@@ -260,7 +260,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     return executeBulkWriteBatch(retryState, binding, connection, maxWireVersion);
                 } else {
                     retryState.markAsLastAttempt();
-                    return executeLegacyBatches(connection);
+                    return executeLegacyBatches(binding, connection);
                 }
             });
         });
@@ -322,7 +322,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     executeBulkWriteBatchAsync(retryState, binding, connection, maxWireVersion, releasingCallback);
                 } else {
                     retryState.markAsLastAttempt();
-                    executeLegacyBatchesAsync(connection, releasingCallback);
+                    executeLegacyBatchesAsync(binding, connection, releasingCallback);
                 }
             });
         }).whenComplete(binding::release);
@@ -429,20 +429,21 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         });
     }
 
-    private BulkWriteResult executeLegacyBatches(final Connection connection) {
+    private BulkWriteResult executeLegacyBatches(final WriteBinding binding, final Connection connection) {
         for (WriteRequest writeRequest : getWriteRequests()) {
             if (writeRequest.getType() == INSERT) {
-                connection.insert(getNamespace(), isOrdered(), (InsertRequest) writeRequest);
+                    connection.insert(getNamespace(), isOrdered(), (InsertRequest) writeRequest, binding.getRequestContext());
             } else if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
-                connection.update(getNamespace(), isOrdered(), (UpdateRequest) writeRequest);
+                    connection.update(getNamespace(), isOrdered(), (UpdateRequest) writeRequest, binding.getRequestContext());
             } else {
-                connection.delete(getNamespace(), isOrdered(), (DeleteRequest) writeRequest);
+                    connection.delete(getNamespace(), isOrdered(), (DeleteRequest) writeRequest, binding.getRequestContext());
             }
         }
         return BulkWriteResult.unacknowledged();
     }
 
-    private void executeLegacyBatchesAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
+    private void executeLegacyBatchesAsync(final AsyncWriteBinding binding, final AsyncConnection connection,
+            final SingleResultCallback<BulkWriteResult> callback) {
         List<? extends WriteRequest> writeRequests = getWriteRequests();
         LoopState loopState = new LoopState();
         AsyncCallbackRunnable loop = new AsyncCallbackLoop(loopState, iterationCallback -> {
@@ -453,11 +454,14 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             WriteRequest writeRequest = writeRequests.get(i);
             SingleResultCallback<WriteConcernResult> commandCallback = (ignored, t) -> iterationCallback.onResult(null, t);
             if (writeRequest.getType() == INSERT) {
-                connection.insertAsync(getNamespace(), isOrdered(), (InsertRequest) writeRequest, commandCallback);
+                connection.insertAsync(getNamespace(), isOrdered(), (InsertRequest) writeRequest, binding.getRequestContext(),
+                        commandCallback);
             } else if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
-                connection.updateAsync(getNamespace(), isOrdered(), (UpdateRequest) writeRequest, commandCallback);
+                connection.updateAsync(getNamespace(), isOrdered(), (UpdateRequest) writeRequest, binding.getRequestContext(),
+                        commandCallback);
             } else {
-                connection.deleteAsync(getNamespace(), isOrdered(), (DeleteRequest) writeRequest, commandCallback);
+                connection.deleteAsync(getNamespace(), isOrdered(), (DeleteRequest) writeRequest, binding.getRequestContext(),
+                        commandCallback);
             }
         });
         loop.run((voidResult, t) -> {
@@ -471,14 +475,14 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
-                null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(),
+                null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),
                 shouldAcknowledge(batch, binding.getSessionContext()), batch.getPayload(), batch.getFieldNameValidator());
     }
 
     private void executeCommandAsync(final AsyncWriteBinding binding, final AsyncConnection connection, final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
-                null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(),
+                    null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),
                 shouldAcknowledge(batch, binding.getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator(), callback);
     }

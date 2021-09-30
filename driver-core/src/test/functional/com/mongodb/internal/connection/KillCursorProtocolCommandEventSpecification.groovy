@@ -23,6 +23,7 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.IgnorableRequestContext
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonDouble
@@ -62,7 +63,7 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
         collectionHelper.insertDocuments(new Document(), new Document(), new Document(), new Document(), new Document())
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec())
                 .execute(connection)
-        def protocol = new KillCursorProtocol(getNamespace(), [result.cursor.id])
+        def protocol = new KillCursorProtocol(getNamespace(), [result.cursor.id], IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -91,7 +92,7 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
         collectionHelper.insertDocuments(new Document(), new Document(), new Document(), new Document(), new Document())
         def result = new QueryProtocol(getNamespace(), 1, 2, new BsonDocument(), null, new BsonDocumentCodec())
                 .execute(connection)
-        def protocol = new KillCursorProtocol(null, [result.cursor.id])
+        def protocol = new KillCursorProtocol(null, [result.cursor.id], IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener

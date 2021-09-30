@@ -16,7 +16,9 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 /**
@@ -31,6 +33,25 @@ public final class CommandStartedEvent extends CommandEvent {
     /**
      * Construct an instance.
      *
+     * @param requestContext the request context
+     * @param requestId             the request id
+     * @param connectionDescription the connection description
+     * @param databaseName          the database name
+     * @param commandName           the command name
+     * @param command the command as a BSON document
+     * @since 4.4
+     */
+    public CommandStartedEvent(@Nullable final RequestContext requestContext, final int requestId,
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
+            final BsonDocument command) {
+        super(requestContext, requestId, connectionDescription, commandName);
+        this.command = command;
+        this.databaseName = databaseName;
+    }
+
+    /**
+     * Construct an instance.
+     *
      * @param requestId             the request id
      * @param connectionDescription the connection description
      * @param databaseName          the database name
@@ -38,10 +59,8 @@ public final class CommandStartedEvent extends CommandEvent {
      * @param command the command as a BSON document
      */
     public CommandStartedEvent(final int requestId, final ConnectionDescription connectionDescription,
-                               final String databaseName, final String commandName, final BsonDocument command) {
-        super(requestId, connectionDescription, commandName);
-        this.command = command;
-        this.databaseName = databaseName;
+            final String databaseName, final String commandName, final BsonDocument command) {
+        this(null, requestId, connectionDescription, databaseName, commandName, command);
     }
 
     /**

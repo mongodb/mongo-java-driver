@@ -29,6 +29,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.internal.selector.ServerAddressSelector;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
@@ -127,7 +128,7 @@ public class SingleServerClusterTest {
         // when
         BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("count", new BsonString(collectionName)),
                 new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                getServerApi());
+                getServerApi(), IgnorableRequestContext.INSTANCE);
 
         // then
         assertEquals(new BsonDouble(1.0).intValue(), result.getNumber("ok").intValue());

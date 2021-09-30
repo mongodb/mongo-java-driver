@@ -27,6 +27,7 @@ import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.IgnorableRequestContext
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -123,7 +124,8 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def skip = 1
         def limit = 1000
         def batchSize = 2
-        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, filter, projection, new BsonDocumentCodec())
+        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, filter, projection, new BsonDocumentCodec(),
+                IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -157,7 +159,8 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def skip = 0
         def limit = 0
         def batchSize = 0
-        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, filter, projection, new BsonDocumentCodec())
+        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, filter, projection, new BsonDocumentCodec(),
+                IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -188,7 +191,8 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def skip = 0
         def limit = 0
         def batchSize = 0
-        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, filter, projection, new BsonDocumentCodec())
+        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, filter, projection, new BsonDocumentCodec(),
+                IgnorableRequestContext.INSTANCE)
         protocol.partial = true
         protocol.noCursorTimeout = true
         protocol.tailableCursor = true
@@ -257,7 +261,8 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def skip = 1
         def limit = 1000
         def batchSize = 2
-        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, query, projection, new BsonDocumentCodec())
+        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, query, projection, new BsonDocumentCodec(),
+                IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -303,7 +308,8 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def skip = 10
         def limit = -20
         def batchSize = 0
-        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, query, projection, new BsonDocumentCodec())
+        def protocol = new QueryProtocol(getNamespace(), skip, limit, batchSize, query, projection, new BsonDocumentCodec(),
+                IgnorableRequestContext.INSTANCE)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener

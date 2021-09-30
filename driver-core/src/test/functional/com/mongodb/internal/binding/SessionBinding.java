@@ -17,6 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
@@ -72,6 +73,11 @@ public class SessionBinding implements ReadWriteBinding {
     }
 
     @Override
+    public RequestContext getRequestContext() {
+        return wrapped.getRequestContext();
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource());
     }
@@ -96,6 +102,11 @@ public class SessionBinding implements ReadWriteBinding {
         @Override
         public ServerApi getServerApi() {
             return wrapped.getServerApi();
+        }
+
+        @Override
+        public RequestContext getRequestContext() {
+            return wrapped.getRequestContext();
         }
 
         @Override

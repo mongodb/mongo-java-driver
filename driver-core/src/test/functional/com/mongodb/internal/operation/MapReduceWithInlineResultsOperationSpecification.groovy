@@ -283,7 +283,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null) >>
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null, _) >>
                 new BsonDocument('results', new BsonArrayWrapper([]))
                         .append('counts',
                         new BsonDocument('input', new BsonInt32(0))
@@ -332,7 +332,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _, _) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, *_) >> {
             it.last().onResult(new BsonDocument('results', new BsonArrayWrapper([]))
                     .append('counts',
                     new BsonDocument('input', new BsonInt32(0))

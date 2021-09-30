@@ -20,6 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -317,54 +318,58 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
-            return wrapped.insert(namespace, ordered, insertRequest);
+        public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
+                final RequestContext requestContext) {
+            return wrapped.insert(namespace, ordered, insertRequest, requestContext);
         }
 
         @Override
-        public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
-            return wrapped.update(namespace, ordered, updateRequest);
+        public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
+                final RequestContext requestContext) {
+            return wrapped.update(namespace, ordered, updateRequest, requestContext);
         }
 
         @Override
-        public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
-            return wrapped.delete(namespace, ordered, deleteRequest);
+        public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
+                final RequestContext requestContext) {
+            return wrapped.delete(namespace, ordered, deleteRequest, requestContext);
         }
 
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi) {
-            return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi);
+                final ServerApi serverApi, final RequestContext requestContext) {
+            return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
+                    requestContext);
         }
 
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi, final boolean responseExpected, final SplittablePayload payload,
-                final FieldNameValidator payloadFieldNameValidator) {
+                final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+                final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator) {
             return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
-                    serverApi, responseExpected, payload, payloadFieldNameValidator);
+                    serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator);
         }
 
         @Override
         public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                 final int skip, final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
                 final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                final Decoder<T> resultDecoder) {
+                final Decoder<T> resultDecoder, final RequestContext requestContext) {
             return wrapped.query(namespace, queryDocument, fields, skip, limit, batchSize, secondaryOk, tailableCursor, awaitData,
-                    noCursorTimeout, partial, oplogReplay, resultDecoder);
+                    noCursorTimeout, partial, oplogReplay, resultDecoder, requestContext);
         }
 
         @Override
         public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                final Decoder<T> resultDecoder) {
-            return wrapped.getMore(namespace, cursorId, numberToReturn, resultDecoder);
+                final Decoder<T> resultDecoder, final RequestContext requestContext) {
+            return wrapped.getMore(namespace, cursorId, numberToReturn, resultDecoder, requestContext);
         }
 
         @Override
-        public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
-            wrapped.killCursor(namespace, cursors);
+        public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
+            wrapped.killCursor(namespace, cursors, requestContext);
         }
 
         @Override
@@ -414,57 +419,59 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                final SingleResultCallback<WriteConcernResult> callback) {
-            wrapped.insertAsync(namespace, ordered, insertRequest, callback);
+                final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+            wrapped.insertAsync(namespace, ordered, insertRequest, requestContext, callback);
         }
 
         @Override
         public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                final SingleResultCallback<WriteConcernResult> callback) {
-            wrapped.updateAsync(namespace, ordered, updateRequest, callback);
+                final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+            wrapped.updateAsync(namespace, ordered, updateRequest, requestContext, callback);
         }
 
         @Override
         public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                final SingleResultCallback<WriteConcernResult> callback) {
-            wrapped.deleteAsync(namespace, ordered, deleteRequest, callback);
+                final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+            wrapped.deleteAsync(namespace, ordered, deleteRequest, requestContext, callback);
         }
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi, final SingleResultCallback<T> callback) {
+                final ServerApi serverApi, final RequestContext requestContext, final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
-                    callback);
+                    requestContext, callback);
         }
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi, final boolean responseExpected, final SplittablePayload payload,
-                final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+                final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+                final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
-                    serverApi, responseExpected, payload, payloadFieldNameValidator, callback);
+                    serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator, callback);
         }
 
         @Override
         public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                 final int skip, final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
                 final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
+                final Decoder<T> resultDecoder, final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
             wrapped.queryAsync(namespace, queryDocument, fields, skip, limit, batchSize, secondaryOk, tailableCursor, awaitData,
-                    noCursorTimeout, partial, oplogReplay, resultDecoder, callback);
+                    noCursorTimeout, partial, oplogReplay, resultDecoder, requestContext, callback);
         }
 
         @Override
         public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-            wrapped.getMoreAsync(namespace, cursorId, numberToReturn, resultDecoder, callback);
+                final Decoder<T> resultDecoder, final RequestContext requestContext, final SingleResultCallback<QueryResult<T>> callback) {
+            wrapped.getMoreAsync(namespace, cursorId, numberToReturn, resultDecoder, requestContext, callback);
         }
 
         @Override
-        public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
-            wrapped.killCursorAsync(namespace, cursors, callback);
+        public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors,
+                final RequestContext requestContext, final SingleResultCallback<Void> callback) {
+            wrapped.killCursorAsync(namespace, cursors, requestContext, callback);
         }
 
         @Override

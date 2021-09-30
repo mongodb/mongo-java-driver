@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.RequestContext;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -41,8 +42,9 @@ class UpdateProtocol extends WriteProtocol {
 
     private final UpdateRequest updateRequest;
 
-    UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
-        super(namespace, ordered);
+    UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
+            final RequestContext requestContext) {
+        super(namespace, ordered, requestContext);
         this.updateRequest = updateRequest;
     }
 

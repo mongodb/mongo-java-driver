@@ -68,8 +68,8 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def batch = nextBatch(cursor)
 
         then:
-        1 * connection.commandAsync(NAMESPACE.getDatabaseName(), expectedCommand, _, _, _, _, _, _) >> {
-            it[7].onResult(reply, null)
+        1 * connection.commandAsync(NAMESPACE.getDatabaseName(), expectedCommand, *_) >> {
+            it.last().onResult(reply, null)
         }
         batch == null
 
@@ -102,13 +102,12 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         then:
         if (firstBatch.getCursor() != null) {
             if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
-                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), _, primary(),
-                        _, _, _, _) >> {
-                    it[7].onResult(null, null)
+                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), _, primary(), *_) >> {
+                    it.last().onResult(null, null)
                 }
             } else {
-                1 * connection.killCursorAsync(NAMESPACE, [42], _) >> {
-                    it[2].onResult(null, null)
+                1 * connection.killCursorAsync(NAMESPACE, [42], *_) >> {
+                    it.last().onResult(null, null)
                 }
             }
         }
@@ -172,9 +171,9 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionA.commandAsync(_, _, _, _, _, _, _, _) >> { it[7].onResult(documentResponse(secondBatch), null) }
+            1 * connectionA.commandAsync(*_) >> { it.last().onResult(documentResponse(secondBatch), null) }
         } else {
-            1 * connectionA.getMoreAsync(_, _, _, _, _) >> { it[4].onResult(queryResult(secondBatch), null) }
+            1 * connectionA.getMoreAsync(*_) >> { it.last().onResult(queryResult(secondBatch), null) }
         }
 
         then:
@@ -187,19 +186,19 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionB.commandAsync(_, _, _, _, _, _, _, _) >> {
+            1 * connectionB.commandAsync(*_) >> {
                 connectionB.getCount() == 1
                 connectionSource.getCount() == 1
-                it[7].onResult(documentResponse(thirdBatch, 0), null)
+                it.last().onResult(documentResponse(thirdBatch, 0), null)
             }
         } else {
-            1 * connectionB.getMoreAsync(_, _, _, _, _) >> {
+            1 * connectionB.getMoreAsync(*_) >> {
                 connectionB.getCount() == 1
                 connectionSource.getCount() == 1
-                it[4].onResult(queryResult(thirdBatch, 0), null)
+                it.last().onResult(queryResult(thirdBatch, 0), null)
             }
         }
-        0 * connectionB.killCursorAsync(_, _, _) >> { it[2].onResult(null, null) }
+        0 * connectionB.killCursorAsync(_, _, _) >> { it.last().onResult(null, null) }
 
         then:
         batch == thirdBatch
@@ -232,12 +231,12 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         then:
         if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
             1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(queryResult.cursor), _, primary(),
-                    _, _, _, _) >> {
-                it[7].onResult(null, null)
+                    *_) >> {
+                it.last().onResult(null, null)
             }
         } else {
-            1 * connection.killCursorAsync(NAMESPACE, [42], _) >> {
-                it[2].onResult(null, null)
+            1 * connection.killCursorAsync(NAMESPACE, [42], *_) >> {
+                it.last().onResult(null, null)
             }
         }
 
@@ -266,31 +265,31 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connection.commandAsync(_, _, _, _, _, _, _, _) >> {
+            1 * connection.commandAsync(*_) >> {
                 connection.getCount() == 1
                 connectionSource.getCount() == 1
-                it[7].onResult(response, null)
+                it.last().onResult(response, null)
             }
 
-            1 * connection.commandAsync(_, _, _, _, _, _, _, _) >> {
+            1 * connection.commandAsync(*_) >> {
                 connection.getCount() == 1
                 connectionSource.getCount() == 1
-                it[7].onResult(response2, null)
+                it.last().onResult(response2, null)
             }
         } else {
-            1 * connection.getMoreAsync(_, _, _, _, _) >> {
+            1 * connection.getMoreAsync(*_) >> {
                 connection.getCount() == 1
                 connectionSource.getCount() == 1
-                it[4].onResult(response, null)
+                it.last().onResult(response, null)
             }
 
-            1 * connection.getMoreAsync(_, _, _, _, _) >> {
+            1 * connection.getMoreAsync(*_) >> {
                 connection.getCount() == 1
                 connectionSource.getCount() == 1
-                it[4].onResult(response2, null)
+                it.last().onResult(response2, null)
             }
         }
-        0 * connection.killCursorAsync(_, _, _)
+        0 * connection.killCursorAsync(*_)
 
         then:
         batch == SECOND_BATCH
@@ -330,18 +329,18 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connection.commandAsync(_, _, _, _, _, _, _, _) >> {
-                it[7].onResult(response, null)
+            1 * connection.commandAsync(*_) >> {
+                it.last().onResult(response, null)
             }
             1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), _, primary(), _, _,
-                    null, _) >> {
-                it[7].onResult(null, null)
+                    null, *_) >> {
+                it.last().onResult(null, null)
             }
         } else {
-            1 * connection.getMoreAsync(_, _, _, _, _) >> {
-                it[4].onResult(response, null)
+            1 * connection.getMoreAsync(*_) >> {
+                it.last().onResult(response, null)
             }
-            1 * connection.killCursorAsync(NAMESPACE, [initialResult.cursor.id], _) >> { it[2].onResult(null, null) }
+            1 * connection.killCursorAsync(NAMESPACE, [initialResult.cursor.id], *_) >> { it.last().onResult(null, null) }
         }
 
         then:
@@ -352,8 +351,8 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         cursor.close()
 
         then:
-        0 * connection.killCursorAsync(_, _, _)
-        0 * connection.commandAsync(_, _, _, _, _)
+        0 * connection.killCursorAsync(*_)
+        0 * connection.commandAsync(*_)
         connectionSource.getCount() == 0
 
         where:
@@ -389,18 +388,18 @@ class AsyncQueryBatchCursorSpecification extends Specification {
             int numberOfInvocations = serverType == ServerType.LOAD_BALANCER
                     ? getMoreResponseHasCursor ? 2 : 1
                     : 1
-            numberOfInvocations * connectionA.commandAsync(_, _, _, _, _, _, _, _) >> {
+            numberOfInvocations * connectionA.commandAsync(*_) >> {
                 // `getMore` command
                 cursor.close()
-                ((SingleResultCallback<?>) it[7]).onResult(getMoreResponse, null)
+                ((SingleResultCallback<?>) it.last()).onResult(getMoreResponse, null)
             } >> {
                 // `killCursors` command
-                ((SingleResultCallback<?>) it[7]).onResult(null, null)
+                ((SingleResultCallback<?>) it.last()).onResult(null, null)
             }
         } else {
-            1 * connectionA.getMoreAsync(_, _, _, _, _) >> {
+            1 * connectionA.getMoreAsync(*_) >> {
                 cursor.close()
-                ((SingleResultCallback<?>) it[4]).onResult(getMoreResponse, null)
+                ((SingleResultCallback<?>) it.last()).onResult(getMoreResponse, null)
             }
         }
 
@@ -443,18 +442,18 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         if (commandAsync) {
             // in LB mode the same connection is used to execute both `getMore` and `killCursors`
             int numberOfInvocations = serverType == ServerType.LOAD_BALANCER ? 2 : 1
-            numberOfInvocations * connectionA.commandAsync(_, _, _, _, _, _, _, _) >> {
+            numberOfInvocations * connectionA.commandAsync(*_) >> {
                 // `getMore` command
                 cursor.close()
-                ((SingleResultCallback<?>) it[7]).onResult(null, MONGO_EXCEPTION)
+                ((SingleResultCallback<?>) it.last()).onResult(null, MONGO_EXCEPTION)
             } >> {
                 // `killCursors` command
-                ((SingleResultCallback<?>) it[7]).onResult(null, null)
+                ((SingleResultCallback<?>) it.last()).onResult(null, null)
             }
         } else {
-            1 * connectionA.getMoreAsync(_, _, _, _, _) >> {
+            1 * connectionA.getMoreAsync(*_) >> {
                 cursor.close()
-                ((SingleResultCallback<?>) it[4]).onResult(null, MONGO_EXCEPTION)
+                ((SingleResultCallback<?>) it.last()).onResult(null, MONGO_EXCEPTION)
             }
         }
 
@@ -537,16 +536,16 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionA.commandAsync(_, _, _, _, _, _, _, _) >> {
+            1 * connectionA.commandAsync(*_) >> {
                 connectionA.getCount() == 1
                 connectionSource.getCount() == 1
-                it[7].onResult(null, exception)
+                it.last().onResult(null, exception)
             }
         } else {
-            1 * connectionA.getMoreAsync(_, _, _, _, _) >> {
+            1 * connectionA.getMoreAsync(*_) >> {
                 connectionA.getCount() == 1
                 connectionSource.getCount() == 1
-                it[4].onResult(null, exception)
+                it.last().onResult(null, exception)
             }
         }
 

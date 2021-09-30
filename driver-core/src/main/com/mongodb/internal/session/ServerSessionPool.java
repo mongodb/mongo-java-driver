@@ -21,6 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
@@ -162,7 +163,8 @@ public class ServerSessionPool {
 
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
-                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, serverApi);
+                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, serverApi,
+                    IgnorableRequestContext.INSTANCE);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {

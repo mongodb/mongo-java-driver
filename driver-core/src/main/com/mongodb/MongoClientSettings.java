@@ -97,6 +97,8 @@ public final class MongoClientSettings {
     private final boolean heartbeatSocketTimeoutSetExplicitly;
     private final boolean heartbeatConnectTimeoutSetExplicitly;
 
+    private final ContextProvider contextProvider;
+
     /**
      * Gets the default codec registry.  It includes the following providers:
      *
@@ -171,6 +173,8 @@ public final class MongoClientSettings {
         private int heartbeatConnectTimeoutMS;
         private int heartbeatSocketTimeoutMS;
 
+        private ContextProvider contextProvider;
+
         private Builder() {
         }
 
@@ -190,6 +194,7 @@ public final class MongoClientSettings {
             serverApi = settings.getServerApi();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
+            contextProvider = settings.getContextProvider();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
             serverSettingsBuilder.applySettings(settings.getServerSettings());
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
@@ -517,6 +522,26 @@ public final class MongoClientSettings {
             return this;
         }
 
+        /**
+         * Sets the context provider
+         *
+         * <p>
+         * When used with the synchronous driver, this must be an instance of {@code com.mongodb.client.SynchronousContextProvider}.
+         * When used with the reactive streams driver, this must be an instance of
+         * {@code com.mongodb.reactivestreams.client.ReactiveContextProvider}.
+         *
+         * </p>
+         *
+         * @param contextProvider the context provider
+         * @return this
+         * @since 4.4
+         */
+        public Builder contextProvider(@Nullable final ContextProvider contextProvider) {
+            this.contextProvider = contextProvider;
+            return this;
+        }
+
+
         // Package-private to provide interop with MongoClientOptions
         Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
             this.heartbeatConnectTimeoutMS = heartbeatConnectTimeoutMS;
@@ -784,6 +809,17 @@ public final class MongoClientSettings {
         return serverSettings;
     }
 
+    /**
+     * Get the context provider
+     *
+     * @return the context provider
+     * @since 4.4
+     */
+    @Nullable
+    public ContextProvider getContextProvider() {
+        return contextProvider;
+    }
+
     private MongoClientSettings(final Builder builder) {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
@@ -814,5 +850,6 @@ public final class MongoClientSettings {
                 .build();
         heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
+        contextProvider = builder.contextProvider;
     }
 }

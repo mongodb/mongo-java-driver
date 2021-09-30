@@ -18,11 +18,11 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -41,25 +41,14 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final Decoder<T> commandResultDecoder;
     private final boolean responseExpected;
     private final ClusterConnectionMode clusterConnectionMode;
+    private final RequestContext requestContext;
     private SessionContext sessionContext;
     private final ServerApi serverApi;
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder) {
-        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
-                ClusterConnectionMode.MULTIPLE, null);
-    }
-
-    CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final @Nullable ServerApi serverApi) {
-        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
-                ClusterConnectionMode.MULTIPLE, serverApi);
-    }
-
-    CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
-                        final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                        final ClusterConnectionMode clusterConnectionMode, final ServerApi serverApi) {
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
+            final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+            final ClusterConnectionMode clusterConnectionMode, final ServerApi serverApi, final RequestContext requestContext) {
         notNull("database", database);
         this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
@@ -71,6 +60,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
+        this.requestContext = notNull("requestContext", requestContext);
 
         isTrueArgument("payloadFieldNameValidator cannot be null if there is a payload.",
                 payload == null || payloadFieldNameValidator != null);
@@ -78,13 +68,13 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
 
     @Override
     public T execute(final InternalConnection connection) {
-        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext);
+        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext, requestContext);
     }
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
         try {
-            connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, sessionContext,
+            connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, sessionContext, requestContext,
                     new SingleResultCallback<T>() {
                         @Override
                         public void onResult(final T result, final Throwable t) {

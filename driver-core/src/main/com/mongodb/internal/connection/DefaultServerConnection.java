@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -74,84 +75,92 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
-        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest));
+    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
+            final RequestContext requestContext) {
+        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest, requestContext));
     }
 
     @Override
     public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new InsertProtocol(namespace, ordered, insertRequest), callback);
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new InsertProtocol(namespace, ordered, insertRequest, requestContext), callback);
     }
 
     @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
-        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest));
+    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
+            final RequestContext requestContext) {
+        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest, requestContext));
     }
 
     @Override
     public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new UpdateProtocol(namespace, ordered, updateRequest), callback);
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new UpdateProtocol(namespace, ordered, updateRequest, requestContext), callback);
     }
 
     @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
-        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest));
+    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
+            final RequestContext requestContext) {
+        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest, requestContext));
     }
 
     @Override
     public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new DeleteProtocol(namespace, ordered, deleteRequest), callback);
+                            final RequestContext requestContext, final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new DeleteProtocol(namespace, ordered, deleteRequest, requestContext), callback);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         @Nullable final ServerApi serverApi) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, true, null,
-                null);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
+                requestContext, true, null, null);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         @Nullable final ServerApi serverApi,
-                         final boolean responseExpected, final SplittablePayload payload,
-                         final FieldNameValidator payloadFieldNameValidator) {
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ServerApi serverApi,
+            final RequestContext requestContext, final boolean responseExpected, final SplittablePayload payload,
+            final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi),
+                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
+                        requestContext),
                 sessionContext);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final SingleResultCallback<T> callback) {
-        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
+                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
+                                 final SingleResultCallback<T> callback) {
+        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, requestContext,
                 true, null, null, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final boolean responseExpected,
+                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
+                                 final boolean responseExpected,
                                  final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, serverApi),
+                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, serverApi,
+                        requestContext),
                 sessionContext, callback);
     }
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int skip, final int limit, final int batchSize,
-                                    final boolean secondaryOk, final boolean tailableCursor,
-                                    final boolean awaitData, final boolean noCursorTimeout,
-                                    final boolean partial, final boolean oplogReplay,
-                                    final Decoder<T> resultDecoder) {
-        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
+            final int skip, final int limit, final int batchSize,
+            final boolean secondaryOk, final boolean tailableCursor,
+            final boolean awaitData, final boolean noCursorTimeout,
+            final boolean partial, final boolean oplogReplay,
+            final Decoder<T> resultDecoder, final RequestContext requestContext) {
+        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder,
+                requestContext)
                                .tailableCursor(tailableCursor)
                                .secondaryOk(getSecondaryOk(secondaryOk))
                                .oplogReplay(oplogReplay)
@@ -164,8 +173,9 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields, final int skip,
                                final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
                                final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                               final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-        executeProtocolAsync(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
+                               final Decoder<T> resultDecoder, final RequestContext requestContext,
+                               final SingleResultCallback<QueryResult<T>> callback) {
+        executeProtocolAsync(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder, requestContext)
                              .tailableCursor(tailableCursor)
                              .secondaryOk(getSecondaryOk(secondaryOk))
                              .oplogReplay(oplogReplay)
@@ -176,19 +186,21 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                      final Decoder<T> resultDecoder) {
-        return executeProtocol(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder));
+            final Decoder<T> resultDecoder, final RequestContext requestContext) {
+        return executeProtocol(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder,
+                requestContext));
     }
 
     @Override
     public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                 final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-        executeProtocolAsync(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder), callback);
+                                 final Decoder<T> resultDecoder, final RequestContext requestContext,
+                                 final SingleResultCallback<QueryResult<T>> callback) {
+        executeProtocolAsync(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder, requestContext), callback);
     }
 
     @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
-        executeProtocol(new KillCursorProtocol(namespace, cursors));
+    public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
+        executeProtocol(new KillCursorProtocol(namespace, cursors, requestContext));
     }
 
     @Override
@@ -197,8 +209,9 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
-        executeProtocolAsync(new KillCursorProtocol(namespace, cursors), callback);
+    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext,
+                                final SingleResultCallback<Void> callback) {
+        executeProtocolAsync(new KillCursorProtocol(namespace, cursors, requestContext), callback);
     }
 
     private boolean getSecondaryOk(final boolean secondaryOk) {

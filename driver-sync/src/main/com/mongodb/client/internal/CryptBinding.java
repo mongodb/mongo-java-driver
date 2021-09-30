@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
@@ -69,6 +70,11 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
+    public RequestContext getRequestContext() {
+        return wrapped.getRequestContext();
+    }
+
+    @Override
     public int getCount() {
         return wrapped.getCount();
     }
@@ -109,6 +115,11 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
         @Override
         public ServerApi getServerApi() {
             return wrapped.getServerApi();
+        }
+
+        @Override
+        public RequestContext getRequestContext() {
+            return wrapped.getRequestContext();
         }
 
         @Override

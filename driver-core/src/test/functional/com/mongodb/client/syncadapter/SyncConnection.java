@@ -17,6 +17,7 @@ package com.mongodb.client.syncadapter;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
@@ -63,44 +64,47 @@ public final class SyncConnection implements Connection {
     }
 
     @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
+    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
+            final RequestContext requestContext) {
         SupplyingCallback<WriteConcernResult> callback = new SupplyingCallback<>();
-        wrapped.insertAsync(namespace, ordered, insertRequest, callback);
+        wrapped.insertAsync(namespace, ordered, insertRequest, requestContext, callback);
         return callback.get();
     }
 
     @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
+    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
+            final RequestContext requestContext) {
         SupplyingCallback<WriteConcernResult> callback = new SupplyingCallback<>();
-        wrapped.updateAsync(namespace, ordered, updateRequest, callback);
+        wrapped.updateAsync(namespace, ordered, updateRequest, requestContext, callback);
         return callback.get();
     }
 
     @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
+    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
+            final RequestContext requestContext) {
         SupplyingCallback<WriteConcernResult> callback = new SupplyingCallback<>();
-        wrapped.deleteAsync(namespace, ordered, deleteRequest, callback);
+        wrapped.deleteAsync(namespace, ordered, deleteRequest, requestContext, callback);
         return callback.get();
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            final ServerApi serverApi) {
+            final ServerApi serverApi, final RequestContext requestContext) {
         SupplyingCallback<T> callback = new SupplyingCallback<>();
         wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
-                callback);
+                requestContext, callback);
         return callback.get();
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            final ServerApi serverApi, final boolean responseExpected, final SplittablePayload payload,
+            final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected, final SplittablePayload payload,
             final FieldNameValidator payloadFieldNameValidator) {
         SupplyingCallback<T> callback = new SupplyingCallback<>();
         wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
-                serverApi, responseExpected, payload, payloadFieldNameValidator, callback);
+                serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator, callback);
         return callback.get();
     }
 
@@ -108,25 +112,25 @@ public final class SyncConnection implements Connection {
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
             final int skip, final int limit, final int batchSize, final boolean secondaryOk, final boolean tailableCursor,
             final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-            final Decoder<T> resultDecoder) {
+            final Decoder<T> resultDecoder, final RequestContext requestContext) {
         SupplyingCallback<QueryResult<T>> callback = new SupplyingCallback<>();
         wrapped.queryAsync(namespace, queryDocument, fields, skip, limit, batchSize, secondaryOk, tailableCursor, awaitData,
-                noCursorTimeout, partial, oplogReplay, resultDecoder, callback);
+                noCursorTimeout, partial, oplogReplay, resultDecoder, requestContext, callback);
         return callback.get();
     }
 
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-            final Decoder<T> resultDecoder) {
+            final Decoder<T> resultDecoder, final RequestContext requestContext) {
         SupplyingCallback<QueryResult<T>> callback = new SupplyingCallback<>();
-        wrapped.getMoreAsync(namespace, cursorId, numberToReturn, resultDecoder, callback);
+        wrapped.getMoreAsync(namespace, cursorId, numberToReturn, resultDecoder, requestContext, callback);
         return callback.get();
     }
 
     @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
+    public void killCursor(final MongoNamespace namespace, final List<Long> cursors, final RequestContext requestContext) {
         SupplyingCallback<Void> callback = new SupplyingCallback<>();
-        wrapped.killCursorAsync(namespace, cursors, callback);
+        wrapped.killCursorAsync(namespace, cursors, requestContext, callback);
         callback.get();
     }
 

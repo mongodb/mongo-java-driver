@@ -17,10 +17,12 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -38,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.encodeMessageWithMetadata;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.internal.connection.ProtocolHelper.getQueryFailureException;
@@ -58,6 +61,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
     private static final String FIND_COMMAND_NAME = "find";
     private static final String EXPLAIN_COMMAND_NAME = "explain";
     private final int skip;
+    private final RequestContext requestContext;
     private final int limit;
     private final int batchSize;
     private final int numberToReturn;
@@ -85,12 +89,15 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         this.queryDocument = queryDocument;
         this.fields = fields;
         this.resultDecoder = resultDecoder;
+        this.requestContext = IgnorableRequestContext.INSTANCE;
     }
 
     QueryProtocol(final MongoNamespace namespace, final int skip, final int limit, final int batchSize,
-                  final BsonDocument queryDocument, final BsonDocument fields, final Decoder<T> resultDecoder) {
+                  final BsonDocument queryDocument, final BsonDocument fields, final Decoder<T> resultDecoder,
+                  final RequestContext requestContext) {
         this.namespace = namespace;
         this.skip = skip;
+        this.requestContext = notNull("requestContext", requestContext);
         this.withLimitAndBatchSize = true;
         this.numberToReturn = 0;
         this.limit = limit;
@@ -300,7 +307,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         } catch (RuntimeException e) {
             if (commandListener != null) {
                 sendCommandFailedEvent(message, FIND_COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
-                        commandListener);
+                        commandListener, requestContext);
             }
             throw e;
         }
@@ -325,12 +332,12 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                     startTimeNanos, message, isExplainEvent, connection.getDescription());
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(),
                                         new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message,
-                                                getCommandName(isExplainEvent), startTimeNanos, commandListener, callback,
+                                                getCommandName(isExplainEvent), startTimeNanos, commandListener, requestContext, callback,
                                                 receiveCallback));
         } catch (Throwable t) {
             if (commandListener != null) {
                 sendCommandFailedEvent(message, FIND_COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, t,
-                        commandListener);
+                        commandListener, requestContext);
             }
             callback.onResult(null, t);
         }
@@ -345,7 +352,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
             sendCommandStartedEvent(message, namespace.getDatabaseName(),
                     getCommandName(isExplainEvent),
                     command,
-                    connection.getDescription(), commandListener);
+                    connection.getDescription(), commandListener, requestContext);
         }
         return isExplainEvent;
     }
@@ -361,7 +368,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         if (commandListener != null) {
             BsonDocument response = asFindCommandResponseDocument(responseBuffers, queryResult, isExplainEvent);
             sendCommandSucceededEvent(message, getCommandName(isExplainEvent), response, connectionDescription,
-                    System.nanoTime() - startTimeNanos, commandListener);
+                    System.nanoTime() - startTimeNanos, commandListener, requestContext);
         }
     }
 
@@ -538,7 +545,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
             } catch (Throwable t) {
                 if (commandListener != null) {
                     sendCommandFailedEvent(message, FIND_COMMAND_NAME, connectionDescription, System.nanoTime() - startTimeNanos, t,
-                            commandListener);
+                            commandListener, requestContext);
                 }
                 callback.onResult(null, t);
             } finally {

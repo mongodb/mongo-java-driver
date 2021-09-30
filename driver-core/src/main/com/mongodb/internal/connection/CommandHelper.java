@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -61,7 +62,7 @@ public final class CommandHelper {
     static void executeCommandAsync(final String database, final BsonDocument command, final @Nullable ServerApi serverApi,
                                     final InternalConnection internalConnection, final SingleResultCallback<BsonDocument> callback) {
         internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, serverApi), new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE, new SingleResultCallback<BsonDocument>() {
+                NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument result, final Throwable t) {
                         if (t != null) {
@@ -93,7 +94,7 @@ public final class CommandHelper {
         SessionContext sessionContext = clusterClock == null ? NoOpSessionContext.INSTANCE
                 : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
         return internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection, serverApi),
-                new BsonDocumentCodec(), sessionContext);
+                new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE);
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,

@@ -23,6 +23,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.event.CommandFailedEvent
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.bulk.DeleteRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -32,7 +33,7 @@ import spock.lang.Specification
 
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
-class CommandEventOnConnectionFailureSpecification extends Specification {
+class   CommandEventOnConnectionFailureSpecification extends Specification {
 
     @Shared
     def namespace = new MongoNamespace('test.test')
@@ -60,14 +61,16 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
 
         where:
         [protocolInfo, async] << [[
-                                   ['killCursors',
-                                    new KillCursorProtocol(namespace, [42L])],
-                                   ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec())],
-                                   ['find',
-                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
-                                   ['delete',
-                                    new DeleteProtocol(namespace, true, new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))))],
+                                          ['killCursors',
+                                    new KillCursorProtocol(namespace, [42L], IgnorableRequestContext.INSTANCE)],
+                                          ['getMore',
+                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), IgnorableRequestContext.INSTANCE)],
+                                          ['find',
+                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec(),
+                                           IgnorableRequestContext.INSTANCE)],
+                                          ['delete',
+                                    new DeleteProtocol(namespace, true, new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))),
+                                            IgnorableRequestContext.INSTANCE)],
                                   ],
                                   [false, true]].combinations()
     }
@@ -90,10 +93,11 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
 
         where:
         [protocolInfo, async] << [[
-                                   ['getMore',
-                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec())],
-                                   ['find',
-                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
+                                          ['getMore',
+                                    new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec(), IgnorableRequestContext.INSTANCE)],
+                                          ['find',
+                                    new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec(),
+                                            IgnorableRequestContext.INSTANCE)],
                                   ],
                                   [false, true]].combinations()
     }

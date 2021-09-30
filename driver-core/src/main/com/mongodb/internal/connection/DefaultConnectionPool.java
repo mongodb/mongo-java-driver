@@ -20,6 +20,7 @@ import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.RequestContext;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
@@ -635,9 +636,10 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+                final RequestContext requestContext) {
             isTrue("open", !isClosed.get());
-            return wrapped.sendAndReceive(message, decoder, sessionContext);
+            return wrapped.sendAndReceive(message, decoder, sessionContext, requestContext);
         }
 
         @Override
@@ -671,10 +673,10 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                            final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+                final RequestContext requestContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, new SingleResultCallback<T>() {
+            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, new SingleResultCallback<T>() {
                 @Override
                 public void onResult(final T result, final Throwable t) {
                     callback.onResult(result, t);
