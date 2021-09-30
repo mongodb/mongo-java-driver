@@ -354,7 +354,8 @@ abstract class BaseCluster implements Cluster {
      * until either {@code n} transformed non-{@code null} elements are collected, or the {@code list} does not have
      * unpicked elements left.
      * <p>
-     * Note that this method may reorder the {@code list}.
+     * Note that this method may reorder the {@code list}, as it uses the
+     * <a href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle">Fisher–Yates, a.k.a. Durstenfeld, shuffle algorithm</a>.
      */
     private static List<ServerTuple> atMostNRandom(final ArrayList<ServerDescription> list, final int n,
             final Function<ServerDescription, ServerTuple> transformer) {
