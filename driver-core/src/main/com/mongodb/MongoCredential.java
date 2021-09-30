@@ -318,6 +318,9 @@ public final class MongoCredential {
      * @param password the user password, which may be null if the userName is also null.  This maps to the AWS secretAccessKey.
      * @return the credential
      * @since 4.1
+     * @see #withMechanismProperty(String, Object)
+     * @see #AWS_SESSION_TOKEN_KEY
+     * @see #AWS_CREDENTIAL_PROVIDER_KEY
      * @mongodb.server.release 4.4
      */
     public static MongoCredential createAwsCredential(@Nullable final String userName, @Nullable final char[] password) {

@@ -35,5 +35,8 @@ set -x
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
+
+# As this script may be executed multiple times in a single task, with different values for MONGODB_URI, it's necessary
+# to run cleanTest to ensure that the test actually executes each run
 ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --debug --info --no-build-cache \
 driver-core:cleanTest driver-core:test --tests AwsAuthenticationSpecification
