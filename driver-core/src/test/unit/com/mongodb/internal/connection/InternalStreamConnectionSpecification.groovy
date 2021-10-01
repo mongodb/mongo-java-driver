@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoNamespace
@@ -45,10 +44,13 @@ import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonReader
 import org.bson.BsonString
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.configuration.CodecConfigurationException
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -508,6 +510,29 @@ class InternalStreamConnectionSpecification extends Specification {
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
+    def 'should send events for successful command with decoding error'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new CommandMessage(cmdNamespace, pingCommandDocument, fieldNameValidator, primary(), messageSettings, null)
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(16, 0) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(90, 0) >> helper.defaultReply()
+
+        when:
+        connection.sendAndReceive(commandMessage, {
+            BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
+        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+
+        then:
+        thrown(CodecConfigurationException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'ping',
+                        new BsonDocument('ok', new BsonInt32(1)), 1000)])
+    }
+
     def 'should extract cluster and operation time into session context'() {
         given:
         def connection = getOpenedConnection()
@@ -745,6 +770,39 @@ class InternalStreamConnectionSpecification extends Specification {
         callback.get()
 
         then:
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'ping',
+                        new BsonDocument('ok', new BsonInt32(1)), 1000)])
+    }
+
+    def 'should send events for successful asynchronous command with decoding error'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new CommandMessage(cmdNamespace, pingCommandDocument, fieldNameValidator, primary(), messageSettings, null)
+        def callback = new FutureResultCallback()
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(16, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultMessageHeader(commandMessage.getId()))
+        }
+        stream.readAsync(90, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultReply())
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, {
+            BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
+        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, callback)
+        callback.get()
+
+        then:
+        thrown(CodecConfigurationException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),

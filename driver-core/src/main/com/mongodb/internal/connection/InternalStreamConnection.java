@@ -333,15 +333,16 @@ public class InternalStreamConnection implements InternalConnection {
 
         try {
             sendCommandMessage(message, bsonOutput, sessionContext);
-            if (message.isResponseExpected()) {
-                return receiveCommandMessageResponse(decoder, commandEventSender, sessionContext, 0);
-            } else {
-                commandEventSender.sendSucceededEventForOneWayCommand();
-                return null;
-            }
         } catch (RuntimeException e) {
             commandEventSender.sendFailedEvent(e);
             throw e;
+        }
+
+        if (message.isResponseExpected()) {
+            return receiveCommandMessageResponse(decoder, commandEventSender, sessionContext, 0);
+        } else {
+            commandEventSender.sendSucceededEventForOneWayCommand();
+            return null;
         }
     }
 
@@ -359,7 +360,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
         isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, null, sessionContext, 0);
+        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), sessionContext, 0);
     }
 
     @Override
@@ -370,7 +371,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext, final int additionalTimeout) {
         isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, null, sessionContext, additionalTimeout);
+        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), sessionContext, additionalTimeout);
     }
 
     @Override
@@ -410,26 +411,36 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder,
                                                 final CommandEventSender commandEventSender, final SessionContext sessionContext,
                                                 final int additionalTimeout) {
-        try (ResponseBuffers responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout)) {
+        ResponseBuffers responseBuffers;
+        try {
+            responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout);
+        } catch (Exception e) {
+            commandEventSender.sendFailedEvent(e);
+            throw e;
+        }
+
+        try {
             updateSessionContext(sessionContext, responseBuffers);
             if (!isCommandOk(responseBuffers)) {
-                throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo, new BsonDocumentCodec()),
-                        description.getServerAddress());
+                MongoException commandFailureException = getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
+                                new BsonDocumentCodec()), description.getServerAddress());
+                commandEventSender.sendFailedEvent(commandFailureException);
+                throw commandFailureException;
             }
 
-            if (commandEventSender != null) {
-                commandEventSender.sendSucceededEvent(responseBuffers);
-            }
+            commandEventSender.sendSucceededEvent(responseBuffers);
 
             T commandResult = getCommandResult(decoder, responseBuffers, responseTo);
-
             hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
             if (hasMoreToCome) {
                 responseTo = responseBuffers.getReplyHeader().getRequestId();
             } else {
                 responseTo = 0;
             }
+
             return commandResult;
+        } finally {
+            responseBuffers.close();
         }
     }
 
