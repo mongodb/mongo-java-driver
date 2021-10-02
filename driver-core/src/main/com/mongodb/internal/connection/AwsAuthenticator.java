@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
+import com.mongodb.AwsCredential;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -49,8 +50,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_AWS;
+import static com.mongodb.MongoCredential.AWS_CREDENTIAL_PROVIDER_KEY;
+import static com.mongodb.MongoCredential.AWS_SESSION_TOKEN_KEY;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
 
 public class AwsAuthenticator extends SaslAuthenticator {
@@ -77,12 +83,24 @@ public class AwsAuthenticator extends SaslAuthenticator {
 
     private static class AwsSaslClient implements SaslClient {
         private final MongoCredential credential;
+        @Nullable
+        private final AwsCredential credentialFromSupplier;
         private final byte[] clientNonce = new byte[RANDOM_LENGTH];
         private int step = -1;
         private String httpResponse;
 
         AwsSaslClient(final MongoCredential credential) {
             this.credential = credential;
+
+            Supplier<AwsCredential> awsCredentialSupplier = credential.getMechanismProperty(AWS_CREDENTIAL_PROVIDER_KEY, null);
+            if (awsCredentialSupplier == null) {
+                credentialFromSupplier = null;
+            } else {
+                credentialFromSupplier = assertNotNull(awsCredentialSupplier.get());
+                isTrueArgument("credential userName is null", credential.getUserName() == null);
+                isTrueArgument("credential password is null", credential.getPassword() == null);
+                isTrueArgument("credential session token is null", credential.getMechanismProperty(AWS_SESSION_TOKEN_KEY, null) == null);
+            }
         }
 
         @Override
@@ -193,6 +211,9 @@ public class AwsAuthenticator extends SaslAuthenticator {
 
         @NonNull
         String getUserName() {
+            if (credentialFromSupplier != null) {
+                return credentialFromSupplier.getAccessKeyId();
+            }
             String userName = credential.getUserName();
             if (userName == null) {
                 userName = System.getenv("AWS_ACCESS_KEY_ID");
@@ -208,6 +229,9 @@ public class AwsAuthenticator extends SaslAuthenticator {
 
         @NonNull
         private String getPassword() {
+            if (credentialFromSupplier != null) {
+                return credentialFromSupplier.getSecretAccessKey();
+            }
             char[] password = credential.getPassword();
             if (password == null) {
                 if (System.getenv("AWS_SECRET_ACCESS_KEY") != null) {
@@ -225,7 +249,10 @@ public class AwsAuthenticator extends SaslAuthenticator {
 
         @Nullable
         private String getSessionToken() {
-            String token = credential.getMechanismProperty("AWS_SESSION_TOKEN", null);
+            if (credentialFromSupplier != null) {
+                return credentialFromSupplier.getSessionToken();
+            }
+            String token = credential.getMechanismProperty(AWS_SESSION_TOKEN_KEY, null);
             if (credential.getUserName() != null) {
                 return token;
             }
