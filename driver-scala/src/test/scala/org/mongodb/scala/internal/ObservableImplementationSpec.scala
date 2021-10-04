@@ -59,7 +59,17 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
     forAll(failingObservables) { (observable: Observable[Int]) =>
       {
         var thrown = false
-        observable.subscribe((res: Int) => (), (t: Throwable) => thrown = true)
+        observable.subscribe(_ => (), _ => thrown = true)
+        thrown should equal(true)
+      }
+    }
+  }
+
+  it should "be well behaved when errors are caused by passed in function and call onError" in {
+    forAll(failingFunctionsObservables) { (observable: Observable[Int]) =>
+      {
+        var thrown = false
+        observable.subscribe(_ => (), _ => thrown = true)
         thrown should equal(true)
       }
     }
@@ -208,7 +218,7 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
 
   val failOn = 30
 
-  def failingObservables =
+  private def failingObservables =
     Table(
       "observable",
       TestObservable[Int](failOn = failOn),
@@ -229,6 +239,35 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
       }),
       ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int](failOn = failOn)).map[Int](a => a._1),
       ZipObservable[Int, Int](TestObservable[Int](failOn = failOn), TestObservable[Int]()).map[Int](a => a._1)
+    )
+
+  private def failingFunctionsObservables =
+    Table(
+      "observable",
+      FilterObservable[Int](TestObservable[Int](), (i: Int) => {
+        if (i > 10) {
+          throw new RuntimeException("Error")
+        }
+        i % 2 == 0
+      }),
+      FlatMapObservable[Int, Int](TestObservable[Int](), (i: Int) => {
+        if (i > 10) {
+          throw new RuntimeException("Error")
+        }
+        TestObservable[Int](1 to 2)
+      }),
+      FoldLeftObservable(TestObservable[Int](1 to 100), 0, (v: Int, i: Int) => {
+        if (i > 10) {
+          throw new RuntimeException("Error")
+        }
+        v + i
+      }),
+      MapObservable[Int, Int](TestObservable[Int](), (i: Int) => {
+        if (i > 10) {
+          throw new RuntimeException("Error")
+        }
+        i * 100
+      })
     )
 
   private def happyObservables =
