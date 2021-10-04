@@ -18,6 +18,8 @@ package org.mongodb.scala.internal
 
 import org.mongodb.scala.{ Observable, Observer, Subscription }
 
+import scala.util.{ Failure, Success, Try }
+
 private[scala] case class FilterObservable[T](observable: Observable[T], p: T => Boolean) extends Observable[T] {
   override def subscribe(observer: Observer[_ >: T]): Unit = {
     observable.subscribe(
@@ -43,10 +45,14 @@ private[scala] case class FilterObservable[T](observable: Observable[T], p: T =>
           }
 
           override def onNext(tResult: T): Unit = {
-            if (p(tResult)) {
-              observer.onNext(tResult)
-            } else if (!terminated) {
-              subscription.foreach(_.request(1)) // No match, request more from down stream
+            Try(p(tResult)) match {
+              case Success(result) =>
+                if (result) {
+                  observer.onNext(tResult)
+                } else if (!terminated) {
+                  subscription.foreach(_.request(1)) // No match, request more from down stream
+                }
+              case Failure(exception) => onError(exception)
             }
           }
         }

@@ -35,15 +35,36 @@ class FlatMapObservableTest extends BaseSpec with Futures with Eventually {
         _ => (),
         e => p.failure(e),
         () => {
-          completedCounter.incrementAndGet()
-          Thread.sleep(100)
           p.trySuccess(())
+          completedCounter.incrementAndGet()
         }
       )
     eventually(assert(completedCounter.get() == 1, s"${completedCounter.get()}"))
-    Thread.sleep(200)
-    assert(completedCounter.get() == 1, s"${completedCounter.get()}")
-    Thread.sleep(1000)
+  }
+
+  it should "call onError if the mapper fails" in {
+    val p = Promise[Unit]()
+    val errorCounter = new AtomicInteger(0)
+    Observable(1 to 100)
+      .flatMap(
+        x =>
+          if (x > 10) {
+            throw new IllegalStateException("Fail")
+          } else {
+            createObservable(x)
+          }
+      )
+      .subscribe(
+        _ => (),
+        _ => {
+          p.trySuccess()
+          errorCounter.incrementAndGet()
+        },
+        () => {
+          p.failure(new IllegalStateException("Should not complete"))
+        }
+      )
+    eventually(assert(errorCounter.get() == 1, s"${errorCounter.get()}"))
   }
 
   private def createObservable(x: Int): Observable[Int] = new Observable[Int] {
