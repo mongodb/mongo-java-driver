@@ -411,23 +411,15 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder,
                                                 final CommandEventSender commandEventSender, final SessionContext sessionContext,
                                                 final int additionalTimeout) {
-        ResponseBuffers responseBuffers;
-        try {
-            responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout);
-        } catch (Exception e) {
-            commandEventSender.sendFailedEvent(e);
-            throw e;
-        }
-
-        try {
+        boolean commandSuccessful = false;
+        try (ResponseBuffers responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout)) {
             updateSessionContext(sessionContext, responseBuffers);
             if (!isCommandOk(responseBuffers)) {
-                MongoException commandFailureException = getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
-                                new BsonDocumentCodec()), description.getServerAddress());
-                commandEventSender.sendFailedEvent(commandFailureException);
-                throw commandFailureException;
+                throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
+                        new BsonDocumentCodec()), description.getServerAddress());
             }
 
+            commandSuccessful = true;
             commandEventSender.sendSucceededEvent(responseBuffers);
 
             T commandResult = getCommandResult(decoder, responseBuffers, responseTo);
@@ -439,9 +431,12 @@ public class InternalStreamConnection implements InternalConnection {
             }
 
             return commandResult;
-        } finally {
-            responseBuffers.close();
-        }
+        } catch (RuntimeException e) {
+            if (!commandSuccessful) {
+                commandEventSender.sendFailedEvent(e);
+            }
+            throw e;
+    }
     }
 
     @Override
