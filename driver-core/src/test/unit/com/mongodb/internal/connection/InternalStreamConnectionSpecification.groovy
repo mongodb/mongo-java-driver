@@ -517,8 +517,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceive(commandMessage, {
-            BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
-        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+            BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('') }, NoOpSessionContext.INSTANCE)
 
         then:
         thrown(CodecConfigurationException)
@@ -792,8 +791,8 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, {
-            BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
-        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, callback)
+            BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('') }, NoOpSessionContext.INSTANCE,
+                callback)
         callback.get()
 
         then:
