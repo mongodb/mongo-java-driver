@@ -18,6 +18,8 @@ package org.mongodb.scala.internal
 
 import org.mongodb.scala.{ Observable, Observer, Subscription }
 
+import scala.util.{ Failure, Success, Try }
+
 private[scala] case class MapObservable[T, S](observable: Observable[T], s: T => S, f: Throwable => Throwable = t => t)
     extends Observable[S] {
   override def subscribe(observer: Observer[_ >: S]): Unit = {
@@ -30,7 +32,12 @@ private[scala] case class MapObservable[T, S](observable: Observable[T], s: T =>
 
           override def onComplete(): Unit = observer.onComplete()
 
-          override def onNext(tResult: T): Unit = observer.onNext(s(tResult))
+          override def onNext(tResult: T): Unit = {
+            Try(s(tResult)) match {
+              case Success(result)    => observer.onNext(result);
+              case Failure(exception) => observer.onError(exception)
+            }
+          }
         }
       )
     )

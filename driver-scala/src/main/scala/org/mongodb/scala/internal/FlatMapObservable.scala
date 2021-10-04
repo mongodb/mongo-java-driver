@@ -19,6 +19,7 @@ package org.mongodb.scala.internal
 import org.mongodb.scala._
 
 import java.util.concurrent.atomic.AtomicReference
+import scala.util.{ Failure, Success, Try }
 
 sealed trait State
 case object Init extends State
@@ -78,11 +79,19 @@ private[scala] case class FlatMapObservable[T, S](observable: Observable[T], f: 
           }
 
           override def onError(throwable: Throwable): Unit = {
+            state.set(Error)
             observer.onError(throwable)
           }
 
           override def onNext(tResult: T): Unit = {
-            f(tResult).subscribe(
+            Try(f(tResult)) match {
+              case Success(result)    => onNextMappedObservable(result);
+              case Failure(exception) => onError(exception)
+            }
+          }
+
+          private def onNextMappedObservable(mappedObservable: Observable[S]): Unit = {
+            mappedObservable.subscribe(
               new Observer[S]() {
                 override def onError(throwable: Throwable): Unit = {
                   state.set(Error)

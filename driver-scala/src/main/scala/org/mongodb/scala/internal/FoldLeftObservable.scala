@@ -17,8 +17,9 @@
 package org.mongodb.scala.internal
 
 import java.util.concurrent.atomic.AtomicBoolean
-
 import org.mongodb.scala.{ Observable, Observer, SingleObservable, Subscription }
+
+import scala.util.{ Failure, Success, Try }
 
 private[scala] case class FoldLeftObservable[T, S](observable: Observable[T], initialValue: S, accumulator: (S, T) => S)
     extends SingleObservable[S] {
@@ -55,7 +56,10 @@ private[scala] case class FoldLeftObservable[T, S](observable: Observable[T], in
           }
 
           override def onNext(tResult: T): Unit = {
-            currentValue = accumulator(currentValue, tResult)
+            Try(accumulator(currentValue, tResult)) match {
+              case Success(result)    => currentValue = result;
+              case Failure(exception) => onError(exception)
+            }
           }
         }
       )
