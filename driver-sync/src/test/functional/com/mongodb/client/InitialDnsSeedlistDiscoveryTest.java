@@ -191,7 +191,7 @@ public class InitialDnsSeedlistDiscoveryTest {
     @Test
     public void shouldDiscoverSrvRecord() throws InterruptedException {
         assumeFalse(isServerlessTest());
-        
+
         if (seeds.isEmpty()) {
             return;
         }

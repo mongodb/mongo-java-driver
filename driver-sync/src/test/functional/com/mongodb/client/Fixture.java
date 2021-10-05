@@ -16,13 +16,11 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerSettings;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
