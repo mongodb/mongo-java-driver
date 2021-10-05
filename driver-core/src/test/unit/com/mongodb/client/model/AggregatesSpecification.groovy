@@ -33,6 +33,7 @@ import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
 import static com.mongodb.client.model.Accumulators.last
 import static com.mongodb.client.model.Accumulators.max
+import static com.mongodb.client.model.Accumulators.mergeObjects
 import static com.mongodb.client.model.Accumulators.min
 import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
@@ -439,6 +440,7 @@ class AggregatesSpecification extends Specification {
                                       first: { $first: "$quantity" },
                                       last: { $last: "$quantity" },
                                       all: { $push: "$quantity" },
+                                      merged: { $mergeObjects: "$quantity" },
                                       unique: { $addToSet: "$quantity" },
                                       stdDevPop: { $stdDevPop: "$quantity" },
                                       stdDevSamp: { $stdDevSamp: "$quantity" }
@@ -452,6 +454,7 @@ class AggregatesSpecification extends Specification {
                      first('first', '$quantity'),
                      last('last', '$quantity'),
                      push('all', '$quantity'),
+                     mergeObjects('merged', '$quantity'),
                      addToSet('unique', '$quantity'),
                      stdDevPop('stdDevPop', '$quantity'),
                      stdDevSamp('stdDevSamp', '$quantity')
@@ -730,6 +733,7 @@ class AggregatesSpecification extends Specification {
                 first('first', '$quantity'),
                 last('last', '$quantity'),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')
@@ -741,6 +745,7 @@ class AggregatesSpecification extends Specification {
                 first('first', '$quantity'),
                 last('last', '$quantity'),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')
@@ -763,6 +768,7 @@ class AggregatesSpecification extends Specification {
                 first('first', '$quantity'),
                 last('last', '$quantity'),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')
@@ -775,6 +781,7 @@ class AggregatesSpecification extends Specification {
                 first('first', '$quantity'),
                 last('last', '$quantity'),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')).hashCode()
