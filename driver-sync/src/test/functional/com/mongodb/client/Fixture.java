@@ -17,11 +17,9 @@
 package com.mongodb.client;
 
 import com.mongodb.Block;
-import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
-import com.mongodb.ServerApi;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
@@ -29,7 +27,11 @@ import com.mongodb.connection.ServerSettings;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getConnectionString;
+import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper class for the acceptance tests.
@@ -39,7 +41,6 @@ public final class Fixture {
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
     private static MongoClient mongoClient;
-    private static MongoClientSettings mongoClientSettings;
     private static MongoDatabase defaultDatabase;
 
     private Fixture() {
@@ -79,34 +80,35 @@ public final class Fixture {
         }
     }
 
-    private static synchronized String getConnectionStringProperty() {
-        return ClusterFixture.getConnectionString().getConnectionString();
+    public static MongoClientSettings getMongoClientSettings() {
+        return getMongoClientSettingsBuilder().build();
     }
 
-    private static synchronized ServerApi getServerApi() {
-        return ClusterFixture.getServerApi();
-    }
-
-    public static synchronized MongoClientSettings getMongoClientSettings() {
-        if (mongoClientSettings == null) {
-            MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                    .applyConnectionString(new ConnectionString(getConnectionStringProperty()))
-                    .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                        @Override
-                        public void apply(final ServerSettings.Builder builder) {
-                            builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
-                        }
-                    });
-            if (getServerApi() != null) {
-                builder.serverApi(getServerApi());
-            }
-            mongoClientSettings = builder.build();
-        }
-        return mongoClientSettings;
+    public static MongoClientSettings getMultiMongosMongoClientSettings() {
+        return getMultiMongosMongoClientSettingsBuilder().build();
     }
 
     public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
-        return MongoClientSettings.builder(getMongoClientSettings());
+        return getMongoClientSettings(getConnectionString());
+    }
+
+    public static MongoClientSettings.Builder getMultiMongosMongoClientSettingsBuilder() {
+        return getMongoClientSettings(requireNonNull(getMultiMongosConnectionString()));
+    }
+
+    public static MongoClientSettings.Builder getMongoClientSettings(final ConnectionString connectionString) {
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .applyToSocketSettings(socketSettingsBuilder -> {
+                    socketSettingsBuilder.readTimeout(1, TimeUnit.MINUTES);
+                })
+                .applyToServerSettings(serverSettingsBuilder -> {
+                    serverSettingsBuilder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
+                });
+        if (getServerApi() != null) {
+            builder.serverApi(getServerApi());
+        }
+        return builder;
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {

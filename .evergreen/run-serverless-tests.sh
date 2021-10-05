@@ -21,14 +21,11 @@ echo "Running serverless tests with ${JDK}"
 
 export JAVA_HOME="/opt/java/jdk11"
 
-MONGODB_URI_SINGLE_HOST=${MONGODB_URI%%,*}
-SINGLE_HOST=${MONGODB_URI_SINGLE_HOST:10}
-
-MONGODB_URI_FINAL="mongodb://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${SINGLE_HOST}/?tls=true"
-
-echo ${MONGODB_URI_FINAL}
+# assume "mongodb" protocol for single server, and "mongodb+srv" protocol for multi server
+SINGLE_SERVER_URI="mongodb://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${SINGLE_ATLASPROXY_SERVERLESS_URI:10}"
+MULTI_SERVER_URI="mongodb+srv://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${MULTI_ATLASPROXY_SERVERLESS_URI:14}"
 
 ./gradlew -version
 
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI_FINAL} -Dorg.mongodb.test.serverless=true \
-   --stacktrace --info --continue driver-sync:test
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${SINGLE_SERVER_URI}  -Dorg.mongodb.test.transaction.uri=${MULTI_SERVER_URI} \
+   -Dorg.mongodb.test.serverless=true --stacktrace --info --continue driver-sync:test
