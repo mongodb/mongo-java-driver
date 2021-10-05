@@ -37,6 +37,7 @@ import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
 import static com.mongodb.client.model.Accumulators.last
 import static com.mongodb.client.model.Accumulators.max
+import static com.mongodb.client.model.Accumulators.mergeObjects
 import static com.mongodb.client.model.Accumulators.min
 import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
@@ -91,16 +92,19 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                   .append('z', false)
                                   .append('a', [1, 2, 3])
                                   .append('a1', [new Document('c', 1).append('d', 2), new Document('c', 2).append('d', 3)])
+                                  .append('o', new Document('a', 1))
 
     def b = new Document('_id', 2).append('x', 2)
                                   .append('y', 'b')
                                   .append('z', true)
                                   .append('a', [3, 4, 5, 6])
                                   .append('a1', [new Document('c', 2).append('d', 3), new Document('c', 3).append('d', 4)])
+                                  .append('o', new Document('b', 2))
 
     def c = new Document('_id', 3).append('x', 3)
                                   .append('y', 'c')
                                   .append('z', true)
+                                  .append('o', new Document('c', 3))
 
     def setup() {
         getCollectionHelper().insertDocuments(a, b, c)
@@ -203,6 +207,9 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         aggregate([group('$z', addToSet('acc', '$z'))]).containsAll([new Document('_id', true).append('acc', [true]),
                                                                      new Document('_id', false).append('acc', [false])])
+
+        aggregate([group(null, mergeObjects('acc', '$o'))]).containsAll(
+                [new Document('_id', null).append('acc',new Document('a', 1).append('b', 2).append('c', 3))])
     }
 
     def '$out'() {
