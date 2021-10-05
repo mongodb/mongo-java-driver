@@ -132,6 +132,21 @@ object Accumulators {
     JAccumulators.addToSet(fieldName, expression)
 
   /**
+   * Gets a field name for a `\$group` operation representing the result of merging the fields of the documents.
+   * If documents to merge include the same field name, the field, in the resulting document, has the value from the last document
+   * merged for the field.
+   *
+   * @param fieldName  the field name
+   * @param expression the expression
+   * @tparam TExpression the expression type
+   * @return the field
+   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/mergeObjects/ \$mergeObjects]]
+   * @since 4.4
+   */
+  def mergeObjects[TExpression](fieldName: String, expression: TExpression): BsonField =
+    JAccumulators.mergeObjects(fieldName, expression)
+
+  /**
    * Gets a field name for a `\$group` operation representing the sample standard deviation of the values of the given expression
    * when applied to all members of the group.
    *
