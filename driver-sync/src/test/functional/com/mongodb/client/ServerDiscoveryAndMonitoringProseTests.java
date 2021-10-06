@@ -36,6 +36,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.Test;
@@ -52,6 +53,7 @@ import static com.mongodb.ClusterFixture.disableFailPoint;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -60,6 +62,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.bson.BsonDocument.parse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -220,6 +223,47 @@ public class ServerDiscoveryAndMonitoringProseTests {
             assertPoll(events, ServerHeartbeatSucceededEvent.class, ConnectionPoolReadyEvent.class);
         } finally {
             disableFailPoint("failCommand");
+        }
+    }
+
+    /**
+     * See
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst#monitors-sleep-at-least-minheartbeatfreqencyms-between-checks">
+     * Monitors sleep at least minHeartbeatFreqencyMS between checks</a>.
+     */
+    @Test
+    @SuppressWarnings("try")
+    public void monitorsSleepAtLeastMinHeartbeatFreqencyMSBetweenChecks() {
+        assumeTrue(serverVersionAtLeast(4, 3));
+        long defaultMinHeartbeatIntervalMillis = MongoClientSettings.builder().build().getServerSettings()
+                .getMinHeartbeatFrequency(MILLISECONDS);
+        assertEquals(500, defaultMinHeartbeatIntervalMillis);
+        String appName = "SDAMMinHeartbeatFrequencyTest";
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
+                .applicationName(appName)
+                .applyToClusterSettings(ClusterFixture::setDirectConnection)
+                .applyToClusterSettings(builder -> builder
+                        .serverSelectionTimeout(5000, MILLISECONDS))
+                /* We have to set the default value explicitly because `getMongoClientSettingsBuilder` sets the internal to
+                 * a smaller value to make tests more responsive. */
+                .applyToServerSettings(builder -> builder.minHeartbeatFrequency(defaultMinHeartbeatIntervalMillis, MILLISECONDS))
+                .build();
+        BsonDocument configureFailPoint = new BsonDocument()
+                .append("configureFailPoint", new BsonString("failCommand"))
+                .append("mode", new BsonDocument()
+                        .append("times", new BsonInt32(5)))
+                .append("data", new BsonDocument()
+                        .append("failCommands", new BsonArray(asList(new BsonString("hello"), new BsonString("isMaster"))))
+                        .append("errorCode", new BsonInt32(1234))
+                        .append("appName", new BsonString(appName)));
+        try (FailPoint ignored = FailPoint.enable(configureFailPoint, clientSettings.getClusterSettings().getHosts().get(0));
+                MongoClient client = MongoClients.create(clientSettings)) {
+            long startNanos = System.nanoTime();
+            client.getDatabase(getDefaultDatabaseName()).runCommand(new BsonDocument("ping", BsonNull.VALUE));
+            long durationMillis = NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+            String msg = durationMillis + " ms";
+            assertTrue(msg, durationMillis >= 2000);
+            assertTrue(msg, durationMillis <= 3500);
         }
     }
 
