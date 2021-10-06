@@ -77,13 +77,13 @@ import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
 import static com.mongodb.client.unified.EventMatcher.getReasonString;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
 import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedList;
-import static java.util.Objects.requireNonNull;
 import static org.junit.Assume.assumeTrue;
 
 public final class Entities {
@@ -290,16 +290,17 @@ public final class Entities {
             throw new UnsupportedOperationException("Client entity contains unsupported options: " + entity.keySet()
                     + ". Supported options are " + SUPPORTED_CLIENT_ENTITY_OPTIONS);
         }
-        MongoClientSettings.Builder clientSettingsBuilder = getMongoClientSettingsBuilder();
-        if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue()) {
+        MongoClientSettings.Builder clientSettingsBuilder;
+        if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue() && (isSharded() || isLoadBalanced())) {
             assumeTrue("Multiple mongos connection string not available for sharded cluster",
                     !isSharded() || getMultiMongosConnectionString() != null);
             assumeTrue("Multiple mongos connection string not available for load-balanced cluster",
                     !isLoadBalanced() || getMultiMongosConnectionString() != null);
-            if (isSharded() || isLoadBalanced()) {
-                clientSettingsBuilder.applyConnectionString(requireNonNull(getMultiMongosConnectionString()));
-            }
+            clientSettingsBuilder = getMultiMongosMongoClientSettingsBuilder();
+        } else {
+            clientSettingsBuilder = getMongoClientSettingsBuilder();
         }
+
         if (entity.containsKey("observeEvents")) {
             List<String> ignoreCommandMonitoringEvents = entity
                     .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
