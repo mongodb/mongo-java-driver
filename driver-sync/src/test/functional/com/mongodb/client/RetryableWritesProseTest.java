@@ -43,6 +43,7 @@ import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.getServerStatus;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -54,6 +55,7 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -117,6 +119,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write)
             throws InterruptedException, ExecutionException, TimeoutException {
         assumeTrue(serverVersionAtLeast(4, 3) && !(write && isStandalone()));
+        assumeFalse(isServerlessTest());
         TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener(asList(
                 "connectionCheckedOutEvent",
                 "poolClearedEvent",

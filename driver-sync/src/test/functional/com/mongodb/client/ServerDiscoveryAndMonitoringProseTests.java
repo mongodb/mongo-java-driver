@@ -168,6 +168,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @SuppressWarnings("try")
     public void testConnectionPoolManagement() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(4, 3));
+        assumeFalse(isServerlessTest());
         BlockingQueue<Object> events = new SynchronousQueue<>(true);
         ServerMonitorListener serverMonitorListener = new ServerMonitorListener() {
             @Override
