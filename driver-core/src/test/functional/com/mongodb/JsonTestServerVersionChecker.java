@@ -25,6 +25,7 @@ import java.util.List;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.ClusterFixture.getVersionList;
+import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
@@ -57,6 +58,9 @@ public final class JsonTestServerVersionChecker {
             return false;
         }
         if (document.containsKey("topology") && !topologyMatches(document.getArray("topology"))) {
+            return false;
+        }
+        if (document.containsKey("authEnabled") && (isAuthenticated() != document.getBoolean("authEnabled").getValue())) {
             return false;
         }
 

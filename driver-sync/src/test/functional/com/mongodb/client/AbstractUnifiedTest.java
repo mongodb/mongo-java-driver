@@ -48,6 +48,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -80,6 +81,7 @@ import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEqualit
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static java.lang.Math.toIntExact;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -208,7 +210,8 @@ public abstract class AbstractUnifiedTest {
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {
                     @Override
                     public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(5, SECONDS);
+                        builder.readTimeout(clientOptions.getInt32(
+                                "socketTimeoutMS", new BsonInt32(toIntExact(SECONDS.toMillis(5)))).getValue(), MILLISECONDS);
                         if (clientOptions.containsKey("connectTimeoutMS")) {
                             builder.connectTimeout(clientOptions.getNumber("connectTimeoutMS").intValue(), MILLISECONDS);
                         }
