@@ -20,9 +20,11 @@ import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 public class EvergreenBenchmarkResultWriter implements BenchmarkResultWriter {
 
@@ -68,7 +70,8 @@ public class EvergreenBenchmarkResultWriter implements BenchmarkResultWriter {
         jsonWriter.writeEndArray();
         jsonWriter.writeEndDocument();
 
-        try (FileWriter fileWriter = new FileWriter(System.getProperty(OUTPUT_FILE_SYSTEM_PROPERTY))) {
+        try (OutputStreamWriter fileWriter = new OutputStreamWriter(new FileOutputStream(System.getProperty(OUTPUT_FILE_SYSTEM_PROPERTY)),
+                StandardCharsets.UTF_8)) {
             fileWriter.write(getJsonResultsArrayFromJsonDocument());
         }
     }
