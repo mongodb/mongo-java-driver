@@ -77,6 +77,11 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
     this
   }
 
+  override def hintString(hint: String): AggregateIterable[T] = {
+    wrapped.hintString(hint)
+    this
+  }
+
   override def explain(): Document = wrapped.explain().toFuture().get()
 
   override def explain(verbosity: ExplainVerbosity): Document = wrapped.explain(verbosity).toFuture().get()

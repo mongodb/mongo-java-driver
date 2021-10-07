@@ -76,7 +76,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private Boolean bypassDocumentValidation;
     private Collation collation;
     private String comment;
-    private BsonDocument hint;
+    private BsonValue hint;
     private BsonDocument variables;
 
     /**
@@ -330,10 +330,8 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * Returns the hint for which index to use. The default is not to set a hint.
      *
      * @return the hint
-     * @since 3.6
-     * @mongodb.server.release 3.6
      */
-    public BsonDocument getHint() {
+    public BsonValue getHint() {
         return hint;
     }
 
@@ -345,7 +343,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    public AggregateToCollectionOperation hint(final BsonDocument hint) {
+    public AggregateToCollectionOperation hint(final BsonValue hint) {
         this.hint = hint;
         return this;
     }

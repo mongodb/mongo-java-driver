@@ -194,6 +194,26 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment'))
     }
 
+    def 'should build the expected AggregateToCollectionOperation for $out with hint string'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null, null, null])
+        def collectionName = 'collectionName'
+        def pipeline = [new Document('$match', 1), new Document('$out', collectionName)]
+
+        when: 'aggregation includes $out and hint string'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false)
+                .hintString('x_1').iterator()
+
+        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then: 'should use the overrides'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern, AggregationLevel.COLLECTION)
+                .hint(new BsonString('x_1')))
+    }
+
     def 'should build the expected AggregateToCollectionOperation for $merge document'() {
         given:
         def executor = new TestOperationExecutor([null, null, null, null, null, null, null])

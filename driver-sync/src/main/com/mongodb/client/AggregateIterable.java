@@ -129,6 +129,17 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     AggregateIterable<TResult> hint(@Nullable Bson hint);
 
     /**
+     * Sets the hint to apply.
+     *
+     * <p>Note: If {@link AggregateIterable#hint(Bson)} is set that will be used instead of any hint string.</p>
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 4.4
+     */
+    AggregateIterable<TResult> hintString(@Nullable String hint);
+
+    /**
      * Add top-level variables to the aggregation.
      * <p>
      * For MongoDB 5.0+, the aggregate command accepts a {@code let} option. This option is a document consisting of zero or more

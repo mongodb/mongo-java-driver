@@ -112,20 +112,21 @@ public final class SyncOperations<TDocument> {
                                                                               final long maxTimeMS, final long maxAwaitTimeMS,
                                                                               final Integer batchSize,
                                                                               final Collation collation, final Bson hint,
+                                                                              final String hintString,
                                                                               final String comment,
                                                                               final Bson variables,
                                                                               final Boolean allowDiskUse,
                                                                               final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, variables,
-                allowDiskUse, aggregationLevel);
+        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, hintString, comment,
+                variables, allowDiskUse, aggregationLevel);
     }
 
     public WriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
-                                                      final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-                                                      final Collation collation, final Bson hint, final String comment,
-                                                      final Bson variables, final AggregationLevel aggregationLevel) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
-                variables, aggregationLevel);
+            final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
+            final Collation collation, final Bson hint, final String hintString, final String comment,
+            final Bson variables, final AggregationLevel aggregationLevel) {
+        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
+                comment, variables, aggregationLevel);
     }
 
     @SuppressWarnings("deprecation")

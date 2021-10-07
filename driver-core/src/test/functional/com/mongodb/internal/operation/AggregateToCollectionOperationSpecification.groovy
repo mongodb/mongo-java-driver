@@ -277,21 +277,25 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         if (useCursor) {
             expectedCommand.append('cursor', new BsonDocument())
         }
+        if (useHint) {
+            operation.hint(new BsonString('x_1'))
+            expectedCommand.append('hint', new BsonString('x_1'))
+        }
 
         then:
         testOperation(operation, serverVersion, expectedCommand, false, BsonDocument.parse('{ok: 1}'),
                 true, false, ReadPreference.primary(), false)
 
         where:
-        serverVersion | includeBypassValidation | includeReadConcern | includeWriteConcern | includeCollation | async  | useCursor
-        [3, 6, 0]     | true                    | true               | true                | true             | true   | true
-        [3, 6, 0]     | true                    | true               | true                | true             | false  | true
-        [3, 4, 0]     | true                    | true               | true                | true             | true   | false
-        [3, 4, 0]     | true                    | true               | true                | true             | false  | false
-        [3, 2, 0]     | true                    | false              | false               | false            | true   | false
-        [3, 2, 0]     | true                    | false              | false               | false            | false  | false
-        [3, 0, 0]     | false                   | false              | false               | false            | true   | false
-        [3, 0, 0]     | false                   | false              | false               | false            | false  | false
+        serverVersion | includeBypassValidation | includeReadConcern | includeWriteConcern | includeCollation | async  | useCursor | useHint
+        [3, 6, 0]     | true                    | true               | true                | true             | true   | true      | true
+        [3, 6, 0]     | true                    | true               | true                | true             | false  | true      | false
+        [3, 4, 0]     | true                    | true               | true                | true             | true   | false     | false
+        [3, 4, 0]     | true                    | true               | true                | true             | false  | false     | false
+        [3, 2, 0]     | true                    | false              | false               | false            | true   | false     | false
+        [3, 2, 0]     | true                    | false              | false               | false            | false  | false     | false
+        [3, 0, 0]     | false                   | false              | false               | false            | true   | false     | false
+        [3, 0, 0]     | false                   | false              | false               | false            | false  | false     | false
     }
 
     def 'should throw an exception when passing an unsupported collation'() {
