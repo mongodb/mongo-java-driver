@@ -98,7 +98,7 @@ public final class Fixture {
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
                 .applyToSocketSettings(socketSettingsBuilder -> {
-                    socketSettingsBuilder.readTimeout(1, TimeUnit.MINUTES);
+                    socketSettingsBuilder.readTimeout(5, TimeUnit.MINUTES);
                 })
                 .applyToServerSettings(serverSettingsBuilder -> {
                     serverSettingsBuilder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
