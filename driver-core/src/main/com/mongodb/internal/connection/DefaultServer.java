@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
@@ -48,7 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
@@ -91,7 +91,9 @@ class DefaultServer implements ClusterableServer {
 
     @Override
     public Connection getConnection() {
-        isTrue("open", !isClosed());
+        if (isClosed) {
+            throw new MongoServerUnavailableException(String.format("The server at %s is no longer available", serverId.getAddress()));
+        }
         SdamIssue.Context exceptionContext = sdam.context();
         operationBegin();
         try {
@@ -108,7 +110,11 @@ class DefaultServer implements ClusterableServer {
 
     @Override
     public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
-        isTrue("open", !isClosed());
+        if (isClosed) {
+            callback.onResult(null, new MongoServerUnavailableException(
+                    String.format("The server at %s is no longer available", serverId.getAddress())));
+            return;
+        }
         SdamIssue.Context exceptionContext = sdam.context();
         operationBegin();
         connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {

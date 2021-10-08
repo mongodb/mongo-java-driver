@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
@@ -62,9 +63,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -121,6 +123,43 @@ public class DefaultConnectionPoolTest {
 
         // then
         assertTrue(connectionGetter.isGotTimeout());
+    }
+
+    @Test
+    public void shouldThrowOnPoolClosed() {
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .maxWaitTime(50, MILLISECONDS)
+                        .build(),
+                mockSdamProvider());
+        provider.close();
+
+        String expectedExceptionMessage = "The server at 127.0.0.1:27017 is no longer available";
+        MongoServerUnavailableException exception;
+        exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get());
+        assertEquals(expectedExceptionMessage, exception.getMessage());
+        exception = assertThrows(MongoServerUnavailableException.class, this::getAsync);
+        assertEquals(expectedExceptionMessage, exception.getMessage());
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private InternalConnection getAsync() {
+        CompletableFuture<InternalConnection> resultFuture = new CompletableFuture<>();
+        provider.getAsync((result, t) -> {
+            if (t != null) {
+                resultFuture.completeExceptionally(t);
+            } else {
+                resultFuture.complete(result);
+            }
+        });
+        try {
+            return resultFuture.get();
+        } catch (ExecutionException e) {
+            throw (RuntimeException) e.getCause();
+        } catch (InterruptedException e) {
+            throw new AssertionError("Unexpected InterruptedException");
+        }
     }
 
     @Test

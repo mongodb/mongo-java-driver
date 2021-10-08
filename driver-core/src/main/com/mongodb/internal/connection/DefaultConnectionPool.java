@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.RequestContext;
 import com.mongodb.annotations.NotThreadSafe;
@@ -131,7 +132,8 @@ class DefaultConnectionPool implements ConnectionPool {
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
-        pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory);
+        pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory, String.format("The server at %s is no longer available",
+                serverId.getAddress()));
         this.sdamProvider = assertNotNull(sdamProvider);
         this.connectionPoolListener = getConnectionPoolListener(settings);
         backgroundMaintenance = new BackgroundMaintenanceManager();
@@ -1353,7 +1355,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         void failAsClosed() {
-            doComplete(ConcurrentPool::poolClosedException);
+            doComplete(pool::poolClosedException);
         }
 
         void failAsTimedOut() {
@@ -1497,13 +1499,13 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
-         * @throws IllegalStateException If and only if {@linkplain #close() closed}.
+         * @throws MongoServerUnavailableException If and only if {@linkplain #close() closed}.
          * @throws MongoConnectionPoolClearedException If and only if {@linkplain #pauseAndIncrementGeneration(Throwable) paused}
          * and not {@linkplain #close() closed}.
          */
         void throwIfClosedOrPaused() {
             if (closed.get()) {
-                throw ConcurrentPool.poolClosedException();
+                throw pool.poolClosedException();
             }
             if (paused) {
                 lock.readLock().lock();

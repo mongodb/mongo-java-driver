@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
+import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
 
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
@@ -194,7 +194,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             try {
                 return function.apply(wrapped);
             } catch (Throwable t) {
-                if (!isRetryableError(t, maxWireVersion)) {
+                if (!isResumableError(t, maxWireVersion)) {
                     throw MongoException.fromThrowableNonNull(t);
                 }
             }

@@ -36,7 +36,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursor.convertAndProduceLastId;
-import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
+import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
 import static java.lang.String.format;
@@ -48,7 +48,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     private volatile BsonDocument resumeToken;
     /**
-     * {@linkplain ChangeStreamBatchCursorHelper#isRetryableError(Throwable, int) Retryable errors} can result in
+     * {@linkplain ChangeStreamBatchCursorHelper#isResumableError(Throwable, int) Retryable errors} can result in
      * {@code wrapped} containing {@code null} and {@link #isClosed} being {@code false}.
      * This represents a situation in which the wrapped object was closed by {@code this} but {@code this} remained open.
      */
@@ -209,7 +209,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                     }
                 } else {
                     cachePostBatchResumeToken(wrappedCursor);
-                    if (isRetryableError(t, maxWireVersion)) {
+                    if (isResumableError(t, maxWireVersion)) {
                         nullifyAndCloseWrapped();
                         retryOperation(asyncBlock, errHandlingCallback, tryNext);
                     } else {
