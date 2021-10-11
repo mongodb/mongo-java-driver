@@ -51,9 +51,13 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 /**
- * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
- * a read operation).
+ * An operation that executes an aggregation that writes its results to a collection.
  *
+ * <p>Drivers are required to execute this operation on a secondary as of MongoDB 5.0, and otherwise execute it on a primary. That's why
+ * this is a ReadOperation, not a WriteOperation: because it now uses the read preference to select the server.
+ * </p>
+ *
+ * @see ReadBinding#getReadConnectionSource(int, com.mongodb.ReadPreference)
  * @mongodb.driver.manual reference/command/aggregate/ Aggregation
  * @since 3.0
  */
