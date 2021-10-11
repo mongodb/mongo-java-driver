@@ -276,6 +276,10 @@ public final class ClusterFixture {
          }
     }
 
+    public static String getConnectionStringSystemPropertyOrDefault() {
+        return System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI);
+    }
+
     @Nullable
     private static ConnectionString getConnectionStringFromSystemProperty(final String property) {
         String mongoURIProperty = System.getProperty(property);

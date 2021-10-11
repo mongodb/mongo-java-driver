@@ -16,23 +16,28 @@
 
 package com.mongodb.reactivestreams.client;
 
-import org.bson.Document;
-import org.junit.Test;
+import com.mongodb.ConnectionString;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.client.ConnectivityTestHelper.LEGACY_HELLO_COMMAND;
+import static com.mongodb.reactivestreams.client.Fixture.getMongoClientSettingsBuilder;
 
 public class ConnectivityTest {
     // the test succeeds if no exception is thrown, and fail otherwise
-    @Test
-    public void testConnectivity() {
-        try (MongoClient client = MongoClients.create(Fixture.getMongoClientSettings())) {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("com.mongodb.client.ConnectivityTestHelper#getConnectivityTestArguments")
+    public void testConnectivity(final ConnectionString connectionString, @SuppressWarnings("unused") final List<String> hosts) {
+        try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder(connectionString).build())) {
             // test that a command that doesn't require auth completes normally
-            Mono.from(client.getDatabase("admin").runCommand(new Document("ismaster", 1))).block(TIMEOUT_DURATION);
+            Mono.from(client.getDatabase("admin").runCommand(LEGACY_HELLO_COMMAND)).block(TIMEOUT_DURATION);
 
             // test that a command that requires auth completes normally
             Mono.from(client.getDatabase("test").getCollection("test").estimatedDocumentCount()).block(TIMEOUT_DURATION);
         }
     }
-
 }
