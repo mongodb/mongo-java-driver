@@ -235,6 +235,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @SuppressWarnings("try")
     public void monitorsSleepAtLeastMinHeartbeatFreqencyMSBetweenChecks() {
         assumeTrue(serverVersionAtLeast(4, 3));
+        assumeFalse(isServerlessTest());
         long defaultMinHeartbeatIntervalMillis = MongoClientSettings.builder().build().getServerSettings()
                 .getMinHeartbeatFrequency(MILLISECONDS);
         assertEquals(500, defaultMinHeartbeatIntervalMillis);
