@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Disabling errexit so that all gradle command will run.
-# Then we exit with non-zero if any of them exited with non-zero
-set +o errexit
+# Exit the script with error if any of the commands fail
+set -o errexit
 
 # Supported/used environment variables:
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
