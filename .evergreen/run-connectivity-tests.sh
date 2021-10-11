@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Don't trace since the URI contains a password that shouldn't show up in the logs
-set -o errexit  # Exit the script with error if any of the commands fail
+# Exit the script with error if any of the commands fail
+set -o errexit
 
 # Supported/used environment variables:
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
@@ -19,13 +19,7 @@ echo "Running connectivity tests with ${JDK}"
 
 export JAVA_HOME="/opt/java/jdk11"
 
-./gradlew -version
-
-for MONGODB_URI in $@; do
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info \
-        --no-build-cache driver-sync:cleanTest driver-sync:test --tests ConnectivityTest
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info \
-        --no-build-cache driver-legacy:cleanTest driver-legacy:test --tests ConnectivityTest
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info \
-        --no-build-cache driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ConnectivityTest
-done
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.connectivity.uris="${MONGODB_URIS}" --info --continue \
+ driver-sync:test --tests ConnectivityTest \
+ driver-legacy:test --tests ConnectivityTest \
+ driver-reactive-streams:test --tests ConnectivityTest

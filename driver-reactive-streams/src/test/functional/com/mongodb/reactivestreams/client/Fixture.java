@@ -67,11 +67,15 @@ public final class Fixture {
     }
 
     public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
+        return getMongoClientSettingsBuilder(ClusterFixture.getConnectionString());
+    }
+
+    public static MongoClientSettings.Builder getMongoClientSettingsBuilder(final ConnectionString connectionString) {
         MongoClientSettings.Builder builder = MongoClientSettings.builder();
         if (getServerApi() != null) {
             builder.serverApi(getServerApi());
         }
-        return builder.applyConnectionString(ClusterFixture.getConnectionString());
+        return builder.applyConnectionString(connectionString);
     }
 
     public static String getDefaultDatabaseName() {

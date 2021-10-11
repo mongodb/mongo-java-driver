@@ -16,26 +16,26 @@
 
 package com.mongodb;
 
-import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
+
+import static com.mongodb.client.ConnectivityTestHelper.LEGACY_HELLO_COMMAND;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 
 public class ConnectivityTest {
 
     // the test succeeds if no exception is thrown, and fail otherwise
-    @Test
-    public void testConnectivity() {
-        MongoClient client = new MongoClient(getMongoClientSettings());
-
-        try {
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("com.mongodb.client.ConnectivityTestHelper#getConnectivityTestArguments")
+    public void testConnectivity(final ConnectionString connectionString, @SuppressWarnings("unused") final List<String> hosts) {
+        try (MongoClient client = new MongoClient(getMongoClientSettings(connectionString).build())) {
             // test that a command that doesn't require auth completes normally
-            client.getDatabase("admin").runCommand(new Document("ismaster", 1));
+            client.getDatabase("admin").runCommand(LEGACY_HELLO_COMMAND);
 
             // test that a command that requires auth completes normally
             client.getDatabase("test").getCollection("test").estimatedDocumentCount();
-        } finally {
-            client.close();
         }
     }
 }

@@ -669,10 +669,10 @@ functions:
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          JDK="jdk8" .evergreen/run-connectivity-tests.sh '${atlas_free_tier_uri}' '${atlas_replica_set_uri}' '${atlas_sharded_uri}' \
-          '${atlas_tls_v11_uri}' '${atlas_tls_v12_uri}' '${atlas_free_tier_uri_srv}' '${atlas_replica_set_uri_srv}' \
-          '${atlas_sharded_uri_srv}' '${atlas_tls_v11_uri_srv}' '${atlas_tls_v12_uri_srv}' \
-          '${atlas_serverless_uri}' '${atlas_serverless_uri_srv}'
+          # The connection strings are pipe-delimited
+          JDK="jdk8" \
+          MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
+          .evergreen/run-connectivity-tests.sh
 
   start-kms-mock-server:
     - command: shell.exec
