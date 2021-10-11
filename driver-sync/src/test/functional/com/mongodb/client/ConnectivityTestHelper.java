@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 
-public class ConnectivityTestHelper {
+public final class ConnectivityTestHelper {
     public static final Document LEGACY_HELLO_COMMAND = new Document("ismaster", 1);
 
     /**
@@ -47,4 +47,6 @@ public class ConnectivityTestHelper {
                 });
     }
 
+    private ConnectivityTestHelper() {
+    }
 }

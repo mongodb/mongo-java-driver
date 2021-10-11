@@ -70,7 +70,7 @@ public final class Fixture {
         return getMongoClientSettingsBuilder(ClusterFixture.getConnectionString());
     }
 
-    public static MongoClientSettings.Builder getMongoClientSettingsBuilder(ConnectionString connectionString) {
+    public static MongoClientSettings.Builder getMongoClientSettingsBuilder(final ConnectionString connectionString) {
         MongoClientSettings.Builder builder = MongoClientSettings.builder();
         if (getServerApi() != null) {
             builder.serverApi(getServerApi());

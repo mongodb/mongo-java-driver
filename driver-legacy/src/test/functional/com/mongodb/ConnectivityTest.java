@@ -30,7 +30,7 @@ public class ConnectivityTest {
     @ParameterizedTest(name = "{1}")
     @MethodSource("com.mongodb.client.ConnectivityTestHelper#getConnectivityTestArguments")
     public void testConnectivity(final ConnectionString connectionString, @SuppressWarnings("unused") final List<String> hosts) {
-        try(MongoClient client = new MongoClient(getMongoClientSettings(connectionString).build())) {
+        try (MongoClient client = new MongoClient(getMongoClientSettings(connectionString).build())) {
             // test that a command that doesn't require auth completes normally
             client.getDatabase("admin").runCommand(LEGACY_HELLO_COMMAND);
 
