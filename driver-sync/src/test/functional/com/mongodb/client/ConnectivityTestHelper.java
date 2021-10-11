@@ -23,7 +23,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
+import static com.mongodb.ClusterFixture.getConnectionStringSystemPropertyOrDefault;
 
 public final class ConnectivityTestHelper {
     public static final Document LEGACY_HELLO_COMMAND = new Document("ismaster", 1);
@@ -39,7 +39,7 @@ public final class ConnectivityTestHelper {
      */
     public static Stream<Arguments> getConnectivityTestArguments() {
         String connectionStrings = System.getProperty("org.mongodb.test.connectivity.uris",
-                getConnectionString().getConnectionString());
+                getConnectionStringSystemPropertyOrDefault());
         return Arrays.stream(connectionStrings.split("\\|"))
                 .map(str -> {
                     ConnectionString connectionString = new ConnectionString(str);
