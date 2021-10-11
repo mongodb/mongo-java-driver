@@ -21,6 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
@@ -111,10 +112,15 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
 
     @Override
     public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
-        ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
-                = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
-        ServerTuple serverTuple = cluster.selectServer(readPreferenceWithFallbackServerSelector);
-        return new ClusterBindingConnectionSource(serverTuple, readPreferenceWithFallbackServerSelector.getAppliedReadPreference());
+        // Assume 5.0+ for load-balanced mode
+        if (cluster.getSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+            return getReadConnectionSource();
+        } else {
+            ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
+                    = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
+            ServerTuple serverTuple = cluster.selectServer(readPreferenceWithFallbackServerSelector);
+            return new ClusterBindingConnectionSource(serverTuple, readPreferenceWithFallbackServerSelector.getAppliedReadPreference());
+        }
     }
 
     @Override

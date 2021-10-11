@@ -21,6 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -111,19 +112,24 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     @Override
     public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
             final SingleResultCallback<AsyncConnectionSource> callback) {
-        ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
-                = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
-        cluster.selectServerAsync(readPreferenceWithFallbackServerSelector, new SingleResultCallback<ServerTuple>() {
-            @Override
-            public void onResult(final ServerTuple result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(new AsyncClusterBindingConnectionSource(result.getServer(), result.getServerDescription(),
-                            readPreferenceWithFallbackServerSelector.getAppliedReadPreference()), null);
+        // Assume 5.0+ for load-balanced mode
+        if (cluster.getSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+            getReadConnectionSource(callback);
+        } else {
+            ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
+                    = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
+            cluster.selectServerAsync(readPreferenceWithFallbackServerSelector, new SingleResultCallback<ServerTuple>() {
+                @Override
+                public void onResult(final ServerTuple result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        callback.onResult(new AsyncClusterBindingConnectionSource(result.getServer(), result.getServerDescription(),
+                                readPreferenceWithFallbackServerSelector.getAppliedReadPreference()), null);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     @Override
