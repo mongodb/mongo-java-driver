@@ -190,21 +190,10 @@ final class CommandOperationHelper {
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
             final boolean retryReads) {
-        return executeRetryableRead(binding, binding::getReadConnectionSource, database, commandCreator, decoder, transformer, retryReads);
-    }
-
-    static <D, T> T executeRetryableRead(
-            final ReadBinding binding,
-            final Supplier<ConnectionSource> readConnectionSourceSupplier,
-            final String database,
-            final CommandCreator commandCreator,
-            final Decoder<D> decoder,
-            final CommandReadTransformer<D, T> transformer,
-            final boolean retryReads) {
         RetryState retryState = initialRetryState(retryReads);
         Supplier<T> read = decorateReadWithRetries(retryState, () -> {
             logRetryExecute(retryState);
-            return withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
+            return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), connection.getDescription(),
                         binding.getSessionContext()));
                 return createReadCommandAndExecute(retryState, binding, source, database, commandCreator, decoder, transformer, connection);

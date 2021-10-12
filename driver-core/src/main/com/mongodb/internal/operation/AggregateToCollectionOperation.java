@@ -57,11 +57,10 @@ import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConc
  * this is a ReadOperation, not a WriteOperation: because it now uses the read preference to select the server.
  * </p>
  *
- * @see ReadBinding#getReadConnectionSource(int, com.mongodb.ReadPreference)
  * @mongodb.driver.manual reference/command/aggregate/ Aggregation
  * @since 3.0
  */
-public class AggregateToCollectionOperation implements AsyncReadOperation<Void>, ReadOperation<Void> {
+public class AggregateToCollectionOperation implements AsyncReadOperation<Void>, ReadOperation<Void>, ReadPreferenceFallbackStrategy {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -334,9 +333,13 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     }
 
     @Override
+    public int getMinWireVersionToApplyReadPreference() {
+        return FIVE_DOT_ZERO_WIRE_VERSION;
+    }
+
+    @Override
     public Void execute(final ReadBinding binding) {
         return executeRetryableRead(binding,
-                () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),
                 namespace.getDatabaseName(),
                 (serverDescription, connectionDescription) -> getCommand(connectionDescription),
                 new BsonDocumentCodec(), (result, source, connection) -> {

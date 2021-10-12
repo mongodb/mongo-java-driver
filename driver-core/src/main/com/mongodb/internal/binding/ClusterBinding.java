@@ -35,7 +35,10 @@ import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
 
 /**
  * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time, and a
@@ -46,6 +49,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class ClusterBinding extends AbstractReferenceCounted implements ClusterAwareReadWriteBinding {
     private final Cluster cluster;
     private final ReadPreference readPreference;
+    private final int minWireVersionToApplyReadPreference;
     private final ReadConcern readConcern;
     @Nullable
     private final ServerApi serverApi;
@@ -60,10 +64,17 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
      * @param requestContext the request context
      * @since 3.8
      */
-    public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-            final @Nullable ServerApi serverApi, final RequestContext requestContext) {
+    public ClusterBinding(final Cluster cluster, final ReadPreference readPreference,
+            final ReadConcern readConcern, final @Nullable ServerApi serverApi, final RequestContext requestContext) {
+        this(cluster, readPreference, -1, readConcern, serverApi, requestContext);
+    }
+
+    public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final int minWireVersionToApplyReadPreference,
+            final ReadConcern readConcern, final @Nullable ServerApi serverApi, final RequestContext requestContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
+        assertTrue(minWireVersionToApplyReadPreference == -1 || minWireVersionToApplyReadPreference >= FIVE_DOT_ZERO_WIRE_VERSION);
+        this.minWireVersionToApplyReadPreference = minWireVersionToApplyReadPreference;
         this.readConcern = notNull("readConcern", readConcern);
         this.serverApi = serverApi;
         this.requestContext = notNull("requestContext", requestContext);
@@ -107,19 +118,21 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new ClusterBindingConnectionSource(cluster.selectServer(new ReadPreferenceServerSelector(readPreference)), readPreference);
-    }
-
-    @Override
-    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
-        // Assume 5.0+ for load-balanced mode
-        if (cluster.getSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
-            return getReadConnectionSource();
+        if (minWireVersionToApplyReadPreference == -1) {
+            return new ClusterBindingConnectionSource(cluster.selectServer(new ReadPreferenceServerSelector(readPreference)),
+                    readPreference);
         } else {
-            ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
-                    = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
-            ServerTuple serverTuple = cluster.selectServer(readPreferenceWithFallbackServerSelector);
-            return new ClusterBindingConnectionSource(serverTuple, readPreferenceWithFallbackServerSelector.getAppliedReadPreference());
+            // Assume 5.0+ for load-balanced mode
+            if (cluster.getSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+                return new ClusterBindingConnectionSource(cluster.selectServer(new ReadPreferenceServerSelector(readPreference)),
+                        readPreference);
+            } else {
+                ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
+                        = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersionToApplyReadPreference,
+                        ReadPreference.primary());
+                ServerTuple serverTuple = cluster.selectServer(readPreferenceWithFallbackServerSelector);
+                return new ClusterBindingConnectionSource(serverTuple, readPreferenceWithFallbackServerSelector.getAppliedReadPreference());
+            }
         }
     }
 

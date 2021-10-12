@@ -104,11 +104,6 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
     }
