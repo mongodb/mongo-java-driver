@@ -28,10 +28,10 @@ if [ "$AUTH" != "noauth" ]; then
 fi
 
 if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-    export TRANSACTION_URI="-Dorg.mongodb.test.transaction.uri=${MONGODB_URI}"
+    export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MONGODB_URI}"
 fi
 
 echo "Running scala tests with Scala $SCALA"
 
 ./gradlew -version
-./gradlew -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${TRANSACTION_URI}
+./gradlew -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}

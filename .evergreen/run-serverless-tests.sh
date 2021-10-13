@@ -27,5 +27,5 @@ MULTI_SERVER_URI="mongodb+srv://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASS
 
 ./gradlew -version
 
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${SINGLE_SERVER_URI}  -Dorg.mongodb.test.transaction.uri=${MULTI_SERVER_URI} \
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${SINGLE_SERVER_URI}  -Dorg.mongodb.test.multi.mongos.uri=${MULTI_SERVER_URI} \
    -Dorg.mongodb.test.serverless=true --stacktrace --info --continue driver-sync:test
