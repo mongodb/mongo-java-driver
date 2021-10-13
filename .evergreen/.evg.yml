@@ -1417,9 +1417,6 @@ axes:
       - id: "linux"
         display_name: "Linux"
         run_on: rhel70-small
-      - id: "linux-large"
-        display_name: "Linux Large"
-        run_on: rhel70-large
       - id: "ubuntu"
         display_name: "Ubuntu 18.04"
         run_on: ubuntu1804-test
@@ -1544,7 +1541,7 @@ buildvariants:
 - matrix_name: "tests-zlib-compression"
   matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8",
                  version: ["3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
-                 topology: "standalone", os: "linux-large" }
+                 topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
