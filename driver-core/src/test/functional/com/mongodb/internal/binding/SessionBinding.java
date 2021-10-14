@@ -62,6 +62,11 @@ public class SessionBinding implements ReadWriteBinding {
     }
 
     @Override
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        return new SessionBindingConnectionSource(wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference));
+    }
+
+    @Override
     public SessionContext getSessionContext() {
         return sessionContext;
     }

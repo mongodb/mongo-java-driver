@@ -42,8 +42,7 @@ import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.operation.ReadOperation;
-    import com.mongodb.internal.operation.ReadPreferenceFallbackStrategy;
-    import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -182,9 +181,7 @@ final class MongoClientDelegate {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            int minWireVersionToApplyReadPreference = operation instanceof ReadPreferenceFallbackStrategy
-                    ? ((ReadPreferenceFallbackStrategy) operation).getMinWireVersionToApplyReadPreference() : -1;
-            ReadBinding binding = getReadBinding(readPreference, minWireVersionToApplyReadPreference, readConcern, actualClientSession,
+            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
                     session == null && actualClientSession != null);
 
             try {
@@ -223,19 +220,18 @@ final class MongoClientDelegate {
         }
 
         WriteBinding getWriteBinding(final ReadConcern readConcern, @Nullable final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(primary(), -1, readConcern, session, ownsSession);
+            return getReadWriteBinding(primary(), readConcern, session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, final int minWireVersionToApplyReadPreference, final ReadConcern readConcern,
-                @Nullable final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(readPreference, minWireVersionToApplyReadPreference, readConcern, session, ownsSession);
+        ReadBinding getReadBinding(final ReadPreference readPreference, final ReadConcern readConcern,
+                                   @Nullable final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(readPreference, readConcern, session, ownsSession);
         }
 
-        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final int minWireVersionToApplyReadPreference,
-                final ReadConcern readConcern, @Nullable final ClientSession session, final boolean ownsSession) {
+        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
+                                             @Nullable final ClientSession session, final boolean ownsSession) {
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), minWireVersionToApplyReadPreference, readConcern, serverApi,
-                    getContext());
+                    getReadPreferenceForBinding(readPreference, session), readConcern, serverApi, getContext());
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);

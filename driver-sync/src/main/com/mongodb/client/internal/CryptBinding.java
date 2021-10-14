@@ -49,6 +49,11 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        return new CryptConnectionSource(wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference));
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         return new CryptConnectionSource(wrapped.getWriteConnectionSource());
     }
