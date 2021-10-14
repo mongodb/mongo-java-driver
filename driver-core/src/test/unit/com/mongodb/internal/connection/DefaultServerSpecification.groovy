@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.MongoNodeIsRecoveringException
 import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoSecurityException
+import com.mongodb.MongoServerUnavailableException
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadException
@@ -30,6 +31,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.client.syncadapter.SupplyingCallback
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
@@ -101,6 +103,31 @@ class DefaultServerSpecification extends Specification {
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
+        def callback = new SupplyingCallback<AsyncConnection>()
+        server.getConnectionAsync(callback)
+
+        then:
+        callback.get() == connection
+        1 * connectionFactory.createAsync(_, _, mode) >> connection
+
+        where:
+        mode << [SINGLE, MULTIPLE]
+    }
+
+    def 'should throw MongoServerUnavailableException getting a connection when the server is closed'() {
+        given:
+        def server = new DefaultServer(serverId, SINGLE, Stub(ConnectionPool), Stub(ConnectionFactory), Mock(ServerMonitor),
+                Stub(SdamServerDescriptionManager), Stub(ServerListener), Stub(CommandListener), new ClusterClock(), false)
+        server.close()
+
+        when:
+        server.getConnection()
+
+        then:
+        def ex = thrown(MongoServerUnavailableException)
+        ex.message == 'The server at 127.0.0.1:27017 is no longer available'
+
+        when:
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
@@ -108,12 +135,9 @@ class DefaultServerSpecification extends Specification {
         latch.await()
 
         then:
-        receivedConnection
-        !receivedThrowable
-        1 * connectionFactory.createAsync(_, _, mode) >> connection
-
-        where:
-        mode << [SINGLE, MULTIPLE]
+        !receivedConnection
+        receivedThrowable instanceof MongoServerUnavailableException
+        receivedThrowable.message == 'The server at 127.0.0.1:27017 is no longer available'
     }
 
     def 'invalidate should invoke server listeners'() {
