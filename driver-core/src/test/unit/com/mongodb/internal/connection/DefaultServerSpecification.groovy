@@ -31,6 +31,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.client.syncadapter.SupplyingCallback
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
@@ -102,15 +103,11 @@ class DefaultServerSpecification extends Specification {
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
-        def latch = new CountDownLatch(1)
-        def receivedConnection = null
-        def receivedThrowable = null
-        server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
-        latch.await()
+        def callback = new SupplyingCallback<AsyncConnection>()
+        server.getConnectionAsync(callback)
 
         then:
-        receivedConnection
-        !receivedThrowable
+        callback.get() == connection
         1 * connectionFactory.createAsync(_, _, mode) >> connection
 
         where:

@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.syncadapter.SupplyingCallback;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
@@ -139,27 +140,10 @@ public class DefaultConnectionPoolTest {
         MongoServerUnavailableException exception;
         exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get());
         assertEquals(expectedExceptionMessage, exception.getMessage());
-        exception = assertThrows(MongoServerUnavailableException.class, this::getAsync);
+        SupplyingCallback<InternalConnection> supplyingCallback = new SupplyingCallback<>();
+        provider.getAsync(supplyingCallback);
+        exception = assertThrows(MongoServerUnavailableException.class, supplyingCallback::get);
         assertEquals(expectedExceptionMessage, exception.getMessage());
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    private InternalConnection getAsync() {
-        CompletableFuture<InternalConnection> resultFuture = new CompletableFuture<>();
-        provider.getAsync((result, t) -> {
-            if (t != null) {
-                resultFuture.completeExceptionally(t);
-            } else {
-                resultFuture.complete(result);
-            }
-        });
-        try {
-            return resultFuture.get();
-        } catch (ExecutionException e) {
-            throw (RuntimeException) e.getCause();
-        } catch (InterruptedException e) {
-            throw new AssertionError("Unexpected InterruptedException");
-        }
     }
 
     @Test
