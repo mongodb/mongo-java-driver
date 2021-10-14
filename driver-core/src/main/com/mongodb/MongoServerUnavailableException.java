@@ -26,7 +26,7 @@ package com.mongodb;
  *
  * @since 4.4
  */
-public class MongoServerUnavailableException extends MongoClientException {
+public final class MongoServerUnavailableException extends MongoClientException {
     private static final long serialVersionUID = 5465094535584085700L;
 
     /**
