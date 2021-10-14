@@ -240,9 +240,14 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoCommandException = com.mongodb.MongoCommandException
 
   /**
-   * Subclass of [[MongoException]] representsing a cursor-not-found exception.
+   * Subclass of [[MongoException]] representing a cursor-not-found exception.
    */
   type MongoCursorNotFoundException = com.mongodb.MongoCursorNotFoundException
+
+  /**
+   * Subclass of [[MongoClientException]] representing a server-unavailable exception.
+   */
+  type MongoServerUnavailableException = com.mongodb.MongoServerUnavailableException
 
   /**
    * Exception indicating that the execution of the current operation timed out as a result of the maximum operation time being exceeded.

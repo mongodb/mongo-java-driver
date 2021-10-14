@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
@@ -34,6 +35,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A concurrent pool implementation.
@@ -45,13 +47,13 @@ public class ConcurrentPool<T> implements Pool<T> {
      * {@link Integer#MAX_VALUE}.
      */
     public static final int INFINITE_SIZE = Integer.MAX_VALUE;
-    private static final String POOL_CLOSED_MESSAGE = "The pool is closed";
 
     private final int maxSize;
     private final ItemFactory<T> itemFactory;
 
     private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
     private final StateAndPermits stateAndPermits;
+    private final String poolClosedMessage;
 
     public enum Prune {
         /**
@@ -87,10 +89,15 @@ public class ConcurrentPool<T> implements Pool<T> {
      * @param itemFactory factory used to create and close items in the pool
      */
     public ConcurrentPool(final int maxSize, final ItemFactory<T> itemFactory) {
+        this(maxSize, itemFactory, "The pool is closed");
+    }
+
+    public ConcurrentPool(final int maxSize, final ItemFactory<T> itemFactory, final String poolClosedMessage) {
         assertTrue(maxSize > 0);
         this.maxSize = maxSize;
         this.itemFactory = itemFactory;
-        stateAndPermits = new StateAndPermits(maxSize);
+        stateAndPermits = new StateAndPermits(maxSize, this::poolClosedException);
+        this.poolClosedMessage = notNull("poolClosedMessage", poolClosedMessage);
     }
 
     /**
@@ -307,15 +314,15 @@ public class ConcurrentPool<T> implements Pool<T> {
     /**
      * @see #isPoolClosedException(Throwable)
      */
-    static IllegalStateException poolClosedException() {
-        return new IllegalStateException(POOL_CLOSED_MESSAGE);
+    MongoServerUnavailableException poolClosedException() {
+        return new MongoServerUnavailableException(poolClosedMessage);
     }
 
     /**
      * @see #poolClosedException()
      */
     static boolean isPoolClosedException(final Throwable e) {
-        return e instanceof IllegalStateException && POOL_CLOSED_MESSAGE.equals(e.getMessage());
+        return e instanceof MongoServerUnavailableException;
     }
 
     /**
@@ -324,6 +331,7 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     @ThreadSafe
     private static final class StateAndPermits {
+        private final Supplier<MongoServerUnavailableException> poolClosedExceptionSupplier;
         private final ReadWriteLock lock;
         private final Condition permitAvailableOrClosedOrPausedCondition;
         private volatile boolean paused;
@@ -333,7 +341,8 @@ public class ConcurrentPool<T> implements Pool<T> {
         @Nullable
         private Supplier<MongoException> causeSupplier;
 
-        StateAndPermits(final int maxPermits) {
+        StateAndPermits(final int maxPermits, final Supplier<MongoServerUnavailableException> poolClosedExceptionSupplier) {
+            this.poolClosedExceptionSupplier = poolClosedExceptionSupplier;
             lock = new ReentrantReadWriteLock(true);
             permitAvailableOrClosedOrPausedCondition = lock.writeLock().newCondition();
             paused = false;
@@ -458,14 +467,14 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         /**
-         * @throws IllegalStateException If and only if {@linkplain #close() closed}.
+         * @throws MongoServerUnavailableException If and only if {@linkplain #close() closed}.
          * @throws MongoException If and only if {@linkplain #pause(Supplier) paused}
          * and not {@linkplain #close() closed}. The exception is specified via the {@link #pause(Supplier)} method
          * and may be a subtype of {@link MongoException}.
          */
         void throwIfClosedOrPaused() {
             if (closed) {
-                throw ConcurrentPool.poolClosedException();
+                throw poolClosedExceptionSupplier.get();
             }
             if (paused) {
                 lock.readLock().lock();
