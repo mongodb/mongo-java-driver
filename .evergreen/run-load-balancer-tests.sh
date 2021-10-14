@@ -48,7 +48,7 @@ set +o errexit
 
 ./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
-  -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
+  -Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_LB_URI} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-sync:test \
   --tests LoadBalancerTest \
   --tests RetryableReadsTest \
@@ -63,7 +63,7 @@ echo $first
 
 ./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
-  -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
+  -Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_LB_URI} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-reactive-stream:test \
   --tests LoadBalancerTest \
   --tests RetryableReadsTest \
@@ -78,7 +78,7 @@ echo $second
 
 ./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
-  -Dorg.mongodb.test.transaction.uri=${MULTI_MONGOS_LB_URI} \
+  -Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_LB_URI} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-core:test \
   --tests QueryBatchCursorFunctionalSpecification
 third=$?

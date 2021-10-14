@@ -62,12 +62,12 @@ provision_ssl () {
   if [ "$AUTH" != "noauth" ] || [ "$TOPOLOGY" == "replica_set" ]; then
     export MONGODB_URI="${MONGODB_URI}&ssl=true&sslInvalidHostNameAllowed=true"
     if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-        export TRANSACTION_URI="${TRANSACTION_URI}&ssl=true&sslInvalidHostNameAllowed=true"
+        export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&ssl=true&sslInvalidHostNameAllowed=true"
     fi
   else
     export MONGODB_URI="${MONGODB_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
     if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-        export TRANSACTION_URI="${TRANSACTION_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
+        export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
     fi
   fi
 }
@@ -80,9 +80,9 @@ provision_ssl () {
 if [ "$TOPOLOGY" == "sharded_cluster" ]; then
     if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
         if [ "$AUTH" = "auth" ]; then
-            export TRANSACTION_URI="mongodb://bob:pwd123@localhost:27017,localhost:27018/?authSource=admin"
+            export MULTI_MONGOS_URI="mongodb://bob:pwd123@localhost:27017,localhost:27018/?authSource=admin"
         else
-            export TRANSACTION_URI="${MONGODB_URI}"
+            export MULTI_MONGOS_URI="${MONGODB_URI}"
         fi
     fi
 
@@ -101,10 +101,10 @@ if [ "$COMPRESSOR" != "" ]; then
      fi
 
      if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-         if [[ "$TRANSACTION_URI" == *"?"* ]]; then
-             export TRANSACTION_URI="${TRANSACTION_URI}&compressors=${COMPRESSOR}"
+         if [[ "$MULTI_MONGOS_URI" == *"?"* ]]; then
+             export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&compressors=${COMPRESSOR}"
          else
-             export TRANSACTION_URI="${TRANSACTION_URI}/?compressors=${COMPRESSOR}"
+             export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?compressors=${COMPRESSOR}"
          fi
      fi
 fi
@@ -114,7 +114,7 @@ if [ "$SSL" != "nossl" ]; then
 fi
 
 if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-    export TRANSACTION_URI="-Dorg.mongodb.test.transaction.uri=${TRANSACTION_URI}"
+    export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_URI}"
 fi
 
 # For now it's sufficient to hard-code the API version to "1", since it's the only API version
@@ -129,7 +129,7 @@ echo "Running tests with ${JDK}"
 
 if [ "$SLOW_TESTS_ONLY" == "true" ]; then
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-              ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
+              ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
               --stacktrace --info testSlowOnly
 else
@@ -138,7 +138,7 @@ else
               -Dorg.mongodb.test.tmpAwsAccessKeyId=${AWS_TEMP_ACCESS_KEY_ID} -Dorg.mongodb.test.tmpAwsSecretAccessKey=${AWS_TEMP_SECRET_ACCESS_KEY} -Dorg.mongodb.test.tmpAwsSessionToken=${AWS_TEMP_SESSION_TOKEN} \
               -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
               -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
-              ${TRANSACTION_URI} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
+              ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
               --stacktrace --info --continue test
 fi
