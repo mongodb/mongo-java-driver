@@ -40,33 +40,39 @@ import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRes
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ChangeStreamBatchCursorHelperTest {
     @Test
     public void testIsResumableError() {
-        assertFalse(isResumableError(new IllegalStateException(), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertFalse(isResumableError(new MongoChangeStreamException(""), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertFalse(isResumableError(new MongoInterruptedException("", new InterruptedException()), FOUR_DOT_FOUR_WIRE_VERSION));
+        assertAll(
+                () -> assertFalse(isResumableError(new IllegalStateException(), FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertFalse(isResumableError(new MongoChangeStreamException(""), FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertFalse(isResumableError(new MongoInterruptedException("", new InterruptedException()),
+                        FOUR_DOT_FOUR_WIRE_VERSION)),
 
-        assertTrue(isResumableError(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertTrue(isResumableError(new MongoCursorNotFoundException(1L, new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertTrue(isResumableError(new MongoSocketException("", new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertTrue(isResumableError(new MongoSocketReadTimeoutException("", new ServerAddress(), new IOException()), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertTrue(isResumableError(new MongoClientException(""), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertTrue(isResumableError(new MongoServerUnavailableException(""), FOUR_DOT_FOUR_WIRE_VERSION));
+                () -> assertTrue(isResumableError(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()),
+                        FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertTrue(isResumableError(new MongoCursorNotFoundException(1L, new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertTrue(isResumableError(new MongoSocketException("", new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertTrue(isResumableError(new MongoSocketReadTimeoutException("", new ServerAddress(), new IOException()),
+                        FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertTrue(isResumableError(new MongoClientException(""), FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertTrue(isResumableError(new MongoServerUnavailableException(""), FOUR_DOT_FOUR_WIRE_VERSION)),
 
-        assertTrue(isResumableError(new MongoCommandException(new BsonDocument("ok", new BsonInt32(0))
-                .append("code", new BsonInt32(1000))
-                .append("errorLabels", new BsonArray(singletonList(new BsonString(RESUMABLE_CHANGE_STREAM_ERROR_LABEL)))),
-                new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION));
-        assertFalse(isResumableError(new MongoCommandException(new BsonDocument("ok", new BsonInt32(0))
-                .append("code", new BsonInt32(RETRYABLE_SERVER_ERROR_CODES.get(0))),
-                new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION));
+                () -> assertTrue(isResumableError(new MongoCommandException(new BsonDocument("ok", new BsonInt32(0))
+                        .append("code", new BsonInt32(1000))
+                        .append("errorLabels", new BsonArray(singletonList(new BsonString(RESUMABLE_CHANGE_STREAM_ERROR_LABEL)))),
+                        new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertFalse(isResumableError(new MongoCommandException(new BsonDocument("ok", new BsonInt32(0))
+                        .append("code", new BsonInt32(RETRYABLE_SERVER_ERROR_CODES.get(0))),
+                        new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION)),
 
-        assertTrue(isResumableError(new MongoCommandException(new BsonDocument("ok", new BsonInt32(0))
-                .append("code", new BsonInt32(RETRYABLE_SERVER_ERROR_CODES.get(0))),
-                new ServerAddress()), FOUR_DOT_TWO_WIRE_VERSION));
+                () -> assertTrue(isResumableError(new MongoCommandException(new BsonDocument("ok", new BsonInt32(0))
+                        .append("code", new BsonInt32(RETRYABLE_SERVER_ERROR_CODES.get(0))),
+                        new ServerAddress()), FOUR_DOT_TWO_WIRE_VERSION))
+        );
     }
 }
