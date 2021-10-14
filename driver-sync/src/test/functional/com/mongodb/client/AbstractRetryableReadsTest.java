@@ -126,7 +126,7 @@ public abstract class AbstractRetryableReadsTest {
         if (useMultipleMongoses) {
             assumeTrue(isSharded());
             connectionString = getMultiMongosConnectionString();
-            assumeTrue("The system property org.mongodb.test.transaction.uri is not set.", connectionString != null);
+            assumeTrue("The system property org.mongodb.test.multi.mongos.uri is not set.", connectionString != null);
         }
 
         MongoClientSettings settings = getMongoClientSettingsBuilder()
