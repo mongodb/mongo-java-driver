@@ -84,6 +84,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -220,7 +221,7 @@ class DefaultConnectionPool implements ConnectionPool {
                         LOGGER.trace(format("Pooled connection %s to server %s is not yet open",
                                 getId(connection), serverId));
                     }
-                    openConcurrencyLimiter.openAsyncOrGetAvailable(connection, timeout, eventSendingCallback);
+                    openConcurrencyLimiter.openAsyncWithConcurrencyLimit(connection, timeout, eventSendingCallback);
                 }
             }
         }));
@@ -253,7 +254,7 @@ class DefaultConnectionPool implements ConnectionPool {
         assertFalse(isLoadBalanced());
         if (stateAndGeneration.pauseAndIncrementGeneration(cause)) {
             LOGGER.debug("Invalidating the connection pool for " + serverId + " and marking it as 'paused'"
-                    + (cause == null ? "" : " due to " + cause.toString()));
+                    + (cause == null ? "" : " due to " + cause));
             openConcurrencyLimiter.signalClosedOrPaused();
         }
     }
@@ -390,7 +391,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
                 pool.ensureMinSize(settings.getMinSize(), newConnection -> {
                     try {
-                        openConcurrencyLimiter.openImmediately(new PooledConnection(newConnection));
+                        openConcurrencyLimiter.openImmediatelyAndTryHandOverOrRelease(new PooledConnection(newConnection));
                     } catch (MongoException | MongoOpenConnectionInternalException e) {
                         RuntimeException actualException = e instanceof MongoOpenConnectionInternalException
                                 ? (RuntimeException) e.getCause()
@@ -849,47 +850,56 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         PooledConnection openOrGetAvailable(final PooledConnection connection, final Timeout timeout) throws MongoTimeoutException {
-            return openOrGetAvailable(connection, true, timeout);
+            PooledConnection result = openWithConcurrencyLimit(connection, OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, timeout);
+            return assertNotNull(result);
         }
 
-        void openImmediately(final PooledConnection connection) throws MongoTimeoutException {
-            PooledConnection result = openOrGetAvailable(connection, false, Timeout.immediate());
-            assertTrue(result == connection);
+        void openImmediatelyAndTryHandOverOrRelease(final PooledConnection connection) throws MongoTimeoutException {
+            assertNull(openWithConcurrencyLimit(connection, OpenWithConcurrencyLimitMode.TRY_HAND_OVER_OR_RELEASE, Timeout.immediate()));
         }
 
         /**
          * This method can be thought of as operating in two phases.
          * In the first phase it tries to synchronously acquire a permit to open the {@code connection}
-         * or get a different {@linkplain PooledConnection#opened() opened} connection if {@code tryGetAvailable} is {@code true} and
-         * one becomes available while waiting for a permit.
+         * or get a different {@linkplain PooledConnection#opened() opened} connection if {@code mode} is
+         * {@link OpenWithConcurrencyLimitMode#TRY_GET_AVAILABLE} and one becomes available while waiting for a permit.
          * The first phase has one of the following outcomes:
          * <ol>
          *     <li>A {@link MongoTimeoutException} or a different {@link Exception} is thrown,
          *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.</li>
          *     <li>An opened connection different from the specified one is returned,
-         *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.</li>
+         *     and the specified {@code connection} is {@linkplain PooledConnection#closeSilently() silently closed}.
+         *     This outcome is possible only if {@code mode} is {@link OpenWithConcurrencyLimitMode#TRY_GET_AVAILABLE}.</li>
          *     <li>A permit is acquired, {@link #connectionCreated(ConnectionPoolListener, ConnectionId)} is reported
          *     and an attempt to open the specified {@code connection} is made. This is the second phase in which
          *     the {@code connection} is {@linkplain PooledConnection#open() opened synchronously}.
          *     The attempt to open the {@code connection} has one of the following outcomes
-         *     combined with releasing the acquired permit:</li>
+         *     combined with releasing the acquired permit:
          *     <ol>
          *         <li>An {@link Exception} is thrown
          *         and the {@code connection} is {@linkplain PooledConnection#closeAndHandleOpenFailure() closed}.</li>
-         *         <li>The specified {@code connection}, which is now opened, is returned.</li>
+         *         <li>Else if the specified {@code connection} is opened successfully and
+         *         {@code mode} is {@link OpenWithConcurrencyLimitMode#TRY_HAND_OVER_OR_RELEASE},
+         *         then {@link #tryHandOverOrRelease(UsageTrackingInternalConnection)} is called and {@code null} is returned.</li>
+         *         <li>Else the specified {@code connection}, which is now opened, is returned.</li>
          *     </ol>
+         *     </li>
          * </ol>
          *
          * @param timeout Applies only to the first phase.
          * @return An {@linkplain PooledConnection#opened() opened} connection which is
-         * either the specified {@code connection} or a different one.
+         * either the specified {@code connection},
+         * or potentially a different one if {@code mode} is {@link OpenWithConcurrencyLimitMode#TRY_GET_AVAILABLE},
+         * or {@code null} if {@code mode} is {@link OpenWithConcurrencyLimitMode#TRY_HAND_OVER_OR_RELEASE}.
          * @throws MongoTimeoutException If the first phase timed out.
          */
-        private PooledConnection openOrGetAvailable(
-                final PooledConnection connection, final boolean tryGetAvailable, final Timeout timeout) throws MongoTimeoutException {
+        @Nullable
+        private PooledConnection openWithConcurrencyLimit(final PooledConnection connection, final OpenWithConcurrencyLimitMode mode,
+                final Timeout timeout) throws MongoTimeoutException {
             PooledConnection availableConnection;
             try {//phase one
-                availableConnection = acquirePermitOrGetAvailableOpenedConnection(tryGetAvailable, timeout);
+                availableConnection = acquirePermitOrGetAvailableOpenedConnection(
+                        mode == OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, timeout);
             } catch (RuntimeException e) {
                 connection.closeSilently();
                 throw e;
@@ -900,17 +910,24 @@ class DefaultConnectionPool implements ConnectionPool {
             } else {//acquired a permit, phase two
                 try {
                     connection.open();
+                    if (mode == OpenWithConcurrencyLimitMode.TRY_HAND_OVER_OR_RELEASE) {
+                        tryHandOverOrRelease(connection.wrapped);
+                        return null;
+                    } else {
+                        return connection;
+                    }
                 } finally {
                     releasePermit();
                 }
-                return connection;
             }
         }
 
         /**
-         * This method is similar to {@link #openOrGetAvailable(PooledConnection, boolean, Timeout)} with the following differences:
+         * This method is similar to {@link #openWithConcurrencyLimit(PooledConnection, OpenWithConcurrencyLimitMode, Timeout)}
+         * with the following differences:
          * <ul>
-         *     <li>It does not have the {@code tryGetAvailable} parameter and acts as if this parameter were {@code true}.</li>
+         *     <li>It does not have the {@code mode} parameter and acts as if this parameter were
+         *     {@link OpenWithConcurrencyLimitMode#TRY_GET_AVAILABLE}.</li>
          *     <li>While the first phase is still synchronous, the {@code connection} is
          *     {@linkplain PooledConnection#openAsync(SingleResultCallback) opened asynchronously} in the second phase.</li>
          *     <li>Instead of returning a result or throwing an exception via Java {@code return}/{@code throw} statements,
@@ -918,7 +935,7 @@ class DefaultConnectionPool implements ConnectionPool {
          *     and passes either a {@link PooledConnection} or an {@link Exception}.</li>
          * </ul>
          */
-        void openAsyncOrGetAvailable(
+        void openAsyncWithConcurrencyLimit(
                 final PooledConnection connection, final Timeout timeout, final SingleResultCallback<InternalConnection> callback) {
             PooledConnection availableConnection;
             try {//phase one
@@ -1102,6 +1119,14 @@ class DefaultConnectionPool implements ConnectionPool {
                 throw new MongoInterruptedException(null, e);
             }
         }
+    }
+
+    /**
+     * @see OpenConcurrencyLimiter#openWithConcurrencyLimit(PooledConnection, OpenWithConcurrencyLimitMode, Timeout)
+     */
+    private enum OpenWithConcurrencyLimitMode {
+        TRY_GET_AVAILABLE,
+        TRY_HAND_OVER_OR_RELEASE
     }
 
     @NotThreadSafe
