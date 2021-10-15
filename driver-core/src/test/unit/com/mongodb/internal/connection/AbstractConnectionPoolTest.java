@@ -94,6 +94,7 @@ import static org.mockito.Mockito.mock;
 public abstract class AbstractConnectionPoolTest {
     private static final int ANY_INT = 42;
     private static final String ANY_STRING = "42";
+    private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_NAMES = Collections.singleton("wait-queue-timeout.json");
 
     private final String fileName;
     private final String description;
@@ -149,6 +150,8 @@ public abstract class AbstractConnectionPoolTest {
                         poolOptions.getNumber("backgroundThreadIntervalMS").longValue(), TimeUnit.MILLISECONDS);
             }
         }
+        boolean prestartPoolAsyncWorkManager = PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_NAMES.contains(fileName);
+        ConnectionPoolSettingsUtil.prestartAsyncWorkManager(settingsBuilder, prestartPoolAsyncWorkManager);
 
         listener = new TestConnectionPoolListener();
         settingsBuilder.addConnectionPoolListener(listener);
@@ -184,6 +187,9 @@ public abstract class AbstractConnectionPoolTest {
             default: {
                 throw new AssertionError(format("Style %s is not implemented", style));
             }
+        }
+        if (prestartPoolAsyncWorkManager) {
+            ConnectionPoolSettingsUtil.sleepWhilePrestartingAsyncWorkManager();
         }
     }
 

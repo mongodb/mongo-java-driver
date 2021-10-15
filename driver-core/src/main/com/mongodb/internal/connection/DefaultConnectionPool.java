@@ -139,7 +139,7 @@ class DefaultConnectionPool implements ConnectionPool {
         backgroundMaintenance = new BackgroundMaintenanceManager();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
         openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
-        asyncWorkManager = new AsyncWorkManager();
+        asyncWorkManager = new AsyncWorkManager(ConnectionPoolSettingsUtil.isPrestartAsyncWorkManager(settings));
         stateAndGeneration = new StateAndGeneration();
         connectionGenerationSupplier = new ConnectionGenerationSupplier() {
             @Override
@@ -1227,10 +1227,13 @@ class DefaultConnectionPool implements ConnectionPool {
         @Nullable
         private ExecutorService worker;
 
-        AsyncWorkManager() {
+        AsyncWorkManager(final boolean prestart) {
             state = State.NEW;
             tasks = new LinkedBlockingQueue<>();
             lock = new StampedLock().asWriteLock();
+            if (prestart) {
+                assertTrue(initUnlessClosed());
+            }
         }
 
         void enqueue(final Task task) {
@@ -1247,7 +1250,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
-         * Invocations of this method must be guarded by {@link #lock}.
+         * Invocations of this method must be guarded by {@link #lock}, unless done from the constructor.
          *
          * @return {@code false} iff the {@link #state} is {@link State#CLOSED}.
          */

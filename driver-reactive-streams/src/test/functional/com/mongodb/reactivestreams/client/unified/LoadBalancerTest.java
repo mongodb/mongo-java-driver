@@ -52,11 +52,11 @@ public class LoadBalancerTest extends UnifiedReactiveStreamsTest {
                     "pinned connections are returned after a network error during a killCursors request",
                     "a connection can be shared by a transaction and a cursor");
 
-    public LoadBalancerTest(@SuppressWarnings("unused") final String fileDescription,
+    public LoadBalancerTest(final String fileDescription,
                             final String testDescription,
                             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                             final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        super(fileDescription, schemaVersion, runOnRequirements, entities, initialData, definition);
         // Reactive streams driver can't implement these tests because the underlying cursor is closed on error, which
         // breaks assumption in the tests that closing the cursor is something that happens under user control
         assumeFalse(testDescription.equals("pinned connections are not returned after an network error during getMore"));

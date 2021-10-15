@@ -51,6 +51,7 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.ConnectionPoolSettingsUtil;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.BsonArray;
@@ -253,6 +254,7 @@ public final class Entities {
     }
 
     public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                     final boolean prestartPoolAsyncWorkManager,
                      final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
         for (BsonValue cur : entitiesArray.getValues()) {
             String entityType = cur.asDocument().getFirstKey();
@@ -260,7 +262,7 @@ public final class Entities {
             String id = entity.getString("id").getValue();
             switch (entityType) {
                 case "client":
-                    initClient(entity, id, mongoClientSupplier);
+                    initClient(entity, id, mongoClientSupplier, prestartPoolAsyncWorkManager);
                     break;
                 case "database": {
                     initDatabase(entity, id);
@@ -285,7 +287,8 @@ public final class Entities {
     }
 
     private void initClient(final BsonDocument entity, final String id,
-                            final Function<MongoClientSettings, MongoClient> mongoClientSupplier) {
+                            final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                            final boolean prestartPoolAsyncWorkManager) {
         if (!SUPPORTED_CLIENT_ENTITY_OPTIONS.containsAll(entity.keySet())) {
             throw new UnsupportedOperationException("Client entity contains unsupported options: " + entity.keySet()
                     + ". Supported options are " + SUPPORTED_CLIENT_ENTITY_OPTIONS);
@@ -408,7 +411,12 @@ public final class Entities {
             }
             clientSettingsBuilder.serverApi(serverApiBuilder.build());
         }
+        clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                ConnectionPoolSettingsUtil.prestartAsyncWorkManager(builder, prestartPoolAsyncWorkManager));
         putEntity(id, mongoClientSupplier.apply(clientSettingsBuilder.build()), clients);
+        if (prestartPoolAsyncWorkManager) {
+            ConnectionPoolSettingsUtil.sleepWhilePrestartingAsyncWorkManager();
+        }
     }
 
     private void initDatabase(final BsonDocument entity, final String id) {

@@ -50,7 +50,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
@@ -70,6 +72,11 @@ import static util.JsonPoweredTestHelper.getTestFiles;
 
 @RunWith(Parameterized.class)
 public abstract class UnifiedTest {
+    private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
+            "wait queue timeout errors include details about checked out connections");
+
+    @Nullable
+    private final String fileDescription;
     private final String schemaVersion;
     private final BsonArray runOnRequirements;
     private final BsonArray entitiesArray;
@@ -84,8 +91,9 @@ public abstract class UnifiedTest {
     private final EventMatcher eventMatcher = new EventMatcher(valueMatcher, context);
     private final List<FailPoint> failPoints = new ArrayList<>();
 
-    public UnifiedTest(final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entitiesArray,
-                       final BsonArray initialData, final BsonDocument definition) {
+    public UnifiedTest(@Nullable final String fileDescription, final String schemaVersion, @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
+        this.fileDescription = fileDescription;
         this.schemaVersion = schemaVersion;
         this.runOnRequirements = runOnRequirements;
         this.entitiesArray = entitiesArray;
@@ -148,7 +156,9 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
-        entities.init(entitiesArray, this::createMongoClient, this::createGridFSBucket);
+        entities.init(entitiesArray, this::createMongoClient,
+                fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
+                this::createGridFSBucket);
         addInitialData();
     }
 

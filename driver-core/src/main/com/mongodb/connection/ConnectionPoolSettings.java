@@ -20,6 +20,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.internal.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -46,6 +48,7 @@ public class ConnectionPoolSettings {
     private final long maxConnectionIdleTimeMS;
     private final long maintenanceInitialDelayMS;
     private final long maintenanceFrequencyMS;
+    private final boolean prestartAsyncWorkManager;
 
     /**
      * Gets a Builder for creating a new ConnectionPoolSettings instance.
@@ -80,6 +83,7 @@ public class ConnectionPoolSettings {
         private long maxConnectionIdleTimeMS;
         private long maintenanceInitialDelayMS;
         private long maintenanceFrequencyMS = MILLISECONDS.convert(1, MINUTES);
+        private boolean prestartAsyncWorkManager = false;
 
         Builder() {
         }
@@ -103,6 +107,7 @@ public class ConnectionPoolSettings {
             maxConnectionIdleTimeMS = connectionPoolSettings.maxConnectionIdleTimeMS;
             maintenanceInitialDelayMS = connectionPoolSettings.maintenanceInitialDelayMS;
             maintenanceFrequencyMS = connectionPoolSettings.maintenanceFrequencyMS;
+            prestartAsyncWorkManager = connectionPoolSettings.prestartAsyncWorkManager;
             return this;
         }
 
@@ -207,6 +212,19 @@ public class ConnectionPoolSettings {
          */
         public Builder addConnectionPoolListener(final ConnectionPoolListener connectionPoolListener) {
             connectionPoolListeners.add(notNull("connectionPoolListener", connectionPoolListener));
+            return this;
+        }
+
+        /**
+         * Allows to prestart the asynchronous work manager of the pool.
+         *
+         * @param prestart {@code true} iff pool's asynchronous work manager must be prestarted.
+         * @return {@code this}.
+         */
+        // this method is invoked via reflection
+        @VisibleForTesting(otherwise = PRIVATE)
+        Builder prestartAsyncWorkManager(final boolean prestart) {
+            prestartAsyncWorkManager = prestart;
             return this;
         }
 
@@ -343,6 +361,17 @@ public class ConnectionPoolSettings {
         return connectionPoolListeners;
     }
 
+    /**
+     * Specifies whether to prestart the asynchronous work manager of the pool.
+     *
+     * @return {@code true} iff pool's asynchronous work manager must be prestarted.
+     */
+    // this method is invoked via reflection
+    @VisibleForTesting(otherwise = PRIVATE)
+    boolean isPrestartAsyncWorkManager() {
+        return prestartAsyncWorkManager;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -378,6 +407,9 @@ public class ConnectionPoolSettings {
         if (!connectionPoolListeners.equals(that.connectionPoolListeners)) {
             return false;
         }
+        if (prestartAsyncWorkManager != that.prestartAsyncWorkManager) {
+            return false;
+        }
 
         return true;
     }
@@ -392,6 +424,7 @@ public class ConnectionPoolSettings {
         result = 31 * result + (int) (maintenanceInitialDelayMS ^ (maintenanceInitialDelayMS >>> 32));
         result = 31 * result + (int) (maintenanceFrequencyMS ^ (maintenanceFrequencyMS >>> 32));
         result = 31 * result + connectionPoolListeners.hashCode();
+        result = 31 * result + Boolean.valueOf(prestartAsyncWorkManager).hashCode();
         return result;
     }
 
@@ -426,5 +459,6 @@ public class ConnectionPoolSettings {
         maintenanceInitialDelayMS = builder.maintenanceInitialDelayMS;
         maintenanceFrequencyMS = builder.maintenanceFrequencyMS;
         connectionPoolListeners = unmodifiableList(builder.connectionPoolListeners);
+        prestartAsyncWorkManager = builder.prestartAsyncWorkManager;
     }
 }
