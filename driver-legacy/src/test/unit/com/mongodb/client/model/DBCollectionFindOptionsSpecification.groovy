@@ -47,6 +47,7 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getSort() == null
         options.getComment() == null
         options.getHint() == null
+        options.getHintString() == null
         options.getMax() == null
         options.getMin() == null
         !options.isReturnKey()
@@ -63,6 +64,7 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def readPreference = ReadPreference.nearest()
         def comment = 'comment'
         def hint = BasicDBObject.parse('{x : 1}')
+        def hintString = 'a_1'
         def min = BasicDBObject.parse('{y : 1}')
         def max = BasicDBObject.parse('{y : 100}')
 
@@ -84,6 +86,7 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .sort(sort)
                 .comment(comment)
                 .hint(hint)
+                .hintString(hintString)
                 .max(max)
                 .min(min)
                 .returnKey(true)
@@ -106,6 +109,7 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.isPartial()
         options.getComment() == comment
         options.getHint() == hint
+        options.getHintString() == hintString
         options.getMax() == max
         options.getMin() == min
         options.isReturnKey()
@@ -122,6 +126,7 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def readPreference = ReadPreference.nearest()
         def comment = 'comment'
         def hint = BasicDBObject.parse('{x : 1}')
+        def hintString = 'a_1'
         def min = BasicDBObject.parse('{y : 1}')
         def max = BasicDBObject.parse('{y : 100}')
 
@@ -143,6 +148,7 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .sort(sort)
                 .comment(comment)
                 .hint(hint)
+                .hintString(hintString)
                 .max(max)
                 .min(min)
                 .returnKey(true)
@@ -169,6 +175,7 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.isPartial()
         options.getComment() == comment
         options.getHint() == hint
+        options.getHintString() == hintString
         options.getMax() == max
         options.getMin() == min
         options.isReturnKey()
