@@ -79,22 +79,21 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().hint(new BasicDBObject('a', 1)).count() == 1
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should use provided string hints for queries'() {
+    def 'should use provided hints for find'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
+
+        when:
+        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
+
+        then:
+        dbCursor.one()
 
         when:
         dbCursor = collection.find().hint('a_1')
 
         then:
-        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
-
-        when:
-        dbCursor = collection.find().addSpecial('$hint', 'a_1')
-
-        then:
-        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
+        dbCursor.one()
     }
 
     def 'should use provided hints for count'() {
@@ -122,6 +121,19 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     def 'should throw with bad hint'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
+
+        then:
+        thrown(MongoException)
+
+        when:
+        collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').one()
+
+        then:
+        thrown(MongoException)
+
+        when:
+        collection.find(new BasicDBObject('a', 1)).hint(new BasicDBObject('BAD HINT', 1)).one()
+
         then:
         thrown(MongoException)
     }
