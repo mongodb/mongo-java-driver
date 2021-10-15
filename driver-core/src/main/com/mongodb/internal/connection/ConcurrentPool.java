@@ -194,21 +194,18 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     /**
      * Try to populate this pool with items so that {@link #getCount()} is not smaller than {@code minSize}.
-     * The {@code postCreate} action throwing a exception causes this method to stop and re-throw that exception.
+     * The {@code initAndRelease} action throwing an exception causes this method to stop and re-throw that exception.
      *
-     * @param initialize An action applied to non-{@code null} new items.
-     *                   If an exception is thrown by the action, the action must treat the provided item as if obtained via
-     *                   a {@link #get(long, TimeUnit) get…} method, {@linkplain #release(Object, boolean) releasing} it
-     *                   if an exception is thrown; otherwise the action must not release the item.
+     * @param initAndRelease An action applied to non-{@code null} new items.
+     * If an exception is thrown by the action, the action must {@linkplain #release(Object, boolean) prune} the item.
+     * Otherwise, the action must {@linkplain #release(Object) release} the item.
      */
-    public void ensureMinSize(final int minSize, final Consumer<T> initialize) {
+    public void ensureMinSize(final int minSize, final Consumer<T> initAndRelease) {
         while (getCount() < minSize) {
             if (!acquirePermit(0, TimeUnit.MILLISECONDS)) {
                 break;
             }
-            T newItem = createNewAndReleasePermitIfFailure();
-            initialize.accept(newItem);
-            release(newItem);
+            initAndRelease.accept(createNewAndReleasePermitIfFailure());
         }
     }
 
