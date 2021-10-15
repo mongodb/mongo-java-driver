@@ -71,7 +71,7 @@ public final class ConnectionPoolSettingsUtil {
     public static boolean isPrestartAsyncWorkManager(final ConnectionPoolSettings settings) {
         try {
             return IS_PRESTART_ASYNC_WORK_MANAGER != null && (boolean) IS_PRESTART_ASYNC_WORK_MANAGER.invoke(settings);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException | RuntimeException e) {
             LOGGER.debug(null, e);
             return false;
         }
@@ -83,7 +83,7 @@ public final class ConnectionPoolSettingsUtil {
             Method result = klass.getDeclaredMethod(name, parameterTypes);
             result.setAccessible(true);
             return result;
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException | RuntimeException e) {
             LOGGER.debug(null, e);
             return null;
         }
