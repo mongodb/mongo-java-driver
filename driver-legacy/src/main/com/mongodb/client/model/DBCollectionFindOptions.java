@@ -51,6 +51,7 @@ public final class DBCollectionFindOptions {
     private Collation collation;
     private String comment;
     private DBObject hint;
+    private String hintString;
     private DBObject max;
     private DBObject min;
     private boolean returnKey;
@@ -85,6 +86,7 @@ public final class DBCollectionFindOptions {
         copiedOptions.collation(collation);
         copiedOptions.comment(comment);
         copiedOptions.hint(hint);
+        copiedOptions.hintString(hintString);
         copiedOptions.max(max);
         copiedOptions.min(min);
         copiedOptions.returnKey(returnKey);
@@ -458,6 +460,17 @@ public final class DBCollectionFindOptions {
     }
 
     /**
+     * Returns the hint string for the name of the index to use. The default is not to set a hint.
+     *
+     * @return the hint string
+     * @since 4.4
+     */
+    @Nullable
+    public String getHintString() {
+        return hintString;
+    }
+
+    /**
      * Sets the hint for which index to use. A null value means no hint is set.
      *
      * @param hint the hint
@@ -469,6 +482,17 @@ public final class DBCollectionFindOptions {
         return this;
     }
 
+    /**
+     * Sets the hint for the name of the index to use. A null value means no hint is set.
+     *
+     * @param hintString the hint string
+     * @return this
+     * @since 4.4
+     */
+    public DBCollectionFindOptions hintString(@Nullable final String hintString) {
+        this.hintString = hintString;
+        return this;
+    }
     /**
      * Returns the exclusive upper bound for a specific index. By default there is no max bound.
      *

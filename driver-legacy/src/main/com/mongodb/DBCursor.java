@@ -25,6 +25,7 @@ import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
@@ -309,6 +310,19 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
+     * Informs the database of an indexed field of the collection in order to improve performance.
+     *
+     * @param indexName the name of an index
+     * @return same DBCursor for chaining operations
+     * @since 4.4
+     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
+     */
+    public DBCursor hint(final String indexName) {
+        findOptions.hintString(indexName);
+        return this;
+    }
+
+    /**
      * Set the maximum execution time for operations on this cursor.
      *
      * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation.
@@ -409,7 +423,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .sort(collection.wrapAllowNull(findOptions.getSort()))
                                                 .collation(findOptions.getCollation())
                                                 .comment(findOptions.getComment())
-                                                .hint(collection.wrapAllowNull(findOptions.getHint()))
+                                                .hint(findOptions.getHint() != null
+                                                        ? collection.wrapAllowNull(findOptions.getHint())
+                                                        : (findOptions.getHintString() != null
+                                                        ? new BsonString(findOptions.getHintString()) : null))
                                                 .min(collection.wrapAllowNull(findOptions.getMin()))
                                                 .max(collection.wrapAllowNull(findOptions.getMax()))
                                                 .cursorType(findOptions.getCursorType())
@@ -876,6 +893,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                 .readConcern(getReadConcern())
                 .collation(getCollation())
                 .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .hint(findOptions.getHint());
+                .hint(findOptions.getHint())
+                .hintString(findOptions.getHintString());
     }
 }
