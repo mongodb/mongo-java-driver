@@ -1,7 +1,7 @@
 {
   "version": 1,
   "style": "integration",
-  "description": "threads blocked by maxConnecting check out minSize connections",
+  "description": "threads blocked by maxConnecting check out minPoolSize connections",
   "runOn": [
     {
       "minServerVersion": "4.4.0"
