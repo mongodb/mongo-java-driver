@@ -132,9 +132,9 @@ public class WorkloadExecutor {
             }
 
             BsonDocument eventsDocument = new BsonDocument()
-                    .append("events", eventDocuments)
                     .append("errors", errorDocuments == null ? new BsonArray() : errorDocuments)
-                    .append("failures", failureDocuments == null ? new BsonArray() : failureDocuments);
+                    .append("failures", failureDocuments == null ? new BsonArray() : failureDocuments)
+                    .append("events", eventDocuments);
 
             BsonDocument resultsDocument = new BsonDocument()
                     .append("numErrors", new BsonInt64(errorCount))
