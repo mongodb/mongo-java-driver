@@ -150,6 +150,19 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
+   * Sets the hint for which index to use. A null value means no hint is set.
+   *
+   * @param hint the hint
+   * @return this
+   * @since 4.4
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def hintString(hint: String): AggregateObservable[TResult] = {
+    wrapped.hintString(hint)
+    this
+  }
+
+  /**
    * Sets the number of documents to return per batch.
    *
    * @param batchSize the batch size

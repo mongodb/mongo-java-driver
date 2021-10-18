@@ -27,6 +27,8 @@ import com.mongodb.internal.operation.AggregateToCollectionOperation;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.junit.jupiter.api.DisplayName;
@@ -90,6 +92,55 @@ public class AggregatePublisherImplTest extends TestHelper {
         Flux.from(publisher).blockFirst();
         assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
+    }
+
+    @DisplayName("Should build the expected AggregateOperation for hint string")
+    @Test
+    void shouldBuildTheExpectedOperationForHintString() {
+        List<BsonDocument> pipeline = singletonList(BsonDocument.parse("{'$match': 1}"));
+
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
+        AggregatePublisher<Document> publisher =
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
+
+        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
+                getDefaultCodecRegistry().get(Document.class))
+                .batchSize(Integer.MAX_VALUE)
+                .retryReads(true);
+
+        publisher
+                .hintString("x_1");
+
+        expectedOperation
+                .hint(new BsonString("x_1"));
+
+        Flux.from(publisher).blockFirst();
+        assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
+    }
+
+    @DisplayName("Should build the expected AggregateOperation when both hint and hintString are set")
+    @Test
+    void shouldBuildTheExpectedOperationForHintPlusHintString() {
+        List<BsonDocument> pipeline = singletonList(BsonDocument.parse("{'$match': 1}"));
+
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
+        AggregatePublisher<Document> publisher =
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
+
+        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
+                getDefaultCodecRegistry().get(Document.class))
+                .batchSize(Integer.MAX_VALUE)
+                .retryReads(true);
+
+        publisher
+                .hint(new Document("x", 1))
+                .hintString("x_1");
+
+        expectedOperation
+                .hint(new BsonDocument("x", new BsonInt32(1)));
+
+        Flux.from(publisher).blockFirst();
+        assertOperationIsTheSameAs(expectedOperation, executor.getReadOperation());
     }
 
     @DisplayName("Should build the expected AggregateOperation for $out")
@@ -168,6 +219,63 @@ public class AggregatePublisherImplTest extends TestHelper {
         // default input should be as expected
         Flux.from(publisher.toCollection()).blockFirst();
         assertOperationIsTheSameAs(expectedOperation, executor.getWriteOperation());
+    }
+
+    @DisplayName("Should build the expected AggregateOperation for $out with hint string")
+    @Test
+    void shouldBuildTheExpectedOperationsForDollarOutWithHintString() {
+        String collectionName = "collectionName";
+        List<BsonDocument> pipeline = asList(BsonDocument.parse("{'$match': 1}"),
+                BsonDocument.parse(format("{'$out': '%s'}", collectionName)));
+        MongoNamespace collectionNamespace = new MongoNamespace(NAMESPACE.getDatabaseName(), collectionName);
+
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor(), getBatchCursor(), null));
+        AggregatePublisher<Document> publisher =
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
+
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
+                ReadConcern.DEFAULT,
+                WriteConcern.ACKNOWLEDGED);
+
+        publisher
+                .hintString("x_1");
+
+        expectedOperation
+                .hint(new BsonString("x_1"));
+
+        Flux.from(publisher).blockFirst();
+        assertEquals(ReadPreference.primary(), executor.getReadPreference());
+        WriteOperationThenCursorReadOperation operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
+        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
+    }
+
+    @DisplayName("Should build the expected AggregateOperation for $out when both hint and hint string are set")
+    @Test
+    void shouldBuildTheExpectedOperationsForDollarOutWithHintPlusHintString() {
+        String collectionName = "collectionName";
+        List<BsonDocument> pipeline = asList(BsonDocument.parse("{'$match': 1}"),
+                BsonDocument.parse(format("{'$out': '%s'}", collectionName)));
+        MongoNamespace collectionNamespace = new MongoNamespace(NAMESPACE.getDatabaseName(), collectionName);
+
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor(), getBatchCursor(), null));
+        AggregatePublisher<Document> publisher =
+                new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
+
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
+                ReadConcern.DEFAULT,
+                WriteConcern.ACKNOWLEDGED);
+
+        publisher
+                .hint(new Document("x", 1))
+                .hintString("x_1");
+
+        expectedOperation
+                .hint(new BsonDocument("x", new BsonInt32(1)));
+
+        Flux.from(publisher).blockFirst();
+        assertEquals(ReadPreference.primary(), executor.getReadPreference());
+        WriteOperationThenCursorReadOperation operation = (WriteOperationThenCursorReadOperation) executor.getReadOperation();
+        assertOperationIsTheSameAs(expectedOperation, operation.getAggregateToCollectionOperation());
     }
 
     @DisplayName("Should build the expected AggregateOperation for $out as document")
