@@ -92,6 +92,12 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     }
 
     @Override
+    public AggregateIterable<T> hintString(final String hint) {
+        wrapped.hintString(hint);
+        return this;
+    }
+
+    @Override
     public AggregateIterable<T> let(final Bson variables) {
         wrapped.let(variables);
         return this;

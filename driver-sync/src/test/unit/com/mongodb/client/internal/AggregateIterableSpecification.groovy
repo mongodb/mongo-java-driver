@@ -96,6 +96,22 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment')
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS))
+
+        when: 'both hint and hint string are set'
+        aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+
+        aggregationIterable
+                .hint(new Document('a', 1))
+                .hintString('a_1')
+                .iterator()
+
+        operation = executor.getReadOperation() as AggregateOperation<Document>
+
+        then: 'should use hint not hint string'
+        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
+                .hint(new BsonDocument('a', new BsonInt32(1))))
     }
 
     def 'should build the expected AggregateToCollectionOperation for $out'() {
@@ -192,6 +208,40 @@ class AggregateIterableSpecification extends Specification {
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
                 .comment('this is a comment'))
+    }
+
+    def 'should build the expected AggregateToCollectionOperation for $out with hint string'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null, null, null])
+        def collectionName = 'collectionName'
+        def pipeline = [new Document('$match', 1), new Document('$out', collectionName)]
+
+        when: 'aggregation includes $out and hint string'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false)
+                .hintString('x_1').iterator()
+
+        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then: 'should use the overrides'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern, AggregationLevel.COLLECTION)
+                .hint(new BsonString('x_1')))
+
+        when: 'aggregation includes $out and hint and hint string'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false)
+                .hint(new BsonDocument('x', new BsonInt32(1)))
+                .hintString('x_1').iterator()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then: 'should use the hint not the hint string'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern, AggregationLevel.COLLECTION)
+                .hint(new BsonDocument('x', new BsonInt32(1))))
     }
 
     def 'should build the expected AggregateToCollectionOperation for $merge document'() {

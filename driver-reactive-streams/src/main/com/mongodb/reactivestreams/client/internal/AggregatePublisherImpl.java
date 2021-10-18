@@ -49,6 +49,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private Collation collation;
     private String comment;
     private Bson hint;
+    private String hintString;
     private Bson variables;
 
     AggregatePublisherImpl(
@@ -108,6 +109,12 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     @Override
     public AggregatePublisher<T> hint(@Nullable final Bson hint) {
         this.hint = hint;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> hintString(@Nullable final String hint) {
+        this.hintString = hint;
         return this;
     }
 
@@ -175,11 +182,11 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private AggregateOperation<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
                 .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS,
-                           initialBatchSize, collation, hint, comment, variables, allowDiskUse, aggregationLevel);
+                           initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
     }
 
     private AsyncWriteOperation<Void> getAggregateToCollectionOperation() {
-        return getOperations().aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
+        return getOperations().aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString, comment,
                                                      variables, aggregationLevel);
     }
 
