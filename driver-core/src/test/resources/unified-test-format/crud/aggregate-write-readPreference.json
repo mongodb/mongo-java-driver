@@ -90,7 +90,8 @@
       "description": "Aggregate with $out includes read preference for 5.0+ server",
       "runOnRequirements": [
         {
-          "minServerVersion": "5.0"
+          "minServerVersion": "5.0",
+          "serverless": "forbid"
         }
       ],
       "operations": [
