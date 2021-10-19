@@ -51,6 +51,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Immutable
 public final class ClusterSettings {
     private final String srvHost;
+    private final Integer srvMaxHosts;
     private final List<ServerAddress> hosts;
     private final ClusterConnectionMode mode;
     private final ClusterType requiredClusterType;
@@ -87,6 +88,7 @@ public final class ClusterSettings {
     public static final class Builder {
         private static final List<ServerAddress> DEFAULT_HOSTS = singletonList(new ServerAddress());
         private String srvHost;
+        private Integer srvMaxHosts;
         private List<ServerAddress> hosts = DEFAULT_HOSTS;
         private ClusterConnectionMode mode;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
@@ -142,6 +144,18 @@ public final class ClusterSettings {
                 throw new IllegalArgumentException("Can not set both hosts and srvHost");
             }
             this.srvHost = srvHost;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of hosts to connect to when using SRV protocol.
+         *
+         * @param srvMaxHosts the maximum number of hosts to connect to when using SRV protocol
+         * @return this
+         * @since 4.4
+         */
+        public Builder srvMaxHosts(final Integer srvMaxHosts) {
+            this.srvMaxHosts = srvMaxHosts;
             return this;
         }
 
@@ -277,6 +291,7 @@ public final class ClusterSettings {
             } else if (connectionString.isSrvProtocol()) {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
+                srvMaxHosts(connectionString.getSrvMaxHosts());  // TODO: test this
             } else if ((directConnection != null && directConnection)
                     || (directConnection == null && connectionString.getHosts().size() == 1
                         && connectionString.getRequiredReplicaSetName() == null)) {
@@ -335,6 +350,17 @@ public final class ClusterSettings {
     @Nullable
     public String getSrvHost() {
         return srvHost;
+    }
+
+    /**
+     * Gets the maximum number of hosts to connect to when using SRV protocol.
+     *
+     * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
+     * @since 4.4
+     */
+    @Nullable
+    public Integer getSrvMaxHosts() {
+        return srvMaxHosts;
     }
 
     /**
@@ -566,6 +592,7 @@ public final class ClusterSettings {
         }
 
         srvHost = builder.srvHost;
+        srvMaxHosts = builder.srvMaxHosts;
         hosts = builder.hosts;
         if (srvHost != null) {
             if (builder.mode == ClusterConnectionMode.SINGLE) {

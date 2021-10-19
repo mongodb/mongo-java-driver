@@ -216,6 +216,9 @@ public abstract class AbstractConnectionStringTest extends TestCase {
             } else if (option.getKey().equalsIgnoreCase("minpoolsize")) {
                 Integer expected = option.getValue().asNumber().intValue();
                 assertEquals(expected, connectionString.getMinConnectionPoolSize());
+            } else if (option.getKey().equalsIgnoreCase("srvmaxhosts")) {
+                Integer expected = option.getValue().asNumber().intValue();
+                assertEquals(expected, connectionString.getSrvMaxHosts());
             } else {
                 fail(String.format("Unsupported option '%s' in '%s'", option.getKey(), input));
             }

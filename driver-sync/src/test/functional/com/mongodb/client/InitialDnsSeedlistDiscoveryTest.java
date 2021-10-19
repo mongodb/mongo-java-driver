@@ -30,9 +30,11 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonNumber;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.junit.Before;
@@ -52,11 +54,13 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isServerlessTest;
+import static com.mongodb.ClusterFixture.isSharded;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -66,32 +70,46 @@ import static org.junit.Assume.assumeTrue;
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
 @RunWith(Parameterized.class)
 public class InitialDnsSeedlistDiscoveryTest {
-
     private final String filename;
     private final Path parentDirectory;
     private final String uri;
+    @Nullable
     private final List<String> seeds;
+    @Nullable
+    private final Integer numSeeds;
+    @Nullable
     private final List<ServerAddress> hosts;
+    @Nullable
+    private final Integer numHosts;
     private final boolean isError;
     private final BsonDocument options;
 
-    public InitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri, final List<String> seeds,
-                                           final List<ServerAddress> hosts, final boolean isError, final BsonDocument options) {
+    public InitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri,
+            @Nullable final List<String> seeds, @Nullable final Integer numSeeds,
+            @Nullable final List<ServerAddress> hosts, @Nullable final Integer numHosts,
+            final boolean isError, final BsonDocument options) {
         this.filename = filename;
         this.parentDirectory = parentDirectory;
         this.uri = uri;
         this.seeds = seeds;
+        this.numSeeds = numSeeds;
         this.hosts = hosts;
+        this.numHosts = numHosts;
         this.isError = isError;
         this.options = options;
     }
 
     @Before
     public void setUp() {
+        // Driver does not yet support srvServiceName
+        assumeFalse(filename.equals("srv-service-name.json"));
+
         if (parentDirectory.endsWith("replica-set")) {
             assumeTrue(isDiscoverableReplicaSet());
         } else if (parentDirectory.endsWith("load-balanced")) {
             assumeTrue(isLoadBalanced());
+        } else if (parentDirectory.endsWith("sharded")) {
+            assumeTrue(isSharded());
         } else {
             fail("Unexpected parent directory: " + parentDirectory);
         }
@@ -181,6 +199,8 @@ public class InitialDnsSeedlistDiscoveryTest {
                     assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
                 } else if (entry.getKey().equals("loadBalanced")) {
                     assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
+                } else if (entry.getKey().equals("srvMaxHosts")) {
+                    assertEquals(Integer.valueOf(entry.getValue().asInt32().getValue()), connectionString.getSrvMaxHosts());
                 } else {
                     throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
                 }
@@ -191,11 +211,10 @@ public class InitialDnsSeedlistDiscoveryTest {
     @Test
     public void shouldDiscoverSrvRecord() throws InterruptedException {
         assumeFalse(isServerlessTest());
+        assumeFalse(isError);
 
-        if (seeds.isEmpty()) {
-            return;
-        }
-        final CountDownLatch latch = new CountDownLatch(1);
+        final CountDownLatch seedsLatch = new CountDownLatch(1);
+        final CountDownLatch hostsLatch = new CountDownLatch(1);
         final ConnectionString connectionString = new ConnectionString(uri);
         final SslSettings sslSettings = getSslSettings(connectionString);
 
@@ -217,14 +236,38 @@ public class InitialDnsSeedlistDiscoveryTest {
 
                                     @Override
                                     public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-                                        List<ServerAddress> curHostList = new ArrayList<ServerAddress>();
-                                        for (ServerDescription cur : event.getNewDescription().getServerDescriptions()) {
-                                            if (cur.isOk()) {
-                                                curHostList.add(cur.getAddress());
+                                        List<String> seedsList = event.getNewDescription().getServerDescriptions()
+                                                .stream()
+                                                .map(ServerDescription::getAddress)
+                                                .map(ServerAddress::toString)
+                                                .collect(Collectors.toList());
+                                        List<ServerAddress> okHostsList = event.getNewDescription().getServerDescriptions()
+                                                .stream().filter(ServerDescription::isOk)
+                                                .map(ServerDescription::getAddress)
+                                                .collect(Collectors.toList());
+
+                                        if (seeds != null) {
+                                            if (seedsList.size() == seeds.size() && seedsList.containsAll(seeds)) {
+                                                seedsLatch.countDown();
                                             }
+                                        } else if (numSeeds != null) {
+                                            if (seedsList.size() == numSeeds) {
+                                                seedsLatch.countDown();
+                                            }
+                                        } else {
+                                            seedsLatch.countDown();
                                         }
-                                        if (hosts.size() == curHostList.size() && curHostList.containsAll(hosts)) {
-                                            latch.countDown();
+
+                                        if (hosts != null) {
+                                            if (hosts.size() == okHostsList.size() && okHostsList.containsAll(hosts)) {
+                                                hostsLatch.countDown();
+                                            }
+                                        } else if (numHosts != null) {
+                                            if (okHostsList.size() == numHosts) {
+                                                hostsLatch.countDown();
+                                            }
+                                        } else {
+                                            hostsLatch.countDown();
                                         }
                                     }
                                 });
@@ -239,13 +282,10 @@ public class InitialDnsSeedlistDiscoveryTest {
                 })
                 .build();
 
-        MongoClient client = MongoClients.create(settings);
-
-        try {
-            assertTrue(latch.await(500, TimeUnit.SECONDS));
+        try (MongoClient client = MongoClients.create(settings)) {
+            assertTrue(seedsLatch.await(5, TimeUnit.SECONDS));
+            assertTrue(hostsLatch.await(10, TimeUnit.SECONDS));
             assertTrue(client.getDatabase("admin").runCommand(new Document("ping", 1)).containsKey("ok"));
-        } finally {
-            client.close();
         }
     }
 
@@ -258,8 +298,10 @@ public class InitialDnsSeedlistDiscoveryTest {
                     file.getName(),
                     file.toPath().getParent(),
                     testDocument.getString("uri").getValue(),
-                    toStringList(testDocument.getArray("seeds")),
-                    toServerAddressList(testDocument.getArray("hosts")),
+                    toStringList(testDocument.getArray("seeds", null)),
+                    toInteger(testDocument.getNumber("numSeeds", null)),
+                    toServerAddressList(testDocument.getArray("hosts", null)),
+                    toInteger(testDocument.getNumber("numHosts", null)),
                     testDocument.getBoolean("error", BsonBoolean.FALSE).getValue(),
                     testDocument.getDocument("options", new BsonDocument())
             });
@@ -268,7 +310,19 @@ public class InitialDnsSeedlistDiscoveryTest {
         return data;
     }
 
-    private static List<String> toStringList(final BsonArray bsonArray) {
+    @Nullable
+    private static Integer toInteger(@Nullable final BsonNumber bsonNumber) {
+        if (bsonNumber == null) {
+            return null;
+        }
+        return bsonNumber.intValue();
+    }
+
+    @Nullable
+    private static List<String> toStringList(@Nullable final BsonArray bsonArray) {
+        if (bsonArray == null) {
+            return null;
+        }
         List<String> retVal = new ArrayList<String>(bsonArray.size());
         for (BsonValue cur : bsonArray) {
             retVal.add(cur.asString().getValue());
@@ -276,7 +330,11 @@ public class InitialDnsSeedlistDiscoveryTest {
         return retVal;
     }
 
-    private static List<ServerAddress> toServerAddressList(final BsonArray bsonArray) {
+    @Nullable
+    private static List<ServerAddress> toServerAddressList(@Nullable final BsonArray bsonArray) {
+        if (bsonArray == null) {
+            return null;
+        }
         List<ServerAddress> retVal = new ArrayList<ServerAddress>(bsonArray.size());
         for (BsonValue cur : bsonArray) {
             retVal.add(new ServerAddress(cur.asString().getValue()));

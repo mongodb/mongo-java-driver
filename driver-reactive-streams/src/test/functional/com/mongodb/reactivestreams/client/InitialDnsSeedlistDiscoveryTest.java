@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
+import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.reactivestreams.client.Fixture.getStreamFactoryFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -93,6 +94,8 @@ public class InitialDnsSeedlistDiscoveryTest {
             assumeTrue(isDiscoverableReplicaSet());
         } else if (parentDirectory.endsWith("load-balanced")) {
             assumeTrue(isLoadBalanced());
+        } else if (parentDirectory.endsWith("sharded")) {
+            assumeTrue(isSharded());
         } else {
             fail("Unexpected parent directory: " + parentDirectory);
         }
@@ -185,6 +188,8 @@ public class InitialDnsSeedlistDiscoveryTest {
                     assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
                 } else if (entry.getKey().equals("loadBalanced")) {
                     assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
+                } else if (entry.getKey().equals("srvMaxHosts")) {
+                    assertEquals(Integer.valueOf(entry.getValue().asInt32().getValue()), connectionString.getSrvMaxHosts());
                 } else {
                     throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
                 }
@@ -254,8 +259,8 @@ public class InitialDnsSeedlistDiscoveryTest {
                     file.getName(),
                     file.toPath().getParent(),
                     testDocument.getString("uri").getValue(),
-                    toStringList(testDocument.getArray("seeds")),
-                    toServerAddressList(testDocument.getArray("hosts")),
+                    toStringList(testDocument.getArray("seeds", new BsonArray())),
+                    toServerAddressList(testDocument.getArray("hosts", new BsonArray())),
                     testDocument.getBoolean("error", BsonBoolean.FALSE).getValue(),
                     testDocument.getDocument("options", new BsonDocument())
             });
