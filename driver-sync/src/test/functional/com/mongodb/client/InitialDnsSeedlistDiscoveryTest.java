@@ -69,7 +69,7 @@ import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
 @RunWith(Parameterized.class)
-public class InitialDnsSeedlistDiscoveryTest {
+public abstract class InitialDnsSeedlistDiscoveryTest {
     private final String filename;
     private final Path parentDirectory;
     private final String uri;
@@ -98,6 +98,8 @@ public class InitialDnsSeedlistDiscoveryTest {
         this.isError = isError;
         this.options = options;
     }
+
+    public abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @Before
     public void setUp() {
@@ -158,7 +160,7 @@ public class InitialDnsSeedlistDiscoveryTest {
                     // all good
                     return;
                 }
-                client = MongoClients.create(settings);
+                client = createMongoClient(settings);
                 // Load balancing mode has special rules regarding cluster event publishing, so we can't rely on those here.
                 // Instead we just try to execute an operation and assert that it throws
                 if (settings.getClusterSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
@@ -282,7 +284,7 @@ public class InitialDnsSeedlistDiscoveryTest {
                 })
                 .build();
 
-        try (MongoClient client = MongoClients.create(settings)) {
+        try (MongoClient client = createMongoClient(settings)) {
             assertTrue(seedsLatch.await(5, TimeUnit.SECONDS));
             assertTrue(hostsLatch.await(10, TimeUnit.SECONDS));
             assertTrue(client.getDatabase("admin").runCommand(new Document("ping", 1)).containsKey("ok"));
