@@ -22,8 +22,11 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -44,10 +47,23 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
                 srvResolutionException = null;
                 if (!initialized) {
                     initialized = true;
-                    DnsMultiServerCluster.this.initialize(hosts);
+                    DnsMultiServerCluster.this.initialize(applySrvMaxHosts(hosts));
                 } else {
-                    DnsMultiServerCluster.this.onChange(hosts);
+                    DnsMultiServerCluster.this.onChange(applySrvMaxHosts(hosts));
                 }
+            }
+
+            private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> hosts) {
+                Collection<ServerAddress> newHosts = hosts;
+                Integer srvMaxHosts = getSettings().getSrvMaxHosts();
+                if (srvMaxHosts != null && srvMaxHosts > 0) {
+                    if (srvMaxHosts < hosts.size()) {
+                        List<ServerAddress> newHostsList = new ArrayList<>(hosts);
+                        Collections.shuffle(newHostsList, ThreadLocalRandom.current());
+                        newHosts = newHostsList.subList(0, srvMaxHosts);
+                    }
+                }
+                return newHosts;
             }
 
             @Override

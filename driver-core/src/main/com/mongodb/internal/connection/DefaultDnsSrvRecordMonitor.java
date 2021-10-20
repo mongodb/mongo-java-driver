@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
+import static java.util.Collections.unmodifiableSet;
 
 class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
@@ -83,7 +84,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
 
                     if (!hosts.equals(currentHosts)) {
                         try {
-                            dnsSrvRecordInitializer.initialize(hosts);
+                            dnsSrvRecordInitializer.initialize(unmodifiableSet(hosts));
                             currentHosts = hosts;
                         } catch (RuntimeException e) {
                             LOGGER.warn("Exception in monitor thread during notification of DNS resolution state change", e);

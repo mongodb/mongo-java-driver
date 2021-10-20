@@ -251,6 +251,7 @@ public class ConnectionString {
     private final String collection;
     private final String connectionString;
 
+    private Integer srvMaxHosts;
     private Boolean directConnection;
     private Boolean loadBalanced;
     private ReadPreference readPreference;
@@ -396,6 +397,10 @@ public class ConnectionString {
         }
         translateOptions(combinedOptionsMaps);
 
+        if (!isSrvProtocol && srvMaxHosts != null) {
+            throw new IllegalArgumentException("srvMaxHosts can only be specified with mongodb+srv protocol");
+        }
+
         if (directConnection != null && directConnection) {
             if (isSrvProtocol) {
                 throw new IllegalArgumentException("Direct connections are not supported when using mongodb+srv protocol");
@@ -414,6 +419,13 @@ public class ConnectionString {
             if (hosts.size() > 1) {
                 throw new IllegalArgumentException("Only one host can be specified with loadBalanced=true");
             }
+            if (srvMaxHosts != null && srvMaxHosts > 0) {
+                throw new IllegalArgumentException("srvMaxHosts can not be specified with loadBalanced=true");
+            }
+        }
+
+        if (requiredReplicaSetName != null && srvMaxHosts != null && srvMaxHosts > 0) {
+            throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
@@ -464,6 +476,8 @@ public class ConnectionString {
 
         GENERAL_OPTIONS_KEYS.add("directconnection");
         GENERAL_OPTIONS_KEYS.add("loadbalanced");
+
+        GENERAL_OPTIONS_KEYS.add("srvmaxhosts");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -569,6 +583,11 @@ public class ConnectionString {
                 directConnection = parseBoolean(value, "directconnection");
             } else if (key.equals("loadbalanced")) {
                 loadBalanced = parseBoolean(value, "loadbalanced");
+            } else if (key.equals("srvmaxhosts")) {
+                srvMaxHosts = parseInteger(value, "srvmaxhosts");
+                if (srvMaxHosts < 0) {
+                    throw new IllegalArgumentException("srvMaxHosts must be >= 0");
+                }
             }
         }
 
@@ -1096,6 +1115,17 @@ public class ConnectionString {
      */
     public boolean isSrvProtocol() {
         return isSrvProtocol;
+    }
+
+    /**
+     * Gets the maximum number of hosts to connect to when using SRV protocol.
+     *
+     * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
+     * @since 4.4
+     */
+    @Nullable
+    public Integer getSrvMaxHosts() {
+        return srvMaxHosts;
     }
 
     /**
