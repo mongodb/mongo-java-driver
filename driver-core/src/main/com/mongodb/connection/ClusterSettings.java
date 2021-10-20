@@ -291,7 +291,7 @@ public final class ClusterSettings {
             } else if (connectionString.isSrvProtocol()) {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
-                srvMaxHosts(connectionString.getSrvMaxHosts());  // TODO: test this
+                srvMaxHosts(connectionString.getSrvMaxHosts());
             } else if ((directConnection != null && directConnection)
                     || (directConnection == null && connectionString.getHosts().size() == 1
                         && connectionString.getRequiredReplicaSetName() == null)) {
