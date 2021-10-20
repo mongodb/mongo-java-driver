@@ -36,6 +36,7 @@ case class SyncChangeStreamIterable[T](wrapped: ChangeStreamObservable[T])
       def close(): Unit = wrapped.close()
       def hasNext: Boolean = wrapped.hasNext
       def next: ChangeStreamDocument[T] = wrapped.next
+      override def available(): Int = wrapped.available
       def tryNext: ChangeStreamDocument[T] = wrapped.tryNext
       def getServerCursor: ServerCursor = wrapped.getServerCursor
       def getServerAddress: ServerAddress = wrapped.getServerAddress
