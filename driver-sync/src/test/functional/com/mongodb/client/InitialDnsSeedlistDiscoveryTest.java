@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.Block;
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
@@ -78,7 +79,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     @Nullable
     private final Integer numSeeds;
     @Nullable
-    private final List<ServerAddress> hosts;
+    private final List<String> hosts;
     @Nullable
     private final Integer numHosts;
     private final boolean isError;
@@ -86,7 +87,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
 
     public InitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri,
             @Nullable final List<String> seeds, @Nullable final Integer numSeeds,
-            @Nullable final List<ServerAddress> hosts, @Nullable final Integer numHosts,
+            @Nullable final List<String> hosts, @Nullable final Integer numHosts,
             final boolean isError, final BsonDocument options) {
         this.filename = filename;
         this.parentDirectory = parentDirectory;
@@ -243,36 +244,27 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                                                 .map(ServerDescription::getAddress)
                                                 .map(ServerAddress::toString)
                                                 .collect(Collectors.toList());
-                                        List<ServerAddress> okHostsList = event.getNewDescription().getServerDescriptions()
+                                        List<String> okHostsList = event.getNewDescription().getServerDescriptions()
                                                 .stream().filter(ServerDescription::isOk)
                                                 .map(ServerDescription::getAddress)
+                                                .map(ServerAddress::toString)
                                                 .collect(Collectors.toList());
 
-                                        if (seeds != null) {
-                                            if (seedsList.size() == seeds.size() && seedsList.containsAll(seeds)) {
-                                                seedsLatch.countDown();
-                                            }
-                                        } else if (numSeeds != null) {
-                                            if (seedsList.size() == numSeeds) {
-                                                seedsLatch.countDown();
-                                            }
-                                        } else {
-                                            seedsLatch.countDown();
-                                        }
-
-                                        if (hosts != null) {
-                                            if (hosts.size() == okHostsList.size() && okHostsList.containsAll(hosts)) {
-                                                hostsLatch.countDown();
-                                            }
-                                        } else if (numHosts != null) {
-                                            if (okHostsList.size() == numHosts) {
-                                                hostsLatch.countDown();
-                                            }
-                                        } else {
-                                            hostsLatch.countDown();
-                                        }
+                                        hostsCheck(seedsList, seeds, numSeeds, seedsLatch);
+                                        hostsCheck(okHostsList, hosts, numHosts, hostsLatch);
                                     }
                                 });
+                    }
+
+                    private void hostsCheck(final List<String> actual, @Nullable final List<String> expected,
+                            @Nullable final Integer expectedSize, final CountDownLatch latch) {
+                        if (expected == null && expectedSize == null) {
+                            latch.countDown();
+                        } else if (expected != null && actual.size() == expected.size() && actual.containsAll(expected)) {
+                            latch.countDown();
+                        } else if (expectedSize != null && actual.size() == expectedSize) {
+                            latch.countDown();
+                        }
                     }
                 })
                 .applyToSslSettings(new Block<SslSettings.Builder>() {
@@ -285,8 +277,8 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                 .build();
 
         try (MongoClient client = createMongoClient(settings)) {
-            assertTrue(seedsLatch.await(5, TimeUnit.SECONDS));
-            assertTrue(hostsLatch.await(10, TimeUnit.SECONDS));
+            assertTrue(seedsLatch.await(ClusterFixture.TIMEOUT, TimeUnit.SECONDS));
+            assertTrue(hostsLatch.await(ClusterFixture.TIMEOUT, TimeUnit.SECONDS));
             assertTrue(client.getDatabase("admin").runCommand(new Document("ping", 1)).containsKey("ok"));
         }
     }
@@ -302,7 +294,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                     testDocument.getString("uri").getValue(),
                     toStringList(testDocument.getArray("seeds", null)),
                     toInteger(testDocument.getNumber("numSeeds", null)),
-                    toServerAddressList(testDocument.getArray("hosts", null)),
+                    toStringList(testDocument.getArray("hosts", null)),
                     toInteger(testDocument.getNumber("numHosts", null)),
                     testDocument.getBoolean("error", BsonBoolean.FALSE).getValue(),
                     testDocument.getDocument("options", new BsonDocument())
@@ -328,18 +320,6 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
         List<String> retVal = new ArrayList<String>(bsonArray.size());
         for (BsonValue cur : bsonArray) {
             retVal.add(cur.asString().getValue());
-        }
-        return retVal;
-    }
-
-    @Nullable
-    private static List<ServerAddress> toServerAddressList(@Nullable final BsonArray bsonArray) {
-        if (bsonArray == null) {
-            return null;
-        }
-        List<ServerAddress> retVal = new ArrayList<ServerAddress>(bsonArray.size());
-        for (BsonValue cur : bsonArray) {
-            retVal.add(new ServerAddress(cur.asString().getValue()));
         }
         return retVal;
     }

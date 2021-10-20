@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.ServerAddress;
 import com.mongodb.client.InitialDnsSeedlistDiscoveryTest;
 import com.mongodb.client.MongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
@@ -33,7 +32,7 @@ import java.util.List;
 public class ReactiveInitialDnsSeedlistDiscoveryTest extends InitialDnsSeedlistDiscoveryTest {
 
     public ReactiveInitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri,
-            final List<String> seeds, final Integer numSeeds, final List<ServerAddress> hosts, final Integer numHosts,
+            final List<String> seeds, final Integer numSeeds, final List<String> hosts, final Integer numHosts,
             final boolean isError, final BsonDocument options) {
         super(filename, parentDirectory, uri, seeds, numSeeds, hosts, numHosts, isError, options);
     }

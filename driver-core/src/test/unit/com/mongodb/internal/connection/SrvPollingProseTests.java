@@ -147,7 +147,7 @@ public class SrvPollingProseTests {
 
     // 11. All DNS records are selected (srvMaxHosts >= records)
     @Test
-    public void shouldUseAllRecordsWhenSrvMaxHostsIsGreaterThanNumSrvRecords() {
+    public void shouldUseAllRecordsWhenSrvMaxHostsIsGreaterThanOrEqualToNumSrvRecords() {
         List<String> updatedHosts = asList(thirdHost, fourthHost);
 
         initCluster(updatedHosts, 2);

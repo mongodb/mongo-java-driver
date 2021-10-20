@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.ServerAddress;
 import org.bson.BsonDocument;
 
 import java.nio.file.Path;
@@ -25,7 +24,7 @@ import java.util.List;
 
 public class SyncInitialDnsSeedlistDiscoveryTest extends InitialDnsSeedlistDiscoveryTest {
     public SyncInitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri,
-            final List<String> seeds, final Integer numSeeds, final List<ServerAddress> hosts, final Integer numHosts,
+            final List<String> seeds, final Integer numSeeds, final List<String> hosts, final Integer numHosts,
             final boolean isError, final BsonDocument options) {
         super(filename, parentDirectory, uri, seeds, numSeeds, hosts, numHosts, isError, options);
     }
