@@ -93,7 +93,6 @@ private[codecs] object CaseClassCodec {
     def isTuple(t: Type): Boolean = definitions.TupleClass.seq.contains(t.typeSymbol)
     def isSealed(t: Type): Boolean = t.typeSymbol.isClass && t.typeSymbol.asClass.isSealed
     def isAbstractSealed(t: Type): Boolean = isSealed(t) && t.typeSymbol.isAbstract
-    def isCaseClassOrSealed(t: Type): Boolean = isCaseClass(t) || isSealed(t)
 
     def allSubclasses(s: Symbol): Set[Symbol] = {
       val directSubClasses = s.asClass.knownDirectSubclasses
