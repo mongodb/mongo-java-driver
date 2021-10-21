@@ -554,6 +554,53 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         }
     }
 
+    def 'should report available documents'() {
+        given:
+        def firstBatch = executeQuery(3)
+
+        when:
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+
+        then:
+        cursor.available() == 3
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 3
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.close()
+
+        then:
+        cursor.available() == 0
+    }
+
     private QueryResult<Document> executeQuery() {
         executeQuery(0)
     }
