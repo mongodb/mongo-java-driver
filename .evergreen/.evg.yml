@@ -1608,7 +1608,7 @@ buildvariants:
     - name: "serverless-test"
 
 - matrix_name: "tests-slow"
-  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["5.0"], topology: "*", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["5.0"], topology: "standalone", os: "linux" }
   display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-slow-variant"]
   tasks:
