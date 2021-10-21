@@ -176,7 +176,7 @@ trait ObservableImplicits {
     /**
      * Collects the [[Observable]] results and converts to a `scala.concurrent.Future`.
      *
-     * Automatically subscribes to the `Observable` and uses the [[Observable.collect]] method to aggregate the results.
+     * Automatically subscribes to the `Observable` and uses the [[[Observable.collect[S]()*]]] method to aggregate the results.
      *
      * @note If the Observable is large then this will consume lots of memory!
      *       If the underlying Observable is infinite this Observable will never complete.

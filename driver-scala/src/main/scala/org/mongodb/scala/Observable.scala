@@ -295,7 +295,7 @@ trait Observable[T] extends Publisher[T] {
    * == Ensuring results from a Single Observer ==
    *
    * `recoverWith` can potentially emit results from either Observer. This often isn't desirable, so to ensure only a single Observable
-   * issues results combine with the [[collect]] method eg:
+   * issues results combine with the [[[collect[S]()*]]] method eg:
    *
    * {{{
    *  val results = Observable(1 to 100)
@@ -339,7 +339,7 @@ trait Observable[T] extends Publisher[T] {
    * == Ensuring results from a Single Observer ==
    *
    * `fallbackTo` can potentially emit results from either Observer. This often isn't desirable, so to ensure only a single Observable
-   * issues results combine with the [[collect]] method eg:
+   * issues results combine with the [[[collect[S]()*]]] method eg:
    *
    * {{{
    *  val results = Observable(1 to 100).collect() fallbackTo Observable(200 to 300).collect()
@@ -447,7 +447,7 @@ trait Observable[T] extends Publisher[T] {
   def observeOn(context: ExecutionContext): Observable[T] = ExecutionContextObservable(this, context)
 
   /**
-   * Convert this observable so that it emits a single Unit to [[Observer.onNext]] before calling [[Observer.onComplete()]].
+   * Convert this observable so that it emits a single Unit to [[Observer.onNext]] before calling [[Observer.onComplete]].
    *
    * If the underlying observable errors then that is propagated to the `Observer`. This method is especially useful for chaining
    * `Observable[Void]` in for comprehensions.
