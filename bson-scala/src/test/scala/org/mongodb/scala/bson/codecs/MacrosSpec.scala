@@ -179,6 +179,15 @@ class MacrosSpec extends BaseSpec {
   case class SealedTraitB(intField: Int) extends SealedTrait
   case class ContainsSealedTrait(list: List[SealedTrait])
 
+  sealed class SingleSealedClass
+  case class SingleSealedClassImpl() extends SingleSealedClass
+
+  sealed abstract class SingleSealedAbstractClass
+  case class SingleSealedAbstractClassImpl() extends SingleSealedAbstractClass
+
+  sealed trait SingleSealedTrait
+  case class SingleSealedTraitImpl() extends SingleSealedTrait
+
   object CaseObjectEnumCodecProvider extends CodecProvider {
     def isCaseObjectEnum[T](clazz: Class[T]): Boolean = {
       clazz.isInstance(CaseObjectEnum.Alpha) || clazz.isInstance(CaseObjectEnum.Bravo) || clazz.isInstance(
@@ -518,6 +527,16 @@ class MacrosSpec extends BaseSpec {
       classOf[ContainsNestedSeqADT],
       classOf[Tree]
     )
+  }
+
+  it should "write the type of sealed classes and traits with only one subclass" in {
+    roundTrip(SingleSealedClassImpl(), """{ "_t" : "SingleSealedClassImpl" }""".stripMargin, classOf[SingleSealedClass])
+    roundTrip(
+      SingleSealedAbstractClassImpl(),
+      """{ "_t" : "SingleSealedAbstractClassImpl" }""".stripMargin,
+      classOf[SingleSealedAbstractClass]
+    )
+    roundTrip(SingleSealedTraitImpl(), """{ "_t" : "SingleSealedTraitImpl" }""".stripMargin, classOf[SingleSealedTrait])
   }
 
   it should "support optional values in ADT sealed classes" in {
