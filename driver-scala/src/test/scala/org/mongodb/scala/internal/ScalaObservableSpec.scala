@@ -417,6 +417,43 @@ class ScalaObservableSpec extends BaseSpec {
     )
   }
 
+  it should "have a completeWithUnit method" in {
+    var nextCalled = false
+    observable().completeWithUnit().subscribe(_ => nextCalled = true)
+    nextCalled shouldBe true
+
+    nextCalled = false
+    observable(0 to 0).completeWithUnit().subscribe(_ => nextCalled = true)
+    nextCalled shouldBe true
+
+    nextCalled = false
+    var errorSeen: Option[Throwable] = None
+    observable(1 to 100, fail = true)
+      .completeWithUnit()
+      .subscribe((_: Unit) => nextCalled = true, (fail: Throwable) => errorSeen = Some(fail))
+    nextCalled shouldBe false
+    errorSeen.getOrElse(None) shouldBe a[Throwable]
+
+    nextCalled = false
+    var completed = false
+    observable().completeWithUnit().subscribe(_ => nextCalled = true, (t: Throwable) => t, () => completed = true)
+    nextCalled shouldBe true
+    completed shouldBe true
+
+    nextCalled = false
+    completed = false
+    observable()
+      .completeWithUnit()
+      .subscribe(new Observer[Unit] {
+        override def onSubscribe(subscription: Subscription): Unit = subscription.request(1)
+        override def onNext(result: Unit): Unit = nextCalled = true
+        override def onError(e: Throwable): Unit = completed = false
+        override def onComplete(): Unit = completed = true
+      })
+    nextCalled shouldBe true
+    completed shouldBe true
+  }
+
   it should "not stackoverflow when using flatMap with execution contexts" in {
     val altContextObservable =
       Observable(1 to 10000).observeOn(ExecutionContext.global).flatMap((res: Int) => Observable(Seq(res)))

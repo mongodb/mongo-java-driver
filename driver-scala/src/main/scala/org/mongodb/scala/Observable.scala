@@ -445,4 +445,15 @@ trait Observable[T] extends Publisher[T] {
    * @return an Observable that uses the specified execution context
    */
   def observeOn(context: ExecutionContext): Observable[T] = ExecutionContextObservable(this, context)
+
+  /**
+   * Convert this observable so that it emits a single Unit to [[Observer.onNext]] before calling [[Observer.onComplete()]].
+   *
+   * If the underlying observable errors then that is propagated to the `Observer`. This method is especially useful for chaining
+   * `Observable[Void]` in for comprehensions.
+   *
+   * @return a single observable which emits Unit before completion.
+   * @since 4.4
+   */
+  def completeWithUnit(): SingleObservable[Unit] = UnitObservable(this)
 }
