@@ -80,7 +80,7 @@ trait MacroCodec[T] extends Codec[T] {
    * The field used to save the class name when saving sealed case classes.
    */
   val classFieldName = "_t"
-  lazy val hasClassFieldName: Boolean = caseClassesMap.size > 1
+  lazy val hasClassFieldName: Boolean = caseClassesMapInv.keySet != Set(encoderClass)
   lazy val caseClassesMapInv: Map[Class[_], String] = caseClassesMap.map(_.swap)
   protected val registry: CodecRegistry =
     CodecRegistries.fromRegistries(List(codecRegistry, CodecRegistries.fromCodecs(this)).asJava)
