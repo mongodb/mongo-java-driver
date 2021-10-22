@@ -27,8 +27,6 @@ import org.bson.Transformer;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,9 +44,8 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 public class DocumentCodec implements CollectibleCodec<Document>, OverridableUuidRepresentationCodec<Document> {
 
     private static final String ID_FIELD_NAME = "_id";
-    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
-            new BsonValueCodecProvider(),
-            new DocumentCodecProvider()));
+    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new IterableCodecProvider(),
+            new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider()));
     private static final BsonTypeCodecMap DEFAULT_BSON_TYPE_CODEC_MAP = new BsonTypeCodecMap(DEFAULT_BSON_TYPE_CLASS_MAP, DEFAULT_REGISTRY);
     private static final IdGenerator DEFAULT_ID_GENERATOR = new ObjectIdGenerator();
 
@@ -156,7 +153,18 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
 
     @Override
     public void encode(final BsonWriter writer, final Document document, final EncoderContext encoderContext) {
-        writeMap(writer, document, encoderContext);
+        writer.writeStartDocument();
+
+        beforeFields(writer, encoderContext, document);
+
+        for (final Map.Entry<String, Object> entry : ((Map<String, Object>) document).entrySet()) {
+            if (skipField(encoderContext, entry.getKey())) {
+                continue;
+            }
+            writer.writeName(entry.getKey());
+            writeValue(writer, encoderContext, entry.getValue());
+        }
+        writer.writeEndDocument();
     }
 
     @Override
@@ -194,37 +202,10 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
     private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value) {
         if (value == null) {
             writer.writeNull();
-        } else if (value instanceof Iterable) {
-            writeIterable(writer, (Iterable<Object>) value, encoderContext.getChildContext());
-        } else if (value instanceof Map) {
-            writeMap(writer, (Map<String, Object>) value, encoderContext.getChildContext());
         } else {
             Codec codec = registry.get(value.getClass());
             encoderContext.encodeWithChildContext(codec, writer, value);
         }
-    }
-
-    private void writeMap(final BsonWriter writer, final Map<String, Object> map, final EncoderContext encoderContext) {
-        writer.writeStartDocument();
-
-        beforeFields(writer, encoderContext, map);
-
-        for (final Map.Entry<String, Object> entry : map.entrySet()) {
-            if (skipField(encoderContext, entry.getKey())) {
-                continue;
-            }
-            writer.writeName(entry.getKey());
-            writeValue(writer, encoderContext, entry.getValue());
-        }
-        writer.writeEndDocument();
-    }
-
-    private void writeIterable(final BsonWriter writer, final Iterable<Object> list, final EncoderContext encoderContext) {
-        writer.writeStartArray();
-        for (final Object value : list) {
-            writeValue(writer, encoderContext, value);
-        }
-        writer.writeEndArray();
     }
 
     private Object readValue(final BsonReader reader, final DecoderContext decoderContext) {
@@ -232,8 +213,6 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
         if (bsonType == BsonType.NULL) {
             reader.readNull();
             return null;
-        } else if (bsonType == BsonType.ARRAY) {
-            return readList(reader, decoderContext);
         } else {
             Codec<?> codec = bsonTypeCodecMap.get(bsonType);
 
@@ -257,15 +236,5 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
             }
             return valueTransformer.transform(codec.decode(reader, decoderContext));
         }
-    }
-
-    private List<Object> readList(final BsonReader reader, final DecoderContext decoderContext) {
-        reader.readStartArray();
-        List<Object> list = new ArrayList<Object>();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, decoderContext));
-        }
-        reader.readEndArray();
-        return list;
     }
 }
