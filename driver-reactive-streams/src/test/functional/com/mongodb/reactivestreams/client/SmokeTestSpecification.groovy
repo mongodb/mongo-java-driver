@@ -123,13 +123,13 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('drop the index', collection.&dropIndex, 'multi_1') == []
 
         then:
-        run('has a single index left "_id" ', collection.&listIndexes).size == 2
+        run('has a single index left "_id" ', collection.&listIndexes).size() == 2
 
         then:
         run('drop the index', collection.&dropIndex, 'test_1') == []
 
         then:
-        run('has a single index left "_id" ', collection.&listIndexes).size == 1
+        run('has a single index left "_id" ', collection.&listIndexes).size() == 1
 
         then:
         def newCollectionName = 'new' + collectionName.capitalize()
@@ -146,7 +146,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('drop the collection', collection.&drop) == []
 
         then:
-        run('there are no indexes', collection.&listIndexes).size == 0
+        run('there are no indexes', collection.&listIndexes).size() == 0
 
         then:
         !run('the collection name is no longer in the collectionNames list', database.&listCollectionNames).contains(collectionName)
