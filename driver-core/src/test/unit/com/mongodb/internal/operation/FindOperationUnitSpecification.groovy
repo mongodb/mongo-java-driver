@@ -150,7 +150,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .showRecordId(true)
 
         if (allowDiskUse != null) {
-            operation.allowDiskUse(allowDiskUse.value)
+            operation.allowDiskUse(allowDiskUse)
         }
 
         expectedCommand.append('filter', operation.getFilter())

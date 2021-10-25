@@ -151,7 +151,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), connectionSource)
 
         then:
-        cursor.iterator().sum { it.size } == 10
+        cursor.iterator().sum { it.size() } == 10
     }
 
     def 'test limit exhaustion'() {
@@ -163,7 +163,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, limit, batchSize, 0, new DocumentCodec(), connectionSource, connection)
 
         then:
-        cursor.iterator().sum { it.size } == expectedTotal
+        cursor.iterator().sum { it.size() } == expectedTotal
 
         cleanup:
         connection?.release()
@@ -449,7 +449,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 300, 0, new DocumentCodec(), connectionSource)
 
         then:
-        cursor.iterator().sum { it.size } == 300
+        cursor.iterator().sum { it.size() } == 300
     }
 
     def 'should respect batch size'() {
