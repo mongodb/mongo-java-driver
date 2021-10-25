@@ -166,7 +166,13 @@ public final class ClientEncryptionSettings {
      * <ul>
      *     <li>email: a String, the service account email to authenticate.</li>
      *     <li>privateKey: a String or byte[], the encoded PKCS#8 encrypted key</li>
-     *     <li>endPoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".</li>
+     *     <li>endpoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".</li>
+     * </ul>
+     * <p>
+     * For "kmip", the properties are:
+     * </p>
+     * <ul>
+     *     <li>endpoint: a String, the endpoint as a host with required port. e.g. "example.com:443".</li>
      * </ul>
      * <p>
      * For "local", the properties are:
