@@ -230,6 +230,8 @@ public abstract class AbstractClientSideEncryptionTest {
                 case "local":
                     kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
                     break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProviderKey);
             }
         }
 
