@@ -27,6 +27,7 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -93,7 +94,7 @@ public abstract class AbstractClientSideEncryptionTest {
         return hasErrorField(expectedResult, "errorCodeName");
     }
 
-    private boolean hasErrorField(final BsonValue expectedResult, final String key) {
+    private boolean hasErrorField(@Nullable final BsonValue expectedResult, final String key) {
         return expectedResult != null && expectedResult.isDocument() && expectedResult.asDocument().containsKey(key);
     }
 
@@ -199,31 +200,36 @@ public abstract class AbstractClientSideEncryptionTest {
         for (String kmsProviderKey : kmsProviders.keySet()) {
             BsonDocument kmsProviderOptions = kmsProviders.get(kmsProviderKey).asDocument();
             Map<String, Object> kmsProviderMap = new HashMap<>();
-            if (kmsProviderKey.equals("aws")) {
-                kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
-                kmsProvidersMap.put("aws", kmsProviderMap);
-            } else if (kmsProviderKey.equals("awsTemporary")) {
-                kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
-                kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
-                kmsProviderMap.put("sessionToken", System.getProperty("org.mongodb.test.tmpAwsSessionToken"));
-                kmsProvidersMap.put("aws", kmsProviderMap);
-            } else if (kmsProviderKey.equals("awsTemporaryNoSessionToken")) {
-                kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
-                kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
-                kmsProvidersMap.put("aws", kmsProviderMap);
-            } else if (kmsProviderKey.equals("azure")) {
-                kmsProviderMap.put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
-                kmsProviderMap.put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
-                kmsProviderMap.put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
-                kmsProvidersMap.put("azure", kmsProviderMap);
-            } else if (kmsProviderKey.equals("gcp")) {
-                kmsProviderMap.put("email", System.getProperty("org.mongodb.test.gcpEmail"));
-                kmsProviderMap.put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
-                kmsProvidersMap.put("gcp", kmsProviderMap);
-            } else if (kmsProviderKey.equals("local")) {
-                kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
-                kmsProvidersMap.put("local", kmsProviderMap);
+            kmsProvidersMap.put(kmsProviderKey.startsWith("aws") ? "aws" : kmsProviderKey, kmsProviderMap);
+            switch (kmsProviderKey) {
+                case "aws":
+                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                    break;
+                case "awsTemporary":
+                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                    kmsProviderMap.put("sessionToken", System.getProperty("org.mongodb.test.tmpAwsSessionToken"));
+                    break;
+                case "awsTemporaryNoSessionToken":
+                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                    break;
+                case "azure":
+                    kmsProviderMap.put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
+                    kmsProviderMap.put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
+                    kmsProviderMap.put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                    break;
+                case "gcp":
+                    kmsProviderMap.put("email", System.getProperty("org.mongodb.test.gcpEmail"));
+                    kmsProviderMap.put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                    break;
+                case "kmip":
+                    kmsProviderMap.put("endpoint", System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
+                    break;
+                case "local":
+                    kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
+                    break;
             }
         }
 

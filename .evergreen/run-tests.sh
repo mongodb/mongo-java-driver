@@ -46,8 +46,6 @@ fi
 ############################################
 
 provision_ssl () {
-  echo "SSL !"
-
   # We generate the keystore and truststore on every run with the certs in the drivers-tools repo
   if [ ! -f client.pkc ]; then
     openssl pkcs12 -CAfile ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -export -in ${DRIVERS_TOOLS}/.evergreen/x509gen/client.pem -out client.pkc -password pass:bithere
@@ -58,6 +56,9 @@ provision_ssl () {
 
   # We add extra gradle arguments for SSL
   export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
+}
+
+provision_multi_mongos_uri_for_ssl () {
   # Arguments for auth + SSL
   if [ "$AUTH" != "noauth" ] || [ "$TOPOLOGY" == "replica_set" ]; then
     export MONGODB_URI="${MONGODB_URI}&ssl=true&sslInvalidHostNameAllowed=true"
@@ -109,8 +110,11 @@ if [ "$COMPRESSOR" != "" ]; then
      fi
 fi
 
+# Set up keystore/truststore regardless, as they are required for testing KMIP
+provision_ssl
+
 if [ "$SSL" != "nossl" ]; then
-   provision_ssl
+   provision_multi_mongos_uri_for_ssl
 fi
 
 if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
