@@ -31,7 +31,7 @@ provision_ssl () {
 
 echo "Running OCSP tests"
 
-export JAVA_HOME="/opt/java/${JDK}"
+export JAVA_HOME="/opt/java/jdk11"
 
 # show test output
 set -x
@@ -40,5 +40,5 @@ provision_ssl
 
 echo "Running OCSP tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=${JAVA_HOME} ${GRADLE_EXTRA_VARS} --stacktrace --debug --info driver-sync:test --tests OcspTest
+./gradlew -PjdkHome=/opt/java/${JDK} ${GRADLE_EXTRA_VARS} --stacktrace --debug --info driver-sync:test --tests OcspTest
 
