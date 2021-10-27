@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -34,25 +35,22 @@ import reactor.core.publisher.MonoSink;
 import javax.net.ssl.SSLContext;
 import java.io.Closeable;
 import java.nio.channels.CompletionHandler;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class KeyManagementService implements Closeable {
-    private final int defaultPort;
+    private final Map<String, SSLContext> kmsProviderSslContextMap;
+    private final int timeoutMillis;
     private final TlsChannelStreamFactoryFactory tlsChannelStreamFactoryFactory;
-    private final StreamFactory streamFactory;
 
-    KeyManagementService(final SSLContext sslContext, final int defaultPort, final int timeoutMillis) {
-        this.defaultPort = defaultPort;
+    KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, final int timeoutMillis) {
+        this.kmsProviderSslContextMap = kmsProviderSslContextMap;
         this.tlsChannelStreamFactoryFactory = new TlsChannelStreamFactoryFactory();
-        this.streamFactory = tlsChannelStreamFactoryFactory.create(SocketSettings.builder()
-                                                                           .connectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
-                                                                           .readTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
-                                                                           .build(),
-                                                                   SslSettings.builder().enabled(true).context(sslContext).build());
+        this.timeoutMillis = timeoutMillis;
     }
 
     public void close() {
@@ -60,11 +58,18 @@ class KeyManagementService implements Closeable {
     }
 
     Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor) {
+        SocketSettings socketSettings = SocketSettings.builder()
+                .connectTimeout(timeoutMillis, MILLISECONDS)
+                .readTimeout(timeoutMillis, MILLISECONDS)
+                .build();
+        StreamFactory streamFactory = tlsChannelStreamFactoryFactory.create(socketSettings,
+                SslSettings.builder().enabled(true).context(kmsProviderSslContextMap.get(keyDecryptor.getKmsProvider())).build());
+
         return Mono.<Void>create(sink -> {
             ServerAddress serverAddress = keyDecryptor.getHostName().contains(":")
                     ? new ServerAddress(keyDecryptor.getHostName())
-                    : new ServerAddress(keyDecryptor.getHostName(), defaultPort);
-            final Stream stream = streamFactory.create(serverAddress);
+                    : new ServerAddress(keyDecryptor.getHostName(), 443); // TODO: default to 443 is weird?
+            Stream stream = streamFactory.create(serverAddress);
             stream.openAsync(new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(final Void ignored) {
@@ -127,6 +132,16 @@ class KeyManagementService implements Closeable {
             stream.close();
             sink.success();
         }
+    }
+
+    private static SSLContext getDefaultSslContext() {
+        SSLContext sslContext;
+        try {
+            sslContext = SSLContext.getDefault();
+        } catch (NoSuchAlgorithmException e) {
+            throw new MongoClientException("Unable to create default SSLContext", e);
+        }
+        return sslContext;
     }
 
     private Throwable unWrapException(final Throwable t) {

@@ -18,6 +18,8 @@ package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
 
+import javax.net.ssl.SSLContext;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -36,7 +38,7 @@ public final class ClientEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
-
+    private final Map<String, SSLContext> kmsProviderSslContextMap;
     /**
      * A builder for {@code ClientEncryptionSettings} so that {@code ClientEncryptionSettings} can be immutable, and to support easier
      * construction through chaining.
@@ -46,6 +48,7 @@ public final class ClientEncryptionSettings {
         private MongoClientSettings keyVaultMongoClientSettings;
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
+        private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
 
         /**
          * Sets the key vault settings.
@@ -80,6 +83,19 @@ public final class ClientEncryptionSettings {
          */
         public Builder kmsProviders(final Map<String, Map<String, Object>> kmsProviders) {
             this.kmsProviders = notNull("kmsProviders", kmsProviders);
+            return this;
+        }
+
+        /**
+         * TODO
+         *
+         * @param kmsProviderSslContextMap TODO
+         * @return this
+         * @see #getKmsProviderSslContextMap()
+         * @since 4.4
+         */
+        public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
+            this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
             return this;
         }
 
@@ -187,10 +203,21 @@ public final class ClientEncryptionSettings {
         return kmsProviders;
     }
 
+    /**
+     * TODO
+     *
+     * @return TODO
+     * @since 4.4
+     */
+    public Map<String, SSLContext> getKmsProviderSslContextMap() {
+        return kmsProviderSslContextMap;
+    }
+
     private ClientEncryptionSettings(final Builder builder) {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
+        this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
     }
 
 }
