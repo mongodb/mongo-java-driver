@@ -96,6 +96,9 @@ public class ClientEncryptionCustomEndpointTest {
                 put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
                 put("endpoint", "oauth2.googleapis.com:443");
             }});
+            put("kmip", new HashMap<String, Object>() {{
+                put("endpoint", "localhost:5698");
+            }});
         }};
 
         ClientEncryptionSettings.Builder clientEncryptionSettingsBuilder = ClientEncryptionSettings.builder().
@@ -237,6 +240,19 @@ public class ClientEncryptionCustomEndpointTest {
                         + "  \"endpoint\": \"example.com:443\"\n"
                         + "}"),
                 false, MongoClientException.class, MongoCryptException.class, "Invalid KMS response"});
+        data.add(new Object[]{"10. [kmip] default endpoint",
+                "kmip",
+                BsonDocument.parse("{\n"
+                        + "  \"keyId\": \"1\"\n"
+                        + "}"),
+                false, null, null, null});
+        data.add(new Object[]{"10. [kmip] default endpoint",
+                "kmip",
+                BsonDocument.parse("{\n"
+                        + "  \"keyId\": \"1\",\n"
+                        + "  \"endpoint\": \"localhost:5698\"\n"
+                        + "}"),
+                false, null, null, null});
         return data;
     }
 
