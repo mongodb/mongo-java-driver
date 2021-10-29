@@ -38,3 +38,8 @@ dependencies {
     testImplementation project(':driver-core').sourceSets.test.output
     testImplementation project(':driver-sync').sourceSets.test.output
 }
+
+afterEvaluate {
+    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.driver.legacy.client'
+    jar.manifest.attributes['Bundle-SymbolicName'] = 'org.mongodb.driver-legacy'
+}
