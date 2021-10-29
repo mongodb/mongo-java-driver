@@ -18,6 +18,7 @@ package com.mongodb.internal.selector;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.ServerSelector;
 
@@ -40,12 +41,12 @@ public class ReadPreferenceWithFallbackServerSelector implements ServerSelector 
 
     @Override
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        if (maxWireVersion(clusterDescription) >= minWireVersion) {
-            appliedReadPreference = preferredReadPreference;
-            return new ReadPreferenceServerSelector(preferredReadPreference).select(clusterDescription);
-        } else {
+        if (hasAnyPreMinWireVersionServers(clusterDescription)) {
             appliedReadPreference = fallbackReadPreference;
             return new ReadPreferenceServerSelector(fallbackReadPreference).select(clusterDescription);
+        } else {
+            appliedReadPreference = preferredReadPreference;
+            return new ReadPreferenceServerSelector(preferredReadPreference).select(clusterDescription);
         }
     }
 
@@ -53,9 +54,9 @@ public class ReadPreferenceWithFallbackServerSelector implements ServerSelector 
         return appliedReadPreference;
     }
 
-    private int maxWireVersion(final ClusterDescription clusterDescription) {
+    private boolean hasAnyPreMinWireVersionServers(final ClusterDescription clusterDescription) {
         return clusterDescription.getServerDescriptions().stream()
-                .map(ServerDescription::getMaxWireVersion)
-                .max(Integer::compareTo).orElse(0);
+                .filter(serverDescription -> serverDescription.getState() == ServerConnectionState.CONNECTED)
+                .anyMatch(serverDescription -> serverDescription.getMaxWireVersion() < minWireVersion);
     }
 }
