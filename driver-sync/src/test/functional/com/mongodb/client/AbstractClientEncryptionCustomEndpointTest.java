@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoSocketException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
@@ -35,6 +34,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -263,7 +263,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                         + "  \"keyId\": \"1\",\n"
                         + "  \"endpoint\": \"doesnotexist.local:5698\"\n"
                         + "}"),
-                false, MongoClientException.class, MongoSocketException.class, null});
+                false, MongoClientException.class, UnknownHostException.class, null});
         return data;
     }
 
