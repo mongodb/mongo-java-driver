@@ -53,6 +53,7 @@ import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
@@ -120,6 +121,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
             }
         }
         this.maxWireVersion = connection == null ? 0 : connection.getDescription().getMaxWireVersion();
+        logQueryResult(firstBatch);
     }
 
     /**
@@ -337,8 +339,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         }
     }
 
+
     private void handleGetMoreQueryResult(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
                                           final QueryResult<T> result) {
+        logQueryResult(result);
         cursor.set(result.getCursor());
         if (isClosePending) {
             try {
@@ -371,6 +375,11 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 callback.onResult(result.getResults(), null);
             }
         }
+    }
+
+    private void logQueryResult(final QueryResult<T> result) {
+        LOGGER.debug(format("Received batch of %d documents with cursorId %d from server %s", result.getResults().size(),
+                result.getCursorId(), result.getAddress()));
     }
 
     private class CommandResultSingleResultCallback implements SingleResultCallback<BsonDocument> {

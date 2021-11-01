@@ -84,4 +84,8 @@ public class QueryResult<T> {
     public ServerAddress getAddress() {
         return serverAddress;
     }
+
+    public long getCursorId() {
+        return cursorId;
+    }
 }
