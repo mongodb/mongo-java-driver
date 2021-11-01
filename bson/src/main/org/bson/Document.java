@@ -24,6 +24,8 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.IterableCodecProvider;
+import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -60,7 +62,8 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 public class Document implements Map<String, Object>, Serializable, Bson {
     private static final Codec<Document> DEFAULT_CODEC =
             CodecRegistryHelper.createRegistry(
-                    fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DocumentCodecProvider())),
+                    fromProviders(asList(new ValueCodecProvider(), new IterableCodecProvider(),
+                            new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider())),
                     UuidRepresentation.STANDARD)
                     .get(Document.class);
 

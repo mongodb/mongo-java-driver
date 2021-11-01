@@ -25,9 +25,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.ContainerCodecHelper.readValue;
 
 /**
  * Encodes and decodes {@code Iterable} objects.
@@ -89,7 +89,7 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
 
         List<Object> list = new ArrayList<Object>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, decoderContext));
+            list.add(readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer));
         }
 
         reader.readEndArray();
@@ -118,35 +118,6 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
         } else {
             Codec codec = registry.get(value.getClass());
             encoderContext.encodeWithChildContext(codec, writer, value);
-        }
-    }
-
-    private Object readValue(final BsonReader reader, final DecoderContext decoderContext) {
-        BsonType bsonType = reader.getCurrentBsonType();
-        if (bsonType == BsonType.NULL) {
-            reader.readNull();
-            return null;
-        } else {
-            Codec<?> codec = bsonTypeCodecMap.get(bsonType);
-            if (bsonType == BsonType.BINARY && reader.peekBinarySize() == 16) {
-                switch (reader.peekBinarySubType()) {
-                    case 3:
-                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
-                                || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
-                                || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
-                            codec = registry.get(UUID.class);
-                        }
-                        break;
-                    case 4:
-                        if (uuidRepresentation == UuidRepresentation.STANDARD) {
-                            codec = registry.get(UUID.class);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return valueTransformer.transform(codec.decode(reader, decoderContext));
         }
     }
 }
