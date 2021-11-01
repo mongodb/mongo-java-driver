@@ -89,6 +89,8 @@ case class SyncMongoCursor[T](val observable: Observable[T]) extends MongoCursor
     retVal
   }
 
+  override def available(): Int = throw new UnsupportedOperationException
+
   override def remove(): Unit = throw new UnsupportedOperationException
 
   def tryNext = throw new UnsupportedOperationException // No good way to fulfill this contract with a Publisher<T>

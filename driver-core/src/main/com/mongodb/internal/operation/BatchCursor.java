@@ -66,6 +66,13 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
     List<T> next();
 
     /**
+     * Gets the number of results available locally without blocking,which may be 0, or 0 when the cursor is exhausted or closed.
+     *
+     * @return the number of results available locally without blocking
+     */
+    int available();
+
+    /**
      * Sets the batch size to use when requesting the next batch.  This is the number of documents to request in the next batch.
      *
      * @param batchSize the non-negative batch size.  0 means to use the server default.

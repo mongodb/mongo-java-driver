@@ -66,6 +66,11 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
             }
 
             @Override
+            public int available() {
+                return wrapped.available();
+            }
+
+            @Override
             public ChangeStreamDocument<T> tryNext() {
                 return wrapped.tryNext();
             }
