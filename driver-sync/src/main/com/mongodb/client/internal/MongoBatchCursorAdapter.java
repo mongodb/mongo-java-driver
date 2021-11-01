@@ -67,6 +67,15 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
         return getNextInBatch();
     }
 
+    @Override
+    public int available() {
+        int available = batchCursor.available();
+        if (curBatch != null) {
+            available += (curBatch.size() - curPos);
+        }
+        return available;
+    }
+
     @Nullable
     @Override
     public T tryNext() {

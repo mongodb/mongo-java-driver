@@ -58,6 +58,14 @@ public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
     TResult next();
 
     /**
+     * Gets the number of results available locally without blocking,which may be 0, or 0 when the cursor is exhausted or closed.
+     *
+     * @return the number of results available locally without blocking
+     * @since 4.4
+     */
+    int available();
+
+    /**
      * A special {@code next()} case that returns the next element in the iteration if available or null.
      *
      * <p>Tailable cursors are an example where this is useful. A call to {@code tryNext()} may return null, but in the future calling

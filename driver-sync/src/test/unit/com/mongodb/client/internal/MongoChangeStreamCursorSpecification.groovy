@@ -200,4 +200,72 @@ class MongoChangeStreamCursorSpecification extends Specification {
         cursor.tryNext() == null
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
     }
+
+
+    def 'should report available documents'() {
+        given:
+        def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
+                          RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
+        def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+
+        def batchCursor = Stub(AggregateResponseBatchCursor)
+
+        batchCursor.hasNext() >>> [true, true, true, true, false]
+        batchCursor.next() >>> [firstBatch, secondBatch]
+        batchCursor.available() >>> [2, 2, 0, 0, 0, 1, 0, 0, 0]
+
+        when:
+        def cursor = new MongoChangeStreamCursorImpl(batchCursor, new RawBsonDocumentCodec(), new BsonDocument('_data', new BsonInt32(1)))
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0    // fail
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.close()
+
+        then:
+        cursor.available() == 0
+    }
 }
