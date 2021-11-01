@@ -24,12 +24,11 @@ import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.ContainerCodecHelper.readValue;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -122,7 +121,7 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
-            map.put(fieldName, readValue(reader, decoderContext));
+            map.put(fieldName, readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer));
         }
 
         reader.readEndDocument();
@@ -133,37 +132,6 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
     @Override
     public Class<Map<String, Object>> getEncoderClass() {
         return (Class<Map<String, Object>>) ((Class) Map.class);
-    }
-
-    private Object readValue(final BsonReader reader, final DecoderContext decoderContext) {
-        BsonType bsonType = reader.getCurrentBsonType();
-        if (bsonType == BsonType.NULL) {
-            reader.readNull();
-            return null;
-        } else if (bsonType == BsonType.ARRAY) {
-            return decoderContext.decodeWithChildContext(registry.get(List.class), reader);
-        } else if (bsonType == BsonType.BINARY && reader.peekBinarySize() == 16) {
-            Codec<?> codec = bsonTypeCodecMap.get(bsonType);
-            switch (reader.peekBinarySubType()) {
-                case 3:
-                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
-                            || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
-                            || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
-                        codec = registry.get(UUID.class);
-                    }
-                    break;
-                case 4:
-                    if (uuidRepresentation == UuidRepresentation.STANDARD) {
-                        codec = registry.get(UUID.class);
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            return decoderContext.decodeWithChildContext(codec, reader);
-        }
-        return valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
