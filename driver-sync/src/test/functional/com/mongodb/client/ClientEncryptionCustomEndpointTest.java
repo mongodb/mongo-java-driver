@@ -121,6 +121,9 @@ public class ClientEncryptionCustomEndpointTest {
                 put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
                 put("endpoint", "example.com:443");
             }});
+            put("kmip",  new HashMap<String, Object>() {{
+                put("endpoint", "doesnotexist.local:5698");
+            }});
         }};
 
         invalidClientEncryption = ClientEncryptions.create(ClientEncryptionSettings.builder().
@@ -240,19 +243,26 @@ public class ClientEncryptionCustomEndpointTest {
                         + "  \"endpoint\": \"example.com:443\"\n"
                         + "}"),
                 false, MongoClientException.class, MongoCryptException.class, "Invalid KMS response"});
-        data.add(new Object[]{"10. [kmip] default endpoint",
+        data.add(new Object[]{"10. [kmip] endpoint from KMS providers map",
                 "kmip",
                 BsonDocument.parse("{\n"
                         + "  \"keyId\": \"1\"\n"
                         + "}"),
                 false, null, null, null});
-        data.add(new Object[]{"10. [kmip] default endpoint",
+        data.add(new Object[]{"11. [kmip] endpoint from DataKeyOptions",
                 "kmip",
                 BsonDocument.parse("{\n"
                         + "  \"keyId\": \"1\",\n"
                         + "  \"endpoint\": \"localhost:5698\"\n"
                         + "}"),
                 false, null, null, null});
+        data.add(new Object[]{"12. [kmip] invalid endpoint from DataKeyOptions",
+                "kmip",
+                BsonDocument.parse("{\n"
+                        + "  \"keyId\": \"1\",\n"
+                        + "  \"endpoint\": \"doesnotexist.local:5698\"\n"
+                        + "}"),
+                false, MongoClientException.class, MongoCryptException.class, "Invalid KMS response"});
         return data;
     }
 

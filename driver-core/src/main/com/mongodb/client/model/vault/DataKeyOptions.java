@@ -106,7 +106,8 @@ public class DataKeyOptions {
      * <ul>
      *   <li>keyId: optional String, keyId is the KMIP Unique Identifier to a 96 byte KMIP Secret Data managed object. If keyId is
      *   omitted, the driver creates a random 96 byte KMIP Secret Data managed object.</li>
-     *   <li>endpoint: a String, the endpoint as a host with required port. e.g. "example.com:443".</li>
+     *   <li>endpoint: a String, the endpoint as a host with required port. e.g. "example.com:443". If endpoint is not provided, it
+     *   defaults to the required endpoint from the KMS providers map.</li>
      * </ul>
      * <p>
      * If the kmsProvider is "local" the masterKey is not applicable.
