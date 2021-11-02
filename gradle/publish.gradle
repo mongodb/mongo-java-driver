@@ -69,11 +69,12 @@ ext {
     }
 }
 
-def scalaProjects = subprojects.findAll { it.name.contains('scala') }
-def javaProjects = subprojects.findAll { !scalaProjects.contains(it) && !['util', 'driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
+def publishedProjects = subprojects.findAll {!['util', 'driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
+def scalaProjects = publishedProjects.findAll { it.name.contains('scala') }
+def javaProjects = publishedProjects - scalaProjects
+def projectsWithManifest = publishedProjects.findAll {it.name != 'driver-legacy' }
 
 configure(javaProjects) { project ->
-    apply plugin: 'biz.aQute.bnd.builder'
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
@@ -102,7 +103,6 @@ configure(javaProjects) { project ->
     }
 
     afterEvaluate {
-        jar configureJarManifestAttributes(project)
         publishing.publications.mavenJava.artifactId = project.archivesBaseName
         publishing.publications.mavenJava.pom configurePom(project)
         signing {
@@ -113,7 +113,6 @@ configure(javaProjects) { project ->
 }
 
 configure(scalaProjects) { project ->
-    apply plugin: 'biz.aQute.bnd.builder'
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
@@ -141,11 +140,18 @@ configure(scalaProjects) { project ->
     }
 
     afterEvaluate {
-        jar configureJarManifestAttributes(project)
         publishing.publications.mavenJava.pom configurePom(project)
         signing {
             useInMemoryPgpKeys(findProperty("signingKey"), findProperty("signingPassword"))
             sign publishing.publications.mavenJava
         }
+    }
+}
+
+
+configure(projectsWithManifest) { project ->
+    apply plugin: 'biz.aQute.bnd.builder'
+    afterEvaluate {
+        jar configureJarManifestAttributes(project)
     }
 }
