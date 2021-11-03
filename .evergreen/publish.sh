@@ -23,7 +23,7 @@ else
   TASK="publishSnapshots"
 fi
 
-SYSTEM_PROPERTIES="-Dorg.gradle.internal.publish.checksums.insecure=true -Dorg.gradle.internal.http.connectionTimeout=120000 -Dorg.gradle.internal.http.socketTimeout=120000"
+SYSTEM_PROPERTIES="-PjdkHome=/opt/java/jdk17 -Dorg.gradle.internal.publish.checksums.insecure=true -Dorg.gradle.internal.http.connectionTimeout=120000 -Dorg.gradle.internal.http.socketTimeout=120000"
 
 ./gradlew -version
 ./gradlew ${SYSTEM_PROPERTIES} --stacktrace --info  ${TASK}
