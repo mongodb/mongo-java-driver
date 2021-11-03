@@ -41,6 +41,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final ClusterSettings clusterSettings;
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
+    private final InternalConnectionPoolSettings internalConnectionPoolSettings;
     private final StreamFactory streamFactory;
     private final MongoCredentialWithCache credential;
     private final StreamFactory heartbeatStreamFactory;
@@ -52,15 +53,17 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final ServerApi serverApi;
 
     public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings,
-                                           final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
-                                           final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
-                                           final MongoCredential credential, final CommandListener commandListener,
-                                           final String applicationName, final MongoDriverInformation mongoDriverInformation,
-                                           final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
+            final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
+            final InternalConnectionPoolSettings internalConnectionPoolSettings,
+            final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
+            final MongoCredential credential, final CommandListener commandListener,
+            final String applicationName, final MongoDriverInformation mongoDriverInformation,
+            final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
         this.clusterId = clusterId;
         this.clusterSettings = clusterSettings;
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
+        this.internalConnectionPoolSettings = internalConnectionPoolSettings;
         this.streamFactory = streamFactory;
         this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
@@ -86,7 +89,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
                 new InternalStreamConnectionFactory(clusterSettings.getMode(), streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, commandListener, serverApi),
-                connectionPoolSettings, sdamProvider);
+                connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
                 serverListener, serverMonitor, connectionPool, clusterSettings.getMode());
         sdamProvider.initialize(sdam);

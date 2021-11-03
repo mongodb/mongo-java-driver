@@ -117,6 +117,11 @@ class DefaultConnectionPool implements ConnectionPool {
     private final StateAndGeneration stateAndGeneration;
     private final OptionalProvider<SdamServerDescriptionManager> sdamProvider;
 
+    DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
+            final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
+        this(serverId, internalConnectionFactory, settings, InternalConnectionPoolSettings.builder().build(), sdamProvider);
+    }
+
     /**
      * @param sdamProvider For handling exceptions via the
      *                     <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
@@ -127,7 +132,8 @@ class DefaultConnectionPool implements ConnectionPool {
      *                     otherwise must provide a non-empty {@link Optional}.
      */
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
-                          final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
+            final ConnectionPoolSettings settings, final InternalConnectionPoolSettings internalSettings,
+            final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
@@ -139,7 +145,7 @@ class DefaultConnectionPool implements ConnectionPool {
         backgroundMaintenance = new BackgroundMaintenanceManager();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
         openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
-        asyncWorkManager = new AsyncWorkManager(ConnectionPoolSettingsUtil.isPrestartAsyncWorkManager(settings));
+        asyncWorkManager = new AsyncWorkManager(internalSettings.isPrestartAsyncWorkManager());
         stateAndGeneration = new StateAndGeneration();
         connectionGenerationSupplier = new ConnectionGenerationSupplier() {
             @Override
