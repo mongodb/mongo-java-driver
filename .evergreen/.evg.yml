@@ -97,7 +97,7 @@ functions:
             cp -R ${PROJECT_DIRECTORY}/ $DRIVERS_TOOLS
           else
             # TODO: revert this!!!!!!!
-            git clone git@github.com:kevinAlbs/drivers-evergreen-tools.git $DRIVERS_TOOLS --branch kms_kmip_server.1353 --depth=1
+            git clone https://github.com/kevinAlbs/drivers-evergreen-tools.git $DRIVERS_TOOLS --branch kms_kmip_server.1353 --depth=1
           fi
           echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
 
@@ -564,6 +564,7 @@ functions:
           CA_FILE="$DRIVERS_TOOLS/.evergreen/ocsp/${OCSP_ALGORITHM}/ca.pem" \
           OCSP_TLS_SHOULD_SUCCEED="${OCSP_TLS_SHOULD_SUCCEED}" \
           OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}" \
+          JDK="${JDK}" \
           sh ${PROJECT_DIRECTORY}/.evergreen/run-ocsp-test.sh
 
   "run-valid-ocsp-server-ca-responder":
@@ -1504,6 +1505,10 @@ axes:
   - id: jdk
     display_name: JDK
     values:
+      - id: "jdk17"
+        display_name: JDK17
+        variables:
+          JDK: "jdk17"
       - id: "jdk11"
         display_name: JDK11
         variables:
@@ -1598,34 +1603,41 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-jdk-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk17"], version: ["3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
                  topology: ["replicaset", "sharded-cluster"], os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
+- matrix_name: "tests-jdk-secure-jdk11"
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["5.0"], topology: ["replicaset"], os: "linux" }
+  display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+    - name: "test"
+
 - matrix_name: "tests-require-api-version"
-  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk11"], version: ["5.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk17"], version: ["5.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${topology} ${api-version} "
   tags: ["tests-variant"]
   tasks:
     - name: "test"
 
 - matrix_name: "tests-load-balancer-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["5.0", "latest"], topology: "sharded-cluster", os: "ubuntu" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk17"], version: ["5.0", "latest"], topology: "sharded-cluster", os: "ubuntu" }
   display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
   tasks:
     - name: "load-balancer-test"
 
 - matrix_name: "tests-serverless"
-  matrix_spec: { jdk: ["jdk11"], os: "ubuntu" }
+  matrix_spec: { jdk: ["jdk17"], os: "ubuntu" }
   display_name: "Serverless"
   tasks:
     - name: "serverless-test"
 
 - matrix_name: "tests-slow"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["5.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["5.0"], topology: "standalone", os: "linux" }
   display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-slow-variant"]
   tasks:
@@ -1667,14 +1679,14 @@ buildvariants:
      - name: "socket-test"
 
 - matrix_name: "test-gssapi"
-  matrix_spec: { jdk: "*", os: "linux" }
+  matrix_spec: { jdk: ["jdk8", "jdk17"], os: "linux" }
   display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} "
   tags: ["test-gssapi-variant"]
   tasks:
      - name: "gssapi-auth-test"
 
 - matrix_name: "perf"
-  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["latest"], topology: "standalone", os: "linux" }
+  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["latest"], topology: "standalone", os: "linux" }
   batchtime: 1440 # run once a day
   display_name: "Perf Tests ${version} "
   tags: ["perf-variant"]
@@ -1688,21 +1700,21 @@ buildvariants:
     - name: "plain-auth-test"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk11"], version: ["4.4", "5.0", "latest"], os: "ubuntu" }
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "latest"], os: "ubuntu" }
   display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
   run_on: ubuntu1804-test
   tasks:
     - name: "aws-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
-  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk11", version: ["5.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "Accept API Version 2 ${version}"
   run_on: ubuntu1804-test
   tasks:
     - name: "accept-api-version-2-test"
 
 - matrix_name: "ocsp-test"
-  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk11", version: ["4.4", "5.0", "latest"], os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk17", version: ["4.4", "5.0", "latest"], os: "ubuntu" }
   display_name: "OCSP test ${version} ${os}"
   tasks:
     - name: ".ocsp"
@@ -1726,7 +1738,7 @@ buildvariants:
     - name: "reactive-streams-tck-test"
 
 - matrix_name: "scala-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["5.0"], topology: "replicaset", scala: "*", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["5.0"], topology: "replicaset", scala: "*", os: "ubuntu" }
   display_name: "${scala} ${version} ${topology} ${os}"
   tags: ["test-scala-variant"]
   tasks:

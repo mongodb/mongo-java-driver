@@ -149,6 +149,11 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
     }
 
     @Override
+    public int available() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }

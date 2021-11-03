@@ -11,7 +11,7 @@ JDK=${JDK:-jdk11}
 TOPOLOGY=${TOPOLOGY:-standalone}
 SAFE_FOR_MULTI_MONGOS=${SAFE_FOR_MULTI_MONGOS:-}
 
-export JAVA_HOME="/opt/java/${JDK}"
+export JAVA_HOME="/opt/java/jdk11"
 
 ############################################
 #            Main Program                  #
@@ -34,4 +34,4 @@ fi
 echo "Running scala tests with Scala $SCALA"
 
 ./gradlew -version
-./gradlew -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
+./gradlew -PjdkHome=/opt/java/${JDK} -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}

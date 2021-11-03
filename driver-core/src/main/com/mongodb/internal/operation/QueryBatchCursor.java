@@ -171,6 +171,11 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return assertNotNull(resourceManager.execute(MESSAGE_IF_CLOSED_AS_ITERATOR, this::doNext));
     }
 
+    @Override
+    public int available() {
+        return !resourceManager.operable() || nextBatch == null ? 0 : nextBatch.size();
+    }
+
     private List<T> doNext() {
         if (!doHasNext()) {
             throw new NoSuchElementException();

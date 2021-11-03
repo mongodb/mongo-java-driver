@@ -94,6 +94,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     }
 
     @Override
+    public int available() {
+        return wrapped.available();
+    }
+
+    @Override
     public List<T> tryNext() {
         return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, List<T>>() {
             @Override

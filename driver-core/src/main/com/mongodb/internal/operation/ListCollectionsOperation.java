@@ -423,6 +423,11 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         }
 
         @Override
+        public int available() {
+            return delegate.available();
+        }
+
+        @Override
         public void setBatchSize(final int batchSize) {
             delegate.setBatchSize(batchSize);
         }
