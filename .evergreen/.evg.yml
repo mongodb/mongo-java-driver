@@ -96,8 +96,7 @@ functions:
             # If this was a patch build, doing a fresh clone would not actually test the patch
             cp -R ${PROJECT_DIRECTORY}/ $DRIVERS_TOOLS
           else
-            # TODO: revert this!!!!!!!
-            git clone https://github.com/kevinAlbs/drivers-evergreen-tools.git $DRIVERS_TOOLS --branch kms_kmip_server.1353 --depth=1
+            git clone https://github.com/mongodb-labs/drivers-evergreen-tools.git $DRIVERS_TOOLS
           fi
           echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
 
