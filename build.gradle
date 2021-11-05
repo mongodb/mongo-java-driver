@@ -25,7 +25,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
-        classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.5.0"
+        classpath "com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.9"
         classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
 
         // Scala plugins
@@ -151,7 +151,7 @@ configure(scalaProjects) {
 
     spotless {
         scala {
-            scalafmt('2.0.0').configFile("$configDir/scalafmt.conf")
+            scalafmt('2.0.0').configFile("$configDir/scala/scalafmt.conf")
         }
     }
     compileScala.dependsOn('spotlessApply')
@@ -253,7 +253,7 @@ configure(javaCodeCheckedProjects) {
         testImplementation('org.junit.jupiter:junit-jupiter-params')
         testImplementation('org.junit.vintage:junit-vintage-engine')
 
-        testImplementation platform('org.spockframework:spock-bom:2.0-groovy-2.5')
+        testImplementation platform('org.spockframework:spock-bom:2.0-groovy-3.0')
         testImplementation 'org.spockframework:spock-core'
         testImplementation 'org.spockframework:spock-junit4'
         testImplementation("org.mockito:mockito-core:3.8.0")
@@ -328,13 +328,11 @@ configure(javaCodeCheckedProjects) {
     }
 
     checkstyle {
-        toolVersion = "7.4"
-        configFile = new File(configDir, 'checkstyle.xml')
-        configProperties.checkstyleConfigDir = configDir
+        toolVersion = "9.1"
     }
 
     spotbugs {
-        excludeFilter = new File(configDir, 'findbugs-exclude.xml')
+        excludeFilter = new File(configDir, 'spotbugs/exclude.xml')
     }
 
     codenarc {
