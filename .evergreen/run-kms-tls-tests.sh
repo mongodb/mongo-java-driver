@@ -10,10 +10,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 ############################################
 #            Main Program                  #
 ############################################
-
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 echo "Running KMS TLS tests"
-
-export JAVA_HOME="/opt/java/jdk11"
 
 cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore
 ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass changeit -storetype JKS -noprompt
