@@ -7,9 +7,9 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9", "jdk11"
 
-JDK=${JDK:-jdk11}
 OCSP_MUST_STAPLE=${OCSP_MUST_STAPLE:-}
 OCSP_TLS_SHOULD_SUCCEED=${OCSP_TLS_SHOULD_SUCCEED:-}
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 ############################################
 #            Functions                     #
@@ -31,14 +31,13 @@ provision_ssl () {
 
 echo "Running OCSP tests"
 
-export JAVA_HOME="/opt/java/jdk11"
 
 # show test output
 set -x
 
 provision_ssl
 
-echo "Running OCSP tests with ${JDK}"
+echo "Running OCSP tests with Java ${JAVA_VERSION}"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} ${GRADLE_EXTRA_VARS} --stacktrace --debug --info driver-sync:test --tests OcspTest
+./gradlew -PjavaVersion=${JAVA_VERSION} ${GRADLE_EXTRA_VARS} --stacktrace --debug --info driver-sync:test --tests OcspTest
 

@@ -11,7 +11,7 @@ tar xf parallel.tgz
 tar xf single_and_multi_document.tgz
 cd ..
 
-export JAVA_HOME="/opt/java/jdk11"
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 export TEST_PATH="${PROJECT_DIRECTORY}/driver-performance-test-data/"
 export OUTPUT_FILE="${PROJECT_DIRECTORY}/results.json"

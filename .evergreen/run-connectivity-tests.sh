@@ -9,17 +9,14 @@ set -o errexit
 # Support arguments:
 #       Pass as many MongoDB URIS as arguments to this script as required
 
-JDK=${JDK:-jdk8}
-
 ############################################
 #            Main Program                  #
 ############################################
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
-echo "Running connectivity tests with ${JDK}"
+echo "Running connectivity tests with Java ${JAVA_VERSION}"
 
-export JAVA_HOME="/opt/java/jdk11"
-
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.connectivity.uris="${MONGODB_URIS}" --info --continue \
+./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.connectivity.uris="${MONGODB_URIS}" --info --continue \
  driver-sync:test --tests ConnectivityTest \
  driver-legacy:test --tests ConnectivityTest \
  driver-reactive-streams:test --tests ConnectivityTest
