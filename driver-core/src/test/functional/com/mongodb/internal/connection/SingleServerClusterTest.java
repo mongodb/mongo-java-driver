@@ -69,7 +69,7 @@ public class SingleServerClusterTest {
         cluster = new SingleServerCluster(clusterId,
                 clusterSettings,
                 new DefaultClusterableServerFactory(clusterId, clusterSettings, ServerSettings.builder().build(),
-                        ConnectionPoolSettings.builder().maxSize(1).build(),
+                        ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                         streamFactory, streamFactory, getCredential(),
 
                         null, null, null,

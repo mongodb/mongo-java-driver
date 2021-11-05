@@ -50,6 +50,7 @@ import com.mongodb.internal.binding.SingleConnectionBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 import com.mongodb.internal.connection.MongoCredentialWithCache;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
@@ -380,7 +381,7 @@ public final class ClusterFixture {
     private static Cluster createCluster(final MongoCredential credential, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
-                ConnectionPoolSettings.builder().maxSize(1).build(),
+                ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                 streamFactory, streamFactory, credential, null, null, null,
                 Collections.<MongoCompressor>emptyList(), getServerApi());
     }
@@ -389,6 +390,7 @@ public final class ClusterFixture {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
+                InternalConnectionPoolSettings.builder().build(),
                 streamFactory,
                 new SocketStreamFactory(SocketSettings.builder().readTimeout(5, SECONDS).build(), getSslSettings(connectionString)),
                 connectionString.getCredential(),

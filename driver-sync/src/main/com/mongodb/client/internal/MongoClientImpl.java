@@ -39,6 +39,7 @@ import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -212,7 +213,8 @@ public final class MongoClientImpl implements MongoClient {
                                          @Nullable final MongoDriverInformation mongoDriverInformation) {
         notNull("settings", settings);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), getStreamFactory(settings, false), getStreamFactory(settings, true),
+                settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
+                getStreamFactory(settings, false), getStreamFactory(settings, true),
                 settings.getCredential(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
                 mongoDriverInformation, settings.getCompressorList(), settings.getServerApi());
     }
@@ -257,4 +259,3 @@ public final class MongoClientImpl implements MongoClient {
         return mongoDriverInformation;
     }
 }
-

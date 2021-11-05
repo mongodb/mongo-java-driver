@@ -22,13 +22,19 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
 public abstract class UnifiedSyncTest extends UnifiedTest {
-    public UnifiedSyncTest(final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
-                           final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+    public UnifiedSyncTest(@Nullable final String fileDescription, final String schemaVersion, final BsonArray runOnRequirements,
+            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
+        super(fileDescription, schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+    }
+
+    public UnifiedSyncTest(final String schemaVersion, final BsonArray runOnRequirements,
+            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
+        this(null, schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
     }
 
     @Override

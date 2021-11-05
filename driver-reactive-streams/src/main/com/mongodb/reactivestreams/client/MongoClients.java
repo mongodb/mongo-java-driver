@@ -26,6 +26,7 @@ import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -142,7 +143,9 @@ public final class MongoClients {
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
         notNull("settings", settings);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory, settings.getCredential(),
+                settings.getConnectionPoolSettings(),
+                InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
+                streamFactory, heartbeatStreamFactory, settings.getCredential(),
                 getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
                 settings.getCompressorList(), settings.getServerApi());
     }

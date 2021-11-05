@@ -44,6 +44,7 @@ public final class DefaultClusterFactory {
      * @param clusterSettings        the cluster settings
      * @param serverSettings         the server settings
      * @param connectionPoolSettings the connection pool settings
+     * @param internalConnectionPoolSettings the internal connection pool settings
      * @param streamFactory          the stream factory
      * @param heartbeatStreamFactory the heartbeat stream factory
      * @param credential             the credential, which may be null
@@ -57,8 +58,10 @@ public final class DefaultClusterFactory {
      * @since 3.6
      */
     public Cluster createCluster(final ClusterSettings clusterSettings, final ServerSettings serverSettings,
-                                 final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
-                                 final StreamFactory heartbeatStreamFactory, final @Nullable MongoCredential credential,
+                                 final ConnectionPoolSettings connectionPoolSettings,
+                                 final InternalConnectionPoolSettings internalConnectionPoolSettings,
+                                 final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
+                                 final @Nullable MongoCredential credential,
                                  final CommandListener commandListener, final String applicationName,
                                  final MongoDriverInformation mongoDriverInformation,
                                  final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
@@ -69,13 +72,14 @@ public final class DefaultClusterFactory {
 
         if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(clusterId, serverSettings,
-                    connectionPoolSettings, streamFactory, credential, commandListener, applicationName,
+                    connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
                     serverApi);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, clusterSettings, serverSettings,
-                    connectionPoolSettings, streamFactory, heartbeatStreamFactory, credential, commandListener, applicationName,
+                    connectionPoolSettings, internalConnectionPoolSettings,
+                    streamFactory, heartbeatStreamFactory, credential, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
                     serverApi);
 
