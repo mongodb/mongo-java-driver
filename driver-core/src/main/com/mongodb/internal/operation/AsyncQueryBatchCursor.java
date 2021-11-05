@@ -22,6 +22,8 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.connection.ServerType;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -49,7 +51,6 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
@@ -57,6 +58,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
+    private static final Logger LOGGER = Loggers.getLogger("operation");
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private static final String CURSOR = "cursor";
     private static final String POST_BATCH_RESUME_TOKEN = "postBatchResumeToken";
