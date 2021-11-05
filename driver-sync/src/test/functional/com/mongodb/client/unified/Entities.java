@@ -82,6 +82,7 @@ import static com.mongodb.client.unified.EventMatcher.getReasonString;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
+import static com.mongodb.internal.connection.AbstractConnectionPoolTest.waitForPoolAsyncWorkManagerStart;
 import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedList;
 import static org.junit.Assume.assumeTrue;
@@ -253,6 +254,7 @@ public final class Entities {
     }
 
     public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                     final boolean waitForPoolAsyncWorkManagerStart,
                      final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
         for (BsonValue cur : entitiesArray.getValues()) {
             String entityType = cur.asDocument().getFirstKey();
@@ -260,7 +262,7 @@ public final class Entities {
             String id = entity.getString("id").getValue();
             switch (entityType) {
                 case "client":
-                    initClient(entity, id, mongoClientSupplier);
+                    initClient(entity, id, mongoClientSupplier, waitForPoolAsyncWorkManagerStart);
                     break;
                 case "database": {
                     initDatabase(entity, id);
@@ -285,7 +287,8 @@ public final class Entities {
     }
 
     private void initClient(final BsonDocument entity, final String id,
-                            final Function<MongoClientSettings, MongoClient> mongoClientSupplier) {
+                            final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                            final boolean waitForPoolAsyncWorkManagerStart) {
         if (!SUPPORTED_CLIENT_ENTITY_OPTIONS.containsAll(entity.keySet())) {
             throw new UnsupportedOperationException("Client entity contains unsupported options: " + entity.keySet()
                     + ". Supported options are " + SUPPORTED_CLIENT_ENTITY_OPTIONS);
@@ -409,6 +412,9 @@ public final class Entities {
             clientSettingsBuilder.serverApi(serverApiBuilder.build());
         }
         putEntity(id, mongoClientSupplier.apply(clientSettingsBuilder.build()), clients);
+        if (waitForPoolAsyncWorkManagerStart) {
+            waitForPoolAsyncWorkManagerStart();
+        }
     }
 
     private void initDatabase(final BsonDocument entity, final String id) {

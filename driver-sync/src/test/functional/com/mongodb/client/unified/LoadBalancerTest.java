@@ -27,11 +27,11 @@ import java.util.Collection;
 
 public class LoadBalancerTest extends UnifiedSyncTest {
 
-    public LoadBalancerTest(@SuppressWarnings("unused") final String fileDescription,
+    public LoadBalancerTest(final String fileDescription,
                             @SuppressWarnings("unused") final String testDescription,
                             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                             final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        super(fileDescription, schemaVersion, runOnRequirements, entities, initialData, definition);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

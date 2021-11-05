@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.ClusterFixture;
 import com.mongodb.JsonTestServerVersionChecker;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -94,6 +95,7 @@ import static org.mockito.Mockito.mock;
 public abstract class AbstractConnectionPoolTest {
     private static final int ANY_INT = 42;
     private static final String ANY_STRING = "42";
+    private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_NAMES = Collections.singleton("wait-queue-timeout.json");
 
     private final String fileName;
     private final String description;
@@ -153,11 +155,14 @@ public abstract class AbstractConnectionPoolTest {
         listener = new TestConnectionPoolListener();
         settingsBuilder.addConnectionPoolListener(listener);
         settings = settingsBuilder.build();
+        InternalConnectionPoolSettings internalSettings = InternalConnectionPoolSettings.builder()
+                .prestartAsyncWorkManager(PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_NAMES.contains(fileName))
+                .build();
         Style style = Style.of(definition.getString("style").getValue());
         switch (style) {
             case UNIT: {
                 ServerId serverId = new ServerId(new ClusterId(), new ServerAddress("host1"));
-                pool = new DefaultConnectionPool(serverId, new TestInternalConnectionFactory(), settings,
+                pool = new DefaultConnectionPool(serverId, new TestInternalConnectionFactory(), settings, internalSettings,
                         SameObjectProvider.initialized(mock(SdamServerDescriptionManager.class)));
                 break;
             }
@@ -175,7 +180,7 @@ public abstract class AbstractConnectionPoolTest {
                                 Collections.emptyList(),
                                 new TestCommandListener(),
                                 ClusterFixture.getServerApi()),
-                        settings, sdamProvider));
+                        settings, internalSettings, sdamProvider));
                 sdamProvider.initialize(new DefaultSdamServerDescriptionManager(serverId, mock(ServerDescriptionChangedListener.class),
                         mock(ServerListener.class), mock(ServerMonitor.class), pool, connectionMode));
                 setFailPoint();
@@ -184,6 +189,9 @@ public abstract class AbstractConnectionPoolTest {
             default: {
                 throw new AssertionError(format("Style %s is not implemented", style));
             }
+        }
+        if (internalSettings.isPrestartAsyncWorkManager()) {
+            waitForPoolAsyncWorkManagerStart();
         }
     }
 
@@ -500,6 +508,15 @@ public abstract class AbstractConnectionPoolTest {
             });
         }
         return data;
+    }
+
+    public static void waitForPoolAsyncWorkManagerStart() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MongoInterruptedException(null, e);
+        }
     }
 
     private enum Style {
