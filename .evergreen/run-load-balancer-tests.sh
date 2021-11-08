@@ -17,7 +17,8 @@ MONGODB_URI=${MONGODB_URI:-}
 ############################################
 #            Main Program                  #
 ############################################
-source "${BASH_SOURCE%/*}/javaConfig.bash"
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 if [ "$SSL" != "nossl" ]; then
   # We generate the keystore and truststore on every run with the certs in the drivers-tools repo
