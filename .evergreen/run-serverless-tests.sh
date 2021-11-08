@@ -14,7 +14,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 ############################################
 #            Main Program                  #
 ############################################
-source "${BASH_SOURCE%/*}/javaConfig.bash"
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 
 echo "Running serverless tests with Java ${JAVA_VERSION}"
 

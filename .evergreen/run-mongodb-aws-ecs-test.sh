@@ -12,7 +12,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 ############################################
 #            Main Program                  #
 ############################################
-source "${BASH_SOURCE%/*}/javaConfig.bash"
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 if [[ -z "$1" ]]; then
     echo "usage: $0 <MONGODB_URI>"
