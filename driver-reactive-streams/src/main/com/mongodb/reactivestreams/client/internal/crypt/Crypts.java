@@ -28,6 +28,7 @@ import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongoCryptOptions;
 
@@ -54,7 +55,7 @@ public final class Crypts {
                 options.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(collectionInfoRetrieverClient),
                 new CommandMarker(options.isBypassAutoEncryption(), options.getExtraOptions()),
                 new KeyRetriever(keyVaultClient, new MongoNamespace(options.getKeyVaultNamespace())),
-                createKeyManagementService(),
+                createKeyManagementService(options.getKmsProviderSslContextMap()),
                 options.isBypassAutoEncryption(),
                 internalClient);
     }
@@ -63,11 +64,11 @@ public final class Crypts {
         return new Crypt(MongoCrypts.create(
                 createMongoCryptOptions(options.getKmsProviders(), null)),
                          new KeyRetriever(keyVaultClient, new MongoNamespace(options.getKeyVaultNamespace())),
-                         createKeyManagementService());
+                         createKeyManagementService(options.getKmsProviderSslContextMap()));
     }
 
-    private static KeyManagementService createKeyManagementService() {
-        return new KeyManagementService(getSslContext(), 443, 10000);
+    private static KeyManagementService createKeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap) {
+        return new KeyManagementService(kmsProviderSslContextMap, 10000);
     }
 
     private static SSLContext getSslContext() {

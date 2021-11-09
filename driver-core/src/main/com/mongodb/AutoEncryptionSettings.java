@@ -20,10 +20,13 @@ import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
+import javax.net.ssl.SSLContext;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
@@ -58,6 +61,7 @@ public final class AutoEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
+    private final Map<String, SSLContext> kmsProviderSslContextMap;
     private final Map<String, BsonDocument> schemaMap;
     private final Map<String, Object> extraOptions;
     private final boolean bypassAutoEncryption;
@@ -71,6 +75,7 @@ public final class AutoEncryptionSettings {
         private MongoClientSettings keyVaultMongoClientSettings;
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
+        private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
         private Map<String, BsonDocument> schemaMap = Collections.emptyMap();
         private Map<String, Object> extraOptions = Collections.emptyMap();
         private boolean bypassAutoEncryption;
@@ -108,6 +113,19 @@ public final class AutoEncryptionSettings {
          */
         public Builder kmsProviders(final Map<String, Map<String, Object>> kmsProviders) {
             this.kmsProviders = notNull("kmsProviders", kmsProviders);
+            return this;
+        }
+
+        /**
+         * Sets the KMS provider to SSLContext map
+         *
+         * @param kmsProviderSslContextMap the KMS provider to SSLContext map, which may not be null
+         * @return this
+         * @see #getKmsProviderSslContextMap()
+         * @since 4.4
+         */
+        public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
+            this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
             return this;
         }
 
@@ -250,7 +268,22 @@ public final class AutoEncryptionSettings {
      * @return map of KMS provider properties
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
-        return kmsProviders;
+        return unmodifiableMap(kmsProviders);
+    }
+
+    /**
+     * Gets the KMS provider to SSLContext map.
+     *
+     * <p>
+     * If a KMS provider is mapped to a non-null {@link SSLContext}, the context will be used to establish a TLS connection to the KMS.
+     * Otherwise, the default context will be used.
+     * </p>
+     *
+     * @return the KMS provider to SSLContext map
+     * @since 4.4
+     */
+    public Map<String, SSLContext> getKmsProviderSslContextMap() {
+        return unmodifiableMap(kmsProviderSslContextMap);
     }
 
     /**
@@ -321,6 +354,7 @@ public final class AutoEncryptionSettings {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
+        this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
         this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
         this.bypassAutoEncryption = builder.bypassAutoEncryption;

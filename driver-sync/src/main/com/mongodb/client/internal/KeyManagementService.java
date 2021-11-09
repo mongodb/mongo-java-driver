@@ -17,11 +17,15 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.SslHelper;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,24 +33,32 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Map;
+
+import static com.mongodb.assertions.Assertions.notNull;
 
 class KeyManagementService {
-    private final SSLContext sslContext;
-    private final int defaultPort;
+    private static final Logger LOGGER = Loggers.getLogger("client");
+    private final Map<String, SSLContext> kmsProviderSslContextMap;
     private final int timeoutMillis;
 
-    KeyManagementService(final SSLContext sslContext, final int defaultPort, final int timeoutMillis) {
-        this.sslContext = sslContext;
-        this.defaultPort = defaultPort;
+    KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, final int timeoutMillis) {
+        this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
         this.timeoutMillis = timeoutMillis;
     }
 
-    public InputStream stream(final String host, final ByteBuffer message) throws IOException {
-        ServerAddress serverAddress = host.contains(":") ? new ServerAddress(host) : new ServerAddress(host, defaultPort);
-        SSLSocket socket = (SSLSocket) sslContext.getSocketFactory().createSocket();
+    public InputStream stream(final String kmsProvider, final String host, final ByteBuffer message) throws IOException {
+        ServerAddress serverAddress = new ServerAddress(host);
+
+        LOGGER.info("Connecting to KMS server at " + serverAddress);
+        SSLContext sslContext = kmsProviderSslContextMap.get(kmsProvider);
+
+        SocketFactory sslSocketFactory = sslContext == null
+                    ? SSLSocketFactory.getDefault() : sslContext.getSocketFactory();
+        SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket();
+        enableHostNameVerification(socket);
 
         try {
-            enableHostNameVerification(socket);
             socket.setSoTimeout(timeoutMillis);
             socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()), timeoutMillis);
         } catch (IOException e) {
@@ -81,10 +93,6 @@ class KeyManagementService {
         }
         SslHelper.enableHostNameVerification(sslParameters);
         socket.setSSLParameters(sslParameters);
-    }
-
-    public int getDefaultPort() {
-        return defaultPort;
     }
 
     private void closeSocket(final Socket socket) {
