@@ -103,6 +103,7 @@ public class ClientSideEncryptionCorpusTest {
         Mono.from(dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-aws.json"))).block(TIMEOUT_DURATION);
         Mono.from(dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-azure.json"))).block(TIMEOUT_DURATION);
         Mono.from(dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-gcp.json"))).block(TIMEOUT_DURATION);
+        Mono.from(dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-kmip.json"))).block(TIMEOUT_DURATION);
         Mono.from(dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-local.json"))).block(TIMEOUT_DURATION);
 
         // Step 4: Configure our objects
@@ -119,6 +120,9 @@ public class ClientSideEncryptionCorpusTest {
             put("gcp",  new HashMap<String, Object>() {{
                 put("email", System.getProperty("org.mongodb.test.gcpEmail"));
                 put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+            }});
+            put("kmip",  new HashMap<String, Object>() {{
+                put("endpoint", System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
             }});
             put("local", new HashMap<String, Object>() {{
                 put("key", "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
@@ -174,6 +178,7 @@ public class ClientSideEncryptionCorpusTest {
             byte[] awsKeyId = Base64.getDecoder().decode("AWSAAAAAAAAAAAAAAAAAAA==");
             byte[] azureKeyId = Base64.getDecoder().decode("AZUREAAAAAAAAAAAAAAAAA==");
             byte[] gcpKeyId = Base64.getDecoder().decode("GCPAAAAAAAAAAAAAAAAAAA==");
+            byte[] kmipKeyId = Base64.getDecoder().decode("KMIPAAAAAAAAAAAAAAAAAA==");
             byte[] localKeyId = Base64.getDecoder().decode("LOCALAAAAAAAAAAAAAAAAA==");
 
             if (method.equals("auto")) {
@@ -205,6 +210,9 @@ public class ClientSideEncryptionCorpusTest {
                         break;
                     case "gcp":
                         opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, gcpKeyId));
+                        break;
+                    case "kmip":
+                        opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, kmipKeyId));
                         break;
                     case "local":
                         opts.keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, localKeyId));

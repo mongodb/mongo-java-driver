@@ -689,6 +689,20 @@ functions:
           cd ${DRIVERS_TOOLS}/.evergreen/csfle
           ./kmstlsvenv/bin/python3 -u kms_http_server.py -v --ca_file ../x509gen/ca.pem --cert_file ../x509gen/${CERT_FILE} --port 8000
 
+  start-kms-kmip-server:
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          cd ${DRIVERS_TOOLS}/.evergreen/csfle
+          . ./activate_venv.sh
+    - command: shell.exec
+      params:
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/csfle
+          ./kmstlsvenv/bin/python3 -u kms_kmip_server.py
+
   "run-kms-tls-test":
     - command: shell.exec
       type: test
@@ -807,6 +821,7 @@ tasks:
 
     - name: "test"
       commands:
+        - func: "start-kms-kmip-server"
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
 
@@ -836,6 +851,7 @@ tasks:
 
     - name: "accept-api-version-2-test"
       commands:
+        - func: "start-kms-kmip-server"
         - func: "bootstrap mongo-orchestration"
           vars:
             ORCHESTRATION_FILE: "versioned-api-testing.json"
