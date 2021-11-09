@@ -27,6 +27,14 @@ import java.io.InputStream;
 import java.util.List;
 
 class ZstdCompressor extends Compressor {
+    ZstdCompressor() {
+        try {
+            Class.forName("com.github.luben.zstd.Zstd");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public String getName() {
         return "zstd";
