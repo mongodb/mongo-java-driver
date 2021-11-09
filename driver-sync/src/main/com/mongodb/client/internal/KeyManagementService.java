@@ -25,6 +25,8 @@ import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
@@ -46,7 +48,7 @@ class KeyManagementService {
         try {
             enableHostNameVerification(socket);
             socket.setSoTimeout(timeoutMillis);
-            socket.connect(serverAddress.getSocketAddress(), timeoutMillis);
+            socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()), timeoutMillis);
         } catch (IOException e) {
             closeSocket(socket);
             throw e;

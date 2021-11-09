@@ -100,6 +100,16 @@ public class DataKeyOptions {
      *   <li>endpoint: an optional String, with the host with optional port. Defaults to "cloudkms.googleapis.com".</li>
      * </ul>
      * <p>
+     * <p>
+     *     If the kmsProvider is "kmip" the master key is required and must contain the following fields:
+     * </p>
+     * <ul>
+     *   <li>keyId: optional String, keyId is the KMIP Unique Identifier to a 96 byte KMIP Secret Data managed object. If keyId is
+     *   omitted, the driver creates a random 96 byte KMIP Secret Data managed object.</li>
+     *   <li>endpoint: a String, the endpoint as a host with required port. e.g. "example.com:443". If endpoint is not provided, it
+     *   defaults to the required endpoint from the KMS providers map.</li>
+     * </ul>
+     * <p>
      * If the kmsProvider is "local" the masterKey is not applicable.
      * </p>
      * @return the master key document
