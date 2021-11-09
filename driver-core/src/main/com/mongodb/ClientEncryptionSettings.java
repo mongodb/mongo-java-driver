@@ -90,7 +90,7 @@ public final class ClientEncryptionSettings {
         /**
          * Sets the KMS provider to SSLContext map
          *
-         * @param kmsProviderSslContextMap the KMS provider to SSLContext map, which map not be null
+         * @param kmsProviderSslContextMap the KMS provider to SSLContext map, which may not be null
          * @return this
          * @see #getKmsProviderSslContextMap()
          * @since 4.4
