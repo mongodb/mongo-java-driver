@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
@@ -116,9 +117,9 @@ public final class AutoEncryptionSettings {
         }
 
         /**
-         * TODO
+         * Sets the KMS provider to SSLContext map
          *
-         * @param kmsProviderSslContextMap TODO
+         * @param kmsProviderSslContextMap the KMS provider to SSLContext map, which map not be null
          * @return this
          * @see #getKmsProviderSslContextMap()
          * @since 4.4
@@ -271,13 +272,18 @@ public final class AutoEncryptionSettings {
     }
 
     /**
-     * TODO
+     * Gets the KMS provider to SSLContext map.
      *
-     * @return TODO
+     * <p>
+     * If a KMS provider is mapped to a non-null {@link SSLContext}, the context will be used to establish a TLS connection to the KMS.
+     * Otherwise, the default context will be used.
+     * </p>
+     *
+     * @return the KMS provider to SSLContext map
      * @since 4.4
      */
     public Map<String, SSLContext> getKmsProviderSslContextMap() {
-        return kmsProviderSslContextMap;
+        return unmodifiableMap(kmsProviderSslContextMap);
     }
 
     /**
