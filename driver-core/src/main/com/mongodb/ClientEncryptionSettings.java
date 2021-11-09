@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * The client-side settings for data key creation and explicit encryption.
@@ -200,7 +201,7 @@ public final class ClientEncryptionSettings {
      * @return map of KMS provider properties
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
-        return kmsProviders;
+        return unmodifiableMap(kmsProviders);
     }
 
     /**
@@ -215,7 +216,7 @@ public final class ClientEncryptionSettings {
      * @since 4.4
      */
     public Map<String, SSLContext> getKmsProviderSslContextMap() {
-        return kmsProviderSslContextMap;
+        return unmodifiableMap(kmsProviderSslContextMap);
     }
 
     private ClientEncryptionSettings(final Builder builder) {

@@ -268,7 +268,7 @@ public final class AutoEncryptionSettings {
      * @return map of KMS provider properties
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
-        return kmsProviders;
+        return unmodifiableMap(kmsProviders);
     }
 
     /**
