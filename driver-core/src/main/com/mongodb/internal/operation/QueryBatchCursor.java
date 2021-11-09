@@ -27,6 +27,8 @@ import com.mongodb.ServerApi;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerType;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
@@ -60,9 +62,11 @@ import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
+    private static final Logger LOGGER = Loggers.getLogger("operation");
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private static final String CURSOR = "cursor";
     private static final String POST_BATCH_RESUME_TOKEN = "postBatchResumeToken";
@@ -318,6 +322,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private ServerCursor initFromQueryResult(final QueryResult<T> queryResult) {
         nextBatch = queryResult.getResults().isEmpty() ? null : queryResult.getResults();
         count += queryResult.getResults().size();
+        LOGGER.debug(format("Received batch of %d documents with cursorId %d from server %s", queryResult.getResults().size(),
+                queryResult.getCursorId(), queryResult.getAddress()));
         return queryResult.getCursor();
     }
 
