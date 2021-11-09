@@ -302,7 +302,8 @@ class Crypt implements Closeable {
     }
 
     private void decryptKey(final MongoKeyDecryptor keyDecryptor) throws IOException {
-        InputStream inputStream = keyManagementService.stream(keyDecryptor.getHostName(), keyDecryptor.getMessage());
+        InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
+                keyDecryptor.getMessage());
         try {
             int bytesNeeded = keyDecryptor.bytesNeeded();
 
