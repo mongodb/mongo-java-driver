@@ -42,22 +42,22 @@ public class ReadPreferenceWithFallbackServerSelectorTest {
 
     @Test
     public void shouldSelectCorrectServersWhenAtLeastOneServerIsOlderThanMinimum() {
-      ReadPreferenceWithFallbackServerSelector selector =
-        new ReadPreferenceWithFallbackServerSelector(
-            ReadPreference.secondary(), FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary());
+        ReadPreferenceWithFallbackServerSelector selector =
+                new ReadPreferenceWithFallbackServerSelector(
+                        ReadPreference.secondary(), FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary());
 
-      ClusterDescription clusterDescription = new ClusterDescription(
-              ClusterConnectionMode.MULTIPLE,
-              ClusterType.REPLICA_SET,
-              asList(
-                      builder().ok(true).state(CONNECTED).type(REPLICA_SET_PRIMARY).address(new ServerAddress("localhost:27017"))
-                              .maxWireVersion(FOUR_DOT_FOUR_WIRE_VERSION).build(),
-                      builder().ok(true).state(CONNECTED).type(REPLICA_SET_SECONDARY).address(new ServerAddress("localhost:27018"))
-                              .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION).build()));
-      assertEquals(clusterDescription.getServerDescriptions().stream()
-              .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_PRIMARY).collect(toList()),
-              selector.select(clusterDescription));
-      assertEquals(ReadPreference.primary(), selector.getAppliedReadPreference());
+        ClusterDescription clusterDescription = new ClusterDescription(
+                ClusterConnectionMode.MULTIPLE,
+                ClusterType.REPLICA_SET,
+                asList(
+                        builder().ok(true).state(CONNECTED).type(REPLICA_SET_PRIMARY).address(new ServerAddress("localhost:27017"))
+                                .maxWireVersion(FOUR_DOT_FOUR_WIRE_VERSION).build(),
+                        builder().ok(true).state(CONNECTED).type(REPLICA_SET_SECONDARY).address(new ServerAddress("localhost:27018"))
+                                .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION).build()));
+        assertEquals(clusterDescription.getServerDescriptions().stream()
+                        .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_PRIMARY).collect(toList()),
+                selector.select(clusterDescription));
+        assertEquals(ReadPreference.primary(), selector.getAppliedReadPreference());
     }
 
     @Test
@@ -67,17 +67,17 @@ public class ReadPreferenceWithFallbackServerSelectorTest {
                         ReadPreference.secondary(), FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary());
 
         ClusterDescription clusterDescription = new ClusterDescription(
-              ClusterConnectionMode.MULTIPLE,
-              ClusterType.REPLICA_SET,
-              asList(
-                      builder().ok(true).state(CONNECTED).type(REPLICA_SET_PRIMARY).address(new ServerAddress("localhost:27017"))
-                              .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION).build(),
-                      builder().ok(true).state(CONNECTED).type(REPLICA_SET_SECONDARY).address(new ServerAddress("localhost:27018"))
-                              .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION).build()));
-      assertEquals(clusterDescription.getServerDescriptions().stream()
-                      .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_SECONDARY).collect(toList()),
-              selector.select(clusterDescription));
-      assertEquals(ReadPreference.secondary(), selector.getAppliedReadPreference());
+                ClusterConnectionMode.MULTIPLE,
+                ClusterType.REPLICA_SET,
+                asList(
+                        builder().ok(true).state(CONNECTED).type(REPLICA_SET_PRIMARY).address(new ServerAddress("localhost:27017"))
+                                .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION).build(),
+                        builder().ok(true).state(CONNECTED).type(REPLICA_SET_SECONDARY).address(new ServerAddress("localhost:27018"))
+                                .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION).build()));
+        assertEquals(clusterDescription.getServerDescriptions().stream()
+                        .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_SECONDARY).collect(toList()),
+                selector.select(clusterDescription));
+        assertEquals(ReadPreference.secondary(), selector.getAppliedReadPreference());
     }
 
     @Test
@@ -87,29 +87,29 @@ public class ReadPreferenceWithFallbackServerSelectorTest {
                         ReadPreference.secondary(), FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary());
 
         ClusterDescription clusterDescription = new ClusterDescription(
-              ClusterConnectionMode.MULTIPLE,
-              ClusterType.REPLICA_SET,
-              asList(builder().ok(false).state(CONNECTING).address(new ServerAddress("localhost:27017")).build(),
-                      builder().ok(false).state(CONNECTING).address(new ServerAddress("localhost:27018")).build()));
-      assertEquals(emptyList(), selector.select(clusterDescription));
-      assertEquals(ReadPreference.secondary(), selector.getAppliedReadPreference());
+                ClusterConnectionMode.MULTIPLE,
+                ClusterType.REPLICA_SET,
+                asList(builder().ok(false).state(CONNECTING).address(new ServerAddress("localhost:27017")).build(),
+                        builder().ok(false).state(CONNECTING).address(new ServerAddress("localhost:27018")).build()));
+        assertEquals(emptyList(), selector.select(clusterDescription));
+        assertEquals(ReadPreference.secondary(), selector.getAppliedReadPreference());
 
-      // when there is one connecting server, and a primary and secondary with maxWireVersion >= minWireVersion, apply read preference
-      clusterDescription = new ClusterDescription(
-              ClusterConnectionMode.MULTIPLE,
-              ClusterType.REPLICA_SET,
-              asList(
-                      builder().ok(false).state(CONNECTING).address(new ServerAddress("localhost:27017")).build(),
-                      builder().ok(true).state(CONNECTED).type(REPLICA_SET_PRIMARY).address(new ServerAddress("localhost:27018"))
-                              .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION)
-                              .build(),
-                      builder().ok(true).state(CONNECTED).type(REPLICA_SET_SECONDARY).address(new ServerAddress("localhost:27019"))
-                              .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION)
-                              .build()));
-      List<ServerDescription> serverDescriptionList = selector.select(clusterDescription);
-      assertEquals(clusterDescription.getServerDescriptions().stream()
-              .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_SECONDARY).collect(toList()),
-              serverDescriptionList);
-      assertEquals(ReadPreference.secondary(), selector.getAppliedReadPreference());
-  }
+        // when there is one connecting server, and a primary and secondary with maxWireVersion >= minWireVersion, apply read preference
+        clusterDescription = new ClusterDescription(
+                ClusterConnectionMode.MULTIPLE,
+                ClusterType.REPLICA_SET,
+                asList(
+                        builder().ok(false).state(CONNECTING).address(new ServerAddress("localhost:27017")).build(),
+                        builder().ok(true).state(CONNECTED).type(REPLICA_SET_PRIMARY).address(new ServerAddress("localhost:27018"))
+                                .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION)
+                                .build(),
+                        builder().ok(true).state(CONNECTED).type(REPLICA_SET_SECONDARY).address(new ServerAddress("localhost:27019"))
+                                .maxWireVersion(FIVE_DOT_ZERO_WIRE_VERSION)
+                                .build()));
+        List<ServerDescription> serverDescriptionList = selector.select(clusterDescription);
+        assertEquals(clusterDescription.getServerDescriptions().stream()
+                        .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_SECONDARY).collect(toList()),
+                serverDescriptionList);
+        assertEquals(ReadPreference.secondary(), selector.getAppliedReadPreference());
+    }
 }
