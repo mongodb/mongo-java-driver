@@ -74,6 +74,7 @@ public class MongoClientOptions {
     private final int maxWaitTime;
     private final int maxConnectionIdleTime;
     private final int maxConnectionLifeTime;
+    private final int maxConnecting;
 
     private final int connectTimeout;
     private final int socketTimeout;
@@ -111,6 +112,7 @@ public class MongoClientOptions {
         maxWaitTime = builder.maxWaitTime;
         maxConnectionIdleTime = builder.maxConnectionIdleTime;
         maxConnectionLifeTime = builder.maxConnectionLifeTime;
+        maxConnecting = builder.maxConnecting;
         connectTimeout = builder.connectTimeout;
         socketTimeout = builder.socketTimeout;
         readPreference = builder.readPreference;
@@ -145,7 +147,7 @@ public class MongoClientOptions {
                 .maxWaitTime(getMaxWaitTime(), MILLISECONDS)
                 .maxConnectionIdleTime(getMaxConnectionIdleTime(), MILLISECONDS)
                 .maxConnectionLifeTime(getMaxConnectionLifeTime(), MILLISECONDS)
-                .maxConnecting(builder.maxConnecting);
+                .maxConnecting(getMaxConnecting());
 
         for (ConnectionPoolListener connectionPoolListener : builder.connectionPoolListeners) {
             connectionPoolSettingsBuilder.addConnectionPoolListener(connectionPoolListener);
@@ -387,7 +389,7 @@ public class MongoClientOptions {
      * @since 4.4
      */
     public int getMaxConnecting() {
-        return connectionPoolSettings.getMaxConnecting();
+        return maxConnecting;
     }
 
     /**
@@ -827,6 +829,9 @@ public class MongoClientOptions {
         if (maxConnectionLifeTime != that.maxConnectionLifeTime) {
             return false;
         }
+        if (maxConnecting != that.maxConnecting) {
+            return false;
+        }
         if (maxConnectionsPerHost != that.maxConnectionsPerHost) {
             return false;
         }
@@ -904,9 +909,7 @@ public class MongoClientOptions {
         if (serverApi != null ? !serverApi.equals(that.serverApi) : that.serverApi != null) {
             return false;
         }
-        if (!connectionPoolSettings.equals(that.connectionPoolSettings)) {
-            return false;
-        }
+
         return true;
     }
 
@@ -929,6 +932,7 @@ public class MongoClientOptions {
         result = 31 * result + maxWaitTime;
         result = 31 * result + maxConnectionIdleTime;
         result = 31 * result + maxConnectionLifeTime;
+        result = 31 * result + maxConnecting;
         result = 31 * result + connectTimeout;
         result = 31 * result + socketTimeout;
         result = 31 * result + (sslEnabled ? 1 : 0);
@@ -946,7 +950,6 @@ public class MongoClientOptions {
         result = 31 * result + compressorList.hashCode();
         result = 31 * result + (autoEncryptionSettings != null ? autoEncryptionSettings.hashCode() : 0);
         result = 31 * result + (serverApi != null ? serverApi.hashCode() : 0);
-        result = 31 * result + connectionPoolSettings.hashCode();
         return result;
     }
 
