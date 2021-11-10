@@ -58,7 +58,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
-import static com.mongodb.internal.connection.DefaultConnectionPool.MAX_CONNECTING;
 import static java.lang.Long.MAX_VALUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -81,6 +80,7 @@ import static org.mockito.Mockito.withSettings;
 public class DefaultConnectionPoolTest {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress());
     private static final long TEST_WAIT_TIMEOUT_MILLIS = SECONDS.toMillis(5);
+    private static final int DEFAULT_MAX_CONNECTING = ConnectionPoolSettings.builder().build().getMaxConnecting();
 
     private TestInternalConnectionFactory connectionFactory;
 
@@ -331,11 +331,15 @@ public class DefaultConnectionPoolTest {
         return Stream.of(// variants marked with (*) have proved their usefulness by detecting bugs
                 Arguments.of(0, 1, true, 8, true, false, 0.02f, 0, 0),
                 Arguments.of(0, 1, false, 8, false, true, 0.02f, 0, 0), // (*)
-                Arguments.of(MAX_CONNECTING, MAX_CONNECTING, true, 8, true, true, 0, 0, 0),
-                Arguments.of(MAX_CONNECTING + 1, MAX_CONNECTING + 5, true, 2 * (MAX_CONNECTING + 5), true, true, 0.02f, 0, 0),
-                Arguments.of(MAX_CONNECTING + 5, MAX_CONNECTING + 5, false, 2 * (MAX_CONNECTING + 5), true, true, 0.02f, 0, 0), // (*)
-                Arguments.of(MAX_CONNECTING + 1, MAX_CONNECTING + 5, false, 2 * (MAX_CONNECTING + 5), true, true, 0.3f, 0.1f, 0.1f),
-                Arguments.of(MAX_CONNECTING + 1, MAX_CONNECTING + 5, true, 2 * (MAX_CONNECTING + 5), true, true, 0, 0.5f, 0.05f));
+                Arguments.of(DEFAULT_MAX_CONNECTING, DEFAULT_MAX_CONNECTING, true, 8, true, true, 0, 0, 0),
+                Arguments.of(DEFAULT_MAX_CONNECTING + 1, DEFAULT_MAX_CONNECTING + 5, true, 2 * (DEFAULT_MAX_CONNECTING + 5),
+                        true, true, 0.02f, 0, 0),
+                Arguments.of(DEFAULT_MAX_CONNECTING + 5, DEFAULT_MAX_CONNECTING + 5, false, 2 * (DEFAULT_MAX_CONNECTING + 5),
+                        true, true, 0.02f, 0, 0), // (*)
+                Arguments.of(DEFAULT_MAX_CONNECTING + 1, DEFAULT_MAX_CONNECTING + 5, false, 2 * (DEFAULT_MAX_CONNECTING + 5),
+                        true, true, 0.3f, 0.1f, 0.1f),
+                Arguments.of(DEFAULT_MAX_CONNECTING + 1, DEFAULT_MAX_CONNECTING + 5, true, 2 * (DEFAULT_MAX_CONNECTING + 5),
+                        true, true, 0, 0.5f, 0.05f));
     }
 
     @Test
@@ -346,14 +350,15 @@ public class DefaultConnectionPoolTest {
         TestConnectionPoolListener listener = new TestConnectionPoolListener();
         provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory,
                 ConnectionPoolSettings.builder()
-                    .maxSize(MAX_CONNECTING + maxAvailableConnections)
+                    .maxSize(DEFAULT_MAX_CONNECTING + maxAvailableConnections)
                     .addConnectionPoolListener(listener)
                     .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
                     .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                     .build(),
                 mockSdamProvider());
         provider.ready();
-        acquireOpenPermits(provider, MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_CALLBACK, controllableConnFactory, listener);
+        acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_CALLBACK,
+                controllableConnFactory, listener);
         assertUseConcurrently(provider, 2 * maxAvailableConnections,
                 true, true,
                 0.02f, 0, 0,
@@ -364,7 +369,7 @@ public class DefaultConnectionPoolTest {
      * The idea of this test is as follows:
      * <ol>
      *     <li>Check out some connections from the pool
-     *     ({@link DefaultConnectionPool#MAX_CONNECTING} connections must not be checked out to make the next step possible).</li>
+     *     ({@link #DEFAULT_MAX_CONNECTING} connections must not be checked out to make the next step possible).</li>
      *     <li>Acquire all permits to open a connection and leave them acquired.</li>
      *     <li>Check in the checked out connections and concurrently check them out again.</li>
      * </ol>
@@ -380,7 +385,7 @@ public class DefaultConnectionPoolTest {
         TestConnectionPoolListener listener = new TestConnectionPoolListener();
         provider = new DefaultConnectionPool(SERVER_ID, controllableConnFactory.factory,
                 ConnectionPoolSettings.builder()
-                    .maxSize(MAX_CONNECTING
+                    .maxSize(DEFAULT_MAX_CONNECTING
                             + openConnectionsCount
                             /* This wiggle room is needed to open opportunities to create new connections from the standpoint of
                              * the max pool size, and then check that no connections were created nonetheless. */
@@ -395,7 +400,7 @@ public class DefaultConnectionPoolTest {
         for (int i = 0; i < openConnectionsCount; i++) {
             connections.add(provider.get(0, NANOSECONDS));
         }
-        acquireOpenPermits(provider, MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener);
+        acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener);
         int previousIdx = 0;
         // concurrently check in / check out and assert the hand-over mechanism works
         for (int idx = 0; idx < connections.size(); idx += maxConcurrentlyHandedOver) {
@@ -542,7 +547,7 @@ public class DefaultConnectionPoolTest {
                                            final InfiniteCheckoutEmulation infiniteEmulation,
                                            final ControllableConnectionFactory controllableConnFactory,
                                            final TestConnectionPoolListener listener) throws TimeoutException, InterruptedException {
-        assertTrue(openPermitsCount <= MAX_CONNECTING);
+        assertTrue(openPermitsCount <= DEFAULT_MAX_CONNECTING);
         int initialCreatedEventCount = listener.countEvents(ConnectionCreatedEvent.class);
         switch (infiniteEmulation) {
             case INFINITE_CALLBACK: {
