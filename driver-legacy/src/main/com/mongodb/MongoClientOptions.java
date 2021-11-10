@@ -25,7 +25,9 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
@@ -142,7 +144,8 @@ public class MongoClientOptions {
                 .maxSize(getConnectionsPerHost())
                 .maxWaitTime(getMaxWaitTime(), MILLISECONDS)
                 .maxConnectionIdleTime(getMaxConnectionIdleTime(), MILLISECONDS)
-                .maxConnectionLifeTime(getMaxConnectionLifeTime(), MILLISECONDS);
+                .maxConnectionLifeTime(getMaxConnectionLifeTime(), MILLISECONDS)
+                .maxConnecting(builder.maxConnecting);
 
         for (ConnectionPoolListener connectionPoolListener : builder.connectionPoolListeners) {
             connectionPoolSettingsBuilder.addConnectionPoolListener(connectionPoolListener);
@@ -369,6 +372,22 @@ public class MongoClientOptions {
      */
     public int getMaxConnectionLifeTime() {
         return maxConnectionLifeTime;
+    }
+
+    /**
+     * The maximum number of connections a pool may be establishing concurrently.
+     * Establishment of a connection is a part of its life cycle
+     * starting after a {@link ConnectionCreatedEvent} and ending before a {@link ConnectionReadyEvent}.
+     * <p>
+     * Default is 2.
+     *
+     * @return The maximum number of connections a pool may be establishing concurrently.
+     * @see Builder#maxConnecting(int)
+     * @see ConnectionPoolSettings#getMaxConnecting()
+     * @since 4.4
+     */
+    public int getMaxConnecting() {
+        return connectionPoolSettings.getMaxConnecting();
     }
 
     /**
@@ -885,7 +904,9 @@ public class MongoClientOptions {
         if (serverApi != null ? !serverApi.equals(that.serverApi) : that.serverApi != null) {
             return false;
         }
-
+        if (!connectionPoolSettings.equals(that.connectionPoolSettings)) {
+            return false;
+        }
         return true;
     }
 
@@ -925,6 +946,7 @@ public class MongoClientOptions {
         result = 31 * result + compressorList.hashCode();
         result = 31 * result + (autoEncryptionSettings != null ? autoEncryptionSettings.hashCode() : 0);
         result = 31 * result + (serverApi != null ? serverApi.hashCode() : 0);
+        result = 31 * result + connectionPoolSettings.hashCode();
         return result;
     }
 
@@ -1001,6 +1023,7 @@ public class MongoClientOptions {
         private int maxWaitTime = 1000 * 60 * 2;
         private int maxConnectionIdleTime;
         private int maxConnectionLifeTime;
+        private int maxConnecting = ConnectionPoolSettings.builder().build().getMaxConnecting();
         private int connectTimeout = 1000 * 10;
         private int socketTimeout = 0;
         private boolean sslEnabled = false;
@@ -1040,6 +1063,7 @@ public class MongoClientOptions {
             maxWaitTime = options.getMaxWaitTime();
             maxConnectionIdleTime = options.getMaxConnectionIdleTime();
             maxConnectionLifeTime = options.getMaxConnectionLifeTime();
+            maxConnecting = options.getMaxConnecting();
             connectTimeout = options.getConnectTimeout();
             socketTimeout = options.getSocketTimeout();
             readPreference = options.getReadPreference();
@@ -1080,6 +1104,7 @@ public class MongoClientOptions {
             maxWaitTime = (int) settings.getConnectionPoolSettings().getMaxWaitTime(MILLISECONDS);
             maxConnectionIdleTime = (int) settings.getConnectionPoolSettings().getMaxConnectionIdleTime(MILLISECONDS);
             maxConnectionLifeTime = (int) settings.getConnectionPoolSettings().getMaxConnectionLifeTime(MILLISECONDS);
+            maxConnecting = settings.getConnectionPoolSettings().getMaxConnecting();
             connectTimeout = settings.getSocketSettings().getConnectTimeout(MILLISECONDS);
             socketTimeout = settings.getSocketSettings().getReadTimeout(MILLISECONDS);
             readPreference = settings.getReadPreference();
@@ -1233,6 +1258,18 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets the maximum number of connections a pool may be establishing concurrently.
+         *
+         * @param maxConnecting The maximum number of connections a pool may be establishing concurrently. Must be positive.
+         * @return {@code this}.
+         * @see MongoClientOptions#getMaxConnecting()
+         * @since 4.4
+         */
+        public Builder maxConnecting(final int maxConnecting) {
+            this.maxConnecting = maxConnecting;
+            return this;
+        }
 
         /**
          * Sets the connection timeout.

@@ -19,7 +19,9 @@ package com.mongodb.connection;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionReadyEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +48,7 @@ public class ConnectionPoolSettings {
     private final long maxConnectionIdleTimeMS;
     private final long maintenanceInitialDelayMS;
     private final long maintenanceFrequencyMS;
+    private final int maxConnecting;
 
     /**
      * Gets a Builder for creating a new ConnectionPoolSettings instance.
@@ -80,6 +83,7 @@ public class ConnectionPoolSettings {
         private long maxConnectionIdleTimeMS;
         private long maintenanceInitialDelayMS;
         private long maintenanceFrequencyMS = MILLISECONDS.convert(1, MINUTES);
+        private int maxConnecting = 2;
 
         Builder() {
         }
@@ -103,6 +107,7 @@ public class ConnectionPoolSettings {
             maxConnectionIdleTimeMS = connectionPoolSettings.maxConnectionIdleTimeMS;
             maintenanceInitialDelayMS = connectionPoolSettings.maintenanceInitialDelayMS;
             maintenanceFrequencyMS = connectionPoolSettings.maintenanceFrequencyMS;
+            maxConnecting = connectionPoolSettings.maxConnecting;
             return this;
         }
 
@@ -211,6 +216,19 @@ public class ConnectionPoolSettings {
         }
 
         /**
+         * The maximum number of connections a pool may be establishing concurrently.
+         *
+         * @param maxConnecting The maximum number of connections a pool may be establishing concurrently. Must be positive.
+         * @return {@code this}.
+         * @see ConnectionPoolSettings#getMaxConnecting()
+         * @since 4.4
+         */
+        public Builder maxConnecting(final int maxConnecting) {
+            this.maxConnecting = maxConnecting;
+            return this;
+        }
+
+        /**
          * Creates a new ConnectionPoolSettings object with the settings initialised on this builder.
          *
          * @return a new ConnectionPoolSettings object
@@ -249,6 +267,11 @@ public class ConnectionPoolSettings {
             Integer maxConnectionLifeTime = connectionString.getMaxConnectionLifeTime();
             if (maxConnectionLifeTime != null) {
                 maxConnectionLifeTime(maxConnectionLifeTime, MILLISECONDS);
+            }
+
+            Integer maxConnecting = connectionString.getMaxConnecting();
+            if (maxConnecting != null) {
+                maxConnecting(maxConnecting);
             }
 
             return this;
@@ -343,6 +366,21 @@ public class ConnectionPoolSettings {
         return connectionPoolListeners;
     }
 
+    /**
+     * The maximum number of connections a pool may be establishing concurrently.
+     * Establishment of a connection is a part of its life cycle
+     * starting after a {@link ConnectionCreatedEvent} and ending before a {@link ConnectionReadyEvent}.
+     * <p>
+     * Default is 2.
+     *
+     * @return The maximum number of connections a pool may be establishing concurrently.
+     * @see Builder#maxConnecting(int)
+     * @since 4.4
+     */
+    public int getMaxConnecting() {
+        return maxConnecting;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -378,7 +416,9 @@ public class ConnectionPoolSettings {
         if (!connectionPoolListeners.equals(that.connectionPoolListeners)) {
             return false;
         }
-
+        if (maxConnecting != that.maxConnecting) {
+            return false;
+        }
         return true;
     }
 
@@ -392,6 +432,7 @@ public class ConnectionPoolSettings {
         result = 31 * result + (int) (maintenanceInitialDelayMS ^ (maintenanceInitialDelayMS >>> 32));
         result = 31 * result + (int) (maintenanceFrequencyMS ^ (maintenanceFrequencyMS >>> 32));
         result = 31 * result + connectionPoolListeners.hashCode();
+        result = 31 * result + maxConnecting;
         return result;
     }
 
@@ -406,6 +447,7 @@ public class ConnectionPoolSettings {
                 + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
                 + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
                 + ", connectionPoolListeners=" + connectionPoolListeners
+                + ", maxConnecting=" + maxConnecting
                 + '}';
     }
 
@@ -417,6 +459,7 @@ public class ConnectionPoolSettings {
         isTrue("maxConnectionIdleTime >= 0", builder.maxConnectionIdleTimeMS >= 0);
         isTrue("sizeMaintenanceFrequency > 0", builder.maintenanceFrequencyMS > 0);
         isTrue("maxSize >= minSize", builder.maxSize >= builder.minSize);
+        isTrue("maxConnecting > 0", builder.maxConnecting > 0);
 
         maxSize = builder.maxSize;
         minSize = builder.minSize;
@@ -426,5 +469,6 @@ public class ConnectionPoolSettings {
         maintenanceInitialDelayMS = builder.maintenanceInitialDelayMS;
         maintenanceFrequencyMS = builder.maintenanceFrequencyMS;
         connectionPoolListeners = unmodifiableList(builder.connectionPoolListeners);
+        maxConnecting = builder.maxConnecting;
     }
 }

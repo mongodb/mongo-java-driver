@@ -129,7 +129,7 @@ class MongoClientURISpecification extends Specification {
     def 'should correctly parse URI options for #type'() {
         given:
         def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueTimeoutMS=150&'
-                + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
+                + 'maxIdleTimeMS=200&maxLifeTimeMS=300&maxConnecting=1&replicaSet=test&'
                 + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
                 + 'safe=false&w=1&wtimeout=2500&ssl=true&readPreference=secondary&'
                 + 'sslInvalidHostNameAllowed=true&'
@@ -152,6 +152,7 @@ class MongoClientURISpecification extends Specification {
         options.getMaxWaitTime() == 150
         options.getMaxConnectionIdleTime() == 200
         options.getMaxConnectionLifeTime() == 300
+        options.getMaxConnecting() == 1
         options.getSocketTimeout() == 5500
         options.getConnectTimeout() == 2500
         options.getRequiredReplicaSetName() == 'test'
@@ -172,6 +173,7 @@ class MongoClientURISpecification extends Specification {
 
         then:
         options.getConnectionsPerHost() == 100
+        options.getMaxConnecting() == 2
         options.getMaxWaitTime() == 120000
         options.getConnectTimeout() == 10000
         options.getSocketTimeout() == 0
@@ -199,6 +201,7 @@ class MongoClientURISpecification extends Specification {
                 .maxWaitTime(200)
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
+                .maxConnecting(1)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -224,6 +227,7 @@ class MongoClientURISpecification extends Specification {
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300
         options.getMaxConnectionLifeTime() == 400
+        options.getMaxConnecting() == 1
         options.getMinConnectionsPerHost() == 30
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
@@ -346,6 +350,7 @@ class MongoClientURISpecification extends Specification {
                          + 'waitQueueTimeoutMS=150;'
                          + 'maxIdleTimeMS=200;'
                          + 'maxLifeTimeMS=300;replicaSet=test;'
+                         + 'maxConnecting=1;'
                          + 'connectTimeoutMS=2500;'
                          + 'socketTimeoutMS=5500;'
                          + 'safe=false;w=1;wtimeout=2500;'
@@ -353,7 +358,8 @@ class MongoClientURISpecification extends Specification {
                          + 'ssl=true')                               |  new MongoClientURI('mongodb://localhost/db.coll?minPoolSize=5;'
                                                                                          + 'maxPoolSize=10;'
                                                                                          + 'waitQueueTimeoutMS=150;'
-                                                                                         + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
+                                                                                         + 'maxIdleTimeMS=200&maxLifeTimeMS=300;'
+                                                                                         + 'maxConnecting=1;'
                                                                                          + '&replicaSet=test;connectTimeoutMS=2500;'
                                                                                          + 'socketTimeoutMS=5500&safe=false&w=1;'
                                                                                          + 'wtimeout=2500;fsync=true'
@@ -378,11 +384,13 @@ class MongoClientURISpecification extends Specification {
                          + '?readPreference=secondaryPreferred'
                          + '&readPreferenceTags=dc:ny,rack:1'
                          + '&readPreferenceTags=dc:ny'
-                         + '&readPreferenceTags=')                  | new MongoClientURI('mongodb://localhost/'
+                         + '&readPreferenceTags='
+                         + '&maxConnecting=1')                  | new MongoClientURI('mongodb://localhost/'
                                                                                        + '?readPreference=secondaryPreferred'
                                                                                        + '&readPreferenceTags=dc:ny'
                                                                                        + '&readPreferenceTags=dc:ny, rack:1'
-                                                                                       + '&readPreferenceTags=')
+                                                                                       + '&readPreferenceTags='
+                                                                                       + '&maxConnecting=2')
         new MongoClientURI('mongodb://ross:123@localhost/?'
                          + 'authMechanism=SCRAM-SHA-1')            | new MongoClientURI('mongodb://ross:123@localhost/?'
                                                                                        + 'authMechanism=GSSAPI')
@@ -392,7 +400,8 @@ class MongoClientURISpecification extends Specification {
         when:
         MongoClientURI uri1 = new MongoClientURI('mongodb://user:pass@host1:1,host2:2,host3:3/bar?'
                                                         + 'maxPoolSize=10;waitQueueTimeoutMS=150;'
-                                                        + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;replicaSet=test;'
+                                                        + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;maxConnecting=1;'
+                                                        + 'replicaSet=test;'
                                                         + 'connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;'
                                                         + 'slaveOk=true;safe=false;w=1;wtimeout=2600')
 
@@ -402,6 +411,7 @@ class MongoClientURISpecification extends Specification {
                                                                .minConnectionsPerHost(7)
                                                                .maxConnectionIdleTime(1000)
                                                                .maxConnectionLifeTime(2000)
+                                                               .maxConnecting(1)
                                                                .requiredReplicaSetName('test')
                                                                .connectTimeout(2500)
                                                                .socketTimeout(5500)

@@ -107,6 +107,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
+ * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
  * </ul>
  *
  * <p>Write concern configuration:</p>
@@ -372,6 +373,10 @@ public class MongoClientURI {
         Integer maxConnectionLifeTime = proxied.getMaxConnectionLifeTime();
         if (maxConnectionLifeTime != null) {
             builder.maxConnectionLifeTime(maxConnectionLifeTime);
+        }
+        Integer maxConnecting = proxied.getMaxConnecting();
+        if (maxConnecting != null) {
+            builder.maxConnecting(maxConnecting);
         }
         Integer socketTimeout = proxied.getSocketTimeout();
         if (socketTimeout != null) {

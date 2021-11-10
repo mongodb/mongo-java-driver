@@ -55,6 +55,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
+        options.getMaxConnecting() == 2
         options.getConnectTimeout() == 10000
         options.getReadPreference() == ReadPreference.primary()
         options.getServerSelector() == null
@@ -185,6 +186,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxWaitTime(200)
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
+                                        .maxConnecting(1)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
                                         .sslContext(SSLContext.getDefault())
@@ -220,6 +222,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300
         options.getMaxConnectionLifeTime() == 400
+        options.getMaxConnecting() == 1
         options.getMinConnectionsPerHost() == 30
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
@@ -241,7 +244,8 @@ class MongoClientOptionsSpecification extends Specification {
 
         def connectionPoolSettings = ConnectionPoolSettings.builder().maxSize(500).minSize(30)
                 .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
-                .maxConnectionIdleTime(300, MILLISECONDS).build()
+                .maxConnectionIdleTime(300, MILLISECONDS)
+                .maxConnecting(options.getMaxConnecting()).build()
         def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS)
                 .readTimeout(700, MILLISECONDS)
                 .build()
@@ -320,6 +324,7 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getMaxWaitTime() == 200
         optionsFromSettings.getMaxConnectionIdleTime() == 300
         optionsFromSettings.getMaxConnectionLifeTime() == 400
+        optionsFromSettings.getMaxConnecting() == settings.connectionPoolSettings.maxConnecting
         optionsFromSettings.getMinConnectionsPerHost() == 30
         optionsFromSettings.getConnectionsPerHost() == 500
         optionsFromSettings.getConnectTimeout() == 100
@@ -401,6 +406,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxWaitTime(200)
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
+                .maxConnecting(1)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -699,6 +705,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxWaitTime(200)
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
+                .maxConnecting(1)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -734,7 +741,8 @@ class MongoClientOptionsSpecification extends Specification {
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry', 'commandListeners',
                         'compressorList', 'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory',
                         'dbEncoderFactory', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
-                        'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
+                        'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxConnecting',
+                        'maxWaitTime', 'minConnectionsPerHost',
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
                         'serverApi', 'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',
                         'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
