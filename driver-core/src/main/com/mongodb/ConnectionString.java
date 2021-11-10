@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
@@ -126,6 +127,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
+ * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
  * </ul>
  * <p>Write concern configuration:</p>
  * <ul>
@@ -265,6 +267,7 @@ public class ConnectionString {
     private Integer maxWaitTime;
     private Integer maxConnectionIdleTime;
     private Integer maxConnectionLifeTime;
+    private Integer maxConnecting;
     private Integer connectTimeout;
     private Integer socketTimeout;
     private Boolean sslEnabled;
@@ -446,6 +449,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
+        GENERAL_OPTIONS_KEYS.add("maxconnecting");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
 
         // Order matters here: Having tls after ssl means than the tls option will supersede the ssl option when both are set
@@ -542,6 +546,8 @@ public class ConnectionString {
                 maxConnectionIdleTime = parseInteger(value, "maxidletimems");
             } else if (key.equals("maxlifetimems")) {
                 maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
+            } else if (key.equals("maxconnecting")) {
+                maxConnecting = parseInteger(value, "maxConnecting");
             } else if (key.equals("waitqueuetimeoutms")) {
                 maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
             } else if (key.equals("connecttimeoutms")) {
@@ -1301,6 +1307,18 @@ public class ConnectionString {
     }
 
     /**
+     * Gets the maximum number of connections a pool may be establishing concurrently specified in the connection string.
+     * @return The maximum number of connections a pool may be establishing concurrently
+     * if the {@code maxConnecting} option is specified in the connection string, or {@code null} otherwise.
+     * @see ConnectionPoolSettings#getMaxConnecting()
+     * @since 4.4
+     */
+    @Nullable
+    public Integer getMaxConnecting() {
+        return maxConnecting;
+    }
+
+    /**
      * Gets the socket connect timeout specified in the connection string.
      * @return the socket connect timeout
      */
@@ -1445,6 +1463,7 @@ public class ConnectionString {
                 && Objects.equals(maxWaitTime, that.maxWaitTime)
                 && Objects.equals(maxConnectionIdleTime, that.maxConnectionIdleTime)
                 && Objects.equals(maxConnectionLifeTime, that.maxConnectionLifeTime)
+                && Objects.equals(maxConnecting, that.maxConnecting)
                 && Objects.equals(connectTimeout, that.connectTimeout)
                 && Objects.equals(socketTimeout, that.socketTimeout)
                 && Objects.equals(sslEnabled, that.sslEnabled)
@@ -1462,8 +1481,8 @@ public class ConnectionString {
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
-                maxConnectionIdleTime, maxConnectionLifeTime, connectTimeout, socketTimeout, sslEnabled, sslInvalidHostnameAllowed,
-                requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency, applicationName, compressorList,
-                uuidRepresentation);
+                maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
+                sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
+                applicationName, compressorList, uuidRepresentation);
     }
 }

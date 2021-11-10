@@ -200,6 +200,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getMaxWaitTime() == 150;
         connectionString.getMaxConnectionIdleTime() == 200
         connectionString.getMaxConnectionLifeTime() == 300
+        connectionString.getMaxConnecting() == 1
         connectionString.getConnectTimeout() == 2500;
         connectionString.getSocketTimeout() == 5500;
         connectionString.getWriteConcern() == new WriteConcern(1, 2500);
@@ -215,7 +216,7 @@ class ConnectionStringSpecification extends Specification {
         where:
         connectionString <<
                 [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueTimeoutMS=150&'
-                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&maxConnecting=1&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
                                             + 'safe=false&w=1&wtimeout=2500&readPreference=primary&ssl=true&'
                                             + 'sslInvalidHostNameAllowed=true&'
@@ -224,7 +225,7 @@ class ConnectionStringSpecification extends Specification {
                                             + 'heartbeatFrequencyMS=20000&'
                                             + 'appName=app1'),
                  new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
-                                            + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
+                                            + 'maxIdleTimeMS=200;maxLifeTimeMS=300;maxConnecting=1;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
                                             + 'safe=false;w=1;wtimeout=2500;readPreference=primary;ssl=true;'
                                             + 'sslInvalidHostNameAllowed=true;'
@@ -233,7 +234,7 @@ class ConnectionStringSpecification extends Specification {
                                             + 'heartbeatFrequencyMS=20000;'
                                             + 'appName=app1'),
                  new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
-                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&maxConnecting=1&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&'
                                             + 'safe=false&w=1;wtimeout=2500;readPreference=primary;ssl=true;'
@@ -419,6 +420,7 @@ class ConnectionStringSpecification extends Specification {
         then:
         connectionString.getMaxConnectionPoolSize() == null;
         connectionString.getMaxWaitTime() == null;
+        connectionString.getMaxConnecting() == null;
         connectionString.getConnectTimeout() == null;
         connectionString.getSocketTimeout() == null;
         connectionString.getWriteConcern() == null;
@@ -621,6 +623,7 @@ class ConnectionStringSpecification extends Specification {
                              + 'waitQueueTimeoutMS=150;'
                              + 'maxIdleTimeMS=200;'
                              + 'maxLifeTimeMS=300;replicaSet=test;'
+                             + 'maxConnecting=1;'
                              + 'connectTimeoutMS=2500;'
                              + 'socketTimeoutMS=5500;'
                              + 'safe=false;w=1;wtimeout=2500;'
@@ -630,7 +633,9 @@ class ConnectionStringSpecification extends Specification {
                                                                                              + 'maxPoolSize=10;'
                                                                                              + 'waitQueueTimeoutMS=150;'
                                                                                              + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
-                                                                                             + '&replicaSet=test;connectTimeoutMS=2500;'
+                                                                                             + '&replicaSet=test;'
+                                                                                             + 'maxConnecting=1;'
+                                                                                             + 'connectTimeoutMS=2500;'
                                                                                              + 'socketTimeoutMS=5500&safe=false&w=1;'
                                                                                              + 'wtimeout=2500;fsync=true'
                                                                                              + '&directConnection=true'
@@ -655,11 +660,13 @@ class ConnectionStringSpecification extends Specification {
                            + '?readPreference=secondaryPreferred'
                            + '&readPreferenceTags=dc:ny,rack:1'
                            + '&readPreferenceTags=dc:ny'
-                           + '&readPreferenceTags=')                  | new ConnectionString('mongodb://localhost/'
+                           + '&readPreferenceTags='
+                           + '&maxConnecting=1')                | new ConnectionString('mongodb://localhost/'
                                                                                            + '?readPreference=secondaryPreferred'
                                                                                            + '&readPreferenceTags=dc:ny'
                                                                                            + '&readPreferenceTags=dc:ny, rack:1'
-                                                                                           + '&readPreferenceTags=')
+                                                                                           + '&readPreferenceTags='
+                                                                                           + '&maxConnecting=2')
         new ConnectionString('mongodb://ross:123@localhost/?'
                            + 'authMechanism=SCRAM-SHA-1')            | new ConnectionString('mongodb://ross:123@localhost/?'
                                                                                           + 'authMechanism=GSSAPI')

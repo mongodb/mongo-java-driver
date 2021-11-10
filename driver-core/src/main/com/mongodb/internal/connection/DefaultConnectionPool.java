@@ -100,10 +100,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @SuppressWarnings("deprecation")
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
-    static final int MAX_CONNECTING = 2;
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
@@ -145,7 +141,7 @@ class DefaultConnectionPool implements ConnectionPool {
         this.connectionPoolListener = getConnectionPoolListener(settings);
         backgroundMaintenance = new BackgroundMaintenanceManager();
         connectionPoolCreated(connectionPoolListener, serverId, settings);
-        openConcurrencyLimiter = new OpenConcurrencyLimiter(MAX_CONNECTING);
+        openConcurrencyLimiter = new OpenConcurrencyLimiter(settings.getMaxConnecting());
         asyncWorkManager = new AsyncWorkManager(internalSettings.isPrestartAsyncWorkManager());
         stateAndGeneration = new StateAndGeneration();
         connectionGenerationSupplier = new ConnectionGenerationSupplier() {
