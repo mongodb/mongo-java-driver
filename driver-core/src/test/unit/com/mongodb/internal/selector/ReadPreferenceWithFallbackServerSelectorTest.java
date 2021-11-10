@@ -40,13 +40,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ReadPreferenceWithFallbackServerSelectorTest {
 
-  @Test
-  public void shouldSelectCorrectServers() {
+    @Test
+    public void shouldSelectCorrectServersWhenAtLeastOneServerIsOlderThanMinimum() {
       ReadPreferenceWithFallbackServerSelector selector =
         new ReadPreferenceWithFallbackServerSelector(
             ReadPreference.secondary(), FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary());
 
-      // when at least one server maxWireVersion < minWireVersion, fallback
       ClusterDescription clusterDescription = new ClusterDescription(
               ClusterConnectionMode.MULTIPLE,
               ClusterType.REPLICA_SET,
@@ -59,9 +58,15 @@ public class ReadPreferenceWithFallbackServerSelectorTest {
               .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_PRIMARY).collect(toList()),
               selector.select(clusterDescription));
       assertEquals(ReadPreference.primary(), selector.getAppliedReadPreference());
+    }
 
-      // when all servers maxWireVersion >= minWireVersion, apply read preference
-      clusterDescription = new ClusterDescription(
+    @Test
+    public void shouldSelectCorrectServersWhenAllServersAreAtLeastMinimum() {
+        ReadPreferenceWithFallbackServerSelector selector =
+                new ReadPreferenceWithFallbackServerSelector(
+                        ReadPreference.secondary(), FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary());
+
+        ClusterDescription clusterDescription = new ClusterDescription(
               ClusterConnectionMode.MULTIPLE,
               ClusterType.REPLICA_SET,
               asList(
@@ -73,9 +78,15 @@ public class ReadPreferenceWithFallbackServerSelectorTest {
                       .filter(serverDescription -> serverDescription.getType() == REPLICA_SET_SECONDARY).collect(toList()),
               selector.select(clusterDescription));
       assertEquals(ReadPreference.secondary(), selector.getAppliedReadPreference());
+    }
 
-      // when no servers are discovered, apply read preference
-      clusterDescription = new ClusterDescription(
+    @Test
+    public void shouldSelectCorrectServersWhenNoServersHaveBeenDiscovered() {
+        ReadPreferenceWithFallbackServerSelector selector =
+                new ReadPreferenceWithFallbackServerSelector(
+                        ReadPreference.secondary(), FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary());
+
+        ClusterDescription clusterDescription = new ClusterDescription(
               ClusterConnectionMode.MULTIPLE,
               ClusterType.REPLICA_SET,
               asList(builder().ok(false).state(CONNECTING).address(new ServerAddress("localhost:27017")).build(),

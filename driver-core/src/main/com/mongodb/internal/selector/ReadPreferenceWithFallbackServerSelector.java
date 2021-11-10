@@ -41,7 +41,7 @@ public class ReadPreferenceWithFallbackServerSelector implements ServerSelector 
 
     @Override
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        if (hasAnyPreMinWireVersionServers(clusterDescription)) {
+        if (clusterContainsOlderServers(clusterDescription)) {
             appliedReadPreference = fallbackReadPreference;
             return new ReadPreferenceServerSelector(fallbackReadPreference).select(clusterDescription);
         } else {
@@ -54,7 +54,7 @@ public class ReadPreferenceWithFallbackServerSelector implements ServerSelector 
         return appliedReadPreference;
     }
 
-    private boolean hasAnyPreMinWireVersionServers(final ClusterDescription clusterDescription) {
+    private boolean clusterContainsOlderServers(final ClusterDescription clusterDescription) {
         return clusterDescription.getServerDescriptions().stream()
                 .filter(serverDescription -> serverDescription.getState() == ServerConnectionState.CONNECTED)
                 .anyMatch(serverDescription -> serverDescription.getMaxWireVersion() < minWireVersion);
