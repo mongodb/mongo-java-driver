@@ -737,8 +737,8 @@ class MongoClientOptionsSpecification extends Specification {
     def 'should only have the following fields in the builder'() {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
-        def actual = MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name.sort()
-        def expected = ['applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry', 'commandListeners',
+        def actual = new HashSet((MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name))
+        def expected = new HashSet(['applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry', 'commandListeners',
                         'compressorList', 'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory',
                         'dbEncoderFactory', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxConnecting',
@@ -746,7 +746,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
                         'serverApi', 'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',
                         'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
-                        'uuidRepresentation', 'writeConcern']
+                        'uuidRepresentation', 'writeConcern'])
 
         then:
         actual == expected

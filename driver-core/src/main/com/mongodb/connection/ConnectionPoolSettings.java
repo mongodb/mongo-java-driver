@@ -371,7 +371,7 @@ public class ConnectionPoolSettings {
      * Establishment of a connection is a part of its life cycle
      * starting after a {@link ConnectionCreatedEvent} and ending before a {@link ConnectionReadyEvent}.
      * <p>
-     * Default is 2.
+     * Default is 2.</p>
      *
      * @return The maximum number of connections a pool may be establishing concurrently.
      * @see Builder#maxConnecting(int)
