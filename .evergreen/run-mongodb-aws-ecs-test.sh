@@ -12,6 +12,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 ############################################
 #            Main Program                  #
 ############################################
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 if [[ -z "$1" ]]; then
     echo "usage: $0 <MONGODB_URI>"
@@ -34,10 +36,6 @@ if ! which git ; then
 fi
 
 cd src
-
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
-
 ./gradlew -version
 
 echo "Running tests..."
