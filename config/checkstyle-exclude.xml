@@ -19,12 +19,10 @@
 <!DOCTYPE suppressions PUBLIC
         "-//Puppy Crawl//DTD Suppressions 1.1//EN"
         "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
-<suppressions>
-    <!-- vendored code -->
-    <suppress checks="[a-zA-Z0-9]*" files="com[\\/]mongodb[\\/]internal[\\/]connection[\\/]tlschannel[\\/]"/>
 
-    <!-- MongoDriverVersion (generated code) -->
-    <suppress checks="[a-zA-Z0-9]*" files="com[\\/]mongodb[\\/]internal[\\/]build[\\/]MongoDriverVersion.java" />
+<suppressions>
+
+    <suppress checks="[a-zA-Z0-9]*" files="com[\\/]mongodb[\\/]internal[\\/]connection[\\/]tlschannel[\\/]"/>
 
     <suppress checks="MethodLength" files="QuickTour"/>
     <suppress checks="Regexp" files="Tour"/>
@@ -61,10 +59,6 @@
 
     <!--Do not check test classes -->
     <suppress checks="Javadoc*" files=".*test.*"/>
-
-    <!--Do not check tour / helpers classes -->
-    <suppress checks="Javadoc*" files=".*tour.*"/>
-    <suppress checks="Javadoc*" files=".*helpers.*"/>
 
     <!--Do not check The GridFSTour -->
     <suppress checks="Regexp" files="GridFSTour"/>

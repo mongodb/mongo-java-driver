@@ -23,26 +23,6 @@
         <Bug code="EI,EI2"/>
     </Match>
 
-    <Match>
-        <Class name="org.bson.types.ObjectId"/>
-        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
-    </Match>
-
-    <Match>
-        <Class name="com.mongodb.internal.connection.AwsAuthenticator$AwsSaslClient"/>
-        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
-    </Match>
-
-    <Match>
-        <Class name="com.mongodb.internal.connection.ScramShaAuthenticator$DefaultRandomStringGenerator"/>
-        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
-    </Match>
-
-    <Match>
-        <Class name="org.bson.codecs.BsonValueCodecProvider"/>
-        <Method name="getBsonTypeClassMap"/>
-        <Bug pattern="MS_EXPOSE_REP"/>
-    </Match>
 
     <!-- these specific issues are deliberate design decisions -->
 
