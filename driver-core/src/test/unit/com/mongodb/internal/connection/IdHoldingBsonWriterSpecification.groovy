@@ -88,6 +88,32 @@ class IdHoldingBsonWriterSpecification extends Specification {
         encodedDocument == document
     }
 
+    def 'serialize _id documents containing arrays'() {
+        def bsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
+        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter)
+        BsonDocument document = BsonDocument.parse(json)
+
+        when:
+        new BsonDocumentCodec().encode(idTrackingBsonWriter, document, EncoderContext.builder()
+                .isEncodingCollectibleDocument(true).build())
+        def encodedDocument = getEncodedDocument(bsonBinaryWriter.getBsonOutput())
+
+        then:
+        encodedDocument == document
+
+        where:
+        json << ['{"_id": {"a": []}, "b": 123}',
+                 '{"_id": {"a": [1, 2]}, "b": 123}',
+                 '{"_id": {"a": [[[[1]]]]}, "b": 123}',
+                 '{"_id": {"a": [{"a": [1, 2]}]}, "b": 123}',
+                 '{"_id": {"a": {"a": [1, 2]}}, "b": 123}',
+                 '{"_id": [], "b": 123}',
+                 '{"_id": [1, 2], "b": 123}',
+                 '{"_id": [[1], [[2]]], "b": 123}',
+                 '{"_id": [{"a": 1}], "b": 123}',
+                 '{"_id": [{"a": [{"b": 123}]}]}']
+    }
+
     private static BsonDocument getEncodedDocument(BsonOutput buffer) {
         new BsonDocumentCodec().decode(new BsonBinaryReader(buffer.getByteBuffers().get(0).asNIO()),
                 DecoderContext.builder().build())
