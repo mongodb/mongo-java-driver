@@ -39,8 +39,7 @@ if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROV
   readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
 fi
 
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 ############################################
 #            Functions                     #

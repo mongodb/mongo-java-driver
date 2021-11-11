@@ -10,8 +10,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 ############################################
 #            Main Program                  #
 ############################################
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 echo "Running KMS TLS tests"
 
 cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore

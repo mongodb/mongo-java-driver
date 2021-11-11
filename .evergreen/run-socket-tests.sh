@@ -20,8 +20,7 @@ COMPRESSOR=${COMPRESSOR:-}
 ############################################
 #            Main Program                  #
 ############################################
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 SOCKET_REGEX='(.*)localhost:([0-9]+)?(.*)'
 while [[ $MONGODB_URI =~ $SOCKET_REGEX ]]; do

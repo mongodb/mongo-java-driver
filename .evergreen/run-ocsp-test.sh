@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -o xtrace
 set -o errexit  # Exit the script with error if any of the commands fail
@@ -9,8 +9,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 OCSP_MUST_STAPLE=${OCSP_MUST_STAPLE:-}
 OCSP_TLS_SHOULD_SUCCEED=${OCSP_TLS_SHOULD_SUCCEED:-}
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 ############################################
 #            Functions                     #

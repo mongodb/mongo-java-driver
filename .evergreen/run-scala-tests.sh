@@ -13,8 +13,7 @@ SAFE_FOR_MULTI_MONGOS=${SAFE_FOR_MULTI_MONGOS:-}
 ############################################
 #            Main Program                  #
 ############################################
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 
 if [ "$SSL" != "nossl" ]; then
