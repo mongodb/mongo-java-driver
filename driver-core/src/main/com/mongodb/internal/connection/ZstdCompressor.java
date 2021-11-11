@@ -29,9 +29,11 @@ import java.util.List;
 class ZstdCompressor extends Compressor {
     ZstdCompressor() {
         try {
-            Class.forName("com.github.luben.zstd.Zstd");
+            // Trigger static class initialization so that associated blocking
+            // operations don't happen on `#compress`-invoking threads.
+            Class.forName(Zstd.class.getName());
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to initialize Zstd", e);
         }
     }
 
