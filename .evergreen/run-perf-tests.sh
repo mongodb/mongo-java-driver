@@ -11,8 +11,7 @@ tar xf parallel.tgz
 tar xf single_and_multi_document.tgz
 cd ..
 
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 export TEST_PATH="${PROJECT_DIRECTORY}/driver-performance-test-data/"
 export OUTPUT_FILE="${PROJECT_DIRECTORY}/results.json"
