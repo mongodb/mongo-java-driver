@@ -17,10 +17,6 @@
 package com.mongodb
 
 import com.mongodb.connection.ClusterSettings
-import com.mongodb.connection.ConnectionPoolSettings
-import com.mongodb.connection.ServerSettings
-import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.SslSettings
 import com.mongodb.event.ClusterListener
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ConnectionPoolListener
@@ -36,8 +32,6 @@ import javax.net.ssl.SSLContext
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
-import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.SECONDS
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientOptionsSpecification extends Specification {
@@ -76,62 +70,14 @@ class MongoClientOptionsSpecification extends Specification {
         options.getServerListeners() == []
         options.getServerMonitorListeners() == []
 
-        options.connectionPoolSettings == ConnectionPoolSettings.builder().build()
-        options.socketSettings == SocketSettings.builder().build()
-        options.heartbeatSocketSettings == SocketSettings.builder().connectTimeout(20, SECONDS).readTimeout(20, SECONDS).build()
-        options.serverSettings == ServerSettings.builder().heartbeatFrequency(10000, MILLISECONDS)
-                                                .minHeartbeatFrequency(500, MILLISECONDS)
-                                                .build()
-        options.sslSettings == SslSettings.builder().build()
         options.compressorList == []
         options.getAutoEncryptionSettings() == null
         options.getServerApi() == null
     }
 
-    @SuppressWarnings('UnnecessaryObjectReferences')
     def 'should handle illegal arguments'() {
         given:
         def builder = new MongoClientOptions.Builder()
-
-        when:
-        builder.localThreshold(-1)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.heartbeatFrequency(0)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.minHeartbeatFrequency(0)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.writeConcern(null)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.readPreference(null)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.connectionsPerHost(-1)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.minConnectionsPerHost(-1)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.connectTimeout(-1)
-        then:
-        thrown(IllegalArgumentException)
 
         when:
         builder.dbDecoderFactory(null)
@@ -140,16 +86,6 @@ class MongoClientOptionsSpecification extends Specification {
 
         when:
         builder.dbEncoderFactory(null)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.compressorList(null)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.uuidRepresentation(null)
         then:
         thrown(IllegalArgumentException)
     }
@@ -239,32 +175,6 @@ class MongoClientOptionsSpecification extends Specification {
         options.getLocalThreshold() == 25
         options.getRequiredReplicaSetName() == 'test'
         !options.isCursorFinalizerEnabled()
-        options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
-        options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
-
-        def connectionPoolSettings = ConnectionPoolSettings.builder().maxSize(500).minSize(30)
-                .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
-                .maxConnectionIdleTime(300, MILLISECONDS)
-                .maxConnecting(options.getMaxConnecting()).build()
-        def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS)
-                .readTimeout(700, MILLISECONDS)
-                .build()
-        def heartbeatSocketSettings = SocketSettings.builder().connectTimeout(15, MILLISECONDS)
-                .readTimeout(20, MILLISECONDS)
-                .build()
-        def serverSettings = ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS)
-                .heartbeatFrequency(5, MILLISECONDS)
-                .addServerListener(serverListener)
-                .addServerMonitorListener(serverMonitorListener)
-                .build()
-        def sslSettings = SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
-                .context(SSLContext.getDefault()).build()
-
-        options.connectionPoolSettings == connectionPoolSettings
-        options.socketSettings == socketSettings
-        options.heartbeatSocketSettings == heartbeatSocketSettings
-        options.serverSettings == serverSettings
-        options.sslSettings == sslSettings
         options.compressorList == [MongoCompressor.createZlibCompressor()]
         options.getAutoEncryptionSettings() == autoEncryptionSettings
         options.getClusterListeners() == [clusterListener]
@@ -293,21 +203,6 @@ class MongoClientOptionsSpecification extends Specification {
         settings.readConcern == ReadConcern.MAJORITY
         settings.uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
         settings.serverApi == serverApi
-
-        settings.clusterSettings == ClusterSettings.builder()
-                .hosts([new ServerAddress('host1')])
-                .mode(SINGLE)
-                .requiredReplicaSetName('test')
-                .serverSelector(serverSelector)
-                .serverSelectionTimeout(150, MILLISECONDS)
-                .localThreshold(25, MILLISECONDS)
-                .addClusterListener(clusterListener)
-                .build()
-        settings.serverSettings == serverSettings
-        settings.connectionPoolSettings == connectionPoolSettings
-        settings.serverSettings == serverSettings
-        settings.socketSettings == socketSettings
-        settings.heartbeatSocketSettings == heartbeatSocketSettings
 
         when:
         def optionsFromSettings = MongoClientOptions.builder(settings).build()
@@ -338,13 +233,6 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getHeartbeatSocketTimeout() == 20
         optionsFromSettings.getLocalThreshold() == 25
         optionsFromSettings.getRequiredReplicaSetName() == 'test'
-        optionsFromSettings.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
-        optionsFromSettings.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
-        optionsFromSettings.connectionPoolSettings == connectionPoolSettings
-        optionsFromSettings.socketSettings == socketSettings
-        optionsFromSettings.heartbeatSocketSettings == heartbeatSocketSettings
-        optionsFromSettings.serverSettings == serverSettings
-        optionsFromSettings.sslSettings == sslSettings
         optionsFromSettings.compressorList == [MongoCompressor.createZlibCompressor()]
         optionsFromSettings.getAutoEncryptionSettings() == autoEncryptionSettings
         optionsFromSettings.getClusterListeners() == [clusterListener]
@@ -724,7 +612,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .addServerListener(Mock(ServerListener))
                 .addServerMonitorListener(Mock(ServerMonitorListener))
                 .compressorList([MongoCompressor.createZlibCompressor()])
-                .autoEncryptionSettings()
+                .autoEncryptionSettings(null)
                 .build()
 
         when:
@@ -732,24 +620,6 @@ class MongoClientOptionsSpecification extends Specification {
 
         then:
         copy == options
-    }
-
-    def 'should only have the following fields in the builder'() {
-        when:
-        // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
-        def actual = new HashSet((MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name))
-        def expected = new HashSet(['applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry', 'commandListeners',
-                        'compressorList', 'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory',
-                        'dbEncoderFactory', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
-                        'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxConnecting',
-                        'maxWaitTime', 'minConnectionsPerHost',
-                        'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
-                        'serverApi', 'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',
-                        'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
-                        'uuidRepresentation', 'writeConcern'])
-
-        then:
-        actual == expected
     }
 
     def 'should allow 0 (infinite) connectionsPerHost'() {

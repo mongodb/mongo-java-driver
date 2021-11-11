@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.connection.ClusterConnectionMode
 import org.bson.UuidRepresentation
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -240,8 +241,10 @@ class MongoClientURISpecification extends Specification {
         options.getHeartbeatSocketTimeout() == 20
         options.getLocalThreshold() == 25
         options.getRequiredReplicaSetName() == 'test'
-        options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
-        options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
+        options.asMongoClientSettings(null, null, ClusterConnectionMode.SINGLE, null)
+                .getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
+        options.asMongoClientSettings(null, null, ClusterConnectionMode.SINGLE, null)
+                .getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
         options.compressorList == [MongoCompressor.createZlibCompressor()]
         options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
     }
