@@ -137,11 +137,18 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                 }})
                 .build();
         try (ClientEncryption clientEncryption = getClientEncryption(clientEncryptionSettings)) {
+            outer:
             for (String curProvider: kmsProviders.keySet()) {
-                MongoClientException e = assertThrows(MongoClientException.class, () ->
+                Throwable e = assertThrows(MongoClientException.class, () ->
                         clientEncryption.createDataKey(curProvider, new DataKeyOptions().masterKey(
                                 BsonDocument.parse(getMasterKey(curProvider)))));
-                assertTrue(e.getMessage().contains("Don't trust anything"));
+                while (e != null) {
+                    if (e.getMessage().contains("Don't trust anything")) {
+                        break outer;
+                    }
+                    e = e.getCause();
+                }
+                fail("No exception in the cause chain contains the expected string");
             }
         }
     }
