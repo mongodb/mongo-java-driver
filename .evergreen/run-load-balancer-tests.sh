@@ -13,11 +13,13 @@ set -o errexit # Exit the script with error if any of the commands fail
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
+JDK=${JDK:-jdk8}
+
+export JAVA_HOME="/opt/java/jdk11"
 
 ############################################
 #            Main Program                  #
 ############################################
-source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 if [ "$SSL" != "nossl" ]; then
   # We generate the keystore and truststore on every run with the certs in the drivers-tools repo
@@ -36,7 +38,7 @@ fi
 
 echo "Running $AUTH tests over $SSL and connecting to $SINGLE_MONGOS_LB_URI"
 
-echo "Running tests with Java ${JAVA_VERSION}"
+echo "Running tests with ${JDK}"
 ./gradlew -version
 
 # Disabling errexit so that both gradle command will run.
@@ -44,7 +46,7 @@ echo "Running tests with Java ${JAVA_VERSION}"
 
 set +o errexit
 
-./gradlew -PjavaVersion=${JAVA_VERSION} \
+./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
   -Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_LB_URI} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-sync:test \
@@ -59,7 +61,7 @@ set +o errexit
 first=$?
 echo $first
 
-./gradlew -PjavaVersion=${JAVA_VERSION} \
+./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
   -Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_LB_URI} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-reactive-stream:test \
@@ -74,7 +76,7 @@ echo $first
 second=$?
 echo $second
 
-./gradlew -PjavaVersion=${JAVA_VERSION} \
+./gradlew -PjdkHome=/opt/java/${JDK} \
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
   -Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_LB_URI} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-core:test \

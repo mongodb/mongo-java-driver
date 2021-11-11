@@ -28,6 +28,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
+JDK=${JDK:-jdk8}
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 STREAM_TYPE=${STREAM_TYPE:-nio2}
@@ -35,11 +36,10 @@ SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 
 export ASYNC_TYPE="-Dorg.mongodb.test.async.type=${STREAM_TYPE}"
 
+export JAVA_HOME="/opt/java/jdk11"
 if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROVIDER}" != "" ]; then
   readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
 fi
-
-source "${BASH_SOURCE%/*}/javaConfig.bash"
 
 ############################################
 #            Functions                     #
@@ -128,16 +128,16 @@ fi
 
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
-echo "Running tests with Java ${JAVA_VERSION}"
+echo "Running tests with ${JDK}"
 ./gradlew -version
 
 if [ "$SLOW_TESTS_ONLY" == "true" ]; then
-    ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
               ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
               --stacktrace --info testSlowOnly
 else
-    ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
               -Dorg.mongodb.test.awsAccessKeyId=${AWS_ACCESS_KEY_ID} -Dorg.mongodb.test.awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} \
               -Dorg.mongodb.test.tmpAwsAccessKeyId=${AWS_TEMP_ACCESS_KEY_ID} -Dorg.mongodb.test.tmpAwsSecretAccessKey=${AWS_TEMP_SECRET_ACCESS_KEY} -Dorg.mongodb.test.tmpAwsSessionToken=${AWS_TEMP_SESSION_TOKEN} \
               -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
