@@ -55,7 +55,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     private BasicOutputBuffer outputBuffer;
     private String currentFieldName;
     private BsonValue id;
-    private boolean idFieldIsNested = false;
+    private boolean idFieldIsAnArray = false;
 
     public IdHoldingBsonWriter(final BsonWriter bsonWriter) {
         super(bsonWriter);
@@ -106,7 +106,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     public void writeStartArray() {
         if (isWritingId()) {
             if (getIdBsonWriter().getCurrentLevel() == -1) {
-                idFieldIsNested = true;
+                idFieldIsAnArray = true;
                 getIdBsonWriter().writeStartDocument();
                 getIdBsonWriter().writeName(ID_FIELD_NAME);
             }
@@ -131,7 +131,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     public void writeEndArray() {
         if (isWritingId()) {
             getIdBsonWriter().writeEndArray();
-            if (getIdBsonWriter().getCurrentLevel() == 0 && idFieldIsNested) {
+            if (getIdBsonWriter().getCurrentLevel() == 0 && idFieldIsAnArray) {
                 getIdBsonWriter().writeEndDocument();
                 id = new RawBsonDocument(getBytes()).get(ID_FIELD_NAME);
             }
