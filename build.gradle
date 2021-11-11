@@ -361,6 +361,9 @@ apply from: 'gradle/javadoc.gradle'
 //////////////////////////////////////////
 // Root project configuration           //
 //////////////////////////////////////////
+wrapper {
+    gradleVersion = '6.0.1'
+}
 
 if (!JavaVersion.current().isJava9Compatible()) {
     throw new GradleException("""
