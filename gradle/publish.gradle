@@ -69,7 +69,8 @@ ext {
     }
 }
 
-def publishedProjects = subprojects.findAll {!['util', 'driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
+def nonPublishProjects = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor")
+def publishedProjects = subprojects - nonPublishProjects
 def scalaProjects = publishedProjects.findAll { it.name.contains('scala') }
 def javaProjects = publishedProjects - scalaProjects
 def projectsWithManifest = publishedProjects.findAll {it.name != 'driver-legacy' }
