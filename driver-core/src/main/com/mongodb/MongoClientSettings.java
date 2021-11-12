@@ -43,6 +43,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -818,6 +819,77 @@ public final class MongoClientSettings {
     @Nullable
     public ContextProvider getContextProvider() {
         return contextProvider;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final MongoClientSettings that = (MongoClientSettings) o;
+        return retryWrites == that.retryWrites
+                && retryReads == that.retryReads
+                && heartbeatSocketTimeoutSetExplicitly == that.heartbeatSocketTimeoutSetExplicitly
+                && heartbeatConnectTimeoutSetExplicitly == that.heartbeatConnectTimeoutSetExplicitly
+                && Objects.equals(readPreference, that.readPreference)
+                && Objects.equals(writeConcern, that.writeConcern)
+                && Objects.equals(readConcern, that.readConcern)
+                && Objects.equals(credential, that.credential)
+                && Objects.equals(streamFactoryFactory, that.streamFactoryFactory)
+                && Objects.equals(commandListeners, that.commandListeners)
+                && Objects.equals(codecRegistry, that.codecRegistry)
+                && Objects.equals(clusterSettings, that.clusterSettings)
+                && Objects.equals(socketSettings, that.socketSettings)
+                && Objects.equals(heartbeatSocketSettings, that.heartbeatSocketSettings)
+                && Objects.equals(connectionPoolSettings, that.connectionPoolSettings)
+                && Objects.equals(serverSettings, that.serverSettings)
+                && Objects.equals(sslSettings, that.sslSettings)
+                && Objects.equals(applicationName, that.applicationName)
+                && Objects.equals(compressorList, that.compressorList)
+                && uuidRepresentation == that.uuidRepresentation
+                && Objects.equals(serverApi, that.serverApi)
+                && Objects.equals(autoEncryptionSettings, that.autoEncryptionSettings)
+                && Objects.equals(contextProvider, that.contextProvider);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, readConcern, credential, streamFactoryFactory,
+                commandListeners, codecRegistry, clusterSettings, socketSettings, heartbeatSocketSettings, connectionPoolSettings,
+                serverSettings, sslSettings, applicationName, compressorList, uuidRepresentation, serverApi, autoEncryptionSettings,
+                heartbeatSocketTimeoutSetExplicitly, heartbeatConnectTimeoutSetExplicitly, contextProvider);
+    }
+
+    @Override
+    public String toString() {
+        return "MongoClientSettings{"
+                + "readPreference=" + readPreference
+                + ", writeConcern=" + writeConcern
+                + ", retryWrites=" + retryWrites
+                + ", retryReads=" + retryReads
+                + ", readConcern=" + readConcern
+                + ", credential=" + credential
+                + ", streamFactoryFactory=" + streamFactoryFactory
+                + ", commandListeners=" + commandListeners
+                + ", codecRegistry=" + codecRegistry
+                + ", clusterSettings=" + clusterSettings
+                + ", socketSettings=" + socketSettings
+                + ", heartbeatSocketSettings=" + heartbeatSocketSettings
+                + ", connectionPoolSettings=" + connectionPoolSettings
+                + ", serverSettings=" + serverSettings
+                + ", sslSettings=" + sslSettings
+                + ", applicationName='" + applicationName + '\''
+                + ", compressorList=" + compressorList
+                + ", uuidRepresentation=" + uuidRepresentation
+                + ", serverApi=" + serverApi
+                + ", autoEncryptionSettings=" + autoEncryptionSettings
+                + ", heartbeatSocketTimeoutSetExplicitly=" + heartbeatSocketTimeoutSetExplicitly
+                + ", heartbeatConnectTimeoutSetExplicitly=" + heartbeatConnectTimeoutSetExplicitly
+                + ", contextProvider=" + contextProvider
+                + '}';
     }
 
     private MongoClientSettings(final Builder builder) {
