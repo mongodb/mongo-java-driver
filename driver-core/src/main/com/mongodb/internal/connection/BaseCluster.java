@@ -34,6 +34,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -372,10 +373,12 @@ abstract class BaseCluster implements Cluster {
     }
 
     private ServerSelector getCompositeServerSelector(final ServerSelector serverSelector) {
+        ServerSelector latencyMinimizingServerSelector =
+                new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS);
         if (settings.getServerSelector() == null) {
-            return serverSelector;
+            return new CompositeServerSelector(asList(serverSelector, latencyMinimizingServerSelector));
         } else {
-            return new CompositeServerSelector(asList(serverSelector, settings.getServerSelector()));
+            return new CompositeServerSelector(asList(serverSelector, settings.getServerSelector(), latencyMinimizingServerSelector));
         }
     }
 
