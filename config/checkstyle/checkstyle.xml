@@ -78,6 +78,13 @@
     <!--   <property name="fileExtensions" value="java"/> -->
     <!-- </module> -->
 
+    <!-- Checks for Size Violations.                    -->
+    <!-- See http://checkstyle.sf.net/config_sizes.html -->
+    <module name="LineLength">
+        <property name="max" value="140"/>
+        <property name="ignorePattern" value="^.*[(http://|https://)|{@see|{@link].*$"/>
+    </module>
+
     <module name="TreeWalker">
 
         <!-- Checks for Javadoc comments.                     -->
@@ -85,13 +92,12 @@
         <module name="JavadocType">
             <property name="scope" value="public"/>
         </module>
-        <module name="JavadocMethod">
+        <module name="JavadocStyle">
             <property name="scope" value="public"/>
-            <property name="allowUndeclaredRTE" value="true"/>
+            <property name="checkFirstSentence" value="false"/>
         </module>
         <!--<module name="JavadocVariable"/>-->
         <!--<module name="JavadocStyle"/>-->
-
 
         <!-- Checks for Naming Conventions.                  -->
         <!-- See http://checkstyle.sf.net/config_naming.html -->
@@ -113,14 +119,6 @@
         <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
-
-
-        <!-- Checks for Size Violations.                    -->
-        <!-- See http://checkstyle.sf.net/config_sizes.html -->
-        <module name="LineLength">
-            <property name="max" value="140"/>
-            <property name="ignorePattern" value="^.*[(http://|https://)|{@see|{@link].*$"/>
-        </module>
 
         <module name="MethodLength"/>
         <module name="ParameterNumber">
@@ -199,8 +197,6 @@
         <!--<module name="TodoComment"/>-->
         <module name="UpperEll"/>
 
-        <module name="FileContentsHolder"/>
-
         <!--System.out.println not allowed-->
         <module name="Regexp">
             <property name="format" value="System\.out\.println"/>
@@ -221,16 +217,18 @@
             <property name="illegalPattern" value="true"/>
             <property name="ignoreComments" value="true"/>
         </module>
-    </module>
-    <module name="SuppressionCommentFilter"/>
-    <module name="SuppressionCommentFilter">
-        <property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)"/>
-        <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)"/>
-        <property name="checkFormat" value="$1"/>
+
+        <module name="SuppressionCommentFilter"/>
+        <module name="SuppressionCommentFilter">
+            <property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)"/>
+            <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)"/>
+            <property name="checkFormat" value="$1"/>
+        </module>
+
     </module>
 
     <module name="SuppressionFilter">
-        <property name="file" value="${checkstyleConfigDir}/checkstyle-exclude.xml"/>
+        <property name="file" value="${config_loc}/suppressions.xml"/>
     </module>
 
 </module>
