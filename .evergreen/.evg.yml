@@ -32,7 +32,7 @@ functions:
     # Applies the subitted patch, if any
     # Deprecated. Should be removed. But still needed for certain agents (ZAP)
     - command: git.apply_patch
-    # Make an evergreen exapanstion file with dynamic values
+    # Make an evergreen expansion file with dynamic values
     - command: shell.exec
       params:
         working_dir: "src"
@@ -296,7 +296,7 @@ functions:
           export AWS_DEFAULT_REGION=us-east-1
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
-          COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" \
+          COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" \
           AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
           AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
           AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
@@ -313,7 +313,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH="${AUTH}" SSL="${SSL}" JDK="${JDK}" \
+          AUTH="${AUTH}" SSL="${SSL}" JAVA_VERSION="${JAVA_VERSION}" \
           SINGLE_MONGOS_LB_URI="${SINGLE_MONGOS_LB_URI}" \
           MULTI_MONGOS_LB_URI="${MULTI_MONGOS_LB_URI}" \
           .evergreen/run-load-balancer-tests.sh
@@ -325,7 +325,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JDK="${JDK}" \
+          JAVA_VERSION="${JAVA_VERSION}" \
           SINGLE_ATLASPROXY_SERVERLESS_URI="${SINGLE_ATLASPROXY_SERVERLESS_URI}" \
           MULTI_ATLASPROXY_SERVERLESS_URI="${MULTI_ATLASPROXY_SERVERLESS_URI}" \
           SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}" \
@@ -348,7 +348,7 @@ functions:
       working_dir: "src"
       script: |
         ${PREPARE_SHELL}
-        AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
+        AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
 
   "run scala tests":
     - command: shell.exec
@@ -357,7 +357,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" JDK="${JDK}" .evergreen/run-scala-tests.sh
+          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-scala-tests.sh
 
   "run socket tests":
     - command: shell.exec
@@ -366,7 +366,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-socket-tests.sh
+          AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-socket-tests.sh
 
   "run netty tests":
     - command: shell.exec
@@ -375,7 +375,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
+          STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-tests.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -385,7 +385,7 @@ functions:
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          JDK="jdk8" MONGODB_URI="${plain_auth_mongodb_uri}" .evergreen/run-plain-auth-test.sh
+          JAVA_VERSION="8" MONGODB_URI="${plain_auth_mongodb_uri}" .evergreen/run-plain-auth-test.sh
 
   "add aws auth variables to file":
     - command: shell.exec
@@ -437,7 +437,7 @@ functions:
             PASS=$(urlencode ${iam_auth_ecs_secret_access_key})
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
-          JDK=${JDK} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with assume role credentials":
     - command: shell.exec
@@ -466,7 +466,7 @@ functions:
             SESSION_TOKEN=$(urlencode $SESSION_TOKEN)
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
-          JDK=${JDK} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} DRIVERS_TOOLS=${DRIVERS_TOOLS} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} DRIVERS_TOOLS=${DRIVERS_TOOLS} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws EC2 credentials":
     - command: shell.exec
@@ -484,7 +484,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JDK=${JDK} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials as environment variables":
     - command: shell.exec
@@ -504,7 +504,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JDK=${JDK} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials and session token as environment variables":
     - command: shell.exec
@@ -525,7 +525,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JDK=${JDK} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
 
   "run aws ECS auth test":
     - command: shell.exec
@@ -551,7 +551,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JDK=${JDK} .evergreen/run-atlas-data-lake-test.sh
+          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-atlas-data-lake-test.sh
 
   "run-ocsp-test":
     - command: shell.exec
@@ -563,7 +563,7 @@ functions:
           CA_FILE="$DRIVERS_TOOLS/.evergreen/ocsp/${OCSP_ALGORITHM}/ca.pem" \
           OCSP_TLS_SHOULD_SUCCEED="${OCSP_TLS_SHOULD_SUCCEED}" \
           OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}" \
-          JDK="${JDK}" \
+          JAVA_VERSION="${JAVA_VERSION}" \
           sh ${PROJECT_DIRECTORY}/.evergreen/run-ocsp-test.sh
 
   "run-valid-ocsp-server-ca-responder":
@@ -650,7 +650,7 @@ functions:
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JDK=${JDK} MONGODB_URI=${gssapi_auth_mongodb_uri} KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} .evergreen/run-gssapi-auth-test.sh
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JAVA_VERSION=${JAVA_VERSION} MONGODB_URI=${gssapi_auth_mongodb_uri} KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} .evergreen/run-gssapi-auth-test.sh
 
   "run mmapv1 storage test":
     - command: shell.exec
@@ -660,7 +660,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JDK=${JDK} TOPOLOGY=${TOPOLOGY} STORAGE_ENGINE=${STORAGE_ENGINE} MONGODB_URI="${MONGODB_URI}" .evergreen/run-mmapv1-storage-test.sh
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JAVA_VERSION=${JAVA_VERSION} TOPOLOGY=${TOPOLOGY} STORAGE_ENGINE=${STORAGE_ENGINE} MONGODB_URI="${MONGODB_URI}" .evergreen/run-mmapv1-storage-test.sh
 
   "run atlas test":
     - command: shell.exec
@@ -671,7 +671,7 @@ functions:
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
           # The connection strings are pipe-delimited
-          JDK="jdk8" \
+          JAVA_VERSION="8" \
           MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
           .evergreen/run-connectivity-tests.sh
 
@@ -1507,15 +1507,15 @@ axes:
       - id: "jdk17"
         display_name: JDK17
         variables:
-          JDK: "jdk17"
+          JAVA_VERSION: "17"
       - id: "jdk11"
         display_name: JDK11
         variables:
-          JDK: "jdk11"
+          JAVA_VERSION: "11"
       - id: "jdk8"
         display_name: JDK8
         variables:
-           JDK: "jdk8"
+          JAVA_VERSION: "8"
 
   - id: scala
     display_name: SCALA

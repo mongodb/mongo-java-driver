@@ -34,6 +34,10 @@ if ! which git ; then
 fi
 
 cd src
+
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+
 ./gradlew -version
 
 echo "Running tests..."

@@ -6,10 +6,10 @@ set -o errexit  # Exit the script with error if any of the commands fail
 ############################################
 #            Main Program                  #
 ############################################
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
-echo "Compiling java driver with jdk11"
+echo "Compiling java driver"
 
-# We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk11"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/jdk17 -PxmlReports.enabled=true --info -x test -x integrationTest clean check jar testClasses docs
+./gradlew -PxmlReports.enabled=true --info -x test -x integrationTest clean check jar testClasses docs

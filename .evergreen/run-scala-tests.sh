@@ -7,15 +7,15 @@ set -o errexit  # Exit the script with error if any of the commands fail
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
-JDK=${JDK:-jdk11}
 TOPOLOGY=${TOPOLOGY:-standalone}
 SAFE_FOR_MULTI_MONGOS=${SAFE_FOR_MULTI_MONGOS:-}
-
-export JAVA_HOME="/opt/java/jdk11"
 
 ############################################
 #            Main Program                  #
 ############################################
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+
 
 if [ "$SSL" != "nossl" ]; then
   echo -e "\nSSL support not configured for Scala tests"
@@ -34,4 +34,4 @@ fi
 echo "Running scala tests with Scala $SCALA"
 
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
+./gradlew -PjavaVersion=${JAVA_VERSION} -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
