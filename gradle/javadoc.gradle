@@ -17,11 +17,11 @@ import static org.gradle.util.CollectionUtils.single
  */
 
 
-def javaMainProjects = subprojects.findAll { !['util'].contains(it.name) }
+def projectsThatDoNotPublishJavaDocs = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor")
+def javaMainProjects = subprojects - projectsThatDoNotPublishJavaDocs
 
 task docs {
-    dependsOn subprojects.collect { it.tasks.withType(Javadoc) }
-    dependsOn subprojects.collect { it.tasks.withType(ScalaDoc) }
+    dependsOn javaMainProjects.collect { it.tasks.withType(Javadoc) + it.tasks.withType(ScalaDoc) }
 }
 
 def buildDocsUrl(String version, String packageName) {
@@ -37,10 +37,12 @@ def buildDocsUrl(String version, String packageName) {
     ["http://mongodb.github.io/mongo-java-driver/${docVersion}/apidocs/${packageName}/", "${rootProject.buildDir.path}/docs/${packageName}"]
 }
 
-def utilProject = project(':util')
-allprojects {
+def tagletsProject = project(':util:taglets')
+subprojects { project ->
+    if (project in javaMainProjects) {
+
     tasks.withType(Javadoc) {
-        dependsOn utilProject.compileJava //We need taglets to be compiled
+        dependsOn tagletsProject.compileJava //We need taglets to be compiled
         exclude "**/com/mongodb/**/benchmark/**"
         exclude "**/com/mongodb/**/internal/**"
         exclude "**/org/bson/**/internal/**"
@@ -48,8 +50,8 @@ allprojects {
             author = true
             version = true
             links = ['https://docs.oracle.com/en/java/javase/11/docs/api/',
-                    'https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/']
-            tagletPath single(utilProject.sourceSets.main.output.classesDirs)
+                     'https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/']
+            tagletPath tagletsProject.sourceSets.main.output.classesDirs.head()
             taglets 'ManualTaglet'
             taglets 'DochubTaglet'
             taglets 'ServerReleaseTaglet'
@@ -110,5 +112,6 @@ allprojects {
                 }
             }
         }
+    }
     }
 }

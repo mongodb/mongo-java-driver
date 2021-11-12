@@ -54,17 +54,17 @@ ext {
 }
 
 def configDir = ext.configDir
-def coreProjects = subprojects.findAll { !['util'].contains(it.name) }
-def javaProjects = subprojects.findAll { !it.name.contains('scala') }
+def utilProjects = project(":util").allprojects
+def coreProjects = subprojects - utilProjects
 def scalaProjects = subprojects.findAll { it.name.contains('scala') }
-def javaMainProjects = javaProjects.findAll { !['util'].contains(it.name) }
+def javaProjects = subprojects - scalaProjects
+def javaMainProjects = javaProjects - utilProjects
 def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
 def javaAndScalaTestedProjects = javaCodeCheckedProjects + scalaProjects
 
 configure(coreProjects) {
     apply plugin: 'idea'
 
-    evaluationDependsOn(':util')
     group = 'org.mongodb'
     version = '4.5.0-SNAPSHOT'
 
@@ -114,7 +114,6 @@ configure(scalaProjects) {
         testImplementation('ch.qos.logback:logback-classic:1.1.3')
         testImplementation('org.reflections:reflections:0.9.10')
     }
-
 
     test{
         useJUnitPlatform {
@@ -234,7 +233,7 @@ configure(javaCodeCheckedProjects) {
         testImplementation 'org.objenesis:objenesis:1.3'
         testImplementation 'org.hamcrest:hamcrest-all:1.3'
         testImplementation 'ch.qos.logback:logback-classic:1.1.1'
-        testImplementation project(':util') //Adding categories to classpath
+        testImplementation project(':util:spock') //Adding categories to classpath
     }
 
     sourceSets {
