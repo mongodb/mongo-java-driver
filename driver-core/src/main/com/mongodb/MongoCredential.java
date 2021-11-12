@@ -293,7 +293,7 @@ public final class MongoCredential {
      * {@code "JAVA_SUBJECT"} with the value of a {@code Subject} instance.
      * <p>
      * To override the properties of the {@link javax.security.sasl.SaslClient} with which the authentication executes, add a mechanism
-     * property with the name {@code "JAVA_SASL_CLIENT_PROPERTIES"} with the value of a {@code Map<String, Object} instance containing the
+     * property with the name {@code "JAVA_SASL_CLIENT_PROPERTIES"} with the value of a {@code Map<String, Object>} instance containing the
      * necessary properties.  This can be useful if the application is customizing the default
      * {@link javax.security.sasl.SaslClientFactory}.
      *
