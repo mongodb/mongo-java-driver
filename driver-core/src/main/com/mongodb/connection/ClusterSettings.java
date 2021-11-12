@@ -22,9 +22,7 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.ServerAddressHelper;
-import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.lang.Nullable;
-import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
@@ -38,7 +36,6 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -120,7 +117,7 @@ public final class ClusterSettings {
             localThresholdMS = clusterSettings.localThresholdMS;
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
             clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
-            serverSelector = unpackServerSelector(clusterSettings.serverSelector);
+            serverSelector = clusterSettings.serverSelector;
             return this;
         }
 
@@ -315,21 +312,6 @@ public final class ClusterSettings {
                 localThreshold(localThreshold, MILLISECONDS);
             }
             return this;
-        }
-
-        private ServerSelector unpackServerSelector(final ServerSelector serverSelector) {
-            if (serverSelector instanceof CompositeServerSelector) {
-                return ((CompositeServerSelector) serverSelector).getServerSelectors().get(0);
-            }
-            return null;
-        }
-
-        private ServerSelector packServerSelector() {
-            ServerSelector latencyMinimizingServerSelector = new LatencyMinimizingServerSelector(localThresholdMS, MILLISECONDS);
-            if (serverSelector == null) {
-                return latencyMinimizingServerSelector;
-            }
-            return new CompositeServerSelector(asList(serverSelector, latencyMinimizingServerSelector));
         }
 
         /**
@@ -608,7 +590,7 @@ public final class ClusterSettings {
         requiredReplicaSetName = builder.requiredReplicaSetName;
         requiredClusterType = builder.requiredClusterType;
         localThresholdMS = builder.localThresholdMS;
-        serverSelector = builder.packServerSelector();
+        serverSelector = builder.serverSelector;
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
         clusterListeners = unmodifiableList(builder.clusterListeners);
     }
