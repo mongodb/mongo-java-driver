@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
@@ -71,6 +72,11 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
         sendNotification(serverAddress, serverType, hosts, "test");
     }
 
+    public void sendNotification(final ServerAddress serverAddress, final long roundTripTimeMillis, final ServerType serverType,
+            final List<ServerAddress> hosts) {
+        sendNotification(serverAddress, roundTripTimeMillis, serverType, hosts, "test");
+    }
+
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final ServerAddress trueAddress) {
         sendNotification(serverAddress, serverType, hosts, "test", trueAddress);
@@ -90,12 +96,17 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
                                                              true,
                                                              "test",
                                                              null,
-                                                             null).build());
+                                                             null, 1).build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName) {
         sendNotification(serverAddress, serverType, hosts, setName, (ObjectId) null);
+    }
+
+    public void sendNotification(final ServerAddress serverAddress, final long roundTripTimeMillis, final ServerType serverType,
+            final List<ServerAddress> hosts, final String setName) {
+        sendNotification(serverAddress, roundTripTimeMillis, serverType, hosts, setName, (ObjectId) null);
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
@@ -106,21 +117,28 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName, final ObjectId electionId) {
         getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
-                                                             true, setName, electionId, null)
+                                                             true, setName, electionId, null, 1)
                                                   .build());
+    }
+
+    public void sendNotification(final ServerAddress serverAddress, final long roundTripTimeMillis, final ServerType serverType,
+            final List<ServerAddress> hosts, final String setName, final ObjectId electionId) {
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+                true, setName, electionId, null, roundTripTimeMillis)
+                .build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName, final ObjectId electionId, final ServerAddress trueAddress) {
         getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
-                                                             true, setName, electionId, trueAddress)
+                                                             true, setName, electionId, trueAddress, 1)
                                                   .build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final boolean ok) {
         getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
-                                                             ok, null, null, null)
+                                                             ok, null, null, null, 1)
                                                   .build());
     }
 
@@ -137,8 +155,8 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     }
 
     private ServerDescription.Builder getBuilder(final ServerAddress serverAddress, final ServerType serverType,
-                                                 final List<ServerAddress> hosts, final List<ServerAddress> passives, final boolean ok,
-                                                 final String setName, final ObjectId electionId, final ServerAddress trueAddress) {
+            final List<ServerAddress> hosts, final List<ServerAddress> passives, final boolean ok,
+            final String setName, final ObjectId electionId, final ServerAddress trueAddress, final long roundTripTimeMillis) {
         Set<String> hostsSet = new HashSet<String>();
         for (ServerAddress cur : hosts) {
             hostsSet.add(cur.toString());
@@ -158,6 +176,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
                                 .passives(passivesSet)
                                 .setName(setName)
                                 .electionId(electionId)
+                                .roundTripTime(roundTripTimeMillis, TimeUnit.MILLISECONDS)
                                 .maxWireVersion(MAX_DRIVER_WIRE_VERSION)
                                 .setVersion(1);
     }

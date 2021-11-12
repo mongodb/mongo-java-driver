@@ -135,6 +135,42 @@ class BaseClusterSpecification extends Specification {
         cluster.selectServer(new ServerAddressSelector(firstServer)).serverDescription.address == firstServer
     }
 
+    def 'should apply local threshold when custom server selector is present'() {
+        given:
+        def cluster = new MultiServerCluster(new ClusterId(),
+                builder().mode(MULTIPLE)
+                        .hosts([firstServer, secondServer, thirdServer])
+                        .serverSelectionTimeout(1, SECONDS)
+                        .serverSelector(new ReadPreferenceServerSelector(ReadPreference.secondary()))
+                        .localThreshold(5, MILLISECONDS)
+                        .build(),
+                factory)
+        factory.sendNotification(firstServer, 1, REPLICA_SET_SECONDARY, allServers)
+        factory.sendNotification(secondServer, 7, REPLICA_SET_SECONDARY, allServers)
+        factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
+
+        expect:
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.nearest()))
+                .serverDescription.address == firstServer
+    }
+
+    def 'should apply local threshold when custom server selector in absent'() {
+        given:
+        def cluster = new MultiServerCluster(new ClusterId(),
+                builder().mode(MULTIPLE)
+                        .serverSelectionTimeout(1, SECONDS)
+                        .hosts([firstServer, secondServer, thirdServer])
+                        .localThreshold(5, MILLISECONDS)
+                        .build(),
+                factory)
+        factory.sendNotification(firstServer, 1, REPLICA_SET_SECONDARY, allServers)
+        factory.sendNotification(secondServer, 7, REPLICA_SET_SECONDARY, allServers)
+        factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
+
+        expect: // firstServer is the only secondary within the latency threshold
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary())).serverDescription.address == firstServer
+    }
+
     def 'should timeout with useful message'() {
         given:
         def cluster = new MultiServerCluster(new ClusterId(),
