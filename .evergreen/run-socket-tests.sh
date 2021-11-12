@@ -14,13 +14,14 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 AUTH=${AUTH:-noauth}
 MONGODB_URI=${MONGODB_URI:-}
-JDK=${JDK:-jdk8}
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 
 ############################################
 #            Main Program                  #
 ############################################
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 SOCKET_REGEX='(.*)localhost:([0-9]+)?(.*)'
 while [[ $MONGODB_URI =~ $SOCKET_REGEX ]]; do
@@ -47,8 +48,6 @@ fi
 
 echo "Running $AUTH tests over for $TOPOLOGY and connecting to $MONGODB_URI"
 
-export JAVA_HOME="/opt/java/jdk11"
-
-echo "Running tests with ${JDK}"
+echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} --stacktrace --info :driver-legacy:test :driver-sync:test
+./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} --stacktrace --info :driver-legacy:test :driver-sync:test

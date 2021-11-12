@@ -12,11 +12,11 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       KEYTAB_BASE64           The BASE64-encoded keytab
 #       PROJECT_DIRECTORY       The project directory
 
-JDK=${JDK:-jdk8}
-
 ############################################
 #            Main Program                  #
 ############################################
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 echo "Running GSSAPI authentication tests"
 
@@ -31,13 +31,9 @@ com.sun.security.jgss.krb5.initiate {
 };
 EOF
 
-echo "Compiling java driver with jdk11"
-
-export JAVA_HOME="/opt/java/jdk11"
-
-echo "Running tests with ${JDK}"
+echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} --stacktrace --info \
+./gradlew -PjavaVersion=${JAVA_VERSION} --stacktrace --info \
 -Dorg.mongodb.test.uri=${MONGODB_URI} \
 -Pgssapi.enabled=true -Psun.security.krb5.debug=true -Pauth.login.config=file://${PROJECT_DIRECTORY}/.evergreen/java.login.drivers.config \
 -Pkrb5.kdc=${KDC} -Pkrb5.realm=${REALM} -Psun.security.krb5.debug=true \

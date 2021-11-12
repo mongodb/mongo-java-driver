@@ -11,15 +11,13 @@ set -o errexit  # Exit the script with error if any of the commands fail
 # Support arguments:
 #       Pass as many MongoDB URIS as arguments to this script as required
 
-JDK=${JDK:-jdk8}
-
 ############################################
 #            Main Program                  #
 ############################################
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
+. "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
-echo "Running serverless tests with ${JDK}"
-
-export JAVA_HOME="/opt/java/jdk11"
+echo "Running serverless tests with Java ${JAVA_VERSION}"
 
 # assume "mongodb" protocol for single server, and "mongodb+srv" protocol for multi server
 SINGLE_SERVER_URI="mongodb://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${SINGLE_ATLASPROXY_SERVERLESS_URI:10}"
@@ -27,5 +25,5 @@ MULTI_SERVER_URI="mongodb+srv://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASS
 
 ./gradlew -version
 
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${SINGLE_SERVER_URI}  -Dorg.mongodb.test.multi.mongos.uri=${MULTI_SERVER_URI} \
+./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${SINGLE_SERVER_URI}  -Dorg.mongodb.test.multi.mongos.uri=${MULTI_SERVER_URI} \
    -Dorg.mongodb.test.serverless=true --stacktrace --info --continue driver-sync:test
