@@ -213,7 +213,7 @@ class BaseClusterSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def thread = new Thread({
             try {
-                cluster.selectServer()(new ReadPreferenceServerSelector(ReadPreference.primary()))
+                cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
             } catch (MongoInterruptedException e) {
                 latch.countDown()
             }
@@ -221,10 +221,10 @@ class BaseClusterSpecification extends Specification {
         thread.start()
         sleep(1000)
         thread.interrupt()
-        latch.await(ClusterFixture.TIMEOUT, SECONDS)
+        def interrupted = latch.await(ClusterFixture.TIMEOUT, SECONDS)
 
         then:
-        true
+        interrupted
 
         cleanup:
         cluster?.close()
@@ -252,10 +252,10 @@ class BaseClusterSpecification extends Specification {
         thread.start()
         sleep(1000)
         thread.interrupt()
-        latch.await(ClusterFixture.TIMEOUT, SECONDS)
+        def interrupted = latch.await(ClusterFixture.TIMEOUT, SECONDS)
 
         then:
-        true
+        interrupted
 
         cleanup:
         cluster?.close()
