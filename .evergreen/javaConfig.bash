@@ -9,7 +9,7 @@ if [ -d "$JDK11" ]; then
   export JAVA_HOME=$JDK11
 fi
 
-export JAVA_VERSION=${JDK:-11}
+export JAVA_VERSION=${JAVA_VERSION:-11}
 
 echo "Java Configs:"
 echo "Java Home: ${JAVA_HOME}"
