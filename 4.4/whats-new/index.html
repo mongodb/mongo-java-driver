@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2021-11-12T06:27:47.3">
+<meta name="date" content="2021-11-15T08:06:44.24">
 <link rel="shortcut icon" href="/mongo-java-driver/4.4/img/favicon.png">
 
     <title>What&#39;s New</title><link rel="stylesheet" href="/mongo-java-driver/4.4/lib/bootstrap.css" type="text/css" />
@@ -316,6 +316,16 @@
 </ul>
 </div>
 
+<h1 id="what-s-new-in-4-4">What&rsquo;s new in 4.4</h1>
+
+<ul>
+<li>Compatibility with MongoDB 5.1 and support for Java 17</li>
+<li>Added support for index hints in an AggregateIterable</li>
+<li>Added support for the $merge and $out aggregation stages on secondaries</li>
+<li>Use of the <code>mergeObjects()</code> method in the Updates builder</li>
+<li>DocumentCodec does not ignore a CodecRegistry when writing to an Iterable or a Map instance</li>
+</ul>
+
 <h1 id="what-s-new-in-4-3">What&rsquo;s new in 4.3</h1>
 
 <p>This release fully supports all MongoDB releases from versions 2.6 to 4.4. It also supports some features of the next release of MongoDB.</p>
@@ -332,7 +342,7 @@ for any application that is relying on client-side enforcement of these restrict
 <ul>
 <li>Restrictions on field names containing the &ldquo;.&rdquo; character have been removed. This affects all insert and replace operations.</li>
 <li>Restrictions on field names starting with the &ldquo;$&rdquo; character have been removed for all insert operations.</li>
-<li>Restrictions in nested documents on field names starting with the &ldquo;$&rdquo; character have been removed for all replace operations.<br /></li>
+<li>Restrictions in nested documents on field names starting with the &ldquo;$&rdquo; character have been removed for all replace operations.</li>
 <li>Restrictions in the top-level document on field names starting with the &ldquo;$&rdquo; character remain for all replace operations. This is
 primarily to prevent accidental use of a replace operation when the intention was to use an update operation.</li>
 <li>Note that unacknowledged writes using dollar-prefixed or dotted keys may be silently rejected by pre-5.0 servers, where some
@@ -622,9 +632,9 @@ in debugging:</p>
 
 <p>Here&rsquo;s an example</p>
 
-<pre><code>10:37:29.099 [cluster-ClusterId {value='5a466138741fc252712a6d71', description='null'}-127.0.0.1:27017] DEBUG org.mongodb.driver.protocol.command - 
+<pre><code>10:37:29.099 [cluster-ClusterId {value='5a466138741fc252712a6d71', description='null'}-127.0.0.1:27017] DEBUG org.mongodb.driver.protocol.command -
 Sending command '{ &quot;hello&quot; : 1, &quot;$db&quot; : &quot;admin&quot; } ...' with request id 4 to database admin on connection [connectionId{localValue:1, serverValue:1958}] to server 127.0.0.1:27017
-10:37:29.104 [cluster-ClusterId{value='5a466138741fc252712a6d71', description='null'}-127.0.0.1:27017] DEBUG org.mongodb.driver.protocol.command - 
+10:37:29.104 [cluster-ClusterId{value='5a466138741fc252712a6d71', description='null'}-127.0.0.1:27017] DEBUG org.mongodb.driver.protocol.command -
 Execution of command with request id 4 completed successfully in 22.44 ms on connection [connectionId {localValue:1, serverValue:1958}] to server 127.0.0.1:27017
 </code></pre>
 
@@ -643,8 +653,8 @@ BsonDocument embeddedDoc = doc.getDocument(&quot;embeddedDoc&quot;);
 // returns a RawBsonArray that is a slice of the bytes from the containing doc
 BsonArray embeddedArray = doc.getArray(&quot;embeddedArray&quot;);
 
-// returns a RawBsonDocument that is a slice of the bytes from the containing array 
-BsonDocument embeddedDoc2 = (BsonDocument) embeddedArray.get(0); 
+// returns a RawBsonDocument that is a slice of the bytes from the containing array
+BsonDocument embeddedDoc2 = (BsonDocument) embeddedArray.get(0);
 </code></pre>
 
 <h2 id="what-s-new-in-3-6">What&rsquo;s New in 3.6</h2>
@@ -897,14 +907,14 @@ for the method:</p>
 
 collection.count(Filters.eq(&quot;category&quot;, &quot;cafe&quot;), new CountOptions().collation(collation));
 
-collection.updateOne(Filters.eq(&quot;category&quot;, &quot;cafe&quot;), set(&quot;stars&quot;, 1), 
+collection.updateOne(Filters.eq(&quot;category&quot;, &quot;cafe&quot;), set(&quot;stars&quot;, 1),
                      new UpdateOptions().collation(collation));
 
 collection.bulkWrite(Arrays.asList(
                 new UpdateOneModel&lt;&gt;(new Document(&quot;category&quot;, &quot;cafe&quot;),
-                                     new Document(&quot;$set&quot;, new Document(&quot;x&quot;, 0)), 
+                                     new Document(&quot;$set&quot;, new Document(&quot;x&quot;, 0)),
                                      new UpdateOptions().collation(collation)),
-                new DeleteOneModel&lt;&gt;(new Document(&quot;category&quot;, &quot;cafe&quot;), 
+                new DeleteOneModel&lt;&gt;(new Document(&quot;category&quot;, &quot;cafe&quot;),
                                      new DeleteOptions().collation(collation))));
 </code></pre>
 
@@ -938,6 +948,7 @@ collection.bulkWrite(Arrays.asList(
 <div class="wrapper"><div class="toc">
     <span class="toc-header">On this page</span><nav id="TableOfContents">
 <ul>
+<li><a href="#what-s-new-in-4-4">What&rsquo;s new in 4.4</a></li>
 <li><a href="#what-s-new-in-4-3">What&rsquo;s new in 4.3</a></li>
 <li><a href="#what-s-new-in-4-2">What&rsquo;s new in 4.2</a></li>
 <li><a href="#what-s-new-in-4-1">What&rsquo;s new in 4.1</a></li>

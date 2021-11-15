@@ -320,9 +320,7 @@ Prerequisites  The example below requires a restaurants collection in the test d
       <pubDate>Thu, 09 Jun 2016 12:47:43 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.4/whats-new/</guid>
-      <description>What&amp;rsquo;s new in 4.3 This release fully supports all MongoDB releases from versions 2.6 to 4.4. It also supports some features of the next release of MongoDB.
-New features of the 4.3 Java driver release include:
- Added support for the MongoDB Versioned API. See the ServerApi API documentation for details. Removed most restrictions on allowed characters in field names of documents being inserted or replaced. This is a behavioral change for any application that is relying on client-side enforcement of these restrictions.</description>
+      <description>What&amp;rsquo;s new in 4.4  Compatibility with MongoDB 5.1 and support for Java 17 Added support for index hints in an AggregateIterable Added support for the $merge and $out aggregation stages on secondaries Use of the mergeObjects() method in the Updates builder DocumentCodec does not ignore a CodecRegistry when writing to an Iterable or a Map instance  What&amp;rsquo;s new in 4.3 This release fully supports all MongoDB releases from versions 2.</description>
     </item>
     
     <item>
@@ -1239,12 +1237,11 @@ Previous Releases    Release Documentation     4.1.1 Reference &amp;#124; API   
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
       
       <guid>/mongo-java-driver/4.4/</guid>
-      <description>MongoDB Java Driver Documentation Welcome to the MongoDB JVM driver documentation hub for the 4.3 drivers release.
-What&amp;rsquo;s New in 4.3 For key new features of 4.3, see What&amp;rsquo;s New.
+      <description>MongoDB Java Driver Documentation Welcome to the MongoDB JVM driver documentation hub for the 4.4 drivers release. Please note that the primary documentation is now located on the MongoDB domain
+What&amp;rsquo;s New in 4.4 For key new features of 4.4, see What&amp;rsquo;s New.
 Upgrade To upgrade, refer to the Upgrade Considerations documentation.
 MongoDB Driver For the synchronous MongoDB Driver, see MongoDB Driver section.
-MongoDB Reactive Streams Driver For the MongoDB Reactive Streams Driver, see MongoDB Reactive Streams Driver section.
-MongoDB Scala Driver For the MongoDB Scala Driver, see MongoDB Scala Driver section.</description>
+MongoDB Reactive Streams Driver For the MongoDB Reactive Streams Driver, see MongoDB Reactive Streams Driver section.</description>
     </item>
     
   </channel>
