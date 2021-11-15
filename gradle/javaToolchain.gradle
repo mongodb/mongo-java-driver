@@ -18,28 +18,34 @@ final Integer DEFAULT_JDK_VERSION = 11
 def javaMainProjects = subprojects - project(":util:taglets")
 
 allprojects {
-    afterEvaluate { project ->
-        def javaVersion = (findProperty("javaVersion") ?: DEFAULT_JDK_VERSION.toString()).toInteger()
-        project.pluginManager.withPlugin("java") {
-            logger.info("Compiling ${project.name} using JDK${DEFAULT_JDK_VERSION}")
-            java {
-                toolchain {
-                    languageVersion = JavaLanguageVersion.of(DEFAULT_JDK_VERSION)
-                }
-            }
-        }
 
-        if (project in javaMainProjects) {
-            tasks.withType(JavaCompile) {
-                options.encoding = "UTF-8"
-                options.release.set(8)
+    def javaVersion = (findProperty("javaVersion") ?: DEFAULT_JDK_VERSION.toString()).toInteger()
+    project.pluginManager.withPlugin("java") {
+        logger.info("Compiling ${project.name} using JDK${DEFAULT_JDK_VERSION}")
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(DEFAULT_JDK_VERSION)
             }
-        }
-
-        tasks.withType(Test) {
-            javaLauncher.set(javaToolchains.launcherFor {
-                languageVersion = JavaLanguageVersion.of(javaVersion)
-            })
         }
     }
+
+    if (project in javaMainProjects) {
+        tasks.withType(JavaCompile) {
+            options.encoding = "UTF-8"
+            options.release.set(8)
+        }
+
+        // Work around for: https://github.com/gradle/gradle/issues/15703
+        tasks.withType(GroovyCompile) {
+            sourceCompatibility = 1.8
+            targetCompatibility = 1.8
+        }
+    }
+
+    tasks.withType(Test) {
+        javaLauncher.set(javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(javaVersion)
+        })
+    }
+
 }
