@@ -39,11 +39,6 @@ expansion.yml
 **/gradle.properties
 local.properties
 
-# doc settings
-docs/reference/public
-docs/landing/public
-docs/hugo*
-
 # jenv
 .java-version
 
