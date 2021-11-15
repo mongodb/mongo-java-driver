@@ -17,8 +17,8 @@ import static org.gradle.util.CollectionUtils.single
  */
 
 
-def nonDocsProjects = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor")
-def javaMainProjects = subprojects - nonDocsProjects
+def projectsThatDoNotPublishJavaDocs = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor")
+def javaMainProjects = subprojects - projectsThatDoNotPublishJavaDocs
 
 task docs {
     dependsOn javaMainProjects.collect { it.tasks.withType(Javadoc) + it.tasks.withType(ScalaDoc) }
