@@ -151,6 +151,9 @@ public abstract class AbstractConnectionPoolTest {
                         poolOptions.getNumber("backgroundThreadIntervalMS").longValue(), TimeUnit.MILLISECONDS);
             }
         }
+        if (poolOptions.containsKey("maxConnecting")) {
+            settingsBuilder.maxConnecting(poolOptions.getInt32("maxConnecting").intValue());
+        }
 
         listener = new TestConnectionPoolListener();
         settingsBuilder.addConnectionPoolListener(listener);
