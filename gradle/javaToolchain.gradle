@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-final Integer DEFAULT_JDK_VERSION = 11
+final Integer DEFAULT_JDK_VERSION = 17
+final Integer DEFAULT_JDK_VERSION_SCALA = 11
 
 def javaMainProjects = subprojects - project(":util:taglets")
 
@@ -25,6 +26,16 @@ allprojects {
         java {
             toolchain {
                 languageVersion = JavaLanguageVersion.of(DEFAULT_JDK_VERSION)
+            }
+        }
+    }
+
+    // Scala 2.11 requires Java 11 or lower to compile
+    if (project.scalaVersion.startsWith("2.11")) {
+        logger.info("Compiling ${project.name} using JDK${DEFAULT_JDK_VERSION_SCALA}")
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(DEFAULT_JDK_VERSION_SCALA)
             }
         }
     }
