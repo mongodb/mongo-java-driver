@@ -39,6 +39,7 @@ import javax.security.auth.login.LoginContext
 import static com.mongodb.AuthenticationMechanism.GSSAPI
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
+import static com.mongodb.ClusterFixture.getLoginContextName
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY
 import static com.mongodb.MongoCredential.createGSSAPICredential
@@ -113,7 +114,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
     def 'should authorize when successfully authenticated with Subject property'() {
         when:
-        def loginContext = new LoginContext('com.sun.security.jgss.krb5.initiate')
+        def loginContext = new LoginContext(getLoginContextName())
         loginContext.login();
         def subject = loginContext.getSubject()
 
@@ -139,7 +140,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
     def 'should throw MongoSecurityException when authentication fails with Subject property'() {
         when:
-        LoginContext context = new LoginContext('com.sun.security.jgss.krb5.initiate');
+        LoginContext context = new LoginContext(getLoginContextName());
         context.login();
 
         Subject subject = context.getSubject();

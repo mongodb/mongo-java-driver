@@ -481,6 +481,10 @@ public final class ClusterFixture {
         return getConnectionString().getCredential();
     }
 
+    public static String getLoginContextName() {
+        return System.getProperty("org.mongodb.test.gssapi.login.context.name", "com.sun.security.jgss.krb5.initiate");
+    }
+
     @Nullable
     public static MongoCredentialWithCache getCredentialWithCache() {
         return getConnectionString().getCredential() == null ? null : new MongoCredentialWithCache(getConnectionString().getCredential());

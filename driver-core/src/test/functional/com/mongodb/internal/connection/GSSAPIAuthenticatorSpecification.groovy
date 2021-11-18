@@ -29,6 +29,7 @@ import spock.lang.Specification
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
+import static com.mongodb.ClusterFixture.getLoginContextName
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
@@ -40,7 +41,7 @@ class GSSAPIAuthenticatorSpecification extends Specification {
 
     def 'should use subject provider mechanism property'() {
         given:
-        def loginContext = new LoginContext('com.sun.security.jgss.krb5.initiate');
+        def loginContext = new LoginContext(getLoginContextName());
         loginContext.login();
         def subject = loginContext.getSubject();
         def subjectProvider = Mock(SubjectProvider)

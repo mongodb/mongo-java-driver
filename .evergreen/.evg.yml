@@ -650,7 +650,10 @@ functions:
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JAVA_VERSION=${JAVA_VERSION} MONGODB_URI=${gssapi_auth_mongodb_uri} KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} .evergreen/run-gssapi-auth-test.sh
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JAVA_VERSION=${JAVA_VERSION} MONGODB_URI=${gssapi_auth_mongodb_uri} \
+          KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} \
+          LOGIN_CONTEXT_NAME=${LOGIN_CONTEXT_NAME} \
+          .evergreen/run-gssapi-auth-test.sh
 
   "run mmapv1 storage test":
     - command: shell.exec
@@ -1550,6 +1553,18 @@ axes:
         variables:
           REQUIRE_API_VERSION: "true"
 
+  - id: gssapi-login-context-name
+    display_name: GSSAPI Login Context Name
+    values:
+      - id: standard
+        display_name: standard
+        variables:
+          LOGIN_CONTEXT_NAME: "com.sun.security.jgss.krb5.initiate"
+      - id: fallback
+        display_name: fallback
+        variables:
+          LOGIN_CONTEXT_NAME: "com.sun.security.jgss.initiate"
+
 buildvariants:
 
 # Test packaging and other release related routines
@@ -1678,8 +1693,8 @@ buildvariants:
      - name: "socket-test"
 
 - matrix_name: "test-gssapi"
-  matrix_spec: { jdk: ["jdk8", "jdk17"], os: "linux" }
-  display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} "
+  matrix_spec: { jdk: ["jdk8", "jdk17"], os: "linux", gssapi-login-context-name: "*"}
+  display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} ${gssapi-login-context-name}"
   tags: ["test-gssapi-variant"]
   tasks:
      - name: "gssapi-auth-test"

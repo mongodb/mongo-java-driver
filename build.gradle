@@ -201,6 +201,7 @@ configure(javaAndScalaTestedProjects) {
 
         if (project.buildingWith('gssapi.enabled')) {
             systemProperties(
+                    'org.mongodb.test.gssapi.login.context.name': project.getProperty('gssapi.login.context.name'),
                     'sun.security.krb5.debug': project.getProperty('sun.security.krb5.debug'),
                     'javax.security.auth.useSubjectCredsOnly': "false",
                     'java.security.krb5.kdc': project.getProperty('krb5.kdc'),
