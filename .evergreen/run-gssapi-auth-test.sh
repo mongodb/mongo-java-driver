@@ -34,7 +34,7 @@ EOF
 echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
 ./gradlew -PjavaVersion=${JAVA_VERSION} --stacktrace --info \
--Dorg.mongodb.test.uri=${MONGODB_URI} -Pgssapi.enabled=true -Pgssapi.login.context.name=${LOGIN_CONTEXT_NAME} \
--Psun.security.krb5.debug=true -Pauth.login.config=file://${PROJECT_DIRECTORY}/.evergreen/java.login.drivers.config \
+-Dorg.mongodb.test.uri=${MONGODB_URI} -Dorg.mongodb.test.gssapi.login.context.name=${LOGIN_CONTEXT_NAME} \
+-Pgssapi.enabled=true -Psun.security.krb5.debug=true -Pauth.login.config=file://${PROJECT_DIRECTORY}/.evergreen/java.login.drivers.config \
 -Pkrb5.kdc=${KDC} -Pkrb5.realm=${REALM} -Psun.security.krb5.debug=true \
 driver-core:test --tests GSSAPIAuthenticationSpecification --tests GSSAPIAuthenticatorSpecification --tests KerberosSubjectProviderTest
