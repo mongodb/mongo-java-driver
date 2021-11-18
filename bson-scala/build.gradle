@@ -24,11 +24,10 @@ dependencies {
 sourceSets {
     main {
         scala {
-            srcDirs += ["src/main/scala"]
             if(scalaVersion.startsWith("2.13")) {
-                srcDirs += ["src/main/scala-2.13+"]
+                srcDirs = ["src/main/scala", "src/main/scala-2.13+"]
             } else {
-                srcDirs += ["src/main/scala-2.13-"]
+                srcDirs = ["src/main/scala", "src/main/scala-2.13-"]
             }
         }
     }

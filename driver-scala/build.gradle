@@ -17,6 +17,13 @@
 description = "A Scala wrapper of the MongoDB Reactive Streams Java driver"
 archivesBaseName = 'mongo-scala-driver'
 
+configurations {
+    integrationTestImplementation {
+        extendsFrom testImplementation
+        canBeResolved = true
+    }
+}
+
 dependencies {
     implementation project(path: ':bson-scala', configuration: 'default')
     implementation project(path: ':driver-reactive-streams', configuration: 'default')
@@ -29,18 +36,12 @@ dependencies {
     testRuntimeOnly project(path: ':driver-core', configuration: 'consumableTestRuntimeOnly')
 }
 
-
-configurations {
-    integrationTestCompile.extendsFrom testImplementation
-    integrationTestRuntime.extendsFrom testRuntime
-}
-
 sourceSets {
     integrationTest {
         scala.srcDir file('src/it/scala')
         scala {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
+            compileClasspath += main.output
+            runtimeClasspath += main.output
         }
     }
 }
@@ -76,18 +77,13 @@ task aggregatedScalaDoc(type: ScalaDoc) {
     source = fromProjects.collect { it.sourceSets.main.allSource }
 
     scalaDocOptions.additionalParameters = ["-doc-root-content", "${project.rootDir}/driver-scala/rootdoc.txt" as String]
-
-    // Workaround for gradle 2.13 scaladoc issue: https://github.com/gradle/gradle/issues/9855
-    if (project.scalaVersion.startsWith("2.13")) {
-        //scalaClasspath += files("$rootDir/gradle/scala/lib/scala-ant-2.13.1.jar")
-    }
 }
 
 idea {
     module {
         testSourceDirs += sourceSets.integrationTest.scala.srcDirs
         testResourceDirs += sourceSets.integrationTest.resources.srcDirs
-        scopes.TEST.plus += [ configurations.integrationTestCompile ]
+        scopes.TEST.plus += [ configurations.integrationTestImplementation ]
     }
 }
 

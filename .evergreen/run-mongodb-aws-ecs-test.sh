@@ -25,7 +25,10 @@ apt update
 
 if ! which java ; then
     echo "Installing java..."
-    apt install openjdk-11-jdk -y
+    # Ubuntu 18.04 ca-certificates-java and opendjdk-17 bug work around
+    dpkg --purge --force-depends ca-certificates-java
+    apt install ca-certificates-java -y
+    apt install openjdk-17-jdk -y
 fi
 
 if ! which git ; then
