@@ -1527,11 +1527,11 @@ axes:
       - id: "2.12"
         display_name: "Scala 2.12"
         variables:
-          SCALA: "2.12.10"
+          SCALA: "2.12.15"
       - id: "2.13"
         display_name: "Scala 2.13"
         variables:
-          SCALA: "2.13.0"
+          SCALA: "2.13.6"
 
   # Choice of MongoDB storage engine
   - id: storage-engine
