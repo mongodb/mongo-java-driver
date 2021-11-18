@@ -39,7 +39,7 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
   private var _filesCollection: Option[MongoCollection[GridFSFile]] = None
   private var _chunksCollection: Option[MongoCollection[Document]] = None
   private val singleChunkString = "GridFS"
-  private val multiChunkString = singleChunkString.formatted(s"%${1024 * 255 * 5}s")
+  private val multiChunkString = f"${singleChunkString}%1305600s"
 
   override def beforeEach(): Unit = {
     val mongoDatabase = mongoClient().getDatabase(databaseName)
