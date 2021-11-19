@@ -20,6 +20,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 
 import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosTicket;
@@ -27,6 +28,7 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
@@ -52,14 +54,16 @@ public class KerberosSubjectProvider implements SubjectProvider {
     private static final Logger LOGGER = Loggers.getLogger("authenticator");
     private static final String TGT_PREFIX = "krbtgt/";
 
-    private final String loginContextName;
+    private String loginContextName;
+    private String fallbackLoginContextName;
     private Subject subject;
 
     /**
      * Construct an instance with the default login context name {@code "com.sun.security.jgss.krb5.initiate"}.
+     * <p>For compatibility, falls back to {@code "com.sun.security.jgss.initiate"}</p>
      */
     public KerberosSubjectProvider() {
-        this("com.sun.security.jgss.krb5.initiate");
+        this("com.sun.security.jgss.krb5.initiate", "com.sun.security.jgss.initiate");
     }
 
     /**
@@ -67,8 +71,13 @@ public class KerberosSubjectProvider implements SubjectProvider {
      *
      * @param loginContextName the login context name
      */
-    public KerberosSubjectProvider(@NonNull final String loginContextName) {
+    public KerberosSubjectProvider(final String loginContextName) {
+        this(loginContextName, null);
+    }
+
+    private KerberosSubjectProvider(final String loginContextName, @Nullable final String fallbackLoginContextName) {
         this.loginContextName = notNull("loginContextName", loginContextName);
+        this.fallbackLoginContextName = fallbackLoginContextName;
     }
 
     /**
@@ -80,16 +89,32 @@ public class KerberosSubjectProvider implements SubjectProvider {
     @NonNull
     public synchronized Subject getSubject() throws LoginException {
         if (subject == null || needNewSubject(subject)) {
-            LOGGER.info("Creating new LoginContext and logging in the principal");
-            LoginContext loginContext = new LoginContext(loginContextName);
-            loginContext.login();
-            subject = loginContext.getSubject();
-            LOGGER.info("Login successful");
+            subject = createNewSubject();
         }
         return subject;
     }
 
-    private static boolean needNewSubject(@NonNull final Subject subject) {
+    private Subject createNewSubject() throws LoginException {
+        LoginContext loginContext;
+        try {
+            LOGGER.debug(format("Creating LoginContext with name '%s'", loginContextName));
+            loginContext = new LoginContext(loginContextName);
+        } catch (LoginException e) {
+            if (fallbackLoginContextName == null) {
+                throw e;
+            }
+            LOGGER.debug(format("Creating LoginContext with fallback name '%s'", fallbackLoginContextName));
+            loginContext = new LoginContext(fallbackLoginContextName);
+            loginContextName = fallbackLoginContextName;
+            fallbackLoginContextName = null;
+        }
+
+        loginContext.login();
+        LOGGER.debug("Login successful");
+        return loginContext.getSubject();
+    }
+
+    private static boolean needNewSubject(final Subject subject) {
         for (KerberosTicket cur : subject.getPrivateCredentials(KerberosTicket.class)) {
             if (cur.getServer().getName().startsWith(TGT_PREFIX)) {
                 if (System.currentTimeMillis() > cur.getEndTime().getTime() - MILLISECONDS.convert(5, MINUTES)) {
