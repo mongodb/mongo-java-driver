@@ -66,6 +66,7 @@ afterEvaluate {
     jar.manifest.attributes['Import-Package'] = [
             '!sun.misc.*',  // Used by DirectBufferDeallocator only for java 8
             '!sun.nio.ch.*',  // Used by DirectBufferDeallocator only for java 8
+            '!jdk.net.*', // Used by SocketStreamHelper depends on JDK version
             'io.netty.*;resolution:=optional',
             'org.xerial.snappy.*;resolution:=optional',
             'com.github.luben.zstd.*;resolution:=optional',
