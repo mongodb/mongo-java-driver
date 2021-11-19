@@ -72,6 +72,7 @@ afterEvaluate {
             'org.slf4j.*;resolution:=optional',
             'jnr.unixsocket.*;resolution:=optional',
             'com.mongodb.crypt.capi.*;resolution:=optional',
+            'jdk.net.*;resolution:=optional', // Used by SocketStreamHelper & depends on JDK version
             '*' // import all that is not excluded or modified before
     ].join(',')
 }
