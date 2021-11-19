@@ -17,6 +17,13 @@
 description = "A Scala wrapper of the MongoDB Reactive Streams Java driver"
 archivesBaseName = 'mongo-scala-driver'
 
+configurations {
+    integrationTestImplementation {
+        extendsFrom testImplementation
+        canBeResolved = true
+    }
+}
+
 dependencies {
     implementation project(path: ':bson-scala', configuration: 'default')
     implementation project(path: ':driver-reactive-streams', configuration: 'default')
@@ -37,11 +44,6 @@ sourceSets {
             runtimeClasspath += main.output
         }
     }
-}
-
-configurations {
-    integrationTestImplementation.extendsFrom testImplementation
-    integrationTestRuntime.extendsFrom testRuntime
 }
 
 test {

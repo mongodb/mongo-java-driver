@@ -72,10 +72,6 @@ configure(coreProjects) {
         mavenLocal()
         google()
         mavenCentral()
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
-
     }
 }
 
@@ -330,7 +326,7 @@ def getGitVersion() {
     describeStdOut.toString().substring(1).trim()
 }
 
+apply from: 'gradle/javaToolchain.gradle'
 apply from: 'gradle/publish.gradle'
 apply from: 'gradle/deploy.gradle'
 apply from: 'gradle/javadoc.gradle'
-apply from: 'gradle/javaToolchain.gradle'
