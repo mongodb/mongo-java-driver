@@ -23,9 +23,9 @@ import javax.security.auth.login.LoginException;
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.ClusterFixture.getCredential;
-import static org.junit.Assume.assumeTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class KerberosSubjectProviderTest {
 
