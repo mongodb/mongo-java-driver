@@ -145,5 +145,5 @@ else
               -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
               ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
-              --stacktrace --info --continue driver-reactive-stream:test
+              --stacktrace --info --continue test
 fi
