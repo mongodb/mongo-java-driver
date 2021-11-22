@@ -17,12 +17,6 @@
 description = "A Scala wrapper of the MongoDB Reactive Streams Java driver"
 archivesBaseName = 'mongo-scala-driver'
 
-configurations {
-    integrationTestImplementation {
-        extendsFrom testImplementation
-        canBeResolved = true
-    }
-}
 
 dependencies {
     implementation project(path: ':bson-scala', configuration: 'default')
@@ -77,6 +71,13 @@ task aggregatedScalaDoc(type: ScalaDoc) {
     source = fromProjects.collect { it.sourceSets.main.allSource }
 
     scalaDocOptions.additionalParameters = ["-doc-root-content", "${project.rootDir}/driver-scala/rootdoc.txt" as String]
+}
+
+configurations {
+    integrationTestImplementation {
+        extendsFrom testImplementation
+        canBeResolved = true
+    }
 }
 
 idea {
