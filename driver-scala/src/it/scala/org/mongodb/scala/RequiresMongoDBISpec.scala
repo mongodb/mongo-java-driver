@@ -75,13 +75,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   val mongoClientURI: String = GlobalState.mongoClientURI
   val connectionString: ConnectionString = GlobalState.connectionString
 
-  def mongoClientSettingsBuilder: MongoClientSettings.Builder = {
-    val builder = MongoClientSettings.builder().applyConnectionString(GlobalState.connectionString)
-    if (getServerApi != null) {
-      builder.serverApi(getServerApi)
-    }
-    builder
-  }
+  def mongoClientSettingsBuilder: MongoClientSettings.Builder = GlobalState.mongoClientSettingsBuilder
 
   val mongoClientSettings: MongoClientSettings = GlobalState.mongoClientSettings
 
