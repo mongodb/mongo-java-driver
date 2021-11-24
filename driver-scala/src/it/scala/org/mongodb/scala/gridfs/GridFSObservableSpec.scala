@@ -307,6 +307,8 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
     val fileAsDocument = filesCollection.find[BsonDocument]().head().futureValue
     fileAsDocument.getDocument("metadata").getBinary("uuid").getType should equal(4.toByte)
     fileAsDocument.getDocument("metadata").getBinary("uuid").asUuid() should equal(uuid)
+
+    client.close()
   }
 
   it should "handle missing file name data when downloading" in {

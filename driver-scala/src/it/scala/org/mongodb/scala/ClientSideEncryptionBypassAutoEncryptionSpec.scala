@@ -79,6 +79,8 @@ class ClientSideEncryptionBypassAutoEncryptionSpec extends RequiresMongoDBISpec 
     val result = collection.find().first().head().futureValue
 
     result.get[BsonString]("encryptedField") should equal(Some(fieldValue))
+
+    clientEncrypted.close()
   }
 
 }

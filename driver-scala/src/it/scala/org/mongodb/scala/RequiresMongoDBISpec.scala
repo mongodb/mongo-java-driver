@@ -28,6 +28,25 @@ import scala.util.{ Properties, Try }
 
 trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
+  private object GlobalState {
+    val mongoClientURI: String = {
+      val uri = Properties.propOrElse(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI)
+      if (!uri.isBlank) uri else DEFAULT_URI
+    }
+    val connectionString: ConnectionString = ConnectionString(mongoClientURI)
+
+    def mongoClientSettingsBuilder: MongoClientSettings.Builder = {
+      val builder = MongoClientSettings.builder().applyConnectionString(connectionString)
+      if (getServerApi != null) {
+        builder.serverApi(getServerApi)
+      }
+      builder
+    }
+
+    val mongoClientSettings: MongoClientSettings = mongoClientSettingsBuilder.build()
+    val mongoClient: MongoClient = MongoClient(mongoClientSettings)
+  }
+
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
   private val DEFAULT_URI: String = "mongodb://localhost:27017/"
@@ -53,30 +72,27 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
    */
   def collectionName: String = _currentTestName.getOrElse(suiteName).filter(_.isLetterOrDigit)
 
-  val mongoClientURI: String = {
-    val uri = Properties.propOrElse(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI)
-    if (!uri.isBlank) uri else DEFAULT_URI
-  }
-  val connectionString: ConnectionString = ConnectionString(mongoClientURI)
+  val mongoClientURI: String = GlobalState.mongoClientURI
+  val connectionString: ConnectionString = GlobalState.connectionString
 
   def mongoClientSettingsBuilder: MongoClientSettings.Builder = {
-    val builder = MongoClientSettings.builder().applyConnectionString(connectionString)
+    val builder = MongoClientSettings.builder().applyConnectionString(GlobalState.connectionString)
     if (getServerApi != null) {
       builder.serverApi(getServerApi)
     }
     builder
   }
 
-  val mongoClientSettings: MongoClientSettings = mongoClientSettingsBuilder.build()
+  val mongoClientSettings: MongoClientSettings = GlobalState.mongoClientSettings
 
-  def mongoClient(): MongoClient = MongoClient(mongoClientSettings)
+  def mongoClient(): MongoClient = GlobalState.mongoClient
 
   def isMongoDBOnline(): Boolean = {
-    Try(Await.result(MongoClient(mongoClientSettings).listDatabaseNames().toFuture(), WAIT_DURATION)).isSuccess
+    Try(Await.result(GlobalState.mongoClient.listDatabaseNames().toFuture(), WAIT_DURATION)).isSuccess
   }
 
   def hasSingleHost(): Boolean = {
-    new ConnectionString(mongoClientURI).getHosts.size() == 1
+    GlobalState.connectionString.getHosts.size() == 1
   }
 
   def checkMongoDB() {
@@ -87,11 +103,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   def withClient(testCode: MongoClient => Any): Unit = {
     checkMongoDB()
-    val client = mongoClient()
-    try testCode(client) // loan the client
-    finally {
-      client.close()
-    }
+    testCode(GlobalState.mongoClient) // loan the client
   }
 
   def withDatabase(dbName: String)(testCode: MongoDatabase => Any) {
@@ -123,7 +135,10 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
     false
   } else {
     Await
-      .result(mongoClient().getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(), WAIT_DURATION)
+      .result(
+        GlobalState.mongoClient.getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(),
+        WAIT_DURATION
+      )
       .getOrElse("msg", BsonString(""))
       .asString()
       .getValue == "isdbgrid"
@@ -131,7 +146,10 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   lazy val buildInfo: Document = {
     if (mongoDBOnline) {
-      Await.result(mongoClient().getDatabase("admin").runCommand(Document("buildInfo" -> 1)).toFuture(), WAIT_DURATION)
+      Await.result(
+        GlobalState.mongoClient.getDatabase("admin").runCommand(Document("buildInfo" -> 1)).toFuture(),
+        WAIT_DURATION
+      )
     } else {
       Document()
     }
@@ -159,17 +177,13 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   override def beforeAll() {
     if (mongoDBOnline) {
-      val client = mongoClient()
-      Await.result(client.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
-      client.close()
+      Await.result(GlobalState.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
     }
   }
 
   override def afterAll() {
     if (mongoDBOnline) {
-      val client = mongoClient()
-      Await.result(client.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
-      client.close()
+      Await.result(GlobalState.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
     }
   }
 
@@ -177,7 +191,8 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   private[mongodb] class ShutdownHook extends Thread {
     override def run() {
-      mongoClient().getDatabase(databaseName).drop()
+      GlobalState.mongoClient.getDatabase(databaseName).drop()
+      GlobalState.mongoClient.close()
     }
   }
 
