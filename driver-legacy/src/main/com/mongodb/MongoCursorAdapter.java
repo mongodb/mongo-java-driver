@@ -27,6 +27,11 @@ class MongoCursorAdapter implements Cursor {
     }
 
     @Override
+    public int available() {
+        return cursor.available();
+    }
+
+    @Override
     public long getCursorId() {
         ServerCursor serverCursor = cursor.getServerCursor();
         if (serverCursor == null) {

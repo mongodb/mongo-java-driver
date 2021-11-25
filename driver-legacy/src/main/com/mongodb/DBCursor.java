@@ -189,6 +189,16 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
+     * Gets the number of results available locally without blocking,which may be 0, or 0 when the cursor is exhausted or closed.
+     *
+     * @return the number of results available locally without blocking
+     * @since 4.5
+     */
+    public int available() {
+        return cursor != null ? cursor.available() : 0;
+    }
+
+    /**
      * Non blocking check for tailable cursors to see if another object is available.
      *
      * <p>Returns the object the cursor is at and moves the cursor ahead by one or
