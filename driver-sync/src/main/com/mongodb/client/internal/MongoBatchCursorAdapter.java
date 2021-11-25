@@ -34,6 +34,7 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
     private final BatchCursor<T> batchCursor;
     private List<T> curBatch;
     private int curPos;
+    private boolean isClosed;
 
     public MongoBatchCursorAdapter(final BatchCursor<T> batchCursor) {
         this.batchCursor = batchCursor;
@@ -46,11 +47,18 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
 
     @Override
     public void close() {
-        batchCursor.close();
+        try {
+            batchCursor.close();
+        } finally {
+            isClosed = true;
+            curBatch = null;
+            curPos = 0;
+        }
     }
 
     @Override
     public boolean hasNext() {
+        checkClosed();
         return curBatch != null || batchCursor.hasNext();
     }
 
@@ -79,6 +87,7 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
     @Nullable
     @Override
     public T tryNext() {
+        checkClosed();
         if (curBatch == null) {
             curBatch = batchCursor.tryNext();
         }
@@ -106,5 +115,11 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
             curPos = 0;
         }
         return nextInBatch;
+    }
+
+    private void checkClosed() {
+        if (isClosed) {
+            throw new IllegalStateException("Cursor is closed");
+        }
     }
 }

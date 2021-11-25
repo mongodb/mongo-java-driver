@@ -19,6 +19,7 @@ package com.mongodb.client.internal
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
 import com.mongodb.internal.operation.AggregateResponseBatchCursor
+import com.mongodb.internal.operation.BatchCursor
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.RawBsonDocument
@@ -69,6 +70,32 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
         then:
         1 * batchCursor.close()
+    }
+
+
+    def 'should throw if closed'() {
+        given:
+        def batchCursor = Mock(AggregateResponseBatchCursor)
+        def cursor = new MongoBatchCursorAdapter(batchCursor)
+        cursor.close()
+
+        when:
+        cursor.hasNext()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        cursor.next()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        cursor.tryNext()
+
+        then:
+        thrown(IllegalStateException)
     }
 
     def 'next should throw if there is no next'() {

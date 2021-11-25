@@ -62,6 +62,31 @@ class MongoBatchCursorAdapterSpecification extends Specification {
         1 * batchCursor.close()
     }
 
+    def 'should throw if closed'() {
+        given:
+        def batchCursor = Mock(BatchCursor)
+        def cursor = new MongoBatchCursorAdapter(batchCursor)
+        cursor.close()
+
+        when:
+        cursor.hasNext()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        cursor.next()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        cursor.tryNext()
+
+        then:
+        thrown(IllegalStateException)
+    }
+
     def 'next should throw if there is no next'() {
         given:
         def batchCursor = Stub(BatchCursor)

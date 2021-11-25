@@ -35,6 +35,7 @@ public class MongoChangeStreamCursorImpl<T> implements MongoChangeStreamCursor<T
     private List<RawBsonDocument> curBatch;
     private int curPos;
     private BsonDocument resumeToken;
+    private boolean isClosed;
 
     public MongoChangeStreamCursorImpl(final BatchCursor<RawBsonDocument> batchCursor, final Decoder<T> decoder,
                                        @Nullable final BsonDocument initialResumeToken) {
@@ -50,11 +51,18 @@ public class MongoChangeStreamCursorImpl<T> implements MongoChangeStreamCursor<T
 
     @Override
     public void close() {
-        batchCursor.close();
+        try {
+            batchCursor.close();
+        } finally {
+            isClosed = true;
+            curBatch = null;
+            curPos = 0;
+        }
     }
 
     @Override
     public boolean hasNext() {
+        checkClosed();
         return curBatch != null || batchCursor.hasNext();
     }
 
@@ -126,5 +134,11 @@ public class MongoChangeStreamCursorImpl<T> implements MongoChangeStreamCursor<T
     @Nullable
     public BsonDocument getResumeToken() {
         return resumeToken;
+    }
+
+    private void checkClosed() {
+        if (isClosed) {
+            throw new IllegalStateException("Cursor is closed");
+        }
     }
 }
