@@ -19,7 +19,6 @@ package com.mongodb.client.internal
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
 import com.mongodb.internal.operation.AggregateResponseBatchCursor
-import com.mongodb.internal.operation.BatchCursor
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.RawBsonDocument
