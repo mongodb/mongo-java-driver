@@ -49,7 +49,7 @@ dependencies {
     implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
 
     testImplementation project(':bson').sourceSets.test.output
-    testRuntimeOnly "io.netty:netty-tcnative-boringssl-static:2.0.39.Final"
+    testRuntimeOnly "io.netty:netty-tcnative-boringssl-static:$nettyTcnativeBoringsslVersion"
 }
 
 buildConfig {
