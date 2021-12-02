@@ -75,7 +75,7 @@ public class ServerSelectionSelectionTest {
     @Test
     public void shouldPassAllOutcomes() {
         // skip this test because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
-        assumeTrue(!description.equals("max-staleness/server_selection/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
+        assumeTrue(!description.equals("max-staleness/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
 
         ServerSelector serverSelector = null;
         List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers", new BsonArray()));
@@ -105,16 +105,21 @@ public class ServerSelectionSelectionTest {
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/server_selection")) {
-            data.add(new Object[]{getDescription("server-selection/server_selection", file), JsonPoweredTestHelper.getTestDocument(file)});
+            data.add(new Object[]{getServerSelectionTestDescription(file), JsonPoweredTestHelper.getTestDocument(file)});
         }
         for (File file : JsonPoweredTestHelper.getTestFiles("/max-staleness/server_selection")) {
-            data.add(new Object[]{getDescription("max-staleness/server_selection", file), JsonPoweredTestHelper.getTestDocument(file)});
+            data.add(new Object[]{getMaxStalenessTestDescription(file), JsonPoweredTestHelper.getTestDocument(file)});
         }
         return data;
     }
 
-    private static String getDescription(final String root, final File file) {
-        return root + "/" + file.getParentFile().getName() + "/" + file.getName();
+    private static String getServerSelectionTestDescription(final File file) {
+        return "server-selection" + "/" + file.getParentFile().getParentFile().getName() + "/" + file.getParentFile().getName() + "/"
+                + file.getName();
+    }
+
+    private static String getMaxStalenessTestDescription(final File file) {
+        return "max-staleness" + "/" + file.getParentFile().getName() + "/" + file.getName();
     }
 
     public static ClusterDescription buildClusterDescription(final BsonDocument topologyDescription,
