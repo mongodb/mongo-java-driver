@@ -22,6 +22,7 @@ import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
 import com.mongodb.lang.Nullable;
 
@@ -36,6 +37,7 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * A concurrent pool implementation.
@@ -240,10 +242,9 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     *
      * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     boolean acquirePermit(final long timeout, final TimeUnit timeUnit) {
         return stateAndPermits.acquirePermitFair(timeout, timeUnit);
     }

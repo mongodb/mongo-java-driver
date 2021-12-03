@@ -34,6 +34,7 @@ import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.types.ObjectId;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 @ThreadSafe
@@ -143,9 +145,7 @@ public class LoadBalancedServer implements ClusterableServer {
         return -1;
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     ConnectionPool getConnectionPool() {
         return connectionPool;
     }

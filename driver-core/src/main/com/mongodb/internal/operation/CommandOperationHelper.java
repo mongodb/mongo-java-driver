@@ -29,6 +29,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.async.function.RetryState;
@@ -57,6 +58,7 @@ import java.util.function.Supplier;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
@@ -231,9 +233,7 @@ final class CommandOperationHelper {
 
     /* Write Binding Helpers */
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     static <D, T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
                                    final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
         return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection) ->

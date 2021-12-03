@@ -33,6 +33,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -50,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
 
@@ -184,23 +186,17 @@ class DefaultServer implements ClusterableServer {
         serverMonitor.connect();
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     ConnectionPool getConnectionPool() {
         return connectionPool;
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     SdamServerDescriptionManager sdamServerDescriptionManager() {
         return sdam;
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     ServerId serverId() {
         return serverId;
     }

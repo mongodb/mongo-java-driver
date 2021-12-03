@@ -23,6 +23,7 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonString;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoClient.getDefaultCodecRegistry;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -616,6 +618,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException if failed
      * @see #count()
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     public int itcount() {
         int n = 0;
         while (this.hasNext()) {
