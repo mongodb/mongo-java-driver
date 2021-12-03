@@ -68,6 +68,16 @@ final class EventMatcher {
                 }
             }
 
+            if (expected.containsKey("hasServerConnectionId")) {
+                boolean hasServerConnectionId = expected.getBoolean("hasServerConnectionId").getValue();
+                Integer serverConnectionId = actual.getConnectionDescription().getConnectionId().getServerValue();
+                if (hasServerConnectionId) {
+                    assertNotNull(context.getMessage("Expected serverConnectionId"), serverConnectionId);
+                } else {
+                    assertNull(context.getMessage("Expected no serverConnectionId"), serverConnectionId);
+                }
+            }
+
             if (actual.getClass().equals(CommandStartedEvent.class)) {
                 assertEquals(context.getMessage("Expected CommandStartedEvent"), eventType, "commandStartedEvent");
                 CommandStartedEvent actualCommandStartedEvent = (CommandStartedEvent) actual;
