@@ -262,11 +262,6 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
-    public void invalidate() {
-        invalidate(null);
-    }
-
-    @Override
     public void ready() {
         if (stateAndGeneration.ready()) {
             LOGGER.debug("Marking the connection pool for " + serverId +  " as 'ready'");
