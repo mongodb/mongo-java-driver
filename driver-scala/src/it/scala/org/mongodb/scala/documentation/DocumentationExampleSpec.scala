@@ -17,8 +17,8 @@
 package org.mongodb.scala.documentation
 
 import java.util.concurrent.atomic.AtomicBoolean
-
 import com.mongodb.client.model.changestream.{ ChangeStreamDocument, FullDocument }
+import org.mongodb.scala.TestMongoClientHelper.hasSingleHost
 import org.mongodb.scala._
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{ BsonArray, BsonDocument, BsonNull, BsonString, BsonValue }
@@ -596,7 +596,7 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
   }
 
   it should "be able to watch" in withCollection { collection =>
-    assume(serverVersionAtLeast(List(3, 6, 0)) && !hasSingleHost())
+    assume(serverVersionAtLeast(List(3, 6, 0)) && !hasSingleHost)
     val inventory: MongoCollection[Document] = collection
     val stop: AtomicBoolean = new AtomicBoolean(false)
     new Thread(new Runnable {
