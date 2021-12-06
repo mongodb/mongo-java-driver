@@ -56,7 +56,7 @@ object TestMongoClientHelper {
 
   private[mongodb] class ShutdownHook extends Thread {
     override def run() {
-      TestMongoClientHelper.mongoClient.close()
+      mongoClient.close()
     }
   }
 }
