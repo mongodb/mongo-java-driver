@@ -189,7 +189,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Gets the number of results available locally without blocking,which may be 0, or 0 when the cursor is exhausted or closed.
+     * Gets the number of results available locally without blocking, which may be 0, or 0 when the cursor is exhausted or closed.
      *
      * @return the number of results available locally without blocking
      * @since 4.5
