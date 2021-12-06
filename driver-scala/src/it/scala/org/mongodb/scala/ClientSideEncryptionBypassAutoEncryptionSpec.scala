@@ -60,27 +60,30 @@ class ClientSideEncryptionBypassAutoEncryptionSpec extends RequiresMongoDBISpec 
       .codecRegistry(DEFAULT_CODEC_REGISTRY)
       .build
 
-    val clientEncrypted = MongoClient(clientSettings)
+    withTempClient(
+      clientSettings,
+      clientEncrypted => {
 
-    val fieldValue = BsonString("123456789")
+        val fieldValue = BsonString("123456789")
 
-    val dataKeyId = clientEncryption.createDataKey("local", DataKeyOptions()).head().futureValue
+        val dataKeyId = clientEncryption.createDataKey("local", DataKeyOptions()).head().futureValue
 
-    val encryptedFieldValue = clientEncryption
-      .encrypt(fieldValue, EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(dataKeyId))
-      .head()
-      .futureValue
+        val encryptedFieldValue = clientEncryption
+          .encrypt(fieldValue, EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(dataKeyId))
+          .head()
+          .futureValue
 
-    val collection: MongoCollection[Document] =
-      clientEncrypted.getDatabase(databaseName).getCollection[Document]("test")
+        val collection: MongoCollection[Document] =
+          clientEncrypted.getDatabase(databaseName).getCollection[Document]("test")
 
-    collection.insertOne(Document("encryptedField" -> encryptedFieldValue)).futureValue
+        collection.insertOne(Document("encryptedField" -> encryptedFieldValue)).futureValue
 
-    val result = collection.find().first().head().futureValue
+        val result = collection.find().first().head().futureValue
 
-    result.get[BsonString]("encryptedField") should equal(Some(fieldValue))
+        result.get[BsonString]("encryptedField") should equal(Some(fieldValue))
 
-    clientEncrypted.close()
+      }
+    )
   }
 
 }

@@ -284,31 +284,30 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
   }
 
   it should "use the user provided codec registries for encoding / decoding data" in {
-    val client = MongoClient(
+    withTempClient(
       mongoClientSettingsBuilder
         .uuidRepresentation(UuidRepresentation.STANDARD)
-        .build()
+        .build(),
+      client => {
+        val database = client.getDatabase(databaseName)
+        val uuid = UUID.randomUUID()
+        val fileMeta = new org.bson.Document("uuid", uuid)
+        val bucket = GridFSBucket(database)
+
+        val fileId = bucket
+          .uploadFromObservable(
+            "myFile",
+            Observable(Seq(ByteBuffer.wrap(multiChunkString.getBytes()))),
+            new GridFSUploadOptions().metadata(fileMeta)
+          )
+          .head()
+          .futureValue
+
+        val fileAsDocument = filesCollection.find[BsonDocument]().head().futureValue
+        fileAsDocument.getDocument("metadata").getBinary("uuid").getType should equal(4.toByte)
+        fileAsDocument.getDocument("metadata").getBinary("uuid").asUuid() should equal(uuid)
+      }
     )
-
-    val database = client.getDatabase(databaseName)
-    val uuid = UUID.randomUUID()
-    val fileMeta = new org.bson.Document("uuid", uuid)
-    val bucket = GridFSBucket(database)
-
-    val fileId = bucket
-      .uploadFromObservable(
-        "myFile",
-        Observable(Seq(ByteBuffer.wrap(multiChunkString.getBytes()))),
-        new GridFSUploadOptions().metadata(fileMeta)
-      )
-      .head()
-      .futureValue
-
-    val fileAsDocument = filesCollection.find[BsonDocument]().head().futureValue
-    fileAsDocument.getDocument("metadata").getBinary("uuid").getType should equal(4.toByte)
-    fileAsDocument.getDocument("metadata").getBinary("uuid").asUuid() should equal(uuid)
-
-    client.close()
   }
 
   it should "handle missing file name data when downloading" in {

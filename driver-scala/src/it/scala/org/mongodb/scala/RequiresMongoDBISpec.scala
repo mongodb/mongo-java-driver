@@ -31,11 +31,9 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   val WAIT_DURATION: Duration = 60.seconds
   private val DB_PREFIX = "mongo-scala-"
   private var _currentTestName: Option[String] = None
-  private var mongoDBOnline: Boolean = false
 
   protected override def runTest(testName: String, args: Args): Status = {
     _currentTestName = Some(testName.split("should")(1))
-    mongoDBOnline = TestMongoClientHelper.isMongoDBOnline
     super.runTest(testName, args)
   }
 
@@ -49,9 +47,6 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
    */
   def collectionName: String = _currentTestName.getOrElse(suiteName).filter(_.isLetterOrDigit)
 
-  val mongoClientURI: String = TestMongoClientHelper.mongoClientURI
-  val connectionString: ConnectionString = TestMongoClientHelper.connectionString
-
   def mongoClientSettingsBuilder: MongoClientSettings.Builder = TestMongoClientHelper.mongoClientSettingsBuilder
 
   val mongoClientSettings: MongoClientSettings = TestMongoClientHelper.mongoClientSettings
@@ -59,8 +54,17 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   def mongoClient(): MongoClient = TestMongoClientHelper.mongoClient
 
   def checkMongoDB(): Unit = {
-    if (!mongoDBOnline) {
+    if (!TestMongoClientHelper.isMongoDBOnline) {
       cancel("No Available Database")
+    }
+  }
+
+  def withTempClient(mongoClientSettings: MongoClientSettings, testCode: MongoClient => Any): Unit = {
+    val client = MongoClient(mongoClientSettings)
+    try {
+      testCode(client)
+    } finally {
+      client.close()
     }
   }
 
@@ -69,7 +73,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
     testCode(TestMongoClientHelper.mongoClient) // loan the client
   }
 
-  def withDatabase(dbName: String)(testCode: MongoDatabase => Any) {
+  def withDatabase(dbName: String)(testCode: MongoDatabase => Any): Unit = {
     withClient { client =>
       val databaseName = if (dbName.startsWith(DB_PREFIX)) dbName.take(63) else s"$DB_PREFIX$dbName".take(63) // scalastyle:ignore
       val mongoDatabase = client.getDatabase(databaseName)
@@ -83,7 +87,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   def withDatabase(testCode: MongoDatabase => Any): Unit = withDatabase(databaseName)(testCode: MongoDatabase => Any)
 
-  def withCollection(testCode: MongoCollection[Document] => Any) {
+  def withCollection(testCode: MongoCollection[Document] => Any): Unit = {
     withDatabase(databaseName) { mongoDatabase =>
       val mongoCollection = mongoDatabase.getCollection(collectionName)
       try testCode(mongoCollection) // "loan" the fixture to the test
@@ -94,7 +98,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
     }
   }
 
-  lazy val isSharded: Boolean = if (!mongoDBOnline) {
+  lazy val isSharded: Boolean = if (!TestMongoClientHelper.isMongoDBOnline) {
     false
   } else {
     Await
@@ -108,7 +112,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   }
 
   lazy val buildInfo: Document = {
-    if (mongoDBOnline) {
+    if (TestMongoClientHelper.isMongoDBOnline) {
       Await.result(
         mongoClient().getDatabase("admin").runCommand(Document("buildInfo" -> 1)).toFuture(),
         WAIT_DURATION
@@ -139,23 +143,14 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   }
 
   override def beforeAll() {
-    if (mongoDBOnline) {
+    if (TestMongoClientHelper.isMongoDBOnline) {
       Await.result(TestMongoClientHelper.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
     }
   }
 
   override def afterAll() {
-    if (mongoDBOnline) {
+    if (TestMongoClientHelper.isMongoDBOnline) {
       Await.result(TestMongoClientHelper.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
-    }
-  }
-
-  Runtime.getRuntime.addShutdownHook(new ShutdownHook())
-
-  private[mongodb] class ShutdownHook extends Thread {
-    override def run() {
-      TestMongoClientHelper.mongoClient.getDatabase(databaseName).drop()
-      TestMongoClientHelper.mongoClient.close()
     }
   }
 

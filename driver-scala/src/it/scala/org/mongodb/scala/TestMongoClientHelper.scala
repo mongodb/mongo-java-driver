@@ -51,4 +51,12 @@ object TestMongoClientHelper {
   def hasSingleHost: Boolean = {
     TestMongoClientHelper.connectionString.getHosts.size() == 1
   }
+
+  Runtime.getRuntime.addShutdownHook(new ShutdownHook())
+
+  private[mongodb] class ShutdownHook extends Thread {
+    override def run() {
+      TestMongoClientHelper.mongoClient.close()
+    }
+  }
 }
