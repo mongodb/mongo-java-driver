@@ -16,7 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.ClusterFixture.getServerApi
 import com.mongodb.connection.ServerVersion
 import org.mongodb.scala.bson.BsonString
 import org.scalatest._
@@ -24,22 +23,17 @@ import org.scalatest._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{ Duration, _ }
 import scala.concurrent.{ Await, ExecutionContext }
-import scala.util.{ Properties, Try }
 
 trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
-  private val DEFAULT_URI: String = "mongodb://localhost:27017/"
-  private val MONGODB_URI_SYSTEM_PROPERTY_NAME: String = "org.mongodb.test.uri"
   val WAIT_DURATION: Duration = 60.seconds
   private val DB_PREFIX = "mongo-scala-"
   private var _currentTestName: Option[String] = None
-  private var mongoDBOnline: Boolean = false
 
   protected override def runTest(testName: String, args: Args): Status = {
     _currentTestName = Some(testName.split("should")(1))
-    mongoDBOnline = isMongoDBOnline()
     super.runTest(testName, args)
   }
 
@@ -53,48 +47,33 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
    */
   def collectionName: String = _currentTestName.getOrElse(suiteName).filter(_.isLetterOrDigit)
 
-  val mongoClientURI: String = {
-    val uri = Properties.propOrElse(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI)
-    if (!uri.isBlank) uri else DEFAULT_URI
-  }
-  val connectionString: ConnectionString = ConnectionString(mongoClientURI)
+  def mongoClientSettingsBuilder: MongoClientSettings.Builder = TestMongoClientHelper.mongoClientSettingsBuilder
 
-  def mongoClientSettingsBuilder: MongoClientSettings.Builder = {
-    val builder = MongoClientSettings.builder().applyConnectionString(connectionString)
-    if (getServerApi != null) {
-      builder.serverApi(getServerApi)
-    }
-    builder
-  }
+  val mongoClientSettings: MongoClientSettings = TestMongoClientHelper.mongoClientSettings
 
-  val mongoClientSettings: MongoClientSettings = mongoClientSettingsBuilder.build()
+  def mongoClient(): MongoClient = TestMongoClientHelper.mongoClient
 
-  def mongoClient(): MongoClient = MongoClient(mongoClientSettings)
-
-  def isMongoDBOnline(): Boolean = {
-    Try(Await.result(MongoClient(mongoClientSettings).listDatabaseNames().toFuture(), WAIT_DURATION)).isSuccess
-  }
-
-  def hasSingleHost(): Boolean = {
-    new ConnectionString(mongoClientURI).getHosts.size() == 1
-  }
-
-  def checkMongoDB() {
-    if (!mongoDBOnline) {
+  def checkMongoDB(): Unit = {
+    if (!TestMongoClientHelper.isMongoDBOnline) {
       cancel("No Available Database")
+    }
+  }
+
+  def withTempClient(mongoClientSettings: MongoClientSettings, testCode: MongoClient => Any): Unit = {
+    val client = MongoClient(mongoClientSettings)
+    try {
+      testCode(client)
+    } finally {
+      client.close()
     }
   }
 
   def withClient(testCode: MongoClient => Any): Unit = {
     checkMongoDB()
-    val client = mongoClient()
-    try testCode(client) // loan the client
-    finally {
-      client.close()
-    }
+    testCode(TestMongoClientHelper.mongoClient) // loan the client
   }
 
-  def withDatabase(dbName: String)(testCode: MongoDatabase => Any) {
+  def withDatabase(dbName: String)(testCode: MongoDatabase => Any): Unit = {
     withClient { client =>
       val databaseName = if (dbName.startsWith(DB_PREFIX)) dbName.take(63) else s"$DB_PREFIX$dbName".take(63) // scalastyle:ignore
       val mongoDatabase = client.getDatabase(databaseName)
@@ -108,7 +87,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   def withDatabase(testCode: MongoDatabase => Any): Unit = withDatabase(databaseName)(testCode: MongoDatabase => Any)
 
-  def withCollection(testCode: MongoCollection[Document] => Any) {
+  def withCollection(testCode: MongoCollection[Document] => Any): Unit = {
     withDatabase(databaseName) { mongoDatabase =>
       val mongoCollection = mongoDatabase.getCollection(collectionName)
       try testCode(mongoCollection) // "loan" the fixture to the test
@@ -119,19 +98,25 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
     }
   }
 
-  lazy val isSharded: Boolean = if (!mongoDBOnline) {
+  lazy val isSharded: Boolean = if (!TestMongoClientHelper.isMongoDBOnline) {
     false
   } else {
     Await
-      .result(mongoClient().getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(), WAIT_DURATION)
+      .result(
+        mongoClient().getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(),
+        WAIT_DURATION
+      )
       .getOrElse("msg", BsonString(""))
       .asString()
       .getValue == "isdbgrid"
   }
 
   lazy val buildInfo: Document = {
-    if (mongoDBOnline) {
-      Await.result(mongoClient().getDatabase("admin").runCommand(Document("buildInfo" -> 1)).toFuture(), WAIT_DURATION)
+    if (TestMongoClientHelper.isMongoDBOnline) {
+      Await.result(
+        mongoClient().getDatabase("admin").runCommand(Document("buildInfo" -> 1)).toFuture(),
+        WAIT_DURATION
+      )
     } else {
       Document()
     }
@@ -158,26 +143,14 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   }
 
   override def beforeAll() {
-    if (mongoDBOnline) {
-      val client = mongoClient()
-      Await.result(client.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
-      client.close()
+    if (TestMongoClientHelper.isMongoDBOnline) {
+      Await.result(TestMongoClientHelper.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
     }
   }
 
   override def afterAll() {
-    if (mongoDBOnline) {
-      val client = mongoClient()
-      Await.result(client.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
-      client.close()
-    }
-  }
-
-  Runtime.getRuntime.addShutdownHook(new ShutdownHook())
-
-  private[mongodb] class ShutdownHook extends Thread {
-    override def run() {
-      mongoClient().getDatabase(databaseName).drop()
+    if (TestMongoClientHelper.isMongoDBOnline) {
+      Await.result(TestMongoClientHelper.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
     }
   }
 
