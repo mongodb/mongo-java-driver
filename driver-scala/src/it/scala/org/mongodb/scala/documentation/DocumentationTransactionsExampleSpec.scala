@@ -16,6 +16,7 @@
 
 package org.mongodb.scala.documentation
 
+import org.mongodb.scala.TestMongoClientHelper.hasSingleHost
 import org.mongodb.scala._
 import org.mongodb.scala.model.{ Filters, Updates }
 import org.mongodb.scala.result.{ InsertOneResult, UpdateResult }
@@ -36,7 +37,7 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
   // end implicit functions
 
   "The Scala driver" should "be able to commit a transaction" in withClient { client =>
-    assume(serverVersionAtLeast(List(4, 0, 0)) && !hasSingleHost())
+    assume(serverVersionAtLeast(List(4, 0, 0)) && !hasSingleHost)
     client.getDatabase("hr").drop().execute()
     client.getDatabase("hr").createCollection("employees").execute()
     client.getDatabase("hr").createCollection("events").execute()
