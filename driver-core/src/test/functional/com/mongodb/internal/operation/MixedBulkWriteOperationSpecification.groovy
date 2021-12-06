@@ -1277,7 +1277,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         execute(operation, async)
 
         then:
-        thrown(MongoClientException)
+        thrown(IllegalArgumentException)
 
         where:
         async << [true, false]
