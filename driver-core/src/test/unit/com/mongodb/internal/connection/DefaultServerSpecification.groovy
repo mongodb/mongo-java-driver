@@ -179,7 +179,7 @@ class DefaultServerSpecification extends Specification {
         server.invalidate()
 
         then:
-        0 * connectionPool.invalidate()
+        0 * connectionPool.invalidate(null)
         0 * serverMonitor.connect()
     }
 

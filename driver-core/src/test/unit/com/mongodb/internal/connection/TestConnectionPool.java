@@ -160,11 +160,6 @@ public class TestConnectionPool implements ConnectionPool {
     }
 
     @Override
-    public void invalidate() {
-        invalidate(null);
-    }
-
-    @Override
     public void invalidate(final ObjectId serviceId, final int generation) {
         throw new UnsupportedOperationException();
     }
