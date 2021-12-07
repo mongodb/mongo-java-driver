@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -135,13 +136,12 @@ public final class Timeout {
     }
 
     /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     * <p>
      * Returns 0 or a positive value.
      * 0 means that the timeout has expired.
      * <p>
      * Must not be called on {@linkplain #isInfinite() infinite} timeouts.
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     long remainingNanos(final long currentNanos) {
         assertFalse(isInfinite() || isImmediate());
         long elapsedNanos = elapsedNanos(currentNanos);
@@ -262,23 +262,17 @@ public final class Timeout {
         }
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     long durationNanos() {
         return durationNanos;
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     long startNanos() {
         return startNanos;
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     static long convertRoundUp(final long nonNegativeNanos, final TimeUnit unit) {
         assertTrue(nonNegativeNanos >= 0);
         if (unit == NANOSECONDS) {
