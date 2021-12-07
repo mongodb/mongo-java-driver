@@ -45,6 +45,7 @@ import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.Timeout;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
@@ -89,6 +90,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
@@ -366,18 +368,15 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     */
+    @VisibleForTesting(otherwise = PRIVATE)
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
         return pool;
     }
 
     /**
-     * Is package-access for the purpose of testing and must not be used for any other purpose outside of this class.
-     * <p>
      * Synchronously prune idle connections and ensure the minimum pool size.
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     void doMaintenance() {
         Predicate<RuntimeException> silentlyComplete = e ->
                 e instanceof MongoInterruptedException || e instanceof MongoTimeoutException

@@ -16,9 +16,11 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.internal.VisibleForTesting;
 import org.bson.types.ObjectId;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * A client-generated identifier that uniquely identifies a connection to a MongoDB cluster, which could be sharded, replica set,
@@ -48,7 +50,7 @@ public final class ClusterId {
         this.description = description;
     }
 
-    // for testing only, as cluster identifiers should really be unique
+    @VisibleForTesting(otherwise = PRIVATE)
     ClusterId(final String value, final String description) {
         this.value = notNull("value", value);
         this.description = description;
