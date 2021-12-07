@@ -26,7 +26,7 @@ import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An instance of an implementation must be created in the {@linkplain #invalidate() paused} state.
+ * An instance of an implementation must be created in the {@linkplain #invalidate(Throwable) paused} state.
  */
 interface ConnectionPool extends Closeable {
     /**
@@ -36,13 +36,13 @@ interface ConnectionPool extends Closeable {
 
     /**
      * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
-     * @throws MongoConnectionPoolClearedException If detects that the pool is {@linkplain #invalidate() paused}.
+     * @throws MongoConnectionPoolClearedException If detects that the pool is {@linkplain #invalidate(Throwable) paused}.
      */
     InternalConnection get(long timeout, TimeUnit timeUnit) throws MongoConnectionPoolClearedException;
 
     /**
      * Completes the {@code callback} with a {@link MongoConnectionPoolClearedException}
-     * if detects that the pool is {@linkplain #invalidate() paused}.
+     * if detects that the pool is {@linkplain #invalidate(Throwable) paused}.
      */
     void getAsync(SingleResultCallback<InternalConnection> callback);
 
@@ -50,23 +50,16 @@ interface ConnectionPool extends Closeable {
      * Mark the pool as paused, unblock all threads waiting in {@link #get() get…} methods, unless they are blocked
      * doing an IO operation, increment {@linkplain #getGeneration() generation} to lazily clear all connections managed by the pool
      * (this is done via {@link #get() get…} and {@linkplain InternalConnection#close() check in} methods, and may also be done
-     * by a background task). In the {@linkplain #invalidate() paused} state, connections can be created neither in the background
+     * by a background task). In the paused state, connections can be created neither in the background
      * nor via {@link #get() get…} methods.
-     * If the pool is {@linkplain #invalidate() paused}, the method does nothing except for recording the specified {@code cause}.
+     * If the pool is paused, the method does nothing except for recording the specified {@code cause}.
      *
      * @see #ready()
      */
     void invalidate(@Nullable Throwable cause);
 
     /**
-     * Is equivalent to {@link #invalidate(Throwable)} called with {@code null}.
-     *
-     * @see #invalidate(Throwable)
-     */
-    void invalidate();
-
-    /**
-     * Unlike {@link #invalidate()}, this method neither marks the pool as paused,
+     * Unlike {@link #invalidate(Throwable)}, this method neither marks the pool as paused,
      * nor affects the {@linkplain #getGeneration() generation}.
      *
      * @param generation The expected service-specific generation.

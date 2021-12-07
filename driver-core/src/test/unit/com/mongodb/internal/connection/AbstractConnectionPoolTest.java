@@ -239,7 +239,7 @@ public abstract class AbstractConnectionPoolTest {
                             .longValue();
                     listener.waitForEvent(eventClass, operation.getNumber("count").intValue(), timeoutMillis, TimeUnit.MILLISECONDS);
                 } else if (name.equals("clear")) {
-                    pool.invalidate();
+                    pool.invalidate(null);
                 } else if (name.equals("ready")) {
                     pool.ready();
                 } else if (name.equals("close")) {
@@ -580,11 +580,6 @@ public abstract class AbstractConnectionPoolTest {
         @Override
         public void invalidate(@Nullable final Throwable cause) {
             pool.invalidate(cause);
-        }
-
-        @Override
-        public void invalidate() {
-            pool.invalidate();
         }
 
         @Override

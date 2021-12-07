@@ -79,10 +79,11 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
                 markedPoolReady = true;
             }
             updateDescription(candidateDescription);
-            if (candidateDescription.getException() != null) {
+            Throwable candidateDescriptionException = candidateDescription.getException();
+            if (candidateDescriptionException != null) {
                 assertTrue(newServerType == UNKNOWN);
                 assertFalse(markedPoolReady);
-                connectionPool.invalidate();
+                connectionPool.invalidate(candidateDescriptionException);
             }
         } finally {
             lock.unlock();

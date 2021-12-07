@@ -465,11 +465,11 @@ public class DefaultConnectionPoolTest {
         assertTrue(invalidateAndReadyProb >= 0 && invalidateAndReadyProb <= 1);
         Runnable spontaneouslyInvalidateReady = () -> {
             if (ThreadLocalRandom.current().nextFloat() < invalidateAndReadyProb) {
-                pool.invalidate();
+                pool.invalidate(null);
                 pool.ready();
             }
             if (ThreadLocalRandom.current().nextFloat() < invalidateProb) {
-                pool.invalidate();
+                pool.invalidate(null);
             }
             if (ThreadLocalRandom.current().nextFloat() < readyProb) {
                 pool.ready();

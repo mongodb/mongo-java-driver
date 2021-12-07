@@ -152,7 +152,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         connectionFactory.createdConnections.get(0).opened()  // if the first one is opened, they all should be
 
         when: 'the pool is invalidated and the maintenance tasks runs'
-        pool.invalidate()
+        pool.invalidate(null)
         pool.ready()
         pool.doMaintenance()
         //not cool - but we have no way of being notified that the maintenance task has finished
@@ -410,7 +410,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         when:
         pool.ready()
         pool.ready()
-        pool.invalidate()
+        pool.invalidate(null)
         pool.invalidate(new RuntimeException())
 
         then:
@@ -504,7 +504,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.close()
 
         when:
-        pool.invalidate()
+        pool.invalidate(null)
 
         then:
         noExceptionThrown()
