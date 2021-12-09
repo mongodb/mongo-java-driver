@@ -146,6 +146,22 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         }
     }
 
+    @Test
+    public void testAvailable() {
+        prepareData();
+        Cursor cursor = collection.aggregate(asList(new BasicDBObject("$match", new BasicDBObject())),
+                AggregationOptions.builder().build());
+
+        assertEquals(3, cursor.available());
+
+        cursor.next();
+        assertEquals(2, cursor.available());
+
+        cursor.next();
+        assertEquals(1, cursor.available());
+    }
+
+
     private void verify(final List<DBObject> pipeline, final AggregationOptions options) {
         verify(pipeline, options, ReadPreference.primary());
     }

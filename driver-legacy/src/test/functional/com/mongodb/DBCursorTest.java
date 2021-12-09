@@ -62,6 +62,27 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testAvailable() {
+        cursor.batchSize(3);
+        assertEquals(0, cursor.available());
+
+        cursor.next();
+        assertEquals(2, cursor.available());
+
+        cursor.next();
+        assertEquals(1, cursor.available());
+
+        cursor.next();
+        assertEquals(0, cursor.available());
+
+        cursor.next();
+        assertEquals(2, cursor.available());
+
+        cursor.close();
+        assertEquals(0, cursor.available());
+    }
+
+    @Test
     public void testNextHasNext() {
         cursor.sort(new BasicDBObject("_id", 1));
         int i = 0;
