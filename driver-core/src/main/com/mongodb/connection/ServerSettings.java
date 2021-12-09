@@ -131,6 +131,19 @@ public class ServerSettings {
         }
 
         /**
+         * Sets the server listeners.
+         *
+         * @param serverListeners list of server listeners
+         * @return this
+         * @since 4.5
+         */
+        public Builder serverListenerList(final List<ServerListener> serverListeners) {
+            notNull("serverListeners", serverListeners);
+            this.serverListeners = new ArrayList<>(serverListeners);
+            return this;
+        }
+
+        /**
          * Adds a server monitor listener.
          *
          * @param serverMonitorListener the non-null server monitor listener
@@ -140,6 +153,19 @@ public class ServerSettings {
         public Builder addServerMonitorListener(final ServerMonitorListener serverMonitorListener) {
             notNull("serverMonitorListener", serverMonitorListener);
             serverMonitorListeners.add(serverMonitorListener);
+            return this;
+        }
+
+        /**
+         * Sets the server monitor listeners.
+         *
+         * @param serverMonitorListeners list of server monitor listeners
+         * @return this
+         * @since 4.5
+         */
+        public Builder serverMonitorListenerList(final List<ServerMonitorListener> serverMonitorListeners) {
+            notNull("serverMonitorListeners", serverMonitorListeners);
+            this.serverMonitorListeners = new ArrayList<>(serverMonitorListeners);
             return this;
         }
 

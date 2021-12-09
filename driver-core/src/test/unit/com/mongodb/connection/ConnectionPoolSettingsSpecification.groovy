@@ -170,6 +170,7 @@ class ConnectionPoolSettingsSpecification extends Specification {
 
     def 'should apply settings'() {
         given:
+        def connectionPoolListener = Mock(ConnectionPoolListener)
         def defaultSettings = ConnectionPoolSettings.builder().build()
         def customSettings = ConnectionPoolSettings
                 .builder()
@@ -187,6 +188,12 @@ class ConnectionPoolSettingsSpecification extends Specification {
         expect:
         ConnectionPoolSettings.builder().applySettings(customSettings).build() == customSettings
         ConnectionPoolSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
+
+        when:
+        customSettings = ConnectionPoolSettings.builder(customSettings).connectionPoolListenerList([connectionPoolListener]).build()
+
+        then:
+        customSettings.connectionPoolListeners == [connectionPoolListener]
     }
 
     def 'toString should be overridden'() {
