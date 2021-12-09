@@ -28,6 +28,19 @@ import java.util.Iterator;
 public interface Cursor extends Iterator<DBObject>, Closeable {
 
     /**
+     * Gets the number of results available locally without blocking, which may be 0.
+     *
+     * <p>
+     * If the cursor is known to be exhausted, returns 0.  If the cursor is closed before it's been exhausted, it may return a non-zero
+     * value.
+     * </p>
+     *
+     * @return the number of results available locally without blocking
+     * @since 4.5
+     */
+    int available();
+
+    /**
      * Gets the server's identifier for this Cursor.
      *
      * @return the cursor's ID, or 0 if there is no active cursor.
