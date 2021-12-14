@@ -43,7 +43,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
-import static com.mongodb.internal.operation.OperationHelper.validateHint;
+import static com.mongodb.internal.operation.OperationHelper.validateHintForFindAndModify;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -378,7 +378,7 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
             commandDocument.put("collation", collation.asDocument());
         }
         if (hint != null || hintString != null) {
-            validateHint(connectionDescription, getWriteConcern());
+            validateHintForFindAndModify(connectionDescription, getWriteConcern());
             if (hint != null) {
                 commandDocument.put("hint", hint.toBsonDocument(BsonDocument.class, null));
             } else {

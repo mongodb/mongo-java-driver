@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedCrudTest extends UnifiedReactiveStreamsTest {
     @SuppressWarnings("FieldCanBeLocal")
     private final String fileDescription;
@@ -37,6 +39,12 @@ public class UnifiedCrudTest extends UnifiedReactiveStreamsTest {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.fileDescription = fileDescription;
         this.testDescription = testDescription;
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint string on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint document on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint string on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint document on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint string on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint document on 4.4+ server"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
