@@ -65,6 +65,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotSix;
@@ -161,17 +162,27 @@ final class OperationHelper {
         if (serverIsLessThanVersionThreeDotFour(connectionDescription)) {
             throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
                     connectionDescription.getMaxWireVersion()));
-        } else if ((request instanceof DeleteRequest || request instanceof UpdateRequest) && !writeConcern.isAcknowledged()) {
-            throw new MongoClientException("Specifying hints with an unacknowledged WriteConcern is not supported");
+        }
+        if (!writeConcern.isAcknowledged()) {
+            if (request instanceof UpdateRequest && serverIsLessThanVersionFourDotTwo(connectionDescription)) {
+                throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
+                        connectionDescription.getMaxWireVersion()));
+            }
+            if (request instanceof DeleteRequest && serverIsLessThanVersionFourDotFour(connectionDescription)) {
+                throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
+                        connectionDescription.getMaxWireVersion()));
+            }
         }
     }
 
-    static void validateHint(final ConnectionDescription connectionDescription, final WriteConcern writeConcern) {
+    static void validateHintForFindAndModify(final ConnectionDescription connectionDescription, final WriteConcern writeConcern) {
         if (serverIsLessThanVersionFourDotTwo(connectionDescription)) {
             throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
                     connectionDescription.getMaxWireVersion()));
-        } else if (!writeConcern.isAcknowledged()) {
-            throw new MongoClientException("Specifying hints with an unacknowledged WriteConcern is not supported");
+        }
+        if (!writeConcern.isAcknowledged() && serverIsLessThanVersionFourDotFour(connectionDescription)) {
+            throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
+                    connectionDescription.getMaxWireVersion()));
         }
     }
 

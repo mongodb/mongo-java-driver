@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedCrudTest extends UnifiedSyncTest {
 
     public UnifiedCrudTest(@SuppressWarnings("unused") final String fileDescription,
@@ -32,6 +34,12 @@ public class UnifiedCrudTest extends UnifiedSyncTest {
                            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                            final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint string on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint document on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint string on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint document on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint string on 4.4+ server"));
+        assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint document on 4.4+ server"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
