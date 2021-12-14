@@ -28,8 +28,6 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
-import java.util.stream.Collectors;
-
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 
@@ -61,21 +59,18 @@ public final class WriteConcernHelper {
     }
 
     public static MongoWriteConcernException createWriteConcernException(final BsonDocument result, final ServerAddress serverAddress) {
-        MongoWriteConcernException writeConcernException = new MongoWriteConcernException(
+        return new MongoWriteConcernException(
                 createWriteConcernError(result.getDocument("writeConcernError")),
-                WriteConcernResult.acknowledged(0, false, null), serverAddress);
-        result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue())
-                .forEach(writeConcernException::addLabel);
-        return writeConcernException;
+                WriteConcernResult.acknowledged(0, false, null),
+                serverAddress,
+                result.getArray("errorLabels", new BsonArray()));
     }
 
     public static WriteConcernError createWriteConcernError(final BsonDocument writeConcernErrorDocument) {
         return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
                 writeConcernErrorDocument.getString("codeName", new BsonString("")).getValue(),
                 writeConcernErrorDocument.getString("errmsg").getValue(),
-                writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()),
-                writeConcernErrorDocument.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue())
-                        .collect(Collectors.toSet()));
+                writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
     }
 
     private WriteConcernHelper() {

@@ -35,7 +35,7 @@ public class WriteConcernError {
     private final String codeName;
     private final String message;
     private final BsonDocument details;
-    private final Set<String> errorLabels;
+    @Deprecated private final Set<String> errorLabels;
 
 
     /**

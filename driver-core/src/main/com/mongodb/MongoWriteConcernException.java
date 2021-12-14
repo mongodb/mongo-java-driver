@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -40,6 +41,7 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param writeConcernError the non-null write concern error
      * @param serverAddress the non-null server address
      */
+    @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
         this(writeConcernError, null, serverAddress);
     }
@@ -52,20 +54,26 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param serverAddress     the non-null server address
      * @since 3.2
      */
+    @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
                                       final ServerAddress serverAddress) {
+        this(writeConcernError, writeConcernResult, serverAddress, new BsonArray());
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param writeConcernError the non-null write concern error
+     * @param writeConcernResult the write result
+     * @param serverAddress     the non-null server address
+     * @since 3.2
+     */
+    public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
+                                      final ServerAddress serverAddress, final BsonArray errorLabels) {
         super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
         this.writeConcernResult = writeConcernResult;
         this.writeConcernError = notNull("writeConcernError", writeConcernError);
-        for (final String errorLabel : writeConcernError.getErrorLabels()) {
-            super.addLabel(errorLabel);
-        }
-    }
-
-    @Override
-    public void addLabel(final String errorLabel) {
-        writeConcernError.addLabel(errorLabel);
-        super.addLabel(errorLabel);
+        super.addLabels(errorLabels);
     }
 
     /**
