@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -220,6 +221,11 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
  * </ul>
+ * <p>SRV configuration:</p>
+ * <ul>
+ * <li>{@code srvServiceName=string}: The SRV service name.</li>
+ * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * </ul>
  * <p>General configuration:</p>
  * <ul>
  * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
@@ -254,6 +260,7 @@ public class ConnectionString {
     private final String connectionString;
 
     private Integer srvMaxHosts;
+    private String srvServiceName;
     private Boolean directConnection;
     private Boolean loadBalanced;
     private ReadPreference readPreference;
@@ -404,6 +411,10 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can only be specified with mongodb+srv protocol");
         }
 
+        if (!isSrvProtocol && srvServiceName != null) {
+            throw new IllegalArgumentException("srvServiceName can only be specified with mongodb+srv protocol");
+        }
+
         if (directConnection != null && directConnection) {
             if (isSrvProtocol) {
                 throw new IllegalArgumentException("Direct connections are not supported when using mongodb+srv protocol");
@@ -482,6 +493,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("loadbalanced");
 
         GENERAL_OPTIONS_KEYS.add("srvmaxhosts");
+        GENERAL_OPTIONS_KEYS.add("srvservicename");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -594,6 +606,8 @@ public class ConnectionString {
                 if (srvMaxHosts < 0) {
                     throw new IllegalArgumentException("srvMaxHosts must be >= 0");
                 }
+            } else if (key.equals("srvservicename")) {
+                srvServiceName = value;
             }
         }
 
@@ -1135,6 +1149,20 @@ public class ConnectionString {
     }
 
     /**
+     * Gets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd with
+     * prepended underscore) character DNS query limit is not surpassed.
+     *
+     * @return the SRV service name.  Defaults to null in the connection string, but defaults to {@code "mongodb"} in
+     * {@link ClusterSettings}.
+     * @since 4.5
+     * @see ClusterSettings#getSrvServiceName()
+     */
+    @Nullable
+    public String getSrvServiceName() {
+        return srvServiceName;
+    }
+
+    /**
      * Gets the list of hosts
      *
      * @return the host list
@@ -1474,7 +1502,9 @@ public class ConnectionString {
                 && Objects.equals(heartbeatFrequency, that.heartbeatFrequency)
                 && Objects.equals(applicationName, that.applicationName)
                 && Objects.equals(compressorList, that.compressorList)
-                && Objects.equals(uuidRepresentation, that.uuidRepresentation);
+                && Objects.equals(uuidRepresentation, that.uuidRepresentation)
+                && Objects.equals(srvServiceName, that.srvServiceName)
+                && Objects.equals(srvMaxHosts, that.srvMaxHosts);
     }
 
     @Override
@@ -1483,6 +1513,6 @@ public class ConnectionString {
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
-                applicationName, compressorList, uuidRepresentation);
+                applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts);
     }
 }
