@@ -53,6 +53,7 @@ class ClusterSettingsSpecification extends Specification {
         when:
         def listenerOne = Mock(ClusterListener)
         def listenerTwo = Mock(ClusterListener)
+        def listenerThree = Mock(ClusterListener)
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
                                       .mode(ClusterConnectionMode.MULTIPLE)
@@ -73,6 +74,12 @@ class ClusterSettingsSpecification extends Specification {
         settings.serverSelector == new CompositeServerSelector([serverSelector, oneSecondLatencySelector])
         settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 1000
         settings.clusterListeners == [listenerOne, listenerTwo]
+
+        when:
+        settings = ClusterSettings.builder(settings).clusterListenerList([listenerThree]).build()
+
+        then:
+        settings.clusterListeners == [listenerThree]
     }
 
     def 'should apply settings'() {

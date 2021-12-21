@@ -40,8 +40,10 @@ class ServerSettingsSpecification extends Specification {
         given:
         def serverListenerOne = new ServerListenerAdapter() { }
         def serverListenerTwo = new ServerListenerAdapter() { }
+        def serverListenerThree = new ServerListenerAdapter() { }
         def serverMonitorListenerOne = new ServerMonitorListenerAdapter() { }
         def serverMonitorListenerTwo = new ServerMonitorListenerAdapter() { }
+        def serverMonitorListenerThree = new ServerMonitorListenerAdapter() { }
 
         when:
         def settings = ServerSettings.builder()
@@ -59,6 +61,15 @@ class ServerSettingsSpecification extends Specification {
         settings.getMinHeartbeatFrequency(MILLISECONDS) == 1000
         settings.serverListeners == [serverListenerOne, serverListenerTwo]
         settings.serverMonitorListeners == [serverMonitorListenerOne, serverMonitorListenerTwo]
+
+        when:
+        settings = ServerSettings.builder()
+                .serverListenerList([serverListenerThree])
+                .serverMonitorListenerList([serverMonitorListenerThree]).build()
+
+        then:
+        settings.serverListeners == [serverListenerThree]
+        settings.serverMonitorListeners == [serverMonitorListenerThree]
     }
 
     def 'when connection string is applied to builder, all properties should be set'() {
