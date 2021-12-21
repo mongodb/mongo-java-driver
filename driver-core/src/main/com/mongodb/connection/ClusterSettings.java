@@ -269,6 +269,19 @@ public final class ClusterSettings {
         }
 
         /**
+         * Sets the cluster listeners.
+         *
+         * @param clusterListeners list of cluster listeners
+         * @return this
+         * @since 4.5
+         */
+        public Builder clusterListenerList(final List<ClusterListener> clusterListeners) {
+            notNull("clusterListeners", clusterListeners);
+            this.clusterListeners = new ArrayList<>(clusterListeners);
+            return this;
+        }
+
+        /**
          * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
          * @param connectionString the connection string containing details of how to connect to MongoDB

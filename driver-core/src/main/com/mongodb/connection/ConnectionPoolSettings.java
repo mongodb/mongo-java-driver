@@ -216,6 +216,19 @@ public class ConnectionPoolSettings {
         }
 
         /**
+         * Sets the connection pool listeners.
+         *
+         * @param connectionPoolListeners list of connection pool listeners
+         * @return this
+         * @since 4.5
+         */
+        public Builder connectionPoolListenerList(final List<ConnectionPoolListener> connectionPoolListeners) {
+            notNull("connectionPoolListeners", connectionPoolListeners);
+            this.connectionPoolListeners = new ArrayList<>(connectionPoolListeners);
+            return this;
+        }
+
+        /**
          * The maximum number of connections a pool may be establishing concurrently.
          *
          * @param maxConnecting The maximum number of connections a pool may be establishing concurrently. Must be positive.
