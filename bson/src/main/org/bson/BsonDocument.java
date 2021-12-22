@@ -49,6 +49,9 @@ import static java.lang.String.format;
 public class BsonDocument extends BsonValue implements Map<String, BsonValue>, Cloneable, Bson, Serializable {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * The underlying map.
+     */
     private final Map<String, BsonValue> map;
 
     /**
@@ -882,12 +885,31 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
         }
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+    //
+
+    /**
+     * Write the replacement object.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+     * </p>
+     *
+     * @return a proxy for the document
+     */
     private Object writeReplace() {
         return new SerializationProxy(this);
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+    /**
+     * Prevent normal serialization.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+     * </p>
+     *
+     * @param stream the stream
+     * @throws InvalidObjectException in all cases
+     */
     private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Proxy required");
     }

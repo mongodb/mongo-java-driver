@@ -25,6 +25,9 @@ import org.bson.Document;
  */
 public class CodeWithScope extends Code {
 
+    /**
+     * The scope document.
+     */
     private final Document scope;
 
     private static final long serialVersionUID = -6284832275113680002L;

@@ -27,6 +27,9 @@ public class Code implements Serializable {
 
     private static final long serialVersionUID = 475535263314046697L;
 
+    /**
+     * The JavaScript code string.
+     */
     private final String code;
 
     /**
