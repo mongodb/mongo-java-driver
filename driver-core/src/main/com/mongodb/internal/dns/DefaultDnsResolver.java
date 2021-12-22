@@ -58,10 +58,11 @@ public final class DefaultDnsResolver implements DnsResolver {
         List<String> hosts = new ArrayList<String>();
         InitialDirContext dirContext = createDnsDirContext();
         try {
-            Attributes attributes = dirContext.getAttributes("_" + srvServiceName + "._tcp." + srvHost, new String[]{"SRV"});
+            String resourceRecordName = "_" + srvServiceName + "._tcp." + srvHost;
+            Attributes attributes = dirContext.getAttributes(resourceRecordName, new String[]{"SRV"});
             Attribute attribute = attributes.get("SRV");
             if (attribute == null) {
-                throw new MongoConfigurationException("_" + "No SRV records available for " + "_" + srvServiceName + "._tcp." + srvHost);
+                throw new MongoConfigurationException(format("No SRV records available for %s", resourceRecordName));
             }
             NamingEnumeration<?> srvRecordEnumeration = attribute.getAll();
             while (srvRecordEnumeration.hasMore()) {
