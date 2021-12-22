@@ -57,7 +57,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
  * in which case the ":" after the username is left off as well</li>
  * <li>{@code host} is the only required part of the URI.  It identifies a single host name for which SRV records are looked up
- * from a Domain Name Server after prefixing the host name with {@code "_mongodb._tcp"}.  The host/port for each SRV record becomes the
+ * from a Domain Name Server after prefixing the host name with, by default, {@code "_mongodb._tcp"} ({@code "mongodb"} is the default SRV
+ * service name, but can be replaced via the {@code srvServiceName} query parameter),  The host/port for each SRV record becomes the
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
@@ -102,6 +103,12 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
+ * </ul>
+ *
+ * <p>SRV configuration:</p>
+ * <ul>
+ * <li>{@code srvServiceName=string}: The SRV service name.</li>
+ * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
  * </ul>
  *
  * <p>Connection pool configuration:</p>
@@ -326,6 +333,31 @@ public class MongoClientURI {
     }
 
     /**
+     * Gets the maximum number of hosts to connect to when using SRV protocol.
+     *
+     * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
+     * @since 4.5
+     */
+    @Nullable
+    public Integer getSrvMaxHosts() {
+        return proxied.getSrvMaxHosts();
+    }
+
+    /**
+     * Gets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd with
+     * prepended underscore) character DNS query limit is not surpassed.
+     *
+     * @return the SRV service name.  Defaults to null in the connection string, but defaults to {@code "mongodb"} in
+     * {@link MongoClientOptions}.
+     * @since 4.5
+     * @see MongoClientOptions#getSrvServiceName()
+     */
+    @Nullable
+    public String getSrvServiceName() {
+        return proxied.getSrvServiceName();
+    }
+
+    /**
      * Gets the options
      *
      * @return the MongoClientOptions based on this URI.
@@ -420,6 +452,14 @@ public class MongoClientURI {
         UuidRepresentation uuidRepresentation = proxied.getUuidRepresentation();
         if (uuidRepresentation != null) {
             builder.uuidRepresentation(uuidRepresentation);
+        }
+        Integer srvMaxHosts = proxied.getSrvMaxHosts();
+        if (srvMaxHosts != null) {
+            builder.srvMaxHosts(srvMaxHosts);
+        }
+        String srvServiceName = proxied.getSrvServiceName();
+        if (srvServiceName != null) {
+            builder.srvServiceName(srvServiceName);
         }
         return builder.build();
     }

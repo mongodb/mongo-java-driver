@@ -163,7 +163,7 @@ public final class ClusterSettings {
 
         /**
          * Sets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd
-         * with prepended underscore) character DNS query limit is not surpassed..
+         * with prepended underscore) character DNS query limit is not surpassed.
          *
          * @param srvServiceName the SRV service name
          * @return this

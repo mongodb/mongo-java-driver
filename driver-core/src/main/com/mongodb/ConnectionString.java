@@ -78,7 +78,8 @@ import static java.util.Collections.unmodifiableList;
  * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
  * in which case the ":" after the username is left off as well</li>
  * <li>{@code host} is the only required part of the URI.  It identifies a single host name for which SRV records are looked up
- * from a Domain Name Server after prefixing the host name with {@code "_mongodb._tcp"}.  The host/port for each SRV record becomes the
+ * from a Domain Name Server after prefixing the host name with, by default, {@code "_mongodb._tcp"} ({@code "mongodb"} is the default SRV
+ * service name, but can be replaced via the {@code srvServiceName} query parameter),  The host/port for each SRV record becomes the
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>

@@ -483,6 +483,28 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the maximum number of hosts to connect to when using SRV protocol.
+     *
+     * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
+     * @since 4.5
+     */
+    @Nullable
+    public Integer getSrvMaxHosts() {
+        return wrapped.getClusterSettings().getSrvMaxHosts();
+    }
+
+    /**
+     * Gets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd with
+     * prepended underscore) character DNS query limit is not surpassed.
+     *
+     * @return the SRV service name, which defaults to {@code "mongodb"}
+     * @since 4.5
+     */
+    public String getSrvServiceName() {
+        return wrapped.getClusterSettings().getSrvServiceName();
+    }
+
+    /**
      * Gets the server API to use when sending commands to the server.
      *
      * @return the server API, which may be null
@@ -1195,6 +1217,32 @@ public class MongoClientOptions {
          */
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             wrapped.autoEncryptionSettings(autoEncryptionSettings);
+            return this;
+        }
+
+
+        /**
+         * Sets the maximum number of hosts to connect to when using SRV protocol.
+         *
+         * @param srvMaxHosts the maximum number of hosts to connect to when using SRV protocol
+         * @return this
+         * @since 4.5
+         */
+        public Builder srvMaxHosts(final Integer srvMaxHosts) {
+            wrapped.applyToClusterSettings(builder -> builder.srvMaxHosts(srvMaxHosts));
+            return this;
+        }
+
+        /**
+         * Sets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd
+         * with prepended underscore) character DNS query limit is not surpassed.
+         *
+         * @param srvServiceName the SRV service name
+         * @return this
+         * @since 4.5
+         */
+        public Builder srvServiceName(final String srvServiceName) {
+            wrapped.applyToClusterSettings(builder -> builder.srvServiceName(srvServiceName));
             return this;
         }
 
