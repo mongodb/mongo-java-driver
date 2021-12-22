@@ -25,6 +25,7 @@ import java.util.List;
  *
  * @mongodb.driver.manual reference/method/BulkWriteResult/#BulkWriteResult.writeErrors BulkWriteResult.writeErrors
  * @since 2.12
+ * @serial exclude
  */
 public class BulkWriteException extends MongoServerException {
     private static final long serialVersionUID = -1505950263354313025L;
