@@ -27,6 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @see com.mongodb.WriteConcern
  *
  * @since 3.0
+ * @serial exclude
  */
 public class MongoWriteConcernException extends MongoServerException {
     private static final long serialVersionUID = 4577579466973523211L;

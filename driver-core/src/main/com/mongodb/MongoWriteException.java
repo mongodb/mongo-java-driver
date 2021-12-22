@@ -20,6 +20,7 @@ package com.mongodb;
  * An exception indicating the failure of a write operation.
  *
  * @since 3.0
+ * @serial exclude
  */
 public class MongoWriteException extends MongoServerException {
 

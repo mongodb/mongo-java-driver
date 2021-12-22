@@ -30,6 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
+ * @serial exclude
  */
 public class MongoException extends RuntimeException {
 
@@ -190,12 +191,22 @@ public class MongoException extends RuntimeException {
         return errorLabels.contains(errorLabel);
     }
 
+    /**
+     * Add labels.
+     *
+     * @param labels the labels
+     */
     protected void addLabels(final BsonArray labels) {
         for (final BsonValue errorLabel : labels) {
             addLabel(errorLabel.asString().getValue());
         }
     }
 
+    /**
+     * Add labels.
+     *
+     * @param labels the labels
+     */
     protected void addLabels(final Collection<String> labels) {
         for (final String errorLabel : labels) {
             addLabel(errorLabel);

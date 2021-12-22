@@ -26,14 +26,41 @@ import com.mongodb.annotations.Beta;
  */
 @Beta
 public enum MongoTimeUnit {
+    /**
+     * YEAR
+     */
     YEAR("year", false),
+    /**
+     * QUARTER
+     */
     QUARTER("quarter", false),
+    /**
+     * MONTH
+     */
     MONTH("month", false),
+    /**
+     * WEEK
+     */
     WEEK("week", true),
+    /**
+     * DAY
+     */
     DAY("day", true),
+    /**
+     * HOUR
+     */
     HOUR("hour", true),
+    /**
+     * MINUTE
+     */
     MINUTE("minute", true),
+    /**
+     * SECOND
+     */
     SECOND("second", true),
+    /**
+     * MILLISECOND
+     */
     MILLISECOND("millisecond", true);
 
     private final String value;

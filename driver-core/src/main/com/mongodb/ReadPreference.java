@@ -154,8 +154,20 @@ public abstract class ReadPreference {
         }
     }
 
+    /**
+     * Choose for non-replica sets.
+     *
+     * @param clusterDescription the cluster description
+     * @return the list of matching server descriptions
+     */
     protected abstract List<ServerDescription> chooseForNonReplicaSet(ClusterDescription clusterDescription);
 
+    /**
+     * Choose for replica sets.
+     *
+     * @param clusterDescription the cluster description
+     * @return the list of matching server descriptions
+     */
     protected abstract List<ServerDescription> chooseForReplicaSet(ClusterDescription clusterDescription);
 
     /**

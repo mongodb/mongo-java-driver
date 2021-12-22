@@ -100,7 +100,6 @@ public class DataKeyOptions {
      *   <li>endpoint: an optional String, with the host with optional port. Defaults to "cloudkms.googleapis.com".</li>
      * </ul>
      * <p>
-     * <p>
      *     If the kmsProvider is "kmip" the master key is required and must contain the following fields:
      * </p>
      * <ul>

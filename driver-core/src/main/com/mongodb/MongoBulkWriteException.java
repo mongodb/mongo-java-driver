@@ -29,6 +29,7 @@ import java.util.Set;
  * An exception that represents all errors associated with a bulk write operation.
  *
  * @since 3.0
+ * @serial exclude
  */
 public class MongoBulkWriteException extends MongoServerException {
 

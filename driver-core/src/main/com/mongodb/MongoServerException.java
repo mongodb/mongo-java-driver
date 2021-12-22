@@ -20,6 +20,7 @@ package com.mongodb;
  * An exception indicating that some error has been raised by a MongoDB server in response to an operation.
  *
  * @since 2.13
+ * @serial exclude
  */
 public abstract class MongoServerException extends MongoException {
     private static final long serialVersionUID = -5213859742051776206L;

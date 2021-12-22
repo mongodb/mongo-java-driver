@@ -33,7 +33,13 @@ import java.util.List;
 public class ServerAddress implements Serializable {
     private static final long serialVersionUID = 4027873363095395504L;
 
+    /**
+     * The host.
+     */
     private final String host;
+    /**
+     * The port.
+     */
     private final int port;
 
     /**
