@@ -1150,8 +1150,7 @@ public class ConnectionString {
     }
 
     /**
-     * Gets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd with
-     * prepended underscore) character DNS query limit is not surpassed.
+     * Gets the SRV service name.
      *
      * @return the SRV service name.  Defaults to null in the connection string, but defaults to {@code "mongodb"} in
      * {@link ClusterSettings}.

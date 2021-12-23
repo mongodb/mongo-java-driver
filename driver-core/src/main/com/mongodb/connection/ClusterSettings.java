@@ -162,13 +162,22 @@ public final class ClusterSettings {
         }
 
         /**
-         * Sets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd
-         * with prepended underscore) character DNS query limit is not surpassed.
+         * Sets the SRV service name.
+         *
+         * <p>
+         * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a> )
+         * service name, which is limited to 15 characters
+         * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>.
+         * If specified, it is combined with the single host name specified by
+         * {@link #getHosts()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
+         * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
+         * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
+         * </p>
          *
          * @param srvServiceName the SRV service name
          * @return this
          * @since 4.5
-         */
+        */
         public Builder srvServiceName(final String srvServiceName) {
             this.srvServiceName = notNull("srvServiceName", srvServiceName);
             return this;
@@ -366,12 +375,21 @@ public final class ClusterSettings {
         return srvMaxHosts;
     }
 
-    /**
-     * Gets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd with
-     * prepended underscore) character DNS query limit is not surpassed.
-     *
-     * @return the SRV service name, which defaults to {@code "mongodb"}
-     * @since 4.5
+     /**
+      * Gets the SRV service name.
+      *
+      * <p>
+      * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a> )
+      * service name, which is limited to 15 characters
+      * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>.
+      * If specified, it is combined with the single host name specified by
+      * {@link #getHosts()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
+      * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
+      * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
+      * </p>
+      *
+      * @return the SRV service name, which defaults to {@code "mongodb"}
+      * @since 4.5
      */
     public String getSrvServiceName() {
         return srvServiceName;
