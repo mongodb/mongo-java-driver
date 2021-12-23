@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -77,7 +78,8 @@ import static java.util.Collections.unmodifiableList;
  * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
  * in which case the ":" after the username is left off as well</li>
  * <li>{@code host} is the only required part of the URI.  It identifies a single host name for which SRV records are looked up
- * from a Domain Name Server after prefixing the host name with {@code "_mongodb._tcp"}.  The host/port for each SRV record becomes the
+ * from a Domain Name Server after prefixing the host name with, by default, {@code "_mongodb._tcp"} ({@code "mongodb"} is the default SRV
+ * service name, but can be replaced via the {@code srvServiceName} query parameter),  The host/port for each SRV record becomes the
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
@@ -220,6 +222,11 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
  * </ul>
+ * <p>SRV configuration:</p>
+ * <ul>
+ * <li>{@code srvServiceName=string}: The SRV service name. See {@link ClusterSettings#getSrvServiceName()} for details.</li>
+ * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * </ul>
  * <p>General configuration:</p>
  * <ul>
  * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
@@ -254,6 +261,7 @@ public class ConnectionString {
     private final String connectionString;
 
     private Integer srvMaxHosts;
+    private String srvServiceName;
     private Boolean directConnection;
     private Boolean loadBalanced;
     private ReadPreference readPreference;
@@ -404,6 +412,10 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can only be specified with mongodb+srv protocol");
         }
 
+        if (!isSrvProtocol && srvServiceName != null) {
+            throw new IllegalArgumentException("srvServiceName can only be specified with mongodb+srv protocol");
+        }
+
         if (directConnection != null && directConnection) {
             if (isSrvProtocol) {
                 throw new IllegalArgumentException("Direct connections are not supported when using mongodb+srv protocol");
@@ -482,6 +494,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("loadbalanced");
 
         GENERAL_OPTIONS_KEYS.add("srvmaxhosts");
+        GENERAL_OPTIONS_KEYS.add("srvservicename");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -594,6 +607,8 @@ public class ConnectionString {
                 if (srvMaxHosts < 0) {
                     throw new IllegalArgumentException("srvMaxHosts must be >= 0");
                 }
+            } else if (key.equals("srvservicename")) {
+                srvServiceName = value;
             }
         }
 
@@ -1135,6 +1150,19 @@ public class ConnectionString {
     }
 
     /**
+     * Gets the SRV service name.
+     *
+     * @return the SRV service name.  Defaults to null in the connection string, but defaults to {@code "mongodb"} in
+     * {@link ClusterSettings}.
+     * @since 4.5
+     * @see ClusterSettings#getSrvServiceName()
+     */
+    @Nullable
+    public String getSrvServiceName() {
+        return srvServiceName;
+    }
+
+    /**
      * Gets the list of hosts
      *
      * @return the host list
@@ -1474,7 +1502,9 @@ public class ConnectionString {
                 && Objects.equals(heartbeatFrequency, that.heartbeatFrequency)
                 && Objects.equals(applicationName, that.applicationName)
                 && Objects.equals(compressorList, that.compressorList)
-                && Objects.equals(uuidRepresentation, that.uuidRepresentation);
+                && Objects.equals(uuidRepresentation, that.uuidRepresentation)
+                && Objects.equals(srvServiceName, that.srvServiceName)
+                && Objects.equals(srvMaxHosts, that.srvMaxHosts);
     }
 
     @Override
@@ -1483,6 +1513,6 @@ public class ConnectionString {
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
-                applicationName, compressorList, uuidRepresentation);
+                applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts);
     }
 }

@@ -41,7 +41,8 @@ class ClusterSettingsSpecification extends Specification {
         settings.serverSelector == null
         settings.getServerSelectionTimeout(TimeUnit.SECONDS) == 30
         settings.clusterListeners == []
-        settings.getSrvMaxHosts() == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
     }
 
     def 'should set all properties'() {
@@ -92,6 +93,20 @@ class ClusterSettingsSpecification extends Specification {
                 .serverSelectionTimeout(1, TimeUnit.SECONDS)
                 .addClusterListener(listenerOne)
                 .addClusterListener(listenerTwo)
+                .build()
+
+        expect:
+        ClusterSettings.builder().applySettings(customSettings).build() == customSettings
+        ClusterSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
+    }
+
+    def 'should apply settings for SRV'() {
+        given:
+        def defaultSettings = ClusterSettings.builder().build()
+        def customSettings = ClusterSettings.builder()
+                .hosts([new ServerAddress('localhost')])
+                .srvMaxHosts(4)
+                .srvServiceName('foo')
                 .build()
 
         expect:
@@ -174,7 +189,8 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
-        settings.getSrvMaxHosts() == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/')).build()
@@ -184,18 +200,20 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('127.0.0.1:27017')]
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'repl0'
-        settings.getSrvMaxHosts() == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(
-                new ConnectionString('mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=1')).build()
+                new ConnectionString('mongodb+srv://test22.test.build.10gen.cc/?srvServiceName=customname&srvMaxHosts=1')).build()
 
         then:
         settings.mode == ClusterConnectionMode.MULTIPLE
         settings.hosts == [new ServerAddress('127.0.0.1:27017')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
-        settings.getSrvMaxHosts() == 1
+        settings.srvMaxHosts == 1
+        settings.srvServiceName == 'customname'
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?replicaSet=test'))
@@ -206,7 +224,8 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018')]
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'test'
-        settings.getSrvMaxHosts() == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
 
         when:
         settings = ClusterSettings.builder()
@@ -218,7 +237,8 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
-        settings.getSrvMaxHosts() == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
 
         when:
         settings = ClusterSettings.builder()
@@ -230,7 +250,8 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
-        settings.getSrvMaxHosts() == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018,example.com:27019'))
@@ -241,7 +262,8 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
-        settings.getSrvMaxHosts() == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +

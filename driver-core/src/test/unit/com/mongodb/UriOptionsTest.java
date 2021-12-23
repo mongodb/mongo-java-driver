@@ -45,8 +45,6 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         // Skip because Java driver does not support the tlsAllowInvalidCertificates option
         assumeFalse(getDescription().startsWith("tlsInsecure and tlsAllowInvalidCertificates both present"));
         assumeFalse(getDescription().startsWith("tlsAllowInvalidCertificates and tlsInsecure both present"));
-        // Skip because Java driver does not support srvServiceName yet
-        assumeFalse(getDescription().contains("srvServiceName"));
 
         if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
             testValidOptions();

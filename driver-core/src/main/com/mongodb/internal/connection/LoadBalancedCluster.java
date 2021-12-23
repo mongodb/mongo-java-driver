@@ -102,7 +102,7 @@ final class LoadBalancedCluster implements Cluster {
             initializationCompleted = true;
         } else {
             notNull("dnsSrvRecordMonitorFactory", dnsSrvRecordMonitorFactory);
-            dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(settings.getSrvHost(), new DnsSrvRecordInitializer() {
+            dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(settings.getSrvHost(), settings.getSrvServiceName(), new DnsSrvRecordInitializer() {
 
                 @Override
                 public void initialize(final Collection<ServerAddress> hosts) {
