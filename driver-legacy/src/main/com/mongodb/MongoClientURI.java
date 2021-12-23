@@ -107,7 +107,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * <p>SRV configuration:</p>
  * <ul>
- * <li>{@code srvServiceName=string}: The SRV service name.</li>
+ * <li>{@code srvServiceName=string}: The SRV service name. See {@link MongoClientOptions#getSrvServiceName()} for details.</li>
  * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
  * </ul>
  *
@@ -344,8 +344,7 @@ public class MongoClientURI {
     }
 
     /**
-     * Gets the SRV service name according to RFC 6335, with the exception that it may exceed 15 characters as long as the 63rd (62nd with
-     * prepended underscore) character DNS query limit is not surpassed.
+     * Gets the SRV service name.
      *
      * @return the SRV service name.  Defaults to null in the connection string, but defaults to {@code "mongodb"} in
      * {@link MongoClientOptions}.
