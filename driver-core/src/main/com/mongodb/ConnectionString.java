@@ -224,7 +224,7 @@ import static java.util.Collections.unmodifiableList;
  * </ul>
  * <p>SRV configuration:</p>
  * <ul>
- * <li>{@code srvServiceName=string}: The SRV service name.</li>
+ * <li>{@code srvServiceName=string}: The SRV service name. See {@link ClusterSettings#getSrvServiceName()} for details.</li>
  * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
  * </ul>
  * <p>General configuration:</p>
