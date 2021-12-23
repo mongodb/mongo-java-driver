@@ -25,7 +25,7 @@ import java.util.List;
  */
 public interface DnsResolver {
 
-    List<String> resolveHostFromSrvRecords(String srvHost);
+    List<String> resolveHostFromSrvRecords(String srvHost, String srvServiceName);
 
     String resolveAdditionalQueryParametersFromTxtRecords(String host);
 }

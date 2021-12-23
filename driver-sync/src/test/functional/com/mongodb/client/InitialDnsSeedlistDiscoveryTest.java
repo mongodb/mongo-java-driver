@@ -104,9 +104,6 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
 
     @Before
     public void setUp() {
-        // Driver does not yet support srvServiceName
-        assumeFalse(filename.equals("srv-service-name.json"));
-
         if (parentDirectory.endsWith("replica-set")) {
             assumeTrue(isDiscoverableReplicaSet());
         } else if (parentDirectory.endsWith("load-balanced")) {
@@ -204,6 +201,8 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                     assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
                 } else if (entry.getKey().equals("srvMaxHosts")) {
                     assertEquals(Integer.valueOf(entry.getValue().asInt32().getValue()), connectionString.getSrvMaxHosts());
+                } else if (entry.getKey().equals("srvServiceName")) {
+                    assertEquals(entry.getValue().asString().getValue(), connectionString.getSrvServiceName());
                 } else {
                     throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
                 }

@@ -52,16 +52,17 @@ public final class DefaultDnsResolver implements DnsResolver {
       domain equal to the domain of the srvHost.
     */
     @Override
-    public List<String> resolveHostFromSrvRecords(final String srvHost) {
+    public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName) {
         String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
         List<String> hosts = new ArrayList<String>();
         InitialDirContext dirContext = createDnsDirContext();
         try {
-            Attributes attributes = dirContext.getAttributes("_mongodb._tcp." + srvHost, new String[]{"SRV"});
+            String resourceRecordName = "_" + srvServiceName + "._tcp." + srvHost;
+            Attributes attributes = dirContext.getAttributes(resourceRecordName, new String[]{"SRV"});
             Attribute attribute = attributes.get("SRV");
             if (attribute == null) {
-                throw new MongoConfigurationException("No SRV records available for host " + srvHost);
+                throw new MongoConfigurationException(format("No SRV records available for %s", resourceRecordName));
             }
             NamingEnumeration<?> srvRecordEnumeration = attribute.getAll();
             while (srvRecordEnumeration.hasMore()) {

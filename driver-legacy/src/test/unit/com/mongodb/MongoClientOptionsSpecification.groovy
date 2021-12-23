@@ -73,6 +73,9 @@ class MongoClientOptionsSpecification extends Specification {
         options.compressorList == []
         options.getAutoEncryptionSettings() == null
         options.getServerApi() == null
+
+        options.getSrvMaxHosts() == null
+        options.getSrvServiceName() == 'mongodb'
     }
 
     def 'should handle illegal arguments'() {
@@ -276,6 +279,21 @@ class MongoClientOptionsSpecification extends Specification {
 
         then:
         settings.clusterSettings == ClusterSettings.builder().srvHost('test3.test.build.10gen.cc').build()
+        when:
+        def options = MongoClientOptions.builder()
+                .srvServiceName('test')
+                .srvMaxHosts(4)
+                .build()
+        settings = options.asMongoClientSettings(null, 'test3.test.build.10gen.cc',
+                MULTIPLE, null)
+
+        then:
+        settings.clusterSettings == ClusterSettings.builder().srvHost('test3.test.build.10gen.cc')
+                .srvServiceName('test')
+                .srvMaxHosts(4)
+                .build()
+        options.getSrvServiceName() == 'test'
+        options.getSrvMaxHosts() == 4
     }
 
     def 'should be easy to create new options from existing'() {

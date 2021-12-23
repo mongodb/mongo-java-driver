@@ -17,5 +17,5 @@
 package com.mongodb.internal.connection;
 
 public interface DnsSrvRecordMonitorFactory {
-    DnsSrvRecordMonitor create(String hostName, DnsSrvRecordInitializer dnsSrvRecordInitializer);
+    DnsSrvRecordMonitor create(String hostName, String srvServiceName, DnsSrvRecordInitializer dnsSrvRecordInitializer);
 }

@@ -28,6 +28,7 @@ import com.mongodb.selector.ServerSelector;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -49,6 +50,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public final class ClusterSettings {
     private final String srvHost;
     private final Integer srvMaxHosts;
+    private final String srvServiceName;
     private final List<ServerAddress> hosts;
     private final ClusterConnectionMode mode;
     private final ClusterType requiredClusterType;
@@ -86,6 +88,7 @@ public final class ClusterSettings {
         private static final List<ServerAddress> DEFAULT_HOSTS = singletonList(new ServerAddress());
         private String srvHost;
         private Integer srvMaxHosts;
+        private String srvServiceName = "mongodb";
         private List<ServerAddress> hosts = DEFAULT_HOSTS;
         private ClusterConnectionMode mode;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
@@ -110,6 +113,8 @@ public final class ClusterSettings {
         public Builder applySettings(final ClusterSettings clusterSettings) {
             notNull("clusterSettings", clusterSettings);
             srvHost = clusterSettings.srvHost;
+            srvServiceName = clusterSettings.srvServiceName;
+            srvMaxHosts = clusterSettings.srvMaxHosts;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
             requiredReplicaSetName = clusterSettings.requiredReplicaSetName;
@@ -153,6 +158,28 @@ public final class ClusterSettings {
          */
         public Builder srvMaxHosts(final Integer srvMaxHosts) {
             this.srvMaxHosts = srvMaxHosts;
+            return this;
+        }
+
+        /**
+         * Sets the SRV service name.
+         *
+         * <p>
+         * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
+         * service name, which is limited to 15 characters
+         * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
+         * If specified, it is combined with the single host name specified by
+         * {@link #getHosts()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
+         * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
+         * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
+         * </p>
+         *
+         * @param srvServiceName the SRV service name
+         * @return this
+         * @since 4.5
+        */
+        public Builder srvServiceName(final String srvServiceName) {
+            this.srvServiceName = notNull("srvServiceName", srvServiceName);
             return this;
         }
 
@@ -302,6 +329,9 @@ public final class ClusterSettings {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
                 srvMaxHosts(connectionString.getSrvMaxHosts());
+                if (connectionString.getSrvServiceName() != null) {
+                    srvServiceName(connectionString.getSrvServiceName());
+                }
             } else if ((directConnection != null && directConnection)
                     || (directConnection == null && connectionString.getHosts().size() == 1
                         && connectionString.getRequiredReplicaSetName() == null)) {
@@ -356,6 +386,26 @@ public final class ClusterSettings {
     @Nullable
     public Integer getSrvMaxHosts() {
         return srvMaxHosts;
+    }
+
+     /**
+      * Gets the SRV service name.
+      *
+      * <p>
+      * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
+      * service name, which is limited to 15 characters
+      * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
+      * If specified, it is combined with the single host name specified by
+      * {@link #getHosts()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
+      * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
+      * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
+      * </p>
+      *
+      * @return the SRV service name, which defaults to {@code "mongodb"}
+      * @since 4.5
+     */
+    public String getSrvServiceName() {
+        return srvServiceName;
     }
 
     /**
@@ -477,53 +527,24 @@ public final class ClusterSettings {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ClusterSettings that = (ClusterSettings) o;
-
-        if (serverSelectionTimeoutMS != that.serverSelectionTimeoutMS) {
-            return false;
-        }
-        if (localThresholdMS != that.localThresholdMS) {
-            return false;
-        }
-        if (srvHost != null ? !srvHost.equals(that.srvHost) : that.srvHost != null) {
-            return false;
-        }
-        if (!hosts.equals(that.hosts)) {
-            return false;
-        }
-        if (mode != that.mode) {
-            return false;
-        }
-        if (requiredClusterType != that.requiredClusterType) {
-            return false;
-        }
-        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
-                    : that.requiredReplicaSetName != null) {
-            return false;
-        }
-        if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
-            return false;
-        }
-        if (!clusterListeners.equals(that.clusterListeners)) {
-            return false;
-        }
-
-        return true;
+        return localThresholdMS == that.localThresholdMS
+                && serverSelectionTimeoutMS == that.serverSelectionTimeoutMS
+                && Objects.equals(srvHost, that.srvHost)
+                && Objects.equals(srvMaxHosts, that.srvMaxHosts)
+                && srvServiceName.equals(that.srvServiceName)
+                && hosts.equals(that.hosts)
+                && mode == that.mode
+                && requiredClusterType == that.requiredClusterType
+                && Objects.equals(requiredReplicaSetName, that.requiredReplicaSetName)
+                && Objects.equals(serverSelector, that.serverSelector)
+                && clusterListeners.equals(that.clusterListeners);
     }
 
     @Override
     public int hashCode() {
-        int result = hosts.hashCode();
-        result = 31 * result + (srvHost != null ? srvHost.hashCode() : 0);
-        result = 31 * result + mode.hashCode();
-        result = 31 * result + requiredClusterType.hashCode();
-        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
-        result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
-        result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
-        result = 31 * result + (int) (localThresholdMS ^ (localThresholdMS >>> 32));
-        result = 31 * result + clusterListeners.hashCode();
-        return result;
+        return Objects.hash(srvHost, srvMaxHosts, srvServiceName, hosts, mode, requiredClusterType, requiredReplicaSetName, serverSelector,
+                localThresholdMS, serverSelectionTimeoutMS, clusterListeners);
     }
 
     @Override
@@ -531,6 +552,8 @@ public final class ClusterSettings {
         return "{"
                + (hosts.isEmpty() ? "" : "hosts=" + hosts)
                + (srvHost == null ? "" : ", srvHost=" + srvHost)
+               + (srvServiceName == null ? "" : ", srvServiceName=" + srvServiceName)
+               + (srvMaxHosts == null ? "" : ", srvMaxHosts=" + srvMaxHosts)
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
@@ -588,6 +611,7 @@ public final class ClusterSettings {
 
         srvHost = builder.srvHost;
         srvMaxHosts = builder.srvMaxHosts;
+        srvServiceName = builder.srvServiceName;
         hosts = builder.hosts;
         if (srvHost != null) {
             if (builder.mode == ClusterConnectionMode.SINGLE) {

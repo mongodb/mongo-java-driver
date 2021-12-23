@@ -299,6 +299,22 @@ class MongoClientURISpecification extends Specification {
                                                                                        new TagSet()])
     }
 
+    def 'should apply SRV parameters'() {
+        when:
+        def uri = new MongoClientURI('mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=4&srvServiceName=test');
+
+        then:
+        uri.getSrvMaxHosts() == 4
+        uri.getSrvServiceName() == 'test'
+
+        when:
+        def options = uri.getOptions();
+
+        then:
+        options.getSrvMaxHosts() == 4
+        options.getSrvServiceName() == 'test'
+    }
+
     def 'should respect MongoClientOptions builder'() {
         given:
         def uri = new MongoClientURI('mongodb://localhost/', MongoClientOptions.builder().connectionsPerHost(200))

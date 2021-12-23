@@ -37,6 +37,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final String hostName;
+    private final String srvServiceName;
     private final long rescanFrequencyMillis;
     private final long noRecordsRescanFrequencyMillis;
     private final DnsSrvRecordInitializer dnsSrvRecordInitializer;
@@ -44,10 +45,11 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
     private final Thread monitorThread;
     private volatile boolean isClosed;
 
-    DefaultDnsSrvRecordMonitor(final String hostName, final long rescanFrequencyMillis, final long noRecordsRescanFrequencyMillis,
-                               final DnsSrvRecordInitializer dnsSrvRecordInitializer, final ClusterId clusterId,
-                               final DnsResolver dnsResolver) {
+    DefaultDnsSrvRecordMonitor(final String hostName, final String srvServiceName, final long rescanFrequencyMillis, final long noRecordsRescanFrequencyMillis,
+            final DnsSrvRecordInitializer dnsSrvRecordInitializer, final ClusterId clusterId,
+            final DnsResolver dnsResolver) {
         this.hostName = hostName;
+        this.srvServiceName = srvServiceName;
         this.rescanFrequencyMillis = rescanFrequencyMillis;
         this.noRecordsRescanFrequencyMillis = noRecordsRescanFrequencyMillis;
         this.dnsSrvRecordInitializer = dnsSrvRecordInitializer;
@@ -75,7 +77,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
         public void run() {
             while (!isClosed && shouldContinueMonitoring()) {
                 try {
-                    List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName);
+                    List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName, srvServiceName);
                     Set<ServerAddress> hosts = createServerAddressSet(resolvedHostNames);
 
                     if (isClosed) {

@@ -483,6 +483,37 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the maximum number of hosts to connect to when using SRV protocol.
+     *
+     * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
+     * @since 4.5
+     */
+    @Nullable
+    public Integer getSrvMaxHosts() {
+        return wrapped.getClusterSettings().getSrvMaxHosts();
+    }
+
+    /**
+     * Gets the SRV service name.
+     *
+     * <p>
+     * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
+     * service name, which is limited to 15 characters
+     * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
+     * If specified, it is combined with the single host name as follows: {@code _srvServiceName._tcp.hostName}.
+     * The combined string is an SRV resource record
+     * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
+     * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
+     * </p>
+     *
+     * @return the SRV service name, which defaults to {@code "mongodb"}
+     * @since 4.5
+     */
+    public String getSrvServiceName() {
+        return wrapped.getClusterSettings().getSrvServiceName();
+    }
+
+    /**
      * Gets the server API to use when sending commands to the server.
      *
      * @return the server API, which may be null
@@ -1195,6 +1226,41 @@ public class MongoClientOptions {
          */
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             wrapped.autoEncryptionSettings(autoEncryptionSettings);
+            return this;
+        }
+
+
+        /**
+         * Sets the maximum number of hosts to connect to when using SRV protocol.
+         *
+         * @param srvMaxHosts the maximum number of hosts to connect to when using SRV protocol
+         * @return this
+         * @since 4.5
+         */
+        public Builder srvMaxHosts(final Integer srvMaxHosts) {
+            wrapped.applyToClusterSettings(builder -> builder.srvMaxHosts(srvMaxHosts));
+            return this;
+        }
+
+        /**
+         * Sets the SRV service name.
+         *
+         * <p>
+         * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
+         * service name, which is limited to 15 characters
+         * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
+         * If specified, it is combined with the single host name as follows: {@code _srvServiceName._tcp.hostName}.
+         * The combined string is an SRV resource record
+         * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
+         * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
+         * </p>
+         *
+         * @param srvServiceName the SRV service name
+         * @return this
+         * @since 4.5
+         */
+        public Builder srvServiceName(final String srvServiceName) {
+            wrapped.applyToClusterSettings(builder -> builder.srvServiceName(srvServiceName));
             return this;
         }
 
