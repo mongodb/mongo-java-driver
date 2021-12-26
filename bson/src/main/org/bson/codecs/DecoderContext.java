@@ -18,6 +18,9 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -29,7 +32,22 @@ import static org.bson.assertions.Assertions.notNull;
 public final class DecoderContext {
     private static final DecoderContext DEFAULT_CONTEXT = DecoderContext.builder().build();
     private final boolean checkedDiscriminator;
+    private final Map<String, Object> attachments;
 
+    /**
+     * Attaches an item to this context with the given name.  Returns a new modified context.
+     *
+     * @param key the key for the attachment
+     * @param object the item to attach
+     * @return the new DecoderContext
+     */
+    public DecoderContext attach(String key, Object object) {
+        return builder()
+                .attachments(attachments)
+                .checkedDiscriminator(checkedDiscriminator)
+                .attach(key, object)
+                .build();
+    }
     /**
      * @return true if the discriminator has been checked
      */
@@ -37,6 +55,17 @@ public final class DecoderContext {
         return checkedDiscriminator;
     }
 
+    /**
+     * Fetches the named attachment.  Will return null if that name doesn't have an attachment.
+     *
+     * @param key the name of the attachment
+     * @param <T> the type of the attachment
+     * @return the attachment
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T attachment(String key) {
+        return (T) attachments.get(key);
+    }
     /**
      * Create a builder.
      *
@@ -53,7 +82,22 @@ public final class DecoderContext {
         private Builder() {
         }
 
+        private final Map<String, Object> attachments = new HashMap<>();
         private boolean checkedDiscriminator;
+
+        public Map<String, Object> attachments() {
+            return attachments;
+        }
+
+        public Builder attach(String key, Object attachment) {
+            this.attachments.put(key, attachment);
+            return this;
+        }
+
+        public Builder attachments(Map<String, Object> attachments) {
+            this.attachments.putAll(attachments);
+            return this;
+        }
 
         /**
          * @return true if the discriminator has been checked
@@ -97,6 +141,7 @@ public final class DecoderContext {
     }
 
     private DecoderContext(final Builder builder) {
+        this.attachments = builder.attachments();
         this.checkedDiscriminator = builder.hasCheckedDiscriminator();
     }
 }
