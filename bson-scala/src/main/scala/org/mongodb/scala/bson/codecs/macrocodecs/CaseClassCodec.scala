@@ -350,7 +350,7 @@ private[codecs] object CaseClassCodec {
                   val instanceValue = value.asInstanceOf[${classType}]
                   ..${writeClassValues(fields, ignoredFields(classType))}"""
         }.toSeq
-      }
+      } :+ cq"""_ => throw new BsonInvalidOperationException("Unexpected class type: " + className)"""
       q"""
         writer.writeStartDocument()
         this.writeClassFieldName(writer, className, encoderContext)
