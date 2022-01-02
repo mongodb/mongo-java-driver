@@ -42,9 +42,7 @@ public final class DecoderContext {
      * @return the new DecoderContext
      */
     public DecoderContext attach(String key, Object object) {
-        return builder()
-                .attachments(attachments)
-                .checkedDiscriminator(checkedDiscriminator)
+        return builder(this)
                 .attach(key, object)
                 .build();
     }
@@ -66,6 +64,7 @@ public final class DecoderContext {
     public <T> T attachment(String key) {
         return (T) attachments.get(key);
     }
+
     /**
      * Create a builder.
      *
@@ -73,6 +72,17 @@ public final class DecoderContext {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Create a builder.
+     *
+     * @return the builder
+     */
+    public static Builder builder(DecoderContext original) {
+        return new Builder()
+                .attachments(original.attachments)
+                .checkedDiscriminator(original.checkedDiscriminator);
     }
 
     /**

@@ -18,6 +18,9 @@ package org.bson.codecs;
 
 import org.bson.BsonWriter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The context for encoding values to BSON.
  *
@@ -30,6 +33,33 @@ public final class EncoderContext {
 
     private final boolean encodingCollectibleDocument;
 
+    private final Map<String, Object> attachments;
+
+    /**
+     * Attaches an item to this context with the given name.  Returns a new modified context.
+     *
+     * @param key the key for the attachment
+     * @param object the item to attach
+     * @return the new DecoderContext
+     */
+    public EncoderContext attach(String key, Object object) {
+        return builder(this)
+                .attach(key, object)
+                .build();
+    }
+
+    /**
+     * Fetches the named attachment.  Will return null if that name doesn't have an attachment.
+     *
+     * @param key the name of the attachment
+     * @param <T> the type of the attachment
+     * @return the attachment
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T attachment(String key) {
+        return (T) attachments.get(key);
+    }
+
     /**
      * Create a builder.
      *
@@ -40,12 +70,39 @@ public final class EncoderContext {
     }
 
     /**
+     * Create a builder.
+     *
+     * @return the builder
+     */
+    public static Builder builder(EncoderContext original) {
+        return new Builder()
+                .attachments(original.attachments)
+                .isEncodingCollectibleDocument(original.encodingCollectibleDocument);
+    }
+
+    /**
      * A builder for {@code EncoderContext} instances.
      */
     public static final class Builder {
         private boolean encodingCollectibleDocument;
+        private final Map<String, Object> attachments = new HashMap<>();
 
         private Builder() {
+        }
+
+
+        public Map<String, Object> attachments() {
+            return attachments;
+        }
+
+        public Builder attach(String key, Object attachment) {
+            this.attachments.put(key, attachment);
+            return this;
+        }
+
+        public Builder attachments(Map<String, Object> attachments) {
+            this.attachments.putAll(attachments);
+            return this;
         }
 
         /**
@@ -101,6 +158,7 @@ public final class EncoderContext {
     }
 
     private EncoderContext(final Builder builder) {
+        attachments = builder.attachments;
         encodingCollectibleDocument = builder.encodingCollectibleDocument;
     }
 }
