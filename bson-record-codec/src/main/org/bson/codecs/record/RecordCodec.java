@@ -165,9 +165,10 @@ final class RecordCodec<T extends Record> implements Codec<T> {
     }
 
     private static <T> List<ComponentModel> getComponentModels(final Class<T> clazz, final CodecRegistry codecRegistry) {
-        var componentModels = new ArrayList<ComponentModel>(clazz.getRecordComponents().length);
-        for (int i = 0; i < clazz.getRecordComponents().length; i++) {
-            componentModels.add(new ComponentModel(clazz.getRecordComponents()[i], codecRegistry, i));
+        var recordComponents = clazz.getRecordComponents();
+        var componentModels = new ArrayList<ComponentModel>(recordComponents.length);
+        for (int i = 0; i < recordComponents.length; i++) {
+            componentModels.add(new ComponentModel(recordComponents[i], codecRegistry, i));
         }
         return componentModels;
     }
