@@ -28,7 +28,7 @@ public record TestRecord(String name,
                          List<String> hobbies,
                          @BsonRepresentation(BsonType.OBJECT_ID) @BsonId String identifier) {
 
-    // To test that the default constructor is always used for decoding
+    // To test that the canonical constructor is always used for decoding
     public TestRecord(final String identifier) {
         this("Adrian", 17, List.of("soccer", "music"), identifier);
     }
