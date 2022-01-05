@@ -27,6 +27,9 @@ public class Symbol implements Serializable {
 
     private static final long serialVersionUID = 1326269319883146072L;
 
+    /**
+     * The symbol string.
+     */
     private final String symbol;
 
     /**

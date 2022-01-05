@@ -25,8 +25,14 @@ public final class BsonBoolean extends BsonValue implements Comparable<BsonBoole
 
     private final boolean value;
 
+    /**
+     * The true value.
+     */
     public static final BsonBoolean TRUE = new BsonBoolean(true);
 
+    /**
+     * The false value.
+     */
     public static final BsonBoolean FALSE = new BsonBoolean(false);
 
     /**

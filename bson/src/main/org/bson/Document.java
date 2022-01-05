@@ -69,6 +69,9 @@ public class Document implements Map<String, Object>, Serializable, Bson {
 
     private static final long serialVersionUID = 6297731997167536582L;
 
+    /**
+     * The map of keys to values.
+     */
     private final LinkedHashMap<String, Object> documentAsMap;
 
     /**

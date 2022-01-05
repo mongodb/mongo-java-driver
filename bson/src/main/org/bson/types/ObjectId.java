@@ -63,9 +63,21 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
             '0', '1', '2', '3', '4', '5', '6', '7',
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
+    /**
+     * The timestamp
+     */
     private final int timestamp;
+    /**
+     * The counter.
+     */
     private final int counter;
+    /**
+     * the first four bits of randomness.
+     */
     private final int randomValue1;
+    /**
+     * The last two bits of randomness.
+     */
     private final short randomValue2;
 
     /**
@@ -351,12 +363,29 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         return toHexString();
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+    /**
+     * Write the replacement object.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+     * </p>
+     *
+     * @return a proxy for the document
+     */
     private Object writeReplace() {
         return new SerializationProxy(this);
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+    /**
+     * Prevent normal deserialization.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+     * </p>
+     *
+     * @param stream the stream
+     * @throws InvalidObjectException in all cases
+     */
     private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Proxy required");
     }

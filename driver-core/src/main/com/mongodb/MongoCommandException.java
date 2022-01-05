@@ -32,6 +32,7 @@ import static java.lang.String.format;
  * An exception indicating that a command sent to a MongoDB server returned a failure.
  *
  * @since 2.13
+ * @serial exclude
  */
 public class MongoCommandException extends MongoServerException {
     private static final long serialVersionUID = 8160676451944215078L;

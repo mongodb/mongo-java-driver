@@ -55,6 +55,9 @@ public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
         return (DBObject) callback.get();
     }
 
+    /**
+     * The {@code DBDecoderFactory} for {@code LazyDBDecoder} instances.
+     */
     public static final DBDecoderFactory FACTORY = new DBDecoderFactory() {
         @Override
         public DBDecoder create() {

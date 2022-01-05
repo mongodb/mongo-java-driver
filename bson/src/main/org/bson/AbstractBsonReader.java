@@ -771,6 +771,9 @@ public abstract class AbstractBsonReader implements BsonReader {
         }
     }
 
+    /**
+     * An implementation of {@code BsonReaderMark}.
+     */
     protected class Mark implements BsonReaderMark {
         private final State state;
         private final Context parentContext;
@@ -778,14 +781,27 @@ public abstract class AbstractBsonReader implements BsonReader {
         private final BsonType currentBsonType;
         private final String currentName;
 
+        /**
+         * Gets the parent context.
+         *
+         * @return the parent context
+         */
         protected Context getParentContext() {
             return parentContext;
         }
 
+        /**
+         * Gets the context type.
+         *
+         * @return the context type
+         */
         protected BsonContextType getContextType() {
             return contextType;
         }
 
+        /**
+         * Construct an instance.
+         */
         protected Mark() {
             state = AbstractBsonReader.this.state;
             parentContext = AbstractBsonReader.this.context.parentContext;
@@ -794,6 +810,7 @@ public abstract class AbstractBsonReader implements BsonReader {
             currentName = AbstractBsonReader.this.currentName;
         }
 
+        @Override
         public void reset() {
             AbstractBsonReader.this.state = state;
             AbstractBsonReader.this.currentBsonType = currentBsonType;

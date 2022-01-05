@@ -25,6 +25,9 @@ import org.bson.BSONObject;
  */
 public class CodeWScope extends Code {
 
+    /**
+     * The scope document.
+     */
     private final BSONObject scope;
 
     private static final long serialVersionUID = -6284832275113680002L;

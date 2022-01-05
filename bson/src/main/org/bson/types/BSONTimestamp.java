@@ -29,7 +29,13 @@ public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializa
 
     private static final long serialVersionUID = -3268482672267936464L;
 
+    /**
+     * The millisecond increment within the second.
+     */
     private final int inc;
+    /**
+     * The time, in seconds
+     */
     private final Date time;
 
     /**

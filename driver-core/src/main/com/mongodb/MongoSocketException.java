@@ -20,6 +20,7 @@ package com.mongodb;
  * Subclass of {@link MongoException} representing a network-related exception
  *
  * @since 2.12
+ * @serial exclude
  */
 public class MongoSocketException extends MongoException {
 

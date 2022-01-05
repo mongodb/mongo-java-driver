@@ -94,7 +94,13 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
      */
     public static final Decimal128 NEGATIVE_ZERO = fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000000L);
 
+    /**
+     * The high bits.
+     */
     private final long high;
+    /**
+     * The low bits.
+     */
     private final long low;
 
     /**

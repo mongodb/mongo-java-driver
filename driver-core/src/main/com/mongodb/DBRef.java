@@ -33,8 +33,17 @@ public class DBRef implements Serializable {
 
     private static final long serialVersionUID = -849581217713362618L;
 
+    /**
+     * The id.
+     */
     private final Object id;
+    /**
+     * The collection name.
+     */
     private final String collectionName;
+    /**
+     * The database name, which may be null.
+     */
     private final String databaseName;
 
     /**

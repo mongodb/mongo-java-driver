@@ -20,6 +20,7 @@ package com.mongodb;
  * This exception is thrown when there is an error reported by the underlying client authentication mechanism.
  *
  * @since 3.0
+ * @serial exclude
  */
 public class MongoSecurityException extends MongoClientException {
     private static final long serialVersionUID = -7044790409935567275L;

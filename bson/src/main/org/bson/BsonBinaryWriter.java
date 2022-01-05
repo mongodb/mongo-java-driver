@@ -420,6 +420,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         }
     }
 
+    /**
+     * An implementation of {@code AbstractBsonWriter.Context}.
+     */
     protected class Context extends AbstractBsonWriter.Context {
         private final int startPosition;
         private int index; // used when contextType is an array
@@ -458,6 +461,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         }
     }
 
+    /**
+     * An implementation of {@code AbstractBsonWriter.Mark}.
+     */
     protected class Mark extends AbstractBsonWriter.Mark {
         private final int position;
 

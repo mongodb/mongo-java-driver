@@ -29,7 +29,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class CommandResult extends BasicDBObject {
     private static final long serialVersionUID = 5907909423864204060L;
+
+    /**
+     * The response document.
+     */
     private final BsonDocument response;
+    /**
+     * The server address.
+     */
     private final ServerAddress address;
 
     CommandResult(final BsonDocument response) {

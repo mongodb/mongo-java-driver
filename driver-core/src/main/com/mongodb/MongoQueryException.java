@@ -22,6 +22,7 @@ import static java.lang.String.format;
  * An exception indicating that a query operation failed on the server.
  *
  * @since 3.0
+ * @serial exclude
  */
 public class MongoQueryException extends MongoServerException {
     private static final long serialVersionUID = -5113350133297015801L;

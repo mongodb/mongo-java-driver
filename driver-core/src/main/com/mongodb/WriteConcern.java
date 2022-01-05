@@ -70,10 +70,19 @@ public class WriteConcern implements Serializable {
     // map of the constants from above for use by fromString
     private static final Map<String, WriteConcern> NAMED_CONCERNS;
 
+    /**
+     * The w value.
+     */
     private final Object w;
 
+    /**
+     * The w timeout value.
+     */
     private final Integer wTimeoutMS;
 
+    /**
+     * The journal value.
+     */
     private final Boolean journal;
 
     /**
