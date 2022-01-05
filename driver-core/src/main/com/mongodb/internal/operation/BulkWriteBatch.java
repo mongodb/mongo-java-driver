@@ -53,12 +53,11 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
@@ -282,21 +281,11 @@ public final class BulkWriteBatch {
     }
 
     private List<BulkWriteInsert> getInsertedItems(final BsonDocument result) {
-        if (payload.getPayloadType() == SplittablePayload.Type.INSERT) {
-
-            Stream<WriteRequestWithIndex> writeRequests = payload.getWriteRequestWithIndexes().stream();
-            List<Integer> writeErrors = getWriteErrors(result).stream().map(BulkWriteError::getIndex).collect(Collectors.toList());
-            if (!writeErrors.isEmpty()) {
-                writeRequests = writeRequests.filter(wr -> !writeErrors.contains(wr.getIndex()));
-            }
-            if (payload.getPosition() < payload.size()) {
-                writeRequests = writeRequests.filter(wr -> wr.getIndex() < payload.getPosition());
-            }
-            return writeRequests
-                    .map(wr -> new BulkWriteInsert(wr.getIndex(), payload.getInsertedIds().get(wr.getIndex())))
-                    .collect(Collectors.toList());
-        }
-        return Collections.emptyList();
+        Set<Integer> writeErrors = getWriteErrors(result).stream().map(BulkWriteError::getIndex).collect(Collectors.toSet());
+        return payload.getInsertedIds().entrySet().stream()
+                .filter(entry -> !writeErrors.contains(entry.getKey()))
+                .map(entry -> new BulkWriteInsert(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
 
