@@ -70,7 +70,7 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param writeConcernError the non-null write concern error
      * @param writeConcernResult the write result
      * @param serverAddress     the non-null server address
-     * @since 3.5
+     * @since 4.5
      */
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
                                       final ServerAddress serverAddress, final BsonArray errorLabels) {
