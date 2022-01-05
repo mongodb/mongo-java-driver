@@ -35,6 +35,9 @@ import static java.util.Arrays.asList;
  */
 @Immutable
 public final class MongoNamespace {
+    /**
+     * The collection name in which to execute a command.
+     */
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
     private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =

@@ -125,6 +125,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @ThreadSafe
 @SuppressWarnings({"rawtypes", "deprecation"})
 public class DBCollection {
+    /**
+     * The name of the field that uniquely identifies each document in a collection.
+     */
     public static final String ID_FIELD_NAME = "_id";
     private final String name;
     private final DB database;

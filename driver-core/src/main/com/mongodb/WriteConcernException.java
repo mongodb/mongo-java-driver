@@ -39,6 +39,7 @@ import static java.lang.String.format;
  * </ul>
  * @see MongoWriteConcernException
  * @see MongoBulkWriteException
+ * @serial exclude
  */
 public class WriteConcernException extends MongoServerException {
 

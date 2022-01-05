@@ -65,6 +65,9 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
                     UuidRepresentation.STANDARD)
                     .get(BasicDBObject.class);
 
+    /**
+     * Whether the object is partial
+     */
     private boolean isPartialObject;
 
     /**

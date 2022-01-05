@@ -41,6 +41,10 @@ public final class BsonDocumentWrapper<T> extends BsonDocument {
 
     private final transient T wrappedDocument;
     private final transient Encoder<T> encoder;
+
+    /**
+     * The unwrapped document, which may be null
+     */
     private BsonDocument unwrapped;
 
     /**
@@ -198,12 +202,29 @@ public final class BsonDocumentWrapper<T> extends BsonDocument {
         return unwrapped;
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+    /**
+     * Write the replacement object.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+     * </p>
+     *
+     * @return a proxy for the document
+     */
     private Object writeReplace() {
         return getUnwrapped();
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+    /**
+     * Prevent normal deserialization.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+     * </p>
+     *
+     * @param stream the stream
+     * @throws InvalidObjectException in all cases
+     */
     private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Proxy required");
     }

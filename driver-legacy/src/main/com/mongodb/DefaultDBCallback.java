@@ -74,6 +74,9 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         return document;
     }
 
+    /**
+     * The {@code DBCallbackFactory} for {@code DefaultDBCallback} instances.
+     */
     public static final DBCallbackFactory FACTORY = new DBCallbackFactory() {
         @Override
         public DBCallback create(final DBCollection collection) {

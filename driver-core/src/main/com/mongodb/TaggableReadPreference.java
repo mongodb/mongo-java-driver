@@ -205,8 +205,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return selectFreshServers(clusterDescription, getAny(clusterDescription));
     }
 
-    protected static ClusterDescription copyClusterDescription(final ClusterDescription clusterDescription,
-                                                               final List<ServerDescription> selectedServers) {
+    static ClusterDescription copyClusterDescription(final ClusterDescription clusterDescription,
+                                                     final List<ServerDescription> selectedServers) {
         return new ClusterDescription(clusterDescription.getConnectionMode(),
                                              clusterDescription.getType(),
                                              selectedServers,
@@ -214,8 +214,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
                                              clusterDescription.getServerSettings());
     }
 
-    protected List<ServerDescription> selectFreshServers(final ClusterDescription clusterDescription,
-                                                         final List<ServerDescription> servers) {
+    List<ServerDescription> selectFreshServers(final ClusterDescription clusterDescription,
+                                               final List<ServerDescription> servers) {
         Long maxStaleness = getMaxStaleness(MILLISECONDS);
         if (maxStaleness == null) {
             return servers;

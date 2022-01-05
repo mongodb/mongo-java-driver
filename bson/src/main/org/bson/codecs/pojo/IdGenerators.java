@@ -59,6 +59,9 @@ public final class IdGenerators {
         }
     };
 
+    /**
+     * A IdGenerator for {@code String}
+     */
     public static final IdGenerator<String> STRING_ID_GENERATOR = new IdGenerator<String>() {
         @Override
         public String generate() {

@@ -1349,11 +1349,17 @@ public class JsonReader extends AbstractBsonReader {
         return (Context) super.getContext();
     }
 
+    /**
+     * An implementation of {@code AbstractBsonReader.Mark}.
+     */
     protected class Mark extends AbstractBsonReader.Mark {
         private final JsonToken pushedToken;
         private final Object currentValue;
         private final int markPos;
 
+        /**
+         * Construct an instance.
+         */
         protected Mark() {
             super();
             pushedToken = JsonReader.this.pushedToken;
@@ -1361,6 +1367,7 @@ public class JsonReader extends AbstractBsonReader {
             markPos = JsonReader.this.scanner.mark();
         }
 
+        @Override
         public void reset() {
             super.reset();
             JsonReader.this.pushedToken = pushedToken;
@@ -1369,21 +1376,35 @@ public class JsonReader extends AbstractBsonReader {
             JsonReader.this.setContext(new Context(getParentContext(), getContextType()));
         }
 
+        /**
+         * Discard the mark.
+         */
         public void discard() {
             JsonReader.this.scanner.discard(markPos);
         }
     }
 
 
+    /**
+     * An implementation of {@code AbstractBsonReader.Context}/
+     */
     protected class Context extends AbstractBsonReader.Context {
+        /**
+         * Construct an instance.
+         *
+         * @param parentContext the parent context
+         * @param contextType the context type
+         */
         protected Context(final AbstractBsonReader.Context parentContext, final BsonContextType contextType) {
             super(parentContext, contextType);
         }
 
+        @Override
         protected Context getParentContext() {
             return (Context) super.getParentContext();
         }
 
+        @Override
         protected BsonContextType getContextType() {
             return super.getContextType();
         }

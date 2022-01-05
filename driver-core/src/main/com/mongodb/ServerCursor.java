@@ -31,7 +31,13 @@ public final class ServerCursor implements Serializable {
 
     private static final long serialVersionUID = -7013636754565190109L;
 
+    /**
+     * The cursor id.
+     */
     private final long id;
+    /**
+     * The server address.
+     */
     private final ServerAddress address;
 
     /**
