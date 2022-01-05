@@ -40,6 +40,8 @@ public class MongoWriteConcernException extends MongoServerException {
      *
      * @param writeConcernError the non-null write concern error
      * @param serverAddress the non-null server address
+     *
+     * @deprecated Prefer {@link #MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, BsonArray)}
      */
     @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
@@ -53,6 +55,8 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param writeConcernResult the write result
      * @param serverAddress     the non-null server address
      * @since 3.2
+     *
+     * @deprecated Prefer {@link #MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, BsonArray)}
      */
     @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
@@ -66,7 +70,7 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param writeConcernError the non-null write concern error
      * @param writeConcernResult the write result
      * @param serverAddress     the non-null server address
-     * @since 3.2
+     * @since 3.5
      */
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
                                       final ServerAddress serverAddress, final BsonArray errorLabels) {

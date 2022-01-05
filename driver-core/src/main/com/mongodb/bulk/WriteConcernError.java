@@ -35,7 +35,7 @@ public class WriteConcernError {
     private final String codeName;
     private final String message;
     private final BsonDocument details;
-    @Deprecated private final Set<String> errorLabels;
+    private final Set<String> errorLabels;
 
 
     /**
@@ -124,8 +124,11 @@ public class WriteConcernError {
      *
      * @return the error labels, which may not be null but may be empty
      * @since 4.1
+     *
+     * @deprecated Prefer using error labels included in the top level response document
      */
     @NonNull
+    @Deprecated
     public Set<String> getErrorLabels() {
         return Collections.unmodifiableSet(errorLabels);
     }

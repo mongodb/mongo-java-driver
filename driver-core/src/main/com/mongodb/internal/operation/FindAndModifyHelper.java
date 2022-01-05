@@ -53,13 +53,15 @@ final class FindAndModifyHelper {
         };
     }
 
+    @SuppressWarnings("deprecation")
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
-            throw new MongoWriteConcernException(
+            MongoWriteConcernException writeConcernException = new MongoWriteConcernException(
                     createWriteConcernError(result.getDocument("writeConcernError")),
-                    createWriteConcernResult(result.getDocument("lastErrorObject", new BsonDocument())),
-                    serverAddress,
-                    result.getArray("errorLabels", new BsonArray()));
+                    createWriteConcernResult(result.getDocument("lastErrorObject", new BsonDocument())), serverAddress);
+            result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue())
+                    .forEach(writeConcernException::addLabel);
+            throw writeConcernException;
         }
 
         if (!result.isDocument("value")) {

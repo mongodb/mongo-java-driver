@@ -65,6 +65,7 @@ import com.mongodb.internal.operation.IndexHelper;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.UuidRepresentation;
@@ -485,7 +486,8 @@ public final class MongoOperationPublisher<T> {
                                                   e.getWriteResult().getUpserts().isEmpty()
                                                           ? null : e.getWriteResult().getUpserts().get(0).getId());
                         }
-                        exception = new MongoWriteConcernException(writeConcernError, writeConcernResult, e.getServerAddress());
+                        exception = new MongoWriteConcernException(writeConcernError, writeConcernResult, e.getServerAddress(),
+                                new BsonArray());
                     } else if (!e.getWriteErrors().isEmpty()) {
                         exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
                     } else {
