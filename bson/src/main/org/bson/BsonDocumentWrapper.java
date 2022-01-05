@@ -216,7 +216,7 @@ public final class BsonDocumentWrapper<T> extends BsonDocument {
     }
 
     /**
-     * Prevent normal serialization.
+     * Prevent normal deserialization.
      *
      * <p>
      * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html

@@ -885,8 +885,6 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
         }
     }
 
-    //
-
     /**
      * Write the replacement object.
      *
@@ -901,7 +899,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
     }
 
     /**
-     * Prevent normal serialization.
+     * Prevent normal deserialization.
      *
      * <p>
      * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html

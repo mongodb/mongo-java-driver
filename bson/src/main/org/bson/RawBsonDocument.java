@@ -58,12 +58,12 @@ public final class RawBsonDocument extends BsonDocument {
     private final byte[] bytes;
 
     /**
-     * The offset into bytes, which much be less than {@code bytes.length}.
+     * The offset into bytes, which must be less than {@code bytes.length}.
      */
     private final int offset;
 
     /**
-     * The length, which much be less than {@code offset + bytes.length}.
+     * The length, which must be less than {@code offset + bytes.length}.
      */
     private final int length;
 
@@ -384,7 +384,7 @@ public final class RawBsonDocument extends BsonDocument {
     }
 
     /**
-     * Prevent normal serialization.
+     * Prevent normal deserialization.
      *
      * <p>
      * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html

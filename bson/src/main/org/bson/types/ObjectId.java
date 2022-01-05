@@ -377,7 +377,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     /**
-     * Prevent normal serialization.
+     * Prevent normal deserialization.
      *
      * <p>
      * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html

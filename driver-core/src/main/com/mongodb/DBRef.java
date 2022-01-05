@@ -42,7 +42,7 @@ public class DBRef implements Serializable {
      */
     private final String collectionName;
     /**
-     * The database name, which mayt be null.
+     * The database name, which may be null.
      */
     private final String databaseName;
 
