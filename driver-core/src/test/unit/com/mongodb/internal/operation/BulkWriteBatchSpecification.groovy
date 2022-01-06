@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
@@ -228,23 +229,71 @@ class BulkWriteBatchSpecification extends Specification {
         !bulkWriteBatch.hasAnotherBatch()
     }
 
-    def 'should only map inserts up to the payload position'() {
+    def 'should map all inserted ids'() {
         when:
         def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, serverDescription, connectionDescription, false,
-                WriteConcern.ACKNOWLEDGED, null, false, getWriteRequests()[3..4], sessionContext)
+                WriteConcern.ACKNOWLEDGED, null, false,
+                [new InsertRequest(toBsonDocument('{_id: 0}')),
+                 new InsertRequest(toBsonDocument('{_id: 1}')),
+                 new InsertRequest(toBsonDocument('{_id: 2}'))
+                ],
+                sessionContext)
         def payload = bulkWriteBatch.getPayload()
         payload.setPosition(1)
+        payload.insertedIds.put(0, new BsonInt32(0))
         bulkWriteBatch.addResult(BsonDocument.parse('{"n": 1, "ok": 1.0}'))
 
         then:
-        bulkWriteBatch.getResult().inserts == [new BulkWriteInsert(0, null)]
+        bulkWriteBatch.getResult().inserts == [new BulkWriteInsert(0, new BsonInt32(0))]
 
         when:
-        payload.setPosition(2)
+        bulkWriteBatch = bulkWriteBatch.getNextBatch()
+        payload = bulkWriteBatch.getPayload()
+        payload.setPosition(1)
+        payload.insertedIds.put(1, new BsonInt32(1))
         bulkWriteBatch.addResult(BsonDocument.parse('{"n": 1, "ok": 1.0}'))
 
         then:
-        bulkWriteBatch.getResult().inserts == [new BulkWriteInsert(0, null), new BulkWriteInsert(1, null)]
+        bulkWriteBatch.getResult().inserts == [new BulkWriteInsert(0, new BsonInt32(0)),
+                                               new BulkWriteInsert(1, new BsonInt32(1))]
+
+        when:
+        bulkWriteBatch = bulkWriteBatch.getNextBatch()
+        payload = bulkWriteBatch.getPayload()
+        payload.setPosition(1)
+        payload.insertedIds.put(2, new BsonInt32(2))
+        bulkWriteBatch.addResult(BsonDocument.parse('{"n": 1, "ok": 1.0}'))
+
+        then:
+        bulkWriteBatch.getResult().inserts == [new BulkWriteInsert(0, new BsonInt32(0)),
+                                               new BulkWriteInsert(1, new BsonInt32(1)),
+                                               new BulkWriteInsert(2, new BsonInt32(2))]
+    }
+
+    def 'should not map inserted id with a write error'() {
+        given:
+        def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, serverDescription, connectionDescription, false,
+                WriteConcern.ACKNOWLEDGED, null, false,
+                [new InsertRequest(toBsonDocument('{_id: 0}')),
+                 new InsertRequest(toBsonDocument('{_id: 1}')),
+                 new InsertRequest(toBsonDocument('{_id: 2}'))
+                ],
+                sessionContext)
+        def payload = bulkWriteBatch.getPayload()
+        payload.setPosition(3)
+        payload.insertedIds.put(0, new BsonInt32(0))
+        payload.insertedIds.put(1, new BsonInt32(1))
+        payload.insertedIds.put(2, new BsonInt32(2))
+
+        when:
+        bulkWriteBatch.addResult(toBsonDocument('''{"ok": 1, "n": 2,
+            "writeErrors": [{ "index" : 1, "code" : 11000, "errmsg": "duplicate key error"}] }'''))
+        bulkWriteBatch.getResult()
+
+        then:
+        def ex = thrown(MongoBulkWriteException)
+        ex.getWriteResult().inserts == [new BulkWriteInsert(0, new BsonInt32(0)),
+                                        new BulkWriteInsert(2, new BsonInt32(2))]
     }
 
     def 'should not retry when at least one write is not retryable'() {
