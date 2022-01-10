@@ -472,7 +472,7 @@ public interface GridFSBucket {
      * Downloads the contents of the stored file specified by {@code id} and writes the contents to the {@code destination} Stream.
      *
      * @param id the ObjectId of the file to be written to the destination stream
-     * @param destination the destination stream
+     * @param destination the destination stream. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      */
     void downloadToStream(ObjectId id, OutputStream destination);
 
@@ -480,7 +480,7 @@ public interface GridFSBucket {
      * Downloads the contents of the stored file specified by {@code id} and writes the contents to the {@code destination} Stream.
      *
      * @param id the custom id of the file, to be written to the destination stream
-     * @param destination the destination stream
+     * @param destination the destination stream. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      */
     void downloadToStream(BsonValue id, OutputStream destination);
 
@@ -489,7 +489,7 @@ public interface GridFSBucket {
      * the {@code destination} Stream.
      *
      * @param filename the name of the file to be downloaded
-     * @param destination the destination stream
+     * @param destination the destination stream. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      * @since 3.3
      */
     void downloadToStream(String filename, OutputStream destination);
@@ -500,7 +500,7 @@ public interface GridFSBucket {
      *
      * @param filename the name of the file to be downloaded
      * @param destination the destination stream
-     * @param options the download options
+     * @param options the download options. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      * @since 3.3
      */
     void downloadToStream(String filename, OutputStream destination, GridFSDownloadOptions options);
@@ -510,7 +510,7 @@ public interface GridFSBucket {
      *
      * @param clientSession the client session with which to associate this operation
      * @param id the ObjectId of the file to be written to the destination stream
-     * @param destination the destination stream
+     * @param destination the destination stream. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -521,7 +521,7 @@ public interface GridFSBucket {
      *
      * @param clientSession the client session with which to associate this operation
      * @param id the custom id of the file, to be written to the destination stream
-     * @param destination the destination stream
+     * @param destination the destination stream. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -533,7 +533,7 @@ public interface GridFSBucket {
      *
      * @param clientSession the client session with which to associate this operation
      * @param filename the name of the file to be downloaded
-     * @param destination the destination stream
+     * @param destination the destination stream. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -545,7 +545,7 @@ public interface GridFSBucket {
      *
      * @param clientSession the client session with which to associate this operation
      * @param filename the name of the file to be downloaded
-     * @param destination the destination stream
+     * @param destination the destination stream. Its {@link OutputStream#flush()} is not guaranteed to be called by this method.
      * @param options the download options
      * @since 3.6
      * @mongodb.server.release 3.6
