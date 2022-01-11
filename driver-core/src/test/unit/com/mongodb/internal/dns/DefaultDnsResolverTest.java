@@ -16,43 +16,35 @@
 
 package com.mongodb.internal.dns;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoConfigurationException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import javax.naming.Context;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class DefaultDnsResolverTest {
     private static final String TEST_HOST = "test1.test.build.10gen.cc";
+    private static final String DEFAULT_PROVIDER_URL_VALUE = System.getProperty(Context.PROVIDER_URL);
 
-    @Test
-    public void nonDnsProviderUrlShouldBeIgnored() {
-        String currentValue = System.getProperty(Context.PROVIDER_URL);
-        try {
-            System.setProperty(Context.PROVIDER_URL, "file:///tmp/provider.txt");
-            new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb");
-        } catch (MongoClientException e) {
-            fail("Resolution should succeed", e);
-        } finally {
-            if (currentValue != null) {
-                System.setProperty(Context.PROVIDER_URL, currentValue);
-            }
+    @AfterEach
+    public void resetDefaultProviderUrl() {
+        if (DEFAULT_PROVIDER_URL_VALUE != null) {
+            System.setProperty(Context.PROVIDER_URL, DEFAULT_PROVIDER_URL_VALUE);
         }
     }
 
     @Test
+    public void nonDnsProviderUrlShouldBeIgnored() {
+        System.setProperty(Context.PROVIDER_URL, "file:///tmp/provider.txt");
+        assertDoesNotThrow(() -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
+    }
+
+    @Test
     public void dnsProviderUrlShouldNotBeIgnored() {
-        String currentValue = System.getProperty(Context.PROVIDER_URL);
-        try {
-            System.setProperty(Context.PROVIDER_URL, "dns:///mongodb.unknown.server.com");
-            assertThrows(MongoConfigurationException.class, () -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
-        } finally {
-            if (currentValue != null) {
-                System.setProperty(Context.PROVIDER_URL, currentValue);
-            }
-        }
+        System.setProperty(Context.PROVIDER_URL, "dns:///mongodb.unknown.server.com");
+        assertThrows(MongoConfigurationException.class, () -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
     }
 }
