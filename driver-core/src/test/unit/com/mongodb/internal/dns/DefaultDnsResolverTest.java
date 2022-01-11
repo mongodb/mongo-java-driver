@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.naming.Context;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class DefaultDnsResolverTest {
@@ -34,9 +35,8 @@ public class DefaultDnsResolverTest {
             System.setProperty(Context.PROVIDER_URL, "file:///tmp/provider.txt");
             new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb");
         } catch (MongoClientException e) {
-            fail("Resolution should succeed");
-        }
-        finally {
+            fail("Resolution should succeed", e);
+        } finally {
             if (currentValue != null) {
                 System.setProperty(Context.PROVIDER_URL, currentValue);
             }
@@ -48,12 +48,8 @@ public class DefaultDnsResolverTest {
         String currentValue = System.getProperty(Context.PROVIDER_URL);
         try {
             System.setProperty(Context.PROVIDER_URL, "dns:///mongodb.unknown.server.com");
-            new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb");
-            fail("Resolution should fail");
-        } catch (MongoConfigurationException e) {
-            // expected
-        }
-        finally {
+            assertThrows(MongoConfigurationException.class, () -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
+        } finally {
             if (currentValue != null) {
                 System.setProperty(Context.PROVIDER_URL, currentValue);
             }
