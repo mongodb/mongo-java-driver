@@ -147,12 +147,18 @@ public final class DefaultDnsResolver implements DnsResolver {
     private static InitialDirContext createDnsDirContext() {
         Hashtable<String, String> envProps = new Hashtable<String, String>();
         envProps.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");
-        envProps.put(Context.PROVIDER_URL, "dns:");
+
         try {
             return new InitialDirContext(envProps);
         } catch (NamingException e) {
-            throw new MongoClientException("Unable to support mongodb+srv// style connections as the 'com.sun.jndi.dns.DnsContextFactory' "
-                    + "class is not available in this JRE. A JNDI context is required for resolving SRV records.", e);
+            // Just in case the provider url default has been changed to a non-dns pseudo url, fallback to the JDK default
+            envProps.put(Context.PROVIDER_URL, "dns:");
+            try {
+                return new InitialDirContext(envProps);
+            } catch (NamingException ex) {
+                throw new MongoClientException("Unable to support mongodb+srv// style connections as the 'com.sun.jndi.dns.DnsContextFactory' "
+                        + "class is not available in this JRE. A JNDI context is required for resolving SRV records.", e);
+            }
         }
     }
 }
