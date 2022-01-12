@@ -59,7 +59,9 @@ public class WriteConcernError {
      * @param details any details
      * @param errorLabels any error labels
      * @since 4.1
+     * @deprecated Prefer using error labels included in the top level response document
      */
+    @Deprecated
     public WriteConcernError(final int code, final String codeName, final String message, final BsonDocument details,
                              final Set<String> errorLabels) {
         this.code = code;
@@ -113,7 +115,9 @@ public class WriteConcernError {
      * @param errorLabel the non-null error label to add to the exception
      *
      * @since 4.1
+     * @deprecated Prefer using error labels included in the top level response document
      */
+    @Deprecated
     public void addLabel(final String errorLabel) {
         notNull("errorLabel", errorLabel);
         errorLabels.add(errorLabel);
@@ -124,7 +128,6 @@ public class WriteConcernError {
      *
      * @return the error labels, which may not be null but may be empty
      * @since 4.1
-     *
      * @deprecated Prefer using error labels included in the top level response document
      */
     @NonNull

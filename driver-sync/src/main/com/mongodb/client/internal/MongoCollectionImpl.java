@@ -64,7 +64,6 @@ import com.mongodb.internal.operation.RenameCollectionOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -1014,8 +1013,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             if (e.getWriteErrors().isEmpty()) {
                 exception = new MongoWriteConcernException(e.getWriteConcernError(),
                         translateBulkWriteResult(type, e.getWriteResult()),
-                        e.getServerAddress(),
-                        new BsonArray());
+                        e.getServerAddress());
             } else {
                 exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
             }

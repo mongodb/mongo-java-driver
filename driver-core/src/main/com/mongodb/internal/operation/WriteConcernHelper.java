@@ -70,6 +70,7 @@ public final class WriteConcernHelper {
         return writeConcernException;
     }
 
+    @SuppressWarnings("deprecation")
     public static WriteConcernError createWriteConcernError(final BsonDocument writeConcernErrorDocument) {
         return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
                 writeConcernErrorDocument.getString("codeName", new BsonString("")).getValue(),
