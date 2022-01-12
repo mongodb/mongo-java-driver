@@ -168,6 +168,7 @@ public class BulkWriteBatchCombiner {
                 serverAddress, errorLabels);
     }
 
+    @SuppressWarnings("deprecation")
     private void mergeWriteConcernError(final WriteConcernError writeConcernError) {
         if (writeConcernError != null) {
             if (writeConcernErrors.isEmpty()) {

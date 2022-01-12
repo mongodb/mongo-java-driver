@@ -60,6 +60,7 @@ public final class WriteConcernHelper {
         return result.containsKey("writeConcernError");
     }
 
+    @SuppressWarnings("deprecation")
     public static MongoWriteConcernException createWriteConcernException(final BsonDocument result, final ServerAddress serverAddress) {
         MongoWriteConcernException writeConcernException = new MongoWriteConcernException(
                 createWriteConcernError(result.getDocument("writeConcernError")),
@@ -69,6 +70,7 @@ public final class WriteConcernHelper {
         return writeConcernException;
     }
 
+    @SuppressWarnings("deprecation")
     public static WriteConcernError createWriteConcernError(final BsonDocument writeConcernErrorDocument) {
         return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
                 writeConcernErrorDocument.getString("codeName", new BsonString("")).getValue(),

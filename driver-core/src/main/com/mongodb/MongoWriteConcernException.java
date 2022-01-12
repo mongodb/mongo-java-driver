@@ -53,6 +53,7 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param serverAddress     the non-null server address
      * @since 3.2
      */
+    @SuppressWarnings("deprecation")
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
                                       final ServerAddress serverAddress) {
         super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
@@ -64,6 +65,7 @@ public class MongoWriteConcernException extends MongoServerException {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void addLabel(final String errorLabel) {
         writeConcernError.addLabel(errorLabel);
         super.addLabel(errorLabel);
