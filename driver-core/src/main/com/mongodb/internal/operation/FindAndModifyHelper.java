@@ -53,6 +53,7 @@ final class FindAndModifyHelper {
         };
     }
 
+    @SuppressWarnings("deprecation")
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
             MongoWriteConcernException writeConcernException = new MongoWriteConcernException(

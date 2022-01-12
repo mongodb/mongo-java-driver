@@ -67,6 +67,7 @@ public class MongoBulkWriteException extends MongoServerException {
      * @param errorLabels              any server errorLabels
      * @since 4.1
      */
+    @SuppressWarnings("deprecation")
     public MongoBulkWriteException(final BulkWriteResult writeResult, final List<BulkWriteError> writeErrors,
                                    @Nullable final WriteConcernError writeConcernError, final ServerAddress serverAddress,
                                    final Set<String> errorLabels) {
