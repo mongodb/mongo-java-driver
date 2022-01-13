@@ -44,12 +44,6 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
                                 final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                final OperationExecutor executor) {
-        this(clientSession, databaseName, collectionNamesOnly, resultClass, codecRegistry, readPreference, executor, true);
-    }
-
-    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
-                                final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                 final OperationExecutor executor, final boolean retryReads) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads); // TODO: read concern?
         this.collectionNamesOnly = collectionNamesOnly;

@@ -48,12 +48,12 @@ class ListCollectionsIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null, null]);
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry,
-                readPreference, executor)
+                readPreference, executor, true)
                 .filter(new Document('filter', 1))
                 .batchSize(100)
                 .maxTime(1000, MILLISECONDS)
         def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
-                readPreference, executor)
+                readPreference, executor, true)
 
         when: 'default input should be as expected'
         listCollectionIterable.iterator()
@@ -94,7 +94,7 @@ class ListCollectionsIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor]);
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(clientSession, 'db', false, Document, codecRegistry,
-                readPreference, executor)
+                readPreference, executor, true)
 
         when:
         listCollectionIterable.first()
@@ -134,7 +134,7 @@ class ListCollectionsIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                executor)
+                executor, true)
 
         when:
         def results = mongoIterable.first()
@@ -178,7 +178,7 @@ class ListCollectionsIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true)
 
         then:
         mongoIterable.getBatchSize() == null
