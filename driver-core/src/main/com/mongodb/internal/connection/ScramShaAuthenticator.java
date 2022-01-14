@@ -173,7 +173,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         private byte[] validateServerSignature(final byte[] challenge) throws SaslException {
             String serverResponse = encodeUTF8(challenge);
             HashMap<String, String> map = parseServerResponse(serverResponse);
-            if (!MessageDigest.isEqual(decodeBase64(map.get("v")), serverSignature)) {
+            if (!MessageDigest.isEqual(Base64.getDecoder().decode(map.get("v")), serverSignature)) {
                 throw new SaslException("Server signature was invalid.");
             }
             return new byte[0];
@@ -246,7 +246,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             CacheKey cacheKey = new CacheKey(hashedPasswordAndSalt, salt, iterationCount);
             CacheValue cachedKeys = getMongoCredentialWithCache().getFromCache(cacheKey, CacheValue.class);
             if (cachedKeys == null) {
-                byte[] saltedPassword = hi(decodeUTF8(password), decodeBase64(salt), iterationCount);
+                byte[] saltedPassword = hi(decodeUTF8(password), Base64.getDecoder().decode(salt), iterationCount);
                 byte[] clientKey = hmac(saltedPassword, "Client Key");
                 byte[] serverKey = hmac(saltedPassword, "Server Key");
                 cachedKeys = new CacheValue(clientKey, serverKey);
@@ -258,10 +258,6 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             byte[] clientSignature = hmac(storedKey, authMessage);
             byte[] clientProof = xor(cachedKeys.clientKey, clientSignature);
             return Base64.getEncoder().encodeToString(clientProof);
-        }
-
-        private byte[] decodeBase64(final String str) {
-            return Base64.getDecoder().decode(str);
         }
 
         private byte[] decodeUTF8(final String str) throws SaslException {
