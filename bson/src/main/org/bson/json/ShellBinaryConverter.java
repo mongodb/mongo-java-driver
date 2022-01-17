@@ -17,7 +17,8 @@
 package org.bson.json;
 
 import org.bson.BsonBinary;
-import org.bson.internal.Base64;
+
+import java.util.Base64;
 
 import static java.lang.String.format;
 
@@ -25,6 +26,6 @@ class ShellBinaryConverter implements Converter<BsonBinary> {
     @Override
     public void convert(final BsonBinary value, final StrictJsonWriter writer) {
         writer.writeRaw(format("new BinData(%s, \"%s\")", Integer.toString(value.getType() & 0xFF),
-                Base64.encode(value.getData())));
+                Base64.getEncoder().encodeToString(value.getData())));
     }
 }

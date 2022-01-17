@@ -23,7 +23,6 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
 import org.bson.BsonDocument
-import org.bson.internal.Base64
 import spock.lang.Specification
 
 import javax.security.sasl.SaslException
@@ -32,8 +31,8 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
-import static org.junit.Assert.assertEquals
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
+import static org.junit.Assert.assertEquals
 
 class ScramShaAuthenticatorSpecification extends Specification {
     def serverId = new ServerId(new ClusterId(), new ServerAddress('localhost', 27017))
@@ -528,7 +527,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
 
     def encode64(String string) {
-        Base64.encode(string.getBytes(Charset.forName('UTF-8')))
+        Base64.getEncoder().encodeToString(string.getBytes(Charset.forName('UTF-8')))
     }
 
     def createMessages(String messages, boolean emptyExchange = true) {

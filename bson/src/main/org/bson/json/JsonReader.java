@@ -28,7 +28,6 @@ import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
-import org.bson.internal.Base64;
 import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
@@ -39,6 +38,7 @@ import java.text.DateFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeParseException;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -704,7 +704,7 @@ public class JsonReader extends AbstractBsonReader {
         }
         verifyToken(JsonTokenType.RIGHT_PAREN);
 
-        byte[] bytes = Base64.decode(bytesToken.getValue(String.class));
+        byte[] bytes = Base64.getDecoder().decode(bytesToken.getValue(String.class));
         return new BsonBinary(subTypeToken.getValue(Integer.class).byteValue(), bytes);
     }
 
@@ -949,7 +949,7 @@ public class JsonReader extends AbstractBsonReader {
                     byte type;
                     if (firstNestedKey.equals("base64")) {
                         verifyToken(JsonTokenType.COLON);
-                        data = Base64.decode(readStringFromExtendedJson());
+                        data = Base64.getDecoder().decode(readStringFromExtendedJson());
                         verifyToken(JsonTokenType.COMMA);
                         verifyString("subType");
                         verifyToken(JsonTokenType.COLON);
@@ -960,7 +960,7 @@ public class JsonReader extends AbstractBsonReader {
                         verifyToken(JsonTokenType.COMMA);
                         verifyString("base64");
                         verifyToken(JsonTokenType.COLON);
-                        data = Base64.decode(readStringFromExtendedJson());
+                        data = Base64.getDecoder().decode(readStringFromExtendedJson());
                     } else {
                         throw new JsonParseException("Unexpected key for $binary: " + firstNestedKey);
                     }
@@ -991,7 +991,7 @@ public class JsonReader extends AbstractBsonReader {
             byte type;
 
             if (firstKey.equals("$binary")) {
-                data = Base64.decode(readStringFromExtendedJson());
+                data = Base64.getDecoder().decode(readStringFromExtendedJson());
                 verifyToken(JsonTokenType.COMMA);
                 verifyString("$type");
                 verifyToken(JsonTokenType.COLON);
@@ -1001,7 +1001,7 @@ public class JsonReader extends AbstractBsonReader {
                 verifyToken(JsonTokenType.COMMA);
                 verifyString("$binary");
                 verifyToken(JsonTokenType.COLON);
-                data = Base64.decode(readStringFromExtendedJson());
+                data = Base64.getDecoder().decode(readStringFromExtendedJson());
             }
             verifyToken(JsonTokenType.END_OBJECT);
 

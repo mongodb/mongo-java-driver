@@ -32,7 +32,6 @@ import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
-import org.bson.internal.Base64
 import spock.lang.Specification
 
 import java.nio.charset.Charset
@@ -529,7 +528,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     }
 
     def encode64(String string) {
-        Base64.encode(string.getBytes(Charset.forName('UTF-8')))
+        Base64.getEncoder().encodeToString(string.getBytes(Charset.forName('UTF-8')))
     }
 
     def createHelloCommand(final String firstClientChallenge, final String mechanism,
