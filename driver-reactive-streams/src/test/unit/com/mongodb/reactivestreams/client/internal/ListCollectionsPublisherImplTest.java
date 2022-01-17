@@ -40,12 +40,15 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
     void shouldBuildTheExpectedOperation() {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
         ListCollectionsPublisher<String> publisher = new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)
-                .withDocumentClass(String.class), true);
+                .withDocumentClass(String.class), true)
+                .authorizedCollections(true);
 
         ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
                                                                                             getDefaultCodecRegistry().get(String.class))
                 .batchSize(Integer.MAX_VALUE)
-                .nameOnly(true).retryReads(true);
+                .nameOnly(true)
+                .authorizedCollections(true)
+                .retryReads(true);
 
         // default input should be as expected
         Flux.from(publisher).blockFirst();

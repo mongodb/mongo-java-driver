@@ -25,7 +25,6 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import org.bson.BsonDocument;
@@ -159,8 +158,8 @@ public class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames() {
-        return listCollections(BsonDocument.class).map(result -> result.getString("name").getValue());
+    public ListCollectionsIterable<String> listCollectionNames() {
+        return listCollectionsInternal(BsonDocument.class).map(result -> result.getString("name").getValue());
     }
 
     @Override
@@ -170,12 +169,16 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
+        return listCollectionsInternal(resultClass);
+    }
+
+    private <TResult> SyncListCollectionsIterable<TResult> listCollectionsInternal(final Class<TResult> resultClass) {
         return new SyncListCollectionsIterable<>(wrapped.listCollections(resultClass));
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames(final ClientSession clientSession) {
-        return listCollections(clientSession, BsonDocument.class).map(result -> result.getString("name").getValue());
+    public ListCollectionsIterable<String> listCollectionNames(final ClientSession clientSession) {
+        return listCollectionsInternal(clientSession, BsonDocument.class).map(result -> result.getString("name").getValue());
 
     }
 
@@ -186,6 +189,11 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return listCollectionsInternal(clientSession, resultClass);
+    }
+
+    private <TResult> SyncListCollectionsIterable<TResult> listCollectionsInternal(
+            final ClientSession clientSession, final Class<TResult> resultClass) {
         return new SyncListCollectionsIterable<>(wrapped.listCollections(unwrap(clientSession), resultClass));
     }
 

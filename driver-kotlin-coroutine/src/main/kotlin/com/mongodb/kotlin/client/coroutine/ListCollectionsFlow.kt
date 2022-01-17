@@ -61,6 +61,21 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
     public fun filter(filter: Bson?): ListCollectionsFlow<T> = apply { wrapped.filter(filter) }
 
     /**
+     * Sets the `authorizedCollections` field of the `listCollections` command. This method is ignored if called on a
+     * [ListCollectionsFlow] obtained not via any of the [MongoDatabase.listCollectionNames] methods.
+     *
+     * @param authorizedCollections If `true`, allows executing the `listCollections` command, which has the `nameOnly`
+     *   field set to `true`, without having the
+     *   [`listCollections` privilege](https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections)
+     *   on the database resource.
+     * @return `this`.
+     * @since 5.0
+     */
+    public fun authorizedCollections(authorizedCollections: Boolean): ListCollectionsFlow<T> = apply {
+        wrapped.authorizedCollections(authorizedCollections)
+    }
+
+    /**
      * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment

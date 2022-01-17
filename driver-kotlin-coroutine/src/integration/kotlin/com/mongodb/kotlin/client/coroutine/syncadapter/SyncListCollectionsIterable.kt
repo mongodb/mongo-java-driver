@@ -31,6 +31,11 @@ data class SyncListCollectionsIterable<T : Any>(val wrapped: ListCollectionsFlow
     }
 
     override fun filter(filter: Bson?): SyncListCollectionsIterable<T> = apply { wrapped.filter(filter) }
+
+    override fun authorizedCollections(authorizedCollections: Boolean): SyncListCollectionsIterable<T> = apply {
+        wrapped.authorizedCollections(authorizedCollections)
+    }
+
     override fun comment(comment: String?): SyncListCollectionsIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncListCollectionsIterable<T> = apply { wrapped.comment(comment) }
 }

@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -38,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createEmptyAsyncBatchCursor;
@@ -63,6 +65,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
  * ensures that the value of the {@code name} field of each returned document is the simple name of the collection rather than the full
  * namespace.
+ * <p>
+ * See <a href="https://docs.mongodb.com/manual/reference/command/listCollections/">{@code listCollections}</a></p>.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
@@ -74,6 +78,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private int batchSize;
     private long maxTimeMS;
     private boolean nameOnly;
+    private boolean authorizedCollections;
     private BsonValue comment;
 
     public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
@@ -97,6 +102,23 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     public ListCollectionsOperation<T> nameOnly(final boolean nameOnly) {
         this.nameOnly = nameOnly;
         return this;
+    }
+
+    /**
+     * Ignored unless {@link #nameOnly(boolean)} is {@code true}.
+     */
+    public ListCollectionsOperation<T> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
+    /**
+     * This method is used by tests via the reflection API. See
+     * {@code com.mongodb.reactivestreams.client.internal.TestHelper.assertOperationIsTheSameAs}.
+     */
+    @VisibleForTesting(otherwise = PRIVATE)
+    public boolean isAuthorizedCollections() {
+        return authorizedCollections;
     }
 
     public Integer getBatchSize() {
@@ -209,6 +231,9 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         }
         if (nameOnly) {
             command.append("nameOnly", BsonBoolean.TRUE);
+            if (authorizedCollections) {
+                command.append("authorizedCollections", BsonBoolean.TRUE);
+            }
         }
         if (maxTimeMS > 0) {
             command.put("maxTimeMS", new BsonInt64(maxTimeMS));

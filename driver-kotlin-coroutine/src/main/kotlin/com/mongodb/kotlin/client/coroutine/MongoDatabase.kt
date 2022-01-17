@@ -20,15 +20,13 @@ import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
-import com.mongodb.reactivestreams.client.MongoDatabase as JMongoDatabase
-import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
+import java.util.concurrent.TimeUnit
+import com.mongodb.reactivestreams.client.MongoDatabase as JMongoDatabase
 
 /** The MongoDatabase representation. */
 public class MongoDatabase(private val wrapped: JMongoDatabase) {
@@ -236,17 +234,19 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * Gets the names of all the collections in this database.
      *
      * @return an iterable containing all the names of all the collections in this database
+     * @see [listCollections](https://www.mongodb.com/docs/manual/reference/command/listCollections)
      */
-    public fun listCollectionNames(): Flow<String> = wrapped.listCollectionNames().asFlow()
+    public fun listCollectionNames(): ListCollectionsFlow<String> = ListCollectionsFlow(wrapped.listCollectionNames())
 
     /**
      * Gets the names of all the collections in this database.
      *
      * @param clientSession the client session with which to associate this operation
      * @return an iterable containing all the names of all the collections in this database
+     * @see [listCollections](https://www.mongodb.com/docs/manual/reference/command/listCollections)
      */
-    public fun listCollectionNames(clientSession: ClientSession): Flow<String> =
-        wrapped.listCollectionNames(clientSession.wrapped).asFlow()
+    public fun listCollectionNames(clientSession: ClientSession): ListCollectionsFlow<String> =
+        ListCollectionsFlow(wrapped.listCollectionNames(clientSession.wrapped))
 
     /**
      * Gets all the collections in this database.

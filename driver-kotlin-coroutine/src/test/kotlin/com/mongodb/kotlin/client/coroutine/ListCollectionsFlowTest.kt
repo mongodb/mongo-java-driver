@@ -45,10 +45,12 @@ class ListCollectionsFlowTest {
 
         val batchSize = 10
         val bsonComment = BsonString("a comment")
+        val authorizedCollections = true
         val comment = "comment"
         val filter = BsonDocument()
 
         flow.batchSize(batchSize)
+        flow.authorizedCollections(authorizedCollections)
         flow.comment(bsonComment)
         flow.comment(comment)
         flow.filter(filter)
@@ -56,6 +58,7 @@ class ListCollectionsFlowTest {
         flow.maxTime(1, TimeUnit.SECONDS)
 
         verify(wrapped).batchSize(batchSize)
+        verify(wrapped).authorizedCollections(authorizedCollections)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).filter(filter)

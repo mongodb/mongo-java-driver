@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadConcern;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
@@ -25,15 +26,22 @@ import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> implements ListCollectionsPublisher<T> {
 
     private final boolean collectionNamesOnly;
+    private boolean authorizedCollections;
     private Bson filter;
     private long maxTimeMS;
     private BsonValue comment;
@@ -63,6 +71,12 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
     }
 
     @Override
+    public ListCollectionsPublisherImpl<T> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
+    @Override
     public ListCollectionsPublisher<T> comment(@Nullable final String comment) {
         this.comment = comment != null ? new BsonString(comment) : null;
         return this;
@@ -76,6 +90,77 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         return getOperations().listCollections(getNamespace().getDatabaseName(), getDocumentClass(), filter, collectionNamesOnly,
-                initialBatchSize, maxTimeMS, comment);
+                authorizedCollections, initialBatchSize, maxTimeMS, comment);
+    }
+
+    <U> ListCollectionsPublisher<U> map(final Function<T, U> mapper) {
+        return new Mapping<>(this, mapper);
+    }
+
+    private static final class Mapping<T, U> implements ListCollectionsPublisher<U> {
+        private final ListCollectionsPublisher<T> mapped;
+        private final Flux<U> mappingPublisher;
+        private final Function<T, U> mapper;
+
+        Mapping(final ListCollectionsPublisher<T> publisher, final Function<T, U> mapper) {
+            this.mapped = publisher;
+            mappingPublisher = Flux.from(publisher).map(mapper);
+            this.mapper = mapper;
+        }
+
+        @Override
+        public Mapping<T, U> filter(@Nullable final Bson filter) {
+            mapped.filter(filter);
+            return this;
+        }
+
+        @Override
+        public Mapping<T, U> authorizedCollections(final boolean authorizedCollections) {
+            mapped.authorizedCollections(authorizedCollections);
+            return this;
+        }
+
+        @Override
+        public Mapping<T, U> maxTime(final long maxTime, final TimeUnit timeUnit) {
+            mapped.maxTime(maxTime, timeUnit);
+            return this;
+        }
+
+        @Override
+        public Mapping<T, U> batchSize(final int batchSize) {
+            mapped.batchSize(batchSize);
+            return this;
+        }
+
+        @Override
+        public Mapping<T, U> comment(@Nullable final String comment) {
+            mapped.comment(comment);
+            return this;
+        }
+
+        @Override
+        public Mapping<T, U> comment(@Nullable final BsonValue comment) {
+            mapped.comment(comment);
+            return this;
+        }
+
+        @Override
+        public Publisher<U> first() {
+            return Mono.from(mapped.first()).map(mapper);
+        }
+
+        @Override
+        public void subscribe(final Subscriber<? super U> s) {
+            mappingPublisher.subscribe(s);
+        }
+
+        /**
+         * This method is used in tests via the reflection API. See
+         * {@code com.mongodb.reactivestreams.client.internal.TestHelper.assertPublisherIsTheSameAs}
+         */
+        @VisibleForTesting(otherwise = PRIVATE)
+        ListCollectionsPublisher<T> getMapped() {
+            return mapped;
+        }
     }
 }

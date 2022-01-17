@@ -43,11 +43,13 @@ class ListCollectionsIterableTest {
         val iterable = ListCollectionsIterable(wrapped)
 
         val batchSize = 10
+        val authorizedCollections = true
         val bsonComment = BsonString("a comment")
         val comment = "comment"
         val filter = BsonDocument()
 
         iterable.batchSize(batchSize)
+        iterable.authorizedCollections(authorizedCollections)
         iterable.comment(bsonComment)
         iterable.comment(comment)
         iterable.filter(filter)
@@ -55,6 +57,7 @@ class ListCollectionsIterableTest {
         iterable.maxTime(1, TimeUnit.SECONDS)
 
         verify(wrapped).batchSize(batchSize)
+        verify(wrapped).authorizedCollections(authorizedCollections)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).filter(filter)
