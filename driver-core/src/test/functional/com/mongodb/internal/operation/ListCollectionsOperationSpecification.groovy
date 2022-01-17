@@ -190,12 +190,28 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() == 2
     }
 
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
+    def 'should only get collection names when nameOnly and authorizedCollections are requested'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .nameOnly(true)
+                .authorizedCollections(true)
+        getCollectionHelper().create('collection6', new CreateCollectionOptions())
+
+        when:
+        def cursor = operation.execute(getBinding())
+        def collection = cursor.next()[0]
+
+        then:
+        collection.size() == 2
+    }
+
     @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
     def 'should only get all field names when nameOnly is requested on server versions that do not support nameOnly'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
                 .nameOnly(true)
-        getCollectionHelper().create('collection6', new CreateCollectionOptions())
+        getCollectionHelper().create('collection7', new CreateCollectionOptions())
 
         when:
         def cursor = operation.execute(getBinding())
@@ -205,6 +221,21 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() > 2
     }
 
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
+    def 'should get all fields when authorizedCollections is requested and nameOnly is not requested'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .nameOnly(false)
+                .authorizedCollections(true)
+        getCollectionHelper().create('collection8', new CreateCollectionOptions())
+
+        when:
+        def cursor = operation.execute(getBinding())
+        def collection = cursor.next()[0]
+
+        then:
+        collection.size() > 2
+    }
 
     def 'should return collection names if a collection exists asynchronously'() {
         given:

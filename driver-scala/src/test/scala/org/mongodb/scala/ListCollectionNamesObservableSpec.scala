@@ -16,21 +16,20 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-
-import com.mongodb.reactivestreams.client.ListCollectionsPublisher
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.reactivestreams.Publisher
 import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 
-class ListCollectionsObservableSpec extends BaseSpec with MockitoSugar {
+class ListCollectionNamesObservableSpec extends BaseSpec with MockitoSugar {
 
-  "ListCollectionsObservable" should "have the same methods as the wrapped ListCollectionsPublisher" in {
+  "ListCollectionNamesObservable" should "have the same methods as the wrapped ListCollectionNamesPublisher" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
-    val wrapped = classOf[ListCollectionsPublisher[Document]].getMethods.map(_.getName).toSet -- mongoPublisher
-    val local = classOf[ListCollectionsObservable[Document]].getMethods.map(_.getName).toSet
+    val wrapped = classOf[ListCollectionNamesPublisher].getMethods.map(_.getName).toSet -- mongoPublisher
+    val local = classOf[ListCollectionNamesObservable].getMethods.map(_.getName).toSet
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
@@ -39,20 +38,23 @@ class ListCollectionsObservableSpec extends BaseSpec with MockitoSugar {
   }
 
   it should "call the underlying methods" in {
-    val wrapper = mock[ListCollectionsPublisher[Document]]
-    val observable = ListCollectionsObservable(wrapper)
+    val wrapper = mock[ListCollectionNamesPublisher]
+    val observable = ListCollectionNamesObservable(wrapper)
 
     val filter = Document("a" -> 1)
     val duration = Duration(1, TimeUnit.SECONDS)
     val batchSize = 10
+    val authorizedCollections = true
 
     observable.filter(filter)
     observable.maxTime(duration)
     observable.batchSize(batchSize)
+    observable.authorizedCollections(authorizedCollections)
 
     verify(wrapper).filter(filter)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).batchSize(batchSize)
+    verify(wrapper).authorizedCollections(authorizedCollections)
     verifyNoMoreInteractions(wrapper)
   }
 }

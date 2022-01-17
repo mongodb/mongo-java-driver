@@ -23,14 +23,12 @@ import org.bson.conversions.Bson;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Iterable for ListCollections.
+ * Iterable for listing collection names.
  *
- * @param <TResult> The type of the result.
- * @since 3.0
+ * @since 5.0
  * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
-public interface ListCollectionsIterable<TResult> extends CommonListCollectionsIterable<TResult> {
-
+public interface ListCollectionNamesIterable extends CommonListCollectionsIterable<String> {
     /**
      * Sets the query filter to apply to the query.
      *
@@ -38,7 +36,7 @@ public interface ListCollectionsIterable<TResult> extends CommonListCollectionsI
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    ListCollectionsIterable<TResult> filter(@Nullable Bson filter);
+    ListCollectionNamesIterable filter(@Nullable Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -48,7 +46,7 @@ public interface ListCollectionsIterable<TResult> extends CommonListCollectionsI
      * @return this
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
      */
-    ListCollectionsIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
+    ListCollectionNamesIterable maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets the number of documents to return per batch.
@@ -58,25 +56,35 @@ public interface ListCollectionsIterable<TResult> extends CommonListCollectionsI
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     @Override
-    ListCollectionsIterable<TResult> batchSize(int batchSize);
+    ListCollectionNamesIterable batchSize(int batchSize);
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment
      * @return this
-     * @since 4.6
      * @mongodb.server.release 4.4
      */
-    ListCollectionsIterable<TResult> comment(@Nullable String comment);
+    ListCollectionNamesIterable comment(@Nullable String comment);
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment
      * @return this
-     * @since 4.6
      * @mongodb.server.release 4.4
      */
-    ListCollectionsIterable<TResult> comment(@Nullable BsonValue comment);
+    ListCollectionNamesIterable comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets the {@code authorizedCollections} field of the {@code listCollections} command.
+     *
+     * @param authorizedCollections If {@code true}, allows executing the {@code listCollections} command,
+     * which has the {@code nameOnly} field set to {@code true}, without having the
+     * <a href="https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections">
+     * {@code listCollections} privilege</a> on the database resource.
+     * @return {@code this}.
+     * @mongodb.server.release 4.0
+     */
+    ListCollectionNamesIterable authorizedCollections(boolean authorizedCollections);
 }

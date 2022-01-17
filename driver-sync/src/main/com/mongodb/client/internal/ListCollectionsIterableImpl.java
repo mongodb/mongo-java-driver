@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
@@ -42,6 +43,7 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     private Bson filter;
     private final boolean collectionNamesOnly;
+    private boolean authorizedCollections;
     private long maxTimeMS;
     private BsonValue comment;
 
@@ -86,8 +88,17 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
         return this;
     }
 
+    /**
+     * @see ListCollectionNamesIterable#authorizedCollections(boolean)
+     */
+    ListCollectionsIterableImpl<TResult> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS, comment);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
+                getBatchSize(), maxTimeMS, comment);
     }
 }

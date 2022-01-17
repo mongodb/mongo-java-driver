@@ -46,7 +46,7 @@ class ListCollectionsIterableSpecification extends Specification {
 
     def 'should build the expected listCollectionOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null])
+        def executor = new TestOperationExecutor([null, null, null, null])
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry,
                 readPreference, executor, true)
                 .filter(new Document('filter', 1))
@@ -64,7 +64,8 @@ class ListCollectionsIterableSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100).maxTime(1000, MILLISECONDS)
-                .retryReads(true))
+                .retryReads(true)
+                .authorizedCollections(false))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -84,6 +85,16 @@ class ListCollectionsIterableSpecification extends Specification {
 
         then: 'should create operation with nameOnly'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true)
+                .retryReads(true))
+
+        when: 'requesting `authorizedCollections`'
+        listCollectionNamesIterable.authorizedCollections(true).iterator()
+        operation = executor.getReadOperation() as ListCollectionsOperation<Document>
+
+        then: 'should create operation with `authorizedCollections`'
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
+                .authorizedCollections(true)
+                .nameOnly(true)
                 .retryReads(true))
     }
 

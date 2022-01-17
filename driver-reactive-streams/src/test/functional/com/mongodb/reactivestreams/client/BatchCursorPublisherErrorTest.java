@@ -75,6 +75,7 @@ public class BatchCursorPublisherErrorTest {
                 dynamicTest("Distinct Publisher", () -> assertErrorHandling(collection.distinct("a", Integer.class))),
                 dynamicTest("Find Publisher", () -> assertErrorHandling(collection.find())),
                 dynamicTest("List Collections Publisher", () -> assertErrorHandling(getDefaultDatabase().listCollections())),
+                dynamicTest("List Collection Names Publisher", () -> assertErrorHandling(getDefaultDatabase().listCollectionNames())),
                 dynamicTest("List Databases Publisher", () -> assertErrorHandling(getMongoClient().listDatabaseNames())),
                 dynamicTest("List Indexes Publisher", () -> assertErrorHandling(collection.listIndexes())),
                 dynamicTest("Map Reduce Publisher", () -> assertErrorHandling(collection.mapReduce(

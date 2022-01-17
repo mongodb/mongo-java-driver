@@ -28,8 +28,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <TResult> The type of the result.
  * @since 1.0
+ * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
-public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
+public interface ListCollectionsPublisher<TResult> extends CommonListCollectionsPublisher<TResult> {
 
     /**
      * Sets the query filter to apply to the query.
