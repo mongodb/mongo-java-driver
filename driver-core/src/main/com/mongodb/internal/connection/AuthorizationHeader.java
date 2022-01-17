@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import org.bson.internal.Base64;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
@@ -25,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +93,7 @@ final class AuthorizationHeader {
         requestHeaders.put("Content-Length", String.valueOf(this.body.length()));
         requestHeaders.put("Host", this.host);
         requestHeaders.put("X-Amz-Date", this.timestamp);
-        requestHeaders.put("X-MongoDB-Server-Nonce", Base64.encode(this.nonce));
+        requestHeaders.put("X-MongoDB-Server-Nonce", Base64.getEncoder().encodeToString(this.nonce));
         requestHeaders.put("X-MongoDB-GS2-CB-Flag", "n");
         if (this.sessionToken != null) {
             requestHeaders.put("X-Amz-Security-Token", this.sessionToken);
