@@ -21,7 +21,7 @@ import org.bson.ByteBuf;
 import org.bson.types.ObjectId;
 
 import java.nio.ByteOrder;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
 
@@ -31,7 +31,6 @@ import static java.lang.String.format;
  * @since 3.0
  */
 public class ByteBufferBsonInput implements BsonInput {
-    private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private static final String[] ONE_BYTE_ASCII_STRINGS = new String[Byte.MAX_VALUE + 1];
 
@@ -143,7 +142,7 @@ public class ByteBufferBsonInput implements BsonInput {
                 throw new BsonSerializationException("Found a BSON string that is not null-terminated");
             }
             if (asciiByte < 0) {
-                return UTF8_CHARSET.newDecoder().replacement();
+                return StandardCharsets.UTF_8.newDecoder().replacement();
             }
             return ONE_BYTE_ASCII_STRINGS[asciiByte];  // this will throw if asciiByte is negative
         } else {
@@ -153,7 +152,7 @@ public class ByteBufferBsonInput implements BsonInput {
             if (nullByte != 0) {
                 throw new BsonSerializationException("Found a BSON string that is not null-terminated");
             }
-            return new String(bytes, UTF8_CHARSET);
+            return new String(bytes, StandardCharsets.UTF_8);
         }
     }
 

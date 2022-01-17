@@ -25,7 +25,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -111,7 +111,7 @@ public final class ClientMetadataHelper {
                                                      final BsonDocument templateDocument) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
-                    applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+                    applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
         }
 
         BsonDocument document = templateDocument.clone();

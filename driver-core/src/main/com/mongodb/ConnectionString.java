@@ -26,6 +26,7 @@ import org.bson.UuidRepresentation;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -249,8 +250,6 @@ public class ConnectionString {
     private static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
             new HashSet<String>(asList("authsource", "replicaset", "loadbalanced"));
-    private static final String UTF_8 = "UTF-8";
-
     private static final Logger LOGGER = Loggers.getLogger("uri");
 
     private final MongoCredential credential;
@@ -1096,7 +1095,7 @@ public class ConnectionString {
 
     private String urldecode(final String input, final boolean password) {
         try {
-            return URLDecoder.decode(input, UTF_8);
+            return URLDecoder.decode(input, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
             if (password) {
                 throw new IllegalArgumentException("The connection string contained unsupported characters in the password.");

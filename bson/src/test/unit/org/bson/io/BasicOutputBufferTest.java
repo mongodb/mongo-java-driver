@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -42,7 +43,7 @@ public class BasicOutputBufferTest {
 
             // then
             byte[] bytes = getBytes(bsonOutput);
-            assertArrayEquals("failed with code point " + codePoint, str.getBytes("UTF-8"), Arrays.copyOfRange(bytes, 0, bytes.length - 1));
+            assertArrayEquals("failed with code point " + codePoint, str.getBytes(StandardCharsets.UTF_8), Arrays.copyOfRange(bytes, 0, bytes.length - 1));
         }
     }
 
