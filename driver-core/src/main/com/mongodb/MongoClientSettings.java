@@ -39,7 +39,7 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.jsr310.Jsr310CodecProvider;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -448,7 +448,7 @@ public final class MongoClientSettings {
         public Builder applicationName(@Nullable final String applicationName) {
             if (applicationName != null) {
                 isTrueArgument("applicationName UTF-8 encoding length <= 128",
-                        applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+                        applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
             }
             this.applicationName = applicationName;
             return this;

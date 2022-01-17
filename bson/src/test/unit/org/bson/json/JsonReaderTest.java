@@ -32,7 +32,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -1270,8 +1270,8 @@ public class JsonReaderTest {
             assertEquals(exClass, e.getClass());
         }
         try {
-            testFunc.apply(new JsonReader(new InputStreamReader(new ByteArrayInputStream(json.getBytes(Charset.forName("UTF-8"))),
-                    Charset.forName("UTF-8"))));
+            testFunc.apply(new JsonReader(new InputStreamReader(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)),
+                    StandardCharsets.UTF_8)));
         } catch (final RuntimeException e) {
             if (exClass == null) {
                 throw e;

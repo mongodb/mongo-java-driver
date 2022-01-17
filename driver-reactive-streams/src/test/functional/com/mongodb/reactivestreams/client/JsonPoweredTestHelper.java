@@ -29,7 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +49,7 @@ public final class JsonPoweredTestHelper {
         StringBuilder stringBuilder = new StringBuilder();
         String line;
         String ls = System.getProperty("line.separator");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("UTF-8")));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
         try {
             while ((line = reader.readLine()) != null) {
                 stringBuilder.append(line);
