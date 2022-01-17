@@ -136,6 +136,13 @@ public class MongoDatabaseImplTest extends TestHelper {
                   },
                   () -> {
                       ListCollectionsPublisher<Document> expected =
+                              new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true)
+                                      .authorizedCollections(true);
+                      assertPublisherIsTheSameAs(expected, database.listCollectionNames().authorizedCollections(true),
+                              "nameOnly & authorizedCollections");
+                  },
+                  () -> {
+                      ListCollectionsPublisher<Document> expected =
                               new ListCollectionsPublisherImpl<>(clientSession, mongoOperationPublisher, true);
                       assertPublisherIsTheSameAs(expected, database.listCollectionNames(clientSession), "With client session");
                   }

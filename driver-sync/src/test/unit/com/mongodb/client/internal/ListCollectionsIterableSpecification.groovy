@@ -46,7 +46,7 @@ class ListCollectionsIterableSpecification extends Specification {
 
     def 'should build the expected listCollectionOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null]);
+        def executor = new TestOperationExecutor([null, null, null, null]);
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry,
                 readPreference, executor, true)
                 .filter(new Document('filter', 1))
@@ -54,6 +54,9 @@ class ListCollectionsIterableSpecification extends Specification {
                 .maxTime(1000, MILLISECONDS)
         def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
                 readPreference, executor, true)
+        def listAuthorizedCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document,
+                codecRegistry, readPreference, executor, true)
+                .authorizedCollections(true)
 
         when: 'default input should be as expected'
         listCollectionIterable.iterator()
@@ -84,6 +87,16 @@ class ListCollectionsIterableSpecification extends Specification {
 
         then: 'should create operation with nameOnly'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true)
+                .retryReads(true))
+
+        when: 'requesting authorized collection names only'
+        listAuthorizedCollectionNamesIterable.iterator()
+        operation = executor.getReadOperation() as ListCollectionsOperation<Document>
+
+        then: 'should create operation with `nameOnly` and `authorizedCollections`'
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
+                .nameOnly(true)
+                .authorizedCollections(true)
                 .retryReads(true))
     }
 

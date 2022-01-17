@@ -203,7 +203,8 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    *
    * @return a Observable with all the names of all the collections in this database
    */
-  def listCollectionNames(): Observable[String] = wrapped.listCollectionNames()
+  def listCollectionNames(): ListCollectionsObservable[String] =
+    ListCollectionsObservable(wrapped.listCollectionNames())
 
   /**
    * Finds all the collections in this database.
@@ -226,7 +227,8 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def listCollectionNames(clientSession: ClientSession): Observable[String] = wrapped.listCollectionNames(clientSession)
+  def listCollectionNames(clientSession: ClientSession): ListCollectionsObservable[String] =
+    ListCollectionsObservable(wrapped.listCollectionNames(clientSession))
 
   /**
    * Finds all the collections in this database.

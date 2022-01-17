@@ -25,7 +25,6 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import org.bson.Document;
@@ -157,7 +156,7 @@ public class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames() {
+    public ListCollectionsIterable<String> listCollectionNames() {
         throw new UnsupportedOperationException();
     }
 
@@ -172,7 +171,7 @@ public class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames(final ClientSession clientSession) {
+    public ListCollectionsIterable<String> listCollectionNames(final ClientSession clientSession) {
         throw new UnsupportedOperationException();
     }
 

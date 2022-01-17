@@ -34,7 +34,6 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 
 import java.util.Collections;
 import java.util.List;
@@ -168,14 +167,14 @@ public final class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public Publisher<String> listCollectionNames() {
-        return Flux.from(new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true))
+    public ListCollectionsPublisher<String> listCollectionNames() {
+        return new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true)
                 .map(d -> d.getString("name"));
     }
 
     @Override
-    public Publisher<String> listCollectionNames(final ClientSession clientSession) {
-        return Flux.from(new ListCollectionsPublisherImpl<>(notNull("clientSession", clientSession), mongoOperationPublisher, true))
+    public ListCollectionsPublisher<String> listCollectionNames(final ClientSession clientSession) {
+        return new ListCollectionsPublisherImpl<>(notNull("clientSession", clientSession), mongoOperationPublisher, true)
                 .map(d -> d.getString("name"));
     }
 

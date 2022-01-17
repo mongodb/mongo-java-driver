@@ -44,6 +44,7 @@ import reactor.core.Scannable;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -52,6 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.stream.Collectors.toList;
@@ -190,21 +192,23 @@ public class TestHelper {
     }
 
     private static Publisher<?> getRootSource(final Publisher<?> publisher) {
-        Optional<Publisher<?>> sourcePublisher = Optional.of(publisher);
+        Publisher<?> sourcePublisher = publisher;
         // Uses reflection to find the root / source publisher
         if (publisher instanceof Scannable) {
             Scannable scannable = (Scannable) publisher;
             List<? extends Scannable> parents = scannable.parents().collect(toList());
             if (parents.isEmpty()) {
-                sourcePublisher = getSource(scannable);
+                sourcePublisher = getSource(scannable).orElse(publisher);
             } else {
                 sourcePublisher = parents.stream().map(TestHelper::getSource)
                         .filter(Optional::isPresent)
                         .reduce((first, second) -> second)
-                        .orElse(Optional.empty());
+                        .flatMap(Function.identity())
+                        .orElse(publisher);
             }
         }
-        return sourcePublisher.orElse(publisher);
+        sourcePublisher = getMapped(sourcePublisher).orElse(sourcePublisher);
+        return sourcePublisher;
     }
 
     private static Optional<Publisher<?>> getSource(final Scannable scannable) {
@@ -214,6 +218,19 @@ public class TestHelper {
         } else {
             return getScannableArray(scannable);
         }
+    }
+
+    private static Optional<Publisher<?>> getMapped(final Publisher<?> maybeMappingPublisher) {
+        return Stream.of(maybeMappingPublisher.getClass().getDeclaredMethods())
+                .filter(m -> m.getName().equals("getMapped"))
+                .findFirst()
+                .map(m -> {
+                    try {
+                        return (Publisher<?>) m.invoke(maybeMappingPublisher);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     private static Optional<Publisher<?>> getScannableSource(final Scannable scannable) {

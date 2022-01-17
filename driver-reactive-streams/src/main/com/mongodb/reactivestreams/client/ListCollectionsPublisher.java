@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <TResult> The type of the result.
  * @since 1.0
+ * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
 public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
 
@@ -38,6 +39,21 @@ public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
     ListCollectionsPublisher<TResult> filter(@Nullable Bson filter);
+
+    /**
+     * Sets the {@code authorizedCollections} field of the {@code listCollections} command.
+     * This method is ignored if called on a {@link ListCollectionsPublisher} obtained not via any of the
+     * {@link MongoDatabase#listCollectionNames() MongoDatabase.listCollectionNames} methods.
+     *
+     * @param authorizedCollections If {@code true}, allows executing the {@code listCollections} command,
+     * which has the {@code nameOnly} field set to {@code true}, without having the
+     * <a href="https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections">
+     * {@code listCollections} privilege</a> on the corresponding database resource.
+     * @return {@code this}.
+     * @since 4.5
+     * @mongodb.server.release 4.0
+     */
+    ListCollectionsPublisher<TResult> authorizedCollections(boolean authorizedCollections);
 
     /**
      * Sets the maximum execution time on the server for this operation.

@@ -29,6 +29,11 @@ case class SyncListCollectionsIterable[T](wrapped: ListCollectionsObservable[T])
     this
   }
 
+  override def authorizedCollections(authorizedCollections: Boolean): ListCollectionsIterable[T] = {
+    wrapped.authorizedCollections(authorizedCollections)
+    this
+  }
+
   override def maxTime(maxTime: Long, timeUnit: TimeUnit): ListCollectionsIterable[T] = {
     wrapped.maxTime(maxTime, timeUnit)
     this

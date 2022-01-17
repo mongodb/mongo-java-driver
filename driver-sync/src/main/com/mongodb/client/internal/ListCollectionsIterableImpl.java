@@ -16,10 +16,13 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.Function;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
@@ -28,9 +31,11 @@ import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
@@ -40,6 +45,7 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     private Bson filter;
     private final boolean collectionNamesOnly;
+    private boolean authorizedCollections;
     private long maxTimeMS;
 
     ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
@@ -59,6 +65,12 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    public ListCollectionsIterableImpl<TResult> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
+    @Override
     public ListCollectionsIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
@@ -73,6 +85,82 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
+                getBatchSize(), maxTimeMS);
+    }
+
+    @Override
+    public <U> ListCollectionsIterable<U> map(final Function<TResult, U> mapper) {
+        return new Mapping<>(this, mapper);
+    }
+
+    private static final class Mapping<T, U> implements ListCollectionsIterable<U> {
+        private final ListCollectionsIterable<T> wrapped;
+        private final Function<T, U> mapper;
+
+        Mapping(final ListCollectionsIterable<T> iterable, final Function<T, U> mapper) {
+            this.wrapped = iterable;
+            this.mapper = mapper;
+        }
+
+        @Override
+        public Mapping<T, U> filter(@Nullable final Bson filter) {
+            wrapped.filter(filter);
+            return this;
+        }
+
+        @Override
+        public ListCollectionsIterable<U> authorizedCollections(final boolean authorizedCollections) {
+            wrapped.authorizedCollections(authorizedCollections);
+            return this;
+        }
+
+        @Override
+        public ListCollectionsIterable<U> maxTime(final long maxTime, final TimeUnit timeUnit) {
+            wrapped.maxTime(maxTime, timeUnit);
+            return this;
+        }
+
+        @Override
+        public ListCollectionsIterable<U> batchSize(final int batchSize) {
+            wrapped.batchSize(batchSize);
+            return this;
+        }
+
+        @Override
+        public MongoCursor<U> iterator() {
+            return new MongoMappingCursor<>(wrapped.iterator(), mapper);
+        }
+
+        @Override
+        public MongoCursor<U> cursor() {
+            return iterator();
+        }
+
+        @Nullable
+        @Override
+        public U first() {
+            T first = wrapped.first();
+            return first == null ? null : mapper.apply(first);
+        }
+
+        @Override
+        public <W> Mapping<U, W> map(final Function<U, W> mapper) {
+            return new Mapping<>(this, mapper);
+        }
+
+        @Override
+        public <A extends Collection<? super U>> A into(final A target) {
+            forEach(target::add);
+            return target;
+        }
+
+        /**
+         * This method is used in tests written in Groovy.
+         */
+        @VisibleForTesting(otherwise = PRIVATE)
+        ListCollectionsIterable<T> getMapped() {
+            return wrapped;
+        }
     }
 }

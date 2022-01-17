@@ -38,6 +38,12 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     }
 
     @Override
+    public ListCollectionsIterable<T> authorizedCollections(final boolean authorizedCollections) {
+        wrapped.authorizedCollections(authorizedCollections);
+        return this;
+    }
+
+    @Override
     public ListCollectionsIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

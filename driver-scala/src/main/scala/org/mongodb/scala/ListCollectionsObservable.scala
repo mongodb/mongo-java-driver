@@ -45,6 +45,23 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
   }
 
   /**
+   * Sets the `authorizedCollections` field of the `istCollections` command.
+   * This method is ignored if called on a [[ListCollectionsObservable]] obtained not via any of the
+   * `MongoDatabase.listCollectionNames` methods.
+   *
+   * @param authorizedCollections If `true`, allows executing the `listCollections` command,
+   * which has the `nameOnly` field set to `true`, without having the
+   * <a href="https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections">
+   * `listCollections` privilege</a> on the corresponding database resource.
+   * @return `this`.
+   * @since 4.5
+   */
+  def authorizedCollections(authorizedCollections: Boolean): ListCollectionsObservable[TResult] = {
+    wrapped.authorizedCollections(authorizedCollections)
+    this
+  }
+
+  /**
    * Sets the maximum execution time on the server for this operation.
    *
    * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]

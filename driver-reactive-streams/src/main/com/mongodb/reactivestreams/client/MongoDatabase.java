@@ -237,18 +237,20 @@ public interface MongoDatabase {
      * Gets the names of all the collections in this database.
      *
      * @return a publisher with all the names of all the collections in this database
+     * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    Publisher<String> listCollectionNames();
+    ListCollectionsPublisher<String> listCollectionNames();
 
     /**
      * Gets the names of all the collections in this database.
      *
      * @param clientSession the client session with which to associate this operation
      * @return a publisher with all the names of all the collections in this database
+     * @mongodb.driver.manual reference/command/listCollections listCollections
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<String> listCollectionNames(ClientSession clientSession);
+    ListCollectionsPublisher<String> listCollectionNames(ClientSession clientSession);
 
     /**
      * Finds all the collections in this database.

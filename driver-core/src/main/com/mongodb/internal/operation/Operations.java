@@ -542,11 +542,13 @@ public final class Operations<TDocument> {
 
     public <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                 final Bson filter, final boolean collectionNamesOnly,
+                                                                final boolean authorizedCollections,
                                                                 final Integer batchSize, final long maxTimeMS) {
         return new ListCollectionsOperation<TResult>(databaseName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(toBsonDocumentOrNull(filter))
                 .nameOnly(collectionNamesOnly)
+                .authorizedCollections(authorizedCollections)
                 .batchSize(batchSize == null ? 0 : batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS);
     }
