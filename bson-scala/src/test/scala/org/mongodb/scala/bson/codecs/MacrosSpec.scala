@@ -31,7 +31,7 @@ import org.mongodb.scala.bson.codecs.Macros.{ createCodecProvider, createCodecPr
 import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 //scalastyle:off
@@ -90,7 +90,7 @@ class MacrosSpec extends BaseSpec {
   case class ContainsSet(name: String, friends: Set[String])
   case class ContainsVector(name: String, friends: Vector[String])
   case class ContainsList(name: String, friends: List[String])
-  case class ContainsStream(name: String, friends: Stream[String])
+  case class ContainsStream(name: String, friends: LazyList[String])
 
   case class CaseClassWithVal(_id: ObjectId, name: String) {
     val id: String = _id.toString
@@ -234,7 +234,7 @@ class MacrosSpec extends BaseSpec {
       Macros.createCodecProvider(classOf[ContainsList])
     )
     roundTrip(
-      ContainsStream("Bob", Stream("Tom", "Charlie")),
+      ContainsStream("Bob", LazyList("Tom", "Charlie")),
       """{name: "Bob", friends: ["Tom","Charlie"]}""",
       Macros.createCodecProvider(classOf[ContainsStream])
     )

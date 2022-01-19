@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.bson.codecs.macrocodecs
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 
 import org.bson._
@@ -217,8 +217,8 @@ trait MacroCodec[T] extends Codec[T] {
       list.toSet.asInstanceOf[V]
     } else if (classOf[Vector[_]].isAssignableFrom(clazz)) {
       list.toVector.asInstanceOf[V]
-    } else if (classOf[Stream[_]].isAssignableFrom(clazz)) {
-      list.toStream.asInstanceOf[V]
+    } else if (classOf[LazyList[_]].isAssignableFrom(clazz)) {
+      list.to(LazyList).asInstanceOf[V]
     } else {
       list.toList.asInstanceOf[V]
     }

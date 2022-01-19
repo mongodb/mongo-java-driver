@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.mongodb.scala.bson.conversions.Bson
 
 import com.mongodb.client.model.{ MergeOptions => JMergeOptions }

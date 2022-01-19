@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import com.mongodb.{ TagSet => JTagSet }
 

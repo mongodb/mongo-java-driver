@@ -18,7 +18,7 @@ package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.Duration
 
 import com.mongodb.{ ReadPreference => JReadPreference }

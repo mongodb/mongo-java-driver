@@ -28,7 +28,7 @@ import org.mongodb.scala.bson.BaseSpec
 import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class ImmutableDocumentCodecSpec extends BaseSpec {
 
@@ -56,7 +56,7 @@ class ImmutableDocumentCodecSpec extends BaseSpec {
     ImmutableDocumentCodec(registry).encode(writer, original, EncoderContext.builder().build())
 
     info("decoding")
-    val buffer: BasicOutputBuffer = writer.getBsonOutput().asInstanceOf[BasicOutputBuffer];
+    val buffer: BasicOutputBuffer = writer.getBsonOutput.asInstanceOf[BasicOutputBuffer]
     val reader: BsonBinaryReader = new BsonBinaryReader(
       new ByteBufferBsonInput(
         new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray))
@@ -85,7 +85,7 @@ class ImmutableDocumentCodecSpec extends BaseSpec {
     )
 
     info("decoding")
-    val buffer: BasicOutputBuffer = writer.getBsonOutput().asInstanceOf[BasicOutputBuffer];
+    val buffer: BasicOutputBuffer = writer.getBsonOutput.asInstanceOf[BasicOutputBuffer]
     val reader: BsonBinaryReader =
       new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray))))
 
@@ -93,12 +93,12 @@ class ImmutableDocumentCodecSpec extends BaseSpec {
 
     decodedDocument shouldBe a[Document]
     original should equal(decodedDocument)
-    decodedDocument.keys.toList should contain theSameElementsInOrderAs (List("_id", "a", "nested"))
+    decodedDocument.keys.toList should contain theSameElementsInOrderAs List("_id", "a", "nested")
 
-    Document(decodedDocument[BsonDocument]("nested")).keys.toList should contain theSameElementsInOrderAs (List(
+    Document(decodedDocument[BsonDocument]("nested")).keys.toList should contain theSameElementsInOrderAs List(
       "a",
       "_id"
-    ))
+    )
   }
 
   it should "encoder class should work as expected" in {

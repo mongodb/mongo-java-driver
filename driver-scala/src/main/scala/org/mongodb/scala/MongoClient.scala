@@ -26,7 +26,7 @@ import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.codecs.{ DocumentCodecProvider, IterableCodecProvider }
 import org.mongodb.scala.bson.conversions.Bson
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 /**

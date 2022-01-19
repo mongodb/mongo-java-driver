@@ -18,7 +18,7 @@ package org.mongodb.scala.bson
 
 import java.util.Date
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
 
 import org.bson.{ BsonDocument => JBsonDocument }
@@ -176,7 +176,7 @@ object BsonDocument {
    * @param elems a traversable of key, value pairs
    * @return the BsonDocument
    */
-  def apply(elems: Traversable[(String, BsonValue)]): BsonDocument = {
+  def apply(elems: Iterable[(String, BsonValue)]): BsonDocument = {
     val bsonDocument = new JBsonDocument()
     elems.foreach(kv => bsonDocument.put(kv._1, kv._2))
     bsonDocument
@@ -296,7 +296,7 @@ object BsonJavaScriptWithScope {
    * @param scope the function scope
    * @return the BsonJavaScript
    */
-  def apply(value: String, scope: Traversable[(String, BsonValue)]): BsonJavaScriptWithScope =
+  def apply(value: String, scope: Iterable[(String, BsonValue)]): BsonJavaScriptWithScope =
     new BsonJavaScriptWithScope(value, BsonDocument(scope))
 }
 

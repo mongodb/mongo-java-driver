@@ -18,7 +18,7 @@ package org.mongodb.scala
 
 import com.mongodb.annotations.Beta
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
 import org.mongodb.scala.bson.conversions.Bson
 

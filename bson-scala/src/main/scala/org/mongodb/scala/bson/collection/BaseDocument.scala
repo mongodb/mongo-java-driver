@@ -16,8 +16,8 @@
 
 package org.mongodb.scala.bson.collection
 
-import scala.collection.JavaConverters._
-import scala.collection.{ GenTraversableOnce, Traversable }
+import scala.jdk.CollectionConverters._
+import scala.collection.{ Iterable, IterableOnce }
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success, Try }
 
@@ -38,7 +38,7 @@ import org.mongodb.scala.bson.BsonMagnets
  *
  * @tparam T The concrete Document implementation
  */
-private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] with Bson {
+private[bson] trait BaseDocument[T] extends Iterable[(String, BsonValue)] with Bson {
 
   import BsonMagnets._
 
@@ -117,8 +117,8 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    * @param xs      the traversable object consisting of key-value pairs.
    * @return        a new document with the bindings of this document and those from `xs`.
    */
-  def --(xs: GenTraversableOnce[String]): T = {
-    val keysToIgnore = xs.toList
+  def --(xs: IterableOnce[String]): T = {
+    val keysToIgnore = xs.iterator.to(List)
     val newUnderlying = new BsonDocument()
     for ((k, v) <- iterator if !keysToIgnore.contains(k)) {
       newUnderlying.put(k, v)
@@ -209,7 +209,7 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    *
    * @return an iterator over all keys.
    */
-  def keysIterator: Iterator[String] = keySet.toIterator
+  def keysIterator: Iterator[String] = keySet.iterator
 
   /**
    * Collects all values of this document in an iterable collection.
@@ -223,7 +223,7 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    *
    * @return an iterator over all values that are associated with some key in this document.
    */
-  def valuesIterator: Iterator[BsonValue] = values.toIterator
+  def valuesIterator: Iterator[BsonValue] = values.iterator
 
   /**
    * Gets a JSON representation of this document

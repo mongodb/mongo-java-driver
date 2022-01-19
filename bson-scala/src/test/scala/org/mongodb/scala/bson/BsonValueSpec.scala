@@ -18,7 +18,7 @@ package org.mongodb.scala.bson
 
 import java.util.Date
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class BsonValueSpec extends BaseSpec {
 

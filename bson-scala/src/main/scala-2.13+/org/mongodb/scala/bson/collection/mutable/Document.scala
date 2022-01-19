@@ -232,7 +232,7 @@ case class Document(protected[scala] val underlying: BsonDocument)
    *  @param xs   the iterator producing the elements to remove.
    *  @return the document itself
    */
-  def --=(xs: IterableOnce[String]): Document = { xs foreach -=; this }
+  def --=(xs: IterableOnce[String]): Document = { xs.iterator foreach -=; this }
   // scalastyle:on method.name
 
   /**

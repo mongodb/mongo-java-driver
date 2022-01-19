@@ -19,7 +19,7 @@ package org.mongodb.scala.bson
 import java.util.Date
 
 import scala.annotation.implicitNotFound
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
 
 import org.mongodb.scala.bson.collection.immutable.{ Document => IDocument }
@@ -168,12 +168,8 @@ trait DefaultBsonTransformers extends LowPrio {
    * Transforms `Option[T]` to `BsonValue`
    */
   implicit def transformOption[T](implicit transformer: BsonTransformer[T]): BsonTransformer[Option[T]] = {
-    new BsonTransformer[Option[T]] {
-      def apply(value: Option[T]): BsonValue = value match {
-        case Some(transformable) => transformer(transformable)
-        case None                => BsonNull()
-      }
-    }
+    case Some(transformable) => transformer(transformable)
+    case None                => BsonNull()
   }
 
 }
@@ -203,11 +199,9 @@ trait LowPrio {
    */
   implicit def transformKeyValuePairs[T](
       implicit transformer: BsonTransformer[T]
-  ): BsonTransformer[Seq[(String, T)]] = {
-    new BsonTransformer[Seq[(String, T)]] {
-      def apply(values: Seq[(String, T)]): BsonDocument = {
-        BsonDocument(values.map(kv => (kv._1, transformer(kv._2))).toList)
-      }
+  ): BsonTransformer[Seq[(String, T)]] = { (values: Seq[(String, T)]) =>
+    {
+      BsonDocument(values.map(kv => (kv._1, transformer(kv._2))).toList)
     }
   }
 
@@ -219,10 +213,9 @@ trait LowPrio {
    * @return a BsonArray containing all the values
    */
   implicit def transformSeq[T](implicit transformer: BsonTransformer[T]): BsonTransformer[Seq[T]] = {
-    new BsonTransformer[Seq[T]] {
-      def apply(values: Seq[T]): BsonValue = {
+    (values: Seq[T]) =>
+      {
         new BsonArray(values.map(transformer.apply).toList.asJava)
       }
-    }
   }
 }

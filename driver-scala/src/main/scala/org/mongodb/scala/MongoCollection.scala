@@ -26,7 +26,7 @@ import org.mongodb.scala.model._
 import org.mongodb.scala.result._
 import org.reactivestreams.Publisher
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 // scalastyle:off number.of.methods file.size.limit
