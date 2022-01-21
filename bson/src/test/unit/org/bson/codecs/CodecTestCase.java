@@ -48,7 +48,7 @@ abstract class CodecTestCase {
         return fromProviders(asList(new ValueCodecProvider(), getDocumentCodecProvider()));
     }
 
-    <T> T getDecodedValue(BsonValue bsonValue, Decoder<T> decoder) {
+    <T> T getDecodedValue(final BsonValue bsonValue, final Decoder<T> decoder) {
         BsonDocument document = new BsonDocument("val", bsonValue);
         BsonDocumentReader reader = new BsonDocumentReader(document);
         reader.readStartDocument();
@@ -56,7 +56,7 @@ abstract class CodecTestCase {
         return decoder.decode(reader, DecoderContext.builder().build());
     }
 
-    <T> BsonValue getEncodedValue(T value, Encoder<T> encoder) {
+    <T> BsonValue getEncodedValue(final T value, final Encoder<T> encoder) {
         BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
         writer.writeStartDocument();
         writer.writeName("val");
