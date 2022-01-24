@@ -93,6 +93,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
+import static com.mongodb.internal.connection.ConcurrentPool.lockInterruptibly;
+import static com.mongodb.internal.connection.ConcurrentPool.lockUnfair;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static java.lang.String.format;
@@ -831,7 +833,7 @@ class DefaultConnectionPool implements ConnectionPool {
      */
     @ThreadSafe
     private final class OpenConcurrencyLimiter {
-        private final Lock lock;
+        private final ReentrantLock lock;
         private final Condition permitAvailableOrHandedOverOrClosedOrPausedCondition;
         private final int maxPermits;
         private int permits;
@@ -992,12 +994,10 @@ class DefaultConnectionPool implements ConnectionPool {
                     expressedDesireToGetAvailableConnection = true;
                 }
                 long remainingNanos = timeout.remainingOrInfinite(NANOSECONDS);
-                while (permits == 0) {
-                    stateAndGeneration.throwIfClosedOrPaused();
-                    availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null;
-                    if (availableConnection != null) {
-                        break;
-                    }
+                while (permits == 0
+                        // the absence of short-circuiting is of importance
+                        & (availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null) == null
+                        & !stateAndGeneration.throwIfClosedOrPaused()) {
                     if (Timeout.expired(remainingNanos)) {
                         throw createTimeoutException(timeout);
                     }
@@ -1020,7 +1020,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            lock.lock();
+            lockUnfair(lock);
             try {
                 assertTrue(permits < maxPermits);
                 permits++;
@@ -1061,7 +1061,7 @@ class DefaultConnectionPool implements ConnectionPool {
          * from threads that are waiting for a permit to open a connection.
          */
         void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
-            lock.lock();
+            lockUnfair(lock);
             try {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
@@ -1075,26 +1075,18 @@ class DefaultConnectionPool implements ConnectionPool {
                         return;
                     }
                 }
-                pool.release(openConnection);
             } finally {
                 lock.unlock();
             }
+            pool.release(openConnection);
         }
 
         void signalClosedOrPaused() {
-            lock.lock();
+            lockUnfair(lock);
             try {
                 permitAvailableOrHandedOverOrClosedOrPausedCondition.signalAll();
             } finally {
                 lock.unlock();
-            }
-        }
-
-        private void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
-            try {
-                lock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException(null, e);
             }
         }
 
@@ -1523,11 +1515,14 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
+         * @return {@code false} which means that the method did not throw.
+         * The method returns to allow using it conveniently as part of a condition check when waiting on a {@link Condition}.
+         * Short-circuiting operators {@code &&} and {@code ||} must not be used with this method to ensure that it is called.
          * @throws MongoServerUnavailableException If and only if {@linkplain #close() closed}.
          * @throws MongoConnectionPoolClearedException If and only if {@linkplain #pauseAndIncrementGeneration(Throwable) paused}
          * and not {@linkplain #close() closed}.
          */
-        void throwIfClosedOrPaused() {
+        boolean throwIfClosedOrPaused() {
             if (closed.get()) {
                 throw pool.poolClosedException();
             }
@@ -1541,6 +1536,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     lock.readLock().unlock();
                 }
             }
+            return false;
         }
     }
 }
