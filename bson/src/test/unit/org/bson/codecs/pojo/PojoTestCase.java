@@ -51,7 +51,7 @@ import org.bson.codecs.pojo.entities.ReusedGenericsModel;
 import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
-import org.bson.codecs.pojo.entities.SimpleEnum;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;

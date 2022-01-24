@@ -18,7 +18,6 @@ package org.bson.codecs;
 
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

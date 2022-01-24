@@ -17,7 +17,6 @@
 package org.bson.codecs;
 
 import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

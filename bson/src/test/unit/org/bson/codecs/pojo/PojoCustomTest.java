@@ -55,7 +55,7 @@ import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
 import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
-import org.bson.codecs.pojo.entities.SimpleEnum;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;

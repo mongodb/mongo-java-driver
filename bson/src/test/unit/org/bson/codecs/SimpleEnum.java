@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo.entities;
+package org.bson.codecs;
 
 public enum SimpleEnum {
     ALPHA,

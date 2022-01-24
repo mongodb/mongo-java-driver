@@ -66,7 +66,7 @@ import org.bson.codecs.pojo.entities.ShapeHolderModel;
 import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
-import org.bson.codecs.pojo.entities.SimpleEnum;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
