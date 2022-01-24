@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -43,8 +44,8 @@ public final class SingleServerCluster extends BaseCluster {
 
     private final ClusterableServer server;
 
-    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, serverFactory);
+    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterListener clusterListener, final ClusterableServerFactory serverFactory) {
+        super(clusterId, settings, clusterListener, serverFactory);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.SINGLE);
 
@@ -83,28 +84,30 @@ public final class SingleServerCluster extends BaseCluster {
     private class DefaultServerDescriptionChangedListener implements ServerDescriptionChangedListener {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-            ServerDescription newDescription = event.getNewDescription();
-            if (newDescription.isOk()) {
-                if (getSettings().getRequiredClusterType() != ClusterType.UNKNOWN
-                        && getSettings().getRequiredClusterType() != newDescription.getClusterType()) {
-                    newDescription = null;
-                } else if (getSettings().getRequiredClusterType() == ClusterType.REPLICA_SET
-                        && getSettings().getRequiredReplicaSetName() != null) {
-                    if (!getSettings().getRequiredReplicaSetName().equals(newDescription.getSetName())) {
-                        newDescription = ServerDescription.builder(newDescription)
-                                .exception(new MongoConfigurationException(
-                                        format("Replica set name '%s' does not match required replica set name of '%s'",
-                                                newDescription.getSetName(), getSettings().getRequiredReplicaSetName())))
-                                .type(ServerType.UNKNOWN)
-                                .setName(null)
-                                .ok(false)
-                                .build();
-                        publishDescription(ClusterType.UNKNOWN, newDescription);
-                        return;
+            synchronized (this) {
+                ServerDescription newDescription = event.getNewDescription();
+                if (newDescription.isOk()) {
+                    if (getSettings().getRequiredClusterType() != ClusterType.UNKNOWN
+                            && getSettings().getRequiredClusterType() != newDescription.getClusterType()) {
+                        newDescription = null;
+                    } else if (getSettings().getRequiredClusterType() == ClusterType.REPLICA_SET
+                            && getSettings().getRequiredReplicaSetName() != null) {
+                        if (!getSettings().getRequiredReplicaSetName().equals(newDescription.getSetName())) {
+                            newDescription = ServerDescription.builder(newDescription)
+                                    .exception(new MongoConfigurationException(
+                                            format("Replica set name '%s' does not match required replica set name of '%s'",
+                                                    newDescription.getSetName(), getSettings().getRequiredReplicaSetName())))
+                                    .type(ServerType.UNKNOWN)
+                                    .setName(null)
+                                    .ok(false)
+                                    .build();
+                            publishDescription(ClusterType.UNKNOWN, newDescription);
+                            return;
+                        }
                     }
                 }
+                publishDescription(newDescription);
             }
-            publishDescription(newDescription);
         }
     }
 

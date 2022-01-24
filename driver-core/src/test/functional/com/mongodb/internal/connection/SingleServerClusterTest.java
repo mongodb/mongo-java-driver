@@ -49,6 +49,10 @@ import static com.mongodb.ClusterFixture.getSecondary;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
+
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_MONITOR_LISTENER;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -67,11 +71,11 @@ public class SingleServerClusterTest {
                 .hosts(singletonList(serverAddress))
                 .build();
         cluster = new SingleServerCluster(clusterId,
-                clusterSettings,
+                clusterSettings, NO_OP_CLUSTER_LISTENER,
                 new DefaultClusterableServerFactory(clusterId, clusterSettings, ServerSettings.builder().build(),
                         ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                         streamFactory, streamFactory, getCredential(),
-
+                        NO_OP_SERVER_LISTENER, NO_OP_SERVER_MONITOR_LISTENER,
                         null, null, null,
                         Collections.<MongoCompressor>emptyList(), getServerApi()));
     }

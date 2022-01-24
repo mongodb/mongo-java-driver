@@ -56,7 +56,6 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
 import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -160,7 +159,7 @@ final class LoadBalancedCluster implements Cluster {
                         .address(host)
                         .build()),
                 settings, serverFactory.getSettings());
-        server = serverFactory.create(host, event -> { }, createServerListener(serverFactory.getSettings()), clusterClock);
+        server = serverFactory.create(host, event -> { }, clusterClock);
 
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description, initialDescription));
     }

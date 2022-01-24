@@ -57,8 +57,6 @@ import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
-import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
-import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Comparator.comparingInt;
@@ -81,11 +79,12 @@ abstract class BaseCluster implements Cluster {
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    BaseCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    BaseCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterListener clusterListener,
+            final ClusterableServerFactory serverFactory) {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
-        this.clusterListener = getClusterListener(settings);
+        this.clusterListener = notNull("clusterListener", clusterListener);
         clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
         description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList(),
                 settings, serverFactory.getSettings());
@@ -250,6 +249,10 @@ abstract class BaseCluster implements Cluster {
         updatePhase();
     }
 
+    /**
+     * Subclasses must ensure that this method is called in a way that events are delivered in a predictable order.
+     * Typically, this means calling it while holding a lock that includes both updates to the cluster state and firing the event.
+     */
     protected void fireChangeEvent(final ClusterDescription newDescription, final ClusterDescription previousDescription) {
         if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
              clusterListener.clusterDescriptionChanged(
@@ -384,8 +387,7 @@ abstract class BaseCluster implements Cluster {
 
     protected ClusterableServer createServer(final ServerAddress serverAddress,
                                              final ServerDescriptionChangedListener serverDescriptionChangedListener) {
-        return serverFactory.create(serverAddress, serverDescriptionChangedListener, createServerListener(serverFactory.getSettings()),
-                clusterClock);
+        return serverFactory.create(serverAddress, serverDescriptionChangedListener, clusterClock);
     }
 
     private void throwIfIncompatible(final ClusterDescription curDescription) {
