@@ -18,7 +18,11 @@ package org.bson.codecs;
 
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonType;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
 import org.bson.Document;
@@ -42,6 +46,23 @@ abstract class CodecTestCase {
 
     CodecRegistry getRegistry() {
         return fromProviders(asList(new ValueCodecProvider(), getDocumentCodecProvider()));
+    }
+
+    <T> T getDecodedValue(final BsonValue bsonValue, final Decoder<T> decoder) {
+        BsonDocument document = new BsonDocument("val", bsonValue);
+        BsonDocumentReader reader = new BsonDocumentReader(document);
+        reader.readStartDocument();
+        reader.readName("val");
+        return decoder.decode(reader, DecoderContext.builder().build());
+    }
+
+    <T> BsonValue getEncodedValue(final T value, final Encoder<T> encoder) {
+        BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+        writer.writeStartDocument();
+        writer.writeName("val");
+        encoder.encode(writer, value, EncoderContext.builder().build());
+        writer.writeEndDocument();
+        return writer.getDocument().get("val");
     }
 
     <T> void roundTrip(final T value) {

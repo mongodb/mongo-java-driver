@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo.entities;
+package org.bson.codecs;
 
-public enum SimpleEnum {
-    ALPHA,
-    BRAVO,
-    CHARLIE
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+
+/**
+ * A codec provider for classes that extend {@link Enum}.
+ *
+ * @since 4.5
+ */
+public final class EnumCodecProvider implements CodecProvider {
+    @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+        if (Enum.class.isAssignableFrom(clazz)) {
+            return (Codec<T>) new EnumCodec(clazz);
+        }
+        return null;
+    }
 }

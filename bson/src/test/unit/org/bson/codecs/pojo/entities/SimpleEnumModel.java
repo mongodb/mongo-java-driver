@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import org.bson.codecs.SimpleEnum;
+
 public final class SimpleEnumModel {
 
     private SimpleEnum myEnum;

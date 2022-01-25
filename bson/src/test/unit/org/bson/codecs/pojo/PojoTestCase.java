@@ -27,6 +27,7 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.EnumCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.jsr310.Jsr310CodecProvider;
@@ -50,7 +51,7 @@ import org.bson.codecs.pojo.entities.ReusedGenericsModel;
 import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
-import org.bson.codecs.pojo.entities.SimpleEnum;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
@@ -223,7 +224,9 @@ abstract class PojoTestCase {
     }
 
     CodecRegistry getCodecRegistry(final PojoCodecProvider.Builder builder) {
-        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), new Jsr310CodecProvider(), builder.build());
+        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), new Jsr310CodecProvider(),
+                new EnumCodecProvider(),
+                builder.build());
     }
 
     static SimpleModel getSimpleModel() {
