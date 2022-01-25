@@ -20,6 +20,7 @@ import org.bson.BsonDocument;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.EnumCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.JsonObjectCodecProvider;
 import org.bson.codecs.MapCodecProvider;
@@ -47,6 +48,7 @@ public interface Bson {
      *     <li>{@link Jsr310CodecProvider}</li>
      *     <li>{@link JsonObjectCodecProvider}</li>
      *     <li>{@link BsonCodecProvider}</li>
+     *     <li>{@link EnumCodecProvider}</li>
      * </ul>
      * <p>
      * Additional providers may be added in a future release.
@@ -63,7 +65,8 @@ public interface Bson {
                     new MapCodecProvider(),
                     new Jsr310CodecProvider(),
                     new JsonObjectCodecProvider(),
-                    new BsonCodecProvider()));
+                    new BsonCodecProvider(),
+                    new EnumCodecProvider()));
 
     /**
      * Render into a BsonDocument.

@@ -55,7 +55,7 @@ import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
 import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
-import org.bson.codecs.pojo.entities.SimpleEnum;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
@@ -352,9 +352,17 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testEnumSupportWithCustomCodec() {
-        CodecRegistry registry = fromRegistries(getCodecRegistry(getPojoCodecProviderBuilder(SimpleEnumModel.class)),
-                fromCodecs(new SimpleEnumCodec()));
+        CodecRegistry registry = fromRegistries(fromCodecs(new SimpleEnumCodec()),
+                getCodecRegistry(getPojoCodecProviderBuilder(SimpleEnumModel.class)));
         roundTrip(registry, new SimpleEnumModel(SimpleEnum.BRAVO), "{ 'myEnum': 1 }");
+    }
+
+    @Test
+    public void testEnumSupportWithFallback() {
+        // Create a registry without EnumCodecProvider, to test the fallback in EnumPropertyCodecProvider#get
+        CodecRegistry registry = fromRegistries(fromProviders(new ValueCodecProvider(),
+                getPojoCodecProviderBuilder(SimpleEnumModel.class).build()));
+        roundTrip(registry, new SimpleEnumModel(SimpleEnum.BRAVO), "{ 'myEnum': 'BRAVO' }");
     }
 
     @Test
