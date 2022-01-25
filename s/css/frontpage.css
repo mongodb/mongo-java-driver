@@ -5,7 +5,7 @@ body {
   color: #494747;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
-  background-color: #f3f4eb;
+  background-color: #fff;
   color: #4c3a2c;
   padding-top: 50px;
 }
@@ -40,7 +40,7 @@ dt {
     left: 0;
     width: 100%;
     font-size: 31px;
-    background-color: #3b291f;
+    background-color: #023430;
     color: white;
     margin: 0;
     padding: 0;
@@ -219,18 +219,10 @@ input.gsc-search-button[title], input.gsc-search-button:hover[title], input.gsc-
 /* Hero Styles */
 
 #hero {
-  background-color: #666;
+  background-color: #00684a;
   color: #f3f4eb;
   border-bottom: 1px solid #313030;
   padding: 12px 0px;
-}
-
-#mongodbJVMlogo {
-  background-image: url("../img/mongoJVMlogo.png");
-  background-position: left top;
-  background-repeat: no-repeat;
-  width: 83px;
-  height: 150px;
 }
 
 #hero h2 {
@@ -260,8 +252,8 @@ input.gsc-search-button[title], input.gsc-search-button:hover[title], input.gsc-
 }
 
 .btn-dark {
-  border: 2px solid #3b291f;
-  background-color: #3b291f;
+  border: 2px solid #023430;
+  background-color: #023430;
   color: white;
   border-radius: 0;
 }
