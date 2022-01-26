@@ -228,4 +228,11 @@
         <Field name="permits"/>
         <Bug pattern="VO_VOLATILE_INCREMENT"/>
     </Match>
+
+    <!-- Non-short-circuit operators are used intentionally. -->
+    <Match>
+        <Class name="com.mongodb.internal.connection.DefaultConnectionPool$OpenConcurrencyLimiter"/>
+        <Method name="acquirePermitOrGetAvailableOpenedConnection"/>
+        <Bug pattern="NS_NON_SHORT_CIRCUIT"/>
+    </Match>
 </FindBugsFilter>
