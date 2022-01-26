@@ -46,7 +46,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBCollection.createWriteConcernException;
-import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -84,7 +83,7 @@ public class DB {
         this.name = name;
         this.executor = executor;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
-        this.commandCodec = new DBObjectCodec(getDefaultCodecRegistry());
+        this.commandCodec = new DBObjectCodec(mongo.getCodecRegistry());
     }
 
     /**
@@ -454,7 +453,7 @@ public class DB {
         try {
             return executeCommand(wrap(command, encoder), getCommandReadPreference(command, readPreference));
         } catch (MongoCommandException ex) {
-            return new CommandResult(ex.getResponse(), ex.getServerAddress());
+            return new CommandResult(ex.getResponse(), getDefaultDBObjectCodec(), ex.getServerAddress());
         }
     }
 
@@ -522,7 +521,7 @@ public class DB {
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
         return new CommandResult(executor.execute(new CommandReadOperation<BsonDocument>(getName(), commandDocument,
                                                                                          new BsonDocumentCodec()),
-                                                  readPreference, getReadConcern()));
+                                                  readPreference, getReadConcern()), getDefaultDBObjectCodec());
     }
 
     OperationExecutor getExecutor() {
@@ -564,6 +563,13 @@ public class DB {
         } else {
             return requestedPreference;
         }
+    }
+
+    Codec<DBObject> getDefaultDBObjectCodec() {
+        return new DBObjectCodec(getMongoClient().getCodecRegistry(),
+                DBObjectCodec.getDefaultBsonTypeClassMap(),
+                new DBCollectionObjectFactory())
+                .withUuidRepresentation(getMongoClient().getMongoClientOptions().getUuidRepresentation());
     }
 
     private static final Set<String> OBEDIENT_COMMANDS = new HashSet<String>();
