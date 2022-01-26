@@ -998,12 +998,10 @@ class DefaultConnectionPool implements ConnectionPool {
                     expressedDesireToGetAvailableConnection = true;
                 }
                 long remainingNanos = timeout.remainingOrInfinite(NANOSECONDS);
-                while (permits == 0) {
-                    stateAndGeneration.throwIfClosedOrPaused();
-                    availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null;
-                    if (availableConnection != null) {
-                        break;
-                    }
+                while (permits == 0
+                        // the absence of short-circuiting is of importance
+                        & !stateAndGeneration.throwIfClosedOrPaused()
+                        & (availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null) == null) {
                     if (Timeout.expired(remainingNanos)) {
                         throw createTimeoutException(timeout);
                     }
@@ -1529,11 +1527,14 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
+         * @return {@code false} which means that the method did not throw.
+         * The method returns to allow using it conveniently as part of a condition check when waiting on a {@link Condition}.
+         * Short-circuiting operators {@code &&} and {@code ||} must not be used with this method to ensure that it is called.
          * @throws MongoServerUnavailableException If and only if {@linkplain #close() closed}.
          * @throws MongoConnectionPoolClearedException If and only if {@linkplain #pauseAndIncrementGeneration(Throwable) paused}
          * and not {@linkplain #close() closed}.
          */
-        void throwIfClosedOrPaused() {
+        boolean throwIfClosedOrPaused() {
             if (closed.get()) {
                 throw pool.poolClosedException();
             }
@@ -1547,6 +1548,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     lock.readLock().unlock();
                 }
             }
+            return false;
         }
     }
 }

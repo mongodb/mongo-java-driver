@@ -110,6 +110,7 @@
 
     <suppress checks="InnerAssignment" files="DBCursor"/>
     <suppress checks="InnerAssignment" files="JSON"/>
+    <suppress checks="InnerAssignment" files="DefaultConnectionPool"/>
 
     <suppress checks="FinalClass" files="DBCursor"/>
     <suppress checks="FinalClass" files="MongoClientOptions"/>
