@@ -362,9 +362,9 @@ public class ConcurrentPool<T> implements Pool<T> {
          * But it appears to be a good enough compromise, that results in having enough throughput when there are enough
          * available permits and tolerable high percentiles of latencies when there are not enough available permits.</p>
          * <p>
-         * It may seem viable that using {@link #permits} > 0 as a way to decide that there are likely no waiters,
+         * It may seem viable to use {@link #permits} > 0 as a way to decide that there are likely no waiters,
          * but benchmarking shows that with this approach high percentiles of contended {@link #acquirePermit(long, TimeUnit)} latencies
-         * (when the number of threads that use the pool is higher than the maximum pool size) becomes similar to a situation when no
+         * (when the number of threads that use the pool is higher than the maximum pool size) become similar to a situation when no
          * fair locking is used. That is, this approach does not result in the behavior we want.</p>
          */
         private final AtomicInteger waitersEstimate;
