@@ -384,8 +384,9 @@ public class ConcurrentPool<T> implements Pool<T> {
                 throw new MongoInterruptedException(null, e);
             }
             try {
-                while (permits == 0) {
-                    throwIfClosedOrPaused();
+                while (permits == 0
+                        // the absence of short-circuiting is of importance
+                        & !throwIfClosedOrPaused()) {
                     try {
                         if (timeout < 0 || remainingNanos == Long.MAX_VALUE) {
                             permitAvailableOrClosedOrPausedCondition.await();
@@ -399,7 +400,6 @@ public class ConcurrentPool<T> implements Pool<T> {
                     }
                 }
                 assertTrue(permits > 0);
-                throwIfClosedOrPaused();
                 //noinspection NonAtomicOperationOnVolatileField
                 permits--;
                 return true;
@@ -465,12 +465,15 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         /**
+         * @return {@code false} which means that the method did not throw.
+         * The method returns to allow using it conveniently as part of a condition check when waiting on a {@link Condition}.
+         * Short-circuiting operators {@code &&} and {@code ||} must not be used with this method to ensure that it is called.
          * @throws MongoServerUnavailableException If and only if {@linkplain #close() closed}.
          * @throws MongoException If and only if {@linkplain #pause(Supplier) paused}
          * and not {@linkplain #close() closed}. The exception is specified via the {@link #pause(Supplier)} method
          * and may be a subtype of {@link MongoException}.
          */
-        void throwIfClosedOrPaused() {
+        boolean throwIfClosedOrPaused() {
             if (closed) {
                 throw poolClosedExceptionSupplier.get();
             }
@@ -484,6 +487,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                     lock.readLock().unlock();
                 }
             }
+            return false;
         }
 
         boolean closed() {
