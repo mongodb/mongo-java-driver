@@ -91,6 +91,8 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
+import static com.mongodb.internal.connection.ConcurrentPool.lockInterruptibly;
+import static com.mongodb.internal.connection.ConcurrentPool.lockUnfair;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static java.lang.String.format;
@@ -837,7 +839,7 @@ class DefaultConnectionPool implements ConnectionPool {
      */
     @ThreadSafe
     private final class OpenConcurrencyLimiter {
-        private final Lock lock;
+        private final ReentrantLock lock;
         private final Condition permitAvailableOrHandedOverOrClosedOrPausedCondition;
         private final int maxPermits;
         private int permits;
@@ -1024,7 +1026,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            lock.lock();
+            lockUnfair(lock);
             try {
                 assertTrue(permits < maxPermits);
                 permits++;
@@ -1065,7 +1067,7 @@ class DefaultConnectionPool implements ConnectionPool {
          * from threads that are waiting for a permit to open a connection.
          */
         void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
-            lock.lock();
+            lockUnfair(lock);
             try {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
@@ -1079,26 +1081,18 @@ class DefaultConnectionPool implements ConnectionPool {
                         return;
                     }
                 }
-                pool.release(openConnection);
             } finally {
                 lock.unlock();
             }
+            pool.release(openConnection);
         }
 
         void signalClosedOrPaused() {
-            lock.lock();
+            lockUnfair(lock);
             try {
                 permitAvailableOrHandedOverOrClosedOrPausedCondition.signalAll();
             } finally {
                 lock.unlock();
-            }
-        }
-
-        private void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
-            try {
-                lock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException(null, e);
             }
         }
 
