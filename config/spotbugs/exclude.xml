@@ -232,7 +232,7 @@
     <!-- Non-short-circuit operators are used intentionally. -->
     <Match>
         <Class name="com.mongodb.internal.connection.ConcurrentPool$StateAndPermits"/>
-        <Method name="acquirePermitFair"/>
+        <Method name="acquirePermit"/>
         <Bug pattern="NS_DANGEROUS_NON_SHORT_CIRCUIT"/>
     </Match>
     <Match>
