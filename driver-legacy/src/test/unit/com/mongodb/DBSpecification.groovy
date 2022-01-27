@@ -73,6 +73,7 @@ class DBSpecification extends Specification {
         given:
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        mongo.codecRegistry >> getDefaultCodecRegistry()
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -204,6 +205,7 @@ class DBSpecification extends Specification {
         given:
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        mongo.codecRegistry >> getDefaultCodecRegistry()
         def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonDouble(1.0))])
         def database = new DB(mongo, 'test', executor)
         database.setReadPreference(ReadPreference.secondary())
@@ -235,6 +237,7 @@ class DBSpecification extends Specification {
         given:
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        mongo.codecRegistry >> getDefaultCodecRegistry()
         def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonDouble(1.0))])
         def database = new DB(mongo, 'test', executor)
         database.setReadPreference(ReadPreference.secondary())

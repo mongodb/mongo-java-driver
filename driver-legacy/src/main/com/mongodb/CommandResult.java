@@ -18,8 +18,10 @@ package com.mongodb;
 
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
+import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 
-import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -32,14 +34,14 @@ public class CommandResult extends BasicDBObject {
     private final BsonDocument response;
     private final ServerAddress address;
 
-    CommandResult(final BsonDocument response) {
-        this(response, null);
+    CommandResult(final BsonDocument response, final Decoder<DBObject> decoder) {
+        this(response, decoder, null);
     }
 
-    CommandResult(final BsonDocument response, @Nullable final ServerAddress address) {
+    CommandResult(final BsonDocument response, final Decoder<DBObject> decoder, @Nullable final ServerAddress address) {
         this.address = address;
         this.response = notNull("response", response);
-        putAll(toDBObject(response));
+        putAll(decoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build()));
     }
 
     /**

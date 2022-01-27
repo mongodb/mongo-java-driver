@@ -1262,7 +1262,7 @@ public class DBCollection {
                                                          .collation(options.getCollation())
                                                          .retryReads(retryReads);
         return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()),
-                primaryPreferred(), getReadConcern()));
+                primaryPreferred(), getReadConcern()), getDefaultDBObjectCodec());
     }
 
     @SuppressWarnings("unchecked")
