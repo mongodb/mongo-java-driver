@@ -28,8 +28,10 @@ import com.mongodb.lang.Nullable;
 
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -162,7 +164,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     public T get(final long timeout, final TimeUnit timeUnit) {
         stateAndPermits.throwIfClosedOrPaused();
 
-        if (!stateAndPermits.acquirePermitFair(timeout, timeUnit)) {
+        if (!stateAndPermits.acquirePermit(timeout, timeUnit)) {
             throw new MongoTimeoutException(String.format("Timeout waiting for a pooled item after %d %s", timeout, timeUnit));
         }
 
@@ -221,7 +223,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     public void ensureMinSize(final int minSize, final Consumer<T> initAndRelease) {
         stateAndPermits.throwIfClosedOrPaused();
         while (getCount() < minSize) {
-            if (!stateAndPermits.acquirePermitFair(0, TimeUnit.MILLISECONDS)) {
+            if (!stateAndPermits.acquirePermit(0, TimeUnit.MILLISECONDS)) {
                 break;
             }
             initAndRelease.accept(createNewAndReleasePermitIfFailure());
@@ -246,7 +248,7 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     @VisibleForTesting(otherwise = PRIVATE)
     boolean acquirePermit(final long timeout, final TimeUnit timeUnit) {
-        return stateAndPermits.acquirePermitFair(timeout, timeUnit);
+        return stateAndPermits.acquirePermit(timeout, timeUnit);
     }
 
     /**
@@ -330,12 +332,42 @@ public class ConcurrentPool<T> implements Pool<T> {
     @ThreadSafe
     private static final class StateAndPermits {
         private final Supplier<MongoServerUnavailableException> poolClosedExceptionSupplier;
-        private final ReadWriteLock lock;
+        private final ReentrantReadWriteLock lock;
         private final Condition permitAvailableOrClosedOrPausedCondition;
         private volatile boolean paused;
         private volatile boolean closed;
         private final int maxPermits;
         private volatile int permits;
+        /** When there are not enough available permits to serve all threads requesting a permit, threads are queued and wait on
+         * {@link #permitAvailableOrClosedOrPausedCondition}. Because of this waiting, we want threads to acquire the lock fairly,
+         * to avoid a situation when some threads are sitting in the queue for a long time while others barge in and acquire
+         * the lock without waiting in the queue. Fair locking reduces high percentiles of {@link #acquirePermit(long, TimeUnit)} latencies
+         * but reduces its throughput: it makes latencies roughly equally high for everyone, while keeping them lower than the highest
+         * latencies with unfair locking. The fair approach is in accordance with the
+         * <a href="https://github.com/mongodb/specifications/blob/568093ce7f0e1394cf4952c417e1e7dacc5fef53/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#waitqueue">
+         * connection pool specification</a>.
+         * <p>
+         * When there are enough available permits to serve all threads requesting a permit, threads still have to acquire the lock,
+         * and still are queued, but since they are not waiting on {@link #permitAvailableOrClosedOrPausedCondition},
+         * threads spend less time in the queue. This results in having smaller high percentiles
+         * of {@link #acquirePermit(long, TimeUnit)} latencies, and we do not want to sacrifice the throughput
+         * to further reduce the high percentiles by acquiring the lock fairly.</p>
+         * <p>
+         * While there is a chance that the expressed reasoning is flawed, it is supported by the results of experiments reported in
+         * comments in <a href="https://jira.mongodb.org/browse/JAVA-4452">JAVA-4452</a>.</p>
+         * <p>
+         * {@link ReentrantReadWriteLock#hasWaiters(Condition)} requires holding the lock to be called, therefore we cannot use it
+         * to discriminate between the two cases described above, and we use {@link #waitersEstimate} instead.
+         * This approach results in sometimes acquiring a lock unfairly when it should have been acquired fairly, and vice versa.
+         * But it appears to be a good enough compromise, that results in having enough throughput when there are enough
+         * available permits and tolerable high percentiles of latencies when there are not enough available permits.</p>
+         * <p>
+         * It may seem viable to use {@link #permits} > 0 as a way to decide that there are likely no waiters,
+         * but benchmarking shows that with this approach high percentiles of contended {@link #acquirePermit(long, TimeUnit)} latencies
+         * (when the number of threads that use the pool is higher than the maximum pool size) become similar to a situation when no
+         * fair locking is used. That is, this approach does not result in the behavior we want.</p>
+         */
+        private final AtomicInteger waitersEstimate;
         @Nullable
         private Supplier<MongoException> causeSupplier;
 
@@ -347,6 +379,7 @@ public class ConcurrentPool<T> implements Pool<T> {
             closed = false;
             this.maxPermits = maxPermits;
             permits = maxPermits;
+            waitersEstimate = new AtomicInteger();
             causeSupplier = null;
         }
 
@@ -355,9 +388,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            if (!lock.writeLock().tryLock()) { // unfair
-                lock.writeLock().lock();
-            }
+            lockUnfair(lock.writeLock());
             try {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
@@ -373,21 +404,24 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         /**
+         * This method also emulates the eager {@link InterruptedException} behavior of
+         * {@link java.util.concurrent.Semaphore#tryAcquire(long, TimeUnit)}.
+         *
          * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
          */
-        boolean acquirePermitFair(final long timeout, final TimeUnit unit) throws MongoInterruptedException {
+        boolean acquirePermit(final long timeout, final TimeUnit unit) throws MongoInterruptedException {
             long remainingNanos = unit.toNanos(timeout);
-            try {
-                // preserve the eager InterruptedException behavior of `Semaphore.tryAcquire(long, TimeUnit)`
-                lock.writeLock().lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException(null, e);
+            if (waitersEstimate.get() == 0) {
+                lockInterruptiblyUnfair(lock.writeLock());
+            } else {
+                lockInterruptibly(lock.writeLock());
             }
             try {
                 while (permits == 0
                         // the absence of short-circuiting is of importance
                         & !throwIfClosedOrPaused()) {
                     try {
+                        waitersEstimate.incrementAndGet();
                         if (timeout < 0 || remainingNanos == Long.MAX_VALUE) {
                             permitAvailableOrClosedOrPausedCondition.await();
                         } else if (remainingNanos >= 0) {
@@ -397,6 +431,8 @@ public class ConcurrentPool<T> implements Pool<T> {
                         }
                     } catch (InterruptedException e) {
                         throw new MongoInterruptedException(null, e);
+                    } finally {
+                        waitersEstimate.decrementAndGet();
                     }
                 }
                 assertTrue(permits > 0);
@@ -409,7 +445,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void releasePermit() {
-            lock.writeLock().lock();
+            lockUnfair(lock.writeLock());
             try {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
@@ -421,7 +457,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            lock.writeLock().lock();
+            lockUnfair(lock.writeLock());
             try {
                 if (!paused) {
                     this.paused = true;
@@ -435,7 +471,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         void ready() {
             if (paused) {
-                lock.writeLock().lock();
+                lockUnfair(lock.writeLock());
                 try {
                     this.paused = false;
                     this.causeSupplier = null;
@@ -450,7 +486,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                lock.writeLock().lock();
+                lockUnfair(lock.writeLock());
                 try {
                     if (!closed) {
                         closed = true;
@@ -500,5 +536,46 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     static String sizeToString(final int size) {
         return size == INFINITE_SIZE ? "infinite" : Integer.toString(size);
+    }
+
+    static void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
+        try {
+            lock.lockInterruptibly();
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException(null, e);
+        }
+    }
+
+    private static void lockInterruptiblyUnfair(final ReentrantReadWriteLock.WriteLock lock) throws MongoInterruptedException {
+        throwIfInterrupted();
+        // `WriteLock.tryLock` is unfair
+        if (!lock.tryLock()) {
+            try {
+                lock.lockInterruptibly();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new MongoInterruptedException(null, new InterruptedException());
+            }
+        }
+    }
+
+    static void lockUnfair(final ReentrantLock lock) {
+        // `ReentrantLock.tryLock` is unfair
+        if (!lock.tryLock()) {
+            lock.lock();
+        }
+    }
+
+    private static void lockUnfair(final ReentrantReadWriteLock.WriteLock lock) {
+        // `WriteLock.tryLock` is unfair
+        if (!lock.tryLock()) {
+            lock.lock();
+        }
+    }
+
+    private static void throwIfInterrupted() throws MongoInterruptedException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new MongoInterruptedException(null, new InterruptedException());
+        }
     }
 }
