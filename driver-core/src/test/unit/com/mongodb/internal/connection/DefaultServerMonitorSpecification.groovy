@@ -39,7 +39,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
-import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_MONITOR_LISTENER
 
 @SuppressWarnings('BusyWait')
 class DefaultServerMonitorSpecification extends Specification {
@@ -84,7 +83,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
-                NO_OP_SERVER_MONITOR_LISTENER, new ClusterClock(), internalConnectionFactory, null, SameObjectProvider.initialized(sdam))
+                new ClusterClock(), internalConnectionFactory, null, SameObjectProvider.initialized(sdam))
         monitor.start()
 
         when:
@@ -169,7 +168,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                serverMonitorListener, new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
+                new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
 
         when:
         monitor.start()
@@ -250,7 +249,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                serverMonitorListener, new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
+                new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
 
         when:
         monitor.start()

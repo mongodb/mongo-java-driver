@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -198,8 +197,8 @@ public class SrvPollingProseTests {
                             invocation.getArgument(2), clusterId, dnsResolver);
                     return dnsSrvRecordMonitor;
                 });
-        cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.srvMaxHosts(srvMaxHosts).build(), NO_OP_CLUSTER_LISTENER,
-                serverFactory, dnsSrvRecordMonitorFactory);
+        cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.srvMaxHosts(srvMaxHosts).build(), serverFactory,
+                dnsSrvRecordMonitorFactory);
         try {
             Thread.sleep(100); // racy
         } catch (InterruptedException e) {

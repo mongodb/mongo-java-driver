@@ -29,10 +29,11 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
-import com.mongodb.event.ServerListener;
 import com.mongodb.internal.inject.EmptyProvider;
 
 import java.util.List;
+
+import static com.mongodb.internal.event.EventListenerHelper.getServerListener;
 
 @ThreadSafe
 public class LoadBalancedClusterableServerFactory implements ClusterableServerFactory {
@@ -42,7 +43,6 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     private final InternalConnectionPoolSettings internalConnectionPoolSettings;
     private final StreamFactory streamFactory;
     private final MongoCredentialWithCache credential;
-    private final ServerListener serverListener;
     private final CommandListener commandListener;
     private final String applicationName;
     private final MongoDriverInformation mongoDriverInformation;
@@ -50,19 +50,18 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     private final ServerApi serverApi;
 
     public LoadBalancedClusterableServerFactory(final ClusterId clusterId, final ServerSettings serverSettings,
-            final ConnectionPoolSettings connectionPoolSettings,
-            final InternalConnectionPoolSettings internalConnectionPoolSettings,
-            final StreamFactory streamFactory, final MongoCredential credential,
-            final ServerListener serverListener, final CommandListener commandListener,
-            final String applicationName, final MongoDriverInformation mongoDriverInformation,
-            final List<MongoCompressor> compressorList, final ServerApi serverApi) {
+                                                final ConnectionPoolSettings connectionPoolSettings,
+                                                final InternalConnectionPoolSettings internalConnectionPoolSettings,
+                                                final StreamFactory streamFactory, final MongoCredential credential,
+                                                final CommandListener commandListener,
+                                                final String applicationName, final MongoDriverInformation mongoDriverInformation,
+                                                final List<MongoCompressor> compressorList, final ServerApi serverApi) {
         this.clusterId = clusterId;
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
         this.streamFactory = streamFactory;
         this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
-        this.serverListener = serverListener;
         this.commandListener = commandListener;
         this.applicationName = applicationName;
         this.mongoDriverInformation = mongoDriverInformation;
@@ -81,7 +80,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         connectionPool.ready();
 
         return new LoadBalancedServer(new ServerId(clusterId, serverAddress), connectionPool, new DefaultConnectionFactory(),
-                serverListener, clusterClock);
+                getServerListener(serverSettings), clusterClock);
     }
 
     @Override

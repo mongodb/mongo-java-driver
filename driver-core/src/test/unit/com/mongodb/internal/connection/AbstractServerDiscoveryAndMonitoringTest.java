@@ -181,9 +181,9 @@ public class AbstractServerDiscoveryAndMonitoringTest {
                 : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            cluster = new SingleServerCluster(clusterId, clusterSettings, clusterListener, factory);
+            cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
         } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
-            cluster = new MultiServerCluster(clusterId, clusterSettings, clusterListener, factory);
+            cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
         } else {
             cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, null);
         }

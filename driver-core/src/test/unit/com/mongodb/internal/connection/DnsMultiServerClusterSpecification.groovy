@@ -66,7 +66,7 @@ class DnsMultiServerClusterSpecification extends Specification {
                         .serverSelectionTimeout(1, TimeUnit.MILLISECONDS)
                         .srvHost(srvHost)
                         .mode(MULTIPLE)
-                        .build(), clusterListener,
+                        .build(),
                 factory, dnsSrvRecordMonitorFactory)
 
         then: 'the monitor is created and started'

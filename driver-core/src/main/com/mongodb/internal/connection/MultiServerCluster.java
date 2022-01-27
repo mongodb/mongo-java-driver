@@ -18,14 +18,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.event.ClusterListener;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 
 public final class MultiServerCluster extends AbstractMultiServerCluster {
     public MultiServerCluster(final ClusterId clusterId, final ClusterSettings settings,
-            final ClusterListener clusterListener, final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, clusterListener, serverFactory);
+                              final ClusterableServerFactory serverFactory) {
+        super(clusterId, settings, serverFactory);
         isTrue("srvHost is null", settings.getSrvHost() == null);
         initialize(settings.getHosts());
     }

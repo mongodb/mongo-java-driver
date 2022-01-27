@@ -27,7 +27,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -44,8 +43,8 @@ public final class SingleServerCluster extends BaseCluster {
 
     private final ClusterableServer server;
 
-    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterListener clusterListener, final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, clusterListener, serverFactory);
+    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+        super(clusterId, settings, serverFactory);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.SINGLE);
 

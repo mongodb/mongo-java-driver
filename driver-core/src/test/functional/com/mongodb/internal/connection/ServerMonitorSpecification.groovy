@@ -43,7 +43,6 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerDescription.builder
 import static com.mongodb.internal.connection.DefaultServerMonitor.shouldLogStageChange
-import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_MONITOR_LISTENER
 import static java.util.Arrays.asList
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
@@ -220,7 +219,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
             }
         }
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
-                NO_OP_SERVER_MONITOR_LISTENER, new ClusterClock(),
+                new ClusterClock(),
                 new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(SocketSettings.builder()
                         .connectTimeout(500, TimeUnit.MILLISECONDS)
                         .build(),

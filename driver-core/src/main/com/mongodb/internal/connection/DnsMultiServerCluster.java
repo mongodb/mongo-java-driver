@@ -21,7 +21,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
-import com.mongodb.event.ClusterListener;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,9 +35,9 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
     private volatile MongoException srvResolutionException;
 
 
-    public DnsMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterListener clusterListener,
-            final ClusterableServerFactory serverFactory, final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
-        super(clusterId, settings, clusterListener, serverFactory);
+    public DnsMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                                 final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
+        super(clusterId, settings, serverFactory);
         notNull("srvHost", settings.getSrvHost());
         dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(settings.getSrvHost(), settings.getSrvServiceName(),
                 new DnsSrvRecordInitializer() {

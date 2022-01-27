@@ -29,12 +29,12 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
-import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
+import static com.mongodb.internal.event.EventListenerHelper.getServerListener;
 import static java.util.Collections.emptyList;
 
 public class DefaultClusterableServerFactory implements ClusterableServerFactory {
@@ -46,8 +46,6 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final StreamFactory streamFactory;
     private final MongoCredentialWithCache credential;
     private final StreamFactory heartbeatStreamFactory;
-    private final ServerListener serverListener;
-    private final ServerMonitorListener serverMonitorListener;
     private final CommandListener commandListener;
     private final String applicationName;
     private final MongoDriverInformation mongoDriverInformation;
@@ -59,8 +57,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
             final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
             final InternalConnectionPoolSettings internalConnectionPoolSettings,
             final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
-            final MongoCredential credential, final ServerListener serverListener, final ServerMonitorListener serverMonitorListener,
-            final CommandListener commandListener,
+            final MongoCredential credential, final CommandListener commandListener,
             final String applicationName, final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
         this.clusterId = clusterId;
@@ -71,8 +68,6 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         this.streamFactory = streamFactory;
         this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
-        this.serverListener = serverListener;
-        this.serverMonitorListener = serverMonitorListener;
         this.commandListener = commandListener;
         this.applicationName = applicationName;
         this.mongoDriverInformation = mongoDriverInformation;
@@ -86,7 +81,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
             final ClusterClock clusterClock) {
         ServerId serverId = new ServerId(clusterId, serverAddress);
         SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
-        ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, serverMonitorListener, clusterClock,
+        ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, clusterClock,
                 // no credentials, compressor list, or command listener for the server monitor factory
                 new InternalStreamConnectionFactory(clusterSettings.getMode(), heartbeatStreamFactory, null, applicationName,
                         mongoDriverInformation, emptyList(), null, serverApi),
@@ -95,6 +90,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                 new InternalStreamConnectionFactory(clusterSettings.getMode(), streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
+        ServerListener serverListener = getServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
                 serverListener, serverMonitor, connectionPool, clusterSettings.getMode());
         sdamProvider.initialize(sdam);

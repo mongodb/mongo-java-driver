@@ -34,7 +34,6 @@ import static com.mongodb.connection.ClusterType.UNKNOWN
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class SingleServerClusterSpecification extends Specification {
@@ -54,7 +53,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should update description when the server connects'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), NO_OP_CLUSTER_LISTENER, factory)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory)
 
         when:
         sendNotification(firstServer, STANDALONE)
@@ -71,7 +70,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should get server when open'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), NO_OP_CLUSTER_LISTENER, factory)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory)
 
         when:
         sendNotification(firstServer, STANDALONE)
@@ -87,7 +86,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should not get server when closed'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), NO_OP_CLUSTER_LISTENER, factory)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory)
         cluster.close()
 
         when:
@@ -104,7 +103,7 @@ class SingleServerClusterSpecification extends Specification {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().mode(SINGLE).requiredClusterType(ClusterType.SHARDED).hosts(Arrays.asList(firstServer)).build(),
-                NO_OP_CLUSTER_LISTENER, factory)
+                factory)
 
         when:
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY)
@@ -121,7 +120,7 @@ class SingleServerClusterSpecification extends Specification {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().mode(SINGLE).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
-                NO_OP_CLUSTER_LISTENER, factory)
+                factory)
 
         when:
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test1')
@@ -137,7 +136,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'getServer should throw when cluster is incompatible'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer))
-                .serverSelectionTimeout(1, SECONDS).build(), NO_OP_CLUSTER_LISTENER, factory)
+                        .serverSelectionTimeout(1, SECONDS).build(), factory)
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
@@ -153,7 +152,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should connect to server'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(SINGLE).hosts([firstServer]).build(),
-                NO_OP_CLUSTER_LISTENER, factory)
+                factory)
 
         when:
         cluster.connect()
@@ -176,7 +175,7 @@ class SingleServerClusterSpecification extends Specification {
         def listener = Mock(ClusterListener)
         when:
         def cluster = new SingleServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(SINGLE).hosts([firstServer])
-                .addClusterListener(listener).build(), listener,
+                .addClusterListener(listener).build(),
                 factory)
 
         then:
