@@ -34,6 +34,7 @@ import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
+import static com.mongodb.internal.event.EventListenerHelper.singleServerListener;
 import static java.util.Collections.emptyList;
 
 public class DefaultClusterableServerFactory implements ClusterableServerFactory {
@@ -76,9 +77,8 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress,
-                                    final ServerDescriptionChangedListener serverDescriptionChangedListener,
-                                    final ServerListener serverListener,
-                                    final ClusterClock clusterClock) {
+            final ServerDescriptionChangedListener serverDescriptionChangedListener,
+            final ClusterClock clusterClock) {
         ServerId serverId = new ServerId(clusterId, serverAddress);
         SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
         ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, clusterClock,
@@ -90,6 +90,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                 new InternalStreamConnectionFactory(clusterSettings.getMode(), streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
+        ServerListener serverListener = singleServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
                 serverListener, serverMonitor, connectionPool, clusterSettings.getMode());
         sdamProvider.initialize(sdam);

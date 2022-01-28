@@ -27,17 +27,53 @@ import com.mongodb.event.ServerMonitorListener;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
+
 public final class EventListenerHelper {
 
-    public static ClusterListener getClusterListener(final ClusterSettings clusterSettings) {
-        switch (clusterSettings.getClusterListeners().size()) {
-            case 0:
-                return NO_OP_CLUSTER_LISTENER;
-            case 1:
-                return clusterSettings.getClusterListeners().get(0);
-            default:
-                return new ClusterListenerMulticaster(clusterSettings.getClusterListeners());
-        }
+    /**
+     * Returns a single listener.  Asserts that the number configured is <= 1, and returns a no-op listener if 0 or the only one
+     * in the list if 1.
+     */
+    public static ClusterListener singleClusterListener(final ClusterSettings clusterSettings) {
+        assertTrue(clusterSettings.getClusterListeners().size() <= 1);
+        return clusterSettings.getClusterListeners().isEmpty()
+                ? NO_OP_CLUSTER_LISTENER
+                : clusterSettings.getClusterListeners().get(0);
+    }
+
+    /**
+     * Returns a single listener.  Asserts that the number configured is <= 1, and returns a no-op listener if 0 or the only one
+     * in the list if 1.
+     */
+    public static ServerListener singleServerListener(final ServerSettings serverSettings) {
+        assertTrue(serverSettings.getServerListeners().size() <= 1);
+        return serverSettings.getServerListeners().isEmpty()
+                ? NO_OP_SERVER_LISTENER
+                : serverSettings.getServerListeners().get(0);
+    }
+
+    /**
+     * Returns a single listener.  Asserts that the number configured is <= 1, and returns a no-op listener if 0 or the only one
+     * in the list if 1.
+     */
+    public static ServerMonitorListener singleServerMonitorListener(final ServerSettings serverSettings) {
+        assertTrue(serverSettings.getServerMonitorListeners().size() <= 1);
+        return serverSettings.getServerMonitorListeners().isEmpty()
+                ? NO_OP_SERVER_MONITOR_LISTENER
+                : serverSettings.getServerMonitorListeners().get(0);
+    }
+
+    public static ClusterListener clusterListenerMulticaster(final List<ClusterListener> clusterListeners) {
+        return new ClusterListenerMulticaster(clusterListeners);
+    }
+
+    public static ServerListener serverListenerMulticaster(final List<ServerListener> serverListeners) {
+        return new ServerListenerMulticaster(serverListeners);
+    }
+
+    public static ServerMonitorListener serverMonitorListenerMulticaster(final List<ServerMonitorListener> serverMonitorListeners) {
+        return new ServerMonitorListenerMulticaster(serverMonitorListeners);
     }
 
     public static CommandListener getCommandListener(final List<CommandListener> commandListeners) {
@@ -62,32 +98,10 @@ public final class EventListenerHelper {
         }
     }
 
-    public static ServerMonitorListener getServerMonitorListener(final ServerSettings serverSettings) {
-        switch (serverSettings.getServerMonitorListeners().size()) {
-            case 0:
-                return NO_OP_SERVER_MONITOR_LISTENER;
-            case 1:
-                return serverSettings.getServerMonitorListeners().get(0);
-            default:
-                return new ServerMonitorListenerMulticaster(serverSettings.getServerMonitorListeners());
-        }
-    }
-
-    public static ServerListener createServerListener(final ServerSettings serverSettings) {
-        switch (serverSettings.getServerListeners().size()) {
-            case 0:
-                return NO_OP_SERVER_LISTENER;
-            case 1:
-                return serverSettings.getServerListeners().get(0);
-            default:
-                return new ServerListenerMulticaster(serverSettings.getServerListeners());
-        }
-    }
-
     public static final ServerListener NO_OP_SERVER_LISTENER = new ServerListener() {
     };
 
-    private static final ServerMonitorListener NO_OP_SERVER_MONITOR_LISTENER = new ServerMonitorListener() {
+    public static final ServerMonitorListener NO_OP_SERVER_MONITOR_LISTENER = new ServerMonitorListener() {
     };
 
     public static final ClusterListener NO_OP_CLUSTER_LISTENER = new ClusterListener() {

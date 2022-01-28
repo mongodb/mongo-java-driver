@@ -98,8 +98,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 addServer(serverAddress);
             }
             newDescription = updateDescription();
+            fireChangeEvent(newDescription, currentDescription);
         }
-        fireChangeEvent(newDescription, currentDescription);
     }
 
     @Override
@@ -221,9 +221,9 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 oldClusterDescription = getCurrentDescription();
                 newClusterDescription = updateDescription();
             }
-        }
-        if (shouldUpdateDescription) {
-            fireChangeEvent(newClusterDescription, oldClusterDescription);
+            if (shouldUpdateDescription) {
+                fireChangeEvent(newClusterDescription, oldClusterDescription);
+            }
         }
     }
 

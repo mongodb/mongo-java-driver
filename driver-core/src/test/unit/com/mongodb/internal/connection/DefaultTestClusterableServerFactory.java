@@ -45,7 +45,7 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
     @Override
     public ClusterableServer create(final ServerAddress serverAddress,
                                     final ServerDescriptionChangedListener serverDescriptionChangedListener,
-                                    final ServerListener ignored, final ClusterClock clusterClock) {
+                                    final ClusterClock clusterClock) {
         ServerId serverId = new ServerId(clusterId, serverAddress);
         if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
             return new LoadBalancedServer(serverId, new TestConnectionPool(),

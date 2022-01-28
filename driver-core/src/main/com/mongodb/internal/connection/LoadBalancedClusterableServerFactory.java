@@ -29,10 +29,11 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
-import com.mongodb.event.ServerListener;
 import com.mongodb.internal.inject.EmptyProvider;
 
 import java.util.List;
+
+import static com.mongodb.internal.event.EventListenerHelper.singleServerListener;
 
 @ThreadSafe
 public class LoadBalancedClusterableServerFactory implements ClusterableServerFactory {
@@ -70,8 +71,8 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress,
-                                    final ServerDescriptionChangedListener serverDescriptionChangedListener,
-                                    final ServerListener serverListener, final ClusterClock clusterClock) {
+            final ServerDescriptionChangedListener serverDescriptionChangedListener,
+            final ClusterClock clusterClock) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
                 new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, commandListener, serverApi),
@@ -79,7 +80,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         connectionPool.ready();
 
         return new LoadBalancedServer(new ServerId(clusterId, serverAddress), connectionPool, new DefaultConnectionFactory(),
-                serverListener, clusterClock);
+                singleServerListener(serverSettings), clusterClock);
     }
 
     @Override

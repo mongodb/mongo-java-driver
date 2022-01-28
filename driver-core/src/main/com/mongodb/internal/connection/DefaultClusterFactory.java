@@ -26,10 +26,21 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
+import com.mongodb.event.ServerListener;
+import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
+
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_MONITOR_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.clusterListenerMulticaster;
+import static com.mongodb.internal.event.EventListenerHelper.serverListenerMulticaster;
+import static com.mongodb.internal.event.EventListenerHelper.serverMonitorListenerMulticaster;
+import static java.util.Collections.singletonList;
 
 /**
  * The default factory for cluster implementations.
@@ -41,8 +52,8 @@ public final class DefaultClusterFactory {
     /**
      * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
      *
-     * @param clusterSettings        the cluster settings
-     * @param serverSettings         the server settings
+     * @param originalClusterSettings        the cluster settings
+     * @param originalServerSettings         the server settings
      * @param connectionPoolSettings the connection pool settings
      * @param internalConnectionPoolSettings the internal connection pool settings
      * @param streamFactory          the stream factory
@@ -57,7 +68,7 @@ public final class DefaultClusterFactory {
      *
      * @since 3.6
      */
-    public Cluster createCluster(final ClusterSettings clusterSettings, final ServerSettings serverSettings,
+    public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,
                                  final ConnectionPoolSettings connectionPoolSettings,
                                  final InternalConnectionPoolSettings internalConnectionPoolSettings,
                                  final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
@@ -67,6 +78,30 @@ public final class DefaultClusterFactory {
                                  final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
 
         ClusterId clusterId = new ClusterId();
+        ClusterSettings clusterSettings;
+        ServerSettings serverSettings;
+
+        if (noClusterEventListeners(originalClusterSettings, originalServerSettings)) {
+            clusterSettings = ClusterSettings.builder(originalClusterSettings)
+                    .clusterListenerList(singletonList(NO_OP_CLUSTER_LISTENER))
+                    .build();
+            serverSettings = ServerSettings.builder(originalServerSettings)
+                    .serverListenerList(singletonList(NO_OP_SERVER_LISTENER))
+                    .serverMonitorListenerList(singletonList(NO_OP_SERVER_MONITOR_LISTENER))
+                    .build();
+        } else {
+            AsynchronousClusterEventListener clusterEventListener =
+                    AsynchronousClusterEventListener.startNew(clusterId, getClusterListener(originalClusterSettings),
+                            getServerListener(originalServerSettings), getServerMonitorListener(originalServerSettings));
+
+            clusterSettings = ClusterSettings.builder(originalClusterSettings)
+                    .clusterListenerList(singletonList(clusterEventListener))
+                    .build();
+            serverSettings = ServerSettings.builder(originalServerSettings)
+                    .serverListenerList(singletonList(clusterEventListener))
+                    .serverMonitorListenerList(singletonList(clusterEventListener))
+                    .build();
+        }
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings);
 
@@ -95,5 +130,29 @@ public final class DefaultClusterFactory {
                 throw new UnsupportedOperationException("Unsupported cluster mode: " + clusterSettings.getMode());
             }
         }
+    }
+
+    private boolean noClusterEventListeners(final ClusterSettings clusterSettings, final ServerSettings serverSettings) {
+        return clusterSettings.getClusterListeners().isEmpty()
+                && serverSettings.getServerListeners().isEmpty()
+                && serverSettings.getServerMonitorListeners().isEmpty();
+    }
+
+    private static ClusterListener getClusterListener(final ClusterSettings clusterSettings) {
+        return clusterSettings.getClusterListeners().size() == 0
+                ? NO_OP_CLUSTER_LISTENER
+                : clusterListenerMulticaster(clusterSettings.getClusterListeners());
+    }
+
+    private static ServerListener getServerListener(final ServerSettings serverSettings) {
+        return serverSettings.getServerListeners().size() == 0
+                ? NO_OP_SERVER_LISTENER
+                : serverListenerMulticaster(serverSettings.getServerListeners());
+    }
+
+    private static ServerMonitorListener getServerMonitorListener(final ServerSettings serverSettings) {
+        return serverSettings.getServerMonitorListeners().size() == 0
+                ? NO_OP_SERVER_MONITOR_LISTENER
+                : serverMonitorListenerMulticaster(serverSettings.getServerMonitorListeners());
     }
 }

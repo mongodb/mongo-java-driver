@@ -18,11 +18,10 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.event.ServerListener;
 
 public interface ClusterableServerFactory {
     ClusterableServer create(ServerAddress serverAddress, ServerDescriptionChangedListener serverDescriptionChangedListener,
-                             ServerListener serverListener, ClusterClock clusterClock);
+            ClusterClock clusterClock);
 
     ServerSettings getSettings();
 }

@@ -56,8 +56,7 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
-import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
+import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -92,7 +91,7 @@ final class LoadBalancedCluster implements Cluster {
 
         this.clusterId = clusterId;
         this.settings = settings;
-        this.clusterListener = getClusterListener(settings);
+        this.clusterListener = singleClusterListener(settings);
         this.description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, emptyList(), settings,
                 serverFactory.getSettings());
 
@@ -160,7 +159,7 @@ final class LoadBalancedCluster implements Cluster {
                         .address(host)
                         .build()),
                 settings, serverFactory.getSettings());
-        server = serverFactory.create(host, event -> { }, createServerListener(serverFactory.getSettings()), clusterClock);
+        server = serverFactory.create(host, event -> { }, clusterClock);
 
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description, initialDescription));
     }
@@ -260,7 +259,6 @@ final class LoadBalancedCluster implements Cluster {
     public void close() {
         if (!closed.getAndSet(true)) {
             LOGGER.info(format("Cluster closed with id %s", clusterId));
-            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
@@ -275,6 +273,7 @@ final class LoadBalancedCluster implements Cluster {
             if (localServer != null) {
                 localServer.close();
             }
+            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
         }
     }
 

@@ -54,7 +54,7 @@ import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
-import static com.mongodb.internal.event.EventListenerHelper.getServerMonitorListener;
+import static com.mongodb.internal.event.EventListenerHelper.singleServerMonitorListener;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -87,7 +87,7 @@ class DefaultServerMonitor implements ServerMonitor {
                          final Provider<SdamServerDescriptionManager> sdamProvider) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
-        this.serverMonitorListener = getServerMonitorListener(serverSettings);
+        this.serverMonitorListener = singleServerMonitorListener(serverSettings);
         this.clusterClock = notNull("clusterClock", clusterClock);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.serverApi = serverApi;
