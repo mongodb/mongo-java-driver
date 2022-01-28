@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
@@ -50,6 +51,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  * There is an assumption that the last event that should be published is the {@link ClusterClosedEvent}.  Once that event is published,
  * the publishing thread is allowed to die.
  */
+@ThreadSafe
 final class AsynchronousClusterEventListener implements ClusterListener, ServerListener, ServerMonitorListener {
     private final BlockingQueue<Supplier<Boolean>> eventPublishers = new LinkedBlockingQueue<>();
     private final ClusterListener clusterListener;
@@ -63,14 +65,21 @@ final class AsynchronousClusterEventListener implements ClusterListener, ServerL
         void apply(T t);
     }
 
-    AsynchronousClusterEventListener(final ClusterId clusterId, final ClusterListener clusterListener, final ServerListener serverListener,
-            final ServerMonitorListener serverMonitorListener) {
+    static AsynchronousClusterEventListener startNew(final ClusterId clusterId, final ClusterListener clusterListener,
+            final ServerListener serverListener, final ServerMonitorListener serverMonitorListener) {
+        AsynchronousClusterEventListener result = new AsynchronousClusterEventListener(clusterId, clusterListener, serverListener,
+                serverMonitorListener);
+        result.publishingThread.start();
+        return result;
+    }
+
+    private AsynchronousClusterEventListener(final ClusterId clusterId, final ClusterListener clusterListener,
+            final ServerListener serverListener, final ServerMonitorListener serverMonitorListener) {
         this.clusterListener = notNull("clusterListener", clusterListener);
         this.serverListener = notNull("serverListener", serverListener);
         this.serverMonitorListener = notNull("serverMonitorListener", serverMonitorListener);
         publishingThread = new Thread(this::publishEvents, "cluster-event-publisher-" + clusterId.getValue());
         publishingThread.setDaemon(true);
-        publishingThread.start();
     }
 
     @VisibleForTesting(otherwise = PRIVATE)

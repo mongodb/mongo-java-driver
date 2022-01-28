@@ -74,7 +74,7 @@ public final class DefaultClusterFactory {
         ClusterId clusterId = new ClusterId();
 
         AsynchronousClusterEventListener clusterEventListener =
-                new AsynchronousClusterEventListener(clusterId, getClusterListener(originalClusterSettings),
+                AsynchronousClusterEventListener.startNew(clusterId, getClusterListener(originalClusterSettings),
                         getServerListener(originalServerSettings), getServerMonitorListener(originalServerSettings));
 
         ClusterSettings clusterSettings = ClusterSettings.builder(originalClusterSettings)

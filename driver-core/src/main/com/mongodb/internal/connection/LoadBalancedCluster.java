@@ -259,7 +259,6 @@ final class LoadBalancedCluster implements Cluster {
     public void close() {
         if (!closed.getAndSet(true)) {
             LOGGER.info(format("Cluster closed with id %s", clusterId));
-            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
@@ -274,6 +273,7 @@ final class LoadBalancedCluster implements Cluster {
             if (localServer != null) {
                 localServer.close();
             }
+            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
         }
     }
 

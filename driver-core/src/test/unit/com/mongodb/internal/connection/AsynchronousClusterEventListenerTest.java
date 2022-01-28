@@ -41,8 +41,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
@@ -59,7 +59,7 @@ class AsynchronousClusterEventListenerTest {
         ServerId serverId = new ServerId(clusterId, new ServerAddress());
         ConnectionId connectionId = new ConnectionId(serverId);
 
-        AsynchronousClusterEventListener listener = new AsynchronousClusterEventListener(clusterId, targetListener, targetListener,
+        AsynchronousClusterEventListener listener = AsynchronousClusterEventListener.startNew(clusterId, targetListener, targetListener,
                 targetListener);
 
         ClusterOpeningEvent clusterOpeningEvent = new ClusterOpeningEvent(clusterId);
@@ -108,7 +108,7 @@ class AsynchronousClusterEventListenerTest {
     }
 
     private static final class AllClusterEventListener implements ClusterListener, ServerListener, ServerMonitorListener {
-        private final BlockingQueue<Object> lastEvent = new ArrayBlockingQueue<>(1);
+        private final BlockingQueue<Object> lastEvent = new SynchronousQueue<>(true);
 
         Object take() throws InterruptedException {
             return lastEvent.poll(5, TimeUnit.SECONDS);
@@ -118,7 +118,7 @@ class AsynchronousClusterEventListenerTest {
             try {
                 lastEvent.put(event);
             } catch (InterruptedException e) {
-                // ignore
+                Thread.currentThread().interrupt();
             }
         }
 
