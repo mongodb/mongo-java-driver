@@ -57,7 +57,7 @@ import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
-import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
+import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Comparator.comparingInt;
@@ -84,7 +84,7 @@ abstract class BaseCluster implements Cluster {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
-        this.clusterListener = getClusterListener(settings);
+        this.clusterListener = singleClusterListener(settings);
         clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
         description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList(),
                 settings, serverFactory.getSettings());

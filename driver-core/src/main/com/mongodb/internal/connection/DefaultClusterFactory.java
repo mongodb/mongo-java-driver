@@ -26,14 +26,20 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
+import com.mongodb.event.ServerListener;
+import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
-import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
-import static com.mongodb.internal.event.EventListenerHelper.getServerListener;
-import static com.mongodb.internal.event.EventListenerHelper.getServerMonitorListener;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_MONITOR_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.clusterListenerMulticaster;
+import static com.mongodb.internal.event.EventListenerHelper.serverListenerMulticaster;
+import static com.mongodb.internal.event.EventListenerHelper.serverMonitorListenerMulticaster;
 import static java.util.Collections.singletonList;
 
 /**
@@ -72,18 +78,30 @@ public final class DefaultClusterFactory {
                                  final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
 
         ClusterId clusterId = new ClusterId();
+        ClusterSettings clusterSettings;
+        ServerSettings serverSettings;
 
-        AsynchronousClusterEventListener clusterEventListener =
-                AsynchronousClusterEventListener.startNew(clusterId, getClusterListener(originalClusterSettings),
-                        getServerListener(originalServerSettings), getServerMonitorListener(originalServerSettings));
+        if (noClusterEventListeners(originalClusterSettings, originalServerSettings)) {
+            clusterSettings = ClusterSettings.builder(originalClusterSettings)
+                    .clusterListenerList(singletonList(NO_OP_CLUSTER_LISTENER))
+                    .build();
+            serverSettings = ServerSettings.builder(originalServerSettings)
+                    .serverListenerList(singletonList(NO_OP_SERVER_LISTENER))
+                    .serverMonitorListenerList(singletonList(NO_OP_SERVER_MONITOR_LISTENER))
+                    .build();
+        } else {
+            AsynchronousClusterEventListener clusterEventListener =
+                    AsynchronousClusterEventListener.startNew(clusterId, getClusterListener(originalClusterSettings),
+                            getServerListener(originalServerSettings), getServerMonitorListener(originalServerSettings));
 
-        ClusterSettings clusterSettings = ClusterSettings.builder(originalClusterSettings)
-                .clusterListenerList(singletonList(clusterEventListener))
-                .build();
-        ServerSettings serverSettings = ServerSettings.builder(originalServerSettings)
-                .serverListenerList(singletonList(clusterEventListener))
-                .serverMonitorListenerList(singletonList(clusterEventListener))
-                .build();
+            clusterSettings = ClusterSettings.builder(originalClusterSettings)
+                    .clusterListenerList(singletonList(clusterEventListener))
+                    .build();
+            serverSettings = ServerSettings.builder(originalServerSettings)
+                    .serverListenerList(singletonList(clusterEventListener))
+                    .serverMonitorListenerList(singletonList(clusterEventListener))
+                    .build();
+        }
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings);
 
@@ -112,5 +130,29 @@ public final class DefaultClusterFactory {
                 throw new UnsupportedOperationException("Unsupported cluster mode: " + clusterSettings.getMode());
             }
         }
+    }
+
+    private boolean noClusterEventListeners(final ClusterSettings clusterSettings, final ServerSettings serverSettings) {
+        return clusterSettings.getClusterListeners().isEmpty()
+                && serverSettings.getServerListeners().isEmpty()
+                && serverSettings.getServerMonitorListeners().isEmpty();
+    }
+
+    private static ClusterListener getClusterListener(final ClusterSettings clusterSettings) {
+        return clusterSettings.getClusterListeners().size() == 0
+                ? NO_OP_CLUSTER_LISTENER
+                : clusterListenerMulticaster(clusterSettings.getClusterListeners());
+    }
+
+    private static ServerListener getServerListener(final ServerSettings serverSettings) {
+        return serverSettings.getServerListeners().size() == 0
+                ? NO_OP_SERVER_LISTENER
+                : serverListenerMulticaster(serverSettings.getServerListeners());
+    }
+
+    private static ServerMonitorListener getServerMonitorListener(final ServerSettings serverSettings) {
+        return serverSettings.getServerMonitorListeners().size() == 0
+                ? NO_OP_SERVER_MONITOR_LISTENER
+                : serverMonitorListenerMulticaster(serverSettings.getServerMonitorListeners());
     }
 }

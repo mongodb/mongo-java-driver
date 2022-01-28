@@ -33,7 +33,7 @@ import com.mongodb.internal.inject.EmptyProvider;
 
 import java.util.List;
 
-import static com.mongodb.internal.event.EventListenerHelper.getServerListener;
+import static com.mongodb.internal.event.EventListenerHelper.singleServerListener;
 
 @ThreadSafe
 public class LoadBalancedClusterableServerFactory implements ClusterableServerFactory {
@@ -80,7 +80,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         connectionPool.ready();
 
         return new LoadBalancedServer(new ServerId(clusterId, serverAddress), connectionPool, new DefaultConnectionFactory(),
-                getServerListener(serverSettings), clusterClock);
+                singleServerListener(serverSettings), clusterClock);
     }
 
     @Override
