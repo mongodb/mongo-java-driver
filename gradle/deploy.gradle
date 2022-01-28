@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-def deployedProjects = subprojects.findAll { !['util'].contains(it.name) }
+def utilProjects = project(":util").allprojects
+def deployedProjects =  subprojects - utilProjects
+
 configure(deployedProjects) {
 
     def isScala = project.name.contains('scala')
