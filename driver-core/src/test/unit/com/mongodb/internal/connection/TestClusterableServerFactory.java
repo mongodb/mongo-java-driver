@@ -20,7 +20,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerType;
-import com.mongodb.event.ServerListener;
 import org.bson.types.ObjectId;
 
 import java.util.Collections;
@@ -32,6 +31,7 @@ import java.util.Set;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
 
 public class TestClusterableServerFactory implements ClusterableServerFactory {
     private final Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
@@ -39,9 +39,8 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     @Override
     public ClusterableServer create(final ServerAddress serverAddress,
                                     final ServerDescriptionChangedListener serverDescriptionChangedListener,
-                                    final ServerListener serverListener,
                                     final ClusterClock clusterClock) {
-        addressToServerMap.put(serverAddress, new TestServer(serverAddress, serverDescriptionChangedListener, serverListener));
+        addressToServerMap.put(serverAddress, new TestServer(serverAddress, serverDescriptionChangedListener, NO_OP_SERVER_LISTENER));
         return addressToServerMap.get(serverAddress);
     }
 

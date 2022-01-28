@@ -124,10 +124,10 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
         description = newDescription;
         ServerDescriptionChangedEvent serverDescriptionChangedEvent = new ServerDescriptionChangedEvent(
                 serverId, newDescription, previousDescription);
-        serverDescriptionChangedListener.serverDescriptionChanged(serverDescriptionChangedEvent);
         if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
             serverListener.serverDescriptionChanged(serverDescriptionChangedEvent);
         }
+        serverDescriptionChangedListener.serverDescriptionChanged(serverDescriptionChangedEvent);
     }
 
     private void handleException(final SdamIssue sdamIssue, final boolean beforeHandshake) {

@@ -338,7 +338,7 @@ public class LoadBalancedClusterTest {
         // close `cluster`, call `DnsSrvRecordInitializer.initialize` and check that it does not result in creating a `ClusterableServer`
         cluster.close();
         serverInitializerCaptor.getValue().initialize(Collections.singleton(new ServerAddress()));
-        verify(serverFactory, never()).create(any(), any(), any(), any());
+        verify(serverFactory, never()).create(any(), any(), any());
     }
 
     @Test
@@ -347,12 +347,12 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
         when(serverFactory.getSettings()).thenReturn(mock(ServerSettings.class));
         ClusterableServer server = mock(ClusterableServer.class);
-        when(serverFactory.create(any(), any(), any(), any())).thenReturn(server);
+        when(serverFactory.create(any(), any(), any())).thenReturn(server);
         // create `cluster` and check that it creates a `ClusterableServer`
         LoadBalancedCluster cluster = new LoadBalancedCluster(new ClusterId(),
                 ClusterSettings.builder().mode(ClusterConnectionMode.LOAD_BALANCED).build(), serverFactory,
                 mock(DnsSrvRecordMonitorFactory.class));
-        verify(serverFactory, times(1)).create(any(), any(), any(), any());
+        verify(serverFactory, times(1)).create(any(), any(), any());
         // close `cluster` and check that it closes `server`
         cluster.close();
         verify(server, atLeastOnce()).close();
@@ -492,7 +492,7 @@ public class LoadBalancedClusterTest {
     private ClusterableServerFactory mockServerFactory(final ServerAddress serverAddress, final ClusterableServer expectedServer) {
         ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
         when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
-        when(serverFactory.create(eq(serverAddress), any(), any(), any())).thenReturn(expectedServer);
+        when(serverFactory.create(eq(serverAddress), any(), any())).thenReturn(expectedServer);
         return serverFactory;
     }
 
