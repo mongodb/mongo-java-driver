@@ -83,28 +83,30 @@ public final class SingleServerCluster extends BaseCluster {
     private class DefaultServerDescriptionChangedListener implements ServerDescriptionChangedListener {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-            ServerDescription newDescription = event.getNewDescription();
-            if (newDescription.isOk()) {
-                if (getSettings().getRequiredClusterType() != ClusterType.UNKNOWN
-                        && getSettings().getRequiredClusterType() != newDescription.getClusterType()) {
-                    newDescription = null;
-                } else if (getSettings().getRequiredClusterType() == ClusterType.REPLICA_SET
-                        && getSettings().getRequiredReplicaSetName() != null) {
-                    if (!getSettings().getRequiredReplicaSetName().equals(newDescription.getSetName())) {
-                        newDescription = ServerDescription.builder(newDescription)
-                                .exception(new MongoConfigurationException(
-                                        format("Replica set name '%s' does not match required replica set name of '%s'",
-                                                newDescription.getSetName(), getSettings().getRequiredReplicaSetName())))
-                                .type(ServerType.UNKNOWN)
-                                .setName(null)
-                                .ok(false)
-                                .build();
-                        publishDescription(ClusterType.UNKNOWN, newDescription);
-                        return;
+            synchronized (this) {
+                ServerDescription newDescription = event.getNewDescription();
+                if (newDescription.isOk()) {
+                    if (getSettings().getRequiredClusterType() != ClusterType.UNKNOWN
+                            && getSettings().getRequiredClusterType() != newDescription.getClusterType()) {
+                        newDescription = null;
+                    } else if (getSettings().getRequiredClusterType() == ClusterType.REPLICA_SET
+                            && getSettings().getRequiredReplicaSetName() != null) {
+                        if (!getSettings().getRequiredReplicaSetName().equals(newDescription.getSetName())) {
+                            newDescription = ServerDescription.builder(newDescription)
+                                    .exception(new MongoConfigurationException(
+                                            format("Replica set name '%s' does not match required replica set name of '%s'",
+                                                    newDescription.getSetName(), getSettings().getRequiredReplicaSetName())))
+                                    .type(ServerType.UNKNOWN)
+                                    .setName(null)
+                                    .ok(false)
+                                    .build();
+                            publishDescription(ClusterType.UNKNOWN, newDescription);
+                            return;
+                        }
                     }
                 }
+                publishDescription(newDescription);
             }
-            publishDescription(newDescription);
         }
     }
 

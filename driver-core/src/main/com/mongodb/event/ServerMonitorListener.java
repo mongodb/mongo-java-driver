@@ -22,7 +22,11 @@ import java.util.EventListener;
 
 /**
  * A listener for server monitor-related events
- *
+ * <p>
+ * It does not have to be thread-safe, see {@link ClusterListener} for the details regarding the order of events.
+ * </p>
+ * @see ClusterListener
+ * @see ServerListener
  * @since 3.3
  */
 public interface ServerMonitorListener extends EventListener {
