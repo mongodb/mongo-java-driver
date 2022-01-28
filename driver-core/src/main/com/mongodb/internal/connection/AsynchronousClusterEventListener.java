@@ -162,20 +162,16 @@ final class AsynchronousClusterEventListener implements ClusterListener, ServerL
     }
 
     private void publishEvents() {
-        try {
-            while (true) {
+        while (true) {
+            try {
                 Supplier<Boolean> eventPublisher = eventPublishers.take();
-                try {
-                    boolean isLastEvent = eventPublisher.get();
-                    if (isLastEvent) {
-                        break;
-                    }
-                } catch (Exception e) {
-                    // ignore exceptions thrown from listeners
+                boolean isLastEvent = eventPublisher.get();
+                if (isLastEvent) {
+                    break;
                 }
+            } catch (RuntimeException | InterruptedException e) {
+                // ignore exceptions thrown from listeners, also ignore interrupts that user code may cause
             }
-        } catch (InterruptedException e) {
-            // ignore
         }
     }
 }
