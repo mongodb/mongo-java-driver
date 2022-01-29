@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
@@ -39,11 +40,14 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public class ClusterEventPublishingTest {
 
     @Test
     public void shouldPublishExpectedEvents() throws InterruptedException {
+        assumeFalse(ClusterFixture.isLoadBalanced());
+
         AllClusterEventListener clusterEventListenerOne = new AllClusterEventListener();
         AllClusterEventListener clusterEventListenerTwo = new AllClusterEventListener();
 
