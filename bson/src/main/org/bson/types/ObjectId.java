@@ -167,7 +167,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     /**
-     * Creates an ObjectId using the given time, machine identifier, process identifier, and counter.
+     * Creates an ObjectId using the given time and counter.
      *
      * @param timestamp the time in seconds
      * @param counter   the counter
@@ -184,7 +184,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     private ObjectId(final int timestamp, final int randomValue1, final short randomValue2, final int counter,
                      final boolean checkCounter) {
         if ((randomValue1 & 0xff000000) != 0) {
-            throw new IllegalArgumentException("The machine identifier must be between 0 and 16777215 (it must fit in three bytes).");
+            throw new IllegalArgumentException("The random value must be between 0 and 16777215 (it must fit in three bytes).");
         }
         if (checkCounter && ((counter & 0xff000000) != 0)) {
             throw new IllegalArgumentException("The counter must be between 0 and 16777215 (it must fit in three bytes).");
