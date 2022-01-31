@@ -66,8 +66,8 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if name is invalid'() {
         when:
-        new MongoDatabaseImpl('a.b', codecRegistry, readPreference, writeConcern, false, false, readConcern, JAVA_LEGACY, new
-                TestOperationExecutor([]))
+        new MongoDatabaseImpl('a.b', codecRegistry, readPreference, writeConcern, false, false, readConcern, JAVA_LEGACY,
+                new TestOperationExecutor([]))
 
         then:
         thrown(IllegalArgumentException)
@@ -179,7 +179,7 @@ class MongoDatabaseSpecification extends Specification {
         def runCommandMethod = database.&runCommand
 
         when:
-        TestHelper.execute(runCommandMethod, session, command)
+        execute(runCommandMethod, session, command)
         def operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
@@ -188,7 +188,7 @@ class MongoDatabaseSpecification extends Specification {
         executor.getReadPreference() == primary()
 
         when:
-        TestHelper.execute(runCommandMethod, session, command, primaryPreferred())
+        execute(runCommandMethod, session, command, primaryPreferred())
         operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
@@ -197,7 +197,7 @@ class MongoDatabaseSpecification extends Specification {
         executor.getReadPreference() == primaryPreferred()
 
         when:
-        TestHelper.execute(runCommandMethod, session, command, BsonDocument)
+        execute(runCommandMethod, session, command, BsonDocument)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
@@ -206,7 +206,7 @@ class MongoDatabaseSpecification extends Specification {
         executor.getReadPreference() == primary()
 
         when:
-        TestHelper.execute(runCommandMethod, session, command, primaryPreferred(), BsonDocument)
+        execute(runCommandMethod, session, command, primaryPreferred(), BsonDocument)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
@@ -226,7 +226,7 @@ class MongoDatabaseSpecification extends Specification {
         def dropMethod = database.&drop
 
         when:
-        TestHelper.execute(dropMethod, session)
+        execute(dropMethod, session)
         def operation = executor.getWriteOperation() as DropDatabaseOperation
 
         then:
@@ -246,21 +246,21 @@ class MongoDatabaseSpecification extends Specification {
         def listCollectionNamesMethod = database.&listCollectionNames
 
         when:
-        def listCollectionIterable = TestHelper.execute(listCollectionsMethod, session)
+        def listCollectionIterable = execute(listCollectionsMethod, session)
 
         then:
         expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<>(session, name, false,
                 Document, codecRegistry, primary(), executor, false))
 
         when:
-        listCollectionIterable = TestHelper.execute(listCollectionsMethod, session, BsonDocument)
+        listCollectionIterable = execute(listCollectionsMethod, session, BsonDocument)
 
         then:
         expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<>(session, name, false,
                 BsonDocument, codecRegistry, primary(), executor, false))
 
         when:
-        def listCollectionNamesIterable = TestHelper.execute(listCollectionNamesMethod, session)
+        def listCollectionNamesIterable = execute(listCollectionNamesMethod, session)
 
         then:
         // listCollectionNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
@@ -280,7 +280,7 @@ class MongoDatabaseSpecification extends Specification {
         def createCollectionMethod = database.&createCollection
 
         when:
-        TestHelper.execute(createCollectionMethod, session, collectionName)
+        execute(createCollectionMethod, session, collectionName)
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
@@ -299,7 +299,7 @@ class MongoDatabaseSpecification extends Specification {
                     .validationAction(ValidationAction.WARN))
                 .collation(collation)
 
-        TestHelper.execute(createCollectionMethod, session, collectionName, createCollectionOptions)
+        execute(createCollectionMethod, session, collectionName, createCollectionOptions)
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
@@ -323,7 +323,7 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def viewName = 'view1'
         def viewOn = 'col1'
-        def pipeline = [new Document('$match', new Document('x', true))];
+        def pipeline = [new Document('$match', new Document('x', true))]
         def writeConcern = WriteConcern.JOURNALED
         def executor = new TestOperationExecutor([null, null])
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, readConcern, JAVA_LEGACY,
@@ -331,7 +331,7 @@ class MongoDatabaseSpecification extends Specification {
         def createViewMethod = database.&createView
 
         when:
-        TestHelper.execute(createViewMethod, session, viewName, viewOn, pipeline)
+        execute(createViewMethod, session, viewName, viewOn, pipeline)
         def operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
@@ -340,7 +340,7 @@ class MongoDatabaseSpecification extends Specification {
         executor.getClientSession() == session
 
         when:
-        TestHelper.execute(createViewMethod, session, viewName, viewOn, pipeline, new CreateViewOptions().collation(collation))
+        execute(createViewMethod, session, viewName, viewOn, pipeline, new CreateViewOptions().collation(collation))
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
