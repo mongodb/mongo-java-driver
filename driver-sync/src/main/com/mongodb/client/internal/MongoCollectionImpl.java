@@ -81,7 +81,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static java.util.Collections.singletonList;
-import static org.bson.internal.CodecRegistryHelper.createRegistry;
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final MongoNamespace namespace;
@@ -152,7 +152,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoCollectionImpl<>(namespace, documentClass, createRegistry(codecRegistry, uuidRepresentation),
+        return new MongoCollectionImpl<>(namespace, documentClass, withUuidRepresentation(codecRegistry, uuidRepresentation),
                 readPreference, writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, executor);
     }
 

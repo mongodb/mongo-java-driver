@@ -50,6 +50,7 @@ import static com.mongodb.client.internal.TestHelper.execute
 import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
@@ -74,7 +75,7 @@ class MongoClientSpecification extends Specification {
         expect database, isTheSameAs(expectedDatabase)
 
         where:
-        expectedDatabase << new MongoDatabaseImpl('name', codecRegistry, secondary(),
+        expectedDatabase << new MongoDatabaseImpl('name', withUuidRepresentation(codecRegistry, UNSPECIFIED), secondary(),
                 WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, new TestOperationExecutor([]))
     }
 
@@ -90,14 +91,14 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, Document,
-                getDefaultCodecRegistry(), primary(), executor, true))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor, true))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true))
 
         when:
         def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session) as MongoIterable<String>
@@ -105,7 +106,7 @@ class MongoClientSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor, true).nameOnly(true))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true).nameOnly(true))
 
         cleanup:
         client?.close()

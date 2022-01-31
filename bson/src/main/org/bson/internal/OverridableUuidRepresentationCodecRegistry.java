@@ -30,7 +30,7 @@ public class OverridableUuidRepresentationCodecRegistry implements CycleDetectin
     private final CodecCache codecCache = new CodecCache();
     private final UuidRepresentation uuidRepresentation;
 
-    OverridableUuidRepresentationCodecRegistry(final CodecProvider wrapped, final UuidRepresentation uuidRepresentation) {
+    public OverridableUuidRepresentationCodecRegistry(final CodecProvider wrapped, final UuidRepresentation uuidRepresentation) {
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.wrapped = notNull("wrapped", wrapped);
     }

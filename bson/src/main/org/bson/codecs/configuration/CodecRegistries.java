@@ -16,7 +16,9 @@
 
 package org.bson.codecs.configuration;
 
+import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
+import org.bson.internal.OverridableUuidRepresentationCodecRegistry;
 import org.bson.internal.ProvidersCodecRegistry;
 
 import java.util.List;
@@ -29,6 +31,22 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public final class CodecRegistries {
+
+    /**
+     * Apply given {@link UuidRepresentation} to the given {@link CodecRegistry}.
+     *
+     * @param codecRegistry the code registry
+     * @param uuidRepresentation the uuid representation
+     * @since 4.5
+     */
+    public static CodecRegistry withUuidRepresentation(final CodecRegistry codecRegistry, final UuidRepresentation uuidRepresentation) {
+        if (codecRegistry instanceof OverridableUuidRepresentationCodecRegistry
+                && ((OverridableUuidRepresentationCodecRegistry) codecRegistry).getUuidRepresentation().equals(uuidRepresentation)) {
+            return codecRegistry;
+        } else {
+            return new OverridableUuidRepresentationCodecRegistry(codecRegistry, uuidRepresentation);
+        }
+    }
 
     /**
      * Creates a {@code CodecRegistry} from the provided list of {@code Codec} instances.

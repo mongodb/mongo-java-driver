@@ -101,6 +101,9 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
 
     @Override
     public Codec<Map<String, Object>> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        if (this.uuidRepresentation.equals(uuidRepresentation)) {
+            return this;
+        }
         return new MapCodec(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation);
     }
 
