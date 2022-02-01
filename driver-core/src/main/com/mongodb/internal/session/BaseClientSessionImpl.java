@@ -33,7 +33,7 @@ public class BaseClientSessionImpl implements ClientSession {
     private static final String CLUSTER_TIME_KEY = "clusterTime";
 
     private final ServerSessionPool serverSessionPool;
-    private final ServerSession serverSession;
+    private ServerSession serverSession;
     private final Object originator;
     private final ClientSessionOptions options;
     private BsonDocument clusterTime;
@@ -46,7 +46,6 @@ public class BaseClientSessionImpl implements ClientSession {
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
-        this.serverSession = serverSessionPool.get();
         this.originator = originator;
         this.options = options;
         this.pinnedServerAddress = null;
@@ -120,6 +119,9 @@ public class BaseClientSessionImpl implements ClientSession {
     @Override
     public ServerSession getServerSession() {
         isTrue("open", !closed);
+        if (serverSession == null) {
+            serverSession = serverSessionPool.get();
+        }
         return serverSession;
     }
 
@@ -179,7 +181,9 @@ public class BaseClientSessionImpl implements ClientSession {
     public void close() {
         if (!closed) {
             closed = true;
-            serverSessionPool.release(serverSession);
+            if (serverSession != null) {
+                serverSessionPool.release(serverSession);
+            }
             clearTransactionContext();
         }
     }
