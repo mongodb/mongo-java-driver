@@ -112,7 +112,7 @@ class DefaultServerMonitor implements ServerMonitor {
     public void connect() {
         lock.lock();
         try {
-            condition.signal();
+            condition.signalAll();
         } finally {
             lock.unlock();
         }
