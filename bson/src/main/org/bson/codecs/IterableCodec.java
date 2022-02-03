@@ -80,6 +80,9 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
 
     @Override
     public Codec<Iterable> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        if (this.uuidRepresentation.equals(uuidRepresentation)) {
+            return this;
+        }
         return new IterableCodec(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation);
     }
 
