@@ -93,7 +93,7 @@ class CodeRegistriesSpecification extends Specification {
         then:
         registryWithUnspecified instanceof OverridableUuidRepresentationCodecRegistry
         (registryWithUnspecified as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == UNSPECIFIED
-        (registryWithUnspecified as OverridableUuidRepresentationCodecRegistry).wrapped == registryWithStandard
+        (registryWithUnspecified as OverridableUuidRepresentationCodecRegistry).wrapped == registry
 
         when:
         def registryWithUnspecifiedTwo = withUuidRepresentation(registryWithUnspecified, UNSPECIFIED)
