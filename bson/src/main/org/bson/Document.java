@@ -29,7 +29,6 @@ import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.bson.internal.CodecRegistryHelper;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
@@ -51,6 +50,7 @@ import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.isTrue;
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 /**
  * A representation of a document as a {@code Map}.  All iterators will traverse the elements in insertion order, as with {@code
@@ -61,10 +61,8 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  */
 public class Document implements Map<String, Object>, Serializable, Bson {
     private static final Codec<Document> DEFAULT_CODEC =
-            CodecRegistryHelper.createRegistry(
-                    fromProviders(asList(new ValueCodecProvider(), new IterableCodecProvider(),
-                            new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider())),
-                    UuidRepresentation.STANDARD)
+            withUuidRepresentation(fromProviders(asList(new ValueCodecProvider(), new IterableCodecProvider(),
+                    new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider())), UuidRepresentation.STANDARD)
                     .get(Document.class);
 
     private static final long serialVersionUID = 6297731997167536582L;

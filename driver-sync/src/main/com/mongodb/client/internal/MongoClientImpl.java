@@ -53,7 +53,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
-import static org.bson.internal.CodecRegistryHelper.createRegistry;
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 public final class MongoClientImpl implements MongoClient {
 
@@ -76,7 +76,7 @@ public final class MongoClientImpl implements MongoClient {
                     + SynchronousContextProvider.class.getName() + " when using the synchronous driver");
         }
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
-                createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
+                withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
                 (SynchronousContextProvider) settings.getContextProvider());
     }

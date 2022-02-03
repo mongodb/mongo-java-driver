@@ -23,12 +23,16 @@ import org.bson.codecs.IntegerCodec
 import org.bson.codecs.LongCodec
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
+import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import org.bson.internal.ProvidersCodecRegistry
 import spock.lang.Specification
 
 import static CodecRegistries.fromCodecs
 import static CodecRegistries.fromProviders
 import static CodecRegistries.fromRegistries
+import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.UuidRepresentation.UNSPECIFIED
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation
 
 class CodeRegistriesSpecification extends Specification {
     def 'fromCodec should return a SingleCodecRegistry'() {
@@ -69,5 +73,32 @@ class CodeRegistriesSpecification extends Specification {
         registry instanceof ProvidersCodecRegistry
         registry.get(UUID).is(uuidCodec)
         registry.get(Integer) instanceof IntegerCodec
+    }
+
+    def 'withUuidRepresentation should apply uuid representation'() {
+        given:
+        def registry = fromProviders(new ValueCodecProvider());
+
+        when:
+        def registryWithStandard = withUuidRepresentation(registry, STANDARD)
+
+        then:
+        registryWithStandard instanceof OverridableUuidRepresentationCodecRegistry
+        (registryWithStandard as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
+        (registryWithStandard as OverridableUuidRepresentationCodecRegistry).wrapped == registry
+
+        when:
+        def registryWithUnspecified = withUuidRepresentation(registryWithStandard, UNSPECIFIED)
+
+        then:
+        registryWithUnspecified instanceof OverridableUuidRepresentationCodecRegistry
+        (registryWithUnspecified as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == UNSPECIFIED
+        (registryWithUnspecified as OverridableUuidRepresentationCodecRegistry).wrapped == registry
+
+        when:
+        def registryWithUnspecifiedTwo = withUuidRepresentation(registryWithUnspecified, UNSPECIFIED)
+
+        then:
+        registryWithUnspecifiedTwo === registryWithUnspecified
     }
 }

@@ -115,6 +115,9 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
 
     @Override
     public Codec<Document> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        if (this.uuidRepresentation.equals(uuidRepresentation)) {
+            return this;
+        }
         return new DocumentCodec(registry, bsonTypeCodecMap, idGenerator, valueTransformer, uuidRepresentation);
     }
 

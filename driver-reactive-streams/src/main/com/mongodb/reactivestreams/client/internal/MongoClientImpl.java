@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.bson.internal.CodecRegistryHelper.createRegistry;
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 
 /**
@@ -92,8 +92,8 @@ public final class MongoClientImpl implements MongoClient {
         }
         this.externalResourceCloser = externalResourceCloser;
         this.mongoOperationPublisher = new MongoOperationPublisher<>(Document.class,
-                                                                     createRegistry(settings.getCodecRegistry(),
-                                                                                    settings.getUuidRepresentation()),
+                                                                     withUuidRepresentation(settings.getCodecRegistry(),
+                                                                     settings.getUuidRepresentation()),
                                                                      settings.getReadPreference(),
                                                                      settings.getReadConcern(), settings.getWriteConcern(),
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
