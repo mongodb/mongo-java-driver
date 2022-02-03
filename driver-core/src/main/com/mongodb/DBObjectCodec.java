@@ -207,6 +207,9 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
 
     @Override
     public Codec<DBObject> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        if (this.uuidRepresentation.equals(uuidRepresentation)) {
+            return this;
+        }
         return new DBObjectCodec(codecRegistry, bsonTypeCodecMap, objectFactory, uuidRepresentation);
     }
 

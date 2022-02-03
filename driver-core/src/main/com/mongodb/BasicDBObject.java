@@ -29,7 +29,6 @@ import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.bson.internal.CodecRegistryHelper;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.json.JsonMode;
@@ -46,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
+
 /**
  * A basic implementation of BSON object that is MongoDB specific. A {@code DBObject} can be created as follows, using this class:
  * <pre>
@@ -60,9 +61,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     private static final long serialVersionUID = -4415279469780082174L;
 
     private static final Codec<BasicDBObject> DEFAULT_CODEC =
-            CodecRegistryHelper.createRegistry(
-                    DBObjectCodec.getDefaultRegistry(),
-                    UuidRepresentation.STANDARD)
+            withUuidRepresentation(DBObjectCodec.getDefaultRegistry(), UuidRepresentation.STANDARD)
                     .get(BasicDBObject.class);
 
     private boolean isPartialObject;
