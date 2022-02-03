@@ -101,7 +101,7 @@ public interface Stream extends BufferProvider{
      * callback on completion.
      *
      * @param buffers the buffers to write
-     * @param handler invoked when the read operation has completed
+     * @param handler invoked when the write operation has completed
      */
     void writeAsync(List<ByteBuf> buffers, AsyncCompletionHandler<Void> handler);
 
