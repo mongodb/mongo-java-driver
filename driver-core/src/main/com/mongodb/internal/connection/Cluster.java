@@ -92,4 +92,11 @@ public interface Cluster extends Closeable {
      * @return true if all the servers in this cluster have been closed
      */
     boolean isClosed();
+
+    /**
+     * Does the supplied {@code action} while holding a reentrant cluster-wide lock.
+     *
+     * @param action The action to {@linkplain Runnable#run() do}.
+     */
+    void withLock(Runnable action);
 }
