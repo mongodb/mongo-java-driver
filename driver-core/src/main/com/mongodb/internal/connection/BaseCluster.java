@@ -38,7 +38,6 @@ import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
-import org.bson.BsonTimestamp;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,8 +90,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public BsonTimestamp getClusterTime() {
-        return clusterClock.getClusterTime();
+    public ClusterClock getClock() {
+        return clusterClock;
     }
 
     @Override
@@ -392,9 +391,8 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    protected ClusterableServer createServer(final ServerAddress serverAddress,
-                                             final ServerDescriptionChangedListener serverDescriptionChangedListener) {
-        return serverFactory.create(this, serverAddress, serverDescriptionChangedListener, clusterClock);
+    protected ClusterableServer createServer(final ServerAddress serverAddress) {
+        return serverFactory.create(this, serverAddress);
     }
 
     private void throwIfIncompatible(final ClusterDescription curDescription) {

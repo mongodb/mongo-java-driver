@@ -36,10 +36,10 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
-import org.bson.BsonTimestamp;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -159,7 +159,7 @@ final class LoadBalancedCluster implements Cluster {
                         .address(host)
                         .build()),
                 settings, serverFactory.getSettings());
-        server = serverFactory.create(this, host, event -> { }, clusterClock);
+        server = serverFactory.create(this, host);
 
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description, initialDescription));
     }
@@ -196,9 +196,9 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public BsonTimestamp getClusterTime() {
+    public ClusterClock getClock() {
         isTrue("open", !isClosed());
-        return clusterClock.getClusterTime();
+        return clusterClock;
     }
 
     @Override
@@ -284,6 +284,11 @@ final class LoadBalancedCluster implements Cluster {
 
     @Override
     public void withLock(final Runnable action) {
+        fail();
+    }
+
+    @Override
+    public void onChange(final ServerDescriptionChangedEvent event) {
         fail();
     }
 

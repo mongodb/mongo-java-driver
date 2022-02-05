@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.event.ServerDescriptionChangedEvent
 import util.spock.annotations.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoClientException
@@ -68,6 +69,10 @@ class BaseClusterSpecification extends Specification {
             @Override
             ClusterableServer getServer(final ServerAddress serverAddress) {
                 throw new UnsupportedOperationException()
+            }
+
+            @Override
+            void onChange(final ServerDescriptionChangedEvent event) {
             }
         }
 
