@@ -131,14 +131,6 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         return serverTuple.server;
     }
 
-
-    private final class DefaultServerDescriptionChangedListener implements ServerDescriptionChangedListener {
-        @Override
-        public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-            onChange(event);
-        }
-    }
-
     void onChange(final Collection<ServerAddress> newHosts) {
         withLock(() -> {
             if (isClosed()) {
@@ -167,7 +159,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         });
     }
 
-    private void onChange(final ServerDescriptionChangedEvent event) {
+    @Override
+    public void onChange(final ServerDescriptionChangedEvent event) {
         withLock(() -> {
             if (isClosed()) {
                 return;
@@ -347,7 +340,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Adding discovered server %s to client view of cluster", serverAddress));
             }
-            ClusterableServer server = createServer(serverAddress, new DefaultServerDescriptionChangedListener());
+            ClusterableServer server = createServer(serverAddress);
             addressToServerTupleMap.put(serverAddress, new ServerTuple(server, getConnectingServerDescription(serverAddress)));
         }
     }

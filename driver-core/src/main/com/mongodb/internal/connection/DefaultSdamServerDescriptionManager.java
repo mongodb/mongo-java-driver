@@ -35,7 +35,6 @@ import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownCon
 final class DefaultSdamServerDescriptionManager implements SdamServerDescriptionManager {
     private final Cluster cluster;
     private final ServerId serverId;
-    private final ServerDescriptionChangedListener serverDescriptionChangedListener;
     private final ServerListener serverListener;
     private final ServerMonitor serverMonitor;
     private final ConnectionPool connectionPool;
@@ -44,13 +43,11 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
 
     DefaultSdamServerDescriptionManager(final Cluster cluster,
                                         final ServerId serverId,
-                                        final ServerDescriptionChangedListener serverDescriptionChangedListener,
                                         final ServerListener serverListener, final ServerMonitor serverMonitor,
                                         final ConnectionPool connectionPool,
                                         final ClusterConnectionMode connectionMode) {
         this.cluster = cluster;
         this.serverId = assertNotNull(serverId);
-        this.serverDescriptionChangedListener = assertNotNull(serverDescriptionChangedListener);
         this.serverListener = assertNotNull(serverListener);
         this.serverMonitor = assertNotNull(serverMonitor);
         this.connectionPool = assertNotNull(connectionPool);
@@ -113,7 +110,7 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
         if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
             serverListener.serverDescriptionChanged(serverDescriptionChangedEvent);
         }
-        serverDescriptionChangedListener.serverDescriptionChanged(serverDescriptionChangedEvent);
+        cluster.onChange(serverDescriptionChangedEvent);
     }
 
     private void handleException(final SdamIssue sdamIssue, final boolean beforeHandshake) {

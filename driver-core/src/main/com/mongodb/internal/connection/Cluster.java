@@ -19,13 +19,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
+import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
-import org.bson.BsonTimestamp;
 
 import java.io.Closeable;
 
@@ -69,13 +69,9 @@ public interface Cluster extends Closeable {
     ClusterDescription getCurrentDescription();
 
     /**
-     * Get the last seen cluster time
-     *
-     * @since 3.8
-     * @return the last seen cluster time or null if not set
+     * Get the {@link ClusterClock} from which one may get the last seen cluster time.
      */
-    @Nullable
-    BsonTimestamp getClusterTime();
+    ClusterClock getClock();
 
     ServerTuple selectServer(ServerSelector serverSelector);
 
@@ -99,4 +95,11 @@ public interface Cluster extends Closeable {
      * @param action The action to {@linkplain Runnable#run() do}.
      */
     void withLock(Runnable action);
+
+    /**
+     * This method allows {@link Server}s to notify the {@link Cluster} about changes in their state as per the
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
+     * Server Discovery And Monitoring</a> specification.
+     */
+    void onChange(ServerDescriptionChangedEvent event);
 }

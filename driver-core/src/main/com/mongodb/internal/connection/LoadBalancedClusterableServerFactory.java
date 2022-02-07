@@ -23,7 +23,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
@@ -37,7 +36,6 @@ import static com.mongodb.internal.event.EventListenerHelper.singleServerListene
 
 @ThreadSafe
 public class LoadBalancedClusterableServerFactory implements ClusterableServerFactory {
-    private final ClusterId clusterId;
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final InternalConnectionPoolSettings internalConnectionPoolSettings;
@@ -49,14 +47,13 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     private final List<MongoCompressor> compressorList;
     private final ServerApi serverApi;
 
-    public LoadBalancedClusterableServerFactory(final ClusterId clusterId, final ServerSettings serverSettings,
+    public LoadBalancedClusterableServerFactory(final ServerSettings serverSettings,
                                                 final ConnectionPoolSettings connectionPoolSettings,
                                                 final InternalConnectionPoolSettings internalConnectionPoolSettings,
                                                 final StreamFactory streamFactory, final MongoCredential credential,
                                                 final CommandListener commandListener,
                                                 final String applicationName, final MongoDriverInformation mongoDriverInformation,
                                                 final List<MongoCompressor> compressorList, final ServerApi serverApi) {
-        this.clusterId = clusterId;
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
@@ -70,17 +67,15 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     }
 
     @Override
-    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress,
-            final ServerDescriptionChangedListener serverDescriptionChangedListener,
-            final ClusterClock clusterClock) {
-        ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
+    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
+        ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(cluster.getClusterId(), serverAddress),
                 new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance());
         connectionPool.ready();
 
-        return new LoadBalancedServer(new ServerId(clusterId, serverAddress), connectionPool, new DefaultConnectionFactory(),
-                singleServerListener(serverSettings), clusterClock);
+        return new LoadBalancedServer(new ServerId(cluster.getClusterId(), serverAddress), connectionPool, new DefaultConnectionFactory(),
+                singleServerListener(serverSettings), cluster.getClock());
     }
 
     @Override

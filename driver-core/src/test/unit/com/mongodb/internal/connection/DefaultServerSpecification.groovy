@@ -42,6 +42,7 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.event.CommandListener
+import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.event.ServerListener
 import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
@@ -147,8 +148,8 @@ class DefaultServerSpecification extends Specification {
         def connectionPool = Mock(ConnectionPool)
         def sdamProvider = SameObjectProvider.<SdamServerDescriptionManager>uninitialized()
         def serverMonitor = new TestServerMonitor(sdamProvider)
-        sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockCluster(), serverId, Mock(ServerDescriptionChangedListener),
-                serverListener, serverMonitor, connectionPool, ClusterConnectionMode.MULTIPLE))
+        sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockCluster(), serverId, serverListener, serverMonitor,
+                connectionPool, ClusterConnectionMode.MULTIPLE))
         def server = defaultServer(Mock(ConnectionPool), serverMonitor, serverListener, sdamProvider.get(), Mock(CommandListener))
         serverMonitor.updateServerDescription(ServerDescription.builder()
                 .address(serverId.getAddress())
@@ -499,8 +500,7 @@ class DefaultServerSpecification extends Specification {
     private DefaultServer defaultServer(final ConnectionPool connectionPool, final ServerMonitor serverMonitor) {
         def serverListener = Mock(ServerListener)
         defaultServer(connectionPool, serverMonitor, serverListener,
-                new DefaultSdamServerDescriptionManager(mockCluster(),
-                        serverId, Mock(ServerDescriptionChangedListener), serverListener, serverMonitor, connectionPool,
+                new DefaultSdamServerDescriptionManager(mockCluster(), serverId, serverListener, serverMonitor, connectionPool,
                         ClusterConnectionMode.MULTIPLE),
                 Mock(CommandListener))
     }
@@ -581,7 +581,11 @@ class DefaultServerSpecification extends Specification {
 
             @Override
             ClusterableServer getServer(final ServerAddress serverAddress) {
-                null
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            void onChange(final ServerDescriptionChangedEvent event) {
             }
         }
     }
