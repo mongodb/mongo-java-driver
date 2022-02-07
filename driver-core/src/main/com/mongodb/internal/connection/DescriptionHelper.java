@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
@@ -60,13 +59,6 @@ import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class DescriptionHelper {
-
-    private static volatile boolean manufactureServiceId = false;
-
-    public static void enableServiceIdManufacturing() {
-        manufactureServiceId = true;
-    }
-
     static ConnectionDescription createConnectionDescription(final ClusterConnectionMode clusterConnectionMode,
                                                              final ConnectionId connectionId, final BsonDocument helloResult) {
         ConnectionDescription connectionDescription = new ConnectionDescription(connectionId,
@@ -82,10 +74,6 @@ public final class DescriptionHelper {
             ObjectId serviceId = getServiceId(helloResult);
             if (serviceId != null) {
                 connectionDescription = connectionDescription.withServiceId(serviceId);
-            } else if (manufactureServiceId) {
-                TopologyVersion topologyVersion = getTopologyVersion(helloResult);
-                assertNotNull(topologyVersion);
-                connectionDescription = connectionDescription.withServiceId(topologyVersion.getProcessId());
             } else {
                 throw new MongoClientException("Driver attempted to initialize in load balancing mode, but the server does not support "
                         + "this mode");
