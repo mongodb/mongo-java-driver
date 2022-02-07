@@ -58,6 +58,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Mockito;
 import util.JsonPoweredTestHelper;
 
 import java.io.File;
@@ -85,6 +86,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 // Implementation of
@@ -181,8 +183,9 @@ public abstract class AbstractConnectionPoolTest {
                                 new TestCommandListener(),
                                 ClusterFixture.getServerApi()),
                         settings, internalSettings, sdamProvider));
-                sdamProvider.initialize(new DefaultSdamServerDescriptionManager(serverId, mock(ServerDescriptionChangedListener.class),
-                        mock(ServerListener.class), mock(ServerMonitor.class), pool, connectionMode));
+                sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockedCluster(), serverId,
+                        mock(ServerDescriptionChangedListener.class), mock(ServerListener.class), mock(ServerMonitor.class), pool,
+                        connectionMode));
                 setFailPoint();
                 break;
             }
@@ -517,6 +520,15 @@ public abstract class AbstractConnectionPoolTest {
             Thread.currentThread().interrupt();
             throw new MongoInterruptedException(null, e);
         }
+    }
+
+    private static Cluster mockedCluster() {
+        Cluster cluster = mock(Cluster.class);
+        Mockito.doAnswer(invocation -> {
+            invocation.getArgument(0, Runnable.class).run();
+            return null;
+        }).when(cluster).withLock(any(Runnable.class));
+        return cluster;
     }
 
     private enum Style {
