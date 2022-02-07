@@ -65,7 +65,7 @@ public class SrvPollingProseTests {
     @BeforeEach
     public void beforeEach() {
         when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
-        when(serverFactory.create(any(), any(), any(), any())).thenReturn(mock(ClusterableServer.class));
+        when(serverFactory.create(any(), any(), any(), any(), any())).thenReturn(mock(ClusterableServer.class));
     }
 
     @AfterEach

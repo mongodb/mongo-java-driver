@@ -21,7 +21,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.event.ServerListener;
 
 public interface ClusterableServerFactory {
-    ClusterableServer create(ServerAddress serverAddress, ServerDescriptionChangedListener serverDescriptionChangedListener,
+    ClusterableServer create(Cluster cluster, ServerAddress serverAddress, ServerDescriptionChangedListener serverDescriptionChangedListener,
                              ServerListener serverListener, ClusterClock clusterClock);
 
     ServerSettings getSettings();
