@@ -89,17 +89,16 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     protected void initialize(final Collection<ServerAddress> serverAddresses) {
         ClusterDescription currentDescription = getCurrentDescription();
-        ClusterDescription newDescription;
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
-        synchronized (this) {
+        withLock(() -> {
             for (final ServerAddress serverAddress : serverAddresses) {
                 addServer(serverAddress);
             }
-            newDescription = updateDescription();
+            ClusterDescription newDescription = updateDescription();
             fireChangeEvent(newDescription, currentDescription);
-        }
+        });
     }
 
     @Override
@@ -111,14 +110,14 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     @Override
     public void close() {
-        synchronized (this) {
+        withLock(() -> {
             if (!isClosed()) {
                 for (final ServerTuple serverTuple : addressToServerTupleMap.values()) {
                     serverTuple.server.close();
                 }
             }
             super.close();
-        }
+        });
     }
 
     @Override
@@ -141,7 +140,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     void onChange(final Collection<ServerAddress> newHosts) {
-        synchronized (this) {
+        withLock(() -> {
             if (isClosed()) {
                 return;
             }
@@ -165,14 +164,11 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             ClusterDescription newClusterDescription = updateDescription();
 
             fireChangeEvent(newClusterDescription, oldClusterDescription);
-        }
+        });
     }
 
     private void onChange(final ServerDescriptionChangedEvent event) {
-        ClusterDescription oldClusterDescription = null;
-        ClusterDescription newClusterDescription = null;
-        boolean shouldUpdateDescription = true;
-        synchronized (this) {
+        withLock(() -> {
             if (isClosed()) {
                 return;
             }
@@ -193,6 +189,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 return;
             }
 
+            boolean shouldUpdateDescription = true;
             if (newDescription.isOk()) {
                 if (clusterType == UNKNOWN && newDescription.getType() != REPLICA_SET_GHOST) {
                     clusterType = newDescription.getClusterType();
@@ -216,6 +213,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 }
             }
 
+            ClusterDescription oldClusterDescription = null;
+            ClusterDescription newClusterDescription = null;
             if (shouldUpdateDescription) {
                 serverTuple.description = newDescription;
                 oldClusterDescription = getCurrentDescription();
@@ -224,7 +223,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             if (shouldUpdateDescription) {
                 fireChangeEvent(newClusterDescription, oldClusterDescription);
             }
-        }
+        });
     }
 
     private boolean handleReplicaSetMemberChanged(final ServerDescription newDescription) {
