@@ -37,6 +37,7 @@ public final class CodecRegistries {
      *
      * @param codecRegistry the code registry
      * @param uuidRepresentation the uuid representation
+     * @return a {@code CodecRegistry} with the given {@code UuidRepresentation} applied
      * @since 4.5
      */
     public static CodecRegistry withUuidRepresentation(final CodecRegistry codecRegistry, final UuidRepresentation uuidRepresentation) {

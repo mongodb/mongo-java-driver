@@ -99,6 +99,6 @@ class CodeRegistriesSpecification extends Specification {
         def registryWithUnspecifiedTwo = withUuidRepresentation(registryWithUnspecified, UNSPECIFIED)
 
         then:
-        registryWithUnspecifiedTwo === registryWithUnspecified
+        registryWithUnspecifiedTwo.is(registryWithUnspecified)
     }
 }
