@@ -76,7 +76,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress,
+    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress,
             final ServerDescriptionChangedListener serverDescriptionChangedListener,
             final ClusterClock clusterClock) {
         ServerId serverId = new ServerId(clusterId, serverAddress);
@@ -91,7 +91,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                         mongoDriverInformation, compressorList, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
         ServerListener serverListener = singleServerListener(serverSettings);
-        SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
+        SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverDescriptionChangedListener,
                 serverListener, serverMonitor, connectionPool, clusterSettings.getMode());
         sdamProvider.initialize(sdam);
         serverMonitor.start();

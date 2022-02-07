@@ -70,7 +70,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress,
+    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress,
             final ServerDescriptionChangedListener serverDescriptionChangedListener,
             final ClusterClock clusterClock) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),

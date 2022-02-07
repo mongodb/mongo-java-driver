@@ -29,6 +29,9 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 
+import java.util.concurrent.atomic.AtomicReference;
+
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static java.lang.String.format;
@@ -41,7 +44,7 @@ import static java.util.Collections.singletonList;
 public final class SingleServerCluster extends BaseCluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
-    private final ClusterableServer server;
+    private final AtomicReference<ClusterableServer> server;
 
     public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(clusterId, settings, serverFactory);
@@ -52,30 +55,31 @@ public final class SingleServerCluster extends BaseCluster {
             LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
         }
 
+        server = new AtomicReference<>();
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
-        synchronized (this) {
-            this.server = createServer(settings.getHosts().get(0), new DefaultServerDescriptionChangedListener());
+        withLock(() -> {
+            server.set(createServer(settings.getHosts().get(0), new DefaultServerDescriptionChangedListener()));
             publishDescription(ServerDescription.builder().state(CONNECTING).address(settings.getHosts().get(0))
                     .build());
-        }
+        });
     }
 
     @Override
     protected void connect() {
-        server.connect();
+        assertNotNull(server.get()).connect();
     }
 
     @Override
     public ClusterableServer getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
-        return server;
+        return assertNotNull(server.get());
     }
 
     @Override
     public void close() {
         if (!isClosed()) {
-            server.close();
+            assertNotNull(server.get()).close();
             super.close();
         }
     }
@@ -83,7 +87,7 @@ public final class SingleServerCluster extends BaseCluster {
     private class DefaultServerDescriptionChangedListener implements ServerDescriptionChangedListener {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-            synchronized (this) {
+            withLock(() -> {
                 ServerDescription newDescription = event.getNewDescription();
                 if (newDescription.isOk()) {
                     if (getSettings().getRequiredClusterType() != ClusterType.UNKNOWN
@@ -106,7 +110,7 @@ public final class SingleServerCluster extends BaseCluster {
                     }
                 }
                 publishDescription(newDescription);
-            }
+            });
         }
     }
 

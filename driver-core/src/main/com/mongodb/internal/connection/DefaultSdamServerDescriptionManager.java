@@ -24,9 +24,6 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -36,20 +33,22 @@ import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownCon
 
 @ThreadSafe
 final class DefaultSdamServerDescriptionManager implements SdamServerDescriptionManager {
+    private final Cluster cluster;
     private final ServerId serverId;
     private final ServerDescriptionChangedListener serverDescriptionChangedListener;
     private final ServerListener serverListener;
     private final ServerMonitor serverMonitor;
     private final ConnectionPool connectionPool;
     private final ClusterConnectionMode connectionMode;
-    private final Lock lock;
     private volatile ServerDescription description;
 
-    DefaultSdamServerDescriptionManager(final ServerId serverId,
+    DefaultSdamServerDescriptionManager(final Cluster cluster,
+                                        final ServerId serverId,
                                         final ServerDescriptionChangedListener serverDescriptionChangedListener,
                                         final ServerListener serverListener, final ServerMonitor serverMonitor,
                                         final ConnectionPool connectionPool,
                                         final ClusterConnectionMode connectionMode) {
+        this.cluster = cluster;
         this.serverId = assertNotNull(serverId);
         this.serverDescriptionChangedListener = assertNotNull(serverDescriptionChangedListener);
         this.serverListener = assertNotNull(serverListener);
@@ -57,13 +56,11 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
         this.connectionPool = assertNotNull(connectionPool);
         this.connectionMode = assertNotNull(connectionMode);
         description = unknownConnectingServerDescription(serverId, null);
-        lock = new ReentrantLock();
     }
 
     @Override
     public void update(final ServerDescription candidateDescription) {
-        lock.lock();
-        try {
+        cluster.withLock(() -> {
             if (TopologyVersionHelper.newer(description.getTopologyVersion(), candidateDescription.getTopologyVersion())) {
                 return;
             }
@@ -85,29 +82,17 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
                 assertFalse(markedPoolReady);
                 connectionPool.invalidate(candidateDescriptionException);
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     @Override
     public void handleExceptionBeforeHandshake(final SdamIssue sdamIssue) {
-        lock.lock();
-        try {
-            handleException(sdamIssue, true);
-        } finally {
-            lock.unlock();
-        }
+        cluster.withLock(() -> handleException(sdamIssue, true));
     }
 
     @Override
     public void handleExceptionAfterHandshake(final SdamIssue sdamIssue) {
-        lock.lock();
-        try {
-            handleException(sdamIssue, false);
-        } finally {
-            lock.unlock();
-        }
+        cluster.withLock(() -> handleException(sdamIssue, false));
     }
 
     @Override

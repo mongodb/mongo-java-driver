@@ -20,8 +20,8 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerSettings;
 
 public interface ClusterableServerFactory {
-    ClusterableServer create(ServerAddress serverAddress, ServerDescriptionChangedListener serverDescriptionChangedListener,
-            ClusterClock clusterClock);
+    ClusterableServer create(Cluster cluster, ServerAddress serverAddress,
+            ServerDescriptionChangedListener serverDescriptionChangedListener, ClusterClock clusterClock);
 
     ServerSettings getSettings();
 }
