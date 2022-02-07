@@ -32,7 +32,7 @@ final class PropertyReflectionUtils {
     private static final String SET_PREFIX = "set";
 
     static boolean isGetter(final Method method) {
-        if (method.getParameterTypes().length > 0) {
+        if (method.getParameterCount() > 0) {
             return false;
         } else if (method.getName().startsWith(GET_PREFIX) && method.getName().length() > GET_PREFIX.length()) {
             return Character.isUpperCase(method.getName().charAt(GET_PREFIX.length()));
@@ -44,7 +44,7 @@ final class PropertyReflectionUtils {
 
     static boolean isSetter(final Method method) {
         if (method.getName().startsWith(SET_PREFIX) && method.getName().length() > SET_PREFIX.length()
-                && method.getParameterTypes().length == 1) {
+                && method.getParameterCount() == 1) {
             return Character.isUpperCase(method.getName().charAt(SET_PREFIX.length()));
         }
         return false;

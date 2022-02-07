@@ -138,7 +138,7 @@ final class PojoBuilderHelper {
 
         Constructor<T> noArgsConstructor = null;
         for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-            if (constructor.getParameterTypes().length == 0
+            if (constructor.getParameterCount() == 0
                     && (isPublic(constructor.getModifiers()) || isProtected(constructor.getModifiers()))) {
                 noArgsConstructor = (Constructor<T>) constructor;
                 noArgsConstructor.setAccessible(true);
