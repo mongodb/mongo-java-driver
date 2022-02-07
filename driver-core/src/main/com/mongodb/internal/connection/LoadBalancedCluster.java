@@ -160,7 +160,7 @@ final class LoadBalancedCluster implements Cluster {
                         .address(host)
                         .build()),
                 settings, serverFactory.getSettings());
-        server = serverFactory.create(host, event -> { }, createServerListener(serverFactory.getSettings()), clusterClock);
+        server = serverFactory.create(this, host, event -> { }, createServerListener(serverFactory.getSettings()), clusterClock);
 
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description, initialDescription));
     }
@@ -281,6 +281,11 @@ final class LoadBalancedCluster implements Cluster {
     @Override
     public boolean isClosed() {
         return closed.get();
+    }
+
+    @Override
+    public void withLock(final Runnable action) {
+        fail();
     }
 
     private void handleServerSelectionRequest(final ServerSelectionRequest serverSelectionRequest) {

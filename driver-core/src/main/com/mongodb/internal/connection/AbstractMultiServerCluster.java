@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -89,17 +91,17 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     protected void initialize(final Collection<ServerAddress> serverAddresses) {
         ClusterDescription currentDescription = getCurrentDescription();
-        ClusterDescription newDescription;
+        AtomicReference<ClusterDescription> newDescription = new AtomicReference<>();
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
-        synchronized (this) {
+        withLock(() -> {
             for (final ServerAddress serverAddress : serverAddresses) {
                 addServer(serverAddress);
             }
-            newDescription = updateDescription();
-        }
-        fireChangeEvent(newDescription, currentDescription);
+            newDescription.set(updateDescription());
+        });
+        fireChangeEvent(newDescription.get(), currentDescription);
     }
 
     @Override
@@ -111,14 +113,14 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     @Override
     public void close() {
-        synchronized (this) {
+        withLock(() -> {
             if (!isClosed()) {
                 for (final ServerTuple serverTuple : addressToServerTupleMap.values()) {
                     serverTuple.server.close();
                 }
             }
             super.close();
-        }
+        });
     }
 
     @Override
@@ -141,7 +143,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     void onChange(final Collection<ServerAddress> newHosts) {
-        synchronized (this) {
+        withLock(() -> {
             if (isClosed()) {
                 return;
             }
@@ -165,15 +167,16 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             ClusterDescription newClusterDescription = updateDescription();
 
             fireChangeEvent(newClusterDescription, oldClusterDescription);
-        }
+        });
     }
 
     private void onChange(final ServerDescriptionChangedEvent event) {
-        ClusterDescription oldClusterDescription = null;
-        ClusterDescription newClusterDescription = null;
-        boolean shouldUpdateDescription = true;
-        synchronized (this) {
+        AtomicReference<ClusterDescription> oldClusterDescription = new AtomicReference<>();
+        AtomicReference<ClusterDescription> newClusterDescription = new AtomicReference<>();
+        AtomicBoolean shouldUpdateDescription = new AtomicBoolean(true);
+        withLock(() -> {
             if (isClosed()) {
+                shouldUpdateDescription.set(false);
                 return;
             }
 
@@ -190,6 +193,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                     LOGGER.trace(format("Ignoring description changed event for removed server %s",
                                         newDescription.getAddress()));
                 }
+                shouldUpdateDescription.set(false);
                 return;
             }
 
@@ -203,27 +207,27 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
                 switch (clusterType) {
                     case REPLICA_SET:
-                        shouldUpdateDescription = handleReplicaSetMemberChanged(newDescription);
+                        shouldUpdateDescription.set(handleReplicaSetMemberChanged(newDescription));
                         break;
                     case SHARDED:
-                        shouldUpdateDescription = handleShardRouterChanged(newDescription);
+                        shouldUpdateDescription.set(handleShardRouterChanged(newDescription));
                         break;
                     case STANDALONE:
-                        shouldUpdateDescription = handleStandAloneChanged(newDescription);
+                        shouldUpdateDescription.set(handleStandAloneChanged(newDescription));
                         break;
                     default:
                         break;
                 }
             }
 
-            if (shouldUpdateDescription) {
+            if (shouldUpdateDescription.get()) {
                 serverTuple.description = newDescription;
-                oldClusterDescription = getCurrentDescription();
-                newClusterDescription = updateDescription();
+                oldClusterDescription.set(getCurrentDescription());
+                newClusterDescription.set(updateDescription());
             }
-        }
-        if (shouldUpdateDescription) {
-            fireChangeEvent(newClusterDescription, oldClusterDescription);
+        });
+        if (shouldUpdateDescription.get()) {
+            fireChangeEvent(newClusterDescription.get(), oldClusterDescription.get());
         }
     }
 

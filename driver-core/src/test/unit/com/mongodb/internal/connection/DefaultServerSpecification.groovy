@@ -34,6 +34,7 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.syncadapter.SupplyingCallback
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
+import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerConnectionState
@@ -146,7 +147,7 @@ class DefaultServerSpecification extends Specification {
         def connectionPool = Mock(ConnectionPool)
         def sdamProvider = SameObjectProvider.<SdamServerDescriptionManager>uninitialized()
         def serverMonitor = new TestServerMonitor(sdamProvider)
-        sdamProvider.initialize(new DefaultSdamServerDescriptionManager(serverId, Mock(ServerDescriptionChangedListener),
+        sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockCluster(), serverId, Mock(ServerDescriptionChangedListener),
                 serverListener, serverMonitor, connectionPool, ClusterConnectionMode.MULTIPLE))
         def server = defaultServer(Mock(ConnectionPool), serverMonitor, serverListener, sdamProvider.get(), Mock(CommandListener))
         serverMonitor.updateServerDescription(ServerDescription.builder()
@@ -498,7 +499,7 @@ class DefaultServerSpecification extends Specification {
     private DefaultServer defaultServer(final ConnectionPool connectionPool, final ServerMonitor serverMonitor) {
         def serverListener = Mock(ServerListener)
         defaultServer(connectionPool, serverMonitor, serverListener,
-                new DefaultSdamServerDescriptionManager(
+                new DefaultSdamServerDescriptionManager(mockCluster(),
                         serverId, Mock(ServerDescriptionChangedListener), serverListener, serverMonitor, connectionPool,
                         ClusterConnectionMode.MULTIPLE),
                 Mock(CommandListener))
@@ -569,6 +570,19 @@ class DefaultServerSpecification extends Specification {
             sessionContext.advanceClusterTime(responseDocument.getDocument('$clusterTime'))
             sessionContext.advanceOperationTime(responseDocument.getTimestamp('operationTime'))
             this
+        }
+    }
+
+    private Cluster mockCluster() {
+        new BaseCluster(new ClusterId(), ClusterSettings.builder().build(), Mock(ClusterableServerFactory)) {
+            @Override
+            protected void connect() {
+            }
+
+            @Override
+            ClusterableServer getServer(final ServerAddress serverAddress) {
+                throw new UnsupportedOperationException()
+            }
         }
     }
 }

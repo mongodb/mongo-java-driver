@@ -240,13 +240,15 @@ abstract class BaseCluster implements Cluster {
         return isClosed;
     }
 
-    protected synchronized void updateDescription(final ClusterDescription newDescription) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Updating cluster description to  %s", newDescription.getShortDescription()));
-        }
+    protected void updateDescription(final ClusterDescription newDescription) {
+        withLock(() -> {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Updating cluster description to  %s", newDescription.getShortDescription()));
+            }
 
-        description = newDescription;
-        updatePhase();
+            description = newDescription;
+            updatePhase();
+        });
     }
 
     protected void fireChangeEvent(final ClusterDescription newDescription, final ClusterDescription previousDescription) {
@@ -261,8 +263,13 @@ abstract class BaseCluster implements Cluster {
         return description;
     }
 
-    private synchronized void updatePhase() {
-        phase.getAndSet(new CountDownLatch(1)).countDown();
+    @Override
+    public synchronized void withLock(final Runnable action) {
+        action.run();
+    }
+
+    private void updatePhase() {
+        withLock(() -> phase.getAndSet(new CountDownLatch(1)).countDown());
     }
 
     private long getMaxWaitTimeNanos() {
@@ -381,8 +388,8 @@ abstract class BaseCluster implements Cluster {
 
     protected ClusterableServer createServer(final ServerAddress serverAddress,
                                              final ServerDescriptionChangedListener serverDescriptionChangedListener) {
-        return serverFactory.create(serverAddress, serverDescriptionChangedListener, createServerListener(serverFactory.getSettings()),
-                clusterClock);
+        return serverFactory.create(this, serverAddress, serverDescriptionChangedListener,
+                createServerListener(serverFactory.getSettings()), clusterClock);
     }
 
     private void throwIfIncompatible(final ClusterDescription curDescription) {
@@ -451,26 +458,30 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    private synchronized void notifyWaitQueueHandler(final ServerSelectionRequest request) {
-        if (isClosed) {
-            return;
-        }
+    private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
+        withLock(() -> {
+            if (isClosed) {
+                return;
+            }
 
-        waitQueue.add(request);
+            waitQueue.add(request);
 
-        if (waitQueueHandler == null) {
-            waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
-            waitQueueHandler.setDaemon(true);
-            waitQueueHandler.start();
-        } else {
-            updatePhase();
-        }
+            if (waitQueueHandler == null) {
+                waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
+                waitQueueHandler.setDaemon(true);
+                waitQueueHandler.start();
+            } else {
+                updatePhase();
+            }
+        });
     }
 
-    private synchronized void stopWaitQueueHandler() {
-        if (waitQueueHandler != null) {
-            waitQueueHandler.interrupt();
-        }
+    private void stopWaitQueueHandler() {
+        withLock(() -> {
+            if (waitQueueHandler != null) {
+                waitQueueHandler.interrupt();
+            }
+        });
     }
 
     private final class WaitQueueHandler implements Runnable {

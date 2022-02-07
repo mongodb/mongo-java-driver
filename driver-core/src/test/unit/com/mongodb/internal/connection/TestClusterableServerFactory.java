@@ -37,7 +37,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     private final Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress,
+    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress,
                                     final ServerDescriptionChangedListener serverDescriptionChangedListener,
                                     final ServerListener serverListener,
                                     final ClusterClock clusterClock) {

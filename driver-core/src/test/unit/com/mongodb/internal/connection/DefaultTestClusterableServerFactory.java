@@ -43,7 +43,8 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
     }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress,
+    public ClusterableServer create(final Cluster cluster,
+                                    final ServerAddress serverAddress,
                                     final ServerDescriptionChangedListener serverDescriptionChangedListener,
                                     final ServerListener ignored, final ClusterClock clusterClock) {
         ServerId serverId = new ServerId(clusterId, serverAddress);
@@ -56,7 +57,7 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
             serverAddressToServerMonitorMap.put(serverAddress, serverMonitor);
             ConnectionPool connectionPool = new TestConnectionPool();
             ServerListener serverListener = serverListenerFactory.create(serverAddress);
-            SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(serverId, serverDescriptionChangedListener,
+            SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverDescriptionChangedListener,
                     serverListener, serverMonitor, connectionPool, clusterConnectionMode);
             sdamProvider.initialize(sdam);
             serverMonitor.start();
