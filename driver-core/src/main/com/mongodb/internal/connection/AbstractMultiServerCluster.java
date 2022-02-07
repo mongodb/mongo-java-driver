@@ -176,6 +176,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         AtomicBoolean shouldUpdateDescription = new AtomicBoolean(true);
         withLock(() -> {
             if (isClosed()) {
+                shouldUpdateDescription.set(false);
                 return;
             }
 
@@ -192,6 +193,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                     LOGGER.trace(format("Ignoring description changed event for removed server %s",
                                         newDescription.getAddress()));
                 }
+                shouldUpdateDescription.set(false);
                 return;
             }
 
