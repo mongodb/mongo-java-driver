@@ -28,6 +28,11 @@ import org.bson.BsonWriter;
 public final class EnumCodec<T extends Enum<T>> implements Codec<T> {
     private final Class<T> clazz;
 
+    /**
+     * Construct an instance for teh given enum class.
+     *
+     * @param clazz the enum class
+     */
     public EnumCodec(final Class<T> clazz) {
         this.clazz = clazz;
     }
