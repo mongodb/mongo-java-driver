@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
@@ -30,39 +29,34 @@ import java.util.Map;
 
 public class DefaultTestClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings settings = ServerSettings.builder().build();
-    private final ClusterId clusterId;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerListenerFactory serverListenerFactory;
     private final Map<ServerAddress, TestServerMonitor> serverAddressToServerMonitorMap = new HashMap<>();
 
-    public DefaultTestClusterableServerFactory(final ClusterId clusterId, final ClusterConnectionMode clusterConnectionMode,
+    public DefaultTestClusterableServerFactory(final ClusterConnectionMode clusterConnectionMode,
                                                final ServerListenerFactory serverListenerFactory) {
-        this.clusterId = clusterId;
         this.clusterConnectionMode = clusterConnectionMode;
         this.serverListenerFactory = serverListenerFactory;
     }
 
     @Override
-    public ClusterableServer create(final Cluster cluster,
-                                    final ServerAddress serverAddress,
-                                    final ServerDescriptionChangedListener serverDescriptionChangedListener,
-                                    final ClusterClock clusterClock) {
-        ServerId serverId = new ServerId(clusterId, serverAddress);
+    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
+        ServerId serverId = new ServerId(cluster.getClusterId(), serverAddress);
         if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
             return new LoadBalancedServer(serverId, new TestConnectionPool(),
-                    new TestConnectionFactory(), serverListenerFactory.create(serverAddress), clusterClock);
+                    new TestConnectionFactory(), serverListenerFactory.create(serverAddress), cluster.getClock());
         } else {
             SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
             TestServerMonitor serverMonitor = new TestServerMonitor(sdamProvider);
             serverAddressToServerMonitorMap.put(serverAddress, serverMonitor);
             ConnectionPool connectionPool = new TestConnectionPool();
             ServerListener serverListener = serverListenerFactory.create(serverAddress);
-            SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverDescriptionChangedListener,
-                    serverListener, serverMonitor, connectionPool, clusterConnectionMode);
+            SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,
+                    connectionPool, clusterConnectionMode);
             sdamProvider.initialize(sdam);
             serverMonitor.start();
             return new DefaultServer(serverId, clusterConnectionMode, connectionPool, new TestConnectionFactory(), serverMonitor, sdam,
-                    serverListener, null, clusterClock, true);
+                    serverListener, null, cluster.getClock(), true);
         }
     }
 

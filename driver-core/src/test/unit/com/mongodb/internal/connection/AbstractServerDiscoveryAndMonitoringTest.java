@@ -175,7 +175,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         ClusterId clusterId = new ClusterId();
 
-        factory = new DefaultTestClusterableServerFactory(clusterId, settings.getMode(), serverListenerFactory);
+        factory = new DefaultTestClusterableServerFactory(settings.getMode(), serverListenerFactory);
 
         ClusterSettings clusterSettings = settings.getClusterListeners().contains(clusterListener) ? settings
                 : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();

@@ -21,8 +21,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
-import com.mongodb.connection.ClusterId;
-import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
@@ -38,8 +37,6 @@ import static com.mongodb.internal.event.EventListenerHelper.singleServerListene
 import static java.util.Collections.emptyList;
 
 public class DefaultClusterableServerFactory implements ClusterableServerFactory {
-    private final ClusterId clusterId;
-    private final ClusterSettings clusterSettings;
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final InternalConnectionPoolSettings internalConnectionPoolSettings;
@@ -53,15 +50,13 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     @Nullable
     private final ServerApi serverApi;
 
-    public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings,
+    public DefaultClusterableServerFactory(
             final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
             final InternalConnectionPoolSettings internalConnectionPoolSettings,
             final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
             final MongoCredential credential, final CommandListener commandListener,
             final String applicationName, final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
-        this.clusterId = clusterId;
-        this.clusterSettings = clusterSettings;
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
@@ -76,27 +71,26 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     }
 
     @Override
-    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress,
-            final ServerDescriptionChangedListener serverDescriptionChangedListener,
-            final ClusterClock clusterClock) {
-        ServerId serverId = new ServerId(clusterId, serverAddress);
+    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
+        ServerId serverId = new ServerId(cluster.getClusterId(), serverAddress);
+        ClusterConnectionMode clusterMode = cluster.getSettings().getMode();
         SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
-        ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, clusterClock,
+        ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, cluster.getClock(),
                 // no credentials, compressor list, or command listener for the server monitor factory
-                new InternalStreamConnectionFactory(clusterSettings.getMode(), heartbeatStreamFactory, null, applicationName,
+                new InternalStreamConnectionFactory(clusterMode, heartbeatStreamFactory, null, applicationName,
                         mongoDriverInformation, emptyList(), null, serverApi),
                 serverApi, sdamProvider);
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
-                new InternalStreamConnectionFactory(clusterSettings.getMode(), streamFactory, credential, applicationName,
+                new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
         ServerListener serverListener = singleServerListener(serverSettings);
-        SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverDescriptionChangedListener,
-                serverListener, serverMonitor, connectionPool, clusterSettings.getMode());
+        SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,
+                connectionPool, clusterMode);
         sdamProvider.initialize(sdam);
         serverMonitor.start();
-        return new DefaultServer(serverId, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(), serverMonitor,
-                sdam, serverListener, commandListener, clusterClock, true);
+        return new DefaultServer(serverId, clusterMode, connectionPool, new DefaultConnectionFactory(), serverMonitor,
+                sdam, serverListener, commandListener, cluster.getClock(), true);
     }
 
     @Override
