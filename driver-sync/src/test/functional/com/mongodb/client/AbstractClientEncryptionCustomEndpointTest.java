@@ -112,12 +112,12 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                 put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
                 put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
                 put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
-                put("identityPlatformEndpoint", "example.com:443");
+                put("identityPlatformEndpoint", "doesnotexist.invalid:443");
             }});
             put("gcp",  new HashMap<String, Object>() {{
                 put("email", System.getProperty("org.mongodb.test.gcpEmail"));
                 put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
-                put("endpoint", "example.com:443");
+                put("endpoint", "doesnotexist.invalid:443");
             }});
             put("kmip",  new HashMap<String, Object>() {{
                 put("endpoint", "doesnotexist.local:5698");
@@ -211,9 +211,9 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                 BsonDocument.parse("{\n"
                         + "  region: \"us-east-1\",\n"
                         + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\",\n"
-                        + "  endpoint: \"example.com\"\n"
+                        + "  endpoint: \"doesnotexist.invalid\"\n"
                         + "}"),
-                false, MongoClientException.class, MongoCryptException.class, "parse error"});
+                false, MongoClientException.class, UnknownHostException.class, null});
 
         data.add(new Object[]{"7. [azure] valid and invalid kms providers test",
                 "azure",
@@ -221,7 +221,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                         + "  \"keyVaultEndpoint\": \"key-vault-csfle.vault.azure.net\",\n"
                         + "  \"keyName\": \"key-name-csfle\"\n"
                         + "}"),
-                true, MongoClientException.class, MongoCryptException.class, "parse error"});
+                true, MongoClientException.class, UnknownHostException.class, null});
 
         data.add(new Object[]{"8. [gcp] valid and invalid kms providers test",
                 "gcp",
@@ -232,7 +232,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                         + "  \"keyName\": \"key-name-csfle\",\n"
                         + "  \"endpoint\": \"cloudkms.googleapis.com:443\"\n"
                         + "}"),
-                true, MongoClientException.class, MongoCryptException.class, "parse error"});
+                true, MongoClientException.class, UnknownHostException.class, null});
 
         data.add(new Object[]{"9. [gcp] invalid endpoint",
                 "gcp",
@@ -241,7 +241,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                         + "  \"location\": \"global\",\n"
                         + "  \"keyRing\": \"test\",\n"
                         + "  \"keyName\": \"quickstart\",\n"
-                        + "  \"endpoint\": \"example.com:443\"\n"
+                        + "  \"endpoint\": \"doesnotexist.invalid:443\"\n"
                         + "}"),
                 false, MongoClientException.class, MongoCryptException.class, "Invalid KMS response"});
         data.add(new Object[]{"10. [kmip] endpoint from KMS providers map",
