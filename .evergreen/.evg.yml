@@ -1626,7 +1626,7 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-load-balancer-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk17"], version: ["5.0", "latest"], topology: "sharded-cluster", os: "ubuntu" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk17"], version: ["latest"], topology: "sharded-cluster", os: "ubuntu" }
   display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
   tasks:
     - name: "load-balancer-test"
