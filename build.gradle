@@ -128,6 +128,15 @@ configure(scalaProjects) {
 
     tasks.withType(ScalaCompile) {
         scalaCompileOptions.deprecation = false
+        if(scalaVersion.startsWith("2.13")) {
+            scalaCompileOptions.additionalParameters = [
+                    "-feature",
+                    "-unchecked",
+                    "-language:reflectiveCalls",
+                    "-Wconf:cat=deprecation:ws,any:e",
+                    "-Xlint:strict-unsealed-patmat"
+            ]
+        }
     }
 
     tasks.withType(GenerateModuleMetadata) {
