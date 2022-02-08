@@ -65,21 +65,21 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
 
     private Authenticator createAuthenticator(final MongoCredentialWithCache credential) {
         if (credential.getAuthenticationMechanism() == null) {
-            return new DefaultAuthenticator(credential, serverApi);
+            return new DefaultAuthenticator(credential, clusterConnectionMode, serverApi);
         }
 
         switch (credential.getAuthenticationMechanism()) {
             case GSSAPI:
-                return new GSSAPIAuthenticator(credential, serverApi);
+                return new GSSAPIAuthenticator(credential, clusterConnectionMode, serverApi);
             case PLAIN:
-                return new PlainAuthenticator(credential, serverApi);
+                return new PlainAuthenticator(credential, clusterConnectionMode, serverApi);
             case MONGODB_X509:
-                return new X509Authenticator(credential, serverApi);
+                return new X509Authenticator(credential, clusterConnectionMode, serverApi);
             case SCRAM_SHA_1:
             case SCRAM_SHA_256:
-                return new ScramShaAuthenticator(credential, serverApi);
+                return new ScramShaAuthenticator(credential, clusterConnectionMode, serverApi);
             case MONGODB_AWS:
-                return new AwsAuthenticator(credential, serverApi);
+                return new AwsAuthenticator(credential, clusterConnectionMode, serverApi);
             default:
                 throw new IllegalArgumentException("Unsupported authentication mechanism " + credential.getAuthenticationMechanism());
         }

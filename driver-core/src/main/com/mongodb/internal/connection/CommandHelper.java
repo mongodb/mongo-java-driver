@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
@@ -39,29 +40,32 @@ public final class CommandHelper {
     static final String LEGACY_HELLO = "isMaster";
     static final String LEGACY_HELLO_LOWER = LEGACY_HELLO.toLowerCase(Locale.ROOT);
 
-    static BsonDocument executeCommand(final String database, final BsonDocument command, final @Nullable ServerApi serverApi,
-                                       final InternalConnection internalConnection) {
-        return sendAndReceive(database, command, null, serverApi, internalConnection);
+    static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
+            final @Nullable ServerApi serverApi, final InternalConnection internalConnection) {
+        return sendAndReceive(database, command, null, clusterConnectionMode, serverApi, internalConnection);
     }
 
     public static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterClock clusterClock,
-                                              final @Nullable ServerApi serverApi, final InternalConnection internalConnection) {
-        return sendAndReceive(database, command, clusterClock, serverApi, internalConnection);
+            final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi,
+            final InternalConnection internalConnection) {
+        return sendAndReceive(database, command, clusterClock, clusterConnectionMode, serverApi, internalConnection);
     }
 
     static BsonDocument executeCommandWithoutCheckingForFailure(final String database, final BsonDocument command,
-                                                                final @Nullable ServerApi serverApi,
-                                                                final InternalConnection internalConnection) {
+            final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi,
+            final InternalConnection internalConnection) {
         try {
-            return sendAndReceive(database, command, null, serverApi, internalConnection);
+            return sendAndReceive(database, command, null, clusterConnectionMode, serverApi, internalConnection);
         } catch (MongoServerException e) {
             return new BsonDocument();
         }
     }
 
-    static void executeCommandAsync(final String database, final BsonDocument command, final @Nullable ServerApi serverApi,
-                                    final InternalConnection internalConnection, final SingleResultCallback<BsonDocument> callback) {
-        internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, serverApi), new BsonDocumentCodec(),
+    static void executeCommandAsync(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
+            final @Nullable ServerApi serverApi, final InternalConnection internalConnection,
+            final SingleResultCallback<BsonDocument> callback) {
+        internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
+                new BsonDocumentCodec(),
                 NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument result, final Throwable t) {
@@ -89,16 +93,19 @@ public final class CommandHelper {
     }
 
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
-                                               final ClusterClock clusterClock, final @Nullable ServerApi serverApi,
+                                               final ClusterClock clusterClock,
+                                               final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi,
                                                final InternalConnection internalConnection) {
         SessionContext sessionContext = clusterClock == null ? NoOpSessionContext.INSTANCE
                 : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
-        return internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection, serverApi),
+        return internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
                 new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE);
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,
-                                                    final InternalConnection internalConnection, final @Nullable ServerApi serverApi) {
+                                                    final InternalConnection internalConnection,
+                                                    final ClusterConnectionMode clusterConnectionMode,
+                                                    final @Nullable ServerApi serverApi) {
         return new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME), command, new NoOpFieldNameValidator(), primary(),
                 MessageSettings
                         .builder()
@@ -106,7 +113,7 @@ public final class CommandHelper {
                          // which means OP_MSG will not be used
                         .maxWireVersion(internalConnection.getDescription().getMaxWireVersion())
                         .build(),
-                serverApi);
+                clusterConnectionMode, serverApi);
     }
 
     private CommandHelper() {

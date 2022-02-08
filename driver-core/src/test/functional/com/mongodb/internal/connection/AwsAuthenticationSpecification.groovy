@@ -8,7 +8,6 @@ import com.mongodb.MongoSecurityException
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory
-import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
@@ -21,9 +20,11 @@ import spock.lang.Specification
 import java.util.function.Supplier
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_AWS
+import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -36,7 +37,8 @@ class AwsAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection)
 
         then:
         thrown(MongoCommandException)
@@ -54,7 +56,8 @@ class AwsAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection)
 
         then:
         true
@@ -83,7 +86,8 @@ class AwsAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection)
 
         then:
         true
@@ -125,16 +129,16 @@ class AwsAuthenticationSpecification extends Specification {
     }
 
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
-        new InternalStreamConnection(ClusterConnectionMode.SINGLE,
+        new InternalStreamConnection(SINGLE,
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
                 new TestConnectionGenerationSupplier(),
                 async ? new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(ClusterConnectionMode.SINGLE, createAuthenticator(credential), null, [], null))
+                new InternalStreamConnectionInitializer(SINGLE, createAuthenticator(credential), null, [], null))
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {
-        credential == null ? null : new AwsAuthenticator(new MongoCredentialWithCache(credential), null)
+        credential == null ? null : new AwsAuthenticator(new MongoCredentialWithCache(credential), SINGLE, null)
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {

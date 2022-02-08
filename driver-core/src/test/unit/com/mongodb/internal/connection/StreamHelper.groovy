@@ -36,6 +36,7 @@ import java.nio.ByteOrder
 import java.security.SecureRandom
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 
 class StreamHelper {
@@ -165,7 +166,7 @@ class StreamHelper {
     static hello() {
         CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
                 new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
-                MessageSettings.builder().build(), null)
+                MessageSettings.builder().build(), SINGLE, null)
         OutputBuffer outputBuffer = new BasicOutputBuffer()
         command.encode(outputBuffer, NoOpSessionContext.INSTANCE)
         nextMessageId++
