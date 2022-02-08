@@ -16,9 +16,11 @@
 
 package org.mongodb.scala.internal
 
-import scala.util.{ Failure, Success, Try }
-
 import org.mongodb.scala._
+import org.reactivestreams.Publisher
+import reactor.core.publisher.Flux
+
+import scala.util.{ Failure, Success, Try }
 
 private[scala] case class RecoverWithObservable[T, U >: T](
     observable: Observable[T],
@@ -26,99 +28,25 @@ private[scala] case class RecoverWithObservable[T, U >: T](
     throwOriginalException: Boolean = false
 ) extends Observable[U] {
 
-  // scalastyle:off cyclomatic.complexity method.length
-  override def subscribe(observer: Observer[_ >: U]): Unit = {
-    observable.subscribe(
-      SubscriptionCheckingObserver(
-        new Observer[U] {
-
-          @volatile
-          private var recoverySubscription: Option[Subscription] = None
-          @volatile
-          private var inRecovery: Boolean = false
-          @volatile
-          private var demand: Long = 0
-
-          override def onSubscribe(subscription: Subscription): Unit = {
-            val initialSub = new Subscription() {
-              override def isUnsubscribed: Boolean = subscription.isUnsubscribed
-
-              override def request(n: Long): Unit = {
-                require(n > 0L, s"Number requested must be greater than zero: $n")
-
-                val localDemand: Long = addDemand(n)
-                if (inRecovery) {
-                  recoverySubscription.foreach(_.request(localDemand))
+  override def subscribe(observer: Observer[_ >: U]): Unit =
+    Flux
+      .from(observable)
+      .onErrorResume((t: Throwable) => {
+        Try(pf(t)) match {
+          case Success(res) =>
+            Flux
+              .from(res)
+              .onErrorResume((ex: Throwable) => {
+                if (throwOriginalException) {
+                  throw t
                 } else {
-                  subscription.request(localDemand)
+                  throw ex
                 }
-              }
-
-              override def unsubscribe(): Unit = subscription.unsubscribe()
-            }
-            observer.onSubscribe(initialSub)
-          }
-
-          override def onError(originalException: Throwable): Unit = {
-            Try(pf(originalException)) recover pf match {
-              case Success(recoverObservable) =>
-                inRecovery = true
-                recoverObservable.subscribe(
-                  new Observer[U] {
-                    override def onError(throwable: Throwable): Unit = {
-                      observer.onError(if (throwOriginalException) originalException else throwable)
-                    }
-
-                    override def onSubscribe(subscription: Subscription): Unit = {
-                      recoverySubscription = Some(subscription)
-                      if (demand > 0) subscription.request(demand)
-                    }
-
-                    override def onComplete(): Unit = observer.onComplete()
-
-                    override def onNext(tResult: U): Unit = processNext(tResult)
-                  }
-                )
-              case Failure(_) => observer.onError(originalException)
-            }
-          }
-
-          override def onComplete(): Unit = observer.onComplete()
-
-          override def onNext(tResult: U): Unit = processNext(tResult)
-
-          /**
-           * Decrement the demand counter and pass the value to the users observer
-           * @param tResult the result to pass to the users observer
-           */
-          private def processNext(tResult: U): Unit = {
-            addDemand(-1)
-            observer.onNext(tResult)
-          }
-
-          /**
-           * Adds extra demand and protects against Longs rolling over
-           *
-           * @param extraDemand the amount of extra demand
-           * @return the updated demand
-           */
-          private def addDemand(extraDemand: Long): Long = {
-            this.synchronized {
-              demand += extraDemand
-
-              if (demand < 0) {
-                if (extraDemand < 0) {
-                  throw new IllegalStateException("Demand cannot be reduced to below zero")
-                }
-                demand = Long.MaxValue
-              }
-            }
-            demand
-          }
-
+              })
+              .asInstanceOf[Publisher[T]]
+          case Failure(_) => throw t
         }
-      )
-    )
-  }
-  // scalastyle:on cyclomatic.complexity method.length
+      })
+      .subscribe(observer)
+
 }

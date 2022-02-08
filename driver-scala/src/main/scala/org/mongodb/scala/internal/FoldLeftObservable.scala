@@ -16,53 +16,12 @@
 
 package org.mongodb.scala.internal
 
-import java.util.concurrent.atomic.AtomicBoolean
-import org.mongodb.scala.{ Observable, Observer, SingleObservable, Subscription }
-
-import scala.util.{ Failure, Success, Try }
+import org.mongodb.scala.{ Observable, Observer, SingleObservable }
+import reactor.core.publisher.Flux
 
 private[scala] case class FoldLeftObservable[T, S](observable: Observable[T], initialValue: S, accumulator: (S, T) => S)
     extends SingleObservable[S] {
 
-  override def subscribe(observer: Observer[_ >: S]): Unit = {
-    observable.subscribe(
-      SubscriptionCheckingObserver(
-        new Observer[T] {
-
-          @volatile
-          private var currentValue: S = initialValue
-
-          private val requested = new AtomicBoolean(false)
-
-          override def onError(throwable: Throwable): Unit = observer.onError(throwable)
-
-          override def onSubscribe(subscription: Subscription): Unit = {
-            val masterSub = new Subscription() {
-              override def isUnsubscribed: Boolean = subscription.isUnsubscribed
-
-              override def request(n: Long): Unit = {
-                require(n > 0L, s"Number requested must be greater than zero: $n")
-                if (requested.compareAndSet(false, true)) subscription.request(Long.MaxValue)
-              }
-              override def unsubscribe(): Unit = subscription.unsubscribe()
-            }
-
-            observer.onSubscribe(masterSub)
-          }
-
-          override def onComplete(): Unit = {
-            observer.onNext(currentValue)
-            observer.onComplete()
-          }
-
-          override def onNext(tResult: T): Unit = {
-            Try(accumulator(currentValue, tResult)) match {
-              case Success(result)    => currentValue = result;
-              case Failure(exception) => onError(exception)
-            }
-          }
-        }
-      )
-    )
-  }
+  override def subscribe(observer: Observer[_ >: S]): Unit =
+    Flux.from(observable).reduce(initialValue, (s: S, t: T) => accumulator(s, t)).subscribe(observer)
 }

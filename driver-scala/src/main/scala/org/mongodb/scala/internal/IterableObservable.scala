@@ -16,40 +16,11 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{ Observable, Observer, Subscription }
+import scala.collection.JavaConverters._
+import org.mongodb.scala.{ Observable, Observer }
+import reactor.core.publisher.Flux
 
 private[scala] case class IterableObservable[A](from: Iterable[A]) extends Observable[A] {
 
-  override def subscribe(observer: Observer[_ >: A]): Unit = {
-    observer.onSubscribe(
-      new Subscription {
-        @volatile
-        private var left: Iterable[A] = from
-        @volatile
-        private var subscribed: Boolean = true
-        @volatile
-        private var completed: Boolean = false
-
-        override def isUnsubscribed: Boolean = !subscribed
-
-        override def request(n: Long): Unit = {
-          require(n > 0L, s"Number requested must be greater than zero: $n")
-          var counter = n
-          while (!completed && subscribed && counter > 0 && left.nonEmpty) {
-            val head = left.head
-            left = left.tail
-            observer.onNext(head)
-            counter -= 1
-          }
-
-          if (!completed && subscribed && left.isEmpty) {
-            completed = true
-            observer.onComplete()
-          }
-        }
-
-        override def unsubscribe(): Unit = subscribed = false
-      }
-    )
-  }
+  override def subscribe(observer: Observer[_ >: A]): Unit = Flux.fromIterable(from.asJava).subscribe(observer)
 }
