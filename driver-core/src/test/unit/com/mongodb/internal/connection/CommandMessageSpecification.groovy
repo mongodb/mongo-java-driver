@@ -20,6 +20,8 @@ import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.ServerApi
+import com.mongodb.ServerApiVersion
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ServerType
 import com.mongodb.internal.bulk.InsertRequest
@@ -129,6 +131,54 @@ class CommandMessageSpecification extends Specification {
                 [true, false],
                 [true, false]
         ].combinations()
+    }
+
+    def 'should encode command message with OP_MSG when connection mode is load-balanced'() {
+        given:
+        def sessionContext = Stub(SessionContext) {
+            hasSession() >> false
+            getClusterTime() >> null
+            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+            getReadConcern() >> ReadConcern.DEFAULT
+        }
+        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(),
+                MessageSettings.builder()
+                        .maxWireVersion(0)
+                        .build(),
+                true, false, null, null, ClusterConnectionMode.LOAD_BALANCED, null)
+        def output = new BasicOutputBuffer()
+
+        when:
+        message.encode(output, sessionContext)
+
+        then:
+        def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
+        def messageHeader = new MessageHeader(byteBuf, 512)
+        messageHeader.opCode == OpCode.OP_MSG.value
+    }
+
+    def 'should encode command message with OP_MSG when server API is specified'() {
+        given:
+        def sessionContext = Stub(SessionContext) {
+            hasSession() >> false
+            getClusterTime() >> null
+            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+            getReadConcern() >> ReadConcern.DEFAULT
+        }
+        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(),
+                MessageSettings.builder()
+                        .maxWireVersion(0)
+                        .build(),
+                true, false, null, null, ClusterConnectionMode.MULTIPLE, ServerApi.builder().version(ServerApiVersion.V1).build())
+        def output = new BasicOutputBuffer()
+
+        when:
+        message.encode(output, sessionContext)
+
+        then:
+        def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
+        def messageHeader = new MessageHeader(byteBuf, 512)
+        messageHeader.opCode == OpCode.OP_MSG.value
     }
 
     def 'should encode command message with OP_QUERY when server version is < 3.6'() {
