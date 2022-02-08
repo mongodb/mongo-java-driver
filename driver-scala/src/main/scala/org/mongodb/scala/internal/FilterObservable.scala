@@ -16,47 +16,10 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{ Observable, Observer, Subscription }
-
-import scala.util.{ Failure, Success, Try }
+import org.mongodb.scala.{ Observable, Observer }
+import reactor.core.publisher.Flux
 
 private[scala] case class FilterObservable[T](observable: Observable[T], p: T => Boolean) extends Observable[T] {
-  override def subscribe(observer: Observer[_ >: T]): Unit = {
-    observable.subscribe(
-      SubscriptionCheckingObserver(
-        new Observer[T] {
-
-          @volatile private var terminated: Boolean = false
-          @volatile private var subscription: Option[Subscription] = None
-
-          override def onError(throwable: Throwable): Unit = {
-            terminated = true
-            observer.onError(throwable)
-          }
-
-          override def onSubscribe(subscription: Subscription): Unit = {
-            this.subscription = Some(subscription)
-            observer.onSubscribe(subscription)
-          }
-
-          override def onComplete(): Unit = {
-            terminated = true
-            observer.onComplete()
-          }
-
-          override def onNext(tResult: T): Unit = {
-            Try(p(tResult)) match {
-              case Success(result) =>
-                if (result) {
-                  observer.onNext(tResult)
-                } else if (!terminated) {
-                  subscription.foreach(_.request(1)) // No match, request more from down stream
-                }
-              case Failure(exception) => onError(exception)
-            }
-          }
-        }
-      )
-    )
-  }
+  override def subscribe(observer: Observer[_ >: T]): Unit =
+    Flux.from(observable).filter((t: T) => p(t)).subscribe(observer)
 }

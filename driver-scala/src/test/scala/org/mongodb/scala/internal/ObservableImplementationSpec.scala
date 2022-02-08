@@ -342,39 +342,37 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
     var totalRequested = 0L
     override def subscribe(observer: Observer[_ >: Int]): Unit = {
       observable.subscribe(
-        SubscriptionCheckingObserver(
-          new Observer[Int] {
+        new Observer[Int] {
 
-            var completed = false
-            override def onError(throwable: Throwable): Unit = observer.onError(throwable)
+          var completed = false
+          override def onError(throwable: Throwable): Unit = observer.onError(throwable)
 
-            override def onSubscribe(subscription: Subscription): Unit = {
-              val masterSub = new Subscription() {
-                override def isUnsubscribed: Boolean = subscription.isUnsubscribed
+          override def onSubscribe(subscription: Subscription): Unit = {
+            val masterSub = new Subscription() {
+              override def isUnsubscribed: Boolean = subscription.isUnsubscribed
 
-                override def request(n: Long): Unit = {
-                  if (!completed) {
-                    var demand = n + 1
-                    if (demand < 0) demand = Long.MaxValue
-                    totalRequested += demand
-                    subscription.request(demand)
-                  }
+              override def request(n: Long): Unit = {
+                if (!completed) {
+                  var demand = n + 1
+                  if (demand < 0) demand = Long.MaxValue
+                  totalRequested += demand
+                  subscription.request(demand)
                 }
-                override def unsubscribe(): Unit = subscription.unsubscribe()
               }
-              observer.onSubscribe(masterSub)
+              override def unsubscribe(): Unit = subscription.unsubscribe()
             }
-
-            override def onComplete(): Unit = {
-              completed = true
-              observer.onComplete()
-            }
-
-            override def onNext(tResult: Int): Unit = {
-              observer.onNext(tResult)
-            }
+            observer.onSubscribe(masterSub)
           }
-        )
+
+          override def onComplete(): Unit = {
+            completed = true
+            observer.onComplete()
+          }
+
+          override def onNext(tResult: Int): Unit = {
+            observer.onNext(tResult)
+          }
+        }
       )
     }
   }

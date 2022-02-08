@@ -16,32 +16,11 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{ Observer, SingleObservable, Subscription }
+import org.mongodb.scala.{ Observer, SingleObservable }
+import reactor.core.publisher.Mono
 
 private[scala] case class SingleItemObservable[A](item: A) extends SingleObservable[A] {
 
-  override def subscribe(observer: Observer[_ >: A]): Unit = {
-    observer.onSubscribe(
-      new Subscription {
-        @volatile
-        private var subscribed: Boolean = true
-        @volatile
-        private var completed: Boolean = false
-
-        override def isUnsubscribed: Boolean = !subscribed
-
-        override def request(n: Long): Unit = {
-          require(n > 0L, s"Number requested must be greater than zero: $n")
-
-          if (subscribed && !completed) {
-            observer.onNext(item)
-            observer.onComplete()
-            completed = true
-          }
-        }
-
-        override def unsubscribe(): Unit = subscribed = false
-      }
-    )
-  }
+  override def subscribe(observer: Observer[_ >: A]): Unit =
+    Mono.just(item).subscribe(observer)
 }
