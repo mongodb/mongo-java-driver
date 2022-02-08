@@ -16,63 +16,19 @@
 
 package org.mongodb.scala.internal
 
-import java.util.concurrent.atomic.AtomicInteger
-
-import org.mongodb.scala.{ Observable, Observer, Subscription }
+import org.mongodb.scala.{ Observable, Observer }
+import reactor.core.publisher.Flux
+import reactor.core.scheduler.Schedulers
 
 import scala.concurrent.ExecutionContext
 
 private[scala] case class ExecutionContextObservable[T](observable: Observable[T], context: ExecutionContext)
     extends Observable[T] {
 
-  // scalastyle:off method.length
-  override def subscribe(observer: Observer[_ >: T]): Unit = {
-    observable.subscribe(
-      SubscriptionCheckingObserver(
-        new Observer[T] {
-          private val referenceCount = new AtomicInteger(1)
-          @volatile
-          private var error: Option[Throwable] = None
-          @volatile
-          private var onCompleteCalled = false
+  override def subscribe(observer: Observer[_ >: T]): Unit =
+    Flux
+      .from(observable)
+      .publishOn(Schedulers.fromExecutor((command: Runnable) => context.execute(command)))
+      .subscribe(observer)
 
-          override def onSubscribe(subscription: Subscription): Unit =
-            withContext(() => { observer.onSubscribe(subscription) })
-
-          override def onNext(tResult: T): Unit = {
-            referenceCount.incrementAndGet()
-            withContext(() => {
-              observer.onNext(tResult)
-              checkTerminated()
-            })
-          }
-
-          override def onError(throwable: Throwable): Unit = {
-            error = Some(throwable)
-            checkTerminated()
-          }
-
-          override def onComplete(): Unit = {
-            onCompleteCalled = true
-            checkTerminated()
-          }
-
-          def checkTerminated(decrement: Boolean = false): Unit = {
-            val counter = referenceCount.decrementAndGet()
-            if (counter == 0 && error.isDefined) {
-              withContext(() => observer.onError(error.get))
-            } else if (counter == 0 && onCompleteCalled) {
-              withContext(() => observer.onComplete())
-            }
-          }
-
-          private def withContext(f: () => Unit): Unit = {
-            context.execute(new Runnable {
-              override def run(): Unit = f()
-            })
-          }
-        }
-      )
-    )
-  }
 }

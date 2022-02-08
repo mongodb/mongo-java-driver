@@ -19,23 +19,7 @@ package org.mongodb.scala.internal
 import org.mongodb.scala.{ Observable, Observer, SingleObservable }
 
 private[scala] case class UnitObservable[T](observable: Observable[T]) extends SingleObservable[Unit] {
-  override def subscribe(observer: Observer[_ >: Unit]): Unit = {
-    observable
-      .foldLeft(0)((_, _) => 0) // Consume all events from the underlying observable with a single request
-      .subscribe(
-        SubscriptionCheckingObserver(
-          new Observer[Int] {
+  override def subscribe(observer: Observer[_ >: Unit]): Unit =
+    observable.foldLeft(0)((_, _) => 0).map(_ => ()).subscribe(observer)
 
-            override def onNext(result: Int): Unit = {}
-
-            override def onError(e: Throwable): Unit = observer.onError(e)
-
-            override def onComplete(): Unit = {
-              observer.onNext(())
-              observer.onComplete()
-            }
-          }
-        )
-      )
-  }
 }

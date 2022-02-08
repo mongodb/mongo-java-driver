@@ -460,20 +460,6 @@ class ScalaObservableSpec extends BaseSpec {
     Await.result(altContextObservable.toFuture(), Duration(10, TimeUnit.SECONDS)) should equal(1 to 10000)
   }
 
-  it should "let the user know the Observable hasn't been subscribed to" in {
-    forAll(observableErrorScenarios) { (obs: (() => Observable[_])) =>
-      val futureError = intercept[IllegalStateException] {
-        Await.result(obs().toFuture(), Duration(10, TimeUnit.SECONDS))
-      }
-      futureError.getMessage should equal("The Observable has not been subscribed to.")
-
-      val headError = intercept[IllegalStateException] {
-        Await.result(obs().head(), Duration(10, TimeUnit.SECONDS))
-      }
-      headError.getMessage should equal("The Observable has not been subscribed to.")
-    }
-  }
-
   def badObservable[T](t: T*): Observable[T] = {
     new Observable[T] {
       override def subscribe(observer: Observer[_ >: T]): Unit = {
