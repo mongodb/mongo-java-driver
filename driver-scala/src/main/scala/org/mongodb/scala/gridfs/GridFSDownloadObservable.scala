@@ -35,7 +35,7 @@ case class GridFSDownloadObservable(private val wrapped: GridFSDownloadPublisher
    *
    * @return a Publisher with a single element, the corresponding GridFSFile for the file being downloaded
    */
-  def gridFSFile(): Observable[GridFSFile] = wrapped.getGridFSFile
+  def gridFSFile(): Observable[GridFSFile] = wrapped.getGridFSFile()
 
   /**
    * The preferred number of bytes per `ByteBuffer` returned by the `Observable`.
