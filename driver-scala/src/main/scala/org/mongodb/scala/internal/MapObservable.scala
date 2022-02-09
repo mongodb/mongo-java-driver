@@ -19,8 +19,18 @@ package org.mongodb.scala.internal
 import org.mongodb.scala.{ Observable, Observer }
 import reactor.core.publisher.Flux
 
+import org.reactivestreams.{ Subscription => JSubscription }
+
 private[scala] case class MapObservable[T, S](observable: Observable[T], s: T => S, f: Throwable => Throwable = t => t)
     extends Observable[S] {
-  override def subscribe(observer: Observer[_ >: S]): Unit =
-    Flux.from(observable).map((t: T) => s(t)).onErrorMap((x: Throwable) => f(x)).subscribe(observer)
+  override def subscribe(observer: Observer[_ >: S]): Unit = {
+    Flux
+      .from(observable)
+      .subscribe(
+        (t: T) => observer.onNext(s(t)),
+        (e: Throwable) => observer.onError(f(e)),
+        () => observer.onComplete(),
+        (s: JSubscription) => observer.onSubscribe(s)
+      )
+  }
 }

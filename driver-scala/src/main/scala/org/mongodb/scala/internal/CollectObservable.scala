@@ -23,5 +23,5 @@ private[scala] case class CollectObservable[T, S](observable: Observable[T], pf:
     extends SingleObservable[S] {
 
   override def subscribe(observer: Observer[_ >: S]): Unit =
-    Flux.from(observable).filter((t: T) => pf.isDefinedAt(t)).map((t: T) => pf.apply(t)).subscribe(observer)
+    Flux.from(observable.filter((t: T) => pf.isDefinedAt(t)).map((t: T) => pf.apply(t))).subscribe(observer)
 }

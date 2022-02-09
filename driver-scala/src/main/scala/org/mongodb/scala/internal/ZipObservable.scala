@@ -18,6 +18,8 @@ package org.mongodb.scala.internal
 
 import org.mongodb.scala.{ Observable, Observer }
 import reactor.core.publisher.Flux
+import org.reactivestreams.{ Subscription => JSubscription }
+import reactor.util.function.{ Tuple2 => RTuple2 }
 
 private[scala] case class ZipObservable[L, R](
     leftObservable: Observable[L],
@@ -25,5 +27,12 @@ private[scala] case class ZipObservable[L, R](
 ) extends Observable[(L, R)] {
 
   def subscribe(observer: Observer[_ >: (L, R)]): Unit =
-    Flux.zip(leftObservable, rightObservable).map(t => (t.getT1, t.getT2)).subscribe(observer)
+    Flux
+      .zip(leftObservable, rightObservable)
+      .subscribe(
+        (t: RTuple2[L, R]) => observer.onNext((t.getT1, t.getT2)),
+        (e: Throwable) => observer.onError(e),
+        () => observer.onComplete(),
+        (s: JSubscription) => observer.onSubscribe(s)
+      )
 }
