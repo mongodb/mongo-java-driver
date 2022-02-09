@@ -17,7 +17,6 @@
 package org.mongodb.scala.internal
 
 import org.mongodb.scala.{ BaseSpec, Observable, Observer }
-import org.scalatest.Assertions
 import org.scalatest.concurrent.{ Eventually, Futures }
 
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,7 +25,6 @@ import scala.concurrent.{ Future, Promise }
 
 class FlatMapObservableTest extends BaseSpec with Futures with Eventually {
   "FlatMapObservable" should "only complete once" in {
-    Assertions.cancel("Temporarily skipping this test")
 
     val p = Promise[Unit]()
     val completedCounter = new AtomicInteger(0)
