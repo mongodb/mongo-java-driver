@@ -137,6 +137,7 @@ configure(scalaProjects) {
                     "-Xlint:strict-unsealed-patmat"
             ]
         }
+
     }
 
     tasks.withType(GenerateModuleMetadata) {

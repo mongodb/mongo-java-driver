@@ -18,6 +18,7 @@ package org.mongodb.scala
 
 import org.mongodb.scala.bson.ObjectId
 import org.mongodb.scala.gridfs.GridFSFile
+import org.mongodb.scala.internal.MapObservable
 import org.reactivestreams.{ Publisher, Subscriber, Subscription => JSubscription }
 import reactor.core.publisher.{ Flux, Mono }
 
@@ -88,14 +89,19 @@ trait ObservableImplicits {
 
   implicit class ToSingleObservableInt(pub: => Publisher[java.lang.Integer]) extends SingleObservable[Int] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: Int]): Unit =
-      Mono.from(publisher).map(_.intValue()).toSingle().subscribe(observer)
+    override def subscribe(observer: Observer[_ >: Int]): Unit = {
+      Mono
+        .from(MapObservable(publisher.toObservable(), (i: Integer) => i.toInt))
+        .subscribe(observer)
+    }
   }
 
   implicit class ToSingleObservableLong(pub: => Publisher[java.lang.Long]) extends SingleObservable[Long] {
     val publisher = pub
     override def subscribe(observer: Observer[_ >: Long]): Unit =
-      Mono.from(publisher).map(_.longValue()).toSingle().subscribe(observer)
+      Mono
+        .from(MapObservable(publisher.toObservable(), (i: java.lang.Long) => i.toLong))
+        .subscribe(observer)
   }
 
   implicit class ToSingleObservableObjectId(pub: => Publisher[org.bson.types.ObjectId])
