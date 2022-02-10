@@ -16,6 +16,10 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.internal.VisibleForTesting;
+
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+
 /**
  * An interface for reference-counted objects.
  * <p>
@@ -39,9 +43,14 @@ public interface ReferenceCounted {
     /**
      * Gets the current reference count.
      *
+     * <p>
+     * This method should only be used for testing.  Production code should prefer using the count returned from {@link #release()}
+     * </p>
+     *
      * @return the current count, which must be greater than or equal to 0.
      * Returns 1 for a newly created object.
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     int getCount();
 
     /**
@@ -54,6 +63,7 @@ public interface ReferenceCounted {
     /**
      * Release a reference to this object.
      * @throws java.lang.IllegalStateException if the reference count is already 0
+     * @return the reference count after the release
      */
-    void release();
+    int release();
 }

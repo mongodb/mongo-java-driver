@@ -48,13 +48,14 @@ public final class TransactionContext<C extends ReferenceCounted> extends Abstra
     }
 
     @Override
-    public void release() {
-        super.release();
-        if (getCount() == 0) {
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
             if (pinnedConnection != null) {
                 pinnedConnection.release();
             }
         }
+        return count;
     }
 
     @SuppressWarnings("unchecked")

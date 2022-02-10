@@ -37,7 +37,6 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
@@ -61,16 +60,16 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public void release() {
-        super.release();
-        if (getCount() == 0) {
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
             wrapped.close();
         }
+        return count;
     }
 
     @Override
     public ConnectionDescription getDescription() {
-        isTrue("open", getCount() > 0);
         return wrapped.getDescription();
     }
 

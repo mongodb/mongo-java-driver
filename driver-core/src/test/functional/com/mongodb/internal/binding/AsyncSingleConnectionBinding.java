@@ -202,12 +202,13 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
-    public void release() {
-        super.release();
-        if (getCount() == 0) {
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
             readConnection.release();
             writeConnection.release();
         }
+        return count;
     }
 
     private final class SingleAsyncConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
@@ -259,11 +260,12 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         }
 
         @Override
-        public void release() {
-            super.release();
-            if (super.getCount() == 0) {
+        public int release() {
+            int count = super.release();
+            if (count == 0) {
                 AsyncSingleConnectionBinding.this.release();
             }
+            return count;
         }
     }
 }

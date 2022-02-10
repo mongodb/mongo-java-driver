@@ -91,8 +91,8 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
-    public void release() {
-        wrapped.release();
+    public int release() {
+        return wrapped.release();
     }
 
     @Override
@@ -149,8 +149,8 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
+        public int release() {
+            return wrapped.release();
         }
     }
 }
