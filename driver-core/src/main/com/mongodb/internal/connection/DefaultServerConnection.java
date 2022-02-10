@@ -71,7 +71,6 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public ConnectionDescription getDescription() {
-        isTrue("open", !wrapped.isClosed());
         return wrapped.getDescription();
     }
 
