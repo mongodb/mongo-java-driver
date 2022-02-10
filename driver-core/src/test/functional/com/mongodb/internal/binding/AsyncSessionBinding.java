@@ -114,8 +114,8 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     }
 
     @Override
-    public void release() {
-        wrapped.release();
+    public int release() {
+        return wrapped.release();
     }
 
     private class SessionBindingAsyncConnectionSource implements AsyncConnectionSource {
@@ -168,8 +168,8 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
+        public int release() {
+            return wrapped.release();
         }
     }
 

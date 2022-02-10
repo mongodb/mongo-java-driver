@@ -61,16 +61,17 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public void release() {
-        super.release();
-        if (getCount() == 0) {
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
             wrapped.close();
         }
+        return count;
     }
 
     @Override
     public ConnectionDescription getDescription() {
-        isTrue("open", getCount() > 0);
+        isTrue("open", !wrapped.isClosed());
         return wrapped.getDescription();
     }
 

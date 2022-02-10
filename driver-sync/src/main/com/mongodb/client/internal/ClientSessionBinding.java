@@ -23,6 +23,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
@@ -38,7 +39,7 @@ import static org.bson.assertions.Assertions.notNull;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class ClientSessionBinding implements ReadWriteBinding {
+public class ClientSessionBinding extends AbstractReferenceCounted implements ReadWriteBinding {
     private final ClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
@@ -46,6 +47,7 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
     public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final ClusterAwareReadWriteBinding wrapped) {
         this.wrapped = wrapped;
+        wrapped.retain();
         this.session = notNull("session", session);
         this.ownsSession = ownsSession;
         this.sessionContext = new SyncClientSessionContext(session);
@@ -63,20 +65,21 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
     @Override
     public ReadWriteBinding retain() {
-        wrapped.retain();
+        super.retain();
         return this;
     }
 
     @Override
-    public void release() {
-        wrapped.release();
-        closeSessionIfCountIsZero();
-    }
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
+            wrapped.release();
+            if (ownsSession) {
+                session.close();
+            }
 
-    private void closeSessionIfCountIsZero() {
-        if (getCount() == 0 && ownsSession) {
-            session.close();
         }
+        return count;
     }
 
     @Override
@@ -145,6 +148,7 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
         SessionBindingConnectionSource(final ConnectionSource wrapped) {
             this.wrapped = wrapped;
+            ClientSessionBinding.this.retain();
         }
 
         @Override
@@ -202,9 +206,12 @@ public class ClientSessionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
-            closeSessionIfCountIsZero();
+        public int release() {
+            int count = wrapped.release();
+            if (count == 0) {
+                ClientSessionBinding.this.release();
+            }
+            return count;
         }
     }
 

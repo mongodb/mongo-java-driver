@@ -299,6 +299,7 @@ class QueryBatchCursorSpecification extends Specification {
             if (refCounter < 0) {
                 throw new IllegalStateException('Tried to release Connection below 0')
             }
+            refCounter;
         }
         mockConn.getCount() >> { refCounter }
         mockConn
@@ -328,6 +329,7 @@ class QueryBatchCursorSpecification extends Specification {
             if (refCounter < 0) {
                 throw new IllegalStateException('Tried to release ConnectionSource below 0')
             }
+            refCounter
         }
         mockConnectionSource.getCount() >> { refCounter }
         mockConnectionSource.getConnection() >> {
