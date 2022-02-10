@@ -45,8 +45,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
 
     public  ClientSessionBinding(final AsyncClientSession session, final boolean ownsSession,
                                  final AsyncClusterAwareReadWriteBinding wrapped) {
-        this.wrapped = notNull("wrapped", (wrapped));
-        this.wrapped.retain();  // TODO: should be able to move to previous line
+        this.wrapped = notNull("wrapped", wrapped).retain();
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
         this.sessionContext = new AsyncClientSessionContext(session);

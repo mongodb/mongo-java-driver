@@ -73,7 +73,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     }
 
     @Override
-    public AsyncReadWriteBinding retain() {
+    public AsyncClusterAwareReadWriteBinding retain() {
         super.retain();
         return this;
     }

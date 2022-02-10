@@ -64,7 +64,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
     }
 
     @Override
-    public ReadWriteBinding retain() {
+    public ClientSessionBinding retain() {
         super.retain();
         return this;
     }
