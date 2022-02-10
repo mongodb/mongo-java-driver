@@ -146,11 +146,12 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         }
 
         @Override
-        public void release() {
-            super.release();
-            if (super.getCount() == 0) {
+        public int release() {
+            int count = super.release();
+            if (count == 0) {
                 SingleServerBinding.this.release();
             }
+            return count;
         }
     }
 }

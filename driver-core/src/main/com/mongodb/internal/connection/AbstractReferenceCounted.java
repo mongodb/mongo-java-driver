@@ -36,9 +36,11 @@ abstract class AbstractReferenceCounted implements ReferenceCounted {
     }
 
     @Override
-    public void release() {
-        if (referenceCount.decrementAndGet() < 0) {
+    public int release() {
+        int decrementedValue = referenceCount.decrementAndGet();
+        if (decrementedValue < 0) {
             throw new IllegalStateException("Attempted to decrement the reference count below 0");
         }
+        return decrementedValue;
     }
 }

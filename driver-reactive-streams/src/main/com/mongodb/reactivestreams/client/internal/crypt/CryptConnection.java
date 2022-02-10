@@ -87,8 +87,8 @@ class CryptConnection implements AsyncConnection {
     }
 
     @Override
-    public void release() {
-        wrapped.release();
+    public int release() {
+        return wrapped.release();
     }
 
     @Override

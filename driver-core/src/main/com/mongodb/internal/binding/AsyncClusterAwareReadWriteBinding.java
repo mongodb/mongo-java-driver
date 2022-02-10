@@ -33,4 +33,7 @@ public interface AsyncClusterAwareReadWriteBinding extends AsyncReadWriteBinding
      * @param callback the to be passed the connection source
      */
     void getConnectionSource(ServerAddress serverAddress, SingleResultCallback<AsyncConnectionSource> callback);
+
+    @Override
+    AsyncClusterAwareReadWriteBinding retain();
 }

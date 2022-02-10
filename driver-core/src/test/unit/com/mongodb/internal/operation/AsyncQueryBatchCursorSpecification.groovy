@@ -624,6 +624,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
             } else if (counter < 0) {
                 throw new IllegalStateException('Tried to release AsyncConnection below 0')
             }
+            counter
         }
         mock.getCount() >> { counter }
         mock
@@ -671,6 +672,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
             } else if (counter < 0) {
                 throw new IllegalStateException('Tried to release AsyncConnectionSource below 0')
             }
+            counter
         }
         mock.getCount() >> { counter }
         mock

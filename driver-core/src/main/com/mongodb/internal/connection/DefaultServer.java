@@ -301,11 +301,12 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
-            if (getCount() == 0) {
+        public int release() {
+            int count = wrapped.release();
+            if (count == 0) {
                 server.operationEnd();
             }
+            return count;
         }
 
         @Override
@@ -401,11 +402,12 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
-            if (getCount() == 0) {
+        public int release() {
+            int count = wrapped.release();
+            if (count == 0) {
                 server.operationEnd();
             }
+            return count;
         }
 
         @Override

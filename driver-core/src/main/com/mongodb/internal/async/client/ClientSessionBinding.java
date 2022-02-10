@@ -23,6 +23,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
@@ -36,7 +37,7 @@ import org.bson.BsonTimestamp;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 
-public class ClientSessionBinding implements AsyncReadWriteBinding {
+public class ClientSessionBinding extends AbstractReferenceCounted implements AsyncReadWriteBinding {
     private final AsyncClusterAwareReadWriteBinding wrapped;
     private final AsyncClientSession session;
     private final boolean ownsSession;
@@ -44,7 +45,7 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
 
     public  ClientSessionBinding(final AsyncClientSession session, final boolean ownsSession,
                                  final AsyncClusterAwareReadWriteBinding wrapped) {
-        this.wrapped = notNull("wrapped", (wrapped));
+        this.wrapped = notNull("wrapped", wrapped).retain();
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
         this.sessionContext = new AsyncClientSessionContext(session);
@@ -114,13 +115,8 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
     }
 
     @Override
-    public int getCount() {
-        return wrapped.getCount();
-    }
-
-    @Override
     public AsyncReadWriteBinding retain() {
-        wrapped.retain();
+        super.retain();
         return this;
     }
 
@@ -131,15 +127,15 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
     }
 
     @Override
-    public void release() {
-        wrapped.release();
-        closeSessionIfCountIsZero();
-    }
-
-    private void closeSessionIfCountIsZero() {
-        if (getCount() == 0 && ownsSession) {
-            session.close();
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
+            wrapped.release();
+            if (ownsSession) {
+                session.close();
+            }
         }
+        return count;
     }
 
     private boolean isConnectionSourcePinningRequired() {
@@ -152,6 +148,7 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
 
         SessionBindingAsyncConnectionSource(final AsyncConnectionSource wrapped) {
             this.wrapped = wrapped;
+            ClientSessionBinding.this.retain();
         }
 
         @Override
@@ -214,9 +211,12 @@ public class ClientSessionBinding implements AsyncReadWriteBinding {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
-            closeSessionIfCountIsZero();
+        public int release() {
+            int count = wrapped.release();
+            if (count == 0) {
+                ClientSessionBinding.this.release();
+            }
+            return count;
         }
     }
 

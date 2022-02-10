@@ -79,12 +79,13 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public void release() {
+    public int release() {
         count--;
         if (count == 0) {
             writeConnection.release();
             readConnection.release();
         }
+        return count;
     }
 
     @Override
@@ -184,11 +185,12 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public void release() {
+        public int release() {
             count--;
-            if (getCount() == 0) {
+            if (count == 0) {
                 SingleConnectionBinding.this.release();
             }
+            return count;
         }
     }
 }

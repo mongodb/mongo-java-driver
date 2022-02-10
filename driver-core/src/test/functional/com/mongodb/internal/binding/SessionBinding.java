@@ -52,8 +52,8 @@ public class SessionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public void release() {
-        wrapped.release();
+    public int release() {
+        return wrapped.release();
     }
 
     @Override
@@ -136,8 +136,8 @@ public class SessionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
+        public int release() {
+            return wrapped.release();
         }
     }
 

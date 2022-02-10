@@ -182,9 +182,10 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         }
 
         @Override
-        public void release() {
-            super.release();
+        public int release() {
+            int count = super.release();
             ClusterBinding.this.release();
+            return count;
         }
     }
 }

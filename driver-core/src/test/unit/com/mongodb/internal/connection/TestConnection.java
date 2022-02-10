@@ -56,7 +56,8 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public void release() {
+    public int release() {
+        return 1;
     }
 
     @Override

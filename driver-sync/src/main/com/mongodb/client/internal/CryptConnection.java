@@ -84,8 +84,8 @@ class CryptConnection implements Connection {
     }
 
     @Override
-    public void release() {
-        wrapped.release();
+    public int release() {
+        return wrapped.release();
     }
 
     @Override

@@ -62,6 +62,7 @@ class ClientSessionBindingSpecification extends Specification {
                 }
             }
         }
+        wrappedBinding.retain() >> wrappedBinding
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
