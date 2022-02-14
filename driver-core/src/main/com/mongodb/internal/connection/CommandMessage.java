@@ -47,6 +47,7 @@ import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
@@ -98,7 +99,7 @@ public final class CommandMessage extends RequestMessage {
                    final boolean responseExpected, final boolean exhaustAllowed,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
                    final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
-        super(namespace.getFullName(), getOpCode(settings, serverApi), settings);
+        super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.namespace = namespace;
         this.command = command;
         this.commandFieldNameValidator = commandFieldNameValidator;
@@ -334,8 +335,11 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
-    private static OpCode getOpCode(final MessageSettings settings, @Nullable final ServerApi serverApi) {
-        return isServerVersionAtLeastThreeDotSix(settings) || serverApi != null ? OpCode.OP_MSG : OpCode.OP_QUERY;
+    private static OpCode getOpCode(final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final ServerApi serverApi) {
+        return isServerVersionAtLeastThreeDotSix(settings) || clusterConnectionMode == LOAD_BALANCED || serverApi != null
+                ? OpCode.OP_MSG
+                : OpCode.OP_QUERY;
     }
 
     private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
