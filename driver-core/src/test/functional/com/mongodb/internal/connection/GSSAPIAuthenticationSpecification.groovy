@@ -37,6 +37,7 @@ import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
+import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getLoginContextName

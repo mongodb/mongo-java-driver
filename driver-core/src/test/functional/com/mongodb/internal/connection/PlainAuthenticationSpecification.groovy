@@ -52,7 +52,7 @@ class PlainAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                etClusterConnectionMode(), null, connection)
+                getClusterConnectionMode(), null, connection)
 
         then:
         thrown(MongoCommandException)
