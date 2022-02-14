@@ -22,6 +22,7 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.SubjectProvider;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -49,8 +50,9 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
     private static final String SUBJECT_PROVIDER_CACHE_KEY = "SUBJECT_PROVIDER";
 
-    SaslAuthenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
-        super(credential, serverApi);
+    SaslAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
+            final @Nullable ServerApi serverApi) {
+        super(credential, clusterConnectionMode, serverApi);
     }
 
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
@@ -225,25 +227,26 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     private BsonDocument sendSaslStart(final byte[] outToken, final InternalConnection connection) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
-        return executeCommand(getMongoCredential().getSource(), startDocument, getServerApi(), connection);
+        return executeCommand(getMongoCredential().getSource(), startDocument, getClusterConnectionMode(), getServerApi(), connection);
     }
 
     private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection) {
-        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getServerApi(),
-                connection);
+        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken),
+                getClusterConnectionMode(), getServerApi(), connection);
     }
 
     private void sendSaslStartAsync(final byte[] outToken, final InternalConnection connection,
                                     final SingleResultCallback<BsonDocument> callback) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
-        executeCommandAsync(getMongoCredential().getSource(), startDocument, getServerApi(), connection, callback);
+        executeCommandAsync(getMongoCredential().getSource(), startDocument, getClusterConnectionMode(), getServerApi(), connection,
+                callback);
     }
 
     private void sendSaslContinueAsync(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection,
                                        final SingleResultCallback<BsonDocument> callback) {
-        executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getServerApi(),
-                connection, callback);
+        executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken),
+                getClusterConnectionMode(), getServerApi(), connection, callback);
     }
 
     protected BsonDocument createSaslStartCommandDocument(final byte[] outToken) {

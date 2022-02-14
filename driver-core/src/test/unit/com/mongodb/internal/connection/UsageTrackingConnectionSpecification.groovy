@@ -30,6 +30,7 @@ import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 
 class UsageTrackingConnectionSpecification extends Specification {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
@@ -173,7 +174,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build(), null),
+                MessageSettings.builder().build(), SINGLE, null),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
 
         then:
@@ -191,7 +192,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build(), null),
+                MessageSettings.builder().build(), SINGLE, null),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, futureResultCallback)
         futureResultCallback.get()
 

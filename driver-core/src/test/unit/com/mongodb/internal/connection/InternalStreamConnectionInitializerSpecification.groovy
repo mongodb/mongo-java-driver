@@ -290,10 +290,10 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with default authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createCredential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(DefaultAuthenticator, constructorArgs: [credential, null])
+        def authenticator = Spy(DefaultAuthenticator, constructorArgs: [credential, SINGLE, null])
         def scramShaAuthenticator = Spy(ScramShaAuthenticator,
                 constructorArgs: [credential.withMechanism(AuthenticationMechanism.SCRAM_SHA_256),
-                                  { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, null])
+                                  { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, SINGLE, null])
         def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         authenticator.getAuthenticatorForHello() >> scramShaAuthenticator
         def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
@@ -324,7 +324,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with SCRAM-SHA-256 authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createScramSha256Credential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, null])
+        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, SINGLE,
+                                                                         null])
         def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
         def speculativeAuthenticateResponse =
@@ -354,7 +355,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with SCRAM-SHA-1 authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createScramSha1Credential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' }, null])
+        def authenticator = Spy(ScramShaAuthenticator, constructorArgs: [credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' },
+                                                                         SINGLE, null])
         def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         def serverResponse = 'r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096'
         def speculativeAuthenticateResponse =
@@ -384,7 +386,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should speculatively authenticate with X509 authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createMongoX509Credential())
-        def authenticator = Spy(X509Authenticator, constructorArgs: [credential, null])
+        def authenticator = Spy(X509Authenticator, constructorArgs: [credential, SINGLE, null])
         def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
         def speculativeAuthenticateResponse =
                 BsonDocument.parse('{ dbname: "$external", user: "CN=client,OU=KernelUser,O=MongoDB,L=New York City,ST=New York,C=US"}')
@@ -412,7 +414,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should not speculatively authenticate with Plain authenticator'() {
         given:
         def credential = new MongoCredentialWithCache(createPlainCredential('user', 'database', 'pencil' as char[]))
-        def authenticator = Spy(PlainAuthenticator, constructorArgs: [credential, null])
+        def authenticator = Spy(PlainAuthenticator, constructorArgs: [credential, SINGLE, null])
         def initializer = new InternalStreamConnectionInitializer(SINGLE, authenticator, null, [], null)
 
         when:

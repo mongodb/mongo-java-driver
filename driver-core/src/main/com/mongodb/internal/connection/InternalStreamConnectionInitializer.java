@@ -86,8 +86,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     public void startHandshakeAsync(final InternalConnection internalConnection,
                                     final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
         final long startTime = System.nanoTime();
-        executeCommandAsync("admin", createHelloCommand(authenticator, internalConnection), serverApi, internalConnection,
-                new SingleResultCallback<BsonDocument>() {
+        executeCommandAsync("admin", createHelloCommand(authenticator, internalConnection), clusterConnectionMode, serverApi,
+                internalConnection, new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument helloResult, final Throwable t) {
                         if (t != null) {
@@ -128,7 +128,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
         long start = System.nanoTime();
         try {
-            helloResult = executeCommand("admin", helloCommandDocument, serverApi, internalConnection);
+            helloResult = executeCommand("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection);
         } catch (MongoException e) {
             throw mapHelloException(e);
         }
@@ -197,7 +197,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         }
 
         return applyGetLastErrorResult(executeCommandWithoutCheckingForFailure("admin",
-                new BsonDocument("getlasterror", new BsonInt32(1)), serverApi,
+                new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
                 internalConnection),
                 description);
     }
@@ -225,7 +225,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             return;
         }
 
-        executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)), serverApi,
+        executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
                 internalConnection,
                 new SingleResultCallback<BsonDocument>() {
                     @Override

@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
+import static com.mongodb.ClusterFixture.getClusterConnectionMode;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 
@@ -66,14 +67,14 @@ public class PlainAuthenticatorTest {
     @Test
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, password.toCharArray()),
-                getServerApi());
+                getClusterConnectionMode(), getServerApi());
         authenticator.authenticate(internalConnection, connectionDescription);
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, "wrong".toCharArray()),
-                getServerApi());
+                getClusterConnectionMode(), getServerApi());
         authenticator.authenticate(internalConnection, connectionDescription);
     }
 

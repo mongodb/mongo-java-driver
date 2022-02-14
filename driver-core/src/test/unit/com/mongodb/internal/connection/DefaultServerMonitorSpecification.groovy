@@ -18,6 +18,7 @@ package com.mongodb.internal.connection
 
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.ServerAddress
+import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerConnectionState
@@ -83,7 +84,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
-                new ClusterClock(), internalConnectionFactory, null, SameObjectProvider.initialized(sdam))
+                new ClusterClock(), internalConnectionFactory, ClusterConnectionMode.SINGLE, null, SameObjectProvider.initialized(sdam))
         monitor.start()
 
         when:
@@ -168,7 +169,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
+                new ClusterClock(), internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider())
 
         when:
         monitor.start()
@@ -249,7 +250,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                new ClusterClock(), internalConnectionFactory, null, mockSdamProvider())
+                new ClusterClock(), internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider())
 
         when:
         monitor.start()

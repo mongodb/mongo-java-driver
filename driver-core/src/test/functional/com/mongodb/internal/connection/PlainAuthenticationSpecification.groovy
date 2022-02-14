@@ -33,6 +33,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.mongodb.AuthenticationMechanism.PLAIN
+import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
@@ -50,7 +51,8 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                etClusterConnectionMode(), null, connection)
 
         then:
         thrown(MongoCommandException)
@@ -68,7 +70,8 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection)
 
         then:
         true
@@ -86,7 +89,8 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), null, connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection)
 
         then:
         thrown(MongoSecurityException)
@@ -112,7 +116,7 @@ class PlainAuthenticationSpecification extends Specification {
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {
-        credential == null ? null : new PlainAuthenticator(new MongoCredentialWithCache(credential), null)
+        credential == null ? null : new PlainAuthenticator(new MongoCredentialWithCache(credential), clusterConnectionMode, null)
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {

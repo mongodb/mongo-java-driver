@@ -30,6 +30,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.ClusterFixture.getClusterConnectionMode;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
 import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
@@ -48,7 +49,7 @@ public class NativeAuthenticatorUnitTest {
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         MongoCredential credential = MongoCredential.createCredential("\u53f0\u5317", "database",
                 "Ta\u0301ibe\u030Ci".toCharArray());
-        subject = new NativeAuthenticator(new MongoCredentialWithCache(credential), getServerApi());
+        subject = new NativeAuthenticator(new MongoCredentialWithCache(credential), getClusterConnectionMode(), getServerApi());
     }
 
     @Test

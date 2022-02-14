@@ -259,6 +259,10 @@ public final class ClusterFixture {
         }
     }
 
+    public static ClusterConnectionMode getClusterConnectionMode() {
+        return getCluster().getCurrentDescription().getConnectionMode();
+    }
+
     @Nullable
     public static ServerApi getServerApi() {
          if (System.getProperty(MONGODB_API_VERSION) == null) {

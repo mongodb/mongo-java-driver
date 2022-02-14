@@ -46,7 +46,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
@@ -72,16 +72,17 @@ public final class CommandMessage extends RequestMessage {
     private final ServerApi serverApi;
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                   final ReadPreference readPreference, final MessageSettings settings, final @Nullable ServerApi serverApi) {
+            final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
+            final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
-                MULTIPLE, serverApi);
+                clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                   final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
-                   final @Nullable ServerApi serverApi) {
+            final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
+            final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
-                MULTIPLE, serverApi);
+                clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
@@ -106,7 +107,7 @@ public final class CommandMessage extends RequestMessage {
         this.exhaustAllowed = exhaustAllowed;
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
-        this.clusterConnectionMode = clusterConnectionMode;
+        this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
     }
 

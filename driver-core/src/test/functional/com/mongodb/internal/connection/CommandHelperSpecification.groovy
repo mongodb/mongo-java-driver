@@ -34,6 +34,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
@@ -67,7 +68,8 @@ class CommandHelperSpecification extends Specification {
         clusterClock.advance(new BsonDocument('clusterTime', new BsonTimestamp(42L)))
 
         when:
-        executeCommand('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), clusterClock, getServerApi(), connection)
+        executeCommand('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), clusterClock, getClusterConnectionMode(),
+                getServerApi(), connection)
 
         then:
         1 * connection.sendAndReceive(_, _, _ as ClusterClockAdvancingSessionContext, _)
@@ -79,7 +81,8 @@ class CommandHelperSpecification extends Specification {
         BsonDocument receivedDocument = null
         Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
-        executeCommandAsync('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), getServerApi(), connection)
+        executeCommandAsync('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), getClusterConnectionMode(),
+                getServerApi(), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
         latch1.await()
 
@@ -90,7 +93,8 @@ class CommandHelperSpecification extends Specification {
 
         when:
         def latch2 = new CountDownLatch(1)
-        executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), getServerApi(), connection)
+        executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), getClusterConnectionMode(),
+                getServerApi(), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch2.countDown() }
         latch2.await()
 

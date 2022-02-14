@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -36,21 +37,22 @@ import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 class NativeAuthenticator extends Authenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
 
-    NativeAuthenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
-        super(credential, serverApi);
+    NativeAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
+            final @Nullable ServerApi serverApi) {
+        super(credential, clusterConnectionMode, serverApi);
     }
 
     @Override
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
         try {
             BsonDocument nonceResponse = executeCommand(getMongoCredential().getSource(),
-                                                         getNonceCommand(), getServerApi(),
+                                                         getNonceCommand(), getClusterConnectionMode(), getServerApi(),
                                                          connection);
 
             BsonDocument authCommand = getAuthCommand(getUserNameNonNull(),
                                                       getPasswordNonNull(),
                                                       ((BsonString) nonceResponse.get("nonce")).getValue());
-            executeCommand(getMongoCredential().getSource(), authCommand, getServerApi(), connection);
+            executeCommand(getMongoCredential().getSource(), authCommand, getClusterConnectionMode(), getServerApi(), connection);
         } catch (MongoCommandException e) {
             throw new MongoSecurityException(getMongoCredential(), "Exception authenticating", e);
         }
@@ -60,7 +62,7 @@ class NativeAuthenticator extends Authenticator {
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeCommandAsync(getMongoCredential().getSource(), getNonceCommand(), getServerApi(), connection,
+        executeCommandAsync(getMongoCredential().getSource(), getNonceCommand(), getClusterConnectionMode(), getServerApi(), connection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
                                 public void onResult(final BsonDocument nonceResult, final Throwable t) {
@@ -70,7 +72,7 @@ class NativeAuthenticator extends Authenticator {
                                         executeCommandAsync(getMongoCredential().getSource(),
                                                             getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
                                                                            ((BsonString) nonceResult.get("nonce")).getValue()),
-                                                            getServerApi(), connection,
+                                                getClusterConnectionMode(), getServerApi(), connection,
                                                             new SingleResultCallback<BsonDocument>() {
                                                                 @Override
                                                                 public void onResult(final BsonDocument result, final Throwable t) {
