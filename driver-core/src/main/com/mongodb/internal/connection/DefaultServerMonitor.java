@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
@@ -69,6 +70,7 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ClusterClock clusterClock;
     private final Provider<SdamServerDescriptionManager> sdamProvider;
     private final InternalConnectionFactory internalConnectionFactory;
+    private final ClusterConnectionMode clusterConnectionMode;
     @Nullable
     private final ServerApi serverApi;
     private final ServerSettings serverSettings;
@@ -83,13 +85,16 @@ class DefaultServerMonitor implements ServerMonitor {
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
                          final ClusterClock clusterClock,
-                         final InternalConnectionFactory internalConnectionFactory, final @Nullable ServerApi serverApi,
+                         final InternalConnectionFactory internalConnectionFactory,
+                         final ClusterConnectionMode clusterConnectionMode,
+                         final @Nullable ServerApi serverApi,
                          final Provider<SdamServerDescriptionManager> sdamProvider) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
         this.serverMonitorListener = singleServerMonitorListener(serverSettings);
         this.clusterClock = notNull("clusterClock", clusterClock);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
+        this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
         this.sdamProvider = sdamProvider;
         monitor = new ServerMonitorRunnable();
@@ -256,7 +261,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     MessageSettings.builder()
                             .maxWireVersion(connection.getDescription().getMaxWireVersion())
                             .build(),
-                    shouldStreamResponses(currentServerDescription), serverApi);
+                    shouldStreamResponses(currentServerDescription), clusterConnectionMode, serverApi);
         }
 
         private void logStateChange(final ServerDescription previousServerDescription,
@@ -427,7 +432,7 @@ class DefaultServerMonitor implements ServerMonitor {
             long start = System.nanoTime();
             executeCommand("admin",
                     new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
-                    clusterClock, serverApi, connection);
+                    clusterClock, clusterConnectionMode, serverApi, connection);
             long elapsedTimeNanos = System.nanoTime() - start;
             averageRoundTripTime.addSample(elapsedTimeNanos);
         }

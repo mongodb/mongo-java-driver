@@ -19,17 +19,23 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 public abstract class Authenticator {
     private final MongoCredentialWithCache credential;
+    private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
 
-    Authenticator(@NonNull final MongoCredentialWithCache credential, @Nullable final ServerApi serverApi) {
+    Authenticator(@NonNull final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final ServerApi serverApi) {
         this.credential = credential;
+        this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
     }
 
@@ -41,6 +47,10 @@ public abstract class Authenticator {
     @NonNull
     MongoCredential getMongoCredential() {
         return credential.getCredential();
+    }
+
+    ClusterConnectionMode getClusterConnectionMode() {
+        return clusterConnectionMode;
     }
 
     @Nullable

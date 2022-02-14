@@ -36,6 +36,8 @@ import org.bson.BsonInt32
 import org.bson.BsonString
 import spock.lang.Specification
 
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
 
 class LoggingCommandEventSenderSpecification extends Specification {
@@ -50,7 +52,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def replyDocument = new BsonDocument('ok', new BsonInt32(1))
         def failureException = new MongoInternalException('failure!')
         def message = new CommandMessage(namespace, commandDocument,
-                new NoOpFieldNameValidator(), ReadPreference.primary(), messageSettings, null)
+                new NoOpFieldNameValidator(), ReadPreference.primary(), messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
         def logger = Stub(Logger) {
@@ -90,7 +92,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def replyDocument = new BsonDocument('ok', new BsonInt32(1))
         def failureException = new MongoInternalException('failure!')
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
-                messageSettings, null)
+                messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
         def logger = Mock(Logger) {
@@ -138,7 +140,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('fake', new BsonBinary(new byte[2048]))
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
-                messageSettings, null)
+                messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
         def logger = Mock(Logger) {
@@ -165,7 +167,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('createUser', new BsonString('private'))
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
-                messageSettings, null)
+                messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
         def logger = Mock(Logger) {

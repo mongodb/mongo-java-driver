@@ -20,6 +20,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
@@ -49,7 +50,7 @@ public class X509AuthenticatorUnitTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
-        subject = new X509Authenticator(new MongoCredentialWithCache(credential), getServerApi());
+        subject = new X509Authenticator(new MongoCredentialWithCache(credential), ClusterConnectionMode.SINGLE, getServerApi());
     }
 
     @Test

@@ -20,6 +20,7 @@ import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -38,8 +39,9 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
     private BsonDocument speculativeAuthenticateResponse;
 
-    X509Authenticator(final MongoCredentialWithCache credential, final @Nullable ServerApi serverApi) {
-        super(credential, serverApi);
+    X509Authenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
+            final @Nullable ServerApi serverApi) {
+        super(credential, clusterConnectionMode, serverApi);
     }
 
     @Override
@@ -50,7 +52,7 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
         try {
             validateUserName(connectionDescription);
             BsonDocument authCommand = getAuthCommand(getMongoCredential().getUserName());
-            executeCommand(getMongoCredential().getSource(), authCommand, getServerApi(), connection);
+            executeCommand(getMongoCredential().getSource(), authCommand, getClusterConnectionMode(), getServerApi(), connection);
         } catch (MongoCommandException e) {
             throw new MongoSecurityException(getMongoCredential(), "Exception authenticating", e);
         }
@@ -66,7 +68,7 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
             try {
                 validateUserName(connectionDescription);
                 executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()),
-                        getServerApi(), connection,
+                        getClusterConnectionMode(), getServerApi(), connection,
                         new SingleResultCallback<BsonDocument>() {
                             @Override
                             public void onResult(final BsonDocument nonceResult, final Throwable t) {

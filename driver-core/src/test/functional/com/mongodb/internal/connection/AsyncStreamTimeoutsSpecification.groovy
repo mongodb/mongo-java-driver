@@ -34,6 +34,7 @@ import util.spock.annotations.Slow
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
@@ -74,7 +75,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         countCommand.put('query', new BsonDocument('$where', new BsonString('sleep(5050); return true;')))
 
         when:
-        executeCommand(getDatabaseName(), countCommand, getServerApi(), connection)
+        executeCommand(getDatabaseName(), countCommand,  getClusterConnectionMode(), getServerApi(), connection)
 
         then:
         thrown(MongoSocketReadTimeoutException)
@@ -110,7 +111,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         countCommand.put('query', new BsonDocument('$where', new BsonString('sleep(5050); return true;')))
 
         when:
-        executeCommand(getDatabaseName(), countCommand, getServerApi(), connection)
+        executeCommand(getDatabaseName(), countCommand, getClusterConnectionMode(), getServerApi(), connection)
 
         then:
         thrown(MongoSocketReadTimeoutException)

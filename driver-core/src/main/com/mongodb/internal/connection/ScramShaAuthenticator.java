@@ -20,6 +20,7 @@ import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.authentication.SaslPrep;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -55,18 +56,16 @@ class ScramShaAuthenticator extends SaslAuthenticator {
     private static final int RANDOM_LENGTH = 24;
     private static final byte[] INT_1 = {0, 0, 0, 1};
 
-    ScramShaAuthenticator(final MongoCredentialWithCache credential, @Nullable final ServerApi serverApi) {
+    ScramShaAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final ServerApi serverApi) {
         this(credential, new DefaultRandomStringGenerator(), getAuthenicationHashGenerator(credential.getAuthenticationMechanism()),
-                serverApi);
-    }
-
-    ScramShaAuthenticator(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator) {
-        this(credential, randomStringGenerator, getAuthenicationHashGenerator(credential.getAuthenticationMechanism()), null);
+                clusterConnectionMode, serverApi);
     }
 
     ScramShaAuthenticator(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator,
-                          final AuthenticationHashGenerator authenticationHashGenerator, @Nullable final ServerApi serverApi) {
-        super(credential, serverApi);
+                          final AuthenticationHashGenerator authenticationHashGenerator, final ClusterConnectionMode clusterConnectionMode,
+                          @Nullable final ServerApi serverApi) {
+        super(credential, clusterConnectionMode, serverApi);
         this.randomStringGenerator = randomStringGenerator;
         this.authenticationHashGenerator = authenticationHashGenerator;
     }
