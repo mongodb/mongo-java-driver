@@ -3,6 +3,7 @@
   "schemaVersion": "1.3",
   "runOnRequirements": [
     {
+      "minServerVersion": "3.6",
       "topologies": [
         "single",
         "sharded"
