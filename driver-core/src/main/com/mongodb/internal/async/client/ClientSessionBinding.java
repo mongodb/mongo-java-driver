@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.async.client;
 
+import com.mongodb.MongoException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
@@ -58,19 +59,27 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
 
     @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        if (isConnectionSourcePinningRequired()) {
-            getPinnedConnectionSource(true, callback);
-        } else {
-            wrapped.getReadConnectionSource(new WrappingCallback(callback));
-        }
+        isConnectionSourcePinningRequired((isConnectionSourcePinningRequired, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else if (isConnectionSourcePinningRequired) {
+                getPinnedConnectionSource(true, callback);
+            } else {
+                wrapped.getReadConnectionSource(new WrappingCallback(callback));
+            }
+        });
     }
 
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        if (isConnectionSourcePinningRequired()) {
-            getPinnedConnectionSource(false, callback);
-        } else {
-            wrapped.getWriteConnectionSource(new WrappingCallback(callback));
-        }
+        isConnectionSourcePinningRequired((isConnectionSourcePinningRequired, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else if (isConnectionSourcePinningRequired) {
+                getPinnedConnectionSource(false, callback);
+            } else {
+                wrapped.getWriteConnectionSource(new WrappingCallback(callback));
+            }
+        });
     }
 
     @Override
@@ -136,6 +145,14 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
             }
         }
         return count;
+    }
+
+    private void isConnectionSourcePinningRequired(final SingleResultCallback<Boolean> callback) {
+        try {
+            callback.onResult(isConnectionSourcePinningRequired(), null);
+        } catch (MongoException e) {
+            callback.onResult(null, e);
+        }
     }
 
     private boolean isConnectionSourcePinningRequired() {
