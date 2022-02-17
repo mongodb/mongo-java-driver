@@ -17,12 +17,14 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
+import com.mongodb.AwsCredential;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.internal.authentication.AwsInternalCredential;
+import com.mongodb.internal.authentication.AwsCredentialHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonBinaryWriter;
@@ -41,10 +43,12 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_AWS;
 import static com.mongodb.MongoCredential.AWS_CREDENTIAL_PROVIDER_KEY;
 import static com.mongodb.MongoCredential.AWS_SESSION_TOKEN_KEY;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.lang.String.format;
 
 public class AwsAuthenticator extends SaslAuthenticator {
@@ -155,15 +159,11 @@ public class AwsAuthenticator extends SaslAuthenticator {
                     .withZone(ZoneId.of("UTC"))
                     .format(Instant.now());
 
-            AwsInternalCredential awsInternalCredential = AwsInternalCredential.obtainFromEnvironment(new AwsInternalCredential(
-                                credential.getUserName(), getSecretAccessKey(),
-                                credential.getMechanismProperty(AWS_SESSION_TOKEN_KEY, null)),
-                                credential.getMechanismProperty(AWS_CREDENTIAL_PROVIDER_KEY, null));
-
-            String sessionToken = awsInternalCredential.getSessionToken();
+            AwsCredential awsCredential = createAwsCredential();
+            String sessionToken = awsCredential.getSessionToken();
             AuthorizationHeader authorizationHeader = AuthorizationHeader.builder()
-                    .setAccessKeyID(awsInternalCredential.getAccessKeyId())
-                    .setSecretKey(awsInternalCredential.getSecretAccessKey())
+                    .setAccessKeyID(awsCredential.getAccessKeyId())
+                    .setSecretKey(awsCredential.getSecretAccessKey())
                     .setSessionToken(sessionToken)
                     .setHost(host)
                     .setNonce(serverNonce)
@@ -180,9 +180,29 @@ public class AwsAuthenticator extends SaslAuthenticator {
             return toBson(ret);
         }
 
-        private String getSecretAccessKey() {
-            char[] password = credential.getPassword();
-            return password == null ? null : new String(password);
+        private AwsCredential createAwsCredential() {
+            AwsCredential awsCredential;
+            if (credential.getUserName() != null) {
+                if (credential.getPassword() == null) {
+                    throw new MongoClientException("secretAccessKey is required for AWS credential");
+                }
+                awsCredential = new AwsCredential(assertNotNull(credential.getUserName()),
+                        new String(assertNotNull(credential.getPassword())),
+                        credential.getMechanismProperty(AWS_SESSION_TOKEN_KEY, null));
+            } else if (credential.getMechanismProperty(AWS_CREDENTIAL_PROVIDER_KEY, null) != null) {
+                Supplier<AwsCredential> awsCredentialSupplier = assertNotNull(
+                        credential.getMechanismProperty(AWS_CREDENTIAL_PROVIDER_KEY, null));
+                awsCredential = awsCredentialSupplier.get();
+                if (awsCredential == null) {
+                    throw new MongoClientException("AWS_CREDENTIAL_PROVIDER_KEY must return an AwsCredential instance");
+                }
+            } else {
+                awsCredential = AwsCredentialHelper.obtainFromEnvironment();
+                if (awsCredential == null) {
+                    throw new MongoClientException("Unable to obtain AWS credential from the environment");
+                }
+            }
+            return awsCredential;
         }
 
         private byte[] toBson(final BsonDocument document) {
