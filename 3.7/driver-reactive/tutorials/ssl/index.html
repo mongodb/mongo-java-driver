@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MongoDB Java Driver documentation">
+<meta name="author" content="MongoDB Drivers Team">
+<meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
+<meta name="date" content="2022-01-24T16:21:43.48">
+<link rel="shortcut icon" href="/mongo-java-driver/3.7/img/favicon.png">
+
+    <title>TLS/SSL</title><link rel="stylesheet" href="/mongo-java-driver/3.7/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/css/java.css" type="text/css" />
+
+
+
+
+
+</head>
+
+  <body>
+  
+  <section id="container" class="">
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.7/../">
+        <img src="/mongo-java-driver/3.7/img/logo-mongodb-header.png", alt="MongoDB" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.7">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.7/../">MongoDB JVM Drivers</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.7">3.7</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu"><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/whats-new/"><i class='fa fa-level-up'></i>What&#39;s New</a>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.7/driver/" class=""><i class='fa fa-arrows-h'></i><span>Java Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/jndi/"><i class='fa'></i>JNDI</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1 current">
+  <a href="/mongo-java-driver/3.7/driver-reactive/" class=""><i class='fa fa-refresh'></i><span>Reactive Streams</span><span class="menu-arrow fa fa-angle-down"></span></a>
+    <ul  class="current"><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-reactive/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-reactive/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-reactive/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-reactive/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2 current">
+  <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul  class="current"><li class="toctree-l3 current">
+  <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul  class="current"><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver-reactive/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-reactive/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.7/bson/" class=""><i class='fa fa-th'></i><span>BSON</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/readers-and-writers/"><i class='fa'></i>Readers and Writers</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/codecs/"><i class='fa'></i>Codec and CodecRegistry</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/pojos/"><i class='fa fa-star'></i>POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/installation-guide/"><i class='fa'></i>Installation Guide</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.7/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/sorts/"><i class='fa'></i>Sort Criteria  </a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/aggregation/"><i class='fa'></i>Aggregates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.7/driver-scala/" class=""><i class='fa fa-refresh'></i><span>Scala Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-scala/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-scala/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-scala/getting-started/quick-start-case-class/"><i class='fa'></i>Quick Start - Case Classes</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-scala/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver-scala/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver-scala/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver-scala/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver-scala/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/reference/observables/"><i class='fa'></i>Observables</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver-scala/bson/" class=""><i class='fa fa-th'></i><span>BSON</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/bson/scala-documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/bson/macros/"><i class='fa fa-cog'></i>Macros</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/bson/scala-extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver-scala/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/builders/sorts/"><i class='fa'></i>Sort Criteria</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/builders/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-scala/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
+  </li><li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/issues-help/"><i class='fa fa-life-ring'></i>Issues &amp; Help</a>
+  </li></ul>
+        
+    </div>
+  </div></aside>
+
+
+
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body"> 
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-reactive/tutorials/ssl.md" target="_blank" title="Edit driver-reactive/tutorials/ssl.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
+<ul><li><a href="/mongo-java-driver/3.7/driver-reactive/">Reactive Streams</a> <i class="fa fa-angle-right"></i></li><li><a href="/mongo-java-driver/3.7/driver-reactive/tutorials/">Tutorials</a> <i class="fa fa-angle-right"></i></li><li><a href="/mongo-java-driver/3.7/driver-reactive/tutorials/connect-to-mongodb/">Connect to MongoDB</a> <i class="fa fa-angle-right"></i></li><li>TLS/SSL</li>
+</ul>
+</div>
+
+<h2 id="tls-ssl">TLS/SSL</h2>
+
+<p>By default the Java driver supports TLS/SSL connections to MongoDB servers using
+the underlying support for TLS/SSL provided by the JDK. This can be changed either by utilizing extensibility
+of the <a href="https://docs.oracle.com/javase/8/docs/api
+">Java SE API</a>, or via the <a href="https://netty.io/4.1/api/
+">Netty API</a>.
+You can configure the driver to use TLS/SSL either with <a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
+"><code>ConnectionString</code></a> or with
+<a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
+"><code>MongoClientSettings</code></a>.</p>
+
+<h2 id="mongoclient-api-since-3-7">MongoClient API (since 3.7)</h2>
+
+<h3 id="specify-tls-ssl-via-connectionstring">Specify TLS/SSL via <code>ConnectionString</code></h3>
+
+<pre><code class="language-java">com.mongodb.reactivestreams.client.MongoClients;
+com.mongodb.reactivestreams.client.MongoClient;
+</code></pre>
+
+<p>To specify TLS/SSL with <a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-core/com/mongodb/ConnectionString.html
+"><code>ConnectionString</code></a>, specify <code>ssl=true</code> as part of the connection
+string, as in:</p>
+
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create(&quot;mongodb://localhost/?ssl=true&quot;);
+</code></pre>
+
+<h3 id="specify-tls-ssl-via-mongoclientsettings">Specify TLS/SSL via <code>MongoClientSettings</code></h3>
+
+<pre><code class="language-java">import com.mongodb.MongoClientSettings;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoClient;
+</code></pre>
+
+<p>To specify TLS/SSL with with <a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
+"><code>MongoClientSettings</code></a>, set the <code>enabled</code> property to
+<code>true</code>, as in:</p>
+
+<pre><code class="language-java">MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToSslSettings(builder -&gt; builder.enabled(true))
+        .build();
+MongoClient client = MongoClients.create(settings);
+</code></pre>
+
+<h3 id="specify-java-se-sslcontext-via-mongoclientsettings">Specify Java SE <code>SSLContext</code> via <code>MongoClientSettings</code></h3>
+
+<pre><code class="language-java">import javax.net.ssl.SSLContext;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoClient;
+</code></pre>
+
+<p>To specify the <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html
+"><code>javax.net.ssl.SSLContext</code></a> with
+<a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
+"><code>MongoClientSettings</code></a>, set the <code>sslContext</code> property, as in:</p>
+
+<pre><code class="language-java">SSLContext sslContext = ...
+        MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToSslSettings(builder -&gt; builder.enabled(true).context(sslContext))
+        .build();
+        MongoClient client = new MongoClient(settings);
+</code></pre>
+
+<h3 id="specify-netty-sslcontext-via-nettystreamfactoryfactory">Specify Netty <code>SslContext</code> via <code>NettyStreamFactoryFactory</code></h3>
+
+<p>If you use the driver with <a href="https://netty.io/">Netty</a> for network IO,
+you have an option to plug an alternative TLS/SSL protocol implementation provided by Netty.</p>
+
+<pre><code class="language-java">import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
+</code></pre>
+
+<p>To instruct the driver to use <a href="https://netty.io/4.1/api/io/netty/handler/ssl/SslContext.html
+"><code>io.netty.handler.ssl.SslContext</code></a>,
+use the method
+<a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-core/com/mongodb/connection/netty/NettyStreamFactoryFactory.Builder.html#sslContext(io.netty.handler.ssl.SslContext)
+"><code>NettyStreamFactoryFactory.Builder.sslContext</code></a>.
+See the documentation of this method for details on which
+<a href="https://netty.io/4.1/api/io/netty/handler/ssl/SslProvider.html
+"><code>io.netty.handler.ssl.SslProvider</code></a>s are supported by the driver
+and implications of using them.</p>
+
+<pre><code class="language-java">SslContext sslContext = SslContextBuilder.forClient()
+        .sslProvider(SslProvider.OPENSSL)
+        .build();
+MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToSslSettings(builder -&gt; builder.enabled(true))
+        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                .sslContext(sslContext)
+                .build())
+        .build();
+MongoClient client = MongoClients.create(settings);
+</code></pre>
+
+<h2 id="disable-hostname-verification">Disable Hostname Verification</h2>
+
+<p>By default, the driver ensures that the hostname included in the
+server&rsquo;s SSL certificate(s) matches the hostname(s) provided when
+constructing a <a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoClient.html
+"><code>MongoClient()</code></a>.</p>
+
+<p>If your application needs to disable hostname verification, you must explicitly indicate
+this in <a href="/mongo-java-driver/3.7/apidocs/mongodb-driver-core/com/mongodb/MongoClientSettings.html
+"><code>MongoClientSettings</code></a></p>
+
+<pre><code class="language-java">MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToSslSettings(builder -&gt; {
+                    builder.enabled(true);
+                    builder.invalidHostNameAllowed(true);
+                })
+        .build();
+</code></pre>
+
+<h2 id="common-tls-ssl-configuration-tasks">Common TLS/SSL Configuration Tasks</h2>
+
+<p>This section is based on the documentation for <a href="https://www.oracle.com/java/technologies/javase-downloads.html#JDK8">Oracle JDK</a>,
+so some parts may be inapplicable to your JDK or to the custom TLS/SSL implementation you use.</p>
+
+<h3 id="configure-trust-store-and-key-store">Configure Trust Store and Key Store</h3>
+
+<p>One may either configure trust stores and key stores specific to the client via
+<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html#init-javax.net.ssl.KeyManager:A-javax.net.ssl.TrustManager:A-java.security.SecureRandom-
+"><code>javax.net.ssl.SSLContext.init(KeyManager[] km, TrustManager[] tm, SecureRandom random)</code></a>,
+or set the JVM default ones.</p>
+
+<h4 id="set-the-default-trust-store">Set the Default Trust Store</h4>
+
+<p>A typical application will need to set several JVM system properties to
+ensure that the client is able to <em>validate</em> the TLS/SSL certificate
+presented by the server:</p>
+
+<ul>
+<li><p><code>javax.net.ssl.trustStore</code>:
+The path to a trust store containing the certificate of the
+signing authority
+(see <code>&lt;path to trust store&gt;</code> below)</p></li>
+
+<li><p><code>javax.net.ssl.trustStorePassword</code>:
+The password to access this trust store
+(see <code>&lt;trust store password&gt;</code> below)</p></li>
+</ul>
+
+<p>The trust store is typically created with the
+<a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html
+"><code>keytool</code></a>
+command line program provided as part of the JDK. For example:</p>
+
+<pre><code class="language-bash">keytool -importcert -trustcacerts -file &lt;path to certificate authority file&gt;
+            -keystore &lt;path to trust store&gt; -storepass &lt;trust store password&gt;
+</code></pre>
+
+<h4 id="set-the-default-key-store">Set the Default Key Store</h4>
+
+<p>A typical application will also need to set several JVM system
+properties to ensure that the client <em>presents</em> an TLS/SSL <a href="https://docs.mongodb.com/manual/tutorial/configure-ssl/#set-up-mongod-and-mongos-with-client-certificate-validation">client certificate</a> to the
+MongoDB server:</p>
+
+<ul>
+<li><p><code>javax.net.ssl.keyStore</code>
+The path to a key store containing the client&rsquo;s TLS/SSL certificates
+(see <code>&lt;path to key store&gt;</code> below)</p></li>
+
+<li><p><code>javax.net.ssl.keyStorePassword</code>
+The password to access this key store
+(see <code>&lt;trust store password&gt;</code> below)</p></li>
+</ul>
+
+<p>The key store is typically created with the
+<a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html
+"><code>keytool</code></a>
+or the <a href="https://www.openssl.org/docs/apps/openssl.html"><code>openssl</code></a>
+command line program. For example, if you have a file with the client certificate and its private key
+(may be in the PEM format)
+and want to create a key store in the <a href="https://www.rfc-editor.org/rfc/rfc7292">PKCS #12</a> format,
+you can do the following:</p>
+
+<pre><code class="language-sh">openssl pkcs12 -export -in &lt;path to client certificate &amp; private key file&gt;
+            -out &lt;path to key store&gt; -passout pass:&lt;trust store password&gt;
+</code></pre>
+
+<p>For more information on configuring a Java application for TLS/SSL, please
+refer to the <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html
+"><code>JSSE Reference Guide</code></a>.</p>
+
+<h3 id="forcing-tls-1-2">Forcing TLS 1.2</h3>
+
+<p>Some applications may want to force only the TLS 1.2 protocol. To do this, set the <code>jdk.tls.client.protocols</code> system property to &ldquo;TLSv1.2&rdquo;.</p>
+
+<p>Java runtime environments prior to Java 8 started to enable the TLS 1.2 protocol only in later updates, as shown in the previous section. For the driver to force the use of the TLS 1.2 protocol with a Java runtime environment prior to Java 8, ensure that the update has TLS 1.2 enabled.</p>
+
+<h3 id="ocsp">OCSP</h3>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>The Java driver cannot enable OCSP by default on a per MongoClient basis.</p>
+
+</div>
+
+
+<h4 id="client-driven-ocsp">Client-driven OCSP</h4>
+
+<p>An application will need to set JVM system and security properties to ensure that client-driven OCSP is enabled:</p>
+
+<ul>
+<li><p><code>com.sun.net.ssl.checkRevocation</code>:
+When set to <code>true</code>, this system property enables revocation checking.</p></li>
+
+<li><p><code>ocsp.enable</code>:
+When set to <code>true</code>, this security property enables client-driven OCSP.</p></li>
+</ul>
+
+<p>To configure an application to use client-driven OCSP, the application must already be set up to connect to a server using TLS. Setting these system properties is required to enable client-driven OCSP.</p>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>The support for TLS provided by the JDK utilizes “hard fail” behavior in the case of an unavailable OCSP responder in contrast to the mongo shell and drivers that utilize “soft fail” behavior.</p>
+
+</div>
+
+
+<h4 id="ocsp-stapling">OCSP Stapling</h4>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>The following exception may occur when using OCSP stapling with Java runtime environments that use the TLS 1.3 protocol (Java 11 and higher use TLS 1.3 by default):</p>
+
+<p><code>javax.net.ssl.SSLHandshakeException: extension (5) should not be presented in certificate_request</code></p>
+
+<p>The exception is due to a known issue with TLS 1.3 in Java 11 and higher. To avoid this exception when using a Java runtime environments using the TLS 1.3 protocol, you can force the application to use the TLS 1.2 protocol. To do this, set the <code>jdk.tls.client.protocols</code> system property to &ldquo;TLSv1.2&rdquo;.</p>
+
+</div>
+
+
+<p>An application will need to set several JVM system properties to set up OCSP stapling:</p>
+
+<ul>
+<li><p><code>jdk.tls.client.enableStatusRequestExtension</code>:
+When set to <code>true</code> (its default value), this enables OCSP stapling.</p></li>
+
+<li><p><code>com.sun.net.ssl.checkRevocation</code>:
+When set to <code>true</code>, this enables revocation checking. If this property is not set to <code>true</code>, then the connection will be allowed to proceed regardless of the presence or status of the revocation information.</p></li>
+</ul>
+
+<p>To configure an application to use OCSP stapling, the application must already be set up to connect to a server using TLS, and the server must be set up to staple an OCSP response to the certificate it returns as part of the the TLS handshake.</p>
+
+<p>For more information on configuring a Java application to use OCSP, please
+refer to the <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/ocsp.html
+"><code>Client-Driven OCSP and OCSP Stapling</code></a>.</p>
+<div id="btnv"><div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.7/driver-reactive/getting-started/quick-start-primer/">
+      <i class="fa fa-long-arrow-left"> </i> Quick Start Primer
+  </a>
+  </div><div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.7/driver-reactive/tutorials/authentication/">
+    Authentication <i class="fa fa-long-arrow-right"> </i>
+  </a></div>
+</div></div><div class="right-column">
+<div class="wrapper"><div class="toc">
+    <span class="toc-header">On this page</span><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#tls-ssl">TLS/SSL</a></li>
+<li><a href="#mongoclient-api-since-3-7">MongoClient API (since 3.7)</a>
+<ul>
+<li><a href="#specify-tls-ssl-via-connectionstring">Specify TLS/SSL via <code>ConnectionString</code></a></li>
+<li><a href="#specify-tls-ssl-via-mongoclientsettings">Specify TLS/SSL via <code>MongoClientSettings</code></a></li>
+<li><a href="#specify-java-se-sslcontext-via-mongoclientsettings">Specify Java SE <code>SSLContext</code> via <code>MongoClientSettings</code></a></li>
+<li><a href="#specify-netty-sslcontext-via-nettystreamfactoryfactory">Specify Netty <code>SslContext</code> via <code>NettyStreamFactoryFactory</code></a></li>
+</ul></li>
+<li><a href="#disable-hostname-verification">Disable Hostname Verification</a></li>
+<li><a href="#common-tls-ssl-configuration-tasks">Common TLS/SSL Configuration Tasks</a>
+<ul>
+<li><a href="#configure-trust-store-and-key-store">Configure Trust Store and Key Store</a>
+<ul>
+<li><a href="#set-the-default-trust-store">Set the Default Trust Store</a></li>
+<li><a href="#set-the-default-key-store">Set the Default Key Store</a></li>
+</ul></li>
+<li><a href="#forcing-tls-1-2">Forcing TLS 1.2</a></li>
+<li><a href="#ocsp">OCSP</a>
+<ul>
+<li><a href="#client-driven-ocsp">Client-driven OCSP</a></li>
+<li><a href="#ocsp-stapling">OCSP Stapling</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.7",
+   VERSION:     "3.7",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/lib/delighted.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/java.js"></script>
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=UA-7301842-14"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+   {'gtm.start': new Date().getTime(),event:'gtm.js'}
+ );var f=d.getElementsByTagName(s)[0],
+       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+         '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+ })(window,document,'script','dataLayer','UA-7301842-14');</script>
+
+
+<script type="text/javascript">
+ var _elqQ = _elqQ || [];
+ _elqQ.push(['elqSetSiteId', '413370795']);
+ _elqQ.push(['elqTrackPageView']);
+ (function () {
+   function async_load()
+   { var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+   if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+   else if (window.attachEvent) window.attachEvent('onload', async_load);
+ })();
+</script>
+</body>
+</html>

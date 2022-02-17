@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MongoDB Java Driver documentation">
+<meta name="author" content="MongoDB Drivers Team">
+<meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
+<meta name="date" content="2022-02-16T18:13:24.72">
+<link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
+
+    <title>Upgrade Considerations</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/4.5/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/4.5/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/4.5/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/4.5/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
+
+
+  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/4.5/"/>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/4.5/" />
+
+
+
+
+
+</head>
+
+  <body>
+  
+  <section id="container" class="">
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/4.5/../">
+        <img src="/mongo-java-driver/4.5/img/logo-mongodb-header.png", alt="MongoDB" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/4.5">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/4.5/../">MongoDB JVM Drivers</a>
+          <a class="version pull-right" href="/mongo-java-driver/4.5">4.4</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu"><li class="toctree-l1">
+    <a href="/mongo-java-driver/4.5/whats-new/"><i class='fa fa-level-up'></i>What&#39;s New</a>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/4.5/driver/" class=""><i class='fa fa-arrows-h'></i><span>Java Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/4.5/driver/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/jndi/"><i class='fa'></i>JNDI</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/4.5/driver/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/4.5/driver-reactive/" class=""><i class='fa fa-refresh'></i><span>Reactive Streams</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-reactive/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-reactive/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-reactive/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-reactive/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver-reactive/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-reactive/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/4.5/bson/" class=""><i class='fa fa-th'></i><span>BSON</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/bson/documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/bson/readers-and-writers/"><i class='fa'></i>Readers and Writers</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/bson/codecs/"><i class='fa'></i>Codec and CodecRegistry</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/bson/pojos/"><i class='fa fa-star'></i>POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/bson/extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/bson/installation-guide/"><i class='fa'></i>Installation Guide</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/4.5/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/builders/sorts/"><i class='fa'></i>Sort Criteria  </a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/builders/aggregation/"><i class='fa'></i>Aggregates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/4.5/driver-scala/" class=""><i class='fa fa-refresh'></i><span>Scala Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-scala/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-scala/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-scala/getting-started/quick-start-case-class/"><i class='fa'></i>Quick Start - Case Classes</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/4.5/driver-scala/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver-scala/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/4.5/driver-scala/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/4.5/driver-scala/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver-scala/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/reference/observables/"><i class='fa'></i>Observables</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver-scala/bson/" class=""><i class='fa fa-th'></i><span>BSON</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/bson/scala-documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/bson/macros/"><i class='fa fa-cog'></i>Macros</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/bson/scala-extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/4.5/driver-scala/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/builders/sorts/"><i class='fa'></i>Sort Criteria</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/builders/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/4.5/driver-scala/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/4.5/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/4.5/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
+  </li><li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/4.5/issues-help/"><i class='fa fa-life-ring'></i>Issues &amp; Help</a>
+  </li></ul>
+        
+    </div>
+  </div></aside>
+
+
+
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+ 
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/upgrading.md" target="_blank" title="Edit upgrading.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
+<ul><li>Upgrade Considerations</li>
+</ul>
+</div>
+
+<h1 id="upgrading-to-the-4-3-driver">Upgrading to the 4.3 Driver</h1>
+
+<p>The 4.3 release is a minor release as per the definition of <a href="https://semver.org">semantic versioning</a>. As such, there are no breaking
+changes in this release for users upgrading from the 4.2 release.</p>
+
+<h1 id="upgrading-to-the-4-2-driver">Upgrading to the 4.2 Driver</h1>
+
+<p>The 4.2 release is a minor release as per the definition of <a href="https://semver.org">semantic versioning</a>. As such, there are no breaking
+changes in this release for users upgrading from the 4.1 release.</p>
+
+<p>Note that in this release the Reactive Streams driver has taken an implementation dependency on
+<a href="https://projectreactor.io/">Project Reactor</a>.  The minimum supported Project Reactor version is <em>Californium-SR23</em>.</p>
+
+<h1 id="upgrading-to-the-4-1-driver">Upgrading to the 4.1 Driver</h1>
+
+<p>The 4.1 release is a minor release as per the definition of <a href="https://semver.org">semantic versioning</a>. As such, there are no breaking
+changes in this release for users upgrading from the 4.0 release.  Please see the upgrading guide for the 4.0 driver (just below) if you
+plan to upgrade directly from a 3.x release of the driver.</p>
+
+<h1 id="upgrading-to-the-4-0-driver">Upgrading to the 4.0 Driver</h1>
+
+<h2 id="upgrading-from-the-3-12-java-driver">Upgrading from the 3.12 Java driver</h2>
+
+<p>The 4.0 release is a major release as per the definition of <a href="https://semver.org">semantic versioning</a>. As such, users
+that upgrade to this release should expect breaking changes. That said, we have attempted to ensure that the upgrade
+process is as seamless as possible.  Breaking changes are as follows:</p>
+
+<ul>
+<li>Numerous classes and methods have been removed from the driver. All of these API elements are annotated as deprecated in the
+3.12 release, so if you compile your application with 3.12 and enable deprecation warnings in the compiler, you will be
+able to locate all uses of these API elements and follow the recommendations contained in the Javadoc for each API element
+to remove usage from your application. Most of these API elements are unlikely to be used by normal applications, but one bears
+mentioning explicitly: the entire callback-based asynchronous driver has been removed. Applications relying on this driver must either
+port their application to the Reactive Streams driver, or else must remain on a 3.x driver release.</li>
+<li>While the <code>com.mongodb.MongoClient#getDB</code> method is deprecated in 3.x drivers, it has not been removed in this release. It will remain
+at least until the next major release cycle.</li>
+<li>The insert helper methods now return an insert result object instead of void.</li>
+<li>The various <code>toJson</code> methods on <code>BsonDocument</code>, <code>Document</code>, and <code>DBObject</code> now return &ldquo;relaxed&rdquo; JSON instead of &ldquo;strict&rdquo; JSON.  This
+creates more readable JSON documents at the cost of a loss of some BSON type information (e.g., differentiating between 32 and 64 bit
+integers).</li>
+<li>The default BSON representation of <code>java.util.UUID</code> values has changed from <code>JAVA_LEGACY</code> to <code>UNSPECIFIED</code>.  Applications that
+store or retrieve UUID values must explicitly specify which representation to use, via the <code>uuidRepresentation</code> property of
+<code>MongoClientSettings</code>.</li>
+<li>The connection pool no longer enforces any restrictions on the size of the wait queue of threads or asynchronous tasks that
+require a connection to MongoDB.  It is up to the application to throttle requests sufficiently rather than rely on the driver to
+throw a <code>MongoWaitQueueFullException</code>.</li>
+<li>The driver no longer logs via JUL (<code>java.util.logging</code>).  The only supported logging framework is SLF4J.</li>
+<li>The embedded and Android drivers have been removed.  Applications relying on these drivers must remain on a 3.x driver release.</li>
+<li>The <code>mongo-java-driver</code> and <code>mongodb-driver</code> &ldquo;uber-jars&rdquo; are no longer published.  Applications that reference either of these artifacts
+must switch to either <code>mongodb-driver-sync</code> or <code>mongodb-driver-legacy</code>, depending on which API is being used. Care should be taken to
+ensure that neither of the uber-jars are included via a transitive dependency, as that could introduce versioning conflicts.</li>
+<li>Java 8 is now the minimum supported version. Applications using older versions of Java must remain on a 3.x driver release.</li>
+<li>Several binary compatibility breaks were introduced (in particular, the change to the signature of the insert helper methods), so any
+classes that link to the driver must be recompiled in order to work with this release.
+<br /></li>
+</ul>
+
+<h2 id="upgrading-from-the-1-12-reactive-streams-driver">Upgrading from the 1.12 Reactive Streams driver</h2>
+
+<p>The main change to the MongoDB Reactive Streams Java Driver 1.12 driver is the removal of the <code>Success</code> type.</p>
+
+<p>Breaking changes are as follows:</p>
+
+<ul>
+<li><code>Publisher&lt;Success&gt;</code> has been migrated to <code>Publisher&lt;Void&gt;</code>.
+Please note that <code>onNext</code> will not be called just <code>onComplete</code> if the operation is successful or <code>onError</code> if there is an error.</li>
+<li>Removal of deprecated methods</li>
+</ul>
+
+<h2 id="upgrading-from-the-2-8-scala-driver">Upgrading from the 2.8 Scala driver</h2>
+
+<p>As the mongodb-driver-async package was deprecated in 3.x. The 4.0 version of the MongoDB Scala Driver is now built upon the
+mongo-java-driver-reactivestreams 4.0 driver. One major benefit is now the Scala driver is also a reactive streams driver.</p>
+
+<p>Breaking changes are as follows:</p>
+
+<ul>
+<li><code>Observable</code> is now a reactive streams <code>Publisher</code> implementations
+<code>Observable</code> implicits extend any <code>Publisher</code> implementation and can be imported from <code>org.mongodb.scala._</code></li>
+<li>Completed type has now been removed. <code>Observable[Completed]</code> has been migrated to <code>Observable[Void]</code>.
+Please note that <code>onNext</code> will not be called just <code>onComplete</code> if the operation is successful or <code>onError</code> if there is an error.</li>
+<li>Removal of deprecated methods</li>
+</ul>
+
+<h1 id="system-requirements">System Requirements</h1>
+
+<p>The minimum JVM is Java 8.</p>
+
+<h1 id="compatibility">Compatibility</h1>
+
+<p>The following table specifies the compatibility of the MongoDB Java driver for use with a specific version of MongoDB.</p>
+
+<table>
+<thead>
+<tr>
+<th>Java Driver Version</th>
+<th>MongoDB 3.0</th>
+<th>MongoDB 3.2</th>
+<th>MongoDB 3.4</th>
+<th>MongoDB 3.6</th>
+<th>MongoDB 4.0</th>
+<th>MongoDB 4.2</th>
+<th>MongoDB 4.4</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Version 4.3</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+
+<tr>
+<td>Version 4.2</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+
+<tr>
+<td>Version 4.1</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+
+<tr>
+<td>Version 4.0</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.12</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓*</td>
+</tr>
+
+<tr>
+<td>Version 3.11</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.10</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.9</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.9</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.8</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.7</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.6</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.5</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.4</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.3</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.2</td>
+<td>✓</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.1</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>Version 3.0</td>
+<td>✓</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<p>* The 3.12 driver is tested against MongoDB 4.4 but does not support all the new features</p>
+<div id="btnv"></div>
+</div></div><div class="right-column">
+<div class="wrapper"><div class="toc">
+    <span class="toc-header">On this page</span><nav id="TableOfContents">
+<ul>
+<li><a href="#upgrading-to-the-4-3-driver">Upgrading to the 4.3 Driver</a></li>
+<li><a href="#upgrading-to-the-4-2-driver">Upgrading to the 4.2 Driver</a></li>
+<li><a href="#upgrading-to-the-4-1-driver">Upgrading to the 4.1 Driver</a></li>
+<li><a href="#upgrading-to-the-4-0-driver">Upgrading to the 4.0 Driver</a>
+<ul>
+<li><a href="#upgrading-from-the-3-12-java-driver">Upgrading from the 3.12 Java driver</a></li>
+<li><a href="#upgrading-from-the-1-12-reactive-streams-driver">Upgrading from the 1.12 Reactive Streams driver</a></li>
+<li><a href="#upgrading-from-the-2-8-scala-driver">Upgrading from the 2.8 Scala driver</a></li>
+</ul></li>
+<li><a href="#system-requirements">System Requirements</a></li>
+<li><a href="#compatibility">Compatibility</a></li>
+</ul>
+</nav></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/4.5",
+   VERSION:     "4.4",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/lib/delighted.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/4.5/js/java.js"></script>
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=UA-7301842-14"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+   {'gtm.start': new Date().getTime(),event:'gtm.js'}
+ );var f=d.getElementsByTagName(s)[0],
+       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+         '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+ })(window,document,'script','dataLayer','UA-7301842-14');</script>
+
+
+<script type="text/javascript">
+ var _elqQ = _elqQ || [];
+ _elqQ.push(['elqSetSiteId', '413370795']);
+ _elqQ.push(['elqTrackPageView']);
+ (function () {
+   function async_load()
+   { var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+   if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+   else if (window.attachEvent) window.attachEvent('onload', async_load);
+ })();
+</script>
+</body>
+</html>

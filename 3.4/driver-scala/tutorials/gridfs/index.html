@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MongoDB Java Driver documentation">
+<meta name="author" content="MongoDB Drivers Team">
+<meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
+<meta name="date" content="2022-01-24T16:21:40.33">
+<link rel="shortcut icon" href="/mongo-java-driver/3.4/img/favicon.png">
+
+    <title>GridFS</title><link rel="stylesheet" href="/mongo-java-driver/3.4/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/java.css" type="text/css" />
+
+
+
+
+
+</head>
+
+  <body>
+  
+  <section id="container" class="">
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.4/../">
+        <img src="/mongo-java-driver/3.4/img/logo-mongodb-header.png", alt="MongoDB" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.4">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.4/../">MongoDB JVM Drivers</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.4">3.4</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu"><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/whats-new/"><i class='fa fa-level-up'></i>What&#39;s New</a>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.4/driver/" class=""><i class='fa fa-arrows-h'></i><span>Java Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/jndi/"><i class='fa'></i>JNDI</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.4/driver/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.4/driver-reactive/" class=""><i class='fa fa-refresh'></i><span>Reactive Streams</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-reactive/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-reactive/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-reactive/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-reactive/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.4/driver-reactive/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-reactive/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.4/bson/" class=""><i class='fa fa-th'></i><span>BSON</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/readers-and-writers/"><i class='fa'></i>Readers and Writers</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/codecs/"><i class='fa'></i>Codec and CodecRegistry</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/pojos/"><i class='fa fa-star'></i>POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/installation-guide/"><i class='fa'></i>Installation Guide</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.4/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/sorts/"><i class='fa'></i>Sort Criteria  </a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/aggregation/"><i class='fa'></i>Aggregates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li><li class="toctree-l1 current">
+  <a href="/mongo-java-driver/3.4/driver-scala/" class=""><i class='fa fa-refresh'></i><span>Scala Driver</span><span class="menu-arrow fa fa-angle-down"></span></a>
+    <ul  class="current"><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-scala/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-scala/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-scala/getting-started/quick-start-case-class/"><i class='fa'></i>Quick Start - Case Classes</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-scala/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2 current">
+  <a href="/mongo-java-driver/3.4/driver-scala/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul  class="current"><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.4/driver-scala/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.4/driver-scala/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.4/driver-scala/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/reference/observables/"><i class='fa'></i>Observables</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.4/driver-scala/bson/" class=""><i class='fa fa-th'></i><span>BSON</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/bson/scala-documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/bson/macros/"><i class='fa fa-cog'></i>Macros</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/bson/scala-extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.4/driver-scala/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/builders/sorts/"><i class='fa'></i>Sort Criteria</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/builders/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-scala/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
+  </li><li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/issues-help/"><i class='fa fa-life-ring'></i>Issues &amp; Help</a>
+  </li></ul>
+        
+    </div>
+  </div></aside>
+
+
+
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body"> 
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-scala/tutorials/gridfs.md" target="_blank" title="Edit driver-scala/tutorials/gridfs.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
+<ul><li><a href="/mongo-java-driver/3.4/driver-scala/">Scala Driver</a> <i class="fa fa-angle-right"></i></li><li><a href="/mongo-java-driver/3.4/driver-scala/tutorials/">Tutorials</a> <i class="fa fa-angle-right"></i></li><li>GridFS</li>
+</ul>
+</div>
+
+<h2 id="gridfs">GridFS</h2>
+
+<p><a href="http://docs.mongodb.org/manual/core/gridfs
+">GridFS</a> is a specification for storing and retrieving files that exceed the BSON document size limit of 16MB. Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document.</p>
+
+<p>When you query a GridFS store for a file, the Scala driver will reassemble the chunks as needed.</p>
+
+<p>The following code snippets come from the <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-scala/src/it/gridfs/GridFSTour.java
+"><code>GridFSTour.java</code></a> example code
+that can be found with the driver source on github.</p>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<p>Include the following import statements:</p>
+
+<pre><code class="language-scala">import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+
+import org.mongodb.scala._
+import org.mongodb.scala.bson.BsonObjectId
+import org.mongodb.scala.gridfs._
+import org.mongodb.scala.model.Filters
+
+import tour.Helpers._
+
+import scala.util.Success
+</code></pre>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>This guide uses the <code>Observable</code> implicits as covered in the <a href="/mongo-java-driver/3.4/driver-scala/getting-started/quick-start-primer/">Quick Start Primer</a>.</p>
+
+</div>
+
+
+<h2 id="connect-to-a-mongodb-deployment">Connect to a MongoDB Deployment</h2>
+
+<p>Connect to a MongoDB deployment and declare and define a <code>MongoDatabase</code> instance.</p>
+
+<p>For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port <code>27017</code>:</p>
+
+<pre><code class="language-scala">val mongoClient: MongoClient = MongoClient()
+</code></pre>
+
+<p>For additional information on connecting to MongoDB, see <a href="/mongo-java-driver/3.4/driver/tutorials/connect-to-mongodb/">Connect to MongoDB</a>.</p>
+
+<h2 id="create-a-gridfs-bucket">Create a GridFS Bucket</h2>
+
+<p>GridFS stores files in <a href="http://docs.mongodb.org/manual/core/gridfs/#gridfs-collections
+">two collections</a>: a <code>chunks</code> collection stores the file chunks, and a  <code>files</code> collection stores file metadata. The two collections are in a common bucket and the collection names are prefixed with the bucket name.</p>
+
+<p>The Scala driver provides the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket$.html#apply(database:org.mongodb.scala.MongoDatabase):org.mongodb.scala.gridfs.GridFSBucket
+"><code>GridFSBucket()</code></a> method
+to create the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html
+"><code>GridFSBucket</code></a>.</p>
+
+<pre><code class="language-scala">val myDatabase = mongoClient.getDatabase(&quot;mydb&quot;)
+
+// Create a gridFSBucket using the default bucket name &quot;fs&quot;
+val gridFSBucket = GridFSBucket(myDatabase)
+</code></pre>
+
+<p>You can specify a bucket name to <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket$.html#apply(database:org.mongodb.scala.MongoDatabase):org.mongodb.scala.gridfs.GridFSBucket
+"><code>GridFSBuckets.create()</code></a> method.</p>
+
+<pre><code class="language-scala">// Create a gridFSBucket with a custom bucket name &quot;files&quot;
+val gridFSFilesBucket = GridFSBuckets(myDatabase, &quot;files&quot;)
+</code></pre>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>GridFS will automatically create indexes on the <code>files</code> and <code>chunks</code> collections on first upload of data into the GridFS bucket.</p>
+
+</div>
+
+
+<h2 id="upload-to-gridfs">Upload to GridFS</h2>
+
+<p>The <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html#uploadFromObservable(id:org.mongodb.scala.bson.BsonValue,filename:String,source:org.mongo.scala.Observable,options:org.mongodb.scala.gridfs.GridFSUploadOptions):org.mongodb.scala.Observable[Void]
+"><code>GridFSBucket.uploadFromObservable</code></a> methods read the contents of a <code>Observable[ByteBuffer]</code> and save it to the <code>GridFSBucket</code>.</p>
+
+<p>You can use the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/index.html#GridFSUploadOptions=com.mongodb.client.gridfs.model.GridFSUploadOptions
+"><code>GridFSUploadOptions</code></a> to configure the chunk size or include additional metadata.</p>
+
+<p>The following example uploads the contents of a <code>Observable[ByteBuffer]</code> into <code>GridFSBucket</code>:</p>
+
+<pre><code class="language-scala">// Get the input stream
+val observableToUploadFrom: Observable[ByteBuffer] = Observable(
+  Seq(ByteBuffer.wrap(&quot;MongoDB Tutorial..&quot;.getBytes(StandardCharsets.UTF_8)))
+)
+
+// Create some custom options
+val options: GridFSUploadOptions = new GridFSUploadOptions()
+    .chunkSizeBytes(358400)
+    .metadata(Document(&quot;type&quot; -&gt; &quot;presentation&quot;))
+
+val fileId: BsonObjectId = gridFSBucket.uploadFromObservable(&quot;mongodb-tutorial&quot;, observableToUploadFrom, options).headResult()
+</code></pre>
+
+<h2 id="find-files-stored-in-gridfs">Find Files Stored in GridFS</h2>
+
+<p>To find the files stored in the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html#find(filter:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.gridfs.GridFSFindObservable
+"><code>find</code></a> method.</p>
+
+<p>The following example prints out the filename of each file stored:</p>
+
+<pre><code class="language-scala">gridFSBucket.find().results().foreach(file =&gt; println(s&quot; - ${file.getFilename}&quot;))
+</code></pre>
+
+<p>You can also provide a custom filter to limit the results returned. The following example prints out the filenames of all files with a &ldquo;image/png&rdquo; value set as the contentType in the user defined metadata document:</p>
+
+<pre><code class="language-scala">gridFSBucket
+  .find(Filters.equal(&quot;metadata.contentType&quot;, &quot;image/png&quot;))
+  .results()
+  .foreach(file =&gt; println(s&quot; &gt; ${file.getFilename}&quot;))
+</code></pre>
+
+<h2 id="download-from-gridfs">Download from GridFS</h2>
+
+<p>The <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html#downloadToObservable(id:org.mongodb.scala.bson.BsonValue):org.mongodb.scala.gridfs.GridFSDownloadObservable
+"><code>downloadToObservable</code></a> methods return a <code>Observable[ByteBuffer]</code> that reads the contents from MongoDB.</p>
+
+<p>To download a file by its file <code>_id</code>, pass the <code>_id</code> to the method. The following example downloads a file by its file <code>_id</code>:</p>
+
+<pre><code class="language-scala">val downloadById = gridFSBucket.downloadToObservable(fileId).results()
+</code></pre>
+
+<p>If you don&rsquo;t know the <code>_id</code> of the file but know the filename, then you can pass the filename to the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html#downloadToObservable(filename:String,options:org.mongodb.scala.gridfs.GridFSDownloadOptions):org.mongodb.scala.gridfs.GridFSDownloadObservable
+"><code>downloadToObservable</code></a> method. By default, it will download the latest version of the file. Use the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/model/index.html#GridFSDownloadOptions=com.mongodb.client.gridfs.model.GridFSDownloadOptions
+"><code>GridFSDownloadOptions</code></a> to configure which version to download.</p>
+
+<p>The following example downloads the original version of the file named &ldquo;mongodb-tutorial&rdquo;:</p>
+
+<pre><code class="language-scala">val downloadOptions: GridFSDownloadOptions = new GridFSDownloadOptions().revision(0)
+val downloadByName = gridFSBucket.downloadToObservable(&quot;mongodb-tutorial&quot;, downloadOptions).results()
+</code></pre>
+
+<h2 id="rename-files">Rename files</h2>
+
+<p>If you should need to rename a file, then use the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html#rename(id:org.mongodb.scala.bson.BsonValue,newFilename:String):org.mongodb.scala.Observable[Void]
+"><code>rename</code></a> method.</p>
+
+<p>The following example renames a file to &ldquo;mongodbTutorial&rdquo;:</p>
+
+<pre><code class="language-scala">val fileId: ObjectId = ??? //ObjectId of a file uploaded to GridFS
+
+gridFSBucket.rename(fileId, &quot;mongodbTutorial&quot;).printResults()
+</code></pre>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>The <code>rename</code> method requires an <code>ObjectId</code> rather than a <code>filename</code> to ensure the correct file is renamed.</p>
+
+<p>To rename multiple revisions of the same filename, first retrieve the full list of files. Then for every file that should be renamed then execute <code>rename</code> with the corresponding <code>_id</code>.</p>
+
+</div>
+
+
+<h2 id="delete-files">Delete files</h2>
+
+<p>To delete a file from the <code>GridFSBucket</code> use the <a href="/mongo-java-driver/3.4/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket.html#delete(id:org.mongodb.scala.bson.BsonValue):org.mongodb.scala.Observable[Void]
+"><code>delete</code></a> method.</p>
+
+<p>The following example deletes a file from the <code>GridFSBucket</code>:</p>
+
+<pre><code class="language-scala">val fileId: ObjectId = ??? //ObjectId of a file uploaded to GridFS
+
+gridFSBucket.delete(fileId).printResults()
+</code></pre>
+<div id="btnv"><div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.4/driver-scala/tutorials/geospatial-search/">
+      <i class="fa fa-long-arrow-left"> </i> Geospatial Search
+  </a>
+  </div><div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.4/driver-scala/tutorials/commands/">
+    Run Commands <i class="fa fa-long-arrow-right"> </i>
+  </a></div>
+</div></div><div class="right-column">
+<div class="wrapper"><div class="toc">
+    <span class="toc-header">On this page</span><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#gridfs">GridFS</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#connect-to-a-mongodb-deployment">Connect to a MongoDB Deployment</a></li>
+<li><a href="#create-a-gridfs-bucket">Create a GridFS Bucket</a></li>
+<li><a href="#upload-to-gridfs">Upload to GridFS</a></li>
+<li><a href="#find-files-stored-in-gridfs">Find Files Stored in GridFS</a></li>
+<li><a href="#download-from-gridfs">Download from GridFS</a></li>
+<li><a href="#rename-files">Rename files</a></li>
+<li><a href="#delete-files">Delete files</a></li>
+</ul></li>
+</ul>
+</nav></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.4",
+   VERSION:     "3.4",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/delighted.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/java.js"></script>
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=UA-7301842-14"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+   {'gtm.start': new Date().getTime(),event:'gtm.js'}
+ );var f=d.getElementsByTagName(s)[0],
+       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+         '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+ })(window,document,'script','dataLayer','UA-7301842-14');</script>
+
+
+<script type="text/javascript">
+ var _elqQ = _elqQ || [];
+ _elqQ.push(['elqSetSiteId', '413370795']);
+ _elqQ.push(['elqTrackPageView']);
+ (function () {
+   function async_load()
+   { var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+   if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+   else if (window.attachEvent) window.attachEvent('onload', async_load);
+ })();
+</script>
+</body>
+</html>

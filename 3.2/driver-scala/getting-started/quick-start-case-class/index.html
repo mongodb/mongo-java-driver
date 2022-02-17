@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MongoDB Java Driver documentation">
+<meta name="author" content="MongoDB Drivers Team">
+<meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
+<meta name="date" content="2022-01-24T16:21:38.3">
+<link rel="shortcut icon" href="/mongo-java-driver/3.2/img/favicon.png">
+
+    <title>Quick Start - Case Classes</title><link rel="stylesheet" href="/mongo-java-driver/3.2/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/css/java.css" type="text/css" />
+
+
+
+
+
+</head>
+
+  <body>
+  
+  <section id="container" class="">
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.2/../">
+        <img src="/mongo-java-driver/3.2/img/logo-mongodb-header.png", alt="MongoDB" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.2">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.2/../">MongoDB JVM Drivers</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.2">3.2</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu"><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.2/whats-new/"><i class='fa fa-level-up'></i>What&#39;s New</a>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.2/driver/" class=""><i class='fa fa-arrows-h'></i><span>Java Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.2/driver/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/jndi/"><i class='fa'></i>JNDI</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.2/driver/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.2/driver-reactive/" class=""><i class='fa fa-refresh'></i><span>Reactive Streams</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-reactive/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-reactive/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-reactive/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-reactive/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver-reactive/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-reactive/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.2/bson/" class=""><i class='fa fa-th'></i><span>BSON</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/readers-and-writers/"><i class='fa'></i>Readers and Writers</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/codecs/"><i class='fa'></i>Codec and CodecRegistry</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/pojos/"><i class='fa fa-star'></i>POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/installation-guide/"><i class='fa'></i>Installation Guide</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.2/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/sorts/"><i class='fa'></i>Sort Criteria  </a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/aggregation/"><i class='fa'></i>Aggregates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li><li class="toctree-l1 current">
+  <a href="/mongo-java-driver/3.2/driver-scala/" class=""><i class='fa fa-refresh'></i><span>Scala Driver</span><span class="menu-arrow fa fa-angle-down"></span></a>
+    <ul  class="current"><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-scala/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-scala/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-scala/getting-started/quick-start-case-class/"><i class='fa'></i>Quick Start - Case Classes</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/driver-scala/getting-started/quick-start-primer/"><i class='fa'></i>Quick Start Primer</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver-scala/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.2/driver-scala/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/client-side-encryption/"><i class='fa fa-lock'></i>Client Side Encryption</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.2/driver-scala/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver-scala/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/reference/observables/"><i class='fa'></i>Observables</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver-scala/bson/" class=""><i class='fa fa-th'></i><span>BSON</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/bson/scala-documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/bson/macros/"><i class='fa fa-cog'></i>Macros</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/bson/scala-extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.2/driver-scala/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/builders/sorts/"><i class='fa'></i>Sort Criteria</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/builders/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-scala/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.2/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.2/apidocs/"><i class='fa fa-file-text-o'></i>API Documentation</a>
+  </li><li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.2/issues-help/"><i class='fa fa-life-ring'></i>Issues &amp; Help</a>
+  </li></ul>
+        
+    </div>
+  </div></aside>
+
+
+
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body"> 
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-scala/getting-started/quick-start-case-class.md" target="_blank" title="Edit driver-scala/getting-started/quick-start-case-class.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
+<ul><li><a href="/mongo-java-driver/3.2/driver-scala/">Scala Driver</a> <i class="fa fa-angle-right"></i></li><li>Quick Start - Case Classes</li>
+</ul>
+</div>
+
+<h1 id="quick-start-with-case-classes">Quick Start with case classes</h1>
+
+<p>The following code snippets come from the <code>QuickTourCaseClass.scala</code> example code that can be found with the
+<a href="https://github.com/mongodb/mongo-java-driver/blob/master/examples/src/test/scala/tour/QuickStartCaseClass.scala
+">driver source</a>.</p>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>This follows on from the <a href="/mongo-java-driver/3.2/driver-scala/getting-started/quick-start/">quick tour</a>.</p>
+
+<p>See the <a href="/mongo-java-driver/3.2/driver-scala/bson/macros/">Bson macros</a> documentation for in-depth information about using macros for configuring case class
+support with your <code>MongoCollection</code>.</p>
+
+</div>
+
+
+<p>First we&rsquo;ll create the case class we want to use to represent the documents in the collection. In the following we create a <code>Person</code> case
+class and companion object:</p>
+
+<pre><code class="language-scala">import org.mongodb.scala.bson.ObjectId
+object Person {
+  def apply(firstName: String, lastName: String): Person =
+    Person(new ObjectId(), firstName, lastName)
+}
+case class Person(_id: ObjectId, firstName: String, lastName: String)
+</code></pre>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>You&rsquo;ll notice in the companion object the apply method can automatically assign a <code>_id</code> when creating new instances that don&rsquo;t include it.
+In MongoDB the <code>_id</code> field represents the primary key for a document, so by having a <code>_id</code> field in the case class it allows access to the
+primary key.</p>
+
+</div>
+
+
+<h2 id="configuring-case-classes">Configuring case classes</h2>
+
+<p>Then when using <code>Person</code> with a collection, there must be a <code>Codec</code> that can convert it to and from <code>BSON</code>. The
+<code>org.mongodb.scala.bson.codecs.Macros</code> companion object provides macros that can automatically generate a codec for case classes at compile
+time. In the following example we create a new <code>CodecRegistry</code> that includes a codec for the <code>Person</code> case class:</p>
+
+<pre><code class="language-scala">import org.mongodb.scala.bson.codecs.Macros._
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
+import org.bson.codecs.configuration.CodecRegistries.{fromRegistries, fromProviders}
+
+val codecRegistry = fromRegistries(fromProviders(classOf[Person]), DEFAULT_CODEC_REGISTRY )
+</code></pre>
+
+<p>Once the <code>codecRegistry</code> is configured, the next step is to create a <code>MongoCollection[Person]</code>. The following example uses <code>test</code>
+collection on the <code>mydb</code> database.</p>
+
+<pre><code class="language-scala">// To directly connect to the default server localhost on port 27017
+val mongoClient: MongoClient = MongoClient()
+val database: MongoDatabase = mongoClient.getDatabase(&quot;mydb&quot;).withCodecRegistry(codecRegistry)
+val collection: MongoCollection[Person] = database.getCollection(&quot;test&quot;)
+</code></pre>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>The <code>codecRegistry</code> can be set when creating a <code>MongoClient</code>, at the database level or at the collection level. The API is flexible,
+allowing for different <code>CodecRegistries</code> as required.</p>
+
+</div>
+
+
+<h2 id="insert-a-person">Insert a person</h2>
+
+<p>With the correctly configured <code>MongoCollection</code>, inserting <code>Person</code> instances into the collection is simple:</p>
+
+<pre><code class="language-scala">val person: Person = Person(&quot;Ada&quot;, &quot;Lovelace&quot;)
+collection.insertOne(person).results()
+</code></pre>
+
+<h2 id="add-multiple-instances">Add multiple instances</h2>
+
+<p>To add multiple <code>Person</code> instances, use the <code>insertMany()</code>. The following uses the <code>printResults()</code> implicit and blocks until the observer
+is completed and then prints each result:</p>
+
+<pre><code class="language-scala">val people: Seq[Person] = Seq(
+  Person(&quot;Charles&quot;, &quot;Babbage&quot;),
+  Person(&quot;George&quot;, &quot;Boole&quot;),
+  Person(&quot;Gertrude&quot;, &quot;Blanch&quot;),
+  Person(&quot;Grace&quot;, &quot;Hopper&quot;),
+  Person(&quot;Ida&quot;, &quot;Rhodes&quot;),
+  Person(&quot;Jean&quot;, &quot;Bartik&quot;),
+  Person(&quot;John&quot;, &quot;Backus&quot;),
+  Person(&quot;Lucy&quot;, &quot;Sanders&quot;),
+  Person(&quot;Tim&quot;, &quot;Berners Lee&quot;),
+  Person(&quot;Zaphod&quot;, &quot;Beeblebrox&quot;)
+)
+collection.insertMany(people).printResults()
+</code></pre>
+
+<p>It will output the following message:</p>
+
+<pre><code>The operation completed successfully
+</code></pre>
+
+<h2 id="querying-the-collection">Querying the collection</h2>
+
+<p>Use the <a href="/mongo-java-driver/3.2/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#find[C](filter:org.bson.conversions.Bson)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[C,org.mongodb.scala.collection.immutable.Document],implicitct:scala.reflect.ClassTag[C]):org.mongodb.scala.FindObservable[C]
+">find()</a>
+method to query the collection.</p>
+
+<h3 id="find-the-first-person-in-a-collection">Find the first person in a collection</h3>
+
+<p>Querying the collection is the same as shown in the <a href="/mongo-java-driver/3.2/driver-scala/getting-started/quick-start/">quick tour</a>:</p>
+
+<pre><code class="language-scala">collection.find().first().printHeadResult()
+</code></pre>
+
+<p>The example will print the first <code>Person</code> in the database:</p>
+
+<pre><code>Person(58dd0a68218de22333435fa4, Ada, Lovelace)
+</code></pre>
+
+<h3 id="find-all-people-in-the-collection">Find all people in the collection</h3>
+
+<p>To retrieve all the people in the collection, use the <code>find()</code> method. The <code>find()</code> method returns a <code>FindObservable</code> instance that
+provides a fluent interface for chaining or controlling find operations. The following uses prints all the people in the collection:</p>
+
+<pre><code class="language-scala">collection.find().printResults()
+</code></pre>
+
+<h2 id="get-a-single-person-with-a-query-filter">Get a single person with a query filter</h2>
+
+<p>To return a subset of the documents in our collection, pass a filter to the find() method . For example, the following will return the first
+<code>Person</code> whose first name is Ida:</p>
+
+<pre><code class="language-scala">import org.mongodb.scala.model.Filters._
+
+collection.find(equal(&quot;firstName&quot;, &quot;Ida&quot;)).first().printHeadResult()
+</code></pre>
+
+<p>This will print:</p>
+
+<pre><code>Person(58dd0a68218de22333435fa4, Ida, Rhodes)
+</code></pre>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>Use the <a href="/mongo-java-driver/3.2/builders/filters/"><code>Filters</code></a>, <a href="/mongo-java-driver/3.2/builders/sorts/"><code>Sorts</code></a>,
+<a href="/mongo-java-driver/3.2/builders/projections/"><code>Projections</code></a> and <a href="/mongo-java-driver/3.2/builders/updates/"><code>Updates</code></a>
+helpers for simple and concise ways of building up queries.</p>
+
+</div>
+
+
+<h2 id="get-a-set-of-people-with-a-query">Get a set of people with a query</h2>
+
+<p>The following filter will find all <code>Person</code> instances where the <code>firstName</code> starts with <code>G</code>, sorted by <code>lastName</code>:</p>
+
+<pre><code class="language-scala">collection.find(regex(&quot;firstName&quot;, &quot;^G&quot;)).sort(ascending(&quot;lastName&quot;)).printResults()
+</code></pre>
+
+<p>Which will print out the Person instances for Gertrude, George and Grace.</p>
+
+<h2 id="updating-documents">Updating documents</h2>
+
+<p>There are numerous <a href="http://docs.mongodb.org/manual/reference/operator/update-field/">update operators</a>
+supported by MongoDB.  Use the <a href="/mongo-java-driver/3.2/apidocs/mongo-scala-driver/org/mongodb/scala/model/Updates$.html
+">Updates</a> helpers to help update documents in the database.</p>
+
+<p>The following update corrects the hyphenation for Tim Berners-Lee:</p>
+
+<pre><code class="language-scala">collection.updateOne(equal(&quot;lastName&quot;, &quot;Berners Lee&quot;), set(&quot;lastName&quot;, &quot;Berners-Lee&quot;)).printHeadResult(&quot;Update Result: &quot;)
+</code></pre>
+
+<p>The update methods return an <a href="/mongo-java-driver/3.2/apidocs/mongodb-driver-core/com/mongodb/client/result/UpdateResult.html
+"><code>UpdateResult</code></a>,
+which provides information about the operation including the number of documents modified by the update.</p>
+
+<h2 id="deleting-documents">Deleting documents</h2>
+
+<p>To delete at most a single document (may be 0 if none match the filter) use the <a href="/mongo-java-driver/3.2/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#deleteOne(filter:org.bson.conversions.Bson):org.mongodb.scala.Observable[org.mongodb.scala.result.DeleteResult]
+"><code>deleteOne</code></a>
+method:</p>
+
+<pre><code class="language-scala">collection.deleteOne(equal(&quot;firstName&quot;, &quot;Zaphod&quot;)).printHeadResult(&quot;Delete Result: &quot;)
+</code></pre>
+
+<p>As you can see the API allows for easy use of CRUD operations with case classes. See the <a href="/mongo-java-driver/3.2/driver-scala/bson/macros/">Bson macros</a>
+documentation for further information about the macros.</p>
+<div id="btnv"><div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.2/driver-scala/getting-started/quick-start/">
+      <i class="fa fa-long-arrow-left"> </i> Quick Start
+  </a>
+  </div><div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.2/driver-scala/getting-started/quick-start-primer/">
+    Quick Start Primer <i class="fa fa-long-arrow-right"> </i>
+  </a></div>
+</div></div><div class="right-column">
+<div class="wrapper"><div class="toc">
+    <span class="toc-header">On this page</span><nav id="TableOfContents">
+<ul>
+<li><a href="#quick-start-with-case-classes">Quick Start with case classes</a>
+<ul>
+<li><a href="#configuring-case-classes">Configuring case classes</a></li>
+<li><a href="#insert-a-person">Insert a person</a></li>
+<li><a href="#add-multiple-instances">Add multiple instances</a></li>
+<li><a href="#querying-the-collection">Querying the collection</a>
+<ul>
+<li><a href="#find-the-first-person-in-a-collection">Find the first person in a collection</a></li>
+<li><a href="#find-all-people-in-the-collection">Find all people in the collection</a></li>
+</ul></li>
+<li><a href="#get-a-single-person-with-a-query-filter">Get a single person with a query filter</a></li>
+<li><a href="#get-a-set-of-people-with-a-query">Get a set of people with a query</a></li>
+<li><a href="#updating-documents">Updating documents</a></li>
+<li><a href="#deleting-documents">Deleting documents</a></li>
+</ul></li>
+</ul>
+</nav></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.2",
+   VERSION:     "3.2",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/lib/delighted.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/java.js"></script>
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=UA-7301842-14"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+   {'gtm.start': new Date().getTime(),event:'gtm.js'}
+ );var f=d.getElementsByTagName(s)[0],
+       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+         '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+ })(window,document,'script','dataLayer','UA-7301842-14');</script>
+
+
+<script type="text/javascript">
+ var _elqQ = _elqQ || [];
+ _elqQ.push(['elqSetSiteId', '413370795']);
+ _elqQ.push(['elqTrackPageView']);
+ (function () {
+   function async_load()
+   { var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+   if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+   else if (window.attachEvent) window.attachEvent('onload', async_load);
+ })();
+</script>
+</body>
+</html>
