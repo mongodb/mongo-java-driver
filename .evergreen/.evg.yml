@@ -416,6 +416,15 @@ functions:
       type: test
       params:
         working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
+          mongo aws_e2e_regular_aws.js
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
         silent: true
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
@@ -432,6 +441,15 @@ functions:
           JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials and session token as environment variables":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate_venv.sh
+          mongo aws_e2e_assume_role.js
     - command: shell.exec
       type: test
       params:
@@ -787,7 +805,7 @@ tasks:
       commands:
         - func: "run plain auth test"
 
-    - name: "aws-auth-test"
+    - name: "aws-auth-test-with-regular-aws-credentials"
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
@@ -796,10 +814,55 @@ tasks:
             TOPOLOGY: "server"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with regular aws credentials"
+
+    - name: "aws-auth-test-with-assume-role-credentials"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            AUTH: "auth"
+            ORCHESTRATION_FILE: "auth-aws.json"
+            TOPOLOGY: "server"
+        - func: "add aws auth variables to file"
         - func: "run aws auth test with assume role credentials"
+
+    - name: "aws-auth-test-with-aws-credentials-as-environment-variables"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            AUTH: "auth"
+            ORCHESTRATION_FILE: "auth-aws.json"
+            TOPOLOGY: "server"
+        - func: "add aws auth variables to file"
         - func: "run aws auth test with aws credentials as environment variables"
+
+    - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            AUTH: "auth"
+            ORCHESTRATION_FILE: "auth-aws.json"
+            TOPOLOGY: "server"
+        - func: "add aws auth variables to file"
         - func: "run aws auth test with aws credentials and session token as environment variables"
+
+    - name: "aws-auth-test-with-aws-EC2-credentials"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            AUTH: "auth"
+            ORCHESTRATION_FILE: "auth-aws.json"
+            TOPOLOGY: "server"
+        - func: "add aws auth variables to file"
         - func: "run aws auth test with aws EC2 credentials"
+
+    - name: "aws-ECS-auth-test"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            AUTH: "auth"
+            ORCHESTRATION_FILE: "auth-aws.json"
+            TOPOLOGY: "server"
+        - func: "add aws auth variables to file"
         - func: "run aws ECS auth test"
 
     - name: "test-ocsp-rsa-valid-cert-server-staples"
@@ -1641,7 +1704,12 @@ buildvariants:
   display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
   run_on: ubuntu1804-test
   tasks:
-    - name: "aws-auth-test"
+    - name: "aws-auth-test-with-regular-aws-credentials"
+    - name: "aws-auth-test-with-assume-role-credentials"
+    - name: "aws-auth-test-with-aws-credentials-as-environment-variables"
+    - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
+    - name: "aws-auth-test-with-aws-EC2-credentials"
+    - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
   matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "latest"], topology: "standalone", os: "linux" }
