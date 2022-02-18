@@ -209,7 +209,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             try {
                 startTransaction(options);
                 retVal = transactionBody.execute();
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
                 if (transactionState == TransactionState.IN) {
                     abortTransaction();
                 }
