@@ -18,8 +18,6 @@ package org.mongodb.scala
 
 import java.lang.reflect.Modifier.isStatic
 
-import org.scalatest.{ FlatSpec, Matchers }
-
 class MongoDriverInformationSpec extends BaseSpec {
 
   "MongoDriverInformation" should "have the same static fields as the wrapped MongoDriverInformation" in {
