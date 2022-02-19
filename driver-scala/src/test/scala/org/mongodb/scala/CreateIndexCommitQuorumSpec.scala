@@ -18,10 +18,6 @@ package org.mongodb.scala
 
 import java.lang.reflect.Modifier.isStatic
 
-import scala.collection.JavaConverters._
-
-import org.scalatest.{ FlatSpec, Matchers }
-
 class CreateIndexCommitQuorumSpec extends BaseSpec {
 
   "CreateIndexCommitQuorum" should "have the same methods as the wrapped CreateIndexCommitQuorum" in {
