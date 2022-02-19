@@ -399,7 +399,10 @@ class ScalaObservableSpec extends BaseSpec {
       )
     }
 
-    Await.result(TestObservable[Int](Observable(List[Int]())).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(
+    Await.result(
+      TestObservable[Int](Observable(List[Int]())).headOption(),
+      Duration(10, TimeUnit.SECONDS)
+    ) should equal(
       None
     )
   }
@@ -412,7 +415,9 @@ class ScalaObservableSpec extends BaseSpec {
       Await.result(TestObservable[Int](Observable[Int](1 to 10), failOn = 1).head(), Duration(10, TimeUnit.SECONDS))
     }
 
-    Option(Await.result(TestObservable[Int](Observable(List[Int]())).head(), Duration(10, TimeUnit.SECONDS))) should equal(
+    Option(
+      Await.result(TestObservable[Int](Observable(List[Int]())).head(), Duration(10, TimeUnit.SECONDS))
+    ) should equal(
       None
     )
   }

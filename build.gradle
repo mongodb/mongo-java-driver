@@ -122,7 +122,7 @@ configure(scalaProjects) {
 
     spotless {
         scala {
-            scalafmt('3.0.7').configFile("$configDir/scala/scalafmt.conf")
+            scalafmt().configFile("$configDir/scala/scalafmt.conf")
         }
     }
     compileScala.dependsOn('spotlessApply')

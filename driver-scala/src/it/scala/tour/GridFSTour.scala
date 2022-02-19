@@ -32,7 +32,7 @@ import scala.util.Success
  */
 object GridFSTour {
 
-  //scalastyle:off
+  // scalastyle:off
   /**
    * Run this main method to see the output of this quick example.
    *
@@ -109,6 +109,6 @@ object GridFSTour {
     println("Finished")
   }
 
-  //scalastyle:on
+  // scalastyle:on
 
 }

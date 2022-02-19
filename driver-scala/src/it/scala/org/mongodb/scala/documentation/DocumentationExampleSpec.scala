@@ -213,7 +213,7 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
   }
 
   it should "be able to query array" in withCollection { collection =>
-    //Start Example 20
+    // Start Example 20
     collection
       .insertMany(
         Seq(
@@ -225,62 +225,62 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         )
       )
       .execute()
-    //End Example 20
+    // End Example 20
 
     collection.countDocuments().execute() shouldEqual 5
 
-    //Start Example 21
+    // Start Example 21
     var findObservable = collection.find(equal("tags", Seq("red", "blank")))
-    //End Example 21
+    // End Example 21
 
     findObservable.execute().size shouldEqual 1
 
-    //Start Example 22
+    // Start Example 22
     findObservable = collection.find(all("tags", "red", "blank"))
-    //End Example 22
+    // End Example 22
 
     findObservable.execute().size shouldEqual 4
 
-    //Start Example 23
+    // Start Example 23
     findObservable = collection.find(equal("tags", "red"))
-    //End Example 23
+    // End Example 23
 
     findObservable.execute().size shouldEqual 4
 
-    //Start Example 24
+    // Start Example 24
     findObservable = collection.find(gt("dim_cm", 25))
-    //End Example 24
+    // End Example 24
 
     findObservable.execute().size shouldEqual 1
 
-    //Start Example 25
+    // Start Example 25
     findObservable = collection.find(and(gt("dim_cm", 15), lt("dim_cm", 20)))
-    //End Example 25
+    // End Example 25
 
     findObservable.execute().size shouldEqual 4
 
-    //Start Example 26
+    // Start Example 26
     findObservable = collection.find(elemMatch("dim_cm", Document("$gt" -> 22, "$lt" -> 30)))
 
-    //End Example 26
+    // End Example 26
 
     findObservable.execute().size shouldEqual 1
 
-    //Start Example 27
+    // Start Example 27
     findObservable = collection.find(gt("dim_cm.1", 25))
-    //End Example 27
+    // End Example 27
 
     findObservable.execute().size shouldEqual 1
 
-    //Start Example 28
+    // Start Example 28
     findObservable = collection.find(size("tags", 3))
-    //End Example 28
+    // End Example 28
 
     findObservable.execute().size shouldEqual 1
   }
 
   it should "query array of documents" in withCollection { collection =>
-    //Start Example 29
+    // Start Example 29
     collection
       .insertMany(
         Seq(
@@ -292,61 +292,61 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         )
       )
       .execute()
-    //End Example 29
+    // End Example 29
 
     collection.countDocuments().execute() shouldEqual 5
 
-    //Start Example 30
+    // Start Example 30
     var findObservable = collection.find(equal("instock", Document("warehouse" -> "A", "qty" -> 5)))
-    //End Example 30
+    // End Example 30
 
     findObservable.execute().size shouldEqual 1
 
-    //Start Example 31
+    // Start Example 31
     findObservable = collection.find(equal("instock", Document("qty" -> 5, "warehouse" -> "A")))
-    //End Example 31
+    // End Example 31
 
     findObservable.execute().size shouldEqual 0
 
-    //Start Example 32
+    // Start Example 32
     findObservable = collection.find(lte("instock.0.qty", 20))
-    //End Example 32
+    // End Example 32
 
     findObservable.execute().size shouldEqual 3
 
-    //Start Example 33
+    // Start Example 33
     findObservable = collection.find(lte("instock.qty", 20))
-    //End Example 33
+    // End Example 33
 
     findObservable.execute().size shouldEqual 5
 
-    //Start Example 34
+    // Start Example 34
     findObservable = collection.find(elemMatch("instock", Document("qty" -> 5, "warehouse" -> "A")))
-    //End Example 34
+    // End Example 34
 
     findObservable.execute().size shouldEqual 1
 
-    //Start Example 35
+    // Start Example 35
     findObservable = collection.find(elemMatch("instock", Document("""{ qty: { $gt: 10, $lte: 20 } }""")))
-    //End Example 35
+    // End Example 35
 
     findObservable.execute().size shouldEqual 3
 
-    //Start Example 36
+    // Start Example 36
     findObservable = collection.find(and(gt("instock.qty", 10), lte("instock.qty", 20)))
-    //End Example 36
+    // End Example 36
 
     findObservable.execute().size shouldEqual 4
 
-    //Start Example 37
+    // Start Example 37
     findObservable = collection.find(and(equal("instock.qty", 5), equal("instock.warehouse", "A")))
-    //End Example 37
+    // End Example 37
 
     findObservable.execute().size shouldEqual 2
   }
 
   it should "query null and missing fields" in withCollection { collection =>
-    //Start Example 38
+    // Start Example 38
     collection
       .insertMany(
         Seq(
@@ -355,31 +355,31 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         )
       )
       .execute()
-    //End Example 38
+    // End Example 38
 
     collection.countDocuments().execute() shouldEqual 2
 
-    //Start Example 39
+    // Start Example 39
     var findObservable = collection.find(equal("item", BsonNull()))
-    //End Example 39
+    // End Example 39
 
     findObservable.execute().size shouldEqual 2
 
-    //Start Example 40
+    // Start Example 40
     findObservable = collection.find(bsonType("item", BsonType.NULL))
-    //End Example 40
+    // End Example 40
 
     findObservable.execute().size shouldEqual 1
 
-    //Start Example 41
+    // Start Example 41
     findObservable = collection.find(exists("item", exists = false))
-    //End Example 41
+    // End Example 41
 
     findObservable.execute().size shouldEqual 1
   }
 
   it should "be able to project fields" in withCollection { collection =>
-    //Start Example 42
+    // Start Example 42
     collection
       .insertMany(
         Seq(
@@ -400,39 +400,39 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         )
       )
       .execute()
-    //End Example 42
+    // End Example 42
 
     collection.countDocuments().execute() shouldEqual 5
 
-    //Start Example 43
+    // Start Example 43
     var findObservable = collection.find(equal("status", "A"))
-    //End Example 43
+    // End Example 43
 
     findObservable.execute().size shouldEqual 3
 
-    //Start Example 44
+    // Start Example 44
     findObservable = collection.find(equal("status", "A")).projection(include("item", "status"))
-    //End Example 44
+    // End Example 44
 
     findObservable.execute().foreach((doc: Document) => doc.keys should contain only ("_id", "item", "status"))
 
-    //Start Example 45
+    // Start Example 45
     findObservable = collection
       .find(equal("status", "A"))
       .projection(fields(include("item", "status"), excludeId()))
-    //End Example 45
+    // End Example 45
 
     findObservable.execute().foreach((doc: Document) => doc.keys should contain only ("item", "status"))
 
-    //Start Example 46
+    // Start Example 46
     findObservable = collection.find(equal("status", "A")).projection(exclude("item", "status"))
-    //End Example 46
+    // End Example 46
 
     findObservable.execute().foreach((doc: Document) => doc.keys should contain only ("_id", "size", "instock"))
 
-    //Start Example 47
+    // Start Example 47
     findObservable = collection.find(equal("status", "A")).projection(include("item", "status", "size.uom"))
-    //End Example 47
+    // End Example 47
 
     findObservable
       .execute()
@@ -441,9 +441,9 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         doc.get[BsonDocument]("size").get.keys should contain only "uom"
       })
 
-    //Start Example 48
+    // Start Example 48
     findObservable = collection.find(equal("status", "A")).projection(exclude("size.uom"))
-    //End Example 48
+    // End Example 48
 
     findObservable
       .execute()
@@ -452,9 +452,9 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         doc.get[BsonDocument]("size").get.keys should contain only ("h", "w")
       })
 
-    //Start Example 49
+    // Start Example 49
     findObservable = collection.find(equal("status", "A")).projection(include("item", "status", "instock.qty"))
-    //End Example 49
+    // End Example 49
 
     findObservable
       .execute()
@@ -467,11 +467,11 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
           .foreach((doc: BsonValue) => doc.asInstanceOf[BsonDocument].keys should contain only "qty")
       })
 
-    //Start Example 50
+    // Start Example 50
     findObservable = collection
       .find(equal("status", "A"))
       .projection(fields(include("item", "status"), slice("instock", -1)))
-    //End Example 50
+    // End Example 50
 
     findObservable
       .execute()
@@ -484,7 +484,7 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
   it should "be able to update" in withCollection { collection =>
     assume(serverVersionAtLeast(List(2, 6, 0)))
 
-    //Start Example 51
+    // Start Example 51
     collection
       .insertMany(
         Seq(
@@ -501,18 +501,18 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         )
       )
       .execute()
-    //End Example 51
+    // End Example 51
 
     collection.countDocuments().execute() shouldEqual 10
 
-    //Start Example 52
+    // Start Example 52
     collection
       .updateOne(
         equal("item", "paper"),
         combine(set("size.uom", "cm"), set("status", "P"), currentDate("lastModified"))
       )
       .execute()
-    //End Example 52
+    // End Example 52
 
     collection
       .find(equal("item", "paper"))
@@ -523,11 +523,11 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         doc.containsKey("lastModified") shouldBe true
       })
 
-    //Start Example 53
+    // Start Example 53
     collection
       .updateMany(lt("qty", 50), combine(set("size.uom", "in"), set("status", "P"), currentDate("lastModified")))
       .execute()
-    //End Example 53
+    // End Example 53
 
     collection
       .find(lt("qty", 50))
@@ -538,14 +538,14 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         doc.containsKey("lastModified") shouldBe true
       })
 
-    //Start Example 54
+    // Start Example 54
     collection
       .replaceOne(
         equal("item", "paper"),
         Document("""{ item: "paper", instock: [ { warehouse: "A", qty: 60 }, { warehouse: "B", qty: 40 } ] }""")
       )
       .execute()
-    //End Example 54
+    // End Example 54
 
     collection
       .find(equal("item", "paper"))
@@ -559,7 +559,7 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
   }
 
   it should "be able to delete" in withCollection { collection =>
-    //Start Example 55
+    // Start Example 55
     collection
       .insertMany(
         Seq(
@@ -571,25 +571,25 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
         )
       )
       .execute()
-    //End Example 55
+    // End Example 55
 
     collection.countDocuments().execute() shouldEqual 5
 
-    //Start Example 57
+    // Start Example 57
     collection.deleteMany(equal("status", "A")).execute()
-    //End Example 57
+    // End Example 57
 
     collection.countDocuments().execute() shouldEqual 2
 
-    //Start Example 58
+    // Start Example 58
     collection.deleteOne(equal("status", "D")).execute()
-    //End Example 58
+    // End Example 58
 
     collection.countDocuments().execute() shouldEqual 1
 
-    //Start Example 56
+    // Start Example 56
     collection.deleteMany(Document()).execute()
-    //End Example 56
+    // End Example 56
 
     collection.countDocuments().execute() shouldEqual 0
   }
