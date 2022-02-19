@@ -30,7 +30,7 @@ buildscript {
 
         // Scala plugins
         classpath "com.adtran:scala-multiversion-plugin:2.0.4"
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:3.27.1"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:6.3.0"
 
         // Test logging plugin
         classpath 'com.adarshr:gradle-test-logger-plugin:2.1.0'
@@ -95,7 +95,7 @@ configure(scalaProjects) {
     apply plugin: 'scala'
     apply plugin: 'idea'
     apply plugin: "com.adtran.scala-multiversion-plugin"
-    apply plugin: "com.diffplug.gradle.spotless"
+    apply plugin: "com.diffplug.spotless"
 
     group = 'org.mongodb.scala'
 
@@ -122,7 +122,7 @@ configure(scalaProjects) {
 
     spotless {
         scala {
-            scalafmt('2.0.0').configFile("$configDir/scala/scalafmt.conf")
+            scalafmt('3.0.7').configFile("$configDir/scala/scalafmt.conf")
         }
     }
     compileScala.dependsOn('spotlessApply')

@@ -139,8 +139,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @return a Observable containing the command result
    */
   def runCommand[TResult](command: Bson, readPreference: ReadPreference)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand(command, readPreference, ct)
@@ -156,8 +155,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def runCommand[TResult](clientSession: ClientSession, command: Bson)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand[TResult](clientSession, command, ct)
@@ -173,8 +171,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def runCommand[TResult](clientSession: ClientSession, command: Bson, readPreference: ReadPreference)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand(clientSession, command, readPreference, ct)
@@ -239,8 +236,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def listCollections[TResult](clientSession: ClientSession)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): ListCollectionsObservable[TResult] =
     ListCollectionsObservable(wrapped.listCollections(clientSession, ct))

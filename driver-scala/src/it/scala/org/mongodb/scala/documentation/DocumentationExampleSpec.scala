@@ -551,11 +551,10 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
       .find(equal("item", "paper"))
       .projection(excludeId())
       .execute()
-      .foreach(
-        (doc: Document) =>
-          doc shouldEqual Document(
-            """{ item: "paper", instock: [ { warehouse: "A", qty: 60 }, { warehouse: "B", qty: 40 } ] }"""
-          )
+      .foreach((doc: Document) =>
+        doc shouldEqual Document(
+          """{ item: "paper", instock: [ { warehouse: "A", qty: 60 }, { warehouse: "B", qty: 40 } ] }"""
+        )
       )
   }
 

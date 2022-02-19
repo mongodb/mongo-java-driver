@@ -220,7 +220,9 @@ class FiltersSpec extends BaseSpec {
     toBson(model.Filters.text("mongoDB for GIANT ideas", new TextSearchOptions().caseSensitive(true))) should equal(
       Document("""{$text : {$search : "mongoDB for GIANT ideas", $caseSensitive : true} }""")
     )
-    toBson(model.Filters.text("mongoDB for GIANT ideas", new TextSearchOptions().diacriticSensitive(false))) should equal(
+    toBson(
+      model.Filters.text("mongoDB for GIANT ideas", new TextSearchOptions().diacriticSensitive(false))
+    ) should equal(
       Document("""{$text : {$search : "mongoDB for GIANT ideas", $diacriticSensitive : false} }""")
     )
     toBson(

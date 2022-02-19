@@ -29,9 +29,7 @@ class FlatMapObservableTest extends BaseSpec with Futures with Eventually {
     val p = Promise[Unit]()
     val completedCounter = new AtomicInteger(0)
     Observable(1 to 100)
-      .flatMap(
-        x => createObservable(x)
-      )
+      .flatMap(x => createObservable(x))
       .subscribe(
         _ => (),
         e => p.failure(e),
@@ -47,13 +45,12 @@ class FlatMapObservableTest extends BaseSpec with Futures with Eventually {
     val p = Promise[Unit]()
     val errorCounter = new AtomicInteger(0)
     Observable(1 to 100)
-      .flatMap(
-        x =>
-          if (x > 10) {
-            throw new IllegalStateException("Fail")
-          } else {
-            createObservable(x)
-          }
+      .flatMap(x =>
+        if (x > 10) {
+          throw new IllegalStateException("Fail")
+        } else {
+          createObservable(x)
+        }
       )
       .subscribe(
         _ => (),
