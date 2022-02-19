@@ -19,12 +19,14 @@ package org.mongodb.scala.model.vault
 import java.lang.reflect.Modifier.{ isPublic, isStatic }
 
 import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
+import org.mockito.ArgumentMatchers.{ any, same }
+import org.mockito.Mockito.verify
 import org.mongodb.scala.BaseSpec
 import org.mongodb.scala.bson.{ BsonBinary, BsonString }
 import org.mongodb.scala.vault.ClientEncryption
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
-class ClientEncryptionSpec extends BaseSpec with MockFactory {
+class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
 
   val wrapped = mock[JClientEncryption]
   val clientEncryption = ClientEncryption(wrapped)
@@ -47,26 +49,26 @@ class ClientEncryptionSpec extends BaseSpec with MockFactory {
     val kmsProvider = "kmsProvider"
     val options = DataKeyOptions()
 
-    wrapped.expects(Symbol("createDataKey"))(kmsProvider, *).once()
     clientEncryption.createDataKey(kmsProvider)
+    verify(wrapped).createDataKey(same(kmsProvider), any())
 
-    wrapped.expects(Symbol("createDataKey"))(kmsProvider, options).once()
     clientEncryption.createDataKey(kmsProvider, options)
+    verify(wrapped).createDataKey(kmsProvider, options)
   }
 
   it should "call encrypt" in {
     val bsonValue = BsonString("")
     val options = EncryptOptions("algorithm")
-    wrapped.expects(Symbol("encrypt"))(bsonValue, options).once()
-
     clientEncryption.encrypt(bsonValue, options)
+
+    verify(wrapped).encrypt(bsonValue, options)
   }
 
   it should "call decrypt" in {
     val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
-    wrapped.expects(Symbol("decrypt"))(bsonBinary).once()
-
     clientEncryption.decrypt(bsonBinary)
+
+    verify(wrapped).decrypt(bsonBinary)
   }
 
 }

@@ -109,7 +109,7 @@ configure(scalaProjects) {
         testImplementation('org.scalatest:scalatest-flatspec_%%:3.2.9')
         testImplementation('org.scalatest:scalatest-shouldmatchers_%%:3.2.9')
         testImplementation('org.scalatestplus:junit-4-13_%%:3.2.9.0')
-        testImplementation('org.scalamock:scalamock_%%:4.4.0')
+        testImplementation('org.scalatestplus:mockito-3-12_%%:3.2.10.0')
         testImplementation('ch.qos.logback:logback-classic:1.1.3')
         testImplementation('org.reflections:reflections:0.9.10')
     }

@@ -18,12 +18,13 @@ package org.mongodb.scala
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher
+import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.reactivestreams.Publisher
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
 
-class ListDatabasesObservableSpec extends BaseSpec with MockFactory {
+class ListDatabasesObservableSpec extends BaseSpec with MockitoSugar {
 
   "ListDatabasesObservable" should "have the same methods as the wrapped ListDatabasesObservable" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
@@ -43,14 +44,16 @@ class ListDatabasesObservableSpec extends BaseSpec with MockFactory {
     val duration = Duration(1, TimeUnit.SECONDS)
     val batchSize = 10
 
-    wrapper.expects(Symbol("maxTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("filter"))(filter).once()
-    wrapper.expects(Symbol("nameOnly"))(true).once()
-    wrapper.expects(Symbol("batchSize"))(batchSize).once()
-
     observable.maxTime(duration)
     observable.filter(filter)
     observable.nameOnly(true)
     observable.batchSize(batchSize)
+
+    verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).filter(filter)
+    verify(wrapper).nameOnly(true)
+    verify(wrapper).batchSize(batchSize)
+
+    verifyNoMoreInteractions(wrapper)
   }
 }

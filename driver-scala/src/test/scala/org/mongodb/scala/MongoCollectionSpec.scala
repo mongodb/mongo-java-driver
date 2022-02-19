@@ -22,12 +22,13 @@ import com.mongodb.reactivestreams.client.{ MongoCollection => JMongoCollection 
 import org.bson.BsonDocument
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
+import org.mockito.Mockito.{ times, verify }
 import org.mongodb.scala.model._
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
 
-class MongoCollectionSpec extends BaseSpec with MockFactory {
+class MongoCollectionSpec extends BaseSpec with MockitoSugar {
 
   val wrapped = mock[JMongoCollection[Document]]
   val clientSession = mock[ClientSession]
@@ -48,88 +49,81 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
   }
 
   it should "return the underlying getNamespace" in {
-    wrapped.expects(Symbol("getNamespace"))().once()
-
     mongoCollection.namespace
+
+    verify(wrapped).getNamespace
   }
 
   it should "return the underlying getCodecRegistry" in {
-    wrapped.expects(Symbol("getCodecRegistry"))().once()
-
     mongoCollection.codecRegistry
+
+    verify(wrapped).getCodecRegistry
   }
 
   it should "return the underlying getReadPreference" in {
-    wrapped.expects(Symbol("getReadPreference"))().once()
-
     mongoCollection.readPreference
+
+    verify(wrapped).getReadPreference
   }
 
   it should "return the underlying getWriteConcern" in {
-    wrapped.expects(Symbol("getWriteConcern"))().once()
-
     mongoCollection.writeConcern
+
+    verify(wrapped).getWriteConcern
   }
 
   it should "return the underlying getReadConcern" in {
-    wrapped.expects(Symbol("getReadConcern"))().once()
-
     mongoCollection.readConcern
+
+    verify(wrapped).getReadConcern
   }
 
   it should "return the underlying getDocumentClass" in {
-    wrapped.expects(Symbol("getDocumentClass"))().once()
-
     mongoCollection.documentClass
+
+    verify(wrapped).getDocumentClass
   }
 
   it should "return the underlying withCodecRegistry" in {
     val codecRegistry = fromProviders(new BsonValueCodecProvider())
 
-    wrapped.expects(Symbol("withCodecRegistry"))(codecRegistry).once()
-
     mongoCollection.withCodecRegistry(codecRegistry)
+
+    verify(wrapped).withCodecRegistry(codecRegistry)
   }
 
   it should "return the underlying withReadPreference" in {
-    wrapped.expects(Symbol("withReadPreference"))(readPreference).once()
-
     mongoCollection.withReadPreference(readPreference)
+
+    verify(wrapped).withReadPreference(readPreference)
   }
 
   it should "return the underlying withWriteConcern" in {
     val writeConcern = WriteConcern.MAJORITY
-    wrapped.expects(Symbol("withWriteConcern"))(writeConcern).once()
-
     mongoCollection.withWriteConcern(writeConcern)
+
+    verify(wrapped).withWriteConcern(writeConcern)
   }
 
   it should "return the underlying withReadConcern" in {
     val readConcern = ReadConcern.MAJORITY
-    wrapped.expects(Symbol("withReadConcern"))(readConcern).once()
-
     mongoCollection.withReadConcern(readConcern)
+
+    verify(wrapped).withReadConcern(readConcern)
   }
 
   it should "return the underlying withDocumentClass" in {
-    wrapped.expects(Symbol("withDocumentClass"))(classOf[Document]).once()
-    wrapped.expects(Symbol("withDocumentClass"))(classOf[Document]).once()
-    wrapped.expects(Symbol("withDocumentClass"))(classOf[BsonDocument]).once()
-
     mongoCollection.withDocumentClass()
     mongoCollection.withDocumentClass[Document]()
     mongoCollection.withDocumentClass[BsonDocument]()
+
+    verify(wrapped, times(2)).withDocumentClass(classOf[Document])
+    verify(wrapped).withDocumentClass(classOf[BsonDocument])
+
   }
 
   it should "return the underlying countDocuments" in {
     val countOptions = CountOptions()
-
-    wrapped.expects(Symbol("countDocuments"))().once()
-    wrapped.expects(Symbol("countDocuments"))(filter).once()
-    wrapped.expects(Symbol("countDocuments"))(filter, countOptions).once()
-    wrapped.expects(Symbol("countDocuments"))(clientSession).once()
-    wrapped.expects(Symbol("countDocuments"))(clientSession, filter).once()
-    wrapped.expects(Symbol("countDocuments"))(clientSession, filter, countOptions).once()
 
     mongoCollection.countDocuments()
     mongoCollection.countDocuments(filter)
@@ -137,40 +131,38 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     mongoCollection.countDocuments(clientSession)
     mongoCollection.countDocuments(clientSession, filter)
     mongoCollection.countDocuments(clientSession, filter, countOptions)
+
+    verify(wrapped).countDocuments()
+    verify(wrapped).countDocuments(filter)
+    verify(wrapped).countDocuments(filter, countOptions)
+    verify(wrapped).countDocuments(clientSession)
+    verify(wrapped).countDocuments(clientSession, filter)
+    verify(wrapped).countDocuments(clientSession, filter, countOptions)
   }
 
   it should "return the underlying estimatedDocumentCount" in {
     val options = EstimatedDocumentCountOptions().maxTime(1, TimeUnit.SECONDS)
 
-    wrapped.expects(Symbol("estimatedDocumentCount"))().once()
-    wrapped.expects(Symbol("estimatedDocumentCount"))(options).once()
-
     mongoCollection.estimatedDocumentCount()
     mongoCollection.estimatedDocumentCount(options)
+
+    verify(wrapped).estimatedDocumentCount()
+    verify(wrapped).estimatedDocumentCount(options)
   }
 
   it should "wrap the underlying DistinctObservable correctly" in {
-    wrapped.expects(Symbol("distinct"))("fieldName", classOf[String]).once()
-    wrapped.expects(Symbol("distinct"))("fieldName", filter, classOf[String]).once()
-    wrapped.expects(Symbol("distinct"))(clientSession, "fieldName", classOf[String]).once()
-    wrapped.expects(Symbol("distinct"))(clientSession, "fieldName", filter, classOf[String]).once()
-
     mongoCollection.distinct[String]("fieldName")
     mongoCollection.distinct[String]("fieldName", filter)
     mongoCollection.distinct[String](clientSession, "fieldName")
     mongoCollection.distinct[String](clientSession, "fieldName", filter)
+
+    verify(wrapped).distinct("fieldName", classOf[String])
+    verify(wrapped).distinct("fieldName", filter, classOf[String])
+    verify(wrapped).distinct(clientSession, "fieldName", classOf[String])
+    verify(wrapped).distinct(clientSession, "fieldName", filter, classOf[String])
   }
 
   it should "wrap the underlying FindObservable correctly" in {
-    wrapped.expects(Symbol("find"))(classOf[Document]).once()
-    wrapped.expects(Symbol("find"))(classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("find"))(filter, classOf[Document]).once()
-    wrapped.expects(Symbol("find"))(filter, classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("find"))(clientSession, classOf[Document]).once()
-    wrapped.expects(Symbol("find"))(clientSession, classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("find"))(clientSession, filter, classOf[Document]).once()
-    wrapped.expects(Symbol("find"))(clientSession, filter, classOf[BsonDocument]).once()
-
     mongoCollection.find() shouldBe a[FindObservable[_]]
     mongoCollection.find[BsonDocument]() shouldBe a[FindObservable[_]]
     mongoCollection.find(filter) shouldBe a[FindObservable[_]]
@@ -179,32 +171,41 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     mongoCollection.find[BsonDocument](clientSession) shouldBe a[FindObservable[_]]
     mongoCollection.find(clientSession, filter) shouldBe a[FindObservable[_]]
     mongoCollection.find[BsonDocument](clientSession, filter) shouldBe a[FindObservable[_]]
+
+    verify(wrapped).find(classOf[Document])
+    verify(wrapped).find(classOf[BsonDocument])
+    verify(wrapped).find(filter, classOf[Document])
+    verify(wrapped).find(filter, classOf[BsonDocument])
+    verify(wrapped).find(clientSession, classOf[Document])
+    verify(wrapped).find(clientSession, classOf[BsonDocument])
+    verify(wrapped).find(clientSession, filter, classOf[Document])
+    verify(wrapped).find(clientSession, filter, classOf[BsonDocument])
   }
 
   it should "wrap the underlying AggregateObservable correctly" in {
     val pipeline = List(Document("$match" -> 1))
 
-    wrapped.expects(Symbol("aggregate"))(pipeline.asJava, classOf[Document]).once()
-    wrapped.expects(Symbol("aggregate"))(pipeline.asJava, classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("aggregate"))(clientSession, pipeline.asJava, classOf[Document]).once()
-    wrapped.expects(Symbol("aggregate"))(clientSession, pipeline.asJava, classOf[BsonDocument]).once()
-
     mongoCollection.aggregate(pipeline) shouldBe a[AggregateObservable[_]]
     mongoCollection.aggregate[BsonDocument](pipeline) shouldBe a[AggregateObservable[_]]
     mongoCollection.aggregate(clientSession, pipeline) shouldBe a[AggregateObservable[_]]
     mongoCollection.aggregate[BsonDocument](clientSession, pipeline) shouldBe a[AggregateObservable[_]]
+
+    verify(wrapped).aggregate(pipeline.asJava, classOf[Document])
+    verify(wrapped).aggregate(pipeline.asJava, classOf[BsonDocument])
+    verify(wrapped).aggregate(clientSession, pipeline.asJava, classOf[Document])
+    verify(wrapped).aggregate(clientSession, pipeline.asJava, classOf[BsonDocument])
   }
 
   it should "wrap the underlying MapReduceObservable correctly" in {
-    wrapped.expects(Symbol("mapReduce"))("map", "reduce", classOf[Document]).once()
-    wrapped.expects(Symbol("mapReduce"))("map", "reduce", classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("mapReduce"))(clientSession, "map", "reduce", classOf[Document]).once()
-    wrapped.expects(Symbol("mapReduce"))(clientSession, "map", "reduce", classOf[BsonDocument]).once()
-
     mongoCollection.mapReduce("map", "reduce") shouldBe a[MapReduceObservable[_]]
     mongoCollection.mapReduce[BsonDocument]("map", "reduce") shouldBe a[MapReduceObservable[_]]
     mongoCollection.mapReduce(clientSession, "map", "reduce") shouldBe a[MapReduceObservable[_]]
     mongoCollection.mapReduce[BsonDocument](clientSession, "map", "reduce") shouldBe a[MapReduceObservable[_]]
+
+    verify(wrapped).mapReduce("map", "reduce", classOf[Document])
+    verify(wrapped).mapReduce("map", "reduce", classOf[BsonDocument])
+    verify(wrapped).mapReduce(clientSession, "map", "reduce", classOf[Document])
+    verify(wrapped).mapReduce(clientSession, "map", "reduce", classOf[BsonDocument])
   }
 
   it should "wrap the underlying bulkWrite correctly" in {
@@ -215,101 +216,93 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     )
     val bulkWriteOptions = new BulkWriteOptions().ordered(true)
 
-    wrapped.expects(Symbol("bulkWrite"))(bulkRequests.asJava).once()
-    wrapped.expects(Symbol("bulkWrite"))(bulkRequests.asJava, bulkWriteOptions).once()
-    wrapped.expects(Symbol("bulkWrite"))(clientSession, bulkRequests.asJava).once()
-    wrapped.expects(Symbol("bulkWrite"))(clientSession, bulkRequests.asJava, bulkWriteOptions).once()
-
     mongoCollection.bulkWrite(bulkRequests)
     mongoCollection.bulkWrite(bulkRequests, bulkWriteOptions)
     mongoCollection.bulkWrite(clientSession, bulkRequests)
     mongoCollection.bulkWrite(clientSession, bulkRequests, bulkWriteOptions)
+
+    verify(wrapped).bulkWrite(bulkRequests.asJava)
+    verify(wrapped).bulkWrite(bulkRequests.asJava, bulkWriteOptions)
+    verify(wrapped).bulkWrite(clientSession, bulkRequests.asJava)
+    verify(wrapped).bulkWrite(clientSession, bulkRequests.asJava, bulkWriteOptions)
   }
 
   it should "wrap the underlying insertOne correctly" in {
     val insertDoc = Document("a" -> 1)
     val insertOptions = InsertOneOptions().bypassDocumentValidation(true)
-    wrapped.expects(Symbol("insertOne"))(insertDoc).once()
-    wrapped.expects(Symbol("insertOne"))(insertDoc, insertOptions).once()
-    wrapped.expects(Symbol("insertOne"))(clientSession, insertDoc).once()
-    wrapped.expects(Symbol("insertOne"))(clientSession, insertDoc, insertOptions).once()
 
     mongoCollection.insertOne(insertDoc)
     mongoCollection.insertOne(insertDoc, insertOptions)
     mongoCollection.insertOne(clientSession, insertDoc)
     mongoCollection.insertOne(clientSession, insertDoc, insertOptions)
+
+    verify(wrapped).insertOne(insertDoc)
+    verify(wrapped).insertOne(insertDoc, insertOptions)
+    verify(wrapped).insertOne(clientSession, insertDoc)
+    verify(wrapped).insertOne(clientSession, insertDoc, insertOptions)
   }
 
   it should "wrap the underlying insertMany correctly" in {
     val insertDocs = List(Document("a" -> 1))
     val insertOptions = new InsertManyOptions().ordered(false)
 
-    wrapped.expects(Symbol("insertMany"))(insertDocs.asJava).once()
-    wrapped.expects(Symbol("insertMany"))(insertDocs.asJava, insertOptions).once()
-    wrapped.expects(Symbol("insertMany"))(clientSession, insertDocs.asJava).once()
-    wrapped.expects(Symbol("insertMany"))(clientSession, insertDocs.asJava, insertOptions).once()
-
     mongoCollection.insertMany(insertDocs)
     mongoCollection.insertMany(insertDocs, insertOptions)
     mongoCollection.insertMany(clientSession, insertDocs)
     mongoCollection.insertMany(clientSession, insertDocs, insertOptions)
+
+    verify(wrapped).insertMany(insertDocs.asJava)
+    verify(wrapped).insertMany(insertDocs.asJava, insertOptions)
+    verify(wrapped).insertMany(clientSession, insertDocs.asJava)
+    verify(wrapped).insertMany(clientSession, insertDocs.asJava, insertOptions)
   }
 
   it should "wrap the underlying deleteOne correctly" in {
     val options = new DeleteOptions().collation(collation)
-    wrapped.expects(Symbol("deleteOne"))(filter).once()
-    wrapped.expects(Symbol("deleteOne"))(filter, options).once()
-    wrapped.expects(Symbol("deleteOne"))(clientSession, filter).once()
-    wrapped.expects(Symbol("deleteOne"))(clientSession, filter, options).once()
 
     mongoCollection.deleteOne(filter)
     mongoCollection.deleteOne(filter, options)
     mongoCollection.deleteOne(clientSession, filter)
     mongoCollection.deleteOne(clientSession, filter, options)
+
+    verify(wrapped).deleteOne(filter)
+    verify(wrapped).deleteOne(filter, options)
+    verify(wrapped).deleteOne(clientSession, filter)
+    verify(wrapped).deleteOne(clientSession, filter, options)
   }
 
   it should "wrap the underlying deleteMany correctly" in {
     val options = new DeleteOptions().collation(collation)
-    wrapped.expects(Symbol("deleteMany"))(filter).once()
-    wrapped.expects(Symbol("deleteMany"))(filter, options).once()
-    wrapped.expects(Symbol("deleteMany"))(clientSession, filter).once()
-    wrapped.expects(Symbol("deleteMany"))(clientSession, filter, options).once()
-
     mongoCollection.deleteMany(filter)
     mongoCollection.deleteMany(filter, options)
     mongoCollection.deleteMany(clientSession, filter)
     mongoCollection.deleteMany(clientSession, filter, options)
+
+    verify(wrapped).deleteMany(filter)
+    verify(wrapped).deleteMany(filter, options)
+    verify(wrapped).deleteMany(clientSession, filter)
+    verify(wrapped).deleteMany(clientSession, filter, options)
   }
 
   it should "wrap the underlying replaceOne correctly" in {
     val replacement = Document("a" -> 1)
     val replaceOptions = new ReplaceOptions().upsert(true)
 
-    wrapped.expects(Symbol("replaceOne"))(filter, replacement).once()
-    wrapped.expects(Symbol("replaceOne"))(filter, replacement, replaceOptions).once()
-    wrapped.expects(Symbol("replaceOne"))(clientSession, filter, replacement).once()
-    wrapped.expects(Symbol("replaceOne"))(clientSession, filter, replacement, replaceOptions).once()
-
     mongoCollection.replaceOne(filter, replacement)
     mongoCollection.replaceOne(filter, replacement, replaceOptions)
     mongoCollection.replaceOne(clientSession, filter, replacement)
     mongoCollection.replaceOne(clientSession, filter, replacement, replaceOptions)
+
+    verify(wrapped).replaceOne(filter, replacement)
+    verify(wrapped).replaceOne(filter, replacement, replaceOptions)
+    verify(wrapped).replaceOne(clientSession, filter, replacement)
+    verify(wrapped).replaceOne(clientSession, filter, replacement, replaceOptions)
   }
 
   it should "wrap the underlying updateOne correctly" in {
     val update = Document("$set" -> Document("a" -> 2))
     val pipeline = Seq(update)
     val updateOptions = new UpdateOptions().upsert(true)
-
-    wrapped.expects(Symbol("updateOne"))(filter, update).once()
-    wrapped.expects(Symbol("updateOne"))(filter, update, updateOptions).once()
-    wrapped.expects(Symbol("updateOne"))(clientSession, filter, update).once()
-    wrapped.expects(Symbol("updateOne"))(clientSession, filter, update, updateOptions).once()
-
-    wrapped.expects(Symbol("updateOne"))(filter, pipeline.asJava).once()
-    wrapped.expects(Symbol("updateOne"))(filter, pipeline.asJava, updateOptions).once()
-    wrapped.expects(Symbol("updateOne"))(clientSession, filter, pipeline.asJava).once()
-    wrapped.expects(Symbol("updateOne"))(clientSession, filter, pipeline.asJava, updateOptions).once()
 
     mongoCollection.updateOne(filter, update)
     mongoCollection.updateOne(filter, update, updateOptions)
@@ -320,22 +313,22 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     mongoCollection.updateOne(filter, pipeline, updateOptions)
     mongoCollection.updateOne(clientSession, filter, pipeline)
     mongoCollection.updateOne(clientSession, filter, pipeline, updateOptions)
+
+    verify(wrapped).updateOne(filter, update)
+    verify(wrapped).updateOne(filter, update, updateOptions)
+    verify(wrapped).updateOne(clientSession, filter, update)
+    verify(wrapped).updateOne(clientSession, filter, update, updateOptions)
+
+    verify(wrapped).updateOne(filter, pipeline.asJava)
+    verify(wrapped).updateOne(filter, pipeline.asJava, updateOptions)
+    verify(wrapped).updateOne(clientSession, filter, pipeline.asJava)
+    verify(wrapped).updateOne(clientSession, filter, pipeline.asJava, updateOptions)
   }
 
   it should "wrap the underlying updateMany correctly" in {
     val update = Document("$set" -> Document("a" -> 2))
     val pipeline = Seq(update)
     val updateOptions = new UpdateOptions().upsert(true)
-
-    wrapped.expects(Symbol("updateMany"))(filter, update).once()
-    wrapped.expects(Symbol("updateMany"))(filter, update, updateOptions).once()
-    wrapped.expects(Symbol("updateMany"))(clientSession, filter, update).once()
-    wrapped.expects(Symbol("updateMany"))(clientSession, filter, update, updateOptions).once()
-
-    wrapped.expects(Symbol("updateMany"))(filter, pipeline.asJava).once()
-    wrapped.expects(Symbol("updateMany"))(filter, pipeline.asJava, updateOptions).once()
-    wrapped.expects(Symbol("updateMany"))(clientSession, filter, pipeline.asJava).once()
-    wrapped.expects(Symbol("updateMany"))(clientSession, filter, pipeline.asJava, updateOptions).once()
 
     mongoCollection.updateMany(filter, update)
     mongoCollection.updateMany(filter, update, updateOptions)
@@ -346,51 +339,51 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     mongoCollection.updateMany(filter, pipeline, updateOptions)
     mongoCollection.updateMany(clientSession, filter, pipeline)
     mongoCollection.updateMany(clientSession, filter, pipeline, updateOptions)
+
+    verify(wrapped).updateMany(filter, update)
+    verify(wrapped).updateMany(filter, update, updateOptions)
+    verify(wrapped).updateMany(clientSession, filter, update)
+    verify(wrapped).updateMany(clientSession, filter, update, updateOptions)
+
+    verify(wrapped).updateMany(filter, pipeline.asJava)
+    verify(wrapped).updateMany(filter, pipeline.asJava, updateOptions)
+    verify(wrapped).updateMany(clientSession, filter, pipeline.asJava)
+    verify(wrapped).updateMany(clientSession, filter, pipeline.asJava, updateOptions)
   }
 
   it should "wrap the underlying findOneAndDelete correctly" in {
     val options = new FindOneAndDeleteOptions().sort(Document("sort" -> 1))
 
-    wrapped.expects(Symbol("findOneAndDelete"))(filter).once()
-    wrapped.expects(Symbol("findOneAndDelete"))(filter, options).once()
-    wrapped.expects(Symbol("findOneAndDelete"))(clientSession, filter).once()
-    wrapped.expects(Symbol("findOneAndDelete"))(clientSession, filter, options).once()
-
     mongoCollection.findOneAndDelete(filter)
     mongoCollection.findOneAndDelete(filter, options)
     mongoCollection.findOneAndDelete(clientSession, filter)
     mongoCollection.findOneAndDelete(clientSession, filter, options)
+
+    verify(wrapped).findOneAndDelete(filter)
+    verify(wrapped).findOneAndDelete(filter, options)
+    verify(wrapped).findOneAndDelete(clientSession, filter)
+    verify(wrapped).findOneAndDelete(clientSession, filter, options)
   }
 
   it should "wrap the underlying findOneAndReplace correctly" in {
     val replacement = Document("a" -> 2)
     val options = new FindOneAndReplaceOptions().sort(Document("sort" -> 1))
 
-    wrapped.expects(Symbol("findOneAndReplace"))(filter, replacement).once()
-    wrapped.expects(Symbol("findOneAndReplace"))(filter, replacement, options).once()
-    wrapped.expects(Symbol("findOneAndReplace"))(clientSession, filter, replacement).once()
-    wrapped.expects(Symbol("findOneAndReplace"))(clientSession, filter, replacement, options).once()
-
     mongoCollection.findOneAndReplace(filter, replacement)
     mongoCollection.findOneAndReplace(filter, replacement, options)
     mongoCollection.findOneAndReplace(clientSession, filter, replacement)
     mongoCollection.findOneAndReplace(clientSession, filter, replacement, options)
+
+    verify(wrapped).findOneAndReplace(filter, replacement)
+    verify(wrapped).findOneAndReplace(filter, replacement, options)
+    verify(wrapped).findOneAndReplace(clientSession, filter, replacement)
+    verify(wrapped).findOneAndReplace(clientSession, filter, replacement, options)
   }
 
   it should "wrap the underlying findOneAndUpdate correctly" in {
     val update = Document("a" -> 2)
     val pipeline = Seq(update)
     val options = new FindOneAndUpdateOptions().sort(Document("sort" -> 1))
-
-    wrapped.expects(Symbol("findOneAndUpdate"))(filter, update).once()
-    wrapped.expects(Symbol("findOneAndUpdate"))(filter, update, options).once()
-    wrapped.expects(Symbol("findOneAndUpdate"))(clientSession, filter, update).once()
-    wrapped.expects(Symbol("findOneAndUpdate"))(clientSession, filter, update, options).once()
-
-    wrapped.expects(Symbol("findOneAndUpdate"))(filter, pipeline.asJava).once()
-    wrapped.expects(Symbol("findOneAndUpdate"))(filter, pipeline.asJava, options).once()
-    wrapped.expects(Symbol("findOneAndUpdate"))(clientSession, filter, pipeline.asJava).once()
-    wrapped.expects(Symbol("findOneAndUpdate"))(clientSession, filter, pipeline.asJava, options).once()
 
     mongoCollection.findOneAndUpdate(filter, update)
     mongoCollection.findOneAndUpdate(filter, update, options)
@@ -401,70 +394,71 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     mongoCollection.findOneAndUpdate(filter, pipeline, options)
     mongoCollection.findOneAndUpdate(clientSession, filter, pipeline)
     mongoCollection.findOneAndUpdate(clientSession, filter, pipeline, options)
+
+    verify(wrapped).findOneAndUpdate(filter, update)
+    verify(wrapped).findOneAndUpdate(filter, update, options)
+    verify(wrapped).findOneAndUpdate(clientSession, filter, update)
+    verify(wrapped).findOneAndUpdate(clientSession, filter, update, options)
+
+    verify(wrapped).findOneAndUpdate(filter, pipeline.asJava)
+    verify(wrapped).findOneAndUpdate(filter, pipeline.asJava, options)
+    verify(wrapped).findOneAndUpdate(clientSession, filter, pipeline.asJava)
+    verify(wrapped).findOneAndUpdate(clientSession, filter, pipeline.asJava, options)
   }
 
   it should "wrap the underlying drop correctly" in {
-    wrapped.expects(Symbol("drop"))().once()
-    wrapped.expects(Symbol("drop"))(clientSession).once()
-
     mongoCollection.drop()
     mongoCollection.drop(clientSession)
+
+    verify(wrapped).drop()
+    verify(wrapped).drop(clientSession)
   }
 
   it should "wrap the underlying createIndex correctly" in {
     val index = Document("a" -> 1)
     val options = new IndexOptions().background(true)
 
-    wrapped.expects(Symbol("createIndex"))(index).once()
-    wrapped.expects(Symbol("createIndex"))(index, options).once()
-    wrapped.expects(Symbol("createIndex"))(clientSession, index).once()
-    wrapped.expects(Symbol("createIndex"))(clientSession, index, options).once()
-
     mongoCollection.createIndex(index)
     mongoCollection.createIndex(index, options)
     mongoCollection.createIndex(clientSession, index)
     mongoCollection.createIndex(clientSession, index, options)
+
+    verify(wrapped).createIndex(index)
+    verify(wrapped).createIndex(index, options)
+    verify(wrapped).createIndex(clientSession, index)
+    verify(wrapped).createIndex(clientSession, index, options)
   }
 
   it should "wrap the underlying createIndexes correctly" in {
     val indexes = new IndexModel(Document("a" -> 1))
     val options = new CreateIndexOptions()
 
-    // https://github.com/paulbutcher/ScalaMock/issues/93
-    wrapped.expects(Symbol("createIndexes"))(List(indexes).asJava).once()
-    wrapped.expects(Symbol("createIndexes"))(List(indexes).asJava, options).once()
-    wrapped.expects(Symbol("createIndexes"))(clientSession, List(indexes).asJava).once()
-    wrapped.expects(Symbol("createIndexes"))(clientSession, List(indexes).asJava, options).once()
-
     mongoCollection.createIndexes(List(indexes))
     mongoCollection.createIndexes(List(indexes), options)
     mongoCollection.createIndexes(clientSession, List(indexes))
     mongoCollection.createIndexes(clientSession, List(indexes), options)
+
+    verify(wrapped).createIndexes(List(indexes).asJava)
+    verify(wrapped).createIndexes(List(indexes).asJava, options)
+    verify(wrapped).createIndexes(clientSession, List(indexes).asJava)
+    verify(wrapped).createIndexes(clientSession, List(indexes).asJava, options)
   }
 
   it should "wrap the underlying listIndexes correctly" in {
-    wrapped.expects(Symbol("listIndexes"))(classOf[Document]).once()
-    wrapped.expects(Symbol("listIndexes"))(classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("listIndexes"))(clientSession, classOf[Document]).once()
-    wrapped.expects(Symbol("listIndexes"))(clientSession, classOf[BsonDocument]).once()
-
     mongoCollection.listIndexes()
     mongoCollection.listIndexes[BsonDocument]()
     mongoCollection.listIndexes(clientSession)
     mongoCollection.listIndexes[BsonDocument](clientSession)
+
+    verify(wrapped).listIndexes(classOf[Document])
+    verify(wrapped).listIndexes(classOf[BsonDocument])
+    verify(wrapped).listIndexes(clientSession, classOf[Document])
+    verify(wrapped).listIndexes(clientSession, classOf[BsonDocument])
   }
 
   it should "wrap the underlying dropIndex correctly" in {
     val indexDocument = Document("""{a: 1}""")
     val options = new DropIndexOptions()
-    wrapped.expects(Symbol("dropIndex"))("indexName").once()
-    wrapped.expects(Symbol("dropIndex"))(indexDocument).once()
-    wrapped.expects(Symbol("dropIndex"))("indexName", options).once()
-    wrapped.expects(Symbol("dropIndex"))(indexDocument, options).once()
-    wrapped.expects(Symbol("dropIndex"))(clientSession, "indexName").once()
-    wrapped.expects(Symbol("dropIndex"))(clientSession, indexDocument).once()
-    wrapped.expects(Symbol("dropIndex"))(clientSession, "indexName", options).once()
-    wrapped.expects(Symbol("dropIndex"))(clientSession, indexDocument, options).once()
 
     mongoCollection.dropIndex("indexName")
     mongoCollection.dropIndex(indexDocument)
@@ -474,48 +468,48 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     mongoCollection.dropIndex(clientSession, indexDocument)
     mongoCollection.dropIndex(clientSession, "indexName", options)
     mongoCollection.dropIndex(clientSession, indexDocument, options)
+
+    verify(wrapped).dropIndex("indexName")
+    verify(wrapped).dropIndex(indexDocument)
+    verify(wrapped).dropIndex("indexName", options)
+    verify(wrapped).dropIndex(indexDocument, options)
+    verify(wrapped).dropIndex(clientSession, "indexName")
+    verify(wrapped).dropIndex(clientSession, indexDocument)
+    verify(wrapped).dropIndex(clientSession, "indexName", options)
+    verify(wrapped).dropIndex(clientSession, indexDocument, options)
   }
 
   it should "wrap the underlying dropIndexes correctly" in {
-
     val options = new DropIndexOptions()
-    wrapped.expects(Symbol("dropIndexes"))().once()
-    wrapped.expects(Symbol("dropIndexes"))(options).once()
-    wrapped.expects(Symbol("dropIndexes"))(clientSession).once()
-    wrapped.expects(Symbol("dropIndexes"))(clientSession, options).once()
 
     mongoCollection.dropIndexes()
     mongoCollection.dropIndexes(options)
     mongoCollection.dropIndexes(clientSession)
     mongoCollection.dropIndexes(clientSession, options)
+
+    verify(wrapped).dropIndexes()
+    verify(wrapped).dropIndexes(options)
+    verify(wrapped).dropIndexes(clientSession)
+    verify(wrapped).dropIndexes(clientSession, options)
   }
 
   it should "wrap the underlying renameCollection correctly" in {
     val newNamespace = new MongoNamespace("db", "coll")
     val options = new RenameCollectionOptions()
 
-    wrapped.expects(Symbol("renameCollection"))(newNamespace).once()
-    wrapped.expects(Symbol("renameCollection"))(newNamespace, options).once()
-    wrapped.expects(Symbol("renameCollection"))(clientSession, newNamespace).once()
-    wrapped.expects(Symbol("renameCollection"))(clientSession, newNamespace, options).once()
-
     mongoCollection.renameCollection(newNamespace)
     mongoCollection.renameCollection(newNamespace, options)
     mongoCollection.renameCollection(clientSession, newNamespace)
     mongoCollection.renameCollection(clientSession, newNamespace, options)
+
+    verify(wrapped).renameCollection(newNamespace)
+    verify(wrapped).renameCollection(newNamespace, options)
+    verify(wrapped).renameCollection(clientSession, newNamespace)
+    verify(wrapped).renameCollection(clientSession, newNamespace, options)
   }
 
   it should "wrap the underlying ChangeStreamPublisher correctly" in {
     val pipeline = List(Document("$match" -> 1))
-
-    wrapped.expects(Symbol("watch"))(classOf[Document]).once()
-    wrapped.expects(Symbol("watch"))(classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("watch"))(pipeline.asJava, classOf[Document]).once()
-    wrapped.expects(Symbol("watch"))(pipeline.asJava, classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("watch"))(clientSession, classOf[Document]).once()
-    wrapped.expects(Symbol("watch"))(clientSession, classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("watch"))(clientSession, pipeline.asJava, classOf[Document]).once()
-    wrapped.expects(Symbol("watch"))(clientSession, pipeline.asJava, classOf[BsonDocument]).once()
 
     mongoCollection.watch() shouldBe a[ChangeStreamObservable[_]]
     mongoCollection.watch[BsonDocument]() shouldBe a[ChangeStreamObservable[_]]
@@ -525,6 +519,15 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     mongoCollection.watch[BsonDocument](clientSession) shouldBe a[ChangeStreamObservable[_]]
     mongoCollection.watch(clientSession, pipeline) shouldBe a[ChangeStreamObservable[_]]
     mongoCollection.watch[BsonDocument](clientSession, pipeline) shouldBe a[ChangeStreamObservable[_]]
+
+    verify(wrapped).watch(classOf[Document])
+    verify(wrapped).watch(classOf[BsonDocument])
+    verify(wrapped).watch(pipeline.asJava, classOf[Document])
+    verify(wrapped).watch(pipeline.asJava, classOf[BsonDocument])
+    verify(wrapped).watch(clientSession, classOf[Document])
+    verify(wrapped).watch(clientSession, classOf[BsonDocument])
+    verify(wrapped).watch(clientSession, pipeline.asJava, classOf[Document])
+    verify(wrapped).watch(clientSession, pipeline.asJava, classOf[BsonDocument])
   }
 
 }

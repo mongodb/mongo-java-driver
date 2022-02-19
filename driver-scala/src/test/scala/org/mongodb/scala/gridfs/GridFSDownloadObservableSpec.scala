@@ -17,10 +17,11 @@
 package org.mongodb.scala.gridfs
 
 import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadPublisher
+import org.mockito.Mockito.verify
 import org.mongodb.scala.BaseSpec
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
-class GridFSDownloadObservableSpec extends BaseSpec with MockFactory {
+class GridFSDownloadObservableSpec extends BaseSpec with MockitoSugar {
   val wrapper = mock[GridFSDownloadPublisher]
   val gridFSDownloadStream = GridFSDownloadObservable(wrapper)
 
@@ -37,11 +38,11 @@ class GridFSDownloadObservableSpec extends BaseSpec with MockFactory {
   it should "call the underlying methods" in {
     val bufferSizeBytes = 1024
 
-    wrapper.expects(Symbol("bufferSizeBytes"))(bufferSizeBytes).once()
-    wrapper.expects(Symbol("getGridFSFile"))().once()
-
     gridFSDownloadStream.bufferSizeBytes(bufferSizeBytes)
     gridFSDownloadStream.gridFSFile()
+
+    verify(wrapper).bufferSizeBytes(bufferSizeBytes)
+    verify(wrapper).getGridFSFile
   }
 
 }
