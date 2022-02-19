@@ -21,10 +21,9 @@ import org.bson.codecs.configuration.CodecRegistries._
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.codecs.DocumentCodecProvider
 import org.mongodb.scala.connection.ConnectionPoolSettings.Builder
-import org.scalamock.scalatest.proxy.MockFactory
 import org.mongodb.scala.connection._
 
-class MongoClientSettingsSpec extends BaseSpec with MockFactory {
+class MongoClientSettingsSpec extends BaseSpec {
 
   "MongoClientSettings" should "default with the Scala Codec Registry" in {
     MongoClientSettings.builder().build().getCodecRegistry should equal(DEFAULT_CODEC_REGISTRY)

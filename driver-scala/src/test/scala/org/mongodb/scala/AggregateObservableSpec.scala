@@ -20,12 +20,13 @@ import com.mongodb.ExplainVerbosity
 
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.AggregatePublisher
+import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
 
-class AggregateObservableSpec extends BaseSpec with MockFactory {
+class AggregateObservableSpec extends BaseSpec with MockitoSugar {
 
   "AggregateObservable" should "have the same methods as the wrapped AggregateObservable" in {
     val wrapped: Set[String] = classOf[AggregatePublisher[Document]].getMethods.map(_.getName).toSet
@@ -48,17 +49,6 @@ class AggregateObservableSpec extends BaseSpec with MockFactory {
     val ct = classOf[Document]
     val verbosity = ExplainVerbosity.QUERY_PLANNER
 
-    wrapper.expects(Symbol("allowDiskUse"))(true).once()
-    wrapper.expects(Symbol("maxTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("maxAwaitTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("bypassDocumentValidation"))(true).once()
-    wrapper.expects(Symbol("collation"))(collation).once()
-    wrapper.expects(Symbol("comment"))("comment").once()
-    wrapper.expects(Symbol("hint"))(hint).once()
-    wrapper.expects(Symbol("batchSize"))(batchSize).once()
-    wrapper.expects(Symbol("explain"))(ct).once()
-    wrapper.expects(Symbol("explain"))(ct, verbosity).once()
-
     observable.allowDiskUse(true)
     observable.maxTime(duration)
     observable.maxAwaitTime(duration)
@@ -70,7 +60,20 @@ class AggregateObservableSpec extends BaseSpec with MockFactory {
     observable.explain[Document]()
     observable.explain[Document](verbosity)
 
-    wrapper.expects(Symbol("toCollection"))().once()
+    verify(wrapper).allowDiskUse(true)
+    verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).maxAwaitTime(duration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).bypassDocumentValidation(true)
+    verify(wrapper).collation(collation)
+    verify(wrapper).comment("comment")
+    verify(wrapper).hint(hint)
+    verify(wrapper).batchSize(batchSize)
+    verify(wrapper).explain(ct)
+    verify(wrapper).explain(ct, verbosity)
+
     observable.toCollection()
+    verify(wrapper).toCollection
+
+    verifyNoMoreInteractions(wrapper)
   }
 }
