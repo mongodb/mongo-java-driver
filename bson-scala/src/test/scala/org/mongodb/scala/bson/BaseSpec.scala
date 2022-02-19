@@ -16,8 +16,9 @@
 package org.mongodb.scala.bson
 
 import org.junit.runner.RunWith
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-abstract class BaseSpec extends FlatSpec with Matchers {}
+abstract class BaseSpec extends AnyFlatSpec with Matchers {}

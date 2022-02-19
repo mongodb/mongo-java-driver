@@ -24,7 +24,6 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.mongodb.scala.model._
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.collection.JavaConverters._
 

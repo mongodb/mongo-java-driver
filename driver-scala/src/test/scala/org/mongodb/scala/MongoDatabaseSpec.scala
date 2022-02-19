@@ -26,7 +26,6 @@ import com.mongodb.reactivestreams.client.{ ListCollectionsPublisher, MongoDatab
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
 
 class MongoDatabaseSpec extends BaseSpec with MockFactory {
 

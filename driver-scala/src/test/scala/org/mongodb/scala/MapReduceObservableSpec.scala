@@ -22,7 +22,6 @@ import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
 import org.mongodb.scala.model.Collation
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.duration.Duration
 

@@ -21,7 +21,6 @@ import java.lang.reflect.Modifier._
 import scala.util.{ Success, Try }
 
 import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{ FlatSpec, Matchers }
 
 class ReadConcernLevelSpec extends BaseSpec {
 

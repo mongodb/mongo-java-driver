@@ -24,10 +24,9 @@ import org.mongodb.scala.model.Collation
 import org.mongodb.scala.model.changestream.FullDocument
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.duration.Duration
-import scala.util.{ Failure, Success }
+import scala.util.{ Success }
 
 class ChangeStreamObservableSpec extends BaseSpec with MockFactory {
 
