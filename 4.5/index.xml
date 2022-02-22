@@ -1064,7 +1064,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.5/driver-reactive/getting-started/installation/</guid>
       <description> Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Reactive Streams Driver The Reactive Streams implementation for asynchronous stream processing with non-blocking back pressure.
-&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.3.0&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.3.0&#34;  </description>
+&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-reactivestreams&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.5.0&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb:mongodb-driver-reactivestreams:4.5.0&#39; }    libraryDependencies += &#34;org.mongodb&#34; %% &#34;mongodb-driver-reactivestreams&#34; % &#34;4.5.0&#34;  </description>
     </item>
     
     <item>
@@ -1075,7 +1075,7 @@ Bugs / Feature Requests If you think you’ve found a bug or want to see a new f
       <guid>/mongo-java-driver/4.5/driver-scala/getting-started/installation/</guid>
       <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
  MongoDB Scala Driver The Reactive Streams based Scala implementation for asynchronous stream processing with non-blocking back pressure.
-Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.3.0_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.3.0_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.3.0&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
+Scala 2.12 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb.scala&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongo-scala-driver&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;4.5.0_2.12&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.mongodb.scala:mongo-scala-driver:4.5.0_2.12&#39; }    libraryDependencies += &#34;org.mongodb.scala&#34; %% &#34;mongo-scala-driver&#34; % &#34;4.5.0&#34;  Scala 2.11 &amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.</description>
     </item>
     
     <item>
@@ -1180,7 +1180,7 @@ Note See the installation guide for instructions on how to install the MongoDB S
       <description>MongoDB Reactive Streams Driver Documentation The following guide provides information on using the MongoDB Reactive Streams Driver.
 Getting Started To get started, see the Installation Guide, the Quick Start Guide and the Quick Start with POJOs Guide.
 Tutorials For tutorials for some frequently used operations, see the Tutorials section.
-Previous Releases    Release Documentation     4.1.1 Reference &amp;#124; API   4.0.5 Reference &amp;#124; API   1.</description>
+Previous Releases    Release Documentation     4.4.x Reference &amp;#124; API   4.3.x Reference &amp;#124; API   4.</description>
     </item>
     
     <item>
@@ -1228,7 +1228,7 @@ Previous Releases    Release Documentation     4.1.1 Reference &amp;#124; API   
       <description>MongoDB Scala Driver Documentation The following guide provides information on using the MongoDB Scala Driver.
 Getting Started To get started, see the Installation Guide, the Quick Start Guide and the Quick Start with Case Classes.
 Tutorials For tutorials for some frequently used operations, see the Tutorials section.
-Previous Releases    Release Documentation     4.1.1 Reference &amp;#124; API   4.0.5 Reference &amp;#124; API   2.</description>
+Previous Releases    Release Documentation     4.4.x Reference &amp;#124; API   4.3.x Reference &amp;#124; API   4.</description>
     </item>
     
     <item>
