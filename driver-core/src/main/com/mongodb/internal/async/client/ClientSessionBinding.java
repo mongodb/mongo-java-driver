@@ -150,7 +150,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     private void isConnectionSourcePinningRequired(final SingleResultCallback<Boolean> callback) {
         try {
             callback.onResult(isConnectionSourcePinningRequired(), null);
-        } catch (MongoException e) {
+        } catch (RuntimeException e) {
             callback.onResult(null, e);
         }
     }
