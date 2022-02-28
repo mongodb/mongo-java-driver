@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.async.client;
 
-import com.mongodb.MongoException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
