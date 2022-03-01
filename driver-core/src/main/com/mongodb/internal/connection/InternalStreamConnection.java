@@ -733,6 +733,7 @@ public class InternalStreamConnection implements InternalConnection {
             ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
             compressor.uncompress(messageBuffer, buffer);
 
+            messageBuffer.release();
             buffer.flip();
             return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
         } else {
