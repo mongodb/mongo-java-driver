@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -38,12 +39,12 @@ public final class AwsCredential {
      *
      * @param accessKeyId the non-null access key ID that identifies the temporary security credentials.
      * @param secretAccessKey the non-null secret access key that can be used to sign requests
-     * @param sessionToken the non-null session token
+     * @param sessionToken the session token, which may be null
      */
-    public AwsCredential(final String accessKeyId, final String secretAccessKey, final String sessionToken) {
+    public AwsCredential(final String accessKeyId, final String secretAccessKey, @Nullable final String sessionToken) {
         this.accessKeyId = notNull("accessKeyId", accessKeyId);
         this.secretAccessKey = notNull("secretAccessKey", secretAccessKey);
-        this.sessionToken = notNull("sessionToken", sessionToken);
+        this.sessionToken = sessionToken;
     }
 
     /**
@@ -69,6 +70,7 @@ public final class AwsCredential {
      *
      * @return the sessionToken, which may not be null
      */
+    @Nullable
     public String getSessionToken() {
         return sessionToken;
     }
