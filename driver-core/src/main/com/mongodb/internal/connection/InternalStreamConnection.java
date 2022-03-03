@@ -585,19 +585,27 @@ public class InternalStreamConnection implements InternalConnection {
         }
 
         ByteBuf messageBuffer = stream.read(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH);
+        boolean releaseMessageBuffer = true;
+        try {
+            if (messageHeader.getOpCode() == OP_COMPRESSED.getValue()) {
+                CompressedHeader compressedHeader = new CompressedHeader(messageBuffer, messageHeader);
 
-        if (messageHeader.getOpCode() == OP_COMPRESSED.getValue()) {
-            CompressedHeader compressedHeader = new CompressedHeader(messageBuffer, messageHeader);
+                Compressor compressor = getCompressor(compressedHeader);
 
-            Compressor compressor = getCompressor(compressedHeader);
+                ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
+                compressor.uncompress(messageBuffer, buffer);
 
-            ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
-            compressor.uncompress(messageBuffer, buffer);
-
-            buffer.flip();
-            return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
-        } else {
-            return new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader), messageBuffer);
+                buffer.flip();
+                return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
+            } else {
+                ResponseBuffers responseBuffers = new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader), messageBuffer);
+                releaseMessageBuffer = false;
+                return responseBuffers;
+            }
+        } finally {
+            if (releaseMessageBuffer) {
+                messageBuffer.release();
+            }
         }
     }
 
@@ -653,6 +661,7 @@ public class InternalStreamConnection implements InternalConnection {
                     callback.onResult(null, t);
                     return;
                 }
+                boolean releaseResult = true;
                 try {
                     ReplyHeader replyHeader;
                     ByteBuf responseBuffer;
@@ -667,15 +676,21 @@ public class InternalStreamConnection implements InternalConnection {
                             replyHeader = new ReplyHeader(buffer, compressedHeader);
                             responseBuffer = buffer;
                         } finally {
+                            releaseResult = false;
                             result.release();
                         }
                     } else {
                         replyHeader = new ReplyHeader(result, messageHeader);
                         responseBuffer = result;
+                        releaseResult = false;
                     }
                     callback.onResult(new ResponseBuffers(replyHeader, responseBuffer), null);
                 } catch (Throwable localThrowable) {
                     callback.onResult(null, localThrowable);
+                } finally {
+                    if (releaseResult) {
+                        result.release();
+                    }
                 }
             }
         }
