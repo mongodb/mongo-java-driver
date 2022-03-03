@@ -319,23 +319,18 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
             final RequestContext requestContext) {
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
         CommandEventSender commandEventSender;
 
-        try {
+        try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, sessionContext);
             commandEventSender = createCommandEventSender(message, bsonOutput, requestContext);
             commandEventSender.sendStartedEvent();
-        } catch (RuntimeException e) {
-            bsonOutput.close();
-            throw e;
-        }
-
-        try {
-            sendCommandMessage(message, bsonOutput, sessionContext);
-        } catch (RuntimeException e) {
-            commandEventSender.sendFailedEvent(e);
-            throw e;
+            try {
+                sendCommandMessage(message, bsonOutput, sessionContext);
+            } catch (RuntimeException e) {
+                commandEventSender.sendFailedEvent(e);
+                throw e;
+            }
         }
 
         if (message.isResponseExpected()) {
