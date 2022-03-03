@@ -587,7 +587,6 @@ public class InternalStreamConnection implements InternalConnection {
         writeAsync(byteBuffers, errorHandlingCallback(callback, LOGGER));
     }
 
-    @SuppressWarnings("try")
     private void writeAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
         try {
             stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
@@ -603,14 +602,8 @@ public class InternalStreamConnection implements InternalConnection {
                 }
             });
         } catch (Throwable t) {
-            try (AutoCloseable second = () -> callback.onResult(null, t);
-                 AutoCloseable first = this::close) {
-                releaseAllBuffers(byteBuffers);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            close();
+            callback.onResult(null, t);
         }
     }
 
