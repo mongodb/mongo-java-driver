@@ -29,6 +29,7 @@ import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import org.bson.BsonBinary;
@@ -39,6 +40,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 import java.io.Closeable;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -48,6 +50,7 @@ import static java.lang.String.format;
 public class Crypt implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final MongoCrypt mongoCrypt;
+    private final Map<String, Map<String, Object>> kmsProviders;
     private final CollectionInfoRetriever collectionInfoRetriever;
     private final CommandMarker commandMarker;
     private final KeyRetriever keyRetriever;
@@ -63,8 +66,9 @@ public class Crypt implements Closeable {
      * @param keyRetriever         the key retriever
      * @param keyManagementService the key management service
      */
-    Crypt(final MongoCrypt mongoCrypt, final KeyRetriever keyRetriever, final KeyManagementService keyManagementService) {
-        this(mongoCrypt, null, null, keyRetriever, keyManagementService, false, null);
+    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders, final KeyRetriever keyRetriever,
+            final KeyManagementService keyManagementService) {
+        this(mongoCrypt, kmsProviders, null, null, keyRetriever, keyManagementService, false, null);
     }
 
     /**
@@ -77,6 +81,7 @@ public class Crypt implements Closeable {
      * @param commandMarker           the command marker
      */
     Crypt(final MongoCrypt mongoCrypt,
+          final Map<String, Map<String, Object>> kmsProviders,
           @Nullable final CollectionInfoRetriever collectionInfoRetriever,
           @Nullable final CommandMarker commandMarker,
           final KeyRetriever keyRetriever,
@@ -84,6 +89,7 @@ public class Crypt implements Closeable {
           final boolean bypassAutoEncryption,
           @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
+        this.kmsProviders = kmsProviders;
         this.collectionInfoRetriever = collectionInfoRetriever;
         this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
@@ -213,6 +219,9 @@ public class Crypt implements Closeable {
             case NEED_MONGO_MARKINGS:
                 mark(cryptContext, databaseName, sink);
                 break;
+            case NEED_KMS_CREDENTIALS:
+                fetchCredentials(cryptContext, databaseName, sink);
+                break;
             case NEED_MONGO_KEYS:
                 fetchKeys(cryptContext, databaseName, sink);
                 break;
@@ -224,6 +233,16 @@ public class Crypt implements Closeable {
                 break;
             default:
                 sink.error(new MongoInternalException("Unsupported encryptor state + " + state));
+        }
+    }
+
+    private void fetchCredentials(final MongoCryptContext cryptContext, @Nullable final String databaseName,
+            final MonoSink<RawBsonDocument> sink) {
+        try {
+            cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders));
+            executeStateMachineWithSink(cryptContext, databaseName, sink);
+        } catch (Exception e) {
+            sink.error(e);
         }
     }
 
