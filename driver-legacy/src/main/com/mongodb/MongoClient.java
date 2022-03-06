@@ -23,7 +23,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.client.internal.OperationExecutor;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -34,7 +33,6 @@ import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.SingleServerBinding;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.lang.Nullable;
@@ -115,8 +113,6 @@ public class MongoClient implements Closeable {
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<>();
 
     private final MongoClientOptions options;
-
-    private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<>();
     private final ExecutorService cursorCleaningService;
@@ -793,10 +789,6 @@ public class MongoClient implements Closeable {
 
     ServerSessionPool getServerSessionPool() {
         return delegate.getServerSessionPool();
-    }
-
-    BufferProvider getBufferProvider() {
-        return bufferProvider;
     }
 
     @Nullable

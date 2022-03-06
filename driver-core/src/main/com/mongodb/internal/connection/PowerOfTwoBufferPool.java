@@ -36,6 +36,8 @@ import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
  */
 public class PowerOfTwoBufferPool implements BufferProvider {
 
+    public static final PowerOfTwoBufferPool DEFAULT = new PowerOfTwoBufferPool();
+
     private final Map<Integer, ConcurrentPool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, ConcurrentPool<ByteBuffer>>();
 
     /**

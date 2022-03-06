@@ -38,7 +38,7 @@ public class SocketStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;
     private final SocketFactory socketFactory;
-    private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
+    private final BufferProvider bufferProvider = PowerOfTwoBufferPool.DEFAULT;
 
     /**
      * Creates a new factory with the given settings for connecting to servers and the given SSL settings

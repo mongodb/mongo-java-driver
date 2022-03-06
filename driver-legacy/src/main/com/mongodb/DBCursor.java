@@ -23,6 +23,7 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
+import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonString;
@@ -780,7 +781,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         this.decoderFactory = factory;
 
         //Not creating new CompoundDBObjectCodec because we don't care about encoder.
-        this.decoder = new DBDecoderAdapter(factory.create(), collection, getCollection().getBufferPool());
+        this.decoder = new DBDecoderAdapter(factory.create(), collection, PowerOfTwoBufferPool.DEFAULT);
         return this;
     }
 
