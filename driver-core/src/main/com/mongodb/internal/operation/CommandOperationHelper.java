@@ -23,6 +23,7 @@ import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
+import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
@@ -145,6 +146,7 @@ final class CommandOperationHelper {
 
     private static Throwable chooseRetryableReadException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
+        assertFalse(mostRecentAttemptException instanceof ResourceSupplierInternalException);
         if (previouslyChosenException == null
                 || mostRecentAttemptException instanceof MongoSocketException
                 || mostRecentAttemptException instanceof MongoServerException) {
@@ -530,10 +532,12 @@ final class CommandOperationHelper {
     }
 
     private static boolean shouldAttemptToRetryRead(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
-        boolean decision = isRetryableException(failure);
+        assertFalse(attemptFailure instanceof ResourceSupplierInternalException);
+        boolean decision = isRetryableException(attemptFailure)
+                || (attemptFailure instanceof MongoSecurityException
+                && attemptFailure.getCause() != null && isRetryableException(attemptFailure.getCause()));
         if (!decision) {
-            logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), failure);
+            logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), attemptFailure);
         }
         return decision;
     }
@@ -542,7 +546,8 @@ final class CommandOperationHelper {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
-        if (failure instanceof MongoConnectionPoolClearedException) {
+        if (failure instanceof MongoConnectionPoolClearedException
+                || (failure instanceof MongoSecurityException && failure.getCause() != null && isRetryableException(failure.getCause()))) {
             decision = true;
             exceptionRetryableRegardlessOfCommand = (MongoException) failure;
         }
