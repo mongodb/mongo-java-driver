@@ -78,14 +78,17 @@ public class PowerOfTwoBufferPoolTest {
     // Racy test
     @Test
     public void testPruning() throws InterruptedException {
-        try (PowerOfTwoBufferPool pool = new PowerOfTwoBufferPool(10, 5, TimeUnit.MILLISECONDS)) {
-            pool.enablePruning();
+        PowerOfTwoBufferPool pool = new PowerOfTwoBufferPool(10, 5, TimeUnit.MILLISECONDS)
+                .enablePruning();
+        try {
             ByteBuf byteBuf = pool.getBuffer(256);
             ByteBuffer wrappedByteBuf = byteBuf.asNIO();
             byteBuf.release();
             Thread.sleep(50);
             ByteBuf newByteBuf = pool.getBuffer(256);
             assertNotSame(wrappedByteBuf, newByteBuf.asNIO());
+        } finally {
+            pool.disablePruning();
         }
     }
 }

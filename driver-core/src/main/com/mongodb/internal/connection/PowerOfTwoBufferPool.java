@@ -38,18 +38,14 @@ import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
  *
  * <p>This class should not be considered a part of the public API.</p>
  */
-public class PowerOfTwoBufferPool implements BufferProvider, AutoCloseable {
+public class PowerOfTwoBufferPool implements BufferProvider {
 
     /**
      * The global default pool.  Pruning is enabled on this pool. Idle buffers are pruned after one minute.
      */
-    public static final PowerOfTwoBufferPool DEFAULT = new PowerOfTwoBufferPool();
+    public static final PowerOfTwoBufferPool DEFAULT = new PowerOfTwoBufferPool().enablePruning();
 
     private static final long DEFAULT_MAX_IDLE_TIME_MINUTES = 1;
-
-    static {
-        DEFAULT.enablePruning();
-    }
 
     private static final class IdleTrackingByteBuffer {
         private final long lastUsedNanos;
@@ -87,7 +83,7 @@ public class PowerOfTwoBufferPool implements BufferProvider, AutoCloseable {
 
         @Override
         public Prune shouldPrune(final IdleTrackingByteBuffer idleTrackingByteBuffer) {
-            return idleTrackingByteBuffer.getLastUsedNanos() < System.nanoTime() + maxIdleTimeNanos
+            return System.nanoTime() - idleTrackingByteBuffer.getLastUsedNanos() >= maxIdleTimeNanos
                     ? Prune.YES : Prune.STOP;
         }
     }
@@ -100,7 +96,7 @@ public class PowerOfTwoBufferPool implements BufferProvider, AutoCloseable {
     /**
      * Construct an instance with a highest power of two of 24.
      */
-    public PowerOfTwoBufferPool() {
+    PowerOfTwoBufferPool() {
         this(24);
     }
 
@@ -109,7 +105,7 @@ public class PowerOfTwoBufferPool implements BufferProvider, AutoCloseable {
      *
      * @param highestPowerOfTwo the highest power of two buffer size that will be pooled
      */
-    public PowerOfTwoBufferPool(final int highestPowerOfTwo) {
+    PowerOfTwoBufferPool(final int highestPowerOfTwo) {
         this(highestPowerOfTwo, DEFAULT_MAX_IDLE_TIME_MINUTES, TimeUnit.MINUTES);
     }
 
@@ -120,7 +116,7 @@ public class PowerOfTwoBufferPool implements BufferProvider, AutoCloseable {
      * @param maxIdleTime max idle time when pruning is enabled
      * @param timeUnit time unit of maxIdleTime
      */
-    public PowerOfTwoBufferPool(final int highestPowerOfTwo, final long maxIdleTime, final TimeUnit timeUnit) {
+    PowerOfTwoBufferPool(final int highestPowerOfTwo, final long maxIdleTime, final TimeUnit timeUnit) {
         int powerOfTwo = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {
             int size = powerOfTwo;
@@ -134,12 +130,12 @@ public class PowerOfTwoBufferPool implements BufferProvider, AutoCloseable {
     /**
      * Call this method at most once to enable a background thread that prunes idle buffers from the pool
      */
-    public void enablePruning() {
+    PowerOfTwoBufferPool enablePruning() {
         pruner.scheduleAtFixedRate(this::prune, maxIdleTimeNanos, maxIdleTimeNanos / 2, TimeUnit.NANOSECONDS);
+        return this;
     }
 
-    @Override
-    public void close() {
+    void disablePruning() {
         pruner.shutdownNow();
     }
 
