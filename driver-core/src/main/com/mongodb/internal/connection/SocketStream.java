@@ -103,17 +103,21 @@ public class SocketStream implements Stream {
     @Override
     public ByteBuf read(final int numBytes) throws IOException {
         ByteBuf buffer = bufferProvider.getBuffer(numBytes);
-        int totalBytesRead = 0;
-        byte[] bytes = buffer.array();
-        while (totalBytesRead < buffer.limit()) {
-            int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
-            if (bytesRead == -1) {
-                buffer.release();
-                throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
+        try {
+            int totalBytesRead = 0;
+            byte[] bytes = buffer.array();
+            while (totalBytesRead < buffer.limit()) {
+                int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
+                if (bytesRead == -1) {
+                    throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
+                }
+                totalBytesRead += bytesRead;
             }
-            totalBytesRead += bytesRead;
+            return buffer;
+        } catch (Exception e) {
+            buffer.release();
+            throw e;
         }
-        return buffer;
     }
 
     @Override
