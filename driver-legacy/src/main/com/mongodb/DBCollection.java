@@ -26,12 +26,12 @@ import com.mongodb.client.model.DBCollectionFindAndModifyOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.client.model.DBCollectionRemoveOptions;
 import com.mongodb.client.model.DBCollectionUpdateOptions;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest.Type;
+import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.AggregateToCollectionOperation;
 import com.mongodb.internal.operation.BaseWriteOperation;
@@ -1815,7 +1815,7 @@ public class DBCollection {
         // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
         Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
                                     ? getDefaultDBObjectCodec()
-                                    : new DBDecoderAdapter(factory.create(), this, getBufferPool());
+                                    : new DBDecoderAdapter(factory.create(), this, PowerOfTwoBufferPool.DEFAULT);
         this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
     }
 
@@ -2148,10 +2148,6 @@ public class DBCollection {
 
     MongoNamespace getNamespace() {
         return new MongoNamespace(getDB().getName(), getName());
-    }
-
-    BufferProvider getBufferPool() {
-        return getDB().getBufferPool();
     }
 
     @Nullable

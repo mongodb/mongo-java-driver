@@ -23,7 +23,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
@@ -526,10 +525,6 @@ public class DB {
 
     OperationExecutor getExecutor() {
         return executor;
-    }
-
-    BufferProvider getBufferPool() {
-        return getMongoClient().getBufferProvider();
     }
 
     private BsonDocument wrap(final DBObject document) {
