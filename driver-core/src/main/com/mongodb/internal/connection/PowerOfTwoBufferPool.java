@@ -45,8 +45,6 @@ public class PowerOfTwoBufferPool implements BufferProvider {
      */
     public static final PowerOfTwoBufferPool DEFAULT = new PowerOfTwoBufferPool().enablePruning();
 
-    private static final long DEFAULT_MAX_IDLE_TIME_MINUTES = 1;
-
     private static final class IdleTrackingByteBuffer {
         private final long lastUsedNanos;
         private final ByteBuffer buffer;
@@ -106,7 +104,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
      * @param highestPowerOfTwo the highest power of two buffer size that will be pooled
      */
     PowerOfTwoBufferPool(final int highestPowerOfTwo) {
-        this(highestPowerOfTwo, DEFAULT_MAX_IDLE_TIME_MINUTES, TimeUnit.MINUTES);
+        this(highestPowerOfTwo, 1, TimeUnit.MINUTES);
     }
 
     /**
