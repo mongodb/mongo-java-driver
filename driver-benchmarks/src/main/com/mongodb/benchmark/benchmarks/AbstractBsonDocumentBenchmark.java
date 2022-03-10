@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 
 public abstract class AbstractBsonDocumentBenchmark<T> extends Benchmark {
 
-    protected final PowerOfTwoBufferPool bufferPool = new PowerOfTwoBufferPool();
+    protected final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
     protected final Codec<T> codec;
 
     private final String name;

@@ -63,7 +63,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
     private final SelectorMonitor selectorMonitor;
     private final AsynchronousTlsChannelGroup group;
     private final boolean ownsGroup;
-    private final PowerOfTwoBufferPool bufferPool = new PowerOfTwoBufferPool();
+    private final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
 
     /**
      * Construct a new instance

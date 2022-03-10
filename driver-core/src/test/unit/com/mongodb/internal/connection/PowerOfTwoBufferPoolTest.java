@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
@@ -72,5 +73,22 @@ public class PowerOfTwoBufferPoolTest {
 
         buf.release();
         assertNotSame(buf, pool.getBuffer((int) Math.pow(2, 10) + 1));
+    }
+
+    // Racy test
+    @Test
+    public void testPruning() throws InterruptedException {
+        PowerOfTwoBufferPool pool = new PowerOfTwoBufferPool(10, 5, TimeUnit.MILLISECONDS)
+                .enablePruning();
+        try {
+            ByteBuf byteBuf = pool.getBuffer(256);
+            ByteBuffer wrappedByteBuf = byteBuf.asNIO();
+            byteBuf.release();
+            Thread.sleep(50);
+            ByteBuf newByteBuf = pool.getBuffer(256);
+            assertNotSame(wrappedByteBuf, newByteBuf.asNIO());
+        } finally {
+            pool.disablePruning();
+        }
     }
 }
