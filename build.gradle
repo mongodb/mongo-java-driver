@@ -48,7 +48,7 @@ ext {
     nettyTcnativeBoringsslVersion = '2.0.46.Final'
     snappyVersion = '1.1.8.4'
     zstdVersion = '1.5.0-4'
-    mongoCryptVersion = '1.4.0-SNAPSHOT'
+    mongoCryptVersion = '1.4.0-alpha0'
     projectReactorVersion = 'Californium-SR23'
     junitBomVersion = '5.8.1'
     gitVersion = getGitVersion()
@@ -73,7 +73,6 @@ configure(coreProjects) {
         mavenLocal()
         google()
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots/"}
     }
 }
 
