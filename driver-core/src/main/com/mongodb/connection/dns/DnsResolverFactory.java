@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 /**
  * Factory for {@link DnsResolver} instances
  */
-public class DnsResolverFactory {
+public final class DnsResolverFactory {
 
     private static Supplier<DnsResolver> dnsResolverSupplier;
 
