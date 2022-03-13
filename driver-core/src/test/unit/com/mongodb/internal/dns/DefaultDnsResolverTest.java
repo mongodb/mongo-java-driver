@@ -17,6 +17,7 @@
 package com.mongodb.internal.dns;
 
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.connection.dns.DefaultDnsResolver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,12 +40,12 @@ public class DefaultDnsResolverTest {
     @Test
     public void nonDnsProviderUrlShouldBeIgnored() {
         System.setProperty(Context.PROVIDER_URL, "file:///tmp/provider.txt");
-        assertDoesNotThrow(() -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
+        assertDoesNotThrow(() -> DefaultDnsResolver.INSTANCE.resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
     }
 
     @Test
     public void dnsProviderUrlShouldNotBeIgnored() {
         System.setProperty(Context.PROVIDER_URL, "dns:///mongodb.unknown.server.com");
-        assertThrows(MongoConfigurationException.class, () -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
+        assertThrows(MongoConfigurationException.class, () -> DefaultDnsResolver.INSTANCE.resolveHostFromSrvRecords(TEST_HOST, "mongodb"));
     }
 }

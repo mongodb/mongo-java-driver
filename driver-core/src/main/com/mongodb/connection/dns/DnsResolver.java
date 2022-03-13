@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.dns;
+package com.mongodb.connection.dns;
 
 import java.util.List;
 
 /**
  * Utility interface for resolving SRV and TXT records.
  *
- * <p>This class should not be considered a part of the public API.</p>
  */
 public interface DnsResolver {
 

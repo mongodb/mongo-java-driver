@@ -24,7 +24,7 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.internal.dns.DnsResolver;
+import com.mongodb.connection.dns.DnsResolver;
 import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

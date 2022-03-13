@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.dns;
+package com.mongodb.connection.dns;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoConfigurationException;
@@ -34,10 +34,13 @@ import static java.util.Arrays.asList;
 
 /**
  * Utility class for resolving SRV and TXT records.
- *
- * <p>This class should not be considered a part of the public API.</p>
  */
-public final class DefaultDnsResolver implements DnsResolver {
+public enum DefaultDnsResolver implements DnsResolver {
+
+    /**
+     * Singleton
+     */
+    INSTANCE;
 
     /*
       The format of SRV record is

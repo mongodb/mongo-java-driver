@@ -23,7 +23,7 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.internal.dns.DnsResolver;
+import com.mongodb.connection.dns.DnsResolver;
 
 import java.util.Collections;
 import java.util.HashSet;

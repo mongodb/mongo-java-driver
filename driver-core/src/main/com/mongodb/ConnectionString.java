@@ -18,9 +18,10 @@ package com.mongodb;
 
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.dns.DnsResolverFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.internal.dns.DefaultDnsResolver;
+import com.mongodb.connection.dns.DefaultDnsResolver;
 import com.mongodb.lang.Nullable;
 import org.bson.UuidRepresentation;
 
@@ -392,7 +393,7 @@ public class ConnectionString {
         }
 
         String txtRecordsQueryParameters = isSrvProtocol
-                ? new DefaultDnsResolver().resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
+                ? DnsResolverFactory.dnsResolver().resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
         String connectionStringQueryParamenters = unprocessedConnectionString;
 
         Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParamenters);

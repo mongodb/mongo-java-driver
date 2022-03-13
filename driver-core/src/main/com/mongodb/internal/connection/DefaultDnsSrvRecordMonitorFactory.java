@@ -18,7 +18,8 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.internal.dns.DefaultDnsResolver;
+import com.mongodb.connection.dns.DefaultDnsResolver;
+import com.mongodb.connection.dns.DnsResolverFactory;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -38,6 +39,6 @@ public class DefaultDnsSrvRecordMonitorFactory implements DnsSrvRecordMonitorFac
     @Override
     public DnsSrvRecordMonitor create(final String hostName, final String srvServiceName, final DnsSrvRecordInitializer dnsSrvRecordInitializer) {
         return new DefaultDnsSrvRecordMonitor(hostName, srvServiceName, DEFAULT_RESCAN_FREQUENCY_MILLIS, noRecordsRescanFrequency,
-                dnsSrvRecordInitializer, clusterId, new DefaultDnsResolver());
+                dnsSrvRecordInitializer, clusterId, DnsResolverFactory.dnsResolver());
     }
 }

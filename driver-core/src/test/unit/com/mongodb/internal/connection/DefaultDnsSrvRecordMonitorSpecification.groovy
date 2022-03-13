@@ -21,7 +21,7 @@ import com.mongodb.MongoException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ClusterType
-import com.mongodb.internal.dns.DnsResolver
+import com.mongodb.connection.dns.DnsResolver
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
