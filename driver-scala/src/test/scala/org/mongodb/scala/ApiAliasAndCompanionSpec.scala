@@ -50,6 +50,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "DBRef",
       "DBRefCodec",
       "DBRefCodecProvider",
+      "DnsClient",
+      "DnsClientProvider",
       "DocumentToDBRefTransformer",
       "Function",
       "FutureResultCallback",
