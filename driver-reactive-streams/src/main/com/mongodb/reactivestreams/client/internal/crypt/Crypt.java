@@ -63,6 +63,7 @@ public class Crypt implements Closeable {
      * Create an instance to use for explicit encryption and decryption, and data key creation.
      *
      * @param mongoCrypt           the mongoCrypt wrapper
+     * @param kmsProviders         the kms providers
      * @param keyRetriever         the key retriever
      * @param keyManagementService the key management service
      */
