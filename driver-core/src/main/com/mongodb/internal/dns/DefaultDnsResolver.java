@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoConfigurationException;
 
 import javax.naming.Context;
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -128,6 +129,8 @@ public final class DefaultDnsResolver implements DnsResolver {
                     }
                 }
             }
+        } catch (NameNotFoundException e) {
+            // ignore NXDomain error (error code 3, "Non-Existent Domain)
         } catch (NamingException e) {
             throw new MongoConfigurationException("Unable to look up TXT record for host " + host, e);
         } finally {
