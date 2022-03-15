@@ -16,16 +16,33 @@
 
 package com.mongodb.spi.dns;
 
+/**
+ * An exception indicating a DNS error that includes a response code.
+ *
+ * @since 4.6
+ */
 public class DnsWithResponseCodeException extends DnsException {
     private static final long serialVersionUID = 1;
 
     private final int responseCode;
 
+    /**
+     * Construct an instance
+     *
+     * @param message the message
+     * @param responseCode the DNS response code
+     * @param cause the cause
+     */
     public DnsWithResponseCodeException(final String message, final int responseCode, final Throwable cause) {
         super(message, cause);
         this.responseCode = responseCode;
     }
 
+    /**
+     * Gets the response code
+     *
+     * @return the response code
+     */
     public int getResponseCode() {
         return responseCode;
     }

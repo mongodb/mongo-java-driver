@@ -16,6 +16,21 @@
 
 package com.mongodb.spi.dns;
 
+/**
+ * A provider interface for {@link DnsClient}.
+ *
+ * <p>
+ * The driver discovers implementations of this interface via {@link java.util.ServiceLoader}.
+ * </p>
+ *
+ * @since 4.6
+ * @see java.util.ServiceLoader
+ */
 public interface DnsClientProvider {
+    /**
+     * Construct a new instance of a {@link DnsClient}.
+     *
+     * @return a {@link DnsClient}
+     */
     DnsClient create();
 }

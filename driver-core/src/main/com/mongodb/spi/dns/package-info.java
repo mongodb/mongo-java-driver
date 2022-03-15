@@ -22,6 +22,7 @@
  * JNDI support from com.sun.jndi.dns.DnsContextFactory, but this can be replaced using the JDK's ServerLoader capabilities.
  *
  * @see java.util.ServiceLoader
+ * @since 4.6
  */
 
 package com.mongodb.spi.dns;

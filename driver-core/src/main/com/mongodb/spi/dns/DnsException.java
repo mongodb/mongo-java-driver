@@ -16,9 +16,21 @@
 
 package com.mongodb.spi.dns;
 
+/**
+ * An exception indicating a DNS error;
+ *
+ * @since 4.6
+ * @see DnsClient#getAttributeValues(String, String)
+ */
 public class DnsException extends Exception {
     private static final long serialVersionUID = 1;
 
+    /**
+     * Construct an instance
+     *
+     * @param message the message
+     * @param cause the cause
+     */
     public DnsException(final String message, final Throwable cause) {
         super(message, cause);
     }

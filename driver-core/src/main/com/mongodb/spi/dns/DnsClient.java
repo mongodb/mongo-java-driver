@@ -18,6 +18,26 @@ package com.mongodb.spi.dns;
 
 import java.util.List;
 
+
+/**
+ * An interface describing a DNS client.
+ *
+ * @since 4.6
+ * @see DnsClientProvider
+ */
 public interface DnsClient {
+    /**
+     * Gets the attribute values for the given name and type.
+     *
+     * <p>
+     * Implementations should throw {@link DnsWithResponseCodeException} if the DNS response code is known.  Otherwise, the more generic
+     * {@link DnsException} should be thrown.
+     * </p>
+     *
+     * @param name the name to look up
+     * @param type the attribute type, typically either {@code "SRV"} or {@code "TXT"}.
+     * @return the list of values for the requested attribute
+     * @throws DnsException the exception
+     */
     List<String> getAttributeValues(String name, String type) throws DnsException;
 }
