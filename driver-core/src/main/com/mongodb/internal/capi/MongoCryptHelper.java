@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.capi;
 
+import com.mongodb.AwsCredential;
 import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
@@ -23,8 +24,10 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.crypt.capi.MongoCryptOptions;
+import com.mongodb.internal.authentication.AwsCredentialHelper;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 
@@ -40,13 +43,36 @@ public final class MongoCryptHelper {
                                                             final Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap) {
         MongoCryptOptions.Builder mongoCryptOptionsBuilder = MongoCryptOptions.builder();
 
+        BsonDocument bsonKmsProviders = getKmsProvidersAsBsonDocument(kmsProviders);
+        mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
+        mongoCryptOptionsBuilder.localSchemaMap(namespaceToLocalSchemaDocumentMap);
+        mongoCryptOptionsBuilder.needsKmsCredentialsStateEnabled(true);
+        return mongoCryptOptionsBuilder.build();
+    }
+
+    public static BsonDocument fetchCredentials(final Map<String, Map<String, Object>> kmsProviders) {
+        BsonDocument kmsProvidersDocument = MongoCryptHelper.getKmsProvidersAsBsonDocument(kmsProviders);
+        if (kmsProvidersDocument.containsKey("aws") && kmsProvidersDocument.get("aws").asDocument().isEmpty()) {
+            AwsCredential awsCredential = AwsCredentialHelper.obtainFromEnvironment();
+            if (awsCredential != null) {
+                BsonDocument awsCredentialDocument = new BsonDocument();
+                awsCredentialDocument.put("accessKeyId", new BsonString(awsCredential.getAccessKeyId()));
+                awsCredentialDocument.put("secretAccessKey", new BsonString(awsCredential.getSecretAccessKey()));
+                if (awsCredential.getSessionToken() != null) {
+                    awsCredentialDocument.put("sessionToken", new BsonString(awsCredential.getSessionToken()));
+                }
+                kmsProvidersDocument.put("aws", awsCredentialDocument);
+            }
+        }
+        return kmsProvidersDocument;
+    }
+
+    private static BsonDocument getKmsProvidersAsBsonDocument(final Map<String, Map<String, Object>> kmsProviders) {
         BsonDocument bsonKmsProviders = new BsonDocument();
         for (Map.Entry<String, Map<String, Object>> entry : kmsProviders.entrySet()) {
             bsonKmsProviders.put(entry.getKey(), new BsonDocumentWrapper<>(new Document(entry.getValue()), new DocumentCodec()));
         }
-        mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
-        mongoCryptOptionsBuilder.localSchemaMap(namespaceToLocalSchemaDocumentMap);
-        return mongoCryptOptionsBuilder.build();
+        return bsonKmsProviders;
     }
 
     @SuppressWarnings("unchecked")

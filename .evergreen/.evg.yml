@@ -659,6 +659,17 @@ functions:
           set +o xtrace
           MONGODB_URI="${MONGODB_URI}" KMS_TLS_ERROR_TYPE=${KMS_TLS_ERROR_TYPE} .evergreen/run-kms-tls-tests.sh
 
+  "run-csfle-aws-from-environment-test":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          set +o xtrace
+          MONGODB_URI="${MONGODB_URI}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
+          .evergreen/run-csfle-aws-from-environment.sh
+
   "publish snapshot":
     - command: shell.exec
       type: test
@@ -1361,6 +1372,17 @@ tasks:
             TOPOLOGY: "server"
             AUTH: "noauth"
             SSL: "nossl"
+
+    - name: "test-csfle-aws-from-environment"
+      tags: ["csfle-aws-from-environment"]
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            TOPOLOGY: "server"
+            AUTH: "noauth"
+            SSL: "nossl"
+        - func: run-csfle-aws-from-environment-test
+
 axes:
   - id: version
     display_name: MongoDB Version
@@ -1772,3 +1794,9 @@ buildvariants:
   display_name: "CSFLE KMS TLS"
   tasks:
     - name: ".kms-tls"
+
+- matrix_name: "csfle-aws-from-environment-test"
+  matrix_spec: { os: "linux", version: [ "5.0" ], topology: ["standalone"] }
+  display_name: "CSFLE AWS From Environment"
+  tasks:
+    - name: ".csfle-aws-from-environment"
