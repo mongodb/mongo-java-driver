@@ -54,7 +54,7 @@ class ScalaObservableSpec extends BaseSpec {
   it should "have a transform method" in {
     var completed = false
     val results = ArrayBuffer[String]()
-    observable[Int]()
+    observable()
       .transform((res: Int) => res.toString, (ex: Throwable) => ex)
       .subscribe((s: String) => results += s, (t: Throwable) => (), () => completed = true)
     results should equal((1 to 100).map(_.toString))
@@ -63,7 +63,7 @@ class ScalaObservableSpec extends BaseSpec {
     completed = false
     val exception = new MongoException("New Exception")
     var throwable: Option[Throwable] = None
-    observable[Int](fail = true)
+    observable(fail = true)
       .transform((res: Int) => res, (ex: Throwable) => exception)
       .subscribe((s: Int) => (), (t: Throwable) => throwable = Some(t), () => completed = true)
 
@@ -74,7 +74,7 @@ class ScalaObservableSpec extends BaseSpec {
   it should "have a map method" in {
     val results = ArrayBuffer[String]()
     var completed = false
-    observable[Int]()
+    observable()
       .map((res: Int) => res.toString)
       .subscribe((s: String) => results += s, (t: Throwable) => (), () => completed = true)
     results should equal((1 to 100).map(_.toString))
@@ -83,7 +83,7 @@ class ScalaObservableSpec extends BaseSpec {
 
   it should "have a flatMap method" in {
     def myObservable(fail: Boolean = false): Observable[String] =
-      observable[Int](fail = fail).flatMap((res: Int) => observable(List(res.toString)))
+      observable(fail = fail).flatMap((res: Int) => Observable(List(res.toString)))
 
     val results = ArrayBuffer[String]()
     myObservable().subscribe((s: String) => results += s)
@@ -102,7 +102,7 @@ class ScalaObservableSpec extends BaseSpec {
 
   it should "have a filter method" in {
     def myObservable(fail: Boolean = false): Observable[Int] =
-      observable[Int](fail = fail).filter((i: Int) => i % 2 != 0)
+      observable(fail = fail).filter((i: Int) => i % 2 != 0)
 
     val results = ArrayBuffer[Int]()
     myObservable().subscribe((i: Int) => results += i)
@@ -119,7 +119,7 @@ class ScalaObservableSpec extends BaseSpec {
 
   it should "have a withFilter method" in {
     def myObservable(fail: Boolean = false): Observable[Int] =
-      observable[Int](fail = fail).withFilter((i: Int) => i % 2 != 0)
+      observable(fail = fail).withFilter((i: Int) => i % 2 != 0)
 
     val results = ArrayBuffer[Int]()
     myObservable().subscribe((i: Int) => results += i)
@@ -136,7 +136,7 @@ class ScalaObservableSpec extends BaseSpec {
 
   it should "have a collect method" in {
     def myObservable(fail: Boolean = false): Observable[Seq[Int]] = {
-      observable[Int](fail = fail).collect()
+      observable(fail = fail).collect()
     }
 
     val results = ArrayBuffer[Int]()
@@ -157,7 +157,7 @@ class ScalaObservableSpec extends BaseSpec {
     var completed = false
     var errorSeen: Option[Throwable] = None
 
-    observable[Int]()
+    observable()
       .collect()
       .flatMap(_ => Observable(1 to 3))
       .subscribe((i: Int) => results += i, (t: Throwable) => errorSeen = Some(t), () => completed = true)
@@ -170,7 +170,7 @@ class ScalaObservableSpec extends BaseSpec {
     completed = false
     errorSeen = None
 
-    observable[Int](fail = true)
+    observable(fail = true)
       .collect()
       .flatMap(_ => Observable(1 to 3))
       .subscribe((i: Int) => results += i, (t: Throwable) => errorSeen = Some(t), () => completed = true)
@@ -182,7 +182,7 @@ class ScalaObservableSpec extends BaseSpec {
 
   it should "have a foldLeft method" in {
     def myObservable(fail: Boolean = false): Observable[Int] = {
-      observable[Int](fail = fail).foldLeft(0)((l: Int, i) => l + 1)
+      observable(fail = fail).foldLeft(0)((l: Int, i) => l + 1)
     }
 
     var results = 0
@@ -204,7 +204,7 @@ class ScalaObservableSpec extends BaseSpec {
     results should equal(1 to 100)
 
     var errorSeen: Option[Throwable] = None
-    observable[Int](fail = true)
+    observable(fail = true)
       .recover({ case e: ArithmeticException => 999 })
       .subscribe((s: Int) => (), (fail: Throwable) => errorSeen = Some(fail))
     errorSeen.getOrElse(None) shouldBe a[Throwable]
@@ -229,8 +229,8 @@ class ScalaObservableSpec extends BaseSpec {
     results = ArrayBuffer[Int]()
     var errorSeen: Option[Throwable] = None
     completed = false
-    observable[Int](fail = true)
-      .recoverWith({ case e: ArithmeticException => observable[Int](1000 to 1001) })
+    observable(fail = true)
+      .recoverWith({ case e: ArithmeticException => observable(1000 to 1001) })
       .subscribe((i: Int) => results += i, (fail: Throwable) => errorSeen = Some(fail), () => completed = true)
     errorSeen.getOrElse(None) shouldBe a[Throwable]
     results should equal(1 to 50)
@@ -254,24 +254,24 @@ class ScalaObservableSpec extends BaseSpec {
 
   it should "have a zip method" in {
     val results = ArrayBuffer[(Int, String)]()
-    observable[Int]().zip(observable().map(i => i.toString)).subscribe((res: (Int, String)) => results += res)
+    observable().zip(observable().map(i => i.toString)).subscribe((res: (Int, String)) => results += res)
     results should equal((1 to 100).zip((1 to 100).map(_.toString)))
   }
 
   it should "have a fallBackTo method" in {
     var results = ArrayBuffer[Int]()
-    observable().fallbackTo(observable[Int](1000 to 1001)).subscribe((i: Int) => results += i)
+    observable().fallbackTo(observable(1000 to 1001)).subscribe((i: Int) => results += i)
     results should equal(1 to 100)
 
     results = ArrayBuffer[Int]()
     observable(fail = true)
-      .fallbackTo(observable[Int](1000 to 1001))
+      .fallbackTo(observable(1000 to 1001))
       .subscribe((i: Int) => results += i)
     results should equal((1 to 50) ++ (1000 to 1001))
 
     var errorMessage = ""
-    TestObservable[Int](1 to 100, 10, "Original Error")
-      .fallbackTo(TestObservable[Int](1000 to 1001, 1000, "Fallback Error"))
+    TestObservable(1 to 100, 10, "Original Error")
+      .fallbackTo(TestObservable(1000 to 1001, 1000, "Fallback Error"))
       .subscribe((i: Int) => i, (t: Throwable) => errorMessage = t.getMessage)
     errorMessage should equal("Original Error")
   }
@@ -279,7 +279,7 @@ class ScalaObservableSpec extends BaseSpec {
   it should "have an andThen method" in {
     var results = ArrayBuffer[Int]()
     def myObservable(fail: Boolean = false): Observable[Int] = {
-      observable[Int](1 to 100, fail = fail) andThen {
+      observable(1 to 100, fail = fail) andThen {
         case Success(r)  => results += 999
         case Failure(ex) => results += -999
       }
@@ -357,7 +357,7 @@ class ScalaObservableSpec extends BaseSpec {
   it should "convert to a Future" in {
     var results = ArrayBuffer[Int]()
     var errorSeen: Option[Throwable] = None
-    val happyFuture = observable[Int]().toFuture()
+    val happyFuture = observable().toFuture()
     var latch = new CountDownLatch(1)
 
     happyFuture.onComplete({
@@ -372,7 +372,7 @@ class ScalaObservableSpec extends BaseSpec {
 
     results = ArrayBuffer[Int]()
     latch = new CountDownLatch(1)
-    val unhappyFuture = observable[Int](fail = true).toFuture()
+    val unhappyFuture = observable(fail = true).toFuture()
     unhappyFuture.onComplete({
       case Success(res) => results ++= res
       case Failure(throwable) =>
@@ -389,30 +389,30 @@ class ScalaObservableSpec extends BaseSpec {
   }
 
   it should "provide a headOption method" in {
-    Await.result(observable[Int]().headOption(), Duration(10, TimeUnit.SECONDS)) should equal(Some(1))
-    Await.result(observable[Int](fail = true).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(Some(1))
+    Await.result(observable().headOption(), Duration(10, TimeUnit.SECONDS)) should equal(Some(1))
+    Await.result(observable(fail = true).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(Some(1))
 
     intercept[MongoException] {
       Await.result(
-        TestObservable[Int](Observable[Int](1 to 10), failOn = 1).headOption(),
+        TestObservable(observable(1 to 10), failOn = 1).headOption(),
         Duration(10, TimeUnit.SECONDS)
       )
     }
 
-    Await.result(TestObservable[Int](Observable(List[Int]())).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(
+    Await.result(TestObservable(Observable(List[Int]())).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(
       None
     )
   }
 
   it should "provide a head method" in {
-    Await.result(observable[Int]().head(), Duration(10, TimeUnit.SECONDS)) should equal(1)
-    Await.result(observable[Int](fail = true).head(), Duration(10, TimeUnit.SECONDS)) should equal(1)
+    Await.result(observable().head(), Duration(10, TimeUnit.SECONDS)) should equal(1)
+    Await.result(observable(fail = true).head(), Duration(10, TimeUnit.SECONDS)) should equal(1)
 
     intercept[MongoException] {
-      Await.result(TestObservable[Int](Observable[Int](1 to 10), failOn = 1).head(), Duration(10, TimeUnit.SECONDS))
+      Await.result(TestObservable(observable(1 to 10), failOn = 1).head(), Duration(10, TimeUnit.SECONDS))
     }
 
-    Option(Await.result(TestObservable[Int](Observable(List[Int]())).head(), Duration(10, TimeUnit.SECONDS))) should equal(
+    Option(Await.result(TestObservable(Observable(List[Int]())).head(), Duration(10, TimeUnit.SECONDS))) should equal(
       None
     )
   }
@@ -510,7 +510,7 @@ class ScalaObservableSpec extends BaseSpec {
       override def onNext(result: Int): Unit = results += result
     }
 
-    observable[Int]().subscribe(observer)
+    observable().subscribe(observer)
     latch.await(10, TimeUnit.SECONDS)
     results should equal(1 to 100)
 
@@ -559,10 +559,11 @@ class ScalaObservableSpec extends BaseSpec {
     observeOnThreadId1 should not be observeOnThreadId2
   }
 
-  def observable[A](from: Iterable[A] = (1 to 100), fail: Boolean = false): Observable[A] = {
-    fail match {
-      case true  => TestObservable[A](from, failOn = 51)
-      case false => TestObservable[A](from)
+  def observable(from: Iterable[Int] = (1 to 100), fail: Boolean = false): Observable[Int] = {
+    if (fail) {
+      TestObservable(from, failOn = 51)
+    } else {
+      TestObservable(from)
     }
   }
 

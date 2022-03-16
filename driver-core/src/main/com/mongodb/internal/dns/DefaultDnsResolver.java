@@ -20,6 +20,7 @@ import com.mongodb.MongoConfigurationException;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.DnsClientProvider;
 import com.mongodb.spi.dns.DnsException;
+import com.mongodb.spi.dns.DnsWithResponseCodeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,6 +126,12 @@ public final class DefaultDnsResolver implements DnsResolver {
             // between each character-string in a single TXT record.  That whitespace is spurious in
             // this context and must be removed
             return attributeValues.get(0).replaceAll("\\s", "");
+        } catch (DnsWithResponseCodeException e) {
+            // ignore NXDomain error (error code 3, "Non-Existent Domain)
+            if (e.getResponseCode() != 3) {
+                throw new MongoConfigurationException("Unable to look up TXT record for host " + host, e);
+            }
+            return "";
         } catch (DnsException e) {
             throw new MongoConfigurationException("Unable to look up TXT record for host " + host, e);
         }

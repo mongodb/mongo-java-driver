@@ -28,6 +28,7 @@ import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.crypt.capi.MongoDataKeyOptions;
 import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -38,6 +39,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
@@ -45,6 +47,7 @@ import static com.mongodb.crypt.capi.MongoCryptContext.State;
 class Crypt implements Closeable {
 
     private final MongoCrypt mongoCrypt;
+    private final Map<String, Map<String, Object>> kmsProviders;
     private final CollectionInfoRetriever collectionInfoRetriever;
     private final CommandMarker commandMarker;
     private final KeyRetriever keyRetriever;
@@ -56,26 +59,31 @@ class Crypt implements Closeable {
      * Create an instance to use for explicit encryption and decryption, and data key creation.
      *
      * @param mongoCrypt the mongoCrypt wrapper
+     * @param kmsProviders the kms providers
      * @param keyRetriever the key retriever
      * @param keyManagementService the key management service
      */
-    Crypt(final MongoCrypt mongoCrypt, final KeyRetriever keyRetriever, final KeyManagementService keyManagementService) {
-        this(mongoCrypt, null, null, keyRetriever, keyManagementService, false, null);
+    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders, final KeyRetriever keyRetriever,
+            final KeyManagementService keyManagementService) {
+        this(mongoCrypt, kmsProviders, null, null, keyRetriever, keyManagementService, false, null);
     }
 
     /**
      * Create an instance to use for auto-encryption and auto-decryption.
-     *
-     * @param mongoCrypt the mongoCrypt wrapper
-     * @param keyRetriever the key retriever
-     * @param keyManagementService the key management service
+     *  @param mongoCrypt the mongoCrypt wrapper
+     * @param kmsProviders the KMS provider credentials
      * @param collectionInfoRetriever the collection info retriever
      * @param commandMarker the command marker
+     * @param keyRetriever the key retriever
+     * @param keyManagementService the key management service
      */
-    Crypt(final MongoCrypt mongoCrypt, @Nullable final CollectionInfoRetriever collectionInfoRetriever,
-          @Nullable final CommandMarker commandMarker, final KeyRetriever keyRetriever,
-          final KeyManagementService keyManagementService, final boolean bypassAutoEncryption, @Nullable final MongoClient internalClient) {
+    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders,
+            @Nullable final CollectionInfoRetriever collectionInfoRetriever,
+            @Nullable final CommandMarker commandMarker, final KeyRetriever keyRetriever,
+            final KeyManagementService keyManagementService, final boolean bypassAutoEncryption,
+            @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
+        this.kmsProviders = kmsProviders;
         this.collectionInfoRetriever = collectionInfoRetriever;
         this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
@@ -241,6 +249,9 @@ class Crypt implements Closeable {
                 case NEED_MONGO_MARKINGS:
                     mark(cryptContext, databaseName);
                     break;
+                case NEED_KMS_CREDENTIALS:
+                    fetchCredentials(cryptContext);
+                    break;
                 case NEED_MONGO_KEYS:
                     fetchKeys(cryptContext);
                     break;
@@ -253,6 +264,10 @@ class Crypt implements Closeable {
                     throw new MongoInternalException("Unsupported encryptor state + " + state);
             }
         }
+    }
+
+    private void fetchCredentials(final MongoCryptContext cryptContext) {
+        cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders));
     }
 
     private void collInfo(final MongoCryptContext cryptContext, final String databaseName) {
