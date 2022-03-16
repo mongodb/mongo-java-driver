@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{ BaseSpec, Observer, SingleObservable, Subscription }
+import org.mongodb.scala.{ BaseSpec, SingleObservable }
 
 class SingleObservableSpec extends BaseSpec {
 
@@ -26,23 +26,12 @@ class SingleObservableSpec extends BaseSpec {
     result should equal(42)
 
     var thrown = false
-    failedObservable().subscribe((res: Int) => (), (t: Throwable) => thrown = true)
+    observable()
+      .map(_ => throw new RuntimeException("Failed"))
+      .subscribe((_: Int) => (), (_: Throwable) => thrown = true)
     thrown should equal(true)
-
-    var completed = false
-    observable().subscribe((res: Int) => (), (t: Throwable) => (), () => completed = true)
-    completed should equal(true)
   }
 
   def observable(): SingleObservable[Int] = SingleObservable(42)
 
-  def failedObservable(): SingleObservable[Int] = new SingleObservable[Int] {
-    override def subscribe(observer: Observer[_ >: Int]) = {
-      observer.onSubscribe(new Subscription {
-        override def isUnsubscribed: Boolean = false
-        override def request(n: Long): Unit = observer.onError(new Exception("Failed"))
-        override def unsubscribe(): Unit = {}
-      })
-    }
-  }
 }
