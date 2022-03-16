@@ -21,6 +21,7 @@ import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.crypt.capi.MongoCryptOptions;
@@ -36,6 +37,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import static java.lang.String.format;
 
 public final class MongoCryptHelper {
 
@@ -50,8 +54,27 @@ public final class MongoCryptHelper {
         return mongoCryptOptionsBuilder.build();
     }
 
-    public static BsonDocument fetchCredentials(final Map<String, Map<String, Object>> kmsProviders) {
+    public static BsonDocument fetchCredentials(final Map<String, Map<String, Object>> kmsProviders,
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap) {
         BsonDocument kmsProvidersDocument = MongoCryptHelper.getKmsProvidersAsBsonDocument(kmsProviders);
+        for (Map.Entry<String, Supplier<Map<String, Object>>> entry : kmsProviderSupplierMap.entrySet()) {
+            if (!kmsProvidersDocument.get(entry.getKey()).asDocument().isEmpty()) {
+                continue;
+            }
+            Map<String, Object> kmsProviderCredential;
+            try {
+                kmsProviderCredential = entry.getValue().get();
+            } catch (Exception e) {
+                throw new MongoConfigurationException(format("Exception getting credential for kms provider %s from configured Supplier",
+                        entry.getKey()), e);
+            }
+            if (kmsProviderCredential == null || kmsProviderCredential.isEmpty()) {
+                throw new MongoConfigurationException(format("Exception getting credential for kms provider %s from configured Supplier."
+                                + " The returned value is %s.",
+                        entry.getKey(), kmsProviderCredential == null ? "null" : "empty"));
+            }
+            addToKmsProviderDocument(kmsProvidersDocument, entry.getKey(), kmsProviderCredential);
+        }
         if (kmsProvidersDocument.containsKey("aws") && kmsProvidersDocument.get("aws").asDocument().isEmpty()) {
             AwsCredential awsCredential = AwsCredentialHelper.obtainFromEnvironment();
             if (awsCredential != null) {
@@ -70,9 +93,14 @@ public final class MongoCryptHelper {
     private static BsonDocument getKmsProvidersAsBsonDocument(final Map<String, Map<String, Object>> kmsProviders) {
         BsonDocument bsonKmsProviders = new BsonDocument();
         for (Map.Entry<String, Map<String, Object>> entry : kmsProviders.entrySet()) {
-            bsonKmsProviders.put(entry.getKey(), new BsonDocumentWrapper<>(new Document(entry.getValue()), new DocumentCodec()));
+            addToKmsProviderDocument(bsonKmsProviders, entry.getKey(), entry.getValue());
         }
         return bsonKmsProviders;
+    }
+
+    private static void addToKmsProviderDocument(final BsonDocument kmsProvidersDocument, final String kmsProvider,
+            final Map<String, Object> kmsProviderCredential) {
+        kmsProvidersDocument.put(kmsProvider, new BsonDocumentWrapper<>(new Document(kmsProviderCredential), new DocumentCodec()));
     }
 
     @SuppressWarnings("unchecked")

@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
@@ -48,6 +49,7 @@ class Crypt implements Closeable {
 
     private final MongoCrypt mongoCrypt;
     private final Map<String, Map<String, Object>> kmsProviders;
+    private final Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap;
     private final CollectionInfoRetriever collectionInfoRetriever;
     private final CommandMarker commandMarker;
     private final KeyRetriever keyRetriever;
@@ -63,14 +65,15 @@ class Crypt implements Closeable {
      * @param keyRetriever the key retriever
      * @param keyManagementService the key management service
      */
-    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders, final KeyRetriever keyRetriever,
+    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders,
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap, final KeyRetriever keyRetriever,
             final KeyManagementService keyManagementService) {
-        this(mongoCrypt, kmsProviders, null, null, keyRetriever, keyManagementService, false, null);
+        this(mongoCrypt, kmsProviders, kmsProviderSupplierMap, null, null, keyRetriever, keyManagementService, false, null);
     }
 
     /**
      * Create an instance to use for auto-encryption and auto-decryption.
-     *  @param mongoCrypt the mongoCrypt wrapper
+     * @param mongoCrypt the mongoCrypt wrapper
      * @param kmsProviders the KMS provider credentials
      * @param collectionInfoRetriever the collection info retriever
      * @param commandMarker the command marker
@@ -78,12 +81,14 @@ class Crypt implements Closeable {
      * @param keyManagementService the key management service
      */
     Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders,
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap,
             @Nullable final CollectionInfoRetriever collectionInfoRetriever,
             @Nullable final CommandMarker commandMarker, final KeyRetriever keyRetriever,
             final KeyManagementService keyManagementService, final boolean bypassAutoEncryption,
             @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
         this.kmsProviders = kmsProviders;
+        this.kmsProviderSupplierMap = kmsProviderSupplierMap;
         this.collectionInfoRetriever = collectionInfoRetriever;
         this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
@@ -267,7 +272,7 @@ class Crypt implements Closeable {
     }
 
     private void fetchCredentials(final MongoCryptContext cryptContext) {
-        cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders));
+        cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders, kmsProviderSupplierMap));
     }
 
     private void collInfo(final MongoCryptContext cryptContext, final String databaseName) {
