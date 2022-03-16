@@ -221,48 +221,48 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
   private def failingObservables =
     Table(
       "observable",
-      TestObservable[Int](failOn = failOn),
-      AndThenObservable[Int, Int](TestObservable[Int](failOn = failOn), {
+      TestObservable(failOn = failOn),
+      AndThenObservable[Int, Int](TestObservable(failOn = failOn), {
         case Success(r)  => 1000
         case Failure(ex) => 0
       }),
-      FilterObservable[Int](TestObservable[Int](failOn = failOn), (i: Int) => i % 2 != 0),
-      FlatMapObservable[Int, Int](TestObservable[Int](), (i: Int) => TestObservable[Int](failOn = failOn)),
-      FoldLeftObservable(TestObservable[Int](1 to 100, failOn = failOn), 0, (v: Int, i: Int) => v + i),
-      MapObservable[Int, Int](TestObservable[Int](failOn = failOn), (i: Int) => i * 100),
-      RecoverObservable[Int, Int](TestObservable[Int](failOn = failOn), { case e: ArithmeticException => 999 }),
-      RecoverWithObservable[Int, Int](TestObservable[Int](failOn = failOn), {
-        case e: ArithmeticException => TestObservable[Int]()
+      FilterObservable[Int](TestObservable(failOn = failOn), (i: Int) => i % 2 != 0),
+      FlatMapObservable[Int, Int](TestObservable(), (i: Int) => TestObservable(failOn = failOn)),
+      FoldLeftObservable(TestObservable(1 to 100, failOn = failOn), 0, (v: Int, i: Int) => v + i),
+      MapObservable[Int, Int](TestObservable(failOn = failOn), (i: Int) => i * 100),
+      RecoverObservable[Int, Int](TestObservable(failOn = failOn), { case e: ArithmeticException => 999 }),
+      RecoverWithObservable[Int, Int](TestObservable(failOn = failOn), {
+        case e: ArithmeticException => TestObservable()
       }),
-      RecoverWithObservable[Int, Int](TestObservable[Int](failOn = failOn), {
-        case e => TestObservable[Int](failOn = failOn)
+      RecoverWithObservable[Int, Int](TestObservable(failOn = failOn), {
+        case e => TestObservable(failOn = failOn)
       }),
-      ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int](failOn = failOn)).map[Int](a => a._1),
-      ZipObservable[Int, Int](TestObservable[Int](failOn = failOn), TestObservable[Int]()).map[Int](a => a._1)
+      ZipObservable[Int, Int](TestObservable(), TestObservable(failOn = failOn)).map[Int](a => a._1),
+      ZipObservable[Int, Int](TestObservable(failOn = failOn), TestObservable()).map[Int](a => a._1)
     )
 
   private def failingFunctionsObservables =
     Table(
       "observable",
-      FilterObservable[Int](TestObservable[Int](), (i: Int) => {
+      FilterObservable[Int](TestObservable(), (i: Int) => {
         if (i > 10) {
           throw new RuntimeException("Error")
         }
         i % 2 == 0
       }),
-      FlatMapObservable[Int, Int](TestObservable[Int](), (i: Int) => {
+      FlatMapObservable[Int, Int](TestObservable(), (i: Int) => {
         if (i > 10) {
           throw new RuntimeException("Error")
         }
-        TestObservable[Int](1 to 2)
+        TestObservable(1 to 2)
       }),
-      FoldLeftObservable(TestObservable[Int](1 to 100), 0, (v: Int, i: Int) => {
+      FoldLeftObservable(TestObservable(1 to 100), 0, (v: Int, i: Int) => {
         if (i > 10) {
           throw new RuntimeException("Error")
         }
         v + i
       }),
-      MapObservable[Int, Int](TestObservable[Int](), (i: Int) => {
+      MapObservable[Int, Int](TestObservable(), (i: Int) => {
         if (i > 10) {
           throw new RuntimeException("Error")
         }
@@ -273,47 +273,47 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
   private def happyObservables =
     Table(
       ("observable", "observer"),
-      (TestObservable[Int](), TestObserver[Int]()),
-      (AndThenObservable[Int, Int](TestObservable[Int](), {
+      (TestObservable(), TestObserver[Int]()),
+      (AndThenObservable[Int, Int](TestObservable(), {
         case Success(r)  => 1000
         case Failure(ex) => 0
       }), TestObserver[Int]()),
-      (FilterObservable[Int](TestObservable[Int](), (i: Int) => i % 2 != 0), TestObserver[Int]()),
+      (FilterObservable[Int](TestObservable(), (i: Int) => i % 2 != 0), TestObserver[Int]()),
       (
-        FlatMapObservable[Int, Int](TestObservable[Int](), (i: Int) => TestObservable[Int](1 to 1)),
+        FlatMapObservable[Int, Int](TestObservable(), (i: Int) => TestObservable(1 to 1)),
         TestObserver[Int]()
       ),
       (
-        FlatMapObservable[Int, Int](TestObservable[Int](1 to 1), (i: Int) => TestObservable[Int]()),
+        FlatMapObservable[Int, Int](TestObservable(1 to 1), (i: Int) => TestObservable()),
         TestObserver[Int]()
       ),
-      (FoldLeftObservable(TestObservable[Int](1 to 100), 0, (v: Int, i: Int) => v + i), TestObserver[Int]()),
-      (MapObservable[Int, Int](TestObservable[Int](), (i: Int) => i * 100), TestObserver[Int]()),
-      (RecoverObservable[Int, Int](TestObservable[Int](), { case e: ArithmeticException => 999 }), TestObserver[Int]()),
+      (FoldLeftObservable(TestObservable(1 to 100), 0, (v: Int, i: Int) => v + i), TestObserver[Int]()),
+      (MapObservable[Int, Int](TestObservable(), (i: Int) => i * 100), TestObserver[Int]()),
+      (RecoverObservable[Int, Int](TestObservable(), { case e: ArithmeticException => 999 }), TestObserver[Int]()),
       (
-        RecoverWithObservable[Int, Int](TestObservable[Int](), { case t => TestObservable[Int]() }),
+        RecoverWithObservable[Int, Int](TestObservable(), { case t => TestObservable() }),
         TestObserver[Int]()
       ),
       (
-        RecoverWithObservable[Int, Int](TestObservable[Int](1 to 10, failOn = 1), { case t => TestObservable[Int]() }),
+        RecoverWithObservable[Int, Int](TestObservable(1 to 10, failOn = 1), { case t => TestObservable() }),
         TestObserver[Int]()
       ),
       (IterableObservable((1 to 100).toStream), TestObserver[Int]()),
-      (ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int]()).map[Int](a => a._1), TestObserver[Int]())
+      (ZipObservable[Int, Int](TestObservable(), TestObservable()).map[Int](a => a._1), TestObserver[Int]())
     )
 
   private def zippedObservables =
     Table[Observable[(Int, Int)]](
       "observable",
-      ZipObservable[Int, Int](TestObservable[Int](1 to 50), TestObservable[Int]()),
-      ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int](1 to 50))
+      ZipObservable[Int, Int](TestObservable(1 to 50), TestObservable()),
+      ZipObservable[Int, Int](TestObservable(), TestObservable(1 to 50))
     )
 
   private def zippedObservablesWithEmptyObservable =
     Table[Observable[(Int, Int)]](
       "observable",
-      ZipObservable[Int, Int](TestObservable[Int](1 to 50), TestObservable[Int](List())),
-      ZipObservable[Int, Int](TestObservable[Int](List()), TestObservable[Int](1 to 50))
+      ZipObservable[Int, Int](TestObservable(1 to 50), TestObservable(List())),
+      ZipObservable[Int, Int](TestObservable(List()), TestObservable(1 to 50))
     )
 
   private def overRequestingObservables =
@@ -321,23 +321,23 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
       ("observable", "observer", "expected"),
       (
         FlatMapObservable[Int, Int](
-          OverRequestedObservable(TestObservable[Int](1 to 10)),
-          (i: Int) => TestObservable[Int](1 to 10)
+          OverRequestedObservable(TestObservable(1 to 10)),
+          (i: Int) => TestObservable(1 to 10)
         ),
         TestObserver[Int](),
         100
       ),
       (
         RecoverWithObservable[Int, Int](
-          TestObservable[Int](1 to 10, failOn = 1),
-          { case t => OverRequestedObservable(TestObservable[Int](1 to 10)) }
+          TestObservable(1 to 10, failOn = 1),
+          { case t => OverRequestedObservable(TestObservable(1 to 10)) }
         ),
         TestObserver[Int](),
         10
       )
     )
 
-  case class OverRequestedObservable(observable: TestObservable[Int] = TestObservable[Int]()) extends Observable[Int] {
+  case class OverRequestedObservable(observable: TestObservable = TestObservable()) extends Observable[Int] {
 
     var totalRequested = 0L
     override def subscribe(observer: Observer[_ >: Int]): Unit = {

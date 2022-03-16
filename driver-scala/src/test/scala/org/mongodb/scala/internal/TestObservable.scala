@@ -21,28 +21,28 @@ import org.mongodb.scala.{ Observable, Observer, Subscription }
 
 object TestObservable {
 
-  def apply[A](from: Iterable[A]): TestObservable[A] = {
-    new TestObservable(Observable[A](from))
+  def apply(from: Iterable[Int]): TestObservable = {
+    new TestObservable(Observable(from))
   }
 
-  def apply[A](from: Iterable[A], failOn: Int): TestObservable[A] = {
-    new TestObservable(Observable[A](from), failOn)
+  def apply(from: Iterable[Int], failOn: Int): TestObservable = {
+    new TestObservable(Observable(from), failOn)
   }
 
-  def apply[A](from: Iterable[A], failOn: Int, errorMessage: String): TestObservable[A] = {
-    new TestObservable(Observable[A](from), failOn, errorMessage)
+  def apply(from: Iterable[Int], failOn: Int, errorMessage: String): TestObservable = {
+    new TestObservable(Observable(from), failOn, errorMessage)
   }
 }
 
-case class TestObservable[A](
-    delegate: Observable[A] = Observable[Int]((1 to 100).toStream),
+case class TestObservable(
+    delegate: Observable[Int] = Observable((1 to 100)),
     failOn: Int = Int.MaxValue,
     errorMessage: String = "Failed"
-) extends Observable[A] {
+) extends Observable[Int] {
 
-  override def subscribe(observer: Observer[_ >: A]): Unit = {
+  override def subscribe(observer: Observer[_ >: Int]): Unit = {
     delegate.subscribe(
-      new Observer[A] {
+      new Observer[Int] {
         var failed = false
         var subscription: Option[Subscription] = None
         override def onError(throwable: Throwable): Unit = observer.onError(throwable)
@@ -54,7 +54,7 @@ case class TestObservable[A](
 
         override def onComplete(): Unit = if (!failed) observer.onComplete()
 
-        override def onNext(tResult: A): Unit = {
+        override def onNext(tResult: Int): Unit = {
           if (!failed) {
             if (tResult == failOn) {
               failed = true
