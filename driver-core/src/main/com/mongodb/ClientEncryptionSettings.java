@@ -219,7 +219,7 @@ public final class ClientEncryptionSettings {
      * <ul>
      *  <li>use the {@link Supplier} configured in {@link #getKmsProviderSupplierMap()} to obtain a non-empty map</li>
      *  <li>attempt to obtain credentials from the environment</li>
-     * </ul>     *
+     * </ul>
      * @return map of KMS provider properties
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
