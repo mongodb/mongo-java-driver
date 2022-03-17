@@ -27,17 +27,17 @@ import java.util.List;
  */
 public interface DnsClient {
     /**
-     * Gets the attribute values for the given name and type.
+     * Gets the resource record values for the given name and type.
      *
      * <p>
      * Implementations should throw {@link DnsWithResponseCodeException} if the DNS response code is known.  Otherwise, the more generic
      * {@link DnsException} should be thrown.
      * </p>
      *
-     * @param name the name to look up
-     * @param type the attribute type, typically either {@code "SRV"} or {@code "TXT"}.
-     * @return the list of values for the requested attribute
+     * @param name the name of the resource to look up
+     * @param type the resource record type, typically either {@code "SRV"} or {@code "TXT"}.
+     * @return the list of values for the requested resource, or the empty list if none exist
      * @throws DnsException the exception
      */
-    List<String> getAttributeValues(String name, String type) throws DnsException;
+    List<String> getResourceRecordData(String name, String type) throws DnsException;
 }

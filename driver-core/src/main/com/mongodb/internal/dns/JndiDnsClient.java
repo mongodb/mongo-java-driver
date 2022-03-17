@@ -28,22 +28,19 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.InitialDirContext;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 
-public class JndiDnsClient implements DnsClient {
-    private final InitialDirContext dirContext;
-
-    public JndiDnsClient() {
-        dirContext = createDnsDirContext();
-    }
+final class JndiDnsClient implements DnsClient {
 
     @Override
-    public List<String> getAttributeValues(final String name, final String type) throws DnsException {
+    public List<String> getResourceRecordData(final String name, final String type) throws DnsException {
+        InitialDirContext dirContext = createDnsDirContext();
         try {
             Attribute attribute = dirContext.getAttributes(name, new String[]{type}).get(type);
             if (attribute == null) {
-                return null;
+                return Collections.emptyList();
             }
             List<String> attributeValues = new ArrayList<>();
             NamingEnumeration<?> namingEnumeration = attribute.getAll();
@@ -69,7 +66,7 @@ public class JndiDnsClient implements DnsClient {
       This is not guaranteed to work on all JVMs but in practice is expected to work on most.
     */
     private static InitialDirContext createDnsDirContext() {
-        Hashtable<String, String> envProps = new Hashtable<String, String>();
+        Hashtable<String, String> envProps = new Hashtable<>();
         envProps.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");
 
         try {

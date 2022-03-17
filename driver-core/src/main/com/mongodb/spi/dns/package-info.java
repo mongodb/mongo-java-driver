@@ -19,7 +19,7 @@
 
 /**
  * This package defines the Service Provider Interface (SPI) for a DNS provider.  By default the driver will use the
- * JNDI support from com.sun.jndi.dns.DnsContextFactory, but this can be replaced using the JDK's ServerLoader capabilities.
+ * JNDI support from com.sun.jndi.dns.DnsContextFactory, but this can be replaced using the JDK's ServiceLoader capabilities.
  *
  * @see java.util.ServiceLoader
  * @since 4.6

@@ -69,14 +69,11 @@ public final class DefaultDnsResolver implements DnsResolver {
     public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName) {
         String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
-        List<String> hosts = new ArrayList<String>();
+        List<String> hosts = new ArrayList<>();
         try {
-            List<String> srvAttributeValues = dnsClient.getAttributeValues("_" + srvServiceName + "._tcp." + srvHost, "SRV");
-            if (srvAttributeValues == null) {
-                throw new MongoConfigurationException("No SRV records available for host " + "_mongodb._tcp." + srvHost);
-            }
-            if (srvAttributeValues.isEmpty()) {
-                throw new MongoConfigurationException("Unable to find any SRV records for host " + srvHost);
+            List<String> srvAttributeValues = dnsClient.getResourceRecordData("_" + srvServiceName + "._tcp." + srvHost, "SRV");
+            if (srvAttributeValues == null || srvAttributeValues.isEmpty()) {
+                throw new MongoConfigurationException("No SRV records available for " + "_mongodb._tcp." + srvHost);
             }
 
             for (String srvRecord : srvAttributeValues) {
@@ -114,7 +111,7 @@ public final class DefaultDnsResolver implements DnsResolver {
     @Override
     public String resolveAdditionalQueryParametersFromTxtRecords(final String host) {
         try {
-            List<String> attributeValues = dnsClient.getAttributeValues(host, "TXT");
+            List<String> attributeValues = dnsClient.getResourceRecordData(host, "TXT");
             if (attributeValues == null || attributeValues.isEmpty()) {
                 return "";
             }

@@ -20,7 +20,7 @@ package com.mongodb.spi.dns;
  * An exception indicating a DNS error;
  *
  * @since 4.6
- * @see DnsClient#getAttributeValues(String, String)
+ * @see DnsClient#getResourceRecordData(String, String)
  */
 public class DnsException extends Exception {
     private static final long serialVersionUID = 1;
