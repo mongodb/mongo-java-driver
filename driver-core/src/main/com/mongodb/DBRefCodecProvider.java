@@ -54,4 +54,9 @@ public class DBRefCodecProvider implements CodecProvider {
     public int hashCode() {
         return 0;
     }
+
+    @Override
+    public String toString() {
+        return "DBRefCodecProvider{}";
+    }
 }

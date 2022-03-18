@@ -35,4 +35,9 @@ public final class JsonObjectCodecProvider implements CodecProvider {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "JsonObjectCodecProvider{}";
+    }
 }

@@ -170,4 +170,9 @@ public class BsonValueCodecProvider implements CodecProvider {
 
         DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap(map);
     }
+
+    @Override
+    public String toString() {
+        return "BsonValueCodecProvider{}";
+    }
 }
