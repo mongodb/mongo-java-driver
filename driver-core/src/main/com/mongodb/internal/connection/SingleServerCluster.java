@@ -51,10 +51,6 @@ public final class SingleServerCluster extends BaseCluster {
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.SINGLE);
 
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
-        }
-
         server = new AtomicReference<>();
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.

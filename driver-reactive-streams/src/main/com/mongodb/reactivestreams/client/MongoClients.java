@@ -134,7 +134,8 @@ public final class MongoClients {
     private static MongoClient createMongoClient(final MongoClientSettings settings,
             @Nullable final MongoDriverInformation mongoDriverInformation, final StreamFactory streamFactory,
             final StreamFactory heartbeatStreamFactory, @Nullable final Closeable externalResourceCloser) {
-        return new MongoClientImpl(settings, createCluster(settings, wrapMongoDriverInformation(mongoDriverInformation),
+        MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
+        return new MongoClientImpl(settings, wrappedMongoDriverInformation, createCluster(settings, wrappedMongoDriverInformation,
                 streamFactory, heartbeatStreamFactory), externalResourceCloser);
     }
 

@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
@@ -216,6 +217,7 @@ public class MongoClientImplTest extends TestHelper {
     }
 
     private MongoClientImpl createMongoClient() {
-        return new MongoClientImpl(MongoClientSettings.builder().build(), mock(Cluster.class), OPERATION_EXECUTOR);
+        return new MongoClientImpl(MongoClientSettings.builder().build(),
+                MongoDriverInformation.builder().driverName("reactive-streams").build(), mock(Cluster.class), OPERATION_EXECUTOR);
     }
 }

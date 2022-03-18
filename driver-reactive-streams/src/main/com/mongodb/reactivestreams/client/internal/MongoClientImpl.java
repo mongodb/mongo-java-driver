@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -47,6 +48,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
+import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 
@@ -68,17 +71,18 @@ public final class MongoClientImpl implements MongoClient {
     private final Crypt crypt;
     private final AtomicBoolean closed;
 
-    public MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final Closeable externalResourceCloser) {
-        this(settings, cluster, null, externalResourceCloser);
+    public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
+            @Nullable final Closeable externalResourceCloser) {
+        this(settings, mongoDriverInformation, cluster, null, externalResourceCloser);
     }
 
-    public MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final OperationExecutor executor) {
-        this(settings, cluster, executor, null);
+    public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
+            @Nullable final OperationExecutor executor) {
+        this(settings, mongoDriverInformation, cluster, executor, null);
     }
 
-    private MongoClientImpl(final MongoClientSettings settings, final Cluster cluster,
-                            @Nullable final OperationExecutor executor,
-                            @Nullable final Closeable externalResourceCloser) {
+    private MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
+                            @Nullable final OperationExecutor executor, @Nullable final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
         this.serverSessionPool = new ServerSessionPool(cluster, settings.getServerApi());
@@ -99,6 +103,8 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
                                                                      settings.getUuidRepresentation(), this.executor);
         this.closed = new AtomicBoolean();
+        LOGGER.info(format("MongoClient with metadata %s created with settings %s",
+                createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation).toJson(), settings));
     }
 
     Cluster getCluster() {

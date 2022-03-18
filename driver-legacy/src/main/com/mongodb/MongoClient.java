@@ -26,6 +26,8 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -51,7 +53,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -109,6 +113,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @since 2.10.0
  */
 public class MongoClient implements Closeable {
+    private static final Logger LOGGER = Loggers.getLogger("client");
 
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<>();
 
@@ -228,10 +233,13 @@ public class MongoClient implements Closeable {
     private MongoClient(final MongoClientSettings settings,
                        @Nullable final MongoClientOptions options,
                        @Nullable final MongoDriverInformation mongoDriverInformation) {
-        delegate = new MongoClientImpl(settings, wrapMongoDriverInformation(mongoDriverInformation));
+        MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
+        delegate = new MongoClientImpl(settings, wrappedMongoDriverInformation);
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();
+        LOGGER.info(format("MongoClient with metadata %s created with settings %s",
+                createClientMetadataDocument(settings.getApplicationName(), wrappedMongoDriverInformation).toJson(), settings));
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
