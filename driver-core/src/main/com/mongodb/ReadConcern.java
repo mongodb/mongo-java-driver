@@ -134,6 +134,14 @@ public final class ReadConcern {
         return level != null ? level.hashCode() : 0;
     }
 
+
+    @Override
+    public String toString() {
+        return "ReadConcern{"
+                + "level=" + level
+                + '}';
+    }
+
     private ReadConcern() {
         this.level = null;
     }
