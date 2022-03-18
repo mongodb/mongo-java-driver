@@ -95,4 +95,12 @@ public class OverridableUuidRepresentationCodecRegistry implements CycleDetectin
         result = 31 * result + uuidRepresentation.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "OverridableUuidRepresentationCodecRegistry{"
+                + "wrapped=" + wrapped
+                + ", uuidRepresentation=" + uuidRepresentation
+                + '}';
+    }
 }

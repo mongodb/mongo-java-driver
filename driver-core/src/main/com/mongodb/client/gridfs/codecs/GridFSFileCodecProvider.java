@@ -37,4 +37,9 @@ public final class GridFSFileCodecProvider implements CodecProvider {
             return null;
         }
     }
+
+    @Override
+    public String toString() {
+        return "GridFSFileCodecProvider{}";
+    }
 }
