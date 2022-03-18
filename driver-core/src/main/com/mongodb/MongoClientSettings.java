@@ -893,8 +893,6 @@ public final class MongoClientSettings {
                 + ", uuidRepresentation=" + uuidRepresentation
                 + ", serverApi=" + serverApi
                 + ", autoEncryptionSettings=" + autoEncryptionSettings
-                + ", heartbeatSocketTimeoutSetExplicitly=" + heartbeatSocketTimeoutSetExplicitly
-                + ", heartbeatConnectTimeoutSetExplicitly=" + heartbeatConnectTimeoutSetExplicitly
                 + ", contextProvider=" + contextProvider
                 + '}';
     }
