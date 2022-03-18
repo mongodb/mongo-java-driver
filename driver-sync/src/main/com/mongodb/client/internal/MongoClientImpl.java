@@ -36,6 +36,8 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
@@ -52,10 +54,13 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
+import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
+import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 public final class MongoClientImpl implements MongoClient {
+    private static final Logger LOGGER = Loggers.getLogger("client");
 
     private final MongoClientSettings settings;
     private final MongoDriverInformation mongoDriverInformation;
@@ -79,6 +84,8 @@ public final class MongoClientImpl implements MongoClient {
                 withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
                 (SynchronousContextProvider) settings.getContextProvider());
+        LOGGER.info(format("MongoClient with metadata %s created with settings %s",
+                createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation).toJson(), settings));
     }
 
     @Override
