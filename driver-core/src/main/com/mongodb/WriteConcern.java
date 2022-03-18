@@ -332,7 +332,7 @@ public class WriteConcern implements Serializable {
 
     @Override
     public String toString() {
-        return "WriteConcern{w=" + w + ", wTimeout=" + wTimeoutMS + " ms, journal=" + journal;
+        return "WriteConcern{w=" + w + ", wTimeout=" + wTimeoutMS + " ms, journal=" + journal + "}";
 
     }
 
