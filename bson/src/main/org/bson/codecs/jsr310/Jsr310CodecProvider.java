@@ -56,4 +56,9 @@ public class Jsr310CodecProvider implements CodecProvider {
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         return (Codec<T>) JSR310_CODEC_MAP.get(clazz);
     }
+
+    @Override
+    public String toString() {
+        return "Jsr310CodecProvider{}";
+    }
 }

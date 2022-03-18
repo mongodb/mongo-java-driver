@@ -33,4 +33,9 @@ public final class EnumCodecProvider implements CodecProvider {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "EnumCodecProvider{}";
+    }
 }

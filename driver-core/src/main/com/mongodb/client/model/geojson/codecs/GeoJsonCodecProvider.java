@@ -60,4 +60,9 @@ public class GeoJsonCodecProvider implements CodecProvider {
 
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "GeoJsonCodecProvider{}";
+    }
 }

@@ -89,4 +89,11 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
     public int hashCode() {
         return codecProviders.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "ProvidersCodecRegistry{"
+                + "codecProviders=" + codecProviders
+                + '}';
+    }
 }

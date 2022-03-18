@@ -108,4 +108,9 @@ public class IterableCodecProvider implements CodecProvider {
         result = 31 * result + (valueTransformer != null ? valueTransformer.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "IterableCodecProvider{}";
+    }
 }

@@ -37,4 +37,10 @@ final class MapOfCodecsProvider implements CodecProvider {
         return (Codec<T>) codecsMap.get(clazz);
     }
 
+    @Override
+    public String toString() {
+        return "MapOfCodecsProvider{"
+                + "codecsMap=" + codecsMap
+                + '}';
+    }
 }
