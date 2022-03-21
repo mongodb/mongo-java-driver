@@ -359,4 +359,9 @@ public final class AutoEncryptionSettings {
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
     }
+
+    @Override
+    public String toString() {
+        return "AutoEncryptionSettings{<hidden>}";
+    }
 }
