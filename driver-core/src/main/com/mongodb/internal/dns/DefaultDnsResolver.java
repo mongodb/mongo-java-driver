@@ -19,7 +19,6 @@ package com.mongodb.internal.dns;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.DnsClientProvider;
-import com.mongodb.spi.dns.DnsException;
 import com.mongodb.spi.dns.DnsWithResponseCodeException;
 
 import java.util.ArrayList;
@@ -89,8 +88,8 @@ public final class DefaultDnsResolver implements DnsResolver {
                 hosts.add(resolvedHost + ":" + split[2]);
             }
 
-        } catch (DnsException e) {
-            throw new MongoConfigurationException(format("Failed to look up SRV record for '%s'.", resourceName), e);
+        } catch (Exception e) {
+            throw new MongoConfigurationException(format("Failed looking up SRV record for '%s'.", resourceName), e);
         }
         return hosts;
     }
@@ -127,11 +126,11 @@ public final class DefaultDnsResolver implements DnsResolver {
         } catch (DnsWithResponseCodeException e) {
             // ignore NXDomain error (error code 3, "Non-Existent Domain)
             if (e.getResponseCode() != 3) {
-                throw new MongoConfigurationException("Unable to look up TXT record for host " + host, e);
+                throw new MongoConfigurationException("Failed looking up TXT record for host " + host, e);
             }
             return "";
-        } catch (DnsException e) {
-            throw new MongoConfigurationException("Unable to look up TXT record for host " + host, e);
+        } catch (Exception e) {
+            throw new MongoConfigurationException("Failed looking up TXT record for host " + host, e);
         }
     }
 }

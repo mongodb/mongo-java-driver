@@ -22,7 +22,7 @@ package com.mongodb.spi.dns;
  * @since 4.6
  * @see DnsClient#getResourceRecordData(String, String)
  */
-public class DnsException extends Exception {
+public class DnsException extends RuntimeException {
     private static final long serialVersionUID = 1;
 
     /**
