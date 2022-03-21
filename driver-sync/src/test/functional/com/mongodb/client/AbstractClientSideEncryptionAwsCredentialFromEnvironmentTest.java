@@ -101,7 +101,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             put("aws", new HashMap<>());
         }};
 
-        Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap = new HashMap<String, Supplier<Map<String, Object>>>() {{
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
             put("aws", () -> new HashMap<String, Object>() {{
                 put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
                 put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
@@ -111,7 +111,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
         try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultNamespace("test.datakeys")
                 .kmsProviders(kmsProviders)
-                .kmsProviderSupplierMap(kmsProviderSupplierMap)
+                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
                 .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
                 .build())) {
 
@@ -125,7 +125,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             schemaMap.put("test.coll", getSchema(base64DataKeyId));
             AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
                     .kmsProviders(kmsProviders)
-                    .kmsProviderSupplierMap(kmsProviderSupplierMap)
+                    .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
                     .keyVaultNamespace("test.datakeys")
                     .schemaMap(schemaMap)
                     .build();
@@ -149,7 +149,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             put("aws", new HashMap<>());
         }};
 
-        Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap = new HashMap<String, Supplier<Map<String, Object>>>() {{
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
             put("aws", () -> {
                 throw new RuntimeException("Exception from supplier");
             });
@@ -158,7 +158,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
         try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultNamespace("test.datakeys")
                 .kmsProviders(kmsProviders)
-                .kmsProviderSupplierMap(kmsProviderSupplierMap)
+                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
                 .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
                 .build())) {
             MongoConfigurationException e = assertThrows(MongoConfigurationException.class, () ->
@@ -179,14 +179,14 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             put("aws", new HashMap<>());
         }};
 
-        Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap = new HashMap<String, Supplier<Map<String, Object>>>() {{
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
             put("aws", () -> null);
         }};
 
         try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultNamespace("test.datakeys")
                 .kmsProviders(kmsProviders)
-                .kmsProviderSupplierMap(kmsProviderSupplierMap)
+                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
                 .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
                 .build())) {
             MongoConfigurationException e = assertThrows(MongoConfigurationException.class, () ->
@@ -208,14 +208,14 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             put("aws", new HashMap<>());
         }};
 
-        Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap = new HashMap<String, Supplier<Map<String, Object>>>() {{
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
             put("aws", Collections::emptyMap);
         }};
 
         try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultNamespace("test.datakeys")
                 .kmsProviders(kmsProviders)
-                .kmsProviderSupplierMap(kmsProviderSupplierMap)
+                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
                 .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
                 .build())) {
             MongoConfigurationException e = assertThrows(MongoConfigurationException.class, () ->
@@ -240,14 +240,14 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             }});
         }};
 
-        Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap = new HashMap<String, Supplier<Map<String, Object>>>() {{
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
             put("aws", () -> null);  // if Supplier was actually used, an exception would be thrown because it's returning null
         }};
 
         try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultNamespace("test.datakeys")
                 .kmsProviders(kmsProviders)
-                .kmsProviderSupplierMap(kmsProviderSupplierMap)
+                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
                 .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
                 .build())) {
             assertDoesNotThrow(() ->

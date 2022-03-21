@@ -55,9 +55,9 @@ public final class MongoCryptHelper {
     }
 
     public static BsonDocument fetchCredentials(final Map<String, Map<String, Object>> kmsProviders,
-            final Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap) {
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
         BsonDocument kmsProvidersDocument = MongoCryptHelper.getKmsProvidersAsBsonDocument(kmsProviders);
-        for (Map.Entry<String, Supplier<Map<String, Object>>> entry : kmsProviderSupplierMap.entrySet()) {
+        for (Map.Entry<String, Supplier<Map<String, Object>>> entry : kmsProviderPropertySuppliers.entrySet()) {
             String kmsProviderName = entry.getKey();
             if (!kmsProvidersDocument.get(kmsProviderName).asDocument().isEmpty()) {
                 continue;

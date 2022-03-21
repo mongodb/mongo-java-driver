@@ -63,7 +63,7 @@ public final class AutoEncryptionSettings {
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
-    private final Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap;
+    private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, BsonDocument> schemaMap;
     private final Map<String, Object> extraOptions;
     private final boolean bypassAutoEncryption;
@@ -78,7 +78,7 @@ public final class AutoEncryptionSettings {
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
-        private Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap = new HashMap<>();
+        private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, BsonDocument> schemaMap = Collections.emptyMap();
         private Map<String, Object> extraOptions = Collections.emptyMap();
         private boolean bypassAutoEncryption;
@@ -122,13 +122,13 @@ public final class AutoEncryptionSettings {
         /**
          * Set the KMS provider to Supplier map
          *
-         * @param kmsProviderSupplierMap the KMS provider to Supplier map, which may not be null
+         * @param kmsProviderPropertySuppliers the KMS provider to Supplier map, which may not be null
          * @return this
-         * @see #getKmsProviderSupplierMap() ()
+         * @see #getKmsProviderPropertySuppliers()
          * @since 4.6
          */
-        public Builder kmsProviderSupplierMap(final Map<String, Supplier<Map<String, Object>>> kmsProviderSupplierMap) {
-            this.kmsProviderSupplierMap = notNull("kmsProviderSupplierMap", kmsProviderSupplierMap);
+        public Builder kmsProviderPropertySuppliers(final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
+            this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", kmsProviderPropertySuppliers);
             return this;
         }
 
@@ -285,12 +285,12 @@ public final class AutoEncryptionSettings {
      * It is also permitted for the value of a kms provider to be an empty map, in which case the driver will first
      * </p>
      * <ul>
-     *  <li>use the {@link Supplier} configured in {@link #getKmsProviderSupplierMap()} to obtain a non-empty map</li>
+     *  <li>use the {@link Supplier} configured in {@link #getKmsProviderPropertySuppliers()} to obtain a non-empty map</li>
      *  <li>attempt to obtain credentials from the environment</li>
      * </ul>
      *
      * @return map of KMS provider properties
-     * @see #getKmsProviderSupplierMap()
+     * @see #getKmsProviderPropertySuppliers()
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
         return unmodifiableMap(kmsProviders);
@@ -301,15 +301,15 @@ public final class AutoEncryptionSettings {
      *
      * <p>
      * If the {@link #getKmsProviders()} map contains an empty map as its value, the driver will use a {@link Supplier} configured for
-     * the same provider in this map to obtain a non-empty map that contains the credential for the provider.
+     * the same provider in this map to obtain a non-empty map that contains the properties for the provider.
      * </p>
      *
      * @return the KMS provider to Supplier map
      * @see #getKmsProviders()
      * @since 4.6
      */
-    public Map<String, Supplier<Map<String, Object>>> getKmsProviderSupplierMap() {
-        return unmodifiableMap(kmsProviderSupplierMap);
+    public Map<String, Supplier<Map<String, Object>>> getKmsProviderPropertySuppliers() {
+        return unmodifiableMap(kmsProviderPropertySuppliers);
     }
 
     /**
@@ -396,7 +396,7 @@ public final class AutoEncryptionSettings {
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
-        this.kmsProviderSupplierMap = notNull("kmsProviderSupplierMap", builder.kmsProviderSupplierMap);
+        this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
         this.bypassAutoEncryption = builder.bypassAutoEncryption;

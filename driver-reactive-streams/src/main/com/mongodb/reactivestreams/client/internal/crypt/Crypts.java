@@ -53,7 +53,7 @@ public final class Crypts {
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(options.getKmsProviders(),
                 options.getSchemaMap())),
                 options.getKmsProviders(),
-                options.getKmsProviderSupplierMap(),
+                options.getKmsProviderPropertySuppliers(),
                 options.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(collectionInfoRetrieverClient),
                 new CommandMarker(options.isBypassAutoEncryption(), options.getExtraOptions()),
                 new KeyRetriever(keyVaultClient, new MongoNamespace(options.getKeyVaultNamespace())),
@@ -66,7 +66,7 @@ public final class Crypts {
         return new Crypt(MongoCrypts.create(
                 createMongoCryptOptions(options.getKmsProviders(), null)),
                          options.getKmsProviders(),
-                         options.getKmsProviderSupplierMap(),
+                         options.getKmsProviderPropertySuppliers(),
                          new KeyRetriever(keyVaultClient, new MongoNamespace(options.getKeyVaultNamespace())),
                          createKeyManagementService(options.getKmsProviderSslContextMap()));
     }
