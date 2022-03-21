@@ -70,10 +70,11 @@ public final class DefaultDnsResolver implements DnsResolver {
         String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
         List<String> hosts = new ArrayList<>();
+        String resourceName = "_" + srvServiceName + "._tcp." + srvHost;
         try {
-            List<String> srvAttributeValues = dnsClient.getResourceRecordData("_" + srvServiceName + "._tcp." + srvHost, "SRV");
+            List<String> srvAttributeValues = dnsClient.getResourceRecordData(resourceName, "SRV");
             if (srvAttributeValues == null || srvAttributeValues.isEmpty()) {
-                throw new MongoConfigurationException("No SRV records available for " + "_mongodb._tcp." + srvHost);
+                throw new MongoConfigurationException(format("No SRV records available for '%s'.", resourceName));
             }
 
             for (String srvRecord : srvAttributeValues) {
@@ -82,14 +83,14 @@ public final class DefaultDnsResolver implements DnsResolver {
                 String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
                 if (!sameParentDomain(srvHostDomainParts, resolvedHostDomain)) {
                     throw new MongoConfigurationException(
-                            format("The SRV host name '%s'resolved to a host '%s 'that is not in a sub-domain of the SRV host.",
+                            format("The SRV host name '%s' resolved to a host '%s 'that is not in a sub-domain of the SRV host.",
                                     srvHost, resolvedHost));
                 }
                 hosts.add(resolvedHost + ":" + split[2]);
             }
 
         } catch (DnsException e) {
-            throw new MongoConfigurationException("Unable to look up SRV record for host " + srvHost, e);
+            throw new MongoConfigurationException(format("Failed to look up SRV record for '%s'.", resourceName), e);
         }
         return hosts;
     }
