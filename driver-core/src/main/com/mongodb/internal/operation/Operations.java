@@ -133,7 +133,8 @@ public final class Operations<TDocument> {
                 .skip(options.getSkip())
                 .limit(options.getLimit())
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .collation(options.getCollation());
+                .collation(options.getCollation())
+                .comment(options.getComment());
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
         } else if (options.getHintString() != null) {
@@ -198,19 +199,20 @@ public final class Operations<TDocument> {
 
     public <TResult> DistinctOperation<TResult> distinct(final String fieldName, final Bson filter,
                                                          final Class<TResult> resultClass, final long maxTimeMS,
-                                                         final Collation collation) {
+                                                         final Collation collation, final BsonValue comment) {
         return new DistinctOperation<>(namespace, fieldName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS)
-                .collation(collation);
+                .collation(collation)
+                .comment(comment);
 
     }
 
     public <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                     final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
                                                     final Collation collation, final Bson hint, final String hintString,
-                                                    final String comment,
+                                                    final BsonValue comment,
                                                     final Bson variables, final Boolean allowDiskUse,
                                                     final AggregationLevel aggregationLevel) {
         return new AggregateOperation<>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass), aggregationLevel)
@@ -227,7 +229,7 @@ public final class Operations<TDocument> {
 
     public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-            final Collation collation, final Bson hint, final String hintString, final String comment,
+            final Collation collation, final Bson hint, final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
         return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), readConcern, writeConcern, aggregationLevel)
                 .maxTime(maxTimeMS, MILLISECONDS)
@@ -303,7 +305,8 @@ public final class Operations<TDocument> {
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                 .collation(options.getCollation())
                 .hint(options.getHint())
-                .hintString(options.getHintString());
+                .hintString(options.getHintString())
+                .comment(options.getComment());
     }
 
     public FindAndReplaceOperation<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement,
@@ -319,7 +322,8 @@ public final class Operations<TDocument> {
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .collation(options.getCollation())
                 .hint(options.getHint())
-                .hintString(options.getHintString());
+                .hintString(options.getHintString())
+                .comment(options.getComment());
     }
 
     public FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
@@ -335,7 +339,8 @@ public final class Operations<TDocument> {
                 .collation(options.getCollation())
                 .arrayFilters(toBsonDocumentList(options.getArrayFilters()))
                 .hint(options.getHint())
-                .hintString(options.getHintString());
+                .hintString(options.getHintString())
+                .comment(options.getComment());
     }
 
     public FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
@@ -352,47 +357,48 @@ public final class Operations<TDocument> {
                 .collation(options.getCollation())
                 .arrayFilters(toBsonDocumentList(options.getArrayFilters()))
                 .hint(options.getHint())
-                .hintString(options.getHintString());
+                .hintString(options.getHintString())
+                .comment(options.getComment());
     }
 
 
     public MixedBulkWriteOperation insertOne(final TDocument document, final InsertOneOptions options) {
         return bulkWrite(singletonList(new InsertOneModel<>(document)),
-                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()));
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
 
     public MixedBulkWriteOperation replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
         return bulkWrite(singletonList(new ReplaceOneModel<>(filter, replacement, options)),
-                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()));
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
     public MixedBulkWriteOperation deleteOne(final Bson filter, final DeleteOptions options) {
-        return bulkWrite(singletonList(new DeleteOneModel<>(filter, options)), new BulkWriteOptions());
+        return bulkWrite(singletonList(new DeleteOneModel<>(filter, options)), new BulkWriteOptions().comment(options.getComment()));
     }
 
     public MixedBulkWriteOperation deleteMany(final Bson filter, final DeleteOptions options) {
-        return bulkWrite(singletonList(new DeleteManyModel<>(filter, options)), new BulkWriteOptions());
+        return bulkWrite(singletonList(new DeleteManyModel<>(filter, options)), new BulkWriteOptions().comment(options.getComment()));
     }
 
-    public MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, updateOptions)),
-                new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
+    public MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
+        return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
-    public MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, updateOptions)),
-                new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
+    public MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
+        return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
-    public MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, updateOptions)),
-                new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
+    public MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
+        return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
-    public MixedBulkWriteOperation updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, updateOptions)),
-                new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
+    public MixedBulkWriteOperation updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
+        return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
     public MixedBulkWriteOperation insertMany(final List<? extends TDocument> documents,
@@ -410,7 +416,7 @@ public final class Operations<TDocument> {
         }
 
         return new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern, retryWrites)
-                .bypassDocumentValidation(options.getBypassDocumentValidation());
+                .bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment());
     }
 
     @SuppressWarnings("unchecked")
@@ -478,7 +484,8 @@ public final class Operations<TDocument> {
         }
 
         return new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern, retryWrites)
-                .bypassDocumentValidation(options.getBypassDocumentValidation());
+                .bypassDocumentValidation(options.getBypassDocumentValidation())
+                .comment(options.getComment());
     }
 
 
@@ -542,31 +549,34 @@ public final class Operations<TDocument> {
 
     public <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                 final Bson filter, final boolean collectionNamesOnly,
-                                                                final Integer batchSize, final long maxTimeMS) {
+                                                                final Integer batchSize, final long maxTimeMS, final BsonValue comment) {
         return new ListCollectionsOperation<>(databaseName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(collectionNamesOnly)
                 .batchSize(batchSize == null ? 0 : batchSize)
-                .maxTime(maxTimeMS, MILLISECONDS);
+                .maxTime(maxTimeMS, MILLISECONDS)
+                .comment(comment);
     }
 
     public <TResult> ListDatabasesOperation<TResult> listDatabases(final Class<TResult> resultClass, final Bson filter,
                                                             final Boolean nameOnly, final long maxTimeMS,
-                                                            final Boolean authorizedDatabasesOnly) {
+                                                            final Boolean authorizedDatabasesOnly, final BsonValue comment) {
         return new ListDatabasesOperation<>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(nameOnly)
-                .authorizedDatabasesOnly(authorizedDatabasesOnly);
+                .authorizedDatabasesOnly(authorizedDatabasesOnly)
+                .comment(comment);
     }
 
     public <TResult> ListIndexesOperation<TResult> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
-                                                               final long maxTimeMS) {
+                                                               final long maxTimeMS, final BsonValue comment) {
         return new ListIndexesOperation<>(namespace, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .batchSize(batchSize == null ? 0 : batchSize)
-                .maxTime(maxTimeMS, MILLISECONDS);
+                .maxTime(maxTimeMS, MILLISECONDS)
+                .comment(comment);
     }
 
     private Codec<TDocument> getCodec() {

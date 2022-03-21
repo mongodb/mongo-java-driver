@@ -29,10 +29,12 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
 import java.util.concurrent.TimeUnit;
@@ -42,6 +44,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 
 
@@ -59,6 +62,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     private BsonDocument filter;
     private Boolean nameOnly;
     private Boolean authorizedDatabasesOnly;
+    private BsonValue comment;
 
     /**
      * Construct a new instance.
@@ -191,6 +195,29 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public ListDatabasesOperation<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
      * Executing this will return a list of all the databases names in the MongoDB instance.
      *
      * @param binding the binding.
@@ -213,7 +240,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
             public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return new QueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, source);
+                return new QueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, comment, source);
             }
         };
     }
@@ -223,8 +250,8 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                              final AsyncConnection connection) {
-                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, 0, decoder, source,
-                                                    connection, result);
+                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, 0, decoder,
+                        comment, source, connection, result);
             }
         };
     }
@@ -258,6 +285,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         if (authorizedDatabasesOnly != null) {
             command.put("authorizedDatabases", new BsonBoolean(authorizedDatabasesOnly));
         }
+        putIfNotNull(command, "comment", comment);
         return command;
     }
 }

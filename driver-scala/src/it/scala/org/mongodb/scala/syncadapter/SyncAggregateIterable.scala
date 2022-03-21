@@ -16,15 +16,14 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.ExplainVerbosity
-
-import java.util.concurrent.TimeUnit
 import com.mongodb.client.AggregateIterable
 import com.mongodb.client.model.Collation
-import org.bson.Document
 import org.bson.conversions.Bson
+import org.bson.{ BsonValue, Document }
 import org.mongodb.scala.AggregateObservable
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
@@ -67,6 +66,12 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
     wrapped.comment(comment)
     this
   }
+
+  override def comment(comment: BsonValue): AggregateIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
   override def let(variables: Bson): AggregateIterable[T] = {
     wrapped.let(variables)
     this
@@ -97,4 +102,5 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
       .explain[E](verbosity)(DefaultsTo.overrideDefault[E, org.mongodb.scala.Document], ClassTag(explainResultClass))
       .toFuture()
       .get()
+
 }

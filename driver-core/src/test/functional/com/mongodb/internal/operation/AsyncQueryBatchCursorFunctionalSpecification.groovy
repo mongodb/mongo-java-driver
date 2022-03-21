@@ -105,7 +105,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust single batch'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 10
@@ -113,7 +113,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted on first batch'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         nextBatch()
@@ -125,7 +125,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted on getMore'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 1, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 1, 0, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         nextBatch()
@@ -137,7 +137,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted after first batch'() {
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(10, 10), 10, 10, 0, new DocumentCodec(), connectionSource,
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(10, 10), 10, 10, 0, new DocumentCodec(), null, connectionSource,
                 connection)
 
         then:
@@ -147,7 +147,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust single batch with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 0, 0, new DocumentCodec(), null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 1
@@ -156,8 +156,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust multiple batches with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(limit, batchSize), limit, batchSize, 0, new DocumentCodec(),
-                                                     connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(limit, batchSize), limit, batchSize, 0, new DocumentCodec(), null,
+                connectionSource, connection)
 
         when:
         def next = nextBatch()
@@ -187,7 +187,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust multiple batches'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 3
@@ -200,7 +200,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should respect batch size'() {
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
 
         then:
         cursor.batchSize == 2
@@ -215,7 +215,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should close when exhausted'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         cursor.close()
@@ -233,7 +233,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should close when not exhausted'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         cursor.close()
@@ -250,7 +250,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false);
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
         def latch = new CountDownLatch(1)
         Thread.start {
             sleep(500)
@@ -279,7 +279,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), null, connectionSource, connection)
         def batch = nextBatch()
 
         then:
@@ -321,7 +321,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def firstBatch = executeQuery(new BsonDocument('_id', BsonNull.VALUE), 0, 1, true, true);
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 1, 500, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 1, 500, new DocumentCodec(), null, connectionSource, connection)
         Thread.start {
             Thread.sleep(SECONDS.toMillis(2))
             cursor.close()
@@ -338,7 +338,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should respect limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(6, 3), 6, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(6, 3), 6, 2, 0, new DocumentCodec(), null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 3
@@ -352,7 +352,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         given:
         def firstBatch = executeQuery(5)
 
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         while (connection.getCount() > 1) {
@@ -371,7 +371,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
 
         def connection = new SyncConnection(getConnection(connectionSource))
         def serverCursor = cursor.cursor.get()

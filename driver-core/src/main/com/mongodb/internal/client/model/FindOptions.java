@@ -19,6 +19,8 @@ package com.mongodb.internal.client.model;
 import com.mongodb.CursorType;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -45,7 +47,7 @@ public final class FindOptions {
     private boolean oplogReplay;
     private boolean partial;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private Bson hint;
     private String hintString;
     private Bson max;
@@ -64,7 +66,7 @@ public final class FindOptions {
     FindOptions(
             final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
             final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial,
-            final Collation collation, final String comment, final Bson hint, final String hintString, final Bson max, final Bson min,
+            final Collation collation, final BsonValue comment, final Bson hint, final String hintString, final Bson max, final Bson min,
             final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse) {
         this.batchSize = batchSize;
         this.limit = limit;
@@ -389,8 +391,20 @@ public final class FindOptions {
      * @since 3.5
      */
     @Nullable
-    public String getComment() {
+    public BsonValue getComment() {
         return comment;
+    }
+
+    /**
+     * Sets the comment to the query. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     */
+    public FindOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
     }
 
     /**
@@ -401,7 +415,7 @@ public final class FindOptions {
      * @since 3.5
      */
     public FindOptions comment(@Nullable final String comment) {
-        this.comment = comment;
+        this.comment = comment != null ? new BsonString(comment) : null;
         return this;
     }
 

@@ -29,6 +29,7 @@ import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -46,7 +47,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private long maxAwaitTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private Bson hint;
     private String hintString;
     private Bson variables;
@@ -101,6 +102,12 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
     @Override
     public AggregatePublisher<T> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }
@@ -167,7 +174,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         if (outNamespace != null) {
             AsyncReadOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation();
 
-            FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
+            FindOptions findOptions = new FindOptions().collation(collation).comment(comment).batchSize(initialBatchSize);
 
             AsyncReadOperation<AsyncBatchCursor<T>> findOperation =
                     getOperations().find(outNamespace, new BsonDocument(), getDocumentClass(), findOptions);

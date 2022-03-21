@@ -20,6 +20,7 @@ import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -54,6 +55,18 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
     @Override
     public DistinctIterable<T> collation(@Nullable final Collation collation) {
         wrapped.collation(collation);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> comment(@Nullable final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> comment(@Nullable final BsonValue comment) {
+        wrapped.comment(comment);
         return this;
     }
 }

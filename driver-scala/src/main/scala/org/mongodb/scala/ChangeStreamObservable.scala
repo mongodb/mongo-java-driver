@@ -17,9 +17,8 @@
 package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
-
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
-import org.mongodb.scala.bson.BsonTimestamp
+import org.mongodb.scala.bson.{ BsonTimestamp, BsonValue }
 import org.mongodb.scala.model.Collation
 import org.mongodb.scala.model.changestream.{ ChangeStreamDocument, FullDocument }
 
@@ -130,6 +129,34 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
    */
   def collation(collation: Collation): ChangeStreamObservable[TResult] = {
     wrapped.collation(collation)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def comment(comment: String): ChangeStreamObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note The comment can be any valid BSON type for server versions 4.4 and above.
+   *       Server versions between 3.6 and 4.2 only support
+   *       string as comment, and providing a non-string type will result in a server-side error.
+   */
+  def comment(comment: BsonValue): ChangeStreamObservable[TResult] = {
+    wrapped.comment(comment)
     this
   }
 

@@ -24,6 +24,8 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -44,6 +46,7 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
     private Bson filter;
     private Boolean nameOnly;
     private Boolean authorizedDatabasesOnly;
+    private BsonValue comment;
 
     ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
                               final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -60,7 +63,7 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public ListDatabasesIterableImpl<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListDatabasesIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
@@ -91,7 +94,19 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
+    public ListDatabasesIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public ListDatabasesIterable<TResult> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabasesOnly);
+        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabasesOnly, comment);
     }
 }

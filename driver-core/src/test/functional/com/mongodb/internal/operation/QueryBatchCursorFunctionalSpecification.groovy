@@ -84,7 +84,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), null, connectionSource)
 
         then:
         cursor.getServerCursor() != null
@@ -95,7 +95,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery()
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), null, connectionSource)
         then:
         cursor.getServerAddress() != null
     }
@@ -104,7 +104,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery()
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), null, connectionSource)
 
         when:
         cursor.close()
@@ -133,7 +133,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery(1)
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 2, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 2, 0, new DocumentCodec(), null, connectionSource)
         when:
         cursor.next()
         cursor.next()
@@ -148,7 +148,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery()
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), null, connectionSource)
 
         then:
         cursor.iterator().sum { it.size() } == 10
@@ -160,7 +160,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def connection = connectionSource.getConnection()
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, limit, batchSize, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, limit, batchSize, 0, new DocumentCodec(), null, connectionSource, connection)
 
         then:
         cursor.iterator().sum { it.size() } == expectedTotal
@@ -184,7 +184,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery()
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), null, connectionSource)
 
         when:
         cursor.remove()
@@ -203,7 +203,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), null, connectionSource, connection)
 
         then:
         cursor.hasNext()
@@ -250,7 +250,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
 
         then:
         cursor.tryNext().iterator().next().get('_id') == 1
@@ -273,7 +273,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), connectionSource, conn)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), null, connectionSource, conn)
         cursor.next()
         def closeCompleted = new CountDownLatch(1)
 
@@ -305,7 +305,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         def connection = connectionSource.getConnection()
         def maxTimeMS = 10
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), null, connectionSource, connection)
         cursor.tryNext()
         long startTime = System.currentTimeMillis()
 
@@ -330,7 +330,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(new BsonDocument(), 0, 2, true, true)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
 
         CountDownLatch latch = new CountDownLatch(1)
         def seen = 0
@@ -361,7 +361,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(5)
         def connection = connectionSource.getConnection()
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, connection)
@@ -379,7 +379,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery(3)
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 3, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 3, new DocumentCodec(), null, connectionSource)
         ServerCursor serverCursor = cursor.getServerCursor()
 
         cursor.next()
@@ -399,7 +399,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def connection = connectionSource.getConnection()
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), null, connectionSource, connection)
 
         then:
         checkReferenceCountReachesTarget(connectionSource, 1)
@@ -412,7 +412,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         def firstBatch = executeQuery(3)
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 3, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 3, new DocumentCodec(), null, connectionSource)
 
         when:
         cursor.next()
@@ -427,7 +427,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 2, new DocumentCodec(), null, connectionSource)
 
         then:
         cursor.next() != null
@@ -446,7 +446,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(300, 0)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 300, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 300, 0, new DocumentCodec(), null, connectionSource)
 
         then:
         cursor.iterator().sum { it.size() } == 300
@@ -457,7 +457,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
 
         then:
         cursor.batchSize == 2
@@ -494,7 +494,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
         def results = cursor.iterator().collectMany { it*.get('_id') }
 
         then:
@@ -507,7 +507,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
 
         then:
         (0..4).each { cursor.next() }
@@ -528,7 +528,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
         def serverCursor = cursor.getServerCursor()
         def connection = connectionSource.getConnection()
         if (serverVersionLessThan(3, 6)) {
@@ -559,7 +559,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(3)
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), null, connectionSource)
 
         then:
         cursor.available() == 3

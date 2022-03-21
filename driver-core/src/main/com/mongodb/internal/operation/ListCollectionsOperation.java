@@ -36,6 +36,7 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -44,6 +45,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
@@ -67,6 +69,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceE
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyAsyncBatchCursor;
@@ -95,6 +98,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private int batchSize;
     private long maxTimeMS;
     private boolean nameOnly;
+    private BsonValue comment;
 
     /**
      * Construct a new instance.
@@ -229,6 +233,29 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return retryReads;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public ListCollectionsOperation<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads);
@@ -250,7 +277,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                     return new ProjectingBatchCursor(new QueryBatchCursor<>(connection.query(getNamespace(),
                             asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
                             binding.getReadPreference().isSecondaryOk(), false, false, false, false, false,
-                            new BsonDocumentCodec(), binding.getRequestContext()), 0, batchSize, new BsonDocumentCodec(), source));
+                            new BsonDocumentCodec(), binding.getRequestContext()), 0, batchSize, new BsonDocumentCodec(), comment, source));
                 }
             });
         });
@@ -292,7 +319,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                     } else {
                                         releasingCallback.onResult(new ProjectingAsyncBatchCursor(
                                                 new AsyncQueryBatchCursor<BsonDocument>(result, 0,
-                                                        batchSize, 0, new BsonDocumentCodec(), source, connection)
+                                                        batchSize, 0, new BsonDocumentCodec(), comment, source, connection)
                                         ), null);
                                     }
                                 }
@@ -316,7 +343,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                              final AsyncConnection connection) {
-                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
+                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
             }
         };
     }
@@ -355,6 +382,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         if (maxTimeMS > 0) {
             command.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }
+        putIfNotNull(command, "comment", comment);
         return command;
     }
 

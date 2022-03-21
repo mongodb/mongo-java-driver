@@ -73,7 +73,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private Boolean allowDiskUse;
     private Integer batchSize;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private BsonValue hint;
     private long maxAwaitTimeMS;
     private long maxTimeMS;
@@ -157,11 +157,11 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
-    String getComment() {
+    BsonValue getComment() {
         return comment;
     }
 
-    AggregateOperationImpl<T> comment(final String comment) {
+    AggregateOperationImpl<T> comment(final BsonValue comment) {
         this.comment = comment;
         return this;
     }
@@ -234,7 +234,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
             commandDocument.put("collation", collation.asDocument());
         }
         if (comment != null) {
-            commandDocument.put("comment", new BsonString(comment));
+            commandDocument.put("comment", comment);
         }
         if (hint != null) {
             commandDocument.put("hint", hint);
@@ -256,8 +256,8 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
             public AggregateResponseBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source,
                                                          final Connection connection) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new QueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, source,
-                        connection, result);
+                return new QueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, comment,
+                        source, connection, result);
             }
         };
     }
@@ -269,7 +269,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
                                              final AsyncConnection connection) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
                 return new AsyncQueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
-                        source, connection, result);
+                        comment, source, connection, result);
             }
         };
     }

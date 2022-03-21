@@ -438,7 +438,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .projection(collection.wrapAllowNull(findOptions.getProjection()))
                                                 .sort(collection.wrapAllowNull(findOptions.getSort()))
                                                 .collation(findOptions.getCollation())
-                                                .comment(findOptions.getComment())
+                                                .comment(findOptions.getComment() != null
+                                                        ? new BsonString(findOptions.getComment()) : null)
                                                 .hint(findOptions.getHint() != null
                                                         ? collection.wrapAllowNull(findOptions.getHint())
                                                         : (findOptions.getHintString() != null

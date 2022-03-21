@@ -16,14 +16,14 @@
 
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
-
-import com.mongodb.{ ServerAddress, ServerCursor }
-import com.mongodb.client.{ ChangeStreamIterable, MongoChangeStreamCursor }
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.{ ChangeStreamDocument, FullDocument }
-import org.bson.{ BsonDocument, BsonTimestamp }
+import com.mongodb.client.{ ChangeStreamIterable, MongoChangeStreamCursor }
+import com.mongodb.{ ServerAddress, ServerCursor }
+import org.bson.{ BsonDocument, BsonTimestamp, BsonValue }
 import org.mongodb.scala.ChangeStreamObservable
+
+import java.util.concurrent.TimeUnit
 
 case class SyncChangeStreamIterable[T](wrapped: ChangeStreamObservable[T])
     extends SyncMongoIterable[ChangeStreamDocument[T]]
@@ -77,6 +77,16 @@ case class SyncChangeStreamIterable[T](wrapped: ChangeStreamObservable[T])
 
   override def startAfter(startAfter: BsonDocument): ChangeStreamIterable[T] = {
     wrapped.startAfter(startAfter)
+    this
+  }
+
+  override def comment(comment: String): ChangeStreamIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  override def comment(comment: BsonValue): ChangeStreamIterable[T] = {
+    wrapped.comment(comment)
     this
   }
 }

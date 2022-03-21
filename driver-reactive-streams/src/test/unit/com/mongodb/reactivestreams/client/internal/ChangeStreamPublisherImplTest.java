@@ -24,6 +24,8 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.ChangeStreamOperation;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
@@ -68,6 +70,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
         publisher
                 .batchSize(100)
                 .collation(COLLATION)
+                .comment("comment")
                 .maxAwaitTime(20, SECONDS)
                 .fullDocument(FullDocument.UPDATE_LOOKUP);
 
@@ -75,6 +78,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
         expectedOperation
                 .batchSize(100)
                 .collation(COLLATION)
+                .comment(new BsonString("comment"))
                 .maxAwaitTime(20, SECONDS);
 
         Flux.from(publisher).blockFirst();
@@ -92,11 +96,13 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
         Publisher<BsonDocument> publisher = new ChangeStreamPublisherImpl<>(null, createMongoOperationPublisher(executor),
                                                                             Document.class, pipeline, ChangeStreamLevel.COLLECTION)
                 .batchSize(batchSize)
+                .comment(new BsonInt32(1))
                 .withDocumentClass(BsonDocument.class);
 
         ChangeStreamOperation<BsonDocument> expectedOperation =
                 new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, pipeline, getDefaultCodecRegistry().get(BsonDocument.class))
                         .batchSize(batchSize)
+                        .comment(new BsonInt32(1))
                         .retryReads(true);
 
         // default input should be as expected

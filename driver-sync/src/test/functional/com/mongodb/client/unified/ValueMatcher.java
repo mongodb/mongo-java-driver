@@ -110,11 +110,6 @@ final class ValueMatcher {
                 assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
                 assertValuesMatch(value, actualDocument.get(key), false, key, -1);
             });
-            if (!isRoot) {
-                for (String key : actualDocument.keySet()) {
-                    assertTrue(context.getMessage("Actual document contains unexpected key: " + key), expectedDocument.containsKey(key));
-                }
-            }
         } else if (expected.isArray()) {
             assertTrue(context.getMessage("Actual value must be an array but is " + actual.getBsonType()), actual.isArray());
             assertEquals(context.getMessage("Arrays must be the same size"), expected.asArray().size(), actual.asArray().size());
