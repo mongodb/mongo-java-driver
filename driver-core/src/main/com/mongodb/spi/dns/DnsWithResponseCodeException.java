@@ -20,6 +20,7 @@ package com.mongodb.spi.dns;
  * An exception indicating a DNS error that includes a response code.
  *
  * @since 4.6
+ * @serial exclude
  */
 public class DnsWithResponseCodeException extends DnsException {
     private static final long serialVersionUID = 1;
