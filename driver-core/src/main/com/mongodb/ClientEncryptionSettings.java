@@ -218,7 +218,7 @@ public final class ClientEncryptionSettings {
      * </p>
      * <ul>
      *  <li>use the {@link Supplier} configured in {@link #getKmsProviderPropertySuppliers()} to obtain a non-empty map</li>
-     *  <li>attempt to obtain credentials from the environment</li>
+     *  <li>attempt to obtain the properties from the environment</li>
      * </ul>
      * @return map of KMS provider properties
      */
@@ -231,7 +231,7 @@ public final class ClientEncryptionSettings {
      *
      * <p>
      * If the {@link #getKmsProviders()} map contains an empty map as its value, the driver will use a {@link Supplier} configured for
-     * the same provider in this map to obtain a non-empty map that contains the credential for the provider.
+     * the same provider in this map to obtain a non-empty map that contains the properties for the provider.
      * </p>
      *
      * @return the KMS provider to Supplier map

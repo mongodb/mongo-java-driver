@@ -286,7 +286,7 @@ public final class AutoEncryptionSettings {
      * </p>
      * <ul>
      *  <li>use the {@link Supplier} configured in {@link #getKmsProviderPropertySuppliers()} to obtain a non-empty map</li>
-     *  <li>attempt to obtain credentials from the environment</li>
+     *  <li>attempt to obtain the properties from the environment</li>
      * </ul>
      *
      * @return map of KMS provider properties
