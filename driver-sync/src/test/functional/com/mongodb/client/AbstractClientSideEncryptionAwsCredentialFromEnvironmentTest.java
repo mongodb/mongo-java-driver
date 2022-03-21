@@ -22,17 +22,22 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -139,38 +144,22 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
         }
     }
 
-    @Test
-    public void shouldThrowMongoConfigurationIfSupplierThrows() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-        assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
-        assumeTrue(isClientSideEncryptionTest());
-
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
-            put("aws", new HashMap<>());
-        }};
-
-        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
-            put("aws", () -> {
-                throw new RuntimeException("Exception from supplier");
-            });
-        }};
-
-        try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
-                .keyVaultNamespace("test.datakeys")
-                .kmsProviders(kmsProviders)
-                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
-                .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
-                .build())) {
-            MongoConfigurationException e = assertThrows(MongoConfigurationException.class, () ->
-                    clientEncryption.createDataKey("aws", new DataKeyOptions().masterKey(
-                            BsonDocument.parse(MASTER_KEY))));
-            assertEquals("Exception getting credential for kms provider aws from configured Supplier", e.getMessage());
-            assertEquals(RuntimeException.class, e.getCause().getClass());
-        }
+    public static Stream<Arguments> createUnexpectedSupplierArguments() {
+        return Stream.of(
+                Arguments.of("ThrowsAnException", (Supplier<Map<String, Object>>) () -> {
+                    throw new RuntimeException();
+                }, "", RuntimeException.class),
+                Arguments.of("ReturnsNull", (Supplier<Map<String, Object>>) () -> null, " The returned value is null.", null),
+                Arguments.of("ReturnsEmptyMap", (Supplier<Map<String, Object>>) Collections::emptyMap, " The returned value is empty.",
+                        null)
+        );
     }
 
-    @Test
-    public void shouldThrowMongoConfigurationIfSupplierReturnsNull() {
+    @ParameterizedTest(name = "shouldThrowMongoConfigurationIfSupplier{0}")
+    @MethodSource("createUnexpectedSupplierArguments")
+    public void shouldThrowMongoConfigurationIfSupplierReturnsDoesSomethingUnexpected(final String testNameSuffix,
+            final Supplier<Map<String, Object>> awsProviderPropertySupplier, final String exceptionMessageSuffix,
+            @Nullable final Class<?> exceptionCauseType) {
         assumeTrue(serverVersionAtLeast(4, 2));
         assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
         assumeTrue(isClientSideEncryptionTest());
@@ -180,7 +169,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
         }};
 
         Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
-            put("aws", () -> null);
+            put("aws", awsProviderPropertySupplier);
         }};
 
         try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
@@ -193,37 +182,12 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
                     clientEncryption.createDataKey("aws", new DataKeyOptions().masterKey(
                             BsonDocument.parse(MASTER_KEY))));
             assertEquals("Exception getting credential for kms provider aws from configured Supplier."
-                    + " The returned value is null.", e.getMessage());
-            assertNull(e.getCause());
-        }
-    }
-
-    @Test
-    public void shouldThrowMongoConfigurationIfSupplierReturnsEmptyMap() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-        assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
-        assumeTrue(isClientSideEncryptionTest());
-
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
-            put("aws", new HashMap<>());
-        }};
-
-        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
-            put("aws", Collections::emptyMap);
-        }};
-
-        try (ClientEncryption clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
-                .keyVaultNamespace("test.datakeys")
-                .kmsProviders(kmsProviders)
-                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
-                .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
-                .build())) {
-            MongoConfigurationException e = assertThrows(MongoConfigurationException.class, () ->
-                    clientEncryption.createDataKey("aws", new DataKeyOptions().masterKey(
-                            BsonDocument.parse(MASTER_KEY))));
-            assertEquals("Exception getting credential for kms provider aws from configured Supplier."
-                    + " The returned value is empty.", e.getMessage());
-            assertNull(e.getCause());
+                    + exceptionMessageSuffix, e.getMessage());
+            if (exceptionCauseType == null) {
+                assertNull(e.getCause());
+            } else {
+                assertEquals(exceptionCauseType, e.getCause().getClass());
+            }
         }
     }
 

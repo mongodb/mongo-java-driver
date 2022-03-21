@@ -66,7 +66,7 @@ public final class MongoCryptHelper {
             try {
                 kmsProviderCredential = entry.getValue().get();
             } catch (Exception e) {
-                throw new MongoConfigurationException(format("Exception getting credential for kms provider %s from configured Supplier",
+                throw new MongoConfigurationException(format("Exception getting credential for kms provider %s from configured Supplier.",
                         kmsProviderName), e);
             }
             if (kmsProviderCredential == null || kmsProviderCredential.isEmpty()) {
