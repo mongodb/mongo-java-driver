@@ -283,13 +283,6 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     /**
      * Returns the comment to send with the aggregate. The default is not to include a comment with the aggregation.
      *
-     * <p>The comment can be any valid BSON type for server versions 4.4 and above.
-     * Server versions between 3.6 and 4.2 only support string as comment,
-     * and providing a non-string type will result in a server-side error.
-     * <p>
-     * Older server versions do not support comment for aggregate command at all,
-     * and providing one will result in a server-side error.
-     *
      * @return the comment
      * @since 4.6
      * @mongodb.server.release 3.6
@@ -305,13 +298,6 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
-     *
-     * <p>The comment can be any valid BSON type for server versions 4.4 and above.
-     * Server versions between 3.6 and 4.2 only support string as comment,
-     * and providing a non-string type will result in a server-side error.
-     * <p>
-     * Older server versions do not support comment for aggregate command at all,
-     * and providing one will result in a server-side error.
      *
      * @param comment the comment
      * @return this

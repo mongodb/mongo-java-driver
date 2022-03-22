@@ -477,10 +477,10 @@ final class OperationHelper {
     }
 
     static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-                                                          final ConnectionSource source, final Connection connection, final int batchSize) {
+            final BsonValue comment, final ConnectionSource source, final Connection connection, final int batchSize) {
         return new QueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
                 source.getServerDescription().getAddress()),
-                0, batchSize, 0, decoder, null, source, connection);
+                0, batchSize, 0, decoder, comment, source, connection);
     }
 
     static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,

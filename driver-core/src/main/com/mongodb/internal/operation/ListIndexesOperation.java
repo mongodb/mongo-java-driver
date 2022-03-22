@@ -305,7 +305,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
             public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
+                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
             }
         };
     }
