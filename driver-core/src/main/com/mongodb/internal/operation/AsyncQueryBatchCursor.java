@@ -37,6 +37,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
@@ -51,6 +52,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
@@ -76,6 +78,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AtomicInteger count = new AtomicInteger();
     private volatile BsonDocument postBatchResumeToken;
     private final BsonTimestamp operationTime;
+    private final BsonValue comment;
     private final boolean firstBatchEmpty;
     private final int maxWireVersion;
 
@@ -86,13 +89,14 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private volatile boolean isClosePending = false;
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
-                          final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
-        this(firstBatch, limit, batchSize, maxTimeMS, decoder, connectionSource, connection, null);
+            final Decoder<T> decoder, final BsonValue comment, final AsyncConnectionSource connectionSource,
+            final AsyncConnection connection) {
+        this(firstBatch, limit, batchSize, maxTimeMS, decoder, comment, connectionSource, connection, null);
     }
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
-                          final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection,
-                          final BsonDocument result) {
+            final Decoder<T> decoder, final BsonValue comment, final AsyncConnectionSource connectionSource,
+            final AsyncConnection connection, final BsonDocument result) {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstBatch.getNamespace();
@@ -100,6 +104,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = decoder;
+        this.comment = comment;
         this.cursor = new AtomicReference<ServerCursor>(firstBatch.getCursor());
         this.count.addAndGet(firstBatch.getResults().size());
         if (result != null) {
@@ -268,6 +273,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (maxTimeMS != 0) {
             document.append("maxTimeMS", new BsonInt64(maxTimeMS));
         }
+        putIfNotNull(document, "comment", comment);
         return document;
     }
 

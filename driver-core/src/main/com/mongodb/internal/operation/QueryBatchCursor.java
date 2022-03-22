@@ -41,6 +41,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
@@ -59,6 +60,7 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
@@ -82,6 +84,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final Decoder<T> decoder;
     private final long maxTimeMS;
     private int batchSize;
+    private BsonValue comment;
     private List<T> nextBatch;
     private int count;
     private BsonDocument postBatchResumeToken;
@@ -91,28 +94,29 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final ResourceManager resourceManager;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
-        this(firstQueryResult, limit, batchSize, decoder, null);
+        this(firstQueryResult, limit, batchSize, decoder, null, null);
     }
 
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
-                     final Decoder<T> decoder, final ConnectionSource connectionSource) {
-        this(firstQueryResult, limit, batchSize, 0, decoder, connectionSource, null, null);
-    }
-
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
-                     final Decoder<T> decoder, final ConnectionSource connectionSource, final Connection connection) {
-        this(firstQueryResult, limit, batchSize, maxTimeMS, decoder, connectionSource, connection, null);
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder,
+            final BsonValue comment, final ConnectionSource connectionSource) {
+        this(firstQueryResult, limit, batchSize, 0, decoder, comment, connectionSource, null, null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
-                     final Decoder<T> decoder, final ConnectionSource connectionSource, final Connection connection,
-                     final BsonDocument result) {
+            final Decoder<T> decoder, final BsonValue comment, final ConnectionSource connectionSource, final Connection connection) {
+        this(firstQueryResult, limit, batchSize, maxTimeMS, decoder, comment, connectionSource, connection, null);
+    }
+
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
+            final Decoder<T> decoder, final BsonValue comment, final ConnectionSource connectionSource, final Connection connection,
+            final BsonDocument result) {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstQueryResult.getNamespace();
         this.serverApi = connectionSource == null ? null : connectionSource.getServerApi();
         this.serverAddress = firstQueryResult.getAddress();
         this.limit = limit;
+        this.comment = comment;
         this.batchSize = batchSize;
         this.decoder = notNull("decoder", decoder);
         if (result != null) {
@@ -314,7 +318,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         if (maxTimeMS != 0) {
             document.append("maxTimeMS", new BsonInt64(maxTimeMS));
         }
-
+        putIfNotNull(document, "comment", comment);
         return document;
     }
 

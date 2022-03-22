@@ -22,6 +22,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.FindPublisher;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
@@ -121,6 +122,12 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
 
     @Override
     public FindIterable<T> comment(@Nullable final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public FindIterable<T> comment(@Nullable final BsonValue comment) {
         wrapped.comment(comment);
         return this;
     }

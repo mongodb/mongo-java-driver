@@ -31,7 +31,7 @@ class MapReduceInlineResultsCursor<T> extends QueryBatchCursor<T> implements Map
 
     MapReduceInlineResultsCursor(final QueryResult<T> queryResult, final Decoder<T> decoder, final ConnectionSource connectionSource,
                                  final MapReduceStatistics statistics) {
-        super(queryResult, 0, 0, decoder, connectionSource);
+        super(queryResult, 0, 0, decoder, null, connectionSource);
         this.statistics = statistics;
     }
 

@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -80,4 +81,24 @@ public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 4.0
      */
     ListDatabasesIterable<TResult> authorizedDatabasesOnly(@Nullable Boolean authorizedDatabasesOnly);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    ListDatabasesIterable<TResult> comment(@Nullable String comment);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    ListDatabasesIterable<TResult> comment(@Nullable BsonValue comment);
 }

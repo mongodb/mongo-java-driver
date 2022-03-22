@@ -34,9 +34,11 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
@@ -56,6 +58,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceE
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyAsyncBatchCursor;
@@ -80,6 +83,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     private boolean retryReads;
     private int batchSize;
     private long maxTimeMS;
+    private BsonValue comment;
 
     /**
      * Construct a new instance.
@@ -164,6 +168,29 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         return retryReads;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public ListIndexesOperation<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads);
@@ -185,7 +212,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     return new QueryBatchCursor<>(connection.query(getIndexNamespace(),
                             asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
                             binding.getReadPreference().isSecondaryOk(), false, false, false, false, false, decoder,
-                            binding.getRequestContext()), 0, batchSize, decoder, source);
+                            binding.getRequestContext()), 0, batchSize, decoder, comment, source);
                 }
             });
         });
@@ -226,7 +253,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                         releasingCallback.onResult(null, t);
                                     } else {
                                         releasingCallback.onResult(new AsyncQueryBatchCursor<T>(result, 0, batchSize, 0, decoder,
-                                                        source, connection), null);
+                                                                                                comment, source, connection), null);
                                     }
                                 }
                             });
@@ -270,6 +297,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         if (maxTimeMS > 0) {
             command.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }
+        putIfNotNull(command, "comment", comment);
         return command;
     }
 
@@ -277,7 +305,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
             public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
+                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
             }
         };
     }
@@ -287,7 +315,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                              final AsyncConnection connection) {
-                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
+                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
             }
         };
     }

@@ -23,6 +23,7 @@ import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.CountOperation
 import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
+import org.bson.BsonString
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -259,7 +260,7 @@ class DBCursorSpecification extends Specification {
                 .projection(bsonProjection)
                 .skip(1)
                 .sort(bsonSort)
-                .comment(comment)
+                .comment(new BsonString(comment))
                 .hint(bsonHint)
                 .max(bsonMax)
                 .min(bsonMin)

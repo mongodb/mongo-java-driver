@@ -40,6 +40,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -103,8 +104,8 @@ public final class SyncOperations<TDocument> {
 
     public <TResult> ReadOperation<BatchCursor<TResult>> distinct(final String fieldName, final Bson filter,
                                                                   final Class<TResult> resultClass, final long maxTimeMS,
-                                                                  final Collation collation) {
-        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation);
+                                                                  final Collation collation, final BsonValue comment) {
+        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation, comment);
     }
 
     public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
@@ -113,7 +114,7 @@ public final class SyncOperations<TDocument> {
                                                                               final Integer batchSize,
                                                                               final Collation collation, final Bson hint,
                                                                               final String hintString,
-                                                                              final String comment,
+                                                                              final BsonValue comment,
                                                                               final Bson variables,
                                                                               final Boolean allowDiskUse,
                                                                               final AggregationLevel aggregationLevel) {
@@ -123,7 +124,7 @@ public final class SyncOperations<TDocument> {
 
     public ReadOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-            final Collation collation, final Bson hint, final String hintString, final String comment,
+            final Collation collation, final Bson hint, final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
         return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
                 comment, variables, aggregationLevel);
@@ -240,18 +241,19 @@ public final class SyncOperations<TDocument> {
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                          final Bson filter, final boolean collectionNamesOnly,
-                                                                         final Integer batchSize, final long maxTimeMS) {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS);
+                                                                         final Integer batchSize, final long maxTimeMS,
+                                                                         final BsonValue comment) {
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS, comment);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
                                                                        final Boolean nameOnly, final long maxTimeMS,
-                                                                       final Boolean authorizedDatabases) {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabases);
+                                                                       final Boolean authorizedDatabases, final BsonValue comment) {
+        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabases, comment);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
-                                                                     final long maxTimeMS) {
-        return operations.listIndexes(resultClass, batchSize, maxTimeMS);
+                                                                     final long maxTimeMS, final BsonValue comment) {
+        return operations.listIndexes(resultClass, batchSize, maxTimeMS, comment);
     }
 }

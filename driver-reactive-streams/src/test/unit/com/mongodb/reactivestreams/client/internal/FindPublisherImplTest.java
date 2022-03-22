@@ -89,7 +89,7 @@ public class FindPublisherImplTest extends TestHelper {
                 .allowDiskUse(false)
                 .batchSize(100)
                 .collation(COLLATION)
-                .comment("my comment")
+                .comment(new BsonString("my comment"))
                 .cursorType(CursorType.NonTailable)
                 .filter(new BsonDocument("filter", new BsonInt32(1)))
                 .hint(new BsonString("a_1"))

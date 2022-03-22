@@ -35,6 +35,7 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 
 import java.util.List;
 
@@ -56,6 +57,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     private final boolean ordered;
     private final boolean retryWrites;
     private Boolean bypassDocumentValidation;
+    private BsonValue comment;
 
     /**
      * Construct an instance
@@ -140,6 +142,28 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
         return this;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public BaseWriteOperation comment(final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public WriteConcernResult execute(final WriteBinding binding) {
         try {
@@ -177,7 +201,8 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     private MixedBulkWriteOperation getMixedBulkOperation() {
         return new MixedBulkWriteOperation(namespace, getWriteRequests(), ordered, writeConcern, retryWrites)
-                .bypassDocumentValidation(bypassDocumentValidation);
+                .bypassDocumentValidation(bypassDocumentValidation)
+                .comment(comment);
     }
 
     private MongoException convertBulkWriteException(final MongoBulkWriteException e) {

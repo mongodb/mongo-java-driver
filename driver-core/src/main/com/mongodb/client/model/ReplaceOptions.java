@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 /**
@@ -33,6 +35,7 @@ public class ReplaceOptions {
     private Collation collation;
     private Bson hint;
     private String hintString;
+    private BsonValue comment;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -67,6 +70,8 @@ public class ReplaceOptions {
 
     /**
      * Sets the bypass document level validation flag.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#bypassDocumentValidation(Boolean)}</p>
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
@@ -146,6 +151,45 @@ public class ReplaceOptions {
         this.hintString = hint;
         return this;
     }
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(String)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public ReplaceOptions comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(BsonValue)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public ReplaceOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
 
     @Override
     public String toString() {
@@ -155,6 +199,7 @@ public class ReplaceOptions {
                 + ", collation=" + collation
                 + ", hint=" + hint
                 + ", hintString=" + hintString
+                + ", comment=" + comment
                 + '}';
     }
 }

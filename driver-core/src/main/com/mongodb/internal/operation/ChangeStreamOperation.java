@@ -314,6 +314,30 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return wrapped.getRetryReads();
     }
 
+    /**
+     * Returns the comment to send with the aggregate. The default is not to include a comment with the aggregation.
+     *
+     * @return the comment
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    public BsonValue getComment() {
+        return wrapped.getComment();
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    public ChangeStreamOperation<T> comment(final BsonValue comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {

@@ -27,7 +27,9 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -38,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 
 
 final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStreamDocument<T>>
@@ -53,6 +54,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     private BsonDocument startAfter;
     private long maxAwaitTimeMS;
     private Collation collation;
+    private BsonValue comment;
     private BsonTimestamp startAtOperationTime;
 
     ChangeStreamPublisherImpl(
@@ -94,6 +96,19 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     @Override
     public ChangeStreamPublisher<T> batchSize(final int batchSize) {
         super.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamPublisher<T> comment(@Nullable final String comment) {
+        this.comment = comment == null ? null : new BsonString(comment);
+        return this;
+    }
+
+
+    @Override
+    public ChangeStreamPublisher<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
         return this;
     }
 
@@ -143,6 +158,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
                                            createBsonDocumentList(pipeline), codec, changeStreamLevel)
                 .batchSize(initialBatchSize)
                 .collation(collation)
+                .comment(comment)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .resumeAfter(resumeToken)
                 .startAtOperationTime(startAtOperationTime)

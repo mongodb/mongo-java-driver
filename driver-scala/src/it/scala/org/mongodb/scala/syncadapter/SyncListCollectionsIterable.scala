@@ -15,11 +15,12 @@
  */
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
-
 import com.mongodb.client.ListCollectionsIterable
 import org.bson.conversions.Bson
 import org.mongodb.scala.ListCollectionsObservable
+import org.mongodb.scala.bson.BsonValue
+
+import java.util.concurrent.TimeUnit
 
 case class SyncListCollectionsIterable[T](wrapped: ListCollectionsObservable[T])
     extends SyncMongoIterable[T]
@@ -36,6 +37,16 @@ case class SyncListCollectionsIterable[T](wrapped: ListCollectionsObservable[T])
 
   override def batchSize(batchSize: Int): ListCollectionsIterable[T] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  override def comment(comment: String): ListCollectionsIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  override def comment(comment: BsonValue): ListCollectionsIterable[T] = {
+    wrapped.comment(comment)
     this
   }
 }

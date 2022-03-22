@@ -342,7 +342,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def expectedComment = 'this is a comment'
         def operation = new AggregateToCollectionOperation(getNamespace(),
                 [Aggregates.out('outputCollection').toBsonDocument(BsonDocument, registry)], ACKNOWLEDGED)
-                .comment(expectedComment)
+                .comment(new BsonString(expectedComment))
 
         when:
         execute(operation, async)

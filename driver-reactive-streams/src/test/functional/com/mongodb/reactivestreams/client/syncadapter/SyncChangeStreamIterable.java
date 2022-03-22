@@ -29,6 +29,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -137,6 +138,18 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     @Override
     public ChangeStreamIterable<T> startAfter(final BsonDocument startAfter) {
         wrapped.startAfter(startAfter);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<T> comment(@Nullable final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<T> comment(@Nullable final BsonValue comment) {
+        wrapped.comment(comment);
         return this;
     }
 }

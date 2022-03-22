@@ -16,10 +16,11 @@
 
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
-
 import com.mongodb.client.ListIndexesIterable
 import org.mongodb.scala.ListIndexesObservable
+import org.mongodb.scala.bson.BsonValue
+
+import java.util.concurrent.TimeUnit
 
 case class SyncListIndexesIterable[T](wrapped: ListIndexesObservable[T])
     extends SyncMongoIterable[T]
@@ -33,4 +34,15 @@ case class SyncListIndexesIterable[T](wrapped: ListIndexesObservable[T])
     wrapped.batchSize(batchSize)
     this
   }
+
+  override def comment(comment: String): ListIndexesIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  override def comment(comment: BsonValue): ListIndexesIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
 }

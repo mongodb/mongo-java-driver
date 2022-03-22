@@ -25,6 +25,8 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -41,6 +43,7 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     private Bson filter;
     private final boolean collectionNamesOnly;
     private long maxTimeMS;
+    private BsonValue comment;
 
     ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
                                 final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -78,7 +81,19 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    public ListCollectionsIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public ListCollectionsIterable<TResult> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS, comment);
     }
 }

@@ -22,6 +22,8 @@ import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -34,6 +36,7 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     private Bson filter;
     private long maxTimeMS;
     private Collation collation;
+    private BsonValue comment;
 
     DistinctPublisherImpl(
             @Nullable final ClientSession clientSession,
@@ -70,8 +73,20 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     }
 
     @Override
+    public DistinctPublisher<T> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public DistinctPublisher<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         // initialBatchSize is ignored for distinct operations.
-        return getOperations().distinct(fieldName, filter, getDocumentClass(), maxTimeMS, collation);
+        return getOperations().distinct(fieldName, filter, getDocumentClass(), maxTimeMS, collation, comment);
     }
 }

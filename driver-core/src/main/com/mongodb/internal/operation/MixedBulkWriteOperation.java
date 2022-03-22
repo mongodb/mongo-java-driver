@@ -49,6 +49,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 
 import java.util.List;
@@ -89,6 +90,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private final boolean retryWrites;
     private final WriteConcern writeConcern;
     private Boolean bypassDocumentValidation;
+    private BsonValue comment;
 
     /**
      * Construct a new instance.
@@ -167,6 +169,28 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      */
     public MixedBulkWriteOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public MixedBulkWriteOperation comment(final BsonValue comment) {
+        this.comment = comment;
         return this;
     }
 
@@ -254,7 +278,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     if (!bulkWriteTracker.batch().isPresent()) {
                         BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                 source.getServerDescription(), connectionDescription, ordered, writeConcern,
-                                bypassDocumentValidation, retryWrites, writeRequests, sessionContext));
+                                bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment));
                     }
                     logRetryExecute(retryState);
                     return executeBulkWriteBatch(retryState, binding, connection, maxWireVersion);
@@ -312,7 +336,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         if (!bulkWriteTracker.batch().isPresent()) {
                             BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                     source.getServerDescription(), connectionDescription, ordered, writeConcern,
-                                    bypassDocumentValidation, retryWrites, writeRequests, sessionContext));
+                                    bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment));
                         }
                     } catch (Throwable t) {
                         releasingCallback.onResult(null, t);
