@@ -20,15 +20,12 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -39,14 +36,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
-import static com.mongodb.internal.operation.OperationHelper.validateCollation;
-import static com.mongodb.internal.operation.OperationHelper.validateHintForFindAndModify;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An operation that atomically finds and replaces a single document.
@@ -57,42 +48,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     private final BsonDocument replacement;
-    private BsonDocument filter;
-    private BsonDocument projection;
-    private BsonDocument sort;
-    private long maxTimeMS;
     private boolean returnOriginal = true;
     private boolean upsert;
     private Boolean bypassDocumentValidation;
-    private Collation collation;
-    private Bson hint;
-    private String hintString;
-    private BsonValue comment;
-
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace   the database and collection namespace for the operation.
-     * @param decoder     the decoder for the result documents.
-     * @param replacement the document that will replace the found document.
-     */
-    public FindAndReplaceOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument replacement) {
-        this(namespace, WriteConcern.ACKNOWLEDGED, false, decoder, replacement);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace   the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param decoder     the decoder for the result documents.
-     * @param replacement the document that will replace the found document.
-     * @since 3.2
-     */
-    public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder,
-                                   final BsonDocument replacement) {
-        this(namespace, writeConcern, false, decoder, replacement);
-    }
 
     /**
      * Construct a new instance.
@@ -117,97 +75,6 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
      */
     public BsonDocument getReplacement() {
         return replacement;
-    }
-
-    /**
-     * Gets the query filter.
-     *
-     * @return the query filter
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
-    public BsonDocument getFilter() {
-        return filter;
-    }
-
-    /**
-     * Sets the query filter to apply to the query.
-     *
-     * @param filter the query filter, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
-    public FindAndReplaceOperation<T> filter(final BsonDocument filter) {
-        this.filter = filter;
-        return this;
-    }
-
-    /**
-     * Gets a document describing the fields to return for all matching documents.
-     *
-     * @return the project document, which may be null
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
-    public BsonDocument getProjection() {
-        return projection;
-    }
-
-    /**
-     * Sets a document describing the fields to return for all matching documents.
-     *
-     * @param projection the project document, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
-    public FindAndReplaceOperation<T> projection(final BsonDocument projection) {
-        this.projection = projection;
-        return this;
-    }
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
-    public FindAndReplaceOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
-     *
-     * @return a document describing the sort criteria
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
-     */
-    public BsonDocument getSort() {
-        return sort;
-    }
-
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
-     */
-    public FindAndReplaceOperation<T> sort(final BsonDocument sort) {
-        this.sort = sort;
-        return this;
     }
 
     /**
@@ -274,150 +141,66 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
-    /**
-     * Returns the collation options
-     *
-     * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public Collation getCollation() {
-        return collation;
+    @Override
+    public FindAndReplaceOperation<T> filter(final BsonDocument filter) {
+        super.filter(filter);
+        return this;
     }
 
-    /**
-     * Returns the hint for which index to use. The default is not to set a hint.
-     *
-     * @return the hint
-     * @since 4.1
-     */
-    @Nullable
-    public Bson getHint() {
-        return hint;
+    @Override
+    public FindAndReplaceOperation<T> projection(final BsonDocument projection) {
+        super.projection(projection);
+        return this;
     }
 
-    /**
-     * Sets the hint for which index to use. A null value means no hint is set.
-     *
-     * @param hint the hint
-     * @return this
-     * @since 4.1
-     */
+    @Override
+    public FindAndReplaceOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        super.maxTime(maxTime, timeUnit);
+        return this;
+    }
+
+    @Override
+    public FindAndReplaceOperation<T> sort(final BsonDocument sort) {
+        super.sort(sort);
+        return this;
+    }
+
+    @Override
     public FindAndReplaceOperation<T> hint(@Nullable final Bson hint) {
-        this.hint = hint;
+        super.hint(hint);
         return this;
     }
 
-    /**
-     * Gets the hint string to apply.
-     *
-     * @return the hint string, which should be the name of an existing index
-     * @since 4.1
-     */
-    @Nullable
-    public String getHintString() {
-        return hintString;
-    }
-
-    /**
-     * Sets the hint to apply.
-     *
-     * @param hint the name of the index which should be used for the operation
-     * @return this
-     * @since 4.1
-     */
+    @Override
     public FindAndReplaceOperation<T> hintString(@Nullable final String hint) {
-        this.hintString = hint;
+        super.hintString(hint);
         return this;
     }
 
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     * @param collation the collation options to use
-     * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
+    @Override
     public FindAndReplaceOperation<T> collation(final Collation collation) {
-        this.collation = collation;
+        super.collation(collation);
         return this;
     }
 
-    /**
-     * @return comment for this operation. A null value means no comment is set.
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
-    public BsonValue getComment() {
-        return comment;
-    }
-
-    /**
-     * Sets the comment for this operation. A null value means no comment is set.
-     *
-     * @param comment the comment
-     * @return this
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
+    @Override
     public FindAndReplaceOperation<T> comment(final BsonValue comment) {
-        this.comment = comment;
+        super.comment(comment);
         return this;
     }
 
-    @Override
-    protected String getDatabaseName() {
-        return getNamespace().getDatabaseName();
+    protected FieldNameValidator getFieldNameValidator() {
+        Map<String, FieldNameValidator> map = new HashMap<>();
+        map.put("update", new ReplacingDocumentFieldNameValidator());
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 
-    @Override
-    protected CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return createCommand(sessionContext, serverDescription, connectionDescription);
-            }
-        };
-    }
-
-    private BsonDocument createCommand(final SessionContext sessionContext, final ServerDescription serverDescription,
-                                       final ConnectionDescription connectionDescription) {
-        validateCollation(connectionDescription, collation);
-
-        BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
-        putIfNotNull(commandDocument, "query", getFilter());
-        putIfNotNull(commandDocument, "fields", getProjection());
-        putIfNotNull(commandDocument, "sort", getSort());
+    protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {
         commandDocument.put("new", new BsonBoolean(!isReturnOriginal()));
         putIfTrue(commandDocument, "upsert", isUpsert());
-        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         commandDocument.put("update", getReplacement());
         if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
-        addWriteConcernToCommand(connectionDescription, commandDocument, sessionContext);
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
-        }
-        if (hint != null || hintString != null) {
-            validateHintForFindAndModify(connectionDescription, getWriteConcern());
-            if (hint != null) {
-                commandDocument.put("hint", hint.toBsonDocument(BsonDocument.class, null));
-            } else {
-                commandDocument.put("hint", new BsonString(hintString));
-            }
-        }
-        putIfNotNull(commandDocument, "comment", comment);
-        addTxnNumberToCommand(serverDescription, connectionDescription, commandDocument, sessionContext);
-        return commandDocument;
-    }
-
-    @Override
-    protected FieldNameValidator getFieldNameValidator() {
-        Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
-        map.put("update", new ReplacingDocumentFieldNameValidator());
-        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 }
