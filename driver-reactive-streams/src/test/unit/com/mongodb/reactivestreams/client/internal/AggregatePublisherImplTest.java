@@ -84,7 +84,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .allowDiskUse(true)
                 .batchSize(100)
                 .collation(COLLATION)
-                .comment("my comment")
+                .comment(new BsonString("my comment"))
                 .hint(BsonDocument.parse("{a: 1}"))
                 .maxAwaitTime(20, SECONDS)
                 .maxTime(10, SECONDS);
@@ -181,7 +181,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .allowDiskUse(true)
                 .bypassDocumentValidation(true)
                 .collation(COLLATION)
-                .comment("my comment")
+                .comment(new BsonString("my comment"))
                 .hint(BsonDocument.parse("{a: 1}"))
                 .maxTime(10, SECONDS);
 
@@ -197,6 +197,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                         .filter(new BsonDocument())
                         .maxAwaitTime(0, SECONDS)
                         .maxTime(0, SECONDS)
+                        .comment(new BsonString("my comment"))
                         .retryReads(true);
 
         assertOperationIsTheSameAs(expectedFindOperation, operation.getCursorReadOperation());
@@ -352,7 +353,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .batchSize(100) // Used in Find
                 .bypassDocumentValidation(true)
                 .collation(COLLATION)
-                .comment("my comment")
+                .comment(new BsonInt32(1))
                 .hint(BsonDocument.parse("{a: 1}"))
                 .maxAwaitTime(20, SECONDS) // Ignored on $out
                 .maxTime(10, SECONDS);
@@ -361,7 +362,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .allowDiskUse(true)
                 .bypassDocumentValidation(true)
                 .collation(COLLATION)
-                .comment("my comment")
+                .comment(new BsonInt32(1))
                 .hint(BsonDocument.parse("{a: 1}"))
                 .maxTime(10, SECONDS);
 
@@ -377,6 +378,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                         .filter(new BsonDocument())
                         .maxAwaitTime(0, SECONDS)
                         .maxTime(0, SECONDS)
+                        .comment(new BsonInt32(1))
                         .retryReads(true);
 
         assertOperationIsTheSameAs(expectedFindOperation, operation.getCursorReadOperation());

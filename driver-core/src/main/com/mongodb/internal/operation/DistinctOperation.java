@@ -17,11 +17,11 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -34,6 +34,7 @@ import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransfor
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
@@ -44,6 +45,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -69,6 +71,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private BsonDocument filter;
     private long maxTimeMS;
     private Collation collation;
+    private BsonValue comment;
 
     /**
      * Construct an instance.
@@ -177,6 +180,29 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return this;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public DistinctOperation<T> comment(final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
@@ -203,7 +229,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
             @Override
             public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new QueryBatchCursor<T>(queryResult, 0, 0, decoder, source);
+                return new QueryBatchCursor<T>(queryResult, 0, 0, decoder, comment, source);
             }
         };
     }
@@ -238,6 +264,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
         }
+        putIfNotNull(commandDocument, "comment", comment);
         return commandDocument;
     }
 }

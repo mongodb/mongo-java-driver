@@ -1,10 +1,11 @@
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
-
 import com.mongodb.client.ListDatabasesIterable
 import org.bson.conversions.Bson
 import org.mongodb.scala.ListDatabasesObservable
+import org.mongodb.scala.bson.BsonValue
+
+import java.util.concurrent.TimeUnit
 
 case class SyncListDatabasesIterable[T](wrapped: ListDatabasesObservable[T])
     extends SyncMongoIterable[T]
@@ -31,6 +32,16 @@ case class SyncListDatabasesIterable[T](wrapped: ListDatabasesObservable[T])
 
   override def authorizedDatabasesOnly(authorizedDatabasesOnly: java.lang.Boolean): ListDatabasesIterable[T] = {
     wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly)
+    this
+  }
+
+  override def comment(comment: String): ListDatabasesIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  override def comment(comment: BsonValue): ListDatabasesIterable[T] = {
+    wrapped.comment(comment)
     this
   }
 }

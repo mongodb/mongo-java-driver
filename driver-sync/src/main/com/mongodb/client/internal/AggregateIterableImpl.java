@@ -33,6 +33,7 @@ import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -56,7 +57,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private long maxAwaitTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private Bson hint;
     private String hintString;
     private Bson variables;
@@ -143,6 +144,12 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     public AggregateIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment == null ? null : new BsonString(comment);
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<TResult> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }

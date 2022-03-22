@@ -27,6 +27,7 @@ import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.FindPublisher;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -131,6 +132,12 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     @Override
     public FindPublisher<T> comment(@Nullable final String comment) {
+        findOptions.comment(comment);
+        return this;
+    }
+
+    @Override
+    public FindPublisher<T> comment(@Nullable final BsonValue comment) {
         findOptions.comment(comment);
         return this;
     }

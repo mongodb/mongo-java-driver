@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -59,6 +60,18 @@ class SyncListDatabasesIterable<T> extends SyncMongoIterable<T> implements ListD
     @Override
     public ListDatabasesIterable<T> authorizedDatabasesOnly(@Nullable final Boolean authorizedDatabasesOnly) {
         wrapped.authorizedDatabasesOnly(authorizedDatabasesOnly);
+        return this;
+    }
+
+    @Override
+    public ListDatabasesIterable<T> comment(final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ListDatabasesIterable<T> comment(final BsonValue comment) {
+        wrapped.comment(comment);
         return this;
     }
 }

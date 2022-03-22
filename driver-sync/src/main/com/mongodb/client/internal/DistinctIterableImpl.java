@@ -26,6 +26,8 @@ import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -42,6 +44,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     private Bson filter;
     private long maxTimeMS;
     private Collation collation;
+    private BsonValue comment;
 
     DistinctIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -87,7 +90,19 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
+    public DistinctIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment == null ? null : new BsonString(comment);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<TResult> comment(final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation);
+        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation, comment);
     }
 }

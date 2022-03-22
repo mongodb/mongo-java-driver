@@ -20,6 +20,7 @@ import com.mongodb.ExplainVerbosity
 
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.AggregatePublisher
+import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
@@ -106,7 +107,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
-   * Sets the comment to the aggregation. A null value means no comment is set.
+   * Sets the comment for this operation. A null value means no comment is set.
    *
    * @param comment the comment
    * @return this
@@ -114,6 +115,21 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * @note Requires MongoDB 3.6 or greater
    */
   def comment(comment: String): AggregateObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note The comment can be any valid BSON type for server versions 4.4 and above.
+   *       Server versions between 3.6 and 4.2 only support
+   *       string as comment, and providing a non-string type will result in a server-side error.
+   */
+  def comment(comment: BsonValue): AggregateObservable[TResult] = {
     wrapped.comment(comment)
     this
   }

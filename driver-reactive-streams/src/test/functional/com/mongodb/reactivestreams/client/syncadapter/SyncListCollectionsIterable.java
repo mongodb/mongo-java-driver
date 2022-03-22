@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,18 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     public ListCollectionsIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
         super.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public ListCollectionsIterable<T> comment(final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ListCollectionsIterable<T> comment(final BsonValue comment) {
+        wrapped.comment(comment);
         return this;
     }
 }

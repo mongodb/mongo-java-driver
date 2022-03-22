@@ -404,7 +404,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
-                .comment(expectedComment)
+                .comment(new BsonString(expectedComment))
 
         when:
         execute(operation, async)

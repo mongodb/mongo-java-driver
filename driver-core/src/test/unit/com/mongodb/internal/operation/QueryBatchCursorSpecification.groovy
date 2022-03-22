@@ -60,7 +60,7 @@ class QueryBatchCursorSpecification extends Specification {
         def cursorId = 42
 
         def firstBatch = new QueryResult(NAMESPACE, [], cursorId, SERVER_ADDRESS)
-        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, batchSize, maxTimeMS, new BsonDocumentCodec(), connectionSource,
+        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, batchSize, maxTimeMS, new BsonDocumentCodec(), null, connectionSource,
                                                     connection)
         def expectedCommand = new BsonDocument('getMore': new BsonInt64(cursorId))
                 .append('collection', new BsonString(NAMESPACE.getCollectionName()))
@@ -109,7 +109,7 @@ class QueryBatchCursorSpecification extends Specification {
         connectionSource.retain() >> connectionSource
 
         def firstBatch = new QueryResult(NAMESPACE, [], 42, SERVER_ADDRESS)
-        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new BsonDocumentCodec(), connectionSource, connection)
+        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         cursor.close()
@@ -138,7 +138,7 @@ class QueryBatchCursorSpecification extends Specification {
         connectionSource.retain() >> connectionSource
 
         def firstBatch = new QueryResult(NAMESPACE, [], 42, SERVER_ADDRESS)
-        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new BsonDocumentCodec(), connectionSource, connection)
+        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new DocumentCodec(), null, connectionSource, connection)
 
         when:
         cursor.close()
@@ -169,7 +169,7 @@ class QueryBatchCursorSpecification extends Specification {
                 : emptyGetMoreQueryResponse(NAMESPACE, SERVER_ADDRESS, getMoreResponseHasCursor ? 42 : 0)
 
         when:
-        QueryBatchCursor<Document> cursor = new QueryBatchCursor<>(initialResult, 0, 0, 0, new DocumentCodec(), connSource, conn)
+        QueryBatchCursor<Document> cursor = new QueryBatchCursor<>(initialResult, 0, 0, 0, new DocumentCodec(), null, connSource, conn)
         List<Document> batch = cursor.next()
 
         then:
@@ -232,7 +232,7 @@ class QueryBatchCursorSpecification extends Specification {
         String exceptionMessage = 'test'
 
         when:
-        QueryBatchCursor<Document> cursor = new QueryBatchCursor<>(initialResult, 0, 0, 0, new DocumentCodec(), connSource, conn)
+        QueryBatchCursor<Document> cursor = new QueryBatchCursor<>(initialResult, 0, 0, 0, new DocumentCodec(), null, connSource, conn)
         List<Document> batch = cursor.next()
 
         then:

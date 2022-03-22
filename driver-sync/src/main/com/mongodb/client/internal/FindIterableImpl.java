@@ -29,6 +29,7 @@ import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ExplainableReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -153,6 +154,12 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    public FindIterable<TResult> comment(@Nullable final BsonValue comment) {
+        findOptions.comment(comment);
+        return this;
+    }
+
+    @Override
     public FindIterable<TResult> hint(@Nullable final Bson hint) {
         findOptions.hint(hint);
         return this;
@@ -235,4 +242,5 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {
         return operations.find(filter, resultClass, findOptions);
     }
+
 }

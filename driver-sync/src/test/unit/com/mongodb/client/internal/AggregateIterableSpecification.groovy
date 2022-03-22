@@ -93,7 +93,7 @@ class AggregateIterableSpecification extends Specification {
                 .retryReads(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS))
 
@@ -129,7 +129,8 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment'))
+                .iterator()
 
         def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
@@ -141,7 +142,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -162,7 +163,8 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment'))
+                .iterator()
 
         operation = executor.getReadOperation() as AggregateToCollectionOperation
 
@@ -175,7 +177,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -195,7 +197,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
                 .toCollection()
 
         operation = executor.getReadOperation() as AggregateToCollectionOperation
@@ -207,7 +209,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment'))
+                .comment(new BsonString('this is a comment')))
     }
 
     def 'should build the expected AggregateToCollectionOperation for $out with hint string'() {
@@ -262,7 +264,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment')).iterator()
 
         def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
@@ -276,7 +278,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -297,7 +299,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment')).iterator()
 
         operation = executor.getReadOperation() as AggregateToCollectionOperation
 
@@ -312,7 +314,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -333,7 +335,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment')).iterator()
 
         operation = executor.getReadOperation() as AggregateToCollectionOperation
 
@@ -347,7 +349,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -366,7 +368,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
                 .toCollection()
 
         operation = executor.getReadOperation() as AggregateToCollectionOperation
@@ -379,7 +381,7 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment'))
+                .comment(new BsonString('this is a comment')))
     }
 
     def 'should build the expected AggregateToCollectionOperation for $merge string'() {

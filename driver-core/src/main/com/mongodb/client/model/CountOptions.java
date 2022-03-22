@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,7 @@ public class CountOptions {
     private int skip;
     private long maxTimeMS;
     private Collation collation;
+    private BsonValue comment;
 
     /**
      * Gets the hint to apply.
@@ -175,6 +178,42 @@ public class CountOptions {
         return this;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public CountOptions comment(@Nullable final String comment) {
+        this.comment = comment == null ? null : new BsonString(comment);
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public CountOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "CountOptions{"
@@ -184,6 +223,7 @@ public class CountOptions {
                 + ", skip=" + skip
                 + ", maxTimeMS=" + maxTimeMS
                 + ", collation=" + collation
+                + ", comment=" + comment
                 + '}';
     }
 }

@@ -19,6 +19,7 @@ package org.mongodb.scala
 import java.util.concurrent.TimeUnit
 import com.mongodb.{ CursorType, ExplainVerbosity }
 import com.mongodb.reactivestreams.client.FindPublisher
+import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
@@ -205,6 +206,21 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    * @since 2.2
    */
   def comment(comment: String): FindObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note The comment can be any valid BSON type for server versions 4.4 and above.
+   *       Server versions between 3.6 and 4.2 only support
+   *       string as comment, and providing a non-string type will result in a server-side error.
+   */
+  def comment(comment: BsonValue): FindObservable[TResult] = {
     wrapped.comment(comment)
     this
   }

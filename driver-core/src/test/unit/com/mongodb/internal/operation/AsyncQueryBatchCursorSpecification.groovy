@@ -51,7 +51,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connection)
 
         def firstBatch = new QueryResult(NAMESPACE, [], 42, SERVER_ADDRESS)
-        def cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, batchSize, maxTimeMS, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, batchSize, maxTimeMS, CODEC, null, connectionSource,
                 connection)
         def expectedCommand = new BsonDocument('getMore': new BsonInt64(CURSOR_ID))
                 .append('collection', new BsonString(NAMESPACE.getCollectionName()))
@@ -96,7 +96,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connection)
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 0, 0, CODEC, connectionSource, connection)
+        def cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 0, 0, CODEC, null, connectionSource, connection)
         cursor.close()
 
         then:
@@ -129,7 +129,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(referenceCountedAsyncConnection())
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(FIRST_BATCH, 0), 0, 0, 0, CODEC, connectionSource, null)
+        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(FIRST_BATCH, 0), 0, 0, 0, CODEC, null, connectionSource, null)
 
         then:
         nextBatch(cursor) == FIRST_BATCH
@@ -159,7 +159,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def thirdBatch = [new Document('_id', 6)]
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(firstBatch), 6, 2, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(firstBatch), 6, 2, 0, CODEC, null, connectionSource,
                 connectionA)
         def batch = nextBatch(cursor)
 
@@ -226,7 +226,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def queryResult = queryResult()
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(queryResult, 1, 0, 0, CODEC, connectionSource, connection)
+        def cursor = new AsyncQueryBatchCursor<Document>(queryResult, 1, 0, 0, CODEC, null, connectionSource, connection)
 
         then:
         if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
@@ -260,7 +260,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connection)
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(queryResult([], 42), 3, 0, 0, CODEC, connectionSource, connection)
+        def cursor = new AsyncQueryBatchCursor<Document>(queryResult([], 42), 3, 0, 0, CODEC, null, connectionSource, connection)
         def batch = nextBatch(cursor)
 
         then:
@@ -318,7 +318,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def initialResult = queryResult()
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 3, 0, 0, CODEC, connectionSource, connection)
+        def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 3, 0, 0, CODEC, null, connectionSource, connection)
         def batch = nextBatch(cursor)
 
         then:
@@ -372,7 +372,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
                 : queryResult([], getMoreResponseHasCursor ? 42 : 0)
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 0, 0, 0, CODEC, connectionSource, connectionA)
+        def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 0, 0, 0, CODEC, null, connectionSource, connectionA)
         def batch = nextBatch(cursor)
 
         then:
@@ -428,7 +428,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def initialResult = queryResult()
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 0, 0, 0, CODEC, connectionSource, connectionA)
+        def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 0, 0, 0, CODEC, null, connectionSource, connectionA)
         def batch = nextBatch(cursor)
 
         then:
@@ -475,7 +475,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         given:
         def connection = referenceCountedAsyncConnection()
         def connectionSource = getAsyncConnectionSourceWithResult(ServerType.STANDALONE) { [null, MONGO_EXCEPTION] }
-        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(), 0, 0, 0, CODEC, connectionSource, connection)
+        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(), 0, 0, 0, CODEC, null, connectionSource, connection)
 
         when:
         cursor.close()
@@ -497,7 +497,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSourceWithResult(ServerType.STANDALONE) { [null, MONGO_EXCEPTION] }
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(), 0, 0, 0, CODEC, connectionSource, connection)
+        def cursor = new AsyncQueryBatchCursor<Document>(queryResult(), 0, 0, 0, CODEC, null, connectionSource, connection)
 
         then:
         nextBatch(cursor)
@@ -525,7 +525,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connectionA, connectionB)
 
         when:
-        def cursor = new AsyncQueryBatchCursor<Document>(queryResult([]), 0, 0, 0, CODEC, connectionSource,
+        def cursor = new AsyncQueryBatchCursor<Document>(queryResult([]), 0, 0, 0, CODEC, null, connectionSource,
                 connectionA)
 
         then:

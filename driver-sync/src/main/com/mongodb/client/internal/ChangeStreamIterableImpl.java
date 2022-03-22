@@ -33,7 +33,9 @@ import com.mongodb.internal.operation.ChangeStreamOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.Codec;
 import org.bson.codecs.RawBsonDocumentCodec;
@@ -64,6 +66,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     private long maxAwaitTimeMS;
     private Collation collation;
     private BsonTimestamp startAtOperationTime;
+    private BsonValue comment;
 
     public ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
                                     final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
@@ -148,6 +151,19 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         return this;
     }
 
+
+    @Override
+    public ChangeStreamIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment == null ? null : new BsonString(comment);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<TResult> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public MongoCursor<ChangeStreamDocument<TResult>> iterator() {
         return cursor();
@@ -178,10 +194,11 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     private ReadOperation<BatchCursor<RawBsonDocument>> createChangeStreamOperation() {
-        return new ChangeStreamOperation<RawBsonDocument>(namespace, fullDocument,  createBsonDocumentList(pipeline),
+        return new ChangeStreamOperation<>(namespace, fullDocument,  createBsonDocumentList(pipeline),
                 new RawBsonDocumentCodec(), changeStreamLevel)
                         .batchSize(getBatchSize())
                         .collation(collation)
+                        .comment(comment)
                         .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                         .resumeAfter(resumeToken)
                         .startAtOperationTime(startAtOperationTime)

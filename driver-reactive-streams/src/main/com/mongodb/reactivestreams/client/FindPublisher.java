@@ -20,6 +20,7 @@ import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -168,6 +169,20 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @since 1.6
      */
     FindPublisher<TResult> comment(@Nullable String comment);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>The comment can be any valid BSON type for server versions 4.4 and above.
+     * Server versions between 3.6 and 4.2 only support string as comment,
+     * and providing a non-string type will result in a server-side error.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    FindPublisher<TResult> comment(@Nullable BsonValue comment);
 
     /**
      * Sets the hint for which index to use. A null value means no hint is set.

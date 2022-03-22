@@ -16,12 +16,13 @@
 
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
-
 import com.mongodb.client.DistinctIterable
 import com.mongodb.client.model.Collation
+import org.bson.BsonValue
 import org.bson.conversions.Bson
 import org.mongodb.scala.DistinctObservable
+
+import java.util.concurrent.TimeUnit
 
 case class SyncDistinctIterable[T](wrapped: DistinctObservable[T])
     extends SyncMongoIterable[T]
@@ -43,6 +44,16 @@ case class SyncDistinctIterable[T](wrapped: DistinctObservable[T])
 
   override def collation(collation: Collation): DistinctIterable[T] = {
     wrapped.collation(collation)
+    this
+  }
+
+  override def comment(comment: String): DistinctIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  override def comment(comment: BsonValue): DistinctIterable[T] = {
+    wrapped.comment(comment)
     this
   }
 }

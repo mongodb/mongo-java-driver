@@ -103,7 +103,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private boolean noCursorTimeout;
     private boolean partial;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private BsonValue hint;
     private BsonDocument max;
     private BsonDocument min;
@@ -477,7 +477,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * @return the comment
      * @since 3.5
      */
-    public String getComment() {
+    public BsonValue getComment() {
         return comment;
     }
 
@@ -488,7 +488,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * @return this
      * @since 3.5
      */
-    public FindOperation<T> comment(final String comment) {
+    public FindOperation<T> comment(final BsonValue comment) {
         this.comment = comment;
         return this;
     }
@@ -685,7 +685,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                             isPartial(),
                             isOplogReplay(),
                             decoder, binding.getRequestContext());
-                    return new QueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
+                    return new QueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
+                            connection);
                 }
             });
         });
@@ -731,7 +732,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                                             releasingCallback.onResult(null, t);
                                                         } else {
                                                             releasingCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit,
-                                                                    batchSize, getMaxTimeForCursor(), decoder, source, connection),
+                                                                    batchSize, getMaxTimeForCursor(), decoder, comment, source, connection),
                                                                     null);
                                                         }
                                                     }
@@ -794,7 +795,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             document.put("$readPreference", readPreference.toDocument());
         }
         if (comment != null) {
-            document.put("$comment", new BsonString(comment));
+            document.put("$comment", comment);
         }
         if (hint != null) {
             document.put("$hint", hint);
@@ -869,7 +870,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             commandDocument.put("collation", collation.asDocument());
         }
         if (comment != null) {
-            commandDocument.put("comment", new BsonString(comment));
+            commandDocument.put("comment", comment);
         }
         if (hint != null) {
             commandDocument.put("hint", hint);
@@ -917,7 +918,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                                          final Connection connection) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                         connection.getDescription().getServerAddress());
-                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection, result);
+                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection,
+                        result);
             }
         };
     }
@@ -933,8 +935,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                              final AsyncConnection connection) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                         connection.getDescription().getServerAddress());
-                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection,
-                        result);
+                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
+                        connection, result);
             }
         };
     }

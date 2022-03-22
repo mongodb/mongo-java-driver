@@ -16,15 +16,16 @@
 
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
-import com.mongodb.{ CursorType, ExplainVerbosity }
 import com.mongodb.client.FindIterable
 import com.mongodb.client.model.Collation
+import com.mongodb.{ CursorType, ExplainVerbosity }
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.mongodb.scala.FindObservable
+import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
+import java.util.concurrent.TimeUnit
 import scala.reflect.ClassTag
 
 case class SyncFindIterable[T](wrapped: FindObservable[T]) extends SyncMongoIterable[T] with FindIterable[T] {
@@ -94,6 +95,11 @@ case class SyncFindIterable[T](wrapped: FindObservable[T]) extends SyncMongoIter
   }
 
   override def comment(comment: String): FindIterable[T] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  override def comment(comment: BsonValue): FindIterable[T] = {
     wrapped.comment(comment)
     this
   }

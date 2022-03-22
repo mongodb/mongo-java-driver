@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 
 /**
  * The options to apply to an operation that inserts multiple documents into a collection.
@@ -28,6 +30,7 @@ import com.mongodb.lang.Nullable;
 public final class InsertManyOptions {
     private boolean ordered = true;
     private Boolean bypassDocumentValidation;
+    private BsonValue comment;
 
     /**
      * Gets whether the documents should be inserted in the order provided, stopping on the first failed insertion. The default is true.
@@ -65,6 +68,8 @@ public final class InsertManyOptions {
     /**
      * Sets the bypass document level validation flag.
      *
+     * <p>For bulk operations use: {@link BulkWriteOptions#bypassDocumentValidation(Boolean)}</p>
+     *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
      * @since 3.2
@@ -75,11 +80,52 @@ public final class InsertManyOptions {
         return this;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(String)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public InsertManyOptions comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(BsonValue)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public InsertManyOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "InsertManyOptions{"
                 + "ordered=" + ordered
                 + ", bypassDocumentValidation=" + bypassDocumentValidation
+                + ", comment=" + comment
                 + '}';
     }
 }

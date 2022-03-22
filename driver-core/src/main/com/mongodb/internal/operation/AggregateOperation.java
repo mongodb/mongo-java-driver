@@ -209,22 +209,22 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
      * Returns the comment to send with the aggregate. The default is not to include a comment with the aggregation.
      *
      * @return the comment
-     * @since 3.6
+     * @since 4.6
      * @mongodb.server.release 3.6
      */
-    public String getComment() {
+    public BsonValue getComment() {
         return wrapped.getComment();
     }
 
     /**
-     * Sets the comment to the aggregation. A null value means no comment is set.
+     * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment
      * @return this
-     * @since 3.6
+     * @since 4.6
      * @mongodb.server.release 3.6
      */
-    public AggregateOperation<T> comment(final String comment) {
+    public AggregateOperation<T> comment(final BsonValue comment) {
         wrapped.comment(comment);
         return this;
     }

@@ -21,6 +21,8 @@ import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +32,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListIndexesPublisher<T> {
 
     private long maxTimeMS;
+    private BsonValue comment;
 
     ListIndexesPublisherImpl(
             @Nullable final ClientSession clientSession,
@@ -37,18 +40,29 @@ final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implemen
         super(clientSession, mongoOperationPublisher);
     }
 
-    public ListIndexesPublisherImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListIndexesPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-    public ListIndexesPublisherImpl<T> batchSize(final int batchSize) {
+    public ListIndexesPublisher<T> batchSize(final int batchSize) {
         super.batchSize(batchSize);
+        return this;
+    }
+    @Override
+    public ListIndexesPublisher<T> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public ListIndexesPublisher<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
         return this;
     }
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        return getOperations().listIndexes(getDocumentClass(), initialBatchSize, maxTimeMS);
+        return getOperations().listIndexes(getDocumentClass(), initialBatchSize, maxTimeMS, comment);
     }
 }

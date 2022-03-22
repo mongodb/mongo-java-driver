@@ -17,8 +17,8 @@
 package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
-
 import com.mongodb.reactivestreams.client.DistinctPublisher
+import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
 
@@ -80,6 +80,32 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    */
   def batchSize(batchSize: Int): DistinctObservable[TResult] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: String): DistinctObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: BsonValue): DistinctObservable[TResult] = {
+    wrapped.comment(comment)
     this
   }
 

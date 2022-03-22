@@ -17,8 +17,8 @@
 package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
-
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
+import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.conversions.Bson
 
 import scala.concurrent.duration.Duration
@@ -65,6 +65,32 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    */
   def batchSize(batchSize: Int): ListCollectionsObservable[TResult] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: String): ListCollectionsObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: BsonValue): ListCollectionsObservable[TResult] = {
+    wrapped.comment(comment)
     this
   }
 

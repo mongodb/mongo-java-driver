@@ -21,6 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
@@ -40,6 +41,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     private boolean retryReads;
     private BsonDocument filter;
     private BsonValue hint;
+    private BsonValue comment;
     private long skip;
     private long limit;
     private long maxTimeMS;
@@ -114,6 +116,16 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return this;
     }
 
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    public CountDocumentsOperation comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public Long execute(final ReadBinding binding) {
         BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding);
@@ -141,6 +153,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return new AggregateOperation<BsonDocument>(namespace, getPipeline(), DECODER)
                 .retryReads(retryReads)
                 .collation(collation)
+                .comment(comment)
                 .hint(hint)
                 .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
     }

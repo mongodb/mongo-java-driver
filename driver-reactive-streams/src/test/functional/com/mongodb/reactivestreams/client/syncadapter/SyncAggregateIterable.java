@@ -20,6 +20,7 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
@@ -81,6 +82,12 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
 
     @Override
     public AggregateIterable<T> comment(@Nullable final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<T> comment(@Nullable final BsonValue comment) {
         wrapped.comment(comment);
         return this;
     }

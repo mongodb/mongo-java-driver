@@ -72,7 +72,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     private long maxTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private BsonValue hint;
     private BsonDocument variables;
 
@@ -284,10 +284,10 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
      * Returns the comment to send with the aggregate. The default is not to include a comment with the aggregation.
      *
      * @return the comment
-     * @since 3.6
+     * @since 4.6
      * @mongodb.server.release 3.6
      */
-    public String getComment() {
+    public BsonValue getComment() {
         return comment;
     }
 
@@ -297,14 +297,14 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     }
 
     /**
-     * Sets the comment to the aggregation. A null value means no comment is set.
+     * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment
      * @return this
-     * @since 3.6
+     * @since 4.6
      * @mongodb.server.release 3.6
      */
-    public AggregateToCollectionOperation comment(final String comment) {
+    public AggregateToCollectionOperation comment(final BsonValue comment) {
         this.comment = comment;
         return this;
     }
@@ -389,7 +389,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
             commandDocument.put("collation", collation.asDocument());
         }
         if (comment != null) {
-            commandDocument.put("comment", new BsonString(comment));
+            commandDocument.put("comment", comment);
         }
         if (hint != null) {
             commandDocument.put("hint", hint);

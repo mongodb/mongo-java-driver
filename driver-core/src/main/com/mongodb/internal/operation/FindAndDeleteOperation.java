@@ -27,6 +27,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 import org.bson.conversions.Bson;
@@ -56,6 +57,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     private Collation collation;
     private Bson hint;
     private String hintString;
+    private BsonValue comment;
 
     /**
      * Construct a new instance.
@@ -248,6 +250,28 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
+    /**
+     * @return comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public FindAndDeleteOperation<T> comment(final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     protected String getDatabaseName() {
         return getNamespace().getDatabaseName();
@@ -284,6 +308,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
                 commandDocument.put("hint", new BsonString(hintString));
             }
         }
+        putIfNotNull(commandDocument, "comment", comment);
         addTxnNumberToCommand(serverDescription, connectionDescription, commandDocument, sessionContext);
         return commandDocument;
     }

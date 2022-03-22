@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 /**
@@ -30,6 +32,7 @@ public class DeleteOptions {
     private Bson hint;
     private String hintString;
     private Collation collation;
+    private BsonValue comment;
 
     /**
      * Returns the collation options
@@ -107,12 +110,53 @@ public class DeleteOptions {
         return this;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(String)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public DeleteOptions comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(BsonValue)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public DeleteOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "DeleteOptions{"
                 + "collation=" + collation
                 + ", hint=" + hint
                 + ", hintString='" + hintString + '\''
+                + ", comment=" + comment
                 + '}';
     }
 }
