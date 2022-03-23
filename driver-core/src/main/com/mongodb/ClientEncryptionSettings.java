@@ -21,6 +21,7 @@ import com.mongodb.annotations.NotThreadSafe;
 import javax.net.ssl.SSLContext;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.unmodifiableMap;
@@ -39,6 +40,7 @@ public final class ClientEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
+    private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
     /**
      * A builder for {@code ClientEncryptionSettings} so that {@code ClientEncryptionSettings} can be immutable, and to support easier
@@ -49,6 +51,7 @@ public final class ClientEncryptionSettings {
         private MongoClientSettings keyVaultMongoClientSettings;
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
+        private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
 
         /**
@@ -80,10 +83,27 @@ public final class ClientEncryptionSettings {
          *
          * @param kmsProviders the KMS providers map, which may not be null
          * @return this
+         * @see #kmsProviderPropertySuppliers(Map)
          * @see #getKmsProviders()
          */
         public Builder kmsProviders(final Map<String, Map<String, Object>> kmsProviders) {
             this.kmsProviders = notNull("kmsProviders", kmsProviders);
+            return this;
+        }
+
+        /**
+         * This method is similar to {@link #kmsProviders(Map)}, but instead of setting properties for KMS providers,
+         * it sets {@link Supplier}s of properties.
+         *
+         * @param kmsProviderPropertySuppliers A {@link Map} where keys identify KMS providers,
+         * and values specify {@link Supplier}s of properties for the KMS providers.
+         * Must not be null. Each {@link Supplier} must return non-empty properties.
+         * @return this
+         * @see #getKmsProviderPropertySuppliers()
+         * @since 4.6
+         */
+        public Builder kmsProviderPropertySuppliers(final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
+            this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", kmsProviderPropertySuppliers);
             return this;
         }
 
@@ -197,11 +217,31 @@ public final class ClientEncryptionSettings {
      * <ul>
      *     <li>key: byte[] of length 96, the local key</li>
      * </ul>
-     *
+     * <p>
+     * It is also permitted for the value of a kms provider to be an empty map, in which case the driver will first
+     * </p>
+     * <ul>
+     *  <li>use the {@link Supplier} configured in {@link #getKmsProviderPropertySuppliers()} to obtain a non-empty map</li>
+     *  <li>attempt to obtain the properties from the environment</li>
+     * </ul>
      * @return map of KMS provider properties
+     * @see #getKmsProviderPropertySuppliers()
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
         return unmodifiableMap(kmsProviders);
+    }
+
+    /**
+     * This method is similar to {@link #getKmsProviders()}, but instead of getting properties for KMS providers,
+     * it gets {@link Supplier}s of properties.
+     * <p>If {@link #getKmsProviders()} returns empty properties for a KMS provider,
+     * the driver will use a {@link Supplier} of properties configured for the KMS provider to obtain non-empty properties.</p>
+     *
+     * @return A {@link Map} where keys identify KMS providers, and values specify {@link Supplier}s of properties for the KMS providers.
+     * @since 4.6
+     */
+    public Map<String, Supplier<Map<String, Object>>> getKmsProviderPropertySuppliers() {
+        return unmodifiableMap(kmsProviderPropertySuppliers);
     }
 
     /**
@@ -223,6 +263,7 @@ public final class ClientEncryptionSettings {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
+        this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
     }
 
