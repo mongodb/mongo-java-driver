@@ -83,6 +83,7 @@ public final class ClientEncryptionSettings {
          *
          * @param kmsProviders the KMS providers map, which may not be null
          * @return this
+         * @see #kmsProviderPropertySuppliers(Map)
          * @see #getKmsProviders()
          */
         public Builder kmsProviders(final Map<String, Map<String, Object>> kmsProviders) {
@@ -91,9 +92,12 @@ public final class ClientEncryptionSettings {
         }
 
         /**
-         * Set the KMS provider to Supplier map
+         * This method is similar to {@link #kmsProviders(Map)}, but instead of setting properties for KMS providers,
+         * it sets {@link Supplier}s of properties.
          *
-         * @param kmsProviderPropertySuppliers the KMS provider to Supplier map, which may not be null
+         * @param kmsProviderPropertySuppliers A {@link Map} where keys identify KMS providers,
+         * and values specify {@link Supplier}s of properties for the KMS providers.
+         * Must not be null. Each {@link Supplier} must return non-empty properties.
          * @return this
          * @see #getKmsProviderPropertySuppliers()
          * @since 4.6
@@ -221,21 +225,19 @@ public final class ClientEncryptionSettings {
      *  <li>attempt to obtain the properties from the environment</li>
      * </ul>
      * @return map of KMS provider properties
+     * @see #getKmsProviderPropertySuppliers()
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
         return unmodifiableMap(kmsProviders);
     }
 
     /**
-     * Gets the KMS provider to Supplier map.
+     * This method is similar to {@link #getKmsProviders()}, but instead of getting properties for KMS providers,
+     * it gets {@link Supplier}s of properties.
+     * <p>If {@link #getKmsProviders()} returns empty properties for a KMS provider,
+     * the driver will use a {@link Supplier} of properties configured for the KMS provider to obtain non-empty properties.</p>
      *
-     * <p>
-     * If the {@link #getKmsProviders()} map contains an empty map as its value, the driver will use a {@link Supplier} configured for
-     * the same provider in this map to obtain a non-empty map that contains the properties for the provider.
-     * </p>
-     *
-     * @return the KMS provider to Supplier map
-     * @see #getKmsProviders()
+     * @return A {@link Map} where keys identify KMS providers, and values specify {@link Supplier}s of properties for the KMS providers.
      * @since 4.6
      */
     public Map<String, Supplier<Map<String, Object>>> getKmsProviderPropertySuppliers() {
