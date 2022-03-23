@@ -26,6 +26,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -63,6 +64,7 @@ import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
@@ -286,7 +288,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 try {
                     nextServerCursor = initFromCommandResult(connection.command(namespace.getDatabaseName(),
-                            asGetMoreCommandDocument(serverCursor),
+                            asGetMoreCommandDocument(serverCursor.getId(), connection.getDescription()),
                             NO_OP_FIELD_NAME_VALIDATOR,
                             ReadPreference.primary(),
                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
@@ -307,8 +309,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         });
     }
 
-    private BsonDocument asGetMoreCommandDocument(final ServerCursor serverCursor) {
-        BsonDocument document = new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
+    private BsonDocument asGetMoreCommandDocument(final long cursorId, final ConnectionDescription connectionDescription) {
+        BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursorId))
                                 .append("collection", new BsonString(namespace.getCollectionName()));
 
         int batchSizeForGetMoreCommand = Math.abs(getNumberToReturn(limit, this.batchSize, count));
@@ -318,7 +320,9 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         if (maxTimeMS != 0) {
             document.append("maxTimeMS", new BsonInt64(maxTimeMS));
         }
-        putIfNotNull(document, "comment", comment);
+        if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {
+            putIfNotNull(document, "comment", comment);
+        }
         return document;
     }
 
