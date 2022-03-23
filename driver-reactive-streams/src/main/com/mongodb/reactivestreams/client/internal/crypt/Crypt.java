@@ -51,6 +51,7 @@ public class Crypt implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final MongoCrypt mongoCrypt;
     private final Map<String, Map<String, Object>> kmsProviders;
+    private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final CollectionInfoRetriever collectionInfoRetriever;
     private final CommandMarker commandMarker;
     private final KeyRetriever keyRetriever;
@@ -67,9 +68,11 @@ public class Crypt implements Closeable {
      * @param keyRetriever         the key retriever
      * @param keyManagementService the key management service
      */
-    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders, final KeyRetriever keyRetriever,
+    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders,
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers,
+            final KeyRetriever keyRetriever,
             final KeyManagementService keyManagementService) {
-        this(mongoCrypt, kmsProviders, null, null, keyRetriever, keyManagementService, false, null);
+        this(mongoCrypt, kmsProviders, kmsProviderPropertySuppliers, null, null, keyRetriever, keyManagementService, false, null);
     }
 
     /**
@@ -83,6 +86,7 @@ public class Crypt implements Closeable {
      */
     Crypt(final MongoCrypt mongoCrypt,
           final Map<String, Map<String, Object>> kmsProviders,
+          final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers,
           @Nullable final CollectionInfoRetriever collectionInfoRetriever,
           @Nullable final CommandMarker commandMarker,
           final KeyRetriever keyRetriever,
@@ -91,6 +95,7 @@ public class Crypt implements Closeable {
           @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
         this.kmsProviders = kmsProviders;
+        this.kmsProviderPropertySuppliers = kmsProviderPropertySuppliers;
         this.collectionInfoRetriever = collectionInfoRetriever;
         this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
@@ -240,7 +245,7 @@ public class Crypt implements Closeable {
     private void fetchCredentials(final MongoCryptContext cryptContext, @Nullable final String databaseName,
             final MonoSink<RawBsonDocument> sink) {
         try {
-            cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders));
+            cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders, kmsProviderPropertySuppliers));
             executeStateMachineWithSink(cryptContext, databaseName, sink);
         } catch (Exception e) {
             sink.error(e);
