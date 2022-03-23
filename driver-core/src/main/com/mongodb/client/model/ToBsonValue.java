@@ -15,18 +15,18 @@
  */
 package com.mongodb.client.model;
 
-import com.mongodb.annotations.Beta;
-import org.bson.conversions.Bson;
-
-import java.util.List;
+import com.mongodb.annotations.Evolving;
+import org.bson.BsonValue;
 
 /**
- * The core part of the {@link Aggregates#setWindowFields(Object, Bson, List) $setWindowFields} pipeline stage of an aggregation pipeline.
- * A triple of a window function, a {@linkplain Window window} and a path to a field to be computed by the window function over the window.
- *
- * @see WindowedComputations
- * @since 4.3
+ * An interface for types that are able to render themselves into a {@link BsonValue}.
  */
-@Beta
-public interface WindowedComputation extends ToBsonField {
+@Evolving
+public interface ToBsonValue {
+    /**
+     * Renders into {@link BsonValue}.
+     *
+     * @return A {@link BsonValue} representation.
+     */
+    BsonValue toBsonValue();
 }

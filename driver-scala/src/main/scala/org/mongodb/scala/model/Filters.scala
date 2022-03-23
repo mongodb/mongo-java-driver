@@ -318,6 +318,9 @@ object Filters {
 
   /**
    * Creates a filter that matches all documents matching the given search term.
+   * You may use [[Projections.meta]] to extract the metadata associated with the matched documents.
+   *
+   * VAKOTODO Link to Aggregates.search.
    *
    * @param search the search term
    * @return the filter
@@ -327,6 +330,9 @@ object Filters {
 
   /**
    * Creates a filter that matches all documents matching the given search term using the given language.
+   * You may use [[Projections.metaTextScore]] to extract the relevance score assigned to each matched document.
+   *
+   * VAKOTODO Link to Aggregates.search.
    *
    * @param search   the search term
    * @param textSearchOptions the text search options to use

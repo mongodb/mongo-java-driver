@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.model;
-
-import com.mongodb.annotations.Beta;
-import org.bson.conversions.Bson;
-
-import java.util.List;
 
 /**
- * The core part of the {@link Aggregates#setWindowFields(Object, Bson, List) $setWindowFields} pipeline stage of an aggregation pipeline.
- * A triple of a window function, a {@linkplain Window window} and a path to a field to be computed by the window function over the window.
+ * Contains builders related to the embedded full-text search in MongoDB Atlas.
  *
- * @see WindowedComputations
- * @since 4.3
+ * @mongodb.atlas.manual atlas-search/query-syntax/ Atlas search aggregation pipeline stages
+ * @since 4.6
  */
-@Beta
-public interface WindowedComputation extends ToBsonField {
-}
+@NonNullApi
+package com.mongodb.client.model.search;
+
+import com.mongodb.lang.NonNullApi;

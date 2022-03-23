@@ -95,17 +95,19 @@ object Projections {
    * @param fieldName the field name
    * @param metaFieldName the meta field name
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/meta/#projection meta]]
+   * @see [[https://docs.mongodb.com/manual/reference/operator/aggregation/meta/ meta]]
    * @since 4.1
    */
   def meta(fieldName: String, metaFieldName: String): Bson = JProjections.meta(fieldName, metaFieldName)
 
   /**
    * Creates a projection to the given field name of the textScore, for use with text queries.
+   * Calling this method is equivalent to calling [[Projections.meta]] with `"textScore"` as the second argument.
    *
    * @param fieldName the field name
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/meta/#projection textScore]]
+   * @see Filters.text(String, TextSearchOptions)
+   * @see [[https://docs.mongodb.com/manual/reference/operator/aggregation/meta/#text-score-metadata--meta---textscore- textScore]]
    */
   def metaTextScore(fieldName: String): Bson = JProjections.metaTextScore(fieldName)
 

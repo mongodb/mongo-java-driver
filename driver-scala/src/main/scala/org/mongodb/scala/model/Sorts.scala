@@ -55,7 +55,8 @@ object Sorts {
    *
    * @param fieldName the field name
    * @return the sort specification
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/meta/#sort textScore]]
+   * @see Filters.text(String, TextSearchOptions)
+   * @see [[https://docs.mongodb.com/manual/reference/operator/aggregation/meta/#text-score-metadata--meta---textscore- textScore]]
    */
   def metaTextScore(fieldName: String): Bson = JSorts.metaTextScore(fieldName)
 

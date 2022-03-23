@@ -17,6 +17,8 @@
 package com.mongodb.client.model
 
 import com.mongodb.MongoNamespace
+import com.mongodb.client.model.search.SearchCollector
+import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
@@ -43,7 +45,6 @@ import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
-import static com.mongodb.client.model.Aggregates.facet
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -55,6 +56,7 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.search
 import static com.mongodb.client.model.Aggregates.set
 import static com.mongodb.client.model.Aggregates.setWindowFields
 import static com.mongodb.client.model.Aggregates.skip
@@ -73,6 +75,14 @@ import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Windows.Bound.CURRENT
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
+import static com.mongodb.client.model.search.SearchCollector.facet
+import static com.mongodb.client.model.search.SearchCount.total
+import static com.mongodb.client.model.search.SearchFacet.stringFacet
+import static com.mongodb.client.model.search.SearchHighlight.paths
+import static com.mongodb.client.model.search.SearchOperator.exists
+import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions
+import static com.mongodb.client.model.search.SearchPath.fieldPath
+import static com.mongodb.client.model.search.SearchPath.wildcardPath
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
@@ -277,7 +287,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should render $facet'() {
         expect:
-        toBson(facet(
+        toBson(Aggregates.facet(
                 new Facet('Screen Sizes',
                                unwind('$attributes'),
                                match(eq('attributes.name', 'screen size')),
@@ -544,6 +554,115 @@ class AggregatesSpecification extends Specification {
         }''')
     }
 
+    def 'should render $search'() {
+        when:
+        BsonDocument searchDoc = toBson(
+                search(
+                        (SearchOperator) exists(fieldPath('fieldName')),
+                        defaultSearchOptions()
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "exists": {
+                        "path": "fieldName"
+                    }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(
+                search(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('stringFacetName', fieldPath('fieldName1'))]),
+                        defaultSearchOptions()
+                                .index('indexName')
+                                .count(total())
+                                .highlight(paths([
+                                        fieldPath('fieldName1'),
+                                        fieldPath('fieldName2').multi('analyzerName'),
+                                        wildcardPath('field.name*')]))
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "facet": {
+                        "operator": {
+                            "exists": {
+                                "path": "fieldName"
+                            }
+                        },
+                        "facets": {
+                            "stringFacetName": {
+                                "type" : "string",
+                                "path": "fieldName1"
+                            }
+                        }
+                    },
+                    "index": "indexName",
+                    "count": {
+                        "type": "total"
+                    },
+                    "highlight": {
+                        "path": [
+                            "fieldName1",
+                            {
+                                "value": "fieldName2",
+                                "multi": "analyzerName"
+                            },
+                            {
+                                "wildcard": "field.name*"
+                            }
+                        ]
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $search with null options'() {
+        when:
+        BsonDocument searchDoc = toBson(search((SearchOperator) exists(fieldPath('fieldName')), null))
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "exists": {
+                        "path": "fieldName"
+                    }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(search((SearchCollector) facet(exists(fieldPath('fieldName')),
+                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)]),
+                null))
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "facet": {
+                        "operator": {
+                            "exists": {
+                                "path": "fieldName"
+                            }
+                        },
+                        "facets": {
+                            "facetName": {
+                                "type": "string",
+                                "path": "fieldName",
+                                "numBuckets": 3
+                            }
+                        }
+                    }
+                }
+        }''')
+    }
+
     def 'should create string representation for simple stages'() {
         expect:
         match(new BsonDocument('x', new BsonInt32(1))).toString() == 'Stage{name=\'$match\', value={"x": 1}}'
@@ -801,7 +920,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should test equals for FacetStage'() {
         expect:
-        facet(
+        Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),
@@ -811,7 +930,7 @@ class AggregatesSpecification extends Specification {
                         group('$attributes.value', sum('count', 1)),
                         sort(descending('count')),
                         limit(5)))
-                .equals(facet(
+                .equals(Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),
@@ -825,7 +944,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should test hashCode for FacetStage'() {
         expect:
-        facet(
+        Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),
@@ -835,7 +954,7 @@ class AggregatesSpecification extends Specification {
                         group('$attributes.value', sum('count', 1)),
                         sort(descending('count')),
                         limit(5))).hashCode() ==
-                facet(
+                Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),

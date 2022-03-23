@@ -18,6 +18,9 @@ package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Beta;
+import com.mongodb.client.model.search.SearchOperator;
+import com.mongodb.client.model.search.SearchCollector;
+import com.mongodb.client.model.search.SearchOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -31,6 +34,8 @@ import org.bson.conversions.Bson;
 import java.util.List;
 import java.util.Objects;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -648,6 +653,46 @@ public final class Aggregates {
                                                      final List<WindowedComputation> output) {
         notNull("output", output);
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "searchScore"} expression, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * <p>
+     * {@link Filters#text(String, TextSearchOptions)} is a legacy text search alternative.</p>
+     *
+     * @param operator A search operator.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@code null} is equivalent to specifying {@link SearchOptions#defaultSearchOptions()}.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.6
+     */
+    public static Bson search(final SearchOperator operator, @Nullable final SearchOptions options) {
+        return new SearchStage(notNull("operator", operator), options);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use {@code $meta: "searchScore"}, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param collector A search collector.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@code null} is equivalent to specifying {@link SearchOptions#defaultSearchOptions()}.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.6
+     */
+    public static Bson search(final SearchCollector collector, @Nullable final SearchOptions options) {
+        return new SearchStage(notNull("collector", collector), options);
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,
@@ -1608,6 +1653,81 @@ public final class Aggregates {
                     + ", partitionBy=" + partitionBy
                     + ", sortBy=" + sortBy
                     + ", output=" + output
+                    + '}';
+        }
+    }
+
+    private static final class SearchStage implements Bson {
+        @Nullable
+        private final SearchOperator operator;
+        @Nullable
+        private final SearchCollector collector;
+        @Nullable
+        private final SearchOptions options;
+
+        SearchStage(final SearchOperator operator, @Nullable final SearchOptions options) {
+            this(operator, null, options);
+        }
+
+        SearchStage(final SearchCollector collector, @Nullable final SearchOptions options) {
+            this(null, collector, options);
+        }
+
+        private SearchStage(
+                @Nullable final SearchOperator operator,
+                @Nullable final SearchCollector collector,
+                @Nullable final SearchOptions options) {
+            assertTrue(operator == null ^ collector == null);
+            this.operator = operator;
+            this.collector = collector;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeStartDocument("$search");
+            BsonField operatorOrCollector = operator != null
+                    ? assertNotNull(operator).toBsonField()
+                    : assertNotNull(collector).toBsonField();
+            writer.writeName(operatorOrCollector.getName());
+            BuildersHelper.encodeValue(writer, operatorOrCollector.getValue(), codecRegistry);
+            if (options != null) {
+                options.toBsonDocument().forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+            }
+            // end $search
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final SearchStage that = (SearchStage) o;
+            return Objects.equals(operator, that.operator) && Objects.equals(collector, that.collector) && Objects.equals(options, that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(operator, collector, options);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='$search'"
+                    + (operator != null ? ", operator=" + assertNotNull(operator) : ", collector=" + assertNotNull(collector))
+                    + ", options=" + options
                     + '}';
         }
     }

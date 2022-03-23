@@ -281,10 +281,22 @@ public class BasicBSONEncoder implements BSONEncoder {
      * Encodes any number field.
      *
      * @param name   the field name
-     * @param number the value
+     * @param number The value. The following types are supported:
+     * <ul>
+     *     <li>{@link Integer}</li>
+     *     <li>{@link Short}</li>
+     *     <li>{@link Byte}</li>
+     *     <li>{@link AtomicInteger}</li>
+     *     <li>{@link Long}</li>
+     *     <li>{@link AtomicLong}</li>
+     *     <li>{@link Float}</li>
+     *     <li>{@link Double}</li>
+     * </ul>
+     * @see #putDecimal128(String, Decimal128)
      */
     protected void putNumber(final String name, final Number number) {
         putName(name);
+        // must handle the same `Number`s as those handled by `NumberHandler.toBsonNumber`
         if (number instanceof Integer || number instanceof Short || number instanceof Byte || number instanceof AtomicInteger) {
             bsonWriter.writeInt32(number.intValue());
         } else if (number instanceof Long || number instanceof AtomicLong) {
@@ -303,6 +315,7 @@ public class BasicBSONEncoder implements BSONEncoder {
      * @param value the value
      * @since 3.4
      * @mongodb.server.release 3.4
+     * @see #putNumber(String, Number)
      */
     protected void putDecimal128(final String name, final Decimal128 value) {
         putName(name);

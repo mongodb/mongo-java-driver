@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.model;
 
-import com.mongodb.annotations.Beta;
-import org.bson.conversions.Bson;
+public final class AtlasManualTaglet extends DocTaglet {
+    @Override
+    public String getName() {
+        return "mongodb.atlas.manual";
+    }
 
-import java.util.List;
+    @Override
+    protected String getHeader() {
+        return "MongoDB Atlas documentation";
+    }
 
-/**
- * The core part of the {@link Aggregates#setWindowFields(Object, Bson, List) $setWindowFields} pipeline stage of an aggregation pipeline.
- * A triple of a window function, a {@linkplain Window window} and a path to a field to be computed by the window function over the window.
- *
- * @see WindowedComputations
- * @since 4.3
- */
-@Beta
-public interface WindowedComputation extends ToBsonField {
+    @Override
+    protected String getBaseDocURI() {
+        return "https://docs.atlas.mongodb.com/";
+    }
 }

@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.model;
+package com.mongodb.client.model.search;
 
-import com.mongodb.annotations.Beta;
-import org.bson.conversions.Bson;
+import com.mongodb.client.model.BsonField;
+import com.mongodb.internal.client.model.BsonFieldAdapter;
 
-import java.util.List;
-
-/**
- * The core part of the {@link Aggregates#setWindowFields(Object, Bson, List) $setWindowFields} pipeline stage of an aggregation pipeline.
- * A triple of a window function, a {@linkplain Window window} and a path to a field to be computed by the window function over the window.
- *
- * @see WindowedComputations
- * @since 4.3
- */
-@Beta
-public interface WindowedComputation extends ToBsonField {
+final class BsonFieldToManifoldAdapter extends BsonFieldAdapter implements ExistsSearchOperator, FacetSearchCollector, SearchFacet {
+    BsonFieldToManifoldAdapter(final BsonField field) {
+        super(field);
+    }
 }
