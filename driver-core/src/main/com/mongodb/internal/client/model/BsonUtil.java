@@ -16,7 +16,7 @@
 package com.mongodb.internal.client.model;
 
 import com.mongodb.client.model.ToBsonField;
-import com.mongodb.client.model.ToBsonValue;
+import com.mongodb.client.model.search.SearchPath;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -26,6 +26,8 @@ import java.util.Iterator;
 import static com.mongodb.assertions.Assertions.fail;
 
 public final class BsonUtil {
+    public static final String SEARCH_PATH_VALUE_KEY = "value";
+
     /**
      * Returns a {@link BsonDocument} constructed from the specified {@code fields}.
      *
@@ -41,23 +43,23 @@ public final class BsonUtil {
     }
 
     /**
-     * If {@code nonEmptyValues} has exactly one element, then returns the result of its {@link ToBsonValue#toBsonValue()},
+     * If {@code nonEmptyPaths} has exactly one element, then returns the result of {@link SearchPath#toBsonValue()},
      * otherwise returns a {@link BsonArray} of such results.
      *
-     * @param nonEmptyValues One or more values to be converted.
-     * @return A single {@link BsonValue} representing the specified values.
+     * @param nonEmptyPaths One or more path to be converted.
+     * @return A single {@link BsonValue} representing the specified paths.
      */
-    public static BsonValue toBsonValueOrArray(final Iterator<? extends ToBsonValue> nonEmptyValues) {
-        BsonValue firstValue = nonEmptyValues.next().toBsonValue();
-        if (nonEmptyValues.hasNext()) {
+    public static BsonValue toBsonValue(final Iterator<? extends SearchPath> nonEmptyPaths) {
+        BsonValue firstPath = nonEmptyPaths.next().toBsonValue();
+        if (nonEmptyPaths.hasNext()) {
             BsonArray bsonArray = new BsonArray();
-            bsonArray.add(firstValue);
-            while (nonEmptyValues.hasNext()) {
-                bsonArray.add(nonEmptyValues.next().toBsonValue());
+            bsonArray.add(firstPath);
+            while (nonEmptyPaths.hasNext()) {
+                bsonArray.add(nonEmptyPaths.next().toBsonValue());
             }
             return bsonArray;
         } else {
-            return firstValue;
+            return firstPath;
         }
     }
 

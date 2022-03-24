@@ -16,22 +16,23 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
-import com.mongodb.client.model.ToBsonValue;
+import com.mongodb.internal.client.model.BsonUtil;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.model.search.ConstructibleBsonToSearchPathAdapter.VALUE_KEY;
+import static com.mongodb.internal.client.model.BsonUtil.SEARCH_PATH_VALUE_KEY;
 
 /**
  * A specification of document fields to be searched.
  *
  * @mongodb.atlas.manual atlas-search/path-construction/ Path
- * @mongodb.driver.manual core/document/#dot-notation Dot notation
  * @since 4.6
  */
 @Evolving
-public interface SearchPath extends ToBsonValue {
+public interface SearchPath extends Bson {
     /**
      * Returns a {@link SearchPath} for the given {@code path}.
      *
@@ -44,7 +45,7 @@ public interface SearchPath extends ToBsonValue {
         if (path.contains("*")) {
             throw new IllegalArgumentException("path must not contain '*'");
         }
-        return new ConstructibleBsonToSearchPathAdapter(new BsonDocument(VALUE_KEY, new BsonString(path)));
+        return new ConstructibleBsonToManifoldAdapter(new BsonDocument(SEARCH_PATH_VALUE_KEY, new BsonString(path)));
     }
 
     /**
@@ -63,6 +64,29 @@ public interface SearchPath extends ToBsonValue {
         if (!wildcardPath.contains("*")) {
             throw new IllegalArgumentException("wildcardPath must contain '*'");
         }
-        return new ConstructibleBsonToSearchPathAdapter(new BsonDocument("wildcard", new BsonString(wildcardPath)));
+        return new ConstructibleBsonToManifoldAdapter(new BsonDocument("wildcard", new BsonString(wildcardPath)));
+    }
+
+    /**
+     * Renders the object as {@link BsonValue}.
+     * If {@link #toBsonDocument()} contains only the {@value BsonUtil#SEARCH_PATH_VALUE_KEY} key,
+     * then returns {@link BsonString} representing the value of this key,
+     * otherwise returns {@link #toBsonDocument()}.
+     *
+     * @return This {@link SearchPath} rendered as {@link BsonValue}.
+     */
+    default BsonValue toBsonValue() {
+        final BsonDocument doc = toBsonDocument();
+        if (doc.size() > 1) {
+            return doc;
+        } else {
+            final BsonString value = doc.getString(SEARCH_PATH_VALUE_KEY, null);
+            if (value != null) {
+                // paths that contain only `SEARCH_PATH_VALUE_KEY` can be represented as a `BsonString`
+                return value;
+            } else {
+                return doc;
+            }
+        }
     }
 }

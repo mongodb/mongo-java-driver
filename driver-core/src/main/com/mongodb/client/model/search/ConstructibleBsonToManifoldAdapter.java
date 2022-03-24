@@ -24,7 +24,7 @@ import org.bson.BsonValue;
 import static com.mongodb.assertions.Assertions.notNull;
 
 final class ConstructibleBsonToManifoldAdapter extends AbstractConstructibleBson<ConstructibleBsonToManifoldAdapter>
-        implements SearchOptions, SearchHighlight, TotalSearchCount, LowerBoundSearchCount {
+        implements SearchOptions, SearchHighlight, TotalSearchCount, LowerBoundSearchCount, FieldSearchPath, WildcardSearchPath {
     static final ConstructibleBsonToManifoldAdapter EMPTY = new ConstructibleBsonToManifoldAdapter(new BsonDocument());
 
     ConstructibleBsonToManifoldAdapter(final BsonDocument doc) {
@@ -69,5 +69,10 @@ final class ConstructibleBsonToManifoldAdapter extends AbstractConstructibleBson
     @Override
     public LowerBoundSearchCount threshold(final int threshold) {
         return newAppended("threshold", new BsonInt32(threshold));
+    }
+
+    @Override
+    public FieldSearchPath multi(final String analyzerName) {
+        return newAppended("multi", new BsonString(notNull("analyzerName", analyzerName)));
     }
 }
