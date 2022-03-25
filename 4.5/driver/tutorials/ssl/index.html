@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.98">
+<meta name="date" content="2022-03-25T14:39:25.96">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>TLS/SSL</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -363,7 +363,7 @@ import com.mongodb.client.MongoClient;
 <code>true</code>, as in:</p>
 
 <pre><code class="language-java">MongoClientSettings settings = MongoClientSettings.builder()
-        .applyToSslSettings(builder -&gt; 
+        .applyToSslSettings(builder -&gt;
             builder.enabled(true))
         .build();
 MongoClient client = MongoClients.create(settings);
@@ -567,7 +567,8 @@ command line program provided as part of the JDK. For example:</p>
 <h4 id="set-the-default-key-store">Set the Default Key Store</h4>
 
 <p>A typical application will also need to set several JVM system
-properties to ensure that the client <em>presents</em> an TLS/SSL <a href="https://docs.mongodb.com/manual/tutorial/configure-ssl/#set-up-mongod-and-mongos-with-client-certificate-validation">client certificate</a> to the
+properties to ensure that the client <em>presents</em> an TLS/SSL
+<a href="https://www.mongodb.com/docs/manual/tutorial/configure-ssl/#set-up-mongod-and-mongos-with-client-certificate-validation">client certificate</a> to the
 MongoDB server:</p>
 
 <ul>

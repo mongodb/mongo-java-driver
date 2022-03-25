@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:42.02">
+<meta name="date" content="2022-03-25T14:39:26.01">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Aggregates</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -328,7 +328,7 @@
 
 <p>The <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Aggregates.html
 "><code>Aggregates</code></a> class provides static factory methods
-that build <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#stages
+that build <a href="https://www.mongodb.org/docs/manual/meta/aggregation-quick-reference/#stages
 ">aggregation pipeline stages</a>.
 Each method returns an instance of the
 <a href="/mongo-java-driver/4.5/bson/documents/#bson"><code>Bson</code></a> type, which can in turn be passed to the <code>aggregate</code> method of <code>MongoCollection</code>.</p>
@@ -342,7 +342,7 @@ Each method returns an instance of the
 
 <h3 id="match">Match</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/match/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/match/
 "><code>$match</code></a> pipeline stage passes all documents matching the
 specified filter to the next stage.  Though the filter can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to
 combine with use of the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
@@ -356,7 +356,7 @@ combine with use of the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-c
 
 <h3 id="project">Project</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/project/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/project/
 "><code>$project</code></a> pipeline stage passes the projected fields of all
 documents to the next stage.  Though the projection can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to combine
 with use of the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Projections.html
@@ -379,7 +379,7 @@ with use of the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/
 
 <h3 id="sample">Sample</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/sample/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/sample/
 "><code>$sample</code></a> pipeline stage randomly select N documents from its input.
 This example creates a pipeline stage that randomly selects 5 documents from the collection:</p>
 
@@ -388,7 +388,7 @@ This example creates a pipeline stage that randomly selects 5 documents from the
 
 <h3 id="sort">Sort</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/sort/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/sort/
 "><code>$sort</code></a> pipeline stage passes all documents to the next stage,
 sorted by the specified sort criteria. Though the sort criteria can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to
 combine with use of the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Sorts.html
@@ -403,7 +403,7 @@ according to the value of the <code>posts</code> field:</p>
 
 <h3 id="skip">Skip</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/skip/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/skip/
 "><code>$skip</code></a> pipeline stage skips over the specified number of
 documents that pass into the stage and passes the remaining documents to the next stage.</p>
 
@@ -414,7 +414,7 @@ documents that pass into the stage and passes the remaining documents to the nex
 
 <h3 id="limit">Limit</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/limit/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/limit/
 "><code>$limit</code></a> pipeline stage limits the number of documents passed
 to the next stage.</p>
 
@@ -425,7 +425,7 @@ to the next stage.</p>
 
 <h3 id="lookup">Lookup</h3>
 
-<p>Starting in 3.2, MongoDB provides a new <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/lookup/
+<p>Starting in 3.2, MongoDB provides a new <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/lookup/
 "><code>$lookup</code></a> pipeline stage
 that performs a left outer join with another collection to filter in documents from the joined collection for processing.</p>
 
@@ -482,11 +482,11 @@ item and whether the quantity in stock is sufficient to cover the ordered quanti
 
 <h3 id="group">Group</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/group/
 "><code>$group</code></a> pipeline stage groups documents by some specified
 expression and outputs to the next stage a document for each distinct grouping.  A group consists of an <code>_id</code> which specifies the
 expression on which to group, and zero or more
-<a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
+<a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/group/#accumulator-operator
 ">accumulators</a> which are evaluated for each
 grouping.  To simplify the expression of accumulators, the driver includes an
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Accumulators.html
@@ -502,7 +502,7 @@ the <code>quantity</code> field into the <code>totalQuantity</code> and <code>av
 
 <h3 id="unwind">Unwind</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/unwind/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/unwind/
 "><code>$unwind</code></a> pipeline stage deconstructs an array field from the
 input documents to output a document for each element.</p>
 
@@ -524,7 +524,7 @@ the <code>$sizes</code> list is empty:</p>
 
 <h3 id="out">Out</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/out/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/out/
 "><code>$out</code></a> pipeline stage outputs all documents to the specified
 collection.  It must be the last stage in any aggregate pipeline:</p>
 
@@ -535,7 +535,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="merge">Merge</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/merge/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/merge/
 "><code>$merge</code></a> pipeline stage merges all documents into the specified
 collection.  It must be the last stage in any aggregate pipeline:</p>
 
@@ -554,7 +554,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="graphlookup">GraphLookup</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/graphLookup/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/graphLookup/
 "><code>$graphLookup</code></a> pipeline stage performs a recursive search on a specified collection to match field A of one document to some field B of the other documents. For the matching documents, the stage repeats the search to match field A from the matching documents to the field B of the remaining documents until no new documents are encountered or until a specified depth. To each output document, <code>$graphLookup</code> adds a new array field that contains the traversal results of the search for that document.</p>
 
 <p>The following example computes the social network graph for users in the <code>contacts</code> collection, recursively matching the value in the <code>friends</code> field to the <code>name</code> field, up to recursive depth of 1.</p>
@@ -573,7 +573,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="sortbycount">SortByCount</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/sortByCount/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/sortByCount/
 "><code>$sortByCount</code></a> stage groups documents by a given expression and then sorts these groups by count in descending order. The <code>sortByCount</code> outputs documents that contains an <code>_id</code> field, which contains the discrete values of the given expression, and the <code>count</code> field that contains the number of documents that fall into that group.</p>
 
 <p>The following example groups documents by the truncated value of the field <code>x</code> and computes the count for each distinct value of <code>x</code>.</p>
@@ -583,7 +583,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="replaceroot">ReplaceRoot</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/replaceRoot/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/replaceRoot/
 "><code>$replaceRoot</code></a> pipeline stage replaces each input document to the stage with the specified document. All existing fields, including the <code>_id</code> field, are replaced.</p>
 
 <p>If each input document to the <code>replaceRoot</code> stage has a field <code>a1</code> that contains a field <code>b</code> whose value is a document, the following operation replaces each input document with the document in the <code>b</code> field.</p>
@@ -593,7 +593,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="addfields">AddFields</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/addFields/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/addFields/
 "><code>$addFields</code></a> pipeline stage adds new fields to documents. The stage outputs documents that contain all existing fields from the input documents and the newly added fields.</p>
 
 <p>This example adds two new fields, <code>myNewField</code> and <code>z</code> to the input documents; <code>myNewField</code> has the value <code>{c: 3, d: 4}</code>, <code>z</code> has the value 5.</p>
@@ -609,7 +609,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="count">Count</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/count/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/count/
 "><code>$count</code></a> pipeline stage specifies the name of the field that will contain the number of documents that enter this stage.  The <code>$count</code> stage is syntactic sugar for: <code>{$group:{_id:null, count:{$sum:1}}}</code></p>
 
 <p>There are two ways to invoke this stage.  The first way is to explicitly name the resulting field as in the two following examples:</p>
@@ -629,7 +629,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="bucket">Bucket</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/bucket/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/bucket/
 "><code>$bucket</code></a> pipeline stage automates the bucketing of data around predefined boundary values.</p>
 
 <p>The following example shows a basic <code>$bucket</code> stage:</p>
@@ -666,7 +666,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="bucketauto">BucketAuto</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/bucketAuto/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/bucketAuto/
 "><code>$bucketAuto</code></a> pipeline stage automatically determines the boundaries of each bucket in its attempt to distribute the documents evenly into a specified number of buckets. Depending on the input documents, the number of buckets may be less than the specified number of buckets.</p>
 
 <p>For example, this stage creates 10 buckets:</p>
@@ -697,7 +697,7 @@ collection.  It must be the last stage in any aggregate pipeline:</p>
 
 <h3 id="facet">Facet</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/facet/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/facet/
 "><code>$facet</code></a> pipeline stage allows for the definition of a faceted search.  The stage is defined with a set of names and nested aggregation pipelines which define each particular facet.  For example, to return to the example of the television screen size search, the following <code>$facet</code> will return a document that groups televisions by size and manufacturer:</p>
 
 <pre><code class="language-java">facet(

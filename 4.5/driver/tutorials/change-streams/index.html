@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.81">
+<meta name="date" content="2022-03-25T14:39:25.76">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Change Streams</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -403,7 +403,7 @@ connected</p>
 
 <h2 id="filtering-content">Filtering content</h2>
 
-<p>The <code>watch</code> method can also be passed a list of <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference
+<p>The <code>watch</code> method can also be passed a list of <a href="https://www.mongodb.org/docs/manual/meta/aggregation-quick-reference
 ">aggregation stages</a>, that can modify
 the data returned by the <code>$changeStream</code> operator. Note: not all aggregation operators are supported. See the
 <a href="http://dochub.mongodb.org/core/changestreams"><code>$changeStream</code></a> documentation for more information.</p>
@@ -411,7 +411,7 @@ the data returned by the <code>$changeStream</code> operator. Note: not all aggr
 <p>In the following example the change stream prints out all changes it observes, for <code>insert</code>, <code>update</code>, <code>replace</code> and <code>delete</code> operations:</p>
 
 <ul>
-<li><p>First it uses a <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/match/
+<li><p>First it uses a <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/match/
 "><code>$match</code></a> stage to filter for documents where the <code>operationType</code>
 is either an <code>insert</code>, <code>update</code>, <code>replace</code> or <code>delete</code>.</p></li>
 

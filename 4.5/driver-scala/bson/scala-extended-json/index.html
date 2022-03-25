@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:42.05">
+<meta name="date" content="2022-03-25T14:39:26.05">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Extended JSON</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -322,15 +322,15 @@
 
 <h2 id="mongodb-extended-json">MongoDB Extended JSON</h2>
 
-<p>The Scala driver supports reading and writing BSON documents represented as<br />
-<a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">MongoDB Extended JSON</a>.  Both variants are supported:</p>
+<p>The Scala driver supports reading and writing BSON documents represented as
+<a href="https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/">MongoDB Extended JSON</a>. Both variants are supported:</p>
 
 <ul>
 <li>Strict Mode: representations of BSON types that conform to the <a href="http://www.json.org/">JSON RFC</a>. This is the
-format that <a href="http://docs.mongodb.org/manual/reference/program/mongoexport/">mongoexport</a> produces and
-<a href="http://docs.mongodb.org/manual/reference/program/mongoimport/">mongoimport</a> consumes.</li>
+format that <a href="https://www.mongodb.com/docs/database-tools/mongoexport/">mongoexport</a> produces and
+<a href="https://www.mongodb.com/docs/database-tools/mongoimport/">mongoimport</a> consumes.</li>
 <li>Shell Mode: a superset of JSON that the
-<a href="http://docs.mongodb.org/manual/tutorial/getting-started-with-the-mongo-shell/">MongoDB shell</a> can parse.</li>
+<a href="https://www.mongodb.com/docs/manual/reference/program/mongo/">MongoDB shell</a> can parse.</li>
 </ul>
 
 <p>Furthermore, the <code>Document</code> provides two sets of convenience methods for this purpose:</p>
@@ -342,7 +342,7 @@ format that <a href="http://docs.mongodb.org/manual/reference/program/mongoexpor
 
 <h2 id="writing-json">Writing JSON</h2>
 
-<p>Consider the task of implementing a <a href="http://docs.mongodb.org/manual/reference/program/mongoexport/">mongoexport</a>-like tool using the
+<p>Consider the task of implementing a <a href="https://www.mongodb.com/docs/database-tools/mongoexport/">mongoexport</a>-like tool using the
 Scala driver.</p>
 
 <pre><code class="language-scala">val fileName =    // initialize to the path of the file to write to
@@ -376,7 +376,7 @@ println(doc.toJson(new JsonWriterSettings(JsonMode.SHELL)))
 
 <h2 id="reading-json">Reading JSON</h2>
 
-<p>Consider the task of implementing a <a href="http://docs.mongodb.org/manual/reference/program/mongoimport/">mongoimport</a>-like tool using the
+<p>Consider the task of implementing a <a href="https://www.mongodb.com/docs/database-tools/mongoimport/">mongoimport</a>-like tool using the
 Java driver.</p>
 
 <pre><code class="language-scala">import scala.io.Source

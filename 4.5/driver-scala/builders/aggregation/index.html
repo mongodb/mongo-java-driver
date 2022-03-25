@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:42.03">
+<meta name="date" content="2022-03-25T14:39:26.02">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Aggregation</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -324,7 +324,7 @@
 
 <p>The <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Aggregates$.html
 "><code>Aggregates</code></a> class provides static factory methods
-that build <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#stages
+that build <a href="https://www.mongodb.org/docs/manual/meta/aggregation-quick-reference/#stages
 ">aggregation pipeline stages</a>.
 Each method returns an instance of the
 <a href="/mongo-java-driver/4.5/bson/documents/#bson"><code>Bson</code></a> type, which can in turn be passed to the <code>aggregate</code> method of <code>MongoCollection</code>.</p>
@@ -338,7 +338,7 @@ Each method returns an instance of the
 
 <h3 id="match">Match</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/match/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/match/
 "><code>$match</code></a> pipeline stage passes all documents matching the
 specified filter to the next stage.  Though the filter can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to
 combine with use of the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
@@ -362,7 +362,7 @@ combine with use of the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driv
 
 <h3 id="project">Project</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/project/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/project/
 "><code>$project</code></a> pipeline stage passes the projected fields of all
 documents to the next stage.  Though the projection can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to combine
 with use of the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Projections$.html
@@ -385,7 +385,7 @@ with use of the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/m
 
 <h3 id="sample">Sample</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/sample/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/sample/
 "><code>$sample</code></a> pipeline stage randomly select N documents from its input.
 This example creates a pipeline stage that randomly selects 5 documents from the collection:</p>
 
@@ -394,7 +394,7 @@ This example creates a pipeline stage that randomly selects 5 documents from the
 
 <h3 id="sort">Sort</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/sort/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/sort/
 "><code>$sort</code></a> pipeline stage passes all documents to the next stage,
 sorted by the specified sort criteria. Though the sort criteria can be an instance of any class that implements <code>Bson</code>, it&rsquo;s convenient to
 combine with use of the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Sorts$.html
@@ -409,7 +409,7 @@ according to the value of the <code>posts</code> field:</p>
 
 <h3 id="skip">Skip</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/skip/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/skip/
 "><code>$skip</code></a> pipeline stage skips over the specified number of
 documents that pass into the stage and passes the remaining documents to the next stage.</p>
 
@@ -420,7 +420,7 @@ documents that pass into the stage and passes the remaining documents to the nex
 
 <h3 id="limit">Limit</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/limit/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/limit/
 "><code>$limit</code></a> pipeline stage limits the number of documents passed
 to the next stage.</p>
 
@@ -431,7 +431,7 @@ to the next stage.</p>
 
 <h3 id="lookup">Lookup</h3>
 
-<p>Starting in 3.2, MongoDB provides a new <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/lookup/
+<p>Starting in 3.2, MongoDB provides a new <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/lookup/
 "><code>$lookup</code></a> pipeline stage
 that performs a left outer join with another collection to filter in documents from the joined collection for processing.</p>
 
@@ -443,11 +443,11 @@ the <code>joinedOutput</code> field:</p>
 
 <h3 id="group">Group</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/group/
 "><code>$group</code></a> pipeline stage groups documents by some specified
 expression and outputs to the next stage a document for each distinct grouping.  A group consists of an <code>_id</code> which specifies the
 expression on which to group, and zero or more
-<a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
+<a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/group/#accumulator-operator
 ">accumulators</a> which are evaluated for each
 grouping.  To simplify the expression of accumulators, the driver includes an
 <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Accumulators$.html
@@ -463,7 +463,7 @@ the <code>quantity</code> field into the <code>totalQuantity</code> and <code>av
 
 <h3 id="unwind">Unwind</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/unwind/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/unwind/
 "><code>$unwind</code></a> pipeline stage deconstructs an array field from the
 input documents to output a document for each element.</p>
 
@@ -485,7 +485,7 @@ the <code>$sizes</code> list is empty:</p>
 
 <h3 id="out">Out</h3>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/out/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/out/
 "><code>$out</code></a> pipeline stage outputs all documents to the specified
 collection.  It must be the last stage in any aggregate pipeline:</p>
 

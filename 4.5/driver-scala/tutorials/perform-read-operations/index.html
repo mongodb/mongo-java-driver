@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.89">
+<meta name="date" content="2022-03-25T14:39:25.84">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Read Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -422,10 +422,10 @@ val collection: MongoCollection[Document] = database.getCollection(&quot;restaur
           .printResults()
 </code></pre>
 
-<p>For a list of MongoDB query filter operators, refer to the <a href="http://docs.mongodb.org/manual/reference/operator/query
+<p>For a list of MongoDB query filter operators, refer to the <a href="https://www.mongodb.org/docs/manual/reference/operator/query
 ">MongoDB Manual</a>. For the associated <code>Filters</code> helpers, see <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Filters$.html
 "><code>Filters</code></a>.
-See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
+See also the  <a href="https://www.mongodb.org/docs/manual/tutorial/query-documents
 ">Query Documents Tutorial</a> for an overview of querying in MongoDB, including specifying filter conditions on arrays and embedded documents.</p>
 
 <h2 id="findobservable">FindObservable</h2>
@@ -438,7 +438,7 @@ See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
 
 <h3 id="projections">Projections</h3>
 
-<p>By default, queries in MongoDB return all fields in matching documents. To specify the fields to return in the matching documents, you can specify a <a href="http://docs.mongodb.org/manual/tutorial/project-fields-from-query-results/#projection-document
+<p>By default, queries in MongoDB return all fields in matching documents. To specify the fields to return in the matching documents, you can specify a <a href="https://www.mongodb.org/docs/manual/tutorial/project-fields-from-query-results/#projection-document
 ">projection document</a>.</p>
 
 <p>Consider the following <code>find</code> operation which includes a projection <code>Document</code> which specifies that the matching documents return only the <code>name</code> field, <code>stars</code> field, and the <code>categories</code> field.</p>
@@ -457,7 +457,7 @@ See also the  <a href="http://docs.mongodb.org/manual/tutorial/query-documents
           .printResults()
 </code></pre>
 
-<p>In the projection document, you can also specify a projection expression using a <a href="http://docs.mongodb.org/manual/reference/operator/projection/
+<p>In the projection document, you can also specify a projection expression using a <a href="https://www.mongodb.org/docs/manual/reference/operator/projection/
 ">projection operator</a></p>
 
 <p>For an example on using the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Projections$.html#metaTextScore(fieldName:String):org.mongodb.scala.bson.conversions.Bson
@@ -466,7 +466,7 @@ see the <a href="/mongo-java-driver/4.5/driver-scala/tutorials/text-search/">Tex
 
 <h3 id="sorts">Sorts</h3>
 
-<p>To sort documents, pass a <a href="http://docs.mongodb.org/manual/reference/method/cursor.sort/#cursor.sort
+<p>To sort documents, pass a <a href="https://www.mongodb.org/docs/manual/reference/method/cursor.sort/#cursor.sort
 ">sort specification document</a> to the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html#sort(sort:org.mongodb.scala.bson.conversions.Bson):org.mongodb.scala.FindObservable[TResult]
 "><code>FindObservable.sort()</code></a> method.  The Scala driver provides <a href="/mongo-java-driver/4.5/builders/sorts/"><code>Sorts</code></a> helpers to facilitate the sort specification document.</p>
 
@@ -488,7 +488,7 @@ see the <a href="/mongo-java-driver/4.5/driver-scala/tutorials/text-search/">Tex
 
 <h3 id="explain">Explain</h3>
 
-<p>To <a href="http://docs.mongodb.org/manual/reference/command/explain/
+<p>To <a href="https://www.mongodb.org/docs/manual/reference/command/explain/
 ">explain</a> a find operation, call the
 <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/FindObservable.html#explain()
 "><code>FindObservable.explain()</code></a>
@@ -503,9 +503,9 @@ method:</p>
 
 <h2 id="read-preference">Read Preference</h2>
 
-<p>For read operations on <a href="http://docs.mongodb.org/manual/replication/
-">replica sets</a> or <a href="http://docs.mongodb.org/manual/sharding/
-">sharded clusters</a>, applications can configure the <a href="http://docs.mongodb.org/manual/reference/read-preference
+<p>For read operations on <a href="https://www.mongodb.org/docs/manual/replication/
+">replica sets</a> or <a href="https://www.mongodb.org/docs/manual/sharding/
+">sharded clusters</a>, applications can configure the <a href="https://www.mongodb.org/docs/manual/reference/read-preference
 ">read preference</a> at three levels:</p>
 
 <ul>
@@ -557,9 +557,9 @@ method:</p>
 
 <h2 id="read-concern">Read Concern</h2>
 
-<p>For read operations on <a href="http://docs.mongodb.org/manual/replication/
-">replica sets</a> or <a href="http://docs.mongodb.org/manual/sharding/
-">sharded clusters</a>, applications can configure the <a href="http://docs.mongodb.org/manual/reference/read-concern
+<p>For read operations on <a href="https://www.mongodb.org/docs/manual/replication/
+">replica sets</a> or <a href="https://www.mongodb.org/docs/manual/sharding/
+">sharded clusters</a>, applications can configure the <a href="https://www.mongodb.org/docs/manual/reference/read-concern
 ">read concern</a> at three levels:</p>
 
 <ul>
@@ -609,7 +609,7 @@ method:</p>
 <pre><code class="language-scala">val collWithReadConcern = collection.withReadConcern(ReadConcern.AVAILABLE)
 </code></pre>
 
-<p>You can build <code>MongoClientSettings</code>, <code>MongoDatabase</code>, or <code>MongoCollection</code> to include a combination of read concern, read preference, and <a href="http://docs.mongodb.org/manual/reference/write-concern
+<p>You can build <code>MongoClientSettings</code>, <code>MongoDatabase</code>, or <code>MongoCollection</code> to include a combination of read concern, read preference, and <a href="https://www.mongodb.org/docs/manual/reference/write-concern
 ">write concern</a>.</p>
 
 <p>For example, the following sets all three at the collection level:</p>

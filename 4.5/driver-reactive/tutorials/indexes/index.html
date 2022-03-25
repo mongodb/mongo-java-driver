@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.96">
+<meta name="date" content="2022-03-25T14:39:25.92">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Create Indexes</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -322,9 +322,9 @@
 
 <h2 id="create-indexes">Create Indexes</h2>
 
-<p><a href="http://docs.mongodb.org/manual/indexes
+<p><a href="https://www.mongodb.org/docs/manual/indexes
 ">Indexes</a> support the efficient execution of queries in MongoDB. To create an
-<a href="http://docs.mongodb.org/manual/indexes 
+<a href="https://www.mongodb.org/docs/manual/indexes 
 ">index</a> on a field or fields, pass an index specification document to the
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)
 "><code>MongoCollection.createIndex()</code></a>
@@ -395,7 +395,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h3 id="compound-ascending-index">Compound Ascending Index</h3>
 
-<p>The following example creates an ascending <a href="http://docs.mongodb.org/manual/core/index-compound
+<p>The following example creates an ascending <a href="https://www.mongodb.org/docs/manual/core/index-compound
 ">compound index</a>  on the <code>stars</code> field and the <code>name</code>
  field:</p>
 
@@ -420,7 +420,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h3 id="compound-descending-key-index">Compound Descending Key Index</h3>
 
-<p>The following example creates a descending <a href="http://docs.mongodb.org/manual/core/index-compound
+<p>The following example creates a descending <a href="https://www.mongodb.org/docs/manual/core/index-compound
 ">compound index</a> on the <code>stars</code> field and the <code>name</code> field:</p>
 
 <pre><code class="language-java">collection.createIndex(Indexes.descending(&quot;stars&quot;, &quot;name&quot;))
@@ -431,7 +431,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h2 id="compound-indexes">Compound Indexes</h2>
 
-<p>To create a specification for a <a href="http://docs.mongodb.org/manual/core/index-compound
+<p>To create a specification for a <a href="https://www.mongodb.org/docs/manual/core/index-compound
 ">compound index</a>, use the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Indexes.html
 "><code>Indexes.compoundIndex</code></a> static helper methods.</p>
 
@@ -452,7 +452,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h2 id="text-indexes">Text Indexes</h2>
 
-<p>MongoDB provides <a href="http://docs.mongodb.org/manual/core/index-text
+<p>MongoDB provides <a href="https://www.mongodb.org/docs/manual/core/index-text
 ">text indexes</a> to support text search of string content. Text indexes can include any field whose value is a string or an array of string elements. To create a specification for a text index, use the
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Indexes.html#text(java.lang.String)
 "><code>Indexes.text</code></a> static helper method.</p>
@@ -465,7 +465,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h2 id="hashed-index">Hashed Index</h2>
 
-<p>To create a specification for a <a href="http://docs.mongodb.org/manual/core/index-hashed
+<p>To create a specification for a <a href="https://www.mongodb.org/docs/manual/core/index-hashed
 ">hashed index</a> index, use the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Indexes.html#hashed(java.lang.String)
 "><code>Indexes.hashed</code></a> static helper method.</p>
 
@@ -478,12 +478,12 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 <h2 id="geospatial-indexes">Geospatial Indexes</h2>
 
 <p>To support geospatial queries, MongoDB supports various
-<a href="http://docs.mongodb.org/manual/applications/geospatial-indexes
+<a href="https://www.mongodb.org/docs/manual/applications/geospatial-indexes
 ">geospatial indexes</a>.</p>
 
 <h3 id="2dsphere"><code>2dsphere</code></h3>
 
-<p>To create a specification for a <a href="http://docs.mongodb.org/manual/core/2dsphere
+<p>To create a specification for a <a href="https://www.mongodb.org/docs/manual/core/2dsphere
 "><code>2dsphere</code> index</a>, use the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)
 "><code>Indexes.geo2dsphere</code></a> static helper methods.</p>
 
@@ -509,7 +509,7 @@ method can take an index options document, such as to create unique indexes or p
 <h3 id="unique-index">Unique Index</h3>
 
 <p>The following specifies a <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/IndexOptions.html#unique(boolean)
-"><code>unique(true)</code></a> option to create a <a href="http://docs.mongodb.org/manual/core/index-unique
+"><code>unique(true)</code></a> option to create a <a href="https://www.mongodb.org/docs/manual/core/index-unique
 ">unique index</a> on the <code>name</code> and <code>stars</code> fields:</p>
 
 <pre><code class="language-java">IndexOptions indexOptions = new IndexOptions().unique(true);
@@ -517,12 +517,12 @@ collection.createIndex(Indexes.ascending(&quot;name&quot;, &quot;stars&quot;), i
           .subscribe(new PrintToStringSubscriber&lt;String&gt;());
 </code></pre>
 
-<p>For more information on unique indexes, see <a href="http://docs.mongodb.org/manual/core/index-unique
+<p>For more information on unique indexes, see <a href="https://www.mongodb.org/docs/manual/core/index-unique
 ">Unique Indexes</a>.</p>
 
 <h3 id="partial-index">Partial Index</h3>
 
-<p>To create a <a href="http://docs.mongodb.org/manual/core/index-partial/
+<p>To create a <a href="https://www.mongodb.org/docs/manual/core/index-partial/
 ">partial index</a>, include a <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/IndexOptions.html#partialFilterExpression(org.bson.conversions.Bson)
 ">partialFilterExpression</a> as an index option.</p>
 
@@ -535,7 +535,7 @@ collection.createIndex(
           .subscribe(new PrintToStringSubscriber&lt;String&gt;());
 </code></pre>
 
-<p>For more information on partial indexes, see <a href="http://docs.mongodb.org/manual/core/index-partial/
+<p>For more information on partial indexes, see <a href="https://www.mongodb.org/docs/manual/core/index-partial/
 ">Partial Indexes</a>.</p>
 
 <h2 id="get-a-list-of-indexes-on-a-collection">Get a List of Indexes on a Collection</h2>
@@ -545,7 +545,7 @@ collection.createIndex(
 <pre><code class="language-java">collection.listIndexes().subscribe(new PrintDocumentSubscriber());
 </code></pre>
 
-<p>For other index options, see <a href="http://docs.mongodb.org/manual/core/index-properties
+<p>For other index options, see <a href="https://www.mongodb.org/docs/manual/core/index-properties
 ">MongoDB Manual</a>.</p>
 <div id="btnv"><div class="pull-left">
   <a class="navigation prev" href="/mongo-java-driver/4.5/driver-reactive/tutorials/databases-collections/">

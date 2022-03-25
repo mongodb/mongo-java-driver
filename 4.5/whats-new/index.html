@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.91">
+<meta name="date" content="2022-03-25T14:39:25.86">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>What&#39;s New</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -449,7 +449,7 @@ maximum amount of time to wait for a transaction to commit.</li>
 <li>Most read operations are by default
 <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst">automatically retried</a>. Supported read
 operations that fail with a retryable error are retried automatically and transparently.</li>
-<li><a href="https://docs.mongodb.com/manual/core/retryable-writes/">Retryable writes</a> are now enabled by default. Supported write
+<li><a href="https://www.mongodb.com/docs/manual/core/retryable-writes/">Retryable writes</a> are now enabled by default. Supported write
 operations that fail with a retryable error are retried automatically and transparently, with at-most-once update semantics.</li>
 <li>DNS <a href="https://en.wikipedia.org/wiki/SRV_record">SRV</a> records are periodically polled in order to update the mongos proxy list without
 having to change client configuration or even restart the client application. This feature is particularly useful when used with a sharded
@@ -548,7 +548,7 @@ See <a href="https://www.mongodb.com/products/mobile">MongoDB Mobile</a> for mor
 <h3 id="transactions">Transactions</h3>
 
 <p>The Java driver now provides support for executing CRUD operations within a transaction (requires MongoDB 4.0).  See the
-<a href="https://docs.mongodb.com/master/core/transactions/#transactions-and-mongodb-drivers">Transactions and MongoDB Drivers</a> section
+<a href="https://www.mongodb.com/docs/manual/core/transactions/#transactions-and-mongodb-drivers">Transactions and MongoDB Drivers</a> section
 of the documentation and select the <code>Java (Sync)</code> tab.</p>
 
 <h3 id="change-stream-enhancements">Change Stream enhancements</h3>
@@ -774,7 +774,7 @@ used by the synchronous and asynchronous drivers.  See the POJO Quick start page
 It is <em>strongly recommended</em> that system keep-alive settings should be configured with shorter timeouts.</p>
 
 <p>See the
-<a href="http://docs.mongodb.org/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments
+<a href="https://www.mongodb.org/docs/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments
 ">&lsquo;does TCP keep-alive time affect MongoDB deployments?&rsquo;</a>
 documentation for more information.</p>
 
@@ -787,7 +787,7 @@ documentation for more information.</p>
 <pre><code class="language-java">import org.bson.types.Decimal128;
 </code></pre>
 
-<p>The <a href="http://docs.mongodb.org/manual/release-notes/3.4/#decimal-type
+<p>The <a href="https://www.mongodb.org/docs/manual/release-notes/3.4/#decimal-type
 ">Decimal128</a> format supports numbers with up to 34 decimal digits
 (i.e. significant digits) and an exponent range of −6143 to +6144.</p>
 
@@ -818,12 +818,12 @@ documentation for more information.</p>
 <pre><code class="language-java">import com.mongodb.client.model.Collation;
 </code></pre>
 
-<p><a href="http://docs.mongodb.org/manual/reference/collation/
+<p><a href="https://www.mongodb.org/docs/manual/reference/collation/
 ">Collation</a> allows users to specify language-specific rules for string
 comparison.
 Use the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Collation.html
 "><code>Collation.builder()</code></a>
-to create the <code>Collation</code> object. For example, the following example creates a <code>Collation</code> object with Primary level of comparison and <a href="http://docs.mongodb.org/manual/reference/collation-locales-defaults/#supported-languages-and-locales
+to create the <code>Collation</code> object. For example, the following example creates a <code>Collation</code> object with Primary level of comparison and <a href="https://www.mongodb.org/docs/manual/reference/collation-locales-defaults/#supported-languages-and-locales
 ">locale</a> <code>fr</code>.</p>
 
 <pre><code class="language-java">Collation.builder().collationStrength(CollationStrength.PRIMARY).locale(&quot;fr&quot;).build()));
@@ -927,7 +927,7 @@ collection.bulkWrite(Arrays.asList(
 </code></pre>
 
 <p>For more information on collation, including the supported locales, refer to the
-<a href="http://docs.mongodb.org/manual/reference/collation/
+<a href="https://www.mongodb.org/docs/manual/reference/collation/
 ">manual</a>.</p>
 
 <h3 id="other-mongodb-3-4-features">Other MongoDB 3.4 features</h3>
@@ -937,11 +937,11 @@ collection.bulkWrite(Arrays.asList(
 <a href="https://github.com/mongodb/specifications/blob/master/source/max-staleness/max-staleness.rst">maximum staleness for secondary reads</a></li>
 <li>Support for the
 <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst">MongoDB handshake protocol</a>.</li>
-<li>Builders for <a href="http://docs.mongodb.org/manual/release-notes/3.4/#aggregation
+<li>Builders for <a href="https://www.mongodb.org/docs/manual/release-notes/3.4/#aggregation
 ">eight new aggregation pipeline stages</a></li>
-<li>Helpers for creating <a href="http://docs.mongodb.org/manual/release-notes/3.4/#views
+<li>Helpers for creating <a href="https://www.mongodb.org/docs/manual/release-notes/3.4/#views
 ">read-only views</a></li>
-<li>Support for the <a href="https://docs.mongodb.com/master/release-notes/3.4/#linearizable-read-concern">linearizable read concern</a></li>
+<li>Support for the <a href="https://www.mongodb.com/docs/manual/release-notes/3.4/#linearizable-read-concern">linearizable read concern</a></li>
 </ul>
 
 <h3 id="support-for-jndi">Support for JNDI</h3>

@@ -805,8 +805,7 @@ important The server&amp;rsquo;s behavior related to duplicate key names in a do
       <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.5/driver-scala/bson/scala-extended-json/</guid>
-      <description>MongoDB Extended JSON The Scala driver supports reading and writing BSON documents represented as
-MongoDB Extended JSON. Both variants are supported:
+      <description>MongoDB Extended JSON The Scala driver supports reading and writing BSON documents represented as MongoDB Extended JSON. Both variants are supported:
  Strict Mode: representations of BSON types that conform to the JSON RFC. This is the format that mongoexport produces and mongoimport consumes. Shell Mode: a superset of JSON that the MongoDB shell can parse.  Furthermore, the Document provides two sets of convenience methods for this purpose:</description>
     </item>
     

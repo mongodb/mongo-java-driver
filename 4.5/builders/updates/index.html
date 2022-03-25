@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:42.08">
+<meta name="date" content="2022-03-25T14:39:26.09">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Updates</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -344,7 +344,7 @@ any method that expects an update.</p>
 
 <h4 id="set">Set</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/set/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/set/
 "><code>$set</code></a> update operator sets the value of a field to to the specified value.</p>
 
 <p>This example sets the value of the <code>quantity</code> field to <code>11</code>:</p>
@@ -354,7 +354,7 @@ any method that expects an update.</p>
 
 <h4 id="unset">Unset</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/unset/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/unset/
 "><code>$unset</code></a> update operator deletes the field with the given name.</p>
 
 <p>This example deletes the <code>quantity</code> field:</p>
@@ -364,10 +364,10 @@ any method that expects an update.</p>
 
 <h4 id="set-on-insert">Set On Insert</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/setOnInsert/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/setOnInsert/
 "><code>$setOnInsert</code></a> update operator sets the value of a field to the given
 value, but only if the update is an
-<a href="http://docs.mongodb.org/manual/tutorial/modify-documents/#specify-upsert-true-for-the-update-specific-fields-operation
+<a href="https://www.mongodb.org/docs/manual/tutorial/modify-documents/#specify-upsert-true-for-the-update-specific-fields-operation
 ">upsert</a> that results in an
 insert of a document.</p>
 
@@ -378,7 +378,7 @@ insert of a document.</p>
 
 <h4 id="increment">Increment</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/inc/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/inc/
 "><code>$inc</code></a> update operator increments the value of a numeric field by a specified
 value.</p>
 
@@ -389,7 +389,7 @@ value.</p>
 
 <h4 id="multiply">Multiply</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/mul/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/mul/
 "><code>$mul</code></a> update operator multiplies the value of a numeric field by a specified value.</p>
 
 <p>This example multiplies the value of the <code>price</code> field by <code>1.2</code>:</p>
@@ -399,7 +399,7 @@ value.</p>
 
 <h4 id="rename">Rename</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/rename/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/rename/
 "><code>$rename</code></a> update operator renames a field.</p>
 
 <p>This example renames the <code>qty</code> field to <code>quantity</code>:</p>
@@ -409,7 +409,7 @@ value.</p>
 
 <h4 id="min">Min</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/min/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/min/
 "><code>$min</code></a> update operator updates the value of the field to a specified value <em>if</em> the
 specified value is less than the current value of the field .</p>
 
@@ -420,7 +420,7 @@ specified value is less than the current value of the field .</p>
 
 <h4 id="max">Max</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/max/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/max/
 "><code>$max</code></a> update operator updates the value of the field to a specified value <em>if</em>
 the specified value is greater than the current value of the field .</p>
 
@@ -431,11 +431,11 @@ the specified value is greater than the current value of the field .</p>
 
 <h4 id="current-date">Current Date</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/currentDate/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/currentDate/
 "><code>$currentDate</code></a> update operator sets the value of the field with the
-specified name to the current date, either as a BSON <a href="http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-date
+specified name to the current date, either as a BSON <a href="https://www.mongodb.org/docs/manual/reference/bson-types/#document-bson-type-date
 ">date</a> or as a BSON
-<a href="http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-timestamp
+<a href="https://www.mongodb.org/docs/manual/reference/bson-types/#document-bson-type-timestamp
 ">timestamp</a>.</p>
 
 <p>This example sets the value of the <code>lastModified</code> field to the current date as a BSON date type:</p>
@@ -450,7 +450,7 @@ specified name to the current date, either as a BSON <a href="http://docs.mongod
 
 <h4 id="bit">Bit</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/bit/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/bit/
 "><code>$bit</code></a> update operator performs a bitwise update of the integral value of a field.</p>
 
 <p>This example performs a bitwise AND between the number <code>10</code> and the integral value of the <code>mask</code> field:</p>
@@ -474,7 +474,7 @@ specified name to the current date, either as a BSON <a href="http://docs.mongod
 
 <h4 id="add-to-set">Add to Set</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/addToSet/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/addToSet/
 "><code>$addToSet</code></a> update operator adds a value to an array unless the value is
 already present, in which case $addToSet does nothing to that array.</p>
 
@@ -490,7 +490,7 @@ already present, in which case $addToSet does nothing to that array.</p>
 
 <h4 id="pop">Pop</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/pop/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/pop/
 "><code>$pop</code></a> update operator removes the first or last element of an array.</p>
 
 <p>This example pops the first element off of the array value of the <code>scores</code> field:</p>
@@ -505,7 +505,7 @@ already present, in which case $addToSet does nothing to that array.</p>
 
 <h4 id="pull-all">Pull All</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/pullAll/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/pullAll/
 "><code>$pullAll</code></a> update operator removes all instances of the specified values from
 an existing array.</p>
 
@@ -516,7 +516,7 @@ an existing array.</p>
 
 <h4 id="pull">Pull</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/pull/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/pull/
 "><code>$pull</code></a> update operator removes from an existing array all instances of a value
 or values that match a specified query.</p>
 
@@ -532,7 +532,7 @@ or values that match a specified query.</p>
 
 <h4 id="push">Push</h4>
 
-<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/push/
+<p>The <a href="https://www.mongodb.org/docs/manual/reference/operator/update/push/
 "><code>$push</code></a> update operator appends a specified value to an array.</p>
 
 <p>This examples pushes the value <code>89</code> to the <code>scores</code> array:</p>

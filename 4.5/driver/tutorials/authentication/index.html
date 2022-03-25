@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.97">
+<meta name="date" content="2022-03-25T14:39:25.95">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Authentication</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -326,9 +326,9 @@
 
 <h2 id="authentication">Authentication</h2>
 
-<p>The Java driver supports all <a href="http://docs.mongodb.org/manual/core/authentication/
+<p>The Java driver supports all <a href="https://www.mongodb.org/docs/manual/core/authentication/
 ">MongoDB authentication mechanisms</a>, including those only available in the
-<a href="http://docs.mongodb.org/manual/administration/install-enterprise/
+<a href="https://www.mongodb.org/docs/manual/administration/install-enterprise/
 ">MongoDB Enterprise Edition</a>.</p>
 
 <h2 id="mongocredential"><code>MongoCredential</code></h2>
@@ -363,13 +363,13 @@ parameter.</p>
 
 <h2 id="default-authentication-mechanism">Default Authentication Mechanism</h2>
 
-<p>In MongoDB 3.0, MongoDB changed the default authentication mechanism from <a href="http://docs.mongodb.org/manual/core/security-mongodb-cr
+<p>In MongoDB 3.0, MongoDB changed the default authentication mechanism from <a href="https://www.mongodb.org/docs/manual/core/security-mongodb-cr
 "><code>MONGODB-CR</code></a> to
-<a href="http://docs.mongodb.org/manual/core/security-scram
+<a href="https://www.mongodb.org/docs/manual/core/security-scram
 "><code>SCRAM-SHA-1</code></a>. In MongoDB 4.0 support for the deprecated
-<a href="http://docs.mongodb.org/manual/core/security-mongodb-cr
+<a href="https://www.mongodb.org/docs/manual/core/security-mongodb-cr
 "><code>MONGODB-CR</code></a> mechanism was removed and
-<a href="http://docs.mongodb.org/manual/core/security-scram
+<a href="https://www.mongodb.org/docs/manual/core/security-scram
 "><code>SCRAM-SHA-256</code></a> support was added.</p>
 
 <p>To create a credential that will authenticate using the default
@@ -416,7 +416,7 @@ MongoCredential credential = MongoCredential.createCredential(user, source, pass
 </code></pre>
 
 <p>For challenge and response mechanisms, using the default authentication mechanism is the recommended approach as it will make upgrading
-from MongoDB 2.6 to MongoDB 3.0 seamless, even after <a href="http://docs.mongodb.org/manual/release-notes/3.0-scram/
+from MongoDB 2.6 to MongoDB 3.0 seamless, even after <a href="https://www.mongodb.org/docs/manual/release-notes/3.0-scram/
 ">upgrading the authentication schema</a>.
 For MongoDB 4.0 users it is also recommended as the supported authentication mechanisms are checked and the correct hashing algorithm is
 used.</p>
@@ -434,7 +434,7 @@ which uses the <code>SHA-256</code> hashing function.</p>
 
 <p>Requires MongoDB 4.0 and <code>featureCompatibilityVersion</code> to be set to 4.0.</p>
 
-<p>To explicitly create a credential of type <a href="http://docs.mongodb.org/manual/core/security-scram/
+<p>To explicitly create a credential of type <a href="https://www.mongodb.org/docs/manual/core/security-scram/
 "><code>SCRAM-SHA-256</code></a>, use the
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/MongoCredential.html#createScramSha256Credential(java.lang.String,java.lang.String,char[])
 "><code>createScramSha256Credential</code></a>
@@ -479,7 +479,7 @@ MongoCredential credential = MongoCredential.createScramSha256Credential(user, s
 
 <h3 id="scram-sha-1">SCRAM-SHA-1</h3>
 
-<p>To explicitly create a credential of type <a href="http://docs.mongodb.org/manual/core/security-scram/
+<p>To explicitly create a credential of type <a href="https://www.mongodb.org/docs/manual/core/security-scram/
 "><code>SCRAM-SHA-1</code></a>, use the
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])
 "><code>createScramSha1Credential</code></a>
@@ -529,12 +529,12 @@ MongoCredential credential = MongoCredential.createScramSha1Credential(user, sou
 <p>Starting in version 4.0, MongoDB removes support for the deprecated MongoDB Challenge-Response (<code>MONGODB-CR</code>) authentication mechanism.</p>
 
 <p>If your deployment has user credentials stored in <code>MONGODB-CR</code> schema, you must upgrade to <code>SCRAM</code> before you upgrade to version 4.0.
-For information on upgrading to <code>SCRAM</code>, see Upgrade to <a href="http://docs.mongodb.org/manual/release-notes/3.0-scram/">SCRAM</a>.</p>
+For information on upgrading to <code>SCRAM</code>, see Upgrade to <a href="https://www.mongodb.org/docs/manual/release-notes/3.0-scram/">SCRAM</a>.</p>
 
 </div>
 
 
-<p>To explicitly create a credential of type <a href="http://docs.mongodb.org/manual/core/security-mongodb-cr
+<p>To explicitly create a credential of type <a href="https://www.mongodb.org/docs/manual/core/security-mongodb-cr
 "><code>MONGODB-CR</code></a> use the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/MongoCredential.html#createMongoCRCredential(java.lang.String,java.lang.String,char[])
 "><code>createMongCRCredential</code></a>
 static factory method:</p>
@@ -578,7 +578,7 @@ MongoCredential credential = MongoCredential.createMongoCRCredential(user, datab
 
 <div class="admonition note">
 <h5 class="admonition-title">Note</h5>
-<p>After the <a href="http://docs.mongodb.org/manual/release-notes/3.0-scram/">authentication schema upgrade</a> from MONGODB-CR to SCRAM,
+<p>After the <a href="https://www.mongodb.org/docs/manual/release-notes/3.0-scram/">authentication schema upgrade</a> from MONGODB-CR to SCRAM,
 MONGODB-CR credentials will fail to authenticate.</p>
 
 </div>
@@ -586,7 +586,7 @@ MONGODB-CR credentials will fail to authenticate.</p>
 
 <h2 id="x-509">X.509</h2>
 
-<p>With <a href="http://docs.mongodb.org/manual/core/security-x.509
+<p>With <a href="https://www.mongodb.org/docs/manual/core/security-x.509
 ">X.509</a> mechanism, MongoDB uses the
 X.509 certificate presented during SSL negotiation to
 authenticate a user whose name is derived from the distinguished name
@@ -633,7 +633,7 @@ MongoCredential credential = MongoCredential.createMongoX509Credential(user);
 <pre><code class="language-java">MongoClient mongoClient = new MongoClient(&quot;mongodb://subjectName@host1/?authMechanism=MONGODB-X509&amp;ssl=true&quot;);
 </code></pre>
 
-<p>See the MongoDB server <a href="http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user
+<p>See the MongoDB server <a href="https://www.mongodb.org/docs/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user
 ">x.509 tutorial</a>
 for more information about determining the subject
 name from the certificate.</p>
@@ -744,7 +744,7 @@ automatically picked up by your MongoClient when you specify the
 
 <p><a href="http://www.mongodb.com/products/mongodb-enterprise">MongoDB Enterprise</a> supports proxy
 authentication through Kerberos service. To create a credential of type
-<a href="http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication
+<a href="https://www.mongodb.org/docs/manual/core/authentication/#kerberos-authentication
 ">Kerberos (GSSAPI)</a>, use the
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/MongoCredential.html#createGSSAPICredential(java.lang.String)
 "><code>createGSSAPICredential</code></a>
@@ -847,7 +847,7 @@ interoperability with Windows Active Directory and in particular the ability to 
 <h2 id="ldap-plain">LDAP (PLAIN)</h2>
 
 <p><a href="http://www.mongodb.com/products/mongodb-enterprise">MongoDB Enterprise</a> supports proxy authentication through a Lightweight Directory
-Access Protocol (LDAP) service. To create a credential of type <a href="http://docs.mongodb.org/manual/core/authentication/#ldap-proxy-authority-authentication
+Access Protocol (LDAP) service. To create a credential of type <a href="https://www.mongodb.org/docs/manual/core/authentication/#ldap-proxy-authority-authentication
 ">LDAP</a> use the
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/MongoCredential.html#createPlainCredential(java.lang.String,java.lang.String,char[])
 "><code>createPlainCredential</code></a> static factory method:</p>

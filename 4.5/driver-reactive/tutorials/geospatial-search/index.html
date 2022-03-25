@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.87">
+<meta name="date" content="2022-03-25T14:39:25.82">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Geospatial Search</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -322,7 +322,7 @@
 
 <h2 id="geospatial-search">Geospatial Search</h2>
 
-<p>To support geospatial queries, MongoDB provides various geospatial indexes as well as <a href="http://docs.mongodb.org/manual/reference/operator/query-geospatial/
+<p>To support geospatial queries, MongoDB provides various geospatial indexes as well as <a href="https://www.mongodb.org/docs/manual/reference/operator/query-geospatial/
 ">geospatial query operators</a>.</p>
 
 <h2 id="prerequisites">Prerequisites</h2>
@@ -364,7 +364,7 @@ MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;);
 
 <h2 id="create-the-2dsphere-index">Create the <code>2dsphere</code> Index</h2>
 
-<p>To create a <a href="http://docs.mongodb.org/manual/core/2dsphere
+<p>To create a <a href="https://www.mongodb.org/docs/manual/core/2dsphere
 "><code>2dsphere</code> index</a>, use the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)
 "><code>Indexes.geo2dsphere</code></a>
 helper to create a specification for the <code>2dsphere</code> index and pass to <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)
@@ -378,7 +378,7 @@ collection.createIndex(Indexes.geo2dsphere(&quot;contact.location&quot;)).subscr
 
 <h2 id="query-for-locations-near-a-geojson-point">Query for Locations Near a GeoJSON Point</h2>
 
-<p>MongoDB provides various <a href="http://docs.mongodb.org/manual/reference/operator/query-geospatial
+<p>MongoDB provides various <a href="https://www.mongodb.org/docs/manual/reference/operator/query-geospatial
 ">geospatial query operators</a>. To facilitate the creation of geospatial queries filters, the Java driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html
 "><code>Filters</code></a> class and the <code>com.mongodb.client.model.geojson</code> package.</p>
 

@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:42.04">
+<meta name="date" content="2022-03-25T14:39:26.04">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Extended JSON</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -338,7 +338,7 @@ of BSON dates. See the
 <a href="https://github.com/mongodb/specifications/blob/master/source/extended-json.rst">Extended JSON specification</a> for a description of this
 mode.</li>
 <li>Shell Mode: a superset of JSON that the
-<a href="http://docs.mongodb.org/manual/tutorial/getting-started-with-the-mongo-shell/">MongoDB shell</a> can parse.</li>
+<a href="https://www.mongodb.com/docs/manual/reference/program/mongo/">MongoDB shell</a> can parse.</li>
 <li>Strict Mode: Legacy representation.  Though now deprecated, this is still the default mode when writing JSON in order to avoid breaking
 backwards compatibility.  This may change in a future major release of the driver.</li>
 </ul>
@@ -352,7 +352,7 @@ backwards compatibility.  This may change in a future major release of the drive
 
 <h3 id="writing-json">Writing JSON</h3>
 
-<p>Consider the task of implementing a <a href="http://docs.mongodb.org/manual/reference/program/mongoexport/">mongoexport</a>-like tool using the
+<p>Consider the task of implementing a <a href="https://www.mongodb.com/docs/database-tools/mongoexport/">mongoexport</a>-like tool using the
 Java driver.</p>
 
 <pre><code class="language-java">String outputFilename;                 // initialize to the path of the file to write to
@@ -381,8 +381,8 @@ no new lines or indentation.</p>
 <pre><code class="language-java">SimpleDateFormat fmt = new SimpleDateFormat(&quot;dd/MM/yy&quot;);
 Date first = fmt.parse(&quot;01/01/2014&quot;);
 Date second = fmt.parse(&quot;01/01/2015&quot;);
-Document doc = new Document(&quot;startDate&quot;, new Document(&quot;$gt&quot;, first).append(&quot;$lt&quot;, second)); 
-System.out.println(doc.toJson(new JsonWriterSettings(JsonMode.SHELL))); 
+Document doc = new Document(&quot;startDate&quot;, new Document(&quot;$gt&quot;, first).append(&quot;$lt&quot;, second));
+System.out.println(doc.toJson(new JsonWriterSettings(JsonMode.SHELL)));
 </code></pre>
 
 <p>This code snippet will print out MongoDB shell-compatible JSON, which can then be pasted into the shell:</p>
@@ -411,7 +411,7 @@ with any registered converters.</p>
 
 <h3 id="reading-json">Reading JSON</h3>
 
-<p>Consider the task of implementing a <a href="http://docs.mongodb.org/manual/reference/program/mongoimport/">mongoimport</a>-like tool using the
+<p>Consider the task of implementing a <a href="https://www.mongodb.com/docs/database-tools/mongoimport/">mongoimport</a>-like tool using the
 Java driver.</p>
 
 <pre><code class="language-java">String inputFilename;                  // initialize to the path of the file to read from
@@ -424,7 +424,7 @@ try {
 
     while ((json = reader.readLine()) != null) {
         collection.insertOne(Document.parse(json));
-    } 
+    }
 } finally {
     reader.close();
 }

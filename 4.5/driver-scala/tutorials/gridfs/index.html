@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.85">
+<meta name="date" content="2022-03-25T14:39:25.81">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>GridFS</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -322,7 +322,7 @@
 
 <h2 id="gridfs">GridFS</h2>
 
-<p><a href="http://docs.mongodb.org/manual/core/gridfs
+<p><a href="https://www.mongodb.org/docs/manual/core/gridfs
 ">GridFS</a> is a specification for storing and retrieving files that exceed the BSON document size limit of 16MB. Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document.</p>
 
 <p>When you query a GridFS store for a file, the Scala driver will reassemble the chunks as needed.</p>
@@ -368,7 +368,7 @@ import scala.util.Success
 
 <h2 id="create-a-gridfs-bucket">Create a GridFS Bucket</h2>
 
-<p>GridFS stores files in <a href="http://docs.mongodb.org/manual/core/gridfs/#gridfs-collections
+<p>GridFS stores files in <a href="https://www.mongodb.org/docs/manual/core/gridfs/#gridfs-collections
 ">two collections</a>: a <code>chunks</code> collection stores the file chunks, and a  <code>files</code> collection stores file metadata. The two collections are in a common bucket and the collection names are prefixed with the bucket name.</p>
 
 <p>The Scala driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/gridfs/GridFSBucket$.html#apply(database:org.mongodb.scala.MongoDatabase):org.mongodb.scala.gridfs.GridFSBucket

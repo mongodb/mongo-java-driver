@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.9">
+<meta name="date" content="2022-03-25T14:39:25.85">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Write Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -426,7 +426,7 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h3 id="update-operators">Update Operators</h3>
 
-<p>To change a field in a document, MongoDB provides <a href="http://docs.mongodb.org/manual/reference/operator/update
+<p>To change a field in a document, MongoDB provides <a href="https://www.mongodb.org/docs/manual/reference/operator/update
 ">update operators</a>.  To specify the modification to perform using the update operators, use an updates document.</p>
 
 <p>To facilitate the creation of updates documents, the Scala driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/Updates$.html
@@ -497,8 +497,8 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 <p>With the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/
 "><code>updateOne()</code></a> and <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>updateMany</code></a> methods, you can include an <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions
-"><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert-option
-"><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
+"><code>UpdateOptions</code></a> document to specify the <a href="https://www.mongodb.org/docs/manual/reference/method/db.collection.update/#upsert-option
+"><code>upsert</code></a> option or the <a href="https://www.mongodb.org/docs/manual/core/document-validation/#bypass-document-validation
 "><code>bypassDocumentationValidation</code></a> option.</p>
 
 <pre><code class="language-scala">collection.updateOne(
@@ -558,8 +558,8 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <p>With the <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html#updateOne(filter:org.mongodb.scala.bson.conversions.Bson,update:Seq[org.mongodb.scala.bson.conversions.Bson],options:org.mongodb.scala.model.UpdateOptions):org.mongodb.scala.SingleObservable[org.mongodb.scala.result.UpdateResult]
 "><code>replaceOne</code></a>, you can include an <a href="/mongo-java-driver/4.5/apidocs/mongo-scala-driver/org/mongodb/scala/model/index.html#UpdateOptions=com.mongodb.client.model.UpdateOptions
-"><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert-option
-"><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
+"><code>UpdateOptions</code></a> document to specify the <a href="https://www.mongodb.org/docs/manual/reference/method/db.collection.update/#upsert-option
+"><code>upsert</code></a> option or the <a href="https://www.mongodb.org/docs/manual/core/document-validation/#bypass-document-validation
 "><code>bypassDocumentationValidation</code></a> option.</p>
 
 <pre><code class="language-scala">collection.replaceOne(
@@ -609,10 +609,10 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 
 <h2 id="write-concern">Write Concern</h2>
 
-<p><a href="http://docs.mongodb.org/manual/reference/write-concern
+<p><a href="https://www.mongodb.org/docs/manual/reference/write-concern
 ">Write concern</a> describes the level of acknowledgement requested from MongoDB for write operations.</p>
 
-<p>Applications can configure <a href="http://docs.mongodb.org/manual/reference/write-concern
+<p>Applications can configure <a href="https://www.mongodb.org/docs/manual/reference/write-concern
 ">write concern</a> at three levels:</p>
 
 <ul>
@@ -660,8 +660,8 @@ collection.insertMany(Seq(doc1, doc2)).printResults()
 <pre><code class="language-scala">val collWithWriteConcern = collection.withWriteConcern(WriteConcern.MAJORITY)
 </code></pre>
 
-<p>You can build <code>MongoClientSettings</code>, <code>MongoDatabase</code>, or <code>MongoCollection</code> to include a combination of write concern, <a href="http://docs.mongodb.org/manual/reference/read-concern
-">read concern</a>, and <a href="http://docs.mongodb.org/manual/reference/read-preference
+<p>You can build <code>MongoClientSettings</code>, <code>MongoDatabase</code>, or <code>MongoCollection</code> to include a combination of write concern, <a href="https://www.mongodb.org/docs/manual/reference/read-concern
+">read concern</a>, and <a href="https://www.mongodb.org/docs/manual/reference/read-preference
 ">read preference</a>.</p>
 
 <p>For example, the following sets all three at the collection level:</p>

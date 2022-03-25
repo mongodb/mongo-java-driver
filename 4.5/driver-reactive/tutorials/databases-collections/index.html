@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.93">
+<meta name="date" content="2022-03-25T14:39:25.9">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Databases and Collections</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -409,7 +409,7 @@ method to access a collection.</p>
 
 <h3 id="capped-collection">Capped Collection</h3>
 
-<p>For example, the following operation creates a <a href="http://docs.mongodb.org/manual/core/capped-collections
+<p>For example, the following operation creates a <a href="https://www.mongodb.org/docs/manual/core/capped-collections
 ">capped collection</a> sized to 1 megabyte:</p>
 
 <pre><code class="language-java">database.createCollection(&quot;cappedCollection&quot;, new CreateCollectionOptions().capped(true).sizeInBytes(0x100000))
@@ -418,7 +418,7 @@ method to access a collection.</p>
 
 <h3 id="document-validation">Document Validation</h3>
 
-<p>MongoDB provides the capability to <a href="http://docs.mongodb.org/manual/core/document-validation
+<p>MongoDB provides the capability to <a href="https://www.mongodb.org/docs/manual/core/document-validation
 ">validate documents</a> during updates and insertions. Validation rules are specified on a per-collection basis using the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/ValidationOptions.html
 "><code>ValidationOptions</code></a>, which takes a filter document that specifies the validation rules or expressions.</p>
 
@@ -449,9 +449,9 @@ collection.drop().subscribe(new OperationSubscriber&lt;Void&gt;());
 <h2 id="immutability">Immutability</h2>
 
 <p><code>MongoDatabase</code> and <code>MongoCollection</code> instances are immutable. To create new instances from existing instances that
-have different property values, such as <a href="http://docs.mongodb.org/manual/reference/read-concern
-">read concern</a>, <a href="http://docs.mongodb.org/manual/reference/read-preference
-">read preference</a>, and <a href="http://docs.mongodb.org/manual/reference/write-concern
+have different property values, such as <a href="https://www.mongodb.org/docs/manual/reference/read-concern
+">read concern</a>, <a href="https://www.mongodb.org/docs/manual/reference/read-preference
+">read preference</a>, and <a href="https://www.mongodb.org/docs/manual/reference/write-concern
 ">write concern</a>, the <code>MongoDatabase</code> and <code>MongoCollection</code> class provides various methods:</p>
 
 <ul>

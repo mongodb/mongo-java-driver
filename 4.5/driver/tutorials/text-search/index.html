@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.93">
+<meta name="date" content="2022-03-25T14:39:25.89">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Text Search</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="/mongo-java-driver/4.5/css/java.css" type="text/css" />
 
 
-  <link rel="canonical" href="https://docs.mongodb.com/drivers/java/sync/v4.5/"/>
+  <link rel="canonical" href="https://www.mongodb.com/docs/drivers/java/sync/v4.5/"/>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <meta http-equiv="refresh" content="0;url=https://docs.mongodb.com/drivers/java/sync/v4.5/" />
+  <meta http-equiv="refresh" content="0;url=https://www.mongodb.com/docs/drivers/java/sync/v4.5/" />
 
 
 
@@ -46,10 +46,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -329,11 +329,11 @@
 <p><a href="https://docs.atlas.mongodb.com/atlas-search">Atlas Search</a> makes it easy to build fast, relevance-based search capabilities on top of your
 MongoDB data. Try it today on <a href="https://www.mongodb.com/cloud/atlas">MongoDB Atlas</a>, our fully managed database as a service.</p>
 
-<p>Alternatively, MongoDB supports simpler query operations that perform a <a href="http://docs.mongodb.org/manual/text-search
+<p>Alternatively, MongoDB supports simpler query operations that perform a <a href="https://www.mongodb.org/docs/manual/text-search
 ">text search</a> of string content. To
-perform text search, MongoDB uses a <a href="http://docs.mongodb.org/manual/core/index-text
+perform text search, MongoDB uses a <a href="https://www.mongodb.org/docs/manual/core/index-text
 ">text index</a> and the
-<a href="http://docs.mongodb.org/manual/reference/operator/query/text
+<a href="https://www.mongodb.org/docs/manual/reference/operator/query/text
 "><code>$text</code> query operator</a>.</p>
 
 <p>The Java driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)
@@ -374,7 +374,7 @@ MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;);
 
 <h2 id="create-the-text-index">Create the <code>text</code> Index</h2>
 
-<p>To create a <a href="http://docs.mongodb.org/manual/core/index-text
+<p>To create a <a href="https://www.mongodb.org/docs/manual/core/index-text
 ">text index</a>, use the <a href="/mongo-java-driver/4.5/builders/indexes/#text-index"><code>Indexes.text</code></a>
 static helper to create a specification for a text index and pass to <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)
 "><code>MongoCollection.createIndex()</code></a> method.</p>
@@ -401,12 +401,12 @@ System.out.println(&quot;Text search matches: &quot; + matchCount);
 <pre><code class="language-json">Text search matches: 2
 </code></pre>
 
-<p>For more information on the text search, see <a href="http://docs.mongodb.org/manual/reference/operator/query/text
+<p>For more information on the text search, see <a href="https://www.mongodb.org/docs/manual/reference/operator/query/text
 "><code>$text</code> operator</a>.</p>
 
 <h3 id="text-score">Text Score</h3>
 
-<p>For each matching document, text search assigns a score, representing the relevance of a document to the specified text search query filter. To return and sort by score, use the <a href="http://docs.mongodb.org/manual/reference/operator/query/text/#sort-by-text-search-score
+<p>For each matching document, text search assigns a score, representing the relevance of a document to the specified text search query filter. To return and sort by score, use the <a href="https://www.mongodb.org/docs/manual/reference/operator/query/text/#sort-by-text-search-score
 "><code>$meta</code></a> operator in the projection document and the sort expression.</p>
 
 <pre><code class="language-java">collection.find(Filters.text(&quot;bakery cafe&quot;))
@@ -418,11 +418,11 @@ System.out.println(&quot;Text search matches: &quot; + matchCount);
 <h3 id="specify-a-text-search-option">Specify a Text Search Option</h3>
 
 <p>The  <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Filters.html#text(java.lang.String,com.mongodb.client.model.TextSearchOptions)
-"><code>Filters.text()</code></a> helper can accept various <a href="http://docs.mongodb.org/manual/reference/operator/query/text
+"><code>Filters.text()</code></a> helper can accept various <a href="https://www.mongodb.org/docs/manual/reference/operator/query/text
 ">text search options</a>. The Java driver provides <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/TextSearchOptions.html
 "><code>TextSearchOptions</code></a> class to specify these options.</p>
 
-<p>For example, the following text search specifies the <a href="http://docs.mongodb.org/manual/reference/text-search-languages
+<p>For example, the following text search specifies the <a href="https://www.mongodb.org/docs/manual/reference/text-search-languages
 ">text search language</a> option when performing text search for the word <code>cafe</code>:</p>
 
 <pre><code class="language-java">long matchCountEnglish = collection.countDocuments(Filters.text(&quot;cafe&quot;, new TextSearchOptions().language(&quot;english&quot;)));
@@ -437,13 +437,13 @@ System.out.println(&quot;Text search matches (english): &quot; + matchCountEngli
 <p>For more information about text search see the following sections in the MongoDB Server Manual:</p>
 
 <ul>
-<li><p><a href="http://docs.mongodb.org/manual/reference/operator/query/text
+<li><p><a href="https://www.mongodb.org/docs/manual/reference/operator/query/text
 "><code>$text</code> query operator</a></p></li>
 
-<li><p><a href="http://docs.mongodb.org/manual/core/index-text
+<li><p><a href="https://www.mongodb.org/docs/manual/core/index-text
 "><code>text</code> index</a></p></li>
 
-<li><p><a href="http://docs.mongodb.org/manual/reference/text-search-languages
+<li><p><a href="https://www.mongodb.org/docs/manual/reference/text-search-languages
 ">Text Search Languages</a></p></li>
 </ul>
 <div id="btnv"><div class="pull-left">

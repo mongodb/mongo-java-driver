@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-02-22T18:28:41.91">
+<meta name="date" content="2022-03-25T14:39:25.86">
 <link rel="shortcut icon" href="/mongo-java-driver/4.5/img/favicon.png">
 
     <title>Aggregation</title><link rel="stylesheet" href="/mongo-java-driver/4.5/lib/bootstrap.css" type="text/css" />
@@ -42,10 +42,10 @@
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
-  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
-  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
-  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
-  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <a href="https://www.mongodb.com/try" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="https://www.mongodb.com/community" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="https://www.mongodb.com/docs" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="https://www.mongodb.com/blog" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
   <div id="search">
 <form method="get" action="//www.google.com/search" target="_blank">
     <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
@@ -322,7 +322,7 @@
 
 <h2 id="aggregation-framework">Aggregation Framework</h2>
 
-<p>The <a href="http://docs.mongodb.org/manual/core/aggregation-pipeline
+<p>The <a href="https://www.mongodb.org/docs/manual/core/aggregation-pipeline
 ">aggregation pipeline</a> is a framework for data aggregation, modeled on the concept of data processing pipelines.</p>
 
 <h2 id="prerequisites">Prerequisites</h2>
@@ -367,7 +367,7 @@ MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restau
 
 <h2 id="perform-aggregation">Perform Aggregation</h2>
 
-<p>To perform aggregation, pass a list of <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference
+<p>To perform aggregation, pass a list of <a href="https://www.mongodb.org/docs/manual/meta/aggregation-quick-reference
 ">aggregation stages</a> to the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-sync/com/mongodb/client/MongoCollection.html#aggregate(java.util.List)
 "><code>MongoCollection.aggregate()</code></a> method.
 The Java driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Aggregates.html
@@ -376,14 +376,14 @@ The Java driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongodb-dri
 <p>In the following example, the aggregation pipeline</p>
 
 <ul>
-<li><p>First uses a <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/match/
+<li><p>First uses a <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/match/
 "><code>$match</code></a> stage to filter for documents whose <code>categories</code> array field contains the element <code>Bakery</code>. The example uses <a href="/mongo-java-driver/4.5/builders/aggregation/#match"><code>Aggregates.match</code></a> to build the <code>$match</code> stage.</p></li>
 
-<li><p>Then, uses  a <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/
+<li><p>Then, uses  a <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/group/
 "><code>$group</code></a> stage to group the matching documents by the <code>stars</code> field, accumulating a count of documents for each distinct value of <code>stars</code>. The example uses <a href="/mongo-java-driver/4.5/builders/aggregation/#group"><code>Aggregates.group</code></a> to build the <code>$group</code> stage and <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Accumulators#sum(java.lang.String,TExpression).html
-"><code>Accumulators.sum</code></a> to build the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
-">accumulator expression</a>.  For the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation-group/
-">accumulator expressions</a> for use within the <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/group/
+"><code>Accumulators.sum</code></a> to build the <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/group/#accumulator-operator
+">accumulator expression</a>.  For the <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation-group/
+">accumulator expressions</a> for use within the <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/group/
 "><code>$group</code></a> stage, the Java driver provides <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Accumulators.html
 "><code>Accumulators</code></a> helper class.</p></li>
 </ul>
@@ -398,12 +398,12 @@ The Java driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongodb-dri
 
 <h3 id="use-aggregation-expressions">Use Aggregation Expressions</h3>
 
-<p>For <a href="http://docs.mongodb.org/manual/reference/operator/aggregation-group/
+<p>For <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation-group/
 ">$group accumulator expressions</a>, the Java driver provides <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Accumulators.html
-"><code>Accumulators</code></a> helper class. For other <a href="http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#aggregation-expressions
+"><code>Accumulators</code></a> helper class. For other <a href="https://www.mongodb.org/docs/manual/meta/aggregation-quick-reference/#aggregation-expressions
 ">aggregation expressions</a>, manually build the expression <code>Document</code>.</p>
 
-<p>In the following example, the aggregation pipeline uses a <a href="http://docs.mongodb.org/manual/reference/operator/aggregation/project/
+<p>In the following example, the aggregation pipeline uses a <a href="https://www.mongodb.org/docs/manual/reference/operator/aggregation/project/
 "><code>$project</code></a> stage to return only the <code>name</code> field and the calculated field <code>firstCategory</code> whose value is the first element in the <code>categories</code> array. The example uses <a href="/mongo-java-driver/4.5/builders/aggregation/#project"><code>Aggregates.project</code></a> and various
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-core/com/mongodb/client/model/Projections.html
 "><code>Projections</code></a> methods to build the <code>$project</code> stage.</p>
@@ -426,7 +426,7 @@ The Java driver provides the <a href="/mongo-java-driver/4.5/apidocs/mongodb-dri
 
 <h3 id="explain-an-aggregation">Explain an Aggregation</h3>
 
-<p>To <a href="http://docs.mongodb.org/manual/reference/command/explain/
+<p>To <a href="https://www.mongodb.org/docs/manual/reference/command/explain/
 ">explain</a> an aggregation pipeline, call the
 <a href="/mongo-java-driver/4.5/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/AggregatePublisher.html#explain()
 "><code>AggregatePublisher.explain()</code></a>
