@@ -16,24 +16,24 @@
 package com.mongodb.internal.client.model;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.client.model.BsonField;
-import com.mongodb.client.model.ToBsonField;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Objects;
 
 /**
- * A {@link ToBsonField} that allows constructing new instances via {@link #newWithAppendedValue(String, BsonValue)}
- * instead of mutating {@code this}.
+ * A {@link Bson} that contains exactly one name/value pair
+ * and allows constructing new instances via {@link #newWithAppendedValue(String, BsonValue)} instead of mutating {@code this}.
+ * The value must itself be a {@code Bson}.
  * While instances are not {@link Immutable immutable},
- * instances with {@link BsonDocument#isEmpty() empty} {@linkplain BsonField#getValue() values} are treated specially and are immutable.
+ * instances with {@link BsonDocument#isEmpty() empty} values are treated specially and are immutable.
  *
  * @param <S> A type defined by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
  */
-public abstract class AbstractConstructibleBsonField<S extends AbstractConstructibleBsonField<S>> implements ToBsonField {
+public abstract class AbstractConstructibleBsonField<S extends AbstractConstructibleBsonField<S>> implements Bson {
     private final String name;
     private final AbstractConstructibleBson<?> value;
 
@@ -45,23 +45,22 @@ public abstract class AbstractConstructibleBsonField<S extends AbstractConstruct
     protected abstract S newSelf(String name, Bson value);
 
     /**
-     * Creates a new instance with a {@linkplain BsonField#getValue() value} that contains all mapping from {@code this} value
-     * and the specified new mapping.
+     * Creates a new instance with a value that contains all mapping from {@code this} value and the specified new mapping.
      *
      * @return A new instance.
      * @see AbstractConstructibleBson#newAppended(String, BsonValue)
      */
-    public S newWithAppendedValue(final String name, final BsonValue value) {
+    protected final S newWithAppendedValue(final String name, final BsonValue value) {
         return newSelf(this.name, this.value.newAppended(name, value));
     }
 
     @Override
-    public BsonField toBsonField() {
-        return new BsonField(name, value.toBsonDocument());
+    public final <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+        return new BsonDocument(name, value.toBsonDocument());
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public final boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -73,7 +72,7 @@ public abstract class AbstractConstructibleBsonField<S extends AbstractConstruct
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return Objects.hash(name, value);
     }
 }

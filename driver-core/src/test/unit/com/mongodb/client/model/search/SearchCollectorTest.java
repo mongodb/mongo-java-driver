@@ -19,10 +19,12 @@ import com.mongodb.client.model.BsonField;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
 
+import static com.mongodb.client.model.search.SearchFacet.combineToBsonDocument;
+import static com.mongodb.client.model.search.SearchFacet.numberFacet;
 import static com.mongodb.client.model.search.SearchFacet.stringFacet;
 import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
-import static java.util.Collections.singleton;
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 final class SearchCollectorTest {
@@ -49,19 +51,27 @@ final class SearchCollectorTest {
         return SearchCollector.facet(
                 exists(
                         fieldPath("fieldName")),
-                singleton(
+                asList(
                         stringFacet(
-                                "facetName",
-                                fieldPath("fieldName"))));
+                                "stringFacetName",
+                                fieldPath("stringFieldName")),
+                        numberFacet(
+                                "numberFacetName",
+                                fieldPath("numberFieldName"),
+                                asList(10, 20, 30))));
     }
 
     private static BsonField docExampleCustom() {
         return new BsonField("facet",
                 new BsonDocument("operator", exists(
                         fieldPath("fieldName")).appendTo(new BsonDocument()))
-                        .append("facets",
+                        .append("facets", combineToBsonDocument(asList(
                                 stringFacet(
-                                        "facetName",
-                                        fieldPath("fieldName")).appendTo(new BsonDocument())));
+                                        "stringFacetName",
+                                        fieldPath("stringFieldName")),
+                                numberFacet(
+                                        "numberFacetName",
+                                        fieldPath("numberFieldName"),
+                                        asList(10, 20, 30))))));
     }
 }

@@ -22,10 +22,9 @@ import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ToBsonField;
 import org.bson.BsonDocument;
+import org.bson.conversions.Bson;
 
-import java.util.Iterator;
-
-import static com.mongodb.internal.client.model.BsonUtil.toBsonDocument;
+import static com.mongodb.client.model.search.SearchFacet.combineToBsonDocument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -44,24 +43,20 @@ public interface SearchCollector extends ToBsonField {
      * for each of those groups.
      *
      * @param operator A search operator to use.
-     * @param facets Non-empty facets definitions.
+     * @param facets Non-empty facet definitions.
      * @return The requested {@link SearchCollector}.
      * @mongodb.atlas.manual atlas-search/facet/ facet collector
      */
     @Beta
-    static FacetSearchCollector facet(final SearchOperator operator, final Iterable<SearchFacet> facets) {
+    static FacetSearchCollector facet(final SearchOperator operator, final Iterable<? extends SearchFacet> facets) {
         notNull("operator", operator);
         notNull("facets", facets);
-        Iterator<SearchFacet> facetIterator = facets.iterator();
-        if (!facetIterator.hasNext()) {
-            throw new IllegalArgumentException("facets must not be empty");
-        }
         return new BsonFieldToManifoldAdapter(new BsonField("facet", new BsonDocument("operator", operator.appendTo(new BsonDocument()))
-                .append("facets", toBsonDocument(facetIterator))));
+                .append("facets", combineToBsonDocument(facets))));
     }
 
     /**
-     * Creates a {@link SearchCollector} from a {@link BsonField} in situations when there is no builder method
+     * Creates a {@link SearchCollector} from a {@link Bson} in situations when there is no builder method
      * that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
@@ -72,20 +67,28 @@ public interface SearchCollector extends ToBsonField {
      *  SearchCollector collector1 = SearchCollector.facet(
      *          SearchOperator.exists(
      *                  SearchPath.fieldPath("fieldName")),
-     *          Collections.singleton(
+     *          Arrays.asList(
      *                  SearchFacet.stringFacet(
-     *                          "facetName",
-     *                          SearchPath.fieldPath("fieldName"))));
+     *                          "stringFacetName",
+     *                          SearchPath.fieldPath("stringFieldName")),
+     *                  SearchFacet.numberFacet(
+     *                          "numberFacetName",
+     *                          SearchPath.fieldPath("numberFieldName"),
+     *                          Arrays.asList(10, 20, 30))));
      *  SearchCollector collector2 = SearchCollector.of(new BsonField("facet",
-     *          new BsonDocument("operator", SearchOperator.exists(
+     *          new BsonDocument("operator", exists(
      *                  SearchPath.fieldPath("fieldName")).appendTo(new BsonDocument()))
-     *                  .append("facets",
+     *                  .append("facets", SearchFacet.combineToBsonDocument(Arrays.asList(
      *                          SearchFacet.stringFacet(
-     *                                  "facetName",
-     *                                  SearchPath.fieldPath("fieldName")).appendTo(new BsonDocument()))));
+     *                                  "stringFacetName",
+     *                                  SearchPath.fieldPath("stringFieldName")),
+     *                          SearchFacet.numberFacet(
+     *                                  "numberFacetName",
+     *                                  SearchPath.fieldPath("numberFieldName"),
+     *                                  Arrays.asList(10, 20, 30)))))));
      * }</pre>
      *
-     * @param collector A {@link BsonField} representing the required {@link SearchCollector}.
+     * @param collector A {@link Bson} representing the required {@link SearchCollector}.
      * @return The requested {@link SearchCollector}.
      */
     static SearchCollector of(final BsonField collector) {

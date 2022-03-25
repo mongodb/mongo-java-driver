@@ -16,14 +16,14 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
-import com.mongodb.internal.client.model.BsonUtil;
+import com.mongodb.internal.client.model.search.BsonUtil;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.client.model.BsonUtil.SEARCH_PATH_VALUE_KEY;
+import static com.mongodb.internal.client.model.search.BsonUtil.SEARCH_PATH_VALUE_KEY;
 
 /**
  * A specification of document fields to be searched.
@@ -68,12 +68,12 @@ public interface SearchPath extends Bson {
     }
 
     /**
-     * Renders the object as {@link BsonValue}.
+     * Converts this object to {@link BsonValue}.
      * If {@link #toBsonDocument()} contains only the {@value BsonUtil#SEARCH_PATH_VALUE_KEY} key,
      * then returns {@link BsonString} representing the value of this key,
      * otherwise returns {@link #toBsonDocument()}.
      *
-     * @return This {@link SearchPath} rendered as {@link BsonValue}.
+     * @return A {@link BsonValue} representing this {@link SearchPath}.
      */
     default BsonValue toBsonValue() {
         final BsonDocument doc = toBsonDocument();

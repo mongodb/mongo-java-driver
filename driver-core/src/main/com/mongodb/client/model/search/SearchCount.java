@@ -71,6 +71,6 @@ public interface SearchCount extends Bson {
      * @return The requested {@link SearchCount}.
      */
     static SearchCount of(final Bson count) {
-        return new ConstructibleBsonToManifoldAdapter(notNull("count", count).toBsonDocument());
+        return new ConstructibleBsonToManifoldAdapter(notNull("count", count));
     }
 }

@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.client.model;
+package com.mongodb.internal.client.model.search;
 
-import com.mongodb.client.model.ToBsonField;
 import com.mongodb.client.model.search.SearchPath;
 import org.bson.BsonArray;
-import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.util.Iterator;
@@ -29,24 +27,10 @@ public final class BsonUtil {
     public static final String SEARCH_PATH_VALUE_KEY = "value";
 
     /**
-     * Returns a {@link BsonDocument} constructed from the specified {@code fields}.
-     *
-     * @param fields Document fields.
-     * @return The requested {@link BsonDocument}.
-     */
-    public static BsonDocument toBsonDocument(final Iterator<? extends ToBsonField> fields) {
-        BsonDocument result = new BsonDocument();
-        while (fields.hasNext()) {
-            fields.next().appendTo(result);
-        }
-        return result;
-    }
-
-    /**
      * If {@code nonEmptyPaths} has exactly one element, then returns the result of {@link SearchPath#toBsonValue()},
      * otherwise returns a {@link BsonArray} of such results.
      *
-     * @param nonEmptyPaths One or more path to be converted.
+     * @param nonEmptyPaths One or more {@link SearchPath} to convert.
      * @return A single {@link BsonValue} representing the specified paths.
      */
     public static BsonValue toBsonValue(final Iterator<? extends SearchPath> nonEmptyPaths) {

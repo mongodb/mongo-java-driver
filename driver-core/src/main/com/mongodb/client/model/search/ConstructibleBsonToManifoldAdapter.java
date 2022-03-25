@@ -20,14 +20,18 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class ConstructibleBsonToManifoldAdapter extends AbstractConstructibleBson<ConstructibleBsonToManifoldAdapter>
-        implements SearchOptions, SearchHighlight, TotalSearchCount, LowerBoundSearchCount, FieldSearchPath, WildcardSearchPath {
+final class ConstructibleBsonToManifoldAdapter extends AbstractConstructibleBson<ConstructibleBsonToManifoldAdapter> implements
+        SearchOptions,
+        SearchHighlight,
+        TotalSearchCount, LowerBoundSearchCount,
+        FieldSearchPath, WildcardSearchPath {
     static final ConstructibleBsonToManifoldAdapter EMPTY = new ConstructibleBsonToManifoldAdapter(new BsonDocument());
 
-    ConstructibleBsonToManifoldAdapter(final BsonDocument doc) {
+    ConstructibleBsonToManifoldAdapter(final Bson doc) {
         super(doc);
     }
 

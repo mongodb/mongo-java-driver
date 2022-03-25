@@ -42,7 +42,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
     protected abstract S newSelf(BsonDocument doc);
 
     @Override
-    public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+    public final <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
         return doc.isEmpty()
                 // do not expose empty `doc` to enforce immutability of empty objects
                 ? new BsonDocument()
@@ -55,7 +55,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
      * @return A new instance.
      * @see BsonDocument#append(String, BsonValue)
      */
-    public S newAppended(final String name, final BsonValue value) {
+    protected final S newAppended(final String name, final BsonValue value) {
         return newSelf(doc.clone().append(name, value));
     }
 
@@ -64,7 +64,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public final boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -76,7 +76,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return Objects.hash(doc);
     }
 

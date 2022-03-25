@@ -17,17 +17,20 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
-import com.mongodb.client.model.BsonField;
-import com.mongodb.client.model.ToBsonField;
 import org.bson.BsonArray;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonType;
+import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 import org.bson.internal.NumberHelper;
 
 import java.time.Instant;
+import java.util.Iterator;
+import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.StreamSupport.stream;
@@ -41,7 +44,7 @@ import static org.bson.assertions.Assertions.notNull;
  */
 @Beta
 @Evolving
-public interface SearchFacet extends ToBsonField {
+public interface SearchFacet extends Bson {
     /**
      * Returns a {@link SearchFacet} that allows narrowing down search results based on the most frequent
      * values in the BSON {@link BsonType#STRING String} field specified by the {@code path}.
@@ -69,7 +72,7 @@ public interface SearchFacet extends ToBsonField {
      * @return The requested {@link SearchFacet}.
      * @mongodb.atlas.manual atlas-search/facet/#numeric-facets Numeric facet definition
      */
-    static NumericSearchFacet numberFacet(final String name, final FieldSearchPath path, final Iterable<Number> boundaries) {
+    static NumericSearchFacet numberFacet(final String name, final FieldSearchPath path, final Iterable<? extends Number> boundaries) {
         final BsonArray boundariesArray = stream(notNull("boundaries", boundaries).spliterator(), false)
                 .map(NumberHelper::toBsonNumber).collect(toCollection(BsonArray::new));
         isTrueArgument("boundaries must contain at least 2 elements", boundariesArray.size() >= 2);
@@ -100,7 +103,7 @@ public interface SearchFacet extends ToBsonField {
     }
 
     /**
-     * Creates a {@link SearchFacet} from a {@link BsonField} in situations when there is no builder method
+     * Creates a {@link SearchFacet} from a {@link Bson} in situations when there is no builder method
      * that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
@@ -110,14 +113,36 @@ public interface SearchFacet extends ToBsonField {
      * <pre>{@code
      *  SearchFacet facet1 = SearchFacet.stringFacet("facetName",
      *          SearchPath.fieldPath("fieldName"));
-     *  SearchFacet facet2 = SearchFacet.of(new BsonField("facetName", new BsonDocument("type", new BsonString("string"))
+     *  SearchFacet facet2 = SearchFacet.of(new BsonDocument("facetName", new BsonDocument("type", new BsonString("string"))
      *          .append("path", SearchPath.fieldPath("fieldName").toBsonValue())));
      * }</pre>
      *
-     * @param facet A {@link BsonField} representing the required {@link SearchFacet}.
+     * @param facet A {@link Bson} representing the required {@link SearchFacet}.
      * @return The requested {@link SearchFacet}.
      */
-    static SearchFacet of(final BsonField facet) {
-        return new BsonFieldToManifoldAdapter(notNull("facet", facet));
+    static SearchFacet of(final Bson facet) {
+        return new BsonToManifoldAdapter(notNull("facet", facet));
+    }
+
+    /**
+     * Combines {@link SearchFacet}s into a {@link BsonDocument}.
+     *
+     * @param facets Non-empty facet definitions.
+     * @return A {@link BsonDocument} representing combined {@code facets}.
+     */
+    static BsonDocument combineToBsonDocument(final Iterable<? extends SearchFacet> facets) {
+        notNull("facets", facets);
+        Iterator<? extends SearchFacet> facetIterator = facets.iterator();
+        if (!facetIterator.hasNext()) {
+            throw new IllegalArgumentException("facets must not be empty");
+        }
+        BsonDocument result = new BsonDocument();
+        while (facetIterator.hasNext()) {
+            BsonDocument doc = facetIterator.next().toBsonDocument();
+            assertTrue(doc.size() == 1);
+            Map.Entry<String, BsonValue> entry = doc.entrySet().iterator().next();
+            result.append(entry.getKey(), entry.getValue());
+        }
+        return result;
     }
 }

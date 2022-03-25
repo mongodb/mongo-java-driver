@@ -18,7 +18,7 @@ package com.mongodb.client.model.search;
 import com.mongodb.client.model.BsonField;
 import com.mongodb.internal.client.model.BsonFieldAdapter;
 
-final class BsonFieldToManifoldAdapter extends BsonFieldAdapter implements ExistsSearchOperator, FacetSearchCollector, SearchFacet {
+final class BsonFieldToManifoldAdapter extends BsonFieldAdapter implements ExistsSearchOperator, FacetSearchCollector {
     BsonFieldToManifoldAdapter(final BsonField field) {
         super(field);
     }
