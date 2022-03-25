@@ -43,6 +43,7 @@ public class FindOneAndReplaceOptions {
     private Bson hint;
     private String hintString;
     private BsonValue comment;
+    private Bson variables;
 
     /**
      * Gets a document describing the fields to return for all matching documents.
@@ -288,6 +289,33 @@ public class FindOneAndReplaceOptions {
         return this;
     }
 
+    /**
+     * Add top-level variables to the operation
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     *
+     * @param variables for the operation or null
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public FindOneAndReplaceOptions let(final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "FindOneAndReplaceOptions{"
@@ -301,6 +329,7 @@ public class FindOneAndReplaceOptions {
                 + ", hint=" + hint
                 + ", hintString" + hintString
                 + ", comment=" + comment
+                + ", let=" + variables
                 + '}';
     }
 }

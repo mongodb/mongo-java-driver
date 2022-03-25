@@ -114,6 +114,11 @@ case class SyncFindIterable[T](wrapped: FindObservable[T]) extends SyncMongoIter
     this
   }
 
+  override def let(let: Bson): FindIterable[T] = {
+    wrapped.let(let)
+    this
+  }
+
   override def max(max: Bson): FindIterable[T] = {
     wrapped.max(max)
     this

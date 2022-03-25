@@ -183,6 +183,7 @@ public final class Operations<TDocument> {
                 .secondaryOk(readPreference.isSecondaryOk())
                 .collation(options.getCollation())
                 .comment(options.getComment())
+                .let(toBsonDocument(options.getLet()))
                 .min(toBsonDocument(options.getMin()))
                 .max(toBsonDocument(options.getMax()))
                 .returnKey(options.isReturnKey())
@@ -306,7 +307,8 @@ public final class Operations<TDocument> {
                 .collation(options.getCollation())
                 .hint(options.getHint())
                 .hintString(options.getHintString())
-                .comment(options.getComment());
+                .comment(options.getComment())
+                .let(toBsonDocument(options.getLet()));
     }
 
     public FindAndReplaceOperation<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement,
@@ -323,7 +325,8 @@ public final class Operations<TDocument> {
                 .collation(options.getCollation())
                 .hint(options.getHint())
                 .hintString(options.getHintString())
-                .comment(options.getComment());
+                .comment(options.getComment())
+                .let(toBsonDocument(options.getLet()));
     }
 
     public FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
@@ -340,7 +343,8 @@ public final class Operations<TDocument> {
                 .arrayFilters(toBsonDocumentList(options.getArrayFilters()))
                 .hint(options.getHint())
                 .hintString(options.getHintString())
-                .comment(options.getComment());
+                .comment(options.getComment())
+                .let(toBsonDocument(options.getLet()));
     }
 
     public FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
@@ -358,7 +362,8 @@ public final class Operations<TDocument> {
                 .arrayFilters(toBsonDocumentList(options.getArrayFilters()))
                 .hint(options.getHint())
                 .hintString(options.getHintString())
-                .comment(options.getComment());
+                .comment(options.getComment())
+                .let(toBsonDocument(options.getLet()));
     }
 
 
@@ -370,35 +375,42 @@ public final class Operations<TDocument> {
 
     public MixedBulkWriteOperation replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
         return bulkWrite(singletonList(new ReplaceOneModel<>(filter, replacement, options)),
-                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
+                        .comment(options.getComment()).let(options.getLet()));
     }
 
     public MixedBulkWriteOperation deleteOne(final Bson filter, final DeleteOptions options) {
-        return bulkWrite(singletonList(new DeleteOneModel<>(filter, options)), new BulkWriteOptions().comment(options.getComment()));
+        return bulkWrite(singletonList(new DeleteOneModel<>(filter, options)),
+                new BulkWriteOptions().comment(options.getComment()).let(options.getLet()));
     }
 
     public MixedBulkWriteOperation deleteMany(final Bson filter, final DeleteOptions options) {
-        return bulkWrite(singletonList(new DeleteManyModel<>(filter, options)), new BulkWriteOptions().comment(options.getComment()));
+        return bulkWrite(singletonList(new DeleteManyModel<>(filter, options)),
+                new BulkWriteOptions().comment(options.getComment()).let(options.getLet()));
     }
 
     public MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
-                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
+                        .comment(options.getComment()).let(options.getLet()));
     }
 
     public MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
-                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
+                        .comment(options.getComment()).let(options.getLet()));
     }
 
     public MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
-                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
+                        .comment(options.getComment()).let(options.getLet()));
     }
 
     public MixedBulkWriteOperation updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
-                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
+                new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
+                        .comment(options.getComment()).let(options.getLet()));
     }
 
     public MixedBulkWriteOperation insertMany(final List<? extends TDocument> documents,
@@ -485,7 +497,8 @@ public final class Operations<TDocument> {
 
         return new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern, retryWrites)
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
-                .comment(options.getComment());
+                .comment(options.getComment())
+                .let(toBsonDocument(options.getLet()));
     }
 
 

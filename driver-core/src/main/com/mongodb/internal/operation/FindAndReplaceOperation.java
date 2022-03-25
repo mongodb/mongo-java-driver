@@ -189,6 +189,12 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
+    @Override
+    public FindAndReplaceOperation<T> let(final BsonDocument variables) {
+        super.let(variables);
+        return this;
+    }
+
     protected FieldNameValidator getFieldNameValidator() {
         Map<String, FieldNameValidator> map = new HashMap<>();
         map.put("update", new ReplacingDocumentFieldNameValidator());
