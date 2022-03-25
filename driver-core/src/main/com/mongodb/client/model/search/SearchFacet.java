@@ -121,7 +121,7 @@ public interface SearchFacet extends Bson {
      * @return The requested {@link SearchFacet}.
      */
     static SearchFacet of(final Bson facet) {
-        return new BsonToManifoldAdapter(notNull("facet", facet));
+        return new ConstructibleBsonToManifoldAdapter(notNull("facet", facet));
     }
 
     /**

@@ -17,9 +17,8 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.BsonField;
-import com.mongodb.client.model.ToBsonField;
 import org.bson.BsonDocument;
+import org.bson.conversions.Bson;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -31,7 +30,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 4.6
  */
 @Evolving
-public interface SearchOperator extends ToBsonField {
+public interface SearchOperator extends Bson {
     /**
      * Returns a {@link SearchOperator} that tests if the {@code path} exists in a document.
      *
@@ -40,11 +39,11 @@ public interface SearchOperator extends ToBsonField {
      * @mongodb.atlas.manual atlas-search/exists/ exists operator
      */
     static ExistsSearchOperator exists(final FieldSearchPath path) {
-        return new BsonFieldToManifoldAdapter(new BsonField("exists", new BsonDocument("path", (notNull("path", path)).toBsonValue())));
+        return new ConstructibleBsonFieldToManifoldAdapter("exists", new BsonDocument("path", (notNull("path", path)).toBsonValue()));
     }
 
     /**
-     * Creates a {@link SearchOperator} from a {@link BsonField} in situations when there is no builder method
+     * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method
      * that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
@@ -54,14 +53,14 @@ public interface SearchOperator extends ToBsonField {
      * <pre>{@code
      *  SearchOperator operator1 = SearchOperator.exists(
      *          SearchPath.fieldPath("fieldName"));
-     *  SearchOperator operator2 = SearchOperator.of(new BsonField("exists",
+     *  SearchOperator operator2 = SearchOperator.of(new BsonDocument("exists",
      *          new BsonDocument("path", SearchPath.fieldPath("fieldName").toBsonValue()));
      * }</pre>
      *
-     * @param operator A {@link BsonField} representing the required {@link SearchOperator}.
+     * @param operator A {@link Bson} representing the required {@link SearchOperator}.
      * @return The requested {@link SearchOperator}.
      */
-    static SearchOperator of(final BsonField operator) {
-        return new BsonFieldToManifoldAdapter(notNull("operator", operator));
+    static SearchOperator of(final Bson operator) {
+        return new ConstructibleBsonToManifoldAdapter(notNull("operator", operator));
     }
 }

@@ -75,4 +75,9 @@ public abstract class AbstractConstructibleBsonField<S extends AbstractConstruct
     public final int hashCode() {
         return Objects.hash(name, value);
     }
+
+    @Override
+    public String toString() {
+        return toBsonDocument().toString();
+    }
 }

@@ -23,7 +23,10 @@ import org.bson.conversions.Bson;
 import static org.bson.assertions.Assertions.notNull;
 
 final class ConstructibleBsonFieldToManifoldAdapter extends AbstractConstructibleBsonField<ConstructibleBsonFieldToManifoldAdapter>
-        implements StringSearchFacet, NumericSearchFacet, DateSearchFacet {
+        implements
+        ExistsSearchOperator,
+        FacetSearchCollector,
+        StringSearchFacet, NumericSearchFacet, DateSearchFacet {
     ConstructibleBsonFieldToManifoldAdapter(final String name, final Bson value) {
         super(name, value);
     }

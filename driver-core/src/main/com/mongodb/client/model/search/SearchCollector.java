@@ -18,9 +18,7 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.ToBsonField;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 
@@ -37,7 +35,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 4.6
  */
 @Evolving
-public interface SearchCollector extends ToBsonField {
+public interface SearchCollector extends Bson {
     /**
      * Returns a {@link SearchCollector} that groups results by values or ranges in the specified faceted fields and returns the count
      * for each of those groups.
@@ -51,8 +49,8 @@ public interface SearchCollector extends ToBsonField {
     static FacetSearchCollector facet(final SearchOperator operator, final Iterable<? extends SearchFacet> facets) {
         notNull("operator", operator);
         notNull("facets", facets);
-        return new BsonFieldToManifoldAdapter(new BsonField("facet", new BsonDocument("operator", operator.appendTo(new BsonDocument()))
-                .append("facets", combineToBsonDocument(facets))));
+        return new ConstructibleBsonFieldToManifoldAdapter("facet", new BsonDocument("operator", operator.toBsonDocument())
+                .append("facets", combineToBsonDocument(facets)));
     }
 
     /**
@@ -75,9 +73,9 @@ public interface SearchCollector extends ToBsonField {
      *                          "numberFacetName",
      *                          SearchPath.fieldPath("numberFieldName"),
      *                          Arrays.asList(10, 20, 30))));
-     *  SearchCollector collector2 = SearchCollector.of(new BsonField("facet",
+     *  SearchCollector collector2 = SearchCollector.of(new BsonDocument("facet",
      *          new BsonDocument("operator", exists(
-     *                  SearchPath.fieldPath("fieldName")).appendTo(new BsonDocument()))
+     *                  SearchPath.fieldPath("fieldName")).toBsonDocument())
      *                  .append("facets", SearchFacet.combineToBsonDocument(Arrays.asList(
      *                          SearchFacet.stringFacet(
      *                                  "stringFacetName",
@@ -91,7 +89,7 @@ public interface SearchCollector extends ToBsonField {
      * @param collector A {@link Bson} representing the required {@link SearchCollector}.
      * @return The requested {@link SearchCollector}.
      */
-    static SearchCollector of(final BsonField collector) {
-        return new BsonFieldToManifoldAdapter(notNull("collector", collector));
+    static SearchCollector of(final Bson collector) {
+        return new ConstructibleBsonToManifoldAdapter(notNull("collector", collector));
     }
 }

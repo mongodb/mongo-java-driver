@@ -32,9 +32,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
@@ -46,6 +46,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.server.release 2.2
  * @since 3.1
  */
+@SuppressWarnings("overloads")
 public final class Aggregates {
 
     /**
@@ -1658,28 +1659,12 @@ public final class Aggregates {
     }
 
     private static final class SearchStage implements Bson {
-        @Nullable
-        private final SearchOperator operator;
-        @Nullable
-        private final SearchCollector collector;
+        private final Bson operatorOrCollector;
         @Nullable
         private final SearchOptions options;
 
-        SearchStage(final SearchOperator operator, @Nullable final SearchOptions options) {
-            this(operator, null, options);
-        }
-
-        SearchStage(final SearchCollector collector, @Nullable final SearchOptions options) {
-            this(null, collector, options);
-        }
-
-        private SearchStage(
-                @Nullable final SearchOperator operator,
-                @Nullable final SearchCollector collector,
-                @Nullable final SearchOptions options) {
-            assertTrue(operator == null ^ collector == null);
-            this.operator = operator;
-            this.collector = collector;
+        SearchStage(final Bson operatorOrCollector, @Nullable final SearchOptions options) {
+            this.operatorOrCollector = operatorOrCollector;
             this.options = options;
         }
 
@@ -1688,11 +1673,11 @@ public final class Aggregates {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
             writer.writeStartDocument("$search");
-            BsonField operatorOrCollector = operator != null
-                    ? assertNotNull(operator).toBsonField()
-                    : assertNotNull(collector).toBsonField();
-            writer.writeName(operatorOrCollector.getName());
-            BuildersHelper.encodeValue(writer, operatorOrCollector.getValue(), codecRegistry);
+            BsonDocument operatorOrCollectorDoc = operatorOrCollector.toBsonDocument(tDocumentClass, codecRegistry);
+            assertTrue(operatorOrCollectorDoc.size() == 1);
+            Map.Entry<String, BsonValue> operatorOrCollectorEntry = operatorOrCollectorDoc.entrySet().iterator().next();
+            writer.writeName(operatorOrCollectorEntry.getKey());
+            BuildersHelper.encodeValue(writer, operatorOrCollectorEntry.getValue(), codecRegistry);
             if (options != null) {
                 options.toBsonDocument().forEach((optionName, optionValue) -> {
                     writer.writeName(optionName);
@@ -1714,19 +1699,19 @@ public final class Aggregates {
                 return false;
             }
             final SearchStage that = (SearchStage) o;
-            return Objects.equals(operator, that.operator) && Objects.equals(collector, that.collector) && Objects.equals(options, that.options);
+            return operatorOrCollector.equals(that.operatorOrCollector) && Objects.equals(options, that.options);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(operator, collector, options);
+            return Objects.hash(operatorOrCollector, options);
         }
 
         @Override
         public String toString() {
             return "Stage{"
                     + "name='$search'"
-                    + (operator != null ? ", operator=" + assertNotNull(operator) : ", collector=" + assertNotNull(collector))
+                    + ", operatorOrCollector=" + operatorOrCollector
                     + ", options=" + options
                     + '}';
         }

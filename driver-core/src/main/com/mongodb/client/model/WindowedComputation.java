@@ -28,5 +28,11 @@ import java.util.List;
  * @since 4.3
  */
 @Beta
-public interface WindowedComputation extends ToBsonField {
+public interface WindowedComputation {
+    /**
+     * Render into {@link BsonField}.
+     *
+     * @return A {@link BsonField} representation.
+     */
+    BsonField toBsonField();
 }

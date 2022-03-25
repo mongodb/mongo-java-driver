@@ -15,7 +15,6 @@
  */
 package com.mongodb.client.model.search;
 
-import com.mongodb.client.model.BsonField;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
 
@@ -32,9 +31,9 @@ final class SearchCollectorTest {
     void of() {
         assertEquals(
                 docExamplePredefined()
-                        .toBsonField(),
+                        .toBsonDocument(),
                 SearchCollector.of(docExampleCustom())
-                        .toBsonField()
+                        .toBsonDocument()
         );
     }
 
@@ -43,7 +42,7 @@ final class SearchCollectorTest {
         assertEquals(
                 docExampleCustom(),
                 docExamplePredefined()
-                        .toBsonField()
+                        .toBsonDocument()
         );
     }
 
@@ -61,10 +60,10 @@ final class SearchCollectorTest {
                                 asList(10, 20, 30))));
     }
 
-    private static BsonField docExampleCustom() {
-        return new BsonField("facet",
+    private static BsonDocument docExampleCustom() {
+        return new BsonDocument("facet",
                 new BsonDocument("operator", exists(
-                        fieldPath("fieldName")).appendTo(new BsonDocument()))
+                        fieldPath("fieldName")).toBsonDocument())
                         .append("facets", combineToBsonDocument(asList(
                                 stringFacet(
                                         "stringFacetName",
