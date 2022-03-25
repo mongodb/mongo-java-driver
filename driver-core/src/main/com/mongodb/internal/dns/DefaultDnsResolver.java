@@ -16,19 +16,14 @@
 
 package com.mongodb.internal.dns;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.spi.dns.DnsClient;
+import com.mongodb.spi.dns.DnsClientProvider;
+import com.mongodb.spi.dns.DnsWithResponseCodeException;
 
-import javax.naming.Context;
-import javax.naming.NameNotFoundException;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.InitialDirContext;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -39,6 +34,23 @@ import static java.util.Arrays.asList;
  * <p>This class should not be considered a part of the public API.</p>
  */
 public final class DefaultDnsResolver implements DnsResolver {
+
+    private final DnsClient dnsClient;
+
+    public DefaultDnsResolver() {
+        ServiceLoader<DnsClientProvider> loader = ServiceLoader.load(DnsClientProvider.class);
+        DnsClient dnsClientFromServiceLoader = null;
+        for (DnsClientProvider dnsClientProvider : loader) {
+            dnsClientFromServiceLoader = dnsClientProvider.create();
+            break;
+        }
+
+        if (dnsClientFromServiceLoader == null) {
+            dnsClient = new JndiDnsClient();
+        } else {
+            dnsClient = dnsClientFromServiceLoader;
+        }
+    }
 
     /*
       The format of SRV record is
@@ -56,40 +68,28 @@ public final class DefaultDnsResolver implements DnsResolver {
     public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName) {
         String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
-        List<String> hosts = new ArrayList<String>();
-        InitialDirContext dirContext = createDnsDirContext();
+        List<String> hosts = new ArrayList<>();
+        String resourceName = "_" + srvServiceName + "._tcp." + srvHost;
         try {
-            String resourceRecordName = "_" + srvServiceName + "._tcp." + srvHost;
-            Attributes attributes = dirContext.getAttributes(resourceRecordName, new String[]{"SRV"});
-            Attribute attribute = attributes.get("SRV");
-            if (attribute == null) {
-                throw new MongoConfigurationException(format("No SRV records available for %s", resourceRecordName));
+            List<String> srvAttributeValues = dnsClient.getResourceRecordData(resourceName, "SRV");
+            if (srvAttributeValues == null || srvAttributeValues.isEmpty()) {
+                throw new MongoConfigurationException(format("No SRV records available for '%s'.", resourceName));
             }
-            NamingEnumeration<?> srvRecordEnumeration = attribute.getAll();
-            while (srvRecordEnumeration.hasMore()) {
-                String srvRecord = (String) srvRecordEnumeration.next();
+
+            for (String srvRecord : srvAttributeValues) {
                 String[] split = srvRecord.split(" ");
                 String resolvedHost = split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3];
                 String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
                 if (!sameParentDomain(srvHostDomainParts, resolvedHostDomain)) {
                     throw new MongoConfigurationException(
-                            format("The SRV host name '%s'resolved to a host '%s 'that is not in a sub-domain of the SRV host.",
+                            format("The SRV host name '%s' resolved to a host '%s 'that is not in a sub-domain of the SRV host.",
                                     srvHost, resolvedHost));
                 }
                 hosts.add(resolvedHost + ":" + split[2]);
             }
 
-            if (hosts.isEmpty()) {
-                throw new MongoConfigurationException("Unable to find any SRV records for host " + srvHost);
-            }
-        } catch (NamingException e) {
-            throw new MongoConfigurationException("Unable to look up SRV record for host " + srvHost, e);
-        } finally {
-            try {
-                dirContext.close();
-            } catch (NamingException e) {
-                // ignore
-            }
+        } catch (Exception e) {
+            throw new MongoConfigurationException(format("Failed looking up SRV record for '%s'.", resourceName), e);
         }
         return hosts;
     }
@@ -110,58 +110,27 @@ public final class DefaultDnsResolver implements DnsResolver {
     */
     @Override
     public String resolveAdditionalQueryParametersFromTxtRecords(final String host) {
-        String additionalQueryParameters = "";
-        InitialDirContext dirContext = createDnsDirContext();
         try {
-            Attributes attributes = dirContext.getAttributes(host, new String[]{"TXT"});
-            Attribute attribute = attributes.get("TXT");
-            if (attribute != null) {
-                NamingEnumeration<?> txtRecordEnumeration = attribute.getAll();
-                if (txtRecordEnumeration.hasMore()) {
-                    // Remove all space characters, as the DNS resolver for TXT records inserts a space character
-                    // between each character-string in a single TXT record.  That whitespace is spurious in
-                    // this context and must be removed
-                    additionalQueryParameters = ((String) txtRecordEnumeration.next()).replaceAll("\\s", "");
-
-                    if (txtRecordEnumeration.hasMore()) {
-                        throw new MongoConfigurationException(format("Multiple TXT records found for host '%s'.  Only one is permitted",
-                                host));
-                    }
-                }
+            List<String> attributeValues = dnsClient.getResourceRecordData(host, "TXT");
+            if (attributeValues == null || attributeValues.isEmpty()) {
+                return "";
             }
-        } catch (NameNotFoundException e) {
+            if (attributeValues.size() > 1) {
+                throw new MongoConfigurationException(format("Multiple TXT records found for host '%s'.  Only one is permitted",
+                        host));
+            }
+            // Remove all space characters, as the DNS resolver for TXT records inserts a space character
+            // between each character-string in a single TXT record.  That whitespace is spurious in
+            // this context and must be removed
+            return attributeValues.get(0).replaceAll("\\s", "");
+        } catch (DnsWithResponseCodeException e) {
             // ignore NXDomain error (error code 3, "Non-Existent Domain)
-        } catch (NamingException e) {
-            throw new MongoConfigurationException("Unable to look up TXT record for host " + host, e);
-        } finally {
-            try {
-                dirContext.close();
-            } catch (NamingException e) {
-                // ignore
+            if (e.getResponseCode() != 3) {
+                throw new MongoConfigurationException("Failed looking up TXT record for host " + host, e);
             }
-        }
-        return additionalQueryParameters;
-    }
-
-    /*
-      It's unfortunate that we take a runtime dependency on com.sun.jndi.dns.DnsContextFactory.
-      This is not guaranteed to work on all JVMs but in practice is expected to work on most.
-    */
-    private static InitialDirContext createDnsDirContext() {
-        Hashtable<String, String> envProps = new Hashtable<String, String>();
-        envProps.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");
-
-        try {
-            return new InitialDirContext(envProps);
-        } catch (NamingException e) {
-            // Just in case the provider url default has been changed to a non-dns pseudo url, fallback to the JDK default
-            envProps.put(Context.PROVIDER_URL, "dns:");
-            try {
-                return new InitialDirContext(envProps);
-            } catch (NamingException ex) {
-                throw new MongoClientException("Unable to support mongodb+srv// style connections as the 'com.sun.jndi.dns.DnsContextFactory' "
-                        + "class is not available in this JRE. A JNDI context is required for resolving SRV records.", e);
-            }
+            return "";
+        } catch (Exception e) {
+            throw new MongoConfigurationException("Failed looking up TXT record for host " + host, e);
         }
     }
 }
