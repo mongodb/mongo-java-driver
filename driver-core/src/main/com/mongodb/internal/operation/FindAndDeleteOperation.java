@@ -102,6 +102,12 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
+    @Override
+    public FindAndDeleteOperation<T> let(final BsonDocument variables) {
+        super.let(variables);
+        return this;
+    }
+
     protected FieldNameValidator getFieldNameValidator() {
         return new NoOpFieldNameValidator();
     }

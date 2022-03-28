@@ -68,6 +68,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     private Bson hint;
     private String hintString;
     private BsonValue comment;
+    private BsonDocument variables;
 
     /**
      * Construct a new instance.
@@ -325,6 +326,32 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return this;
     }
 
+    /**
+     * Add top-level variables to the operation
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public BsonDocument getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     *
+     * @param variables for the operation
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public BaseFindAndModifyOperation<T> let(final BsonDocument variables) {
+        this.variables = variables;
+        return this;
+    }
+
     protected abstract FieldNameValidator getFieldNameValidator();
 
     protected abstract void specializeCommand(BsonDocument initialCommand, ConnectionDescription connectionDescription);
@@ -356,6 +383,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
                 }
             }
             putIfNotNull(commandDocument, "comment", getComment());
+            putIfNotNull(commandDocument, "let", getLet());
 
             if (isRetryableWrite(isRetryWrites(), getWriteConcern(), serverDescription, connectionDescription, sessionContext)) {
                 commandDocument.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));

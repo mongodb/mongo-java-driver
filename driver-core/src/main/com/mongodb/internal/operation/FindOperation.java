@@ -105,6 +105,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private Collation collation;
     private BsonValue comment;
     private BsonValue hint;
+    private BsonDocument variables;
     private BsonDocument max;
     private BsonDocument min;
     private boolean returnKey;
@@ -516,6 +517,34 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     /**
+     * Add top-level variables to the operation
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.driver.manual reference/command/find/
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public BsonDocument getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables to the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.</p>
+     *
+     * @param variables for find operation or null
+     * @return this
+     * @mongodb.driver.manual reference/command/find/
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public FindOperation<T> let(final BsonDocument variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    /**
      * Returns the exclusive upper bound for a specific index. By default there is no max bound.
      *
      * @return the max
@@ -874,6 +903,9 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         }
         if (hint != null) {
             commandDocument.put("hint", hint);
+        }
+        if (variables != null) {
+            commandDocument.put("let", variables);
         }
         if (max != null) {
             commandDocument.put("max", max);

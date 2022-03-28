@@ -91,6 +91,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private final WriteConcern writeConcern;
     private Boolean bypassDocumentValidation;
     private BsonValue comment;
+    private BsonDocument variables;
 
     /**
      * Construct a new instance.
@@ -195,6 +196,21 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     }
 
     /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     *
+     * @param variables for the operation
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public MixedBulkWriteOperation let(final BsonDocument variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    /**
      * Returns true if writes should be retried if they fail due to a network error.
      *
      * @return the retryWrites value
@@ -278,7 +294,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     if (!bulkWriteTracker.batch().isPresent()) {
                         BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                 source.getServerDescription(), connectionDescription, ordered, writeConcern,
-                                bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment));
+                                bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables));
                     }
                     logRetryExecute(retryState);
                     return executeBulkWriteBatch(retryState, binding, connection, maxWireVersion);
@@ -336,7 +352,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         if (!bulkWriteTracker.batch().isPresent()) {
                             BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                     source.getServerDescription(), connectionDescription, ordered, writeConcern,
-                                    bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment));
+                                    bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables));
                         }
                     } catch (Throwable t) {
                         releasingCallback.onResult(null, t);

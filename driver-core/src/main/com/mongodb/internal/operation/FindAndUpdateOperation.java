@@ -250,6 +250,12 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
+    @Override
+    public FindAndUpdateOperation<T> let(final BsonDocument variables) {
+        super.let(variables);
+        return this;
+    }
+
     protected FieldNameValidator getFieldNameValidator() {
         Map<String, FieldNameValidator> map = new HashMap<>();
         map.put("update", new UpdateFieldNameValidator());

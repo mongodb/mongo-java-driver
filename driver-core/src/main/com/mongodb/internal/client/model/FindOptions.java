@@ -50,6 +50,7 @@ public final class FindOptions {
     private BsonValue comment;
     private Bson hint;
     private String hintString;
+    private Bson variables;
     private Bson max;
     private Bson min;
     private boolean returnKey;
@@ -66,8 +67,8 @@ public final class FindOptions {
     FindOptions(
             final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
             final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial,
-            final Collation collation, final BsonValue comment, final Bson hint, final String hintString, final Bson max, final Bson min,
-            final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse) {
+            final Collation collation, final BsonValue comment, final Bson hint, final String hintString, final Bson variables,
+            final Bson max, final Bson min, final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse) {
         this.batchSize = batchSize;
         this.limit = limit;
         this.projection = projection;
@@ -83,6 +84,7 @@ public final class FindOptions {
         this.comment = comment;
         this.hint = hint;
         this.hintString = hintString;
+        this.variables = variables;
         this.max = max;
         this.min = min;
         this.returnKey = returnKey;
@@ -93,7 +95,7 @@ public final class FindOptions {
 
     public FindOptions withBatchSize(final int batchSize) {
         return new FindOptions(batchSize, limit, projection, maxTimeMS, maxAwaitTimeMS, skip, sort, cursorType, noCursorTimeout,
-                oplogReplay, partial, collation, comment, hint, hintString, max, min, returnKey, showRecordId, allowDiskUse);
+                oplogReplay, partial, collation, comment, hint, hintString, variables, max, min, returnKey, showRecordId, allowDiskUse);
     }
 
     /**
@@ -466,6 +468,35 @@ public final class FindOptions {
     }
 
     /**
+     * Add top-level variables to the operation
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.driver.manual reference/command/find/
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables to the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.</p>
+     *
+     * @param variables for find operation or null
+     * @return this
+     * @mongodb.driver.manual reference/command/find/
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public FindOptions let(@Nullable final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    /**
      * Returns the exclusive upper bound for a specific index. By default there is no max bound.
      *
      * @return the max
@@ -600,6 +631,7 @@ public final class FindOptions {
                 + ", collation=" + collation
                 + ", comment='" + comment + "'"
                 + ", hint=" + hint
+                + ", let=" + variables
                 + ", max=" + max
                 + ", min=" + min
                 + ", returnKey=" + returnKey

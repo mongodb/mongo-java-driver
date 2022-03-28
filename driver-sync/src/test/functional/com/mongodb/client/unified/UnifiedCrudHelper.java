@@ -258,6 +258,9 @@ final class UnifiedCrudHelper {
                 case "comment":
                     iterable.comment(cur.getValue());
                     break;
+                case "let":
+                    iterable.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -329,6 +332,9 @@ final class UnifiedCrudHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "let":
+                    options.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -385,6 +391,9 @@ final class UnifiedCrudHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "let":
+                    options.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -414,6 +423,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "comment":
                     options.comment(cur.getValue());
+                    break;
+                case "let":
+                    options.let(cur.getValue().asDocument());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -681,6 +693,9 @@ final class UnifiedCrudHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "let":
+                    options.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -759,6 +774,9 @@ final class UnifiedCrudHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "let":
+                    options.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -791,6 +809,9 @@ final class UnifiedCrudHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "let":
+                    options.let(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -817,6 +838,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "comment":
                     options.comment(cur.getValue());
+                    break;
+                case "let":
+                    options.let(cur.getValue().asDocument());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
