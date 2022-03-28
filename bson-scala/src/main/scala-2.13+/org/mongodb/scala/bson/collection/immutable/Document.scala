@@ -47,7 +47,7 @@ object Document extends SpecificIterableFactory[(String, BsonValue), Document] {
    * @param json the JSON stringN
    * @return a corresponding `Document` object
    * @see org.bson.json.JsonReader
-   * @see [[http://docs.mongodb.com/manual/reference/mongodb-extended-json/ MongoDB Extended JSON]]
+   * @see [[http://www.mongodb.com/manual/reference/mongodb-extended-json/ MongoDB Extended JSON]]
    */
   def apply(json: String): Document = new Document(BsonDocument(json))
 
