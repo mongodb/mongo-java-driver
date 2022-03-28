@@ -252,11 +252,14 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.isPrimary()) {
-           if (isNonStalePrimary(newDescription.getElectionId(), newDescription.getSetVersion())) {
-                LOGGER.info(format("Setting max election id to %s and max set version to %d from replica set primary %s",
-                        newDescription.getElectionId(), newDescription.getSetVersion(), newDescription.getAddress()));
-                maxElectionId = newDescription.getElectionId();
-                maxSetVersion = newDescription.getSetVersion();
+            if (isNonStalePrimary(newDescription.getElectionId(), newDescription.getSetVersion())) {
+                if (nullSafeCompareTo(newDescription.getElectionId(), maxElectionId) != 0
+                        || nullSafeCompareTo(newDescription.getSetVersion(), maxSetVersion) != 0) {
+                    LOGGER.info(format("Setting max election id to %s and max set version to %d from replica set primary %s",
+                            newDescription.getElectionId(), newDescription.getSetVersion(), newDescription.getAddress()));
+                    maxElectionId = newDescription.getElectionId();
+                    maxSetVersion = newDescription.getSetVersion();
+                }
             } else {
                 LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
                                 + "is less than one already seen of (%d, %s)",
