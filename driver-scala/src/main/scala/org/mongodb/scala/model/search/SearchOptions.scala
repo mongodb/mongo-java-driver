@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.mongodb.scala.model.search
 
-public final class AtlasManualTaglet extends DocTaglet {
-    @Override
-    public String getName() {
-        return "mongodb.atlas.manual";
-    }
+import com.mongodb.client.model.search.{ SearchOptions => JSearchOptions }
 
-    @Override
-    protected String getHeader() {
-        return "MongoDB Atlas documentation";
-    }
+/**
+ * This interface represents optional fields of the `\$search` pipeline stage of an aggregation pipeline.
+ *
+ * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search syntax]]
+ * @since 4.6
+ */
+object SearchOptions {
 
-    @Override
-    protected String getBaseDocURI() {
-        return "https://www.mongodb.com/docs/atlas/";
-    }
+  /**
+   * Returns `SearchOptions` that represents server defaults.
+   *
+   * @return `SearchOptions` that represents server defaults.
+   */
+  def defaultSearchOptions(): SearchOptions = JSearchOptions.defaultSearchOptions()
 }

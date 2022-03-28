@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchCount;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchOptions;
@@ -63,12 +64,14 @@ public final class Projections {
 
     /**
      * Creates a projection of a field whose value is equal to the {@code $$SEARCH_META} variable,
-     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)}.
+     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}.
      * Calling this method is equivalent to calling {@link #computed(String, Object)} with {@code "$$SEARCH_META"} as the second argument.
      *
      * @param fieldName the field name
      * @return the projection
      * @see SearchCount
+     * @see SearchCollector
+     * @since 4.6
      */
     public static Bson computedSearchMeta(final String fieldName) {
         return computed(fieldName, "$$SEARCH_META");
@@ -180,13 +183,13 @@ public final class Projections {
 
     /**
      * Creates a projection to the given field name of the searchScore,
-     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)}.
+     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}.
      * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "searchScore"} as the second argument.
      *
      * @param fieldName the field name
      * @return the projection
-     * @see Aggregates#search(SearchOperator, SearchOptions)
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.6
      */
     public static Bson metaSearchScore(final String fieldName) {
         return meta(fieldName, "searchScore");
@@ -194,13 +197,14 @@ public final class Projections {
 
     /**
      * Creates a projection to the given field name of the searchHighlights,
-     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)}.
+     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}.
      * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "searchHighlights"} as the second argument.
      *
      * @param fieldName the field name
      * @return the projection
      * @see com.mongodb.client.model.search.SearchHighlight
      * @mongodb.atlas.manual atlas-search/highlighting/ Highlighting
+     * @since 4.6
      */
     public static Bson metaSearchHighlights(final String fieldName) {
         return meta(fieldName, "searchHighlights");

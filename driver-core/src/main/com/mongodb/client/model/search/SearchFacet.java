@@ -103,8 +103,7 @@ public interface SearchFacet extends Bson {
     }
 
     /**
-     * Creates a {@link SearchFacet} from a {@link Bson} in situations when there is no builder method
-     * that better satisfies your needs.
+     * Creates a {@link SearchFacet} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
      * <i>Example</i><br>

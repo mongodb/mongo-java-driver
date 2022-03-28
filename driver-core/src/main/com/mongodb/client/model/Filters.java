@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.client.model.geojson.Geometry;
 import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchOptions;
 import com.mongodb.lang.Nullable;
@@ -419,9 +420,10 @@ public final class Filters {
 
     /**
      * Creates a filter that matches all documents matching the given search term.
-     * You may use {@link Projections#meta(String, String)} to extract the metadata associated with the matched documents.
+     * You may use {@link Projections#metaTextScore(String)} to extract the relevance score assigned to each matched document.
      * <p>
-     * {@link Aggregates#search(SearchOperator, SearchOptions)} is a more powerful full-text search alternative.</p>
+     * {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}
+     * is a more powerful full-text search alternative.</p>
      *
      * @param search the search term
      * @return the filter
@@ -436,7 +438,8 @@ public final class Filters {
      * Creates a filter that matches all documents matching the given the search term with the given text search options.
      * You may use {@link Projections#metaTextScore(String)} to extract the relevance score assigned to each matched document.
      * <p>
-     * {@link Aggregates#search(SearchOperator, SearchOptions)} is a more powerful full-text search alternative.</p>
+     * {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}
+     * is a more powerful full-text search alternative.</p>
      *
      * @param search            the search term
      * @param textSearchOptions the text search options to use

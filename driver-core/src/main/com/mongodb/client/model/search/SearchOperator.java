@@ -23,8 +23,7 @@ import org.bson.conversions.Bson;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * The core part of the {@link Aggregates#search(SearchOperator, SearchOptions) $search}
- * pipeline stage of an aggregation pipeline.
+ * The core part of the {@link Aggregates#search(SearchOperator, SearchOptions) $search} pipeline stage of an aggregation pipeline.
  *
  * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
  * @since 4.6
@@ -35,7 +34,7 @@ public interface SearchOperator extends Bson {
      * Returns a {@link SearchOperator} that tests if the {@code path} exists in a document.
      *
      * @param path The path to test.
-     * @return The requested {@link ExistsSearchOperator}.
+     * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/exists/ exists operator
      */
     static ExistsSearchOperator exists(final FieldSearchPath path) {
@@ -43,8 +42,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method
-     * that better satisfies your needs.
+     * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
      * <i>Example</i><br>
@@ -54,7 +52,7 @@ public interface SearchOperator extends Bson {
      *  SearchOperator operator1 = SearchOperator.exists(
      *          SearchPath.fieldPath("fieldName"));
      *  SearchOperator operator2 = SearchOperator.of(new BsonDocument("exists",
-     *          new BsonDocument("path", SearchPath.fieldPath("fieldName").toBsonValue()));
+     *          new BsonDocument("path", SearchPath.fieldPath("fieldName").toBsonValue())));
      * }</pre>
      *
      * @param operator A {@link Bson} representing the required {@link SearchOperator}.

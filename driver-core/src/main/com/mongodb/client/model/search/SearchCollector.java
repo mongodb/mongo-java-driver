@@ -26,8 +26,7 @@ import static com.mongodb.client.model.search.SearchFacet.combineToBsonDocument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * The core part of the {@link Aggregates#search(SearchCollector, SearchOptions) $search}
- * pipeline stage of an aggregation pipeline.
+ * The core part of the {@link Aggregates#search(SearchCollector, SearchOptions) $search} pipeline stage of an aggregation pipeline.
  * {@link SearchCollector}s allow returning metadata together with the matching search results.
  * You may use the {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}, to extract this metadata.
  *
@@ -54,8 +53,7 @@ public interface SearchCollector extends Bson {
     }
 
     /**
-     * Creates a {@link SearchCollector} from a {@link Bson} in situations when there is no builder method
-     * that better satisfies your needs.
+     * Creates a {@link SearchCollector} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
      * <i>Example</i><br>
@@ -74,7 +72,7 @@ public interface SearchCollector extends Bson {
      *                          SearchPath.fieldPath("numberFieldName"),
      *                          Arrays.asList(10, 20, 30))));
      *  SearchCollector collector2 = SearchCollector.of(new BsonDocument("facet",
-     *          new BsonDocument("operator", exists(
+     *          new BsonDocument("operator", SearchOperator.exists(
      *                  SearchPath.fieldPath("fieldName")).toBsonDocument())
      *                  .append("facets", SearchFacet.combineToBsonDocument(Arrays.asList(
      *                          SearchFacet.stringFacet(

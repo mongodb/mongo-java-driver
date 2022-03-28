@@ -39,10 +39,24 @@ object Projections {
    * @param  expression   the expression
    * @tparam TExpression  the expression type
    * @return the projection
+   * @see [[Projections.computedSearchMeta]]
    * @see Aggregates#project(Bson)
    */
   def computed[TExpression](fieldName: String, expression: TExpression): Bson =
     JProjections.computed(fieldName, expression)
+
+  /**
+   * Creates a projection of a field whose value is equal to the `$$SEARCH_META` variable,
+   * for use with `Aggregates.search(SearchOperator, SearchOptions)` / `Aggregates.search(SearchCollector, SearchOptions)`.
+   * Calling this method is equivalent to calling [[Projections.computed]] with `"$$SEARCH_META"` as the second argument.
+   *
+   * @param fieldName the field name
+   * @return the projection
+   * @see [[org.mongodb.scala.model.search.SearchCount]]
+   * @see [[org.mongodb.scala.model.search.SearchCollector]]
+   */
+  def computedSearchMeta(fieldName: String): Bson =
+    JProjections.computedSearchMeta(fieldName)
 
   /**
    * Creates a projection that includes all of the given fields.
@@ -95,7 +109,10 @@ object Projections {
    * @param fieldName the field name
    * @param metaFieldName the meta field name
    * @return the projection
-   * @see [[https://docs.mongodb.com/manual/reference/operator/aggregation/meta/ meta]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/meta/ meta]]
+   * @see [[Projections.metaTextScore]]
+   * @see [[Projections.metaSearchScore]]
+   * @see [[Projections.metaSearchHighlights]]
    * @since 4.1
    */
   def meta(fieldName: String, metaFieldName: String): Bson = JProjections.meta(fieldName, metaFieldName)
@@ -106,10 +123,33 @@ object Projections {
    *
    * @param fieldName the field name
    * @return the projection
-   * @see Filters.text(String, TextSearchOptions)
-   * @see [[https://docs.mongodb.com/manual/reference/operator/aggregation/meta/#text-score-metadata--meta---textscore- textScore]]
+   * @see `Filters.text(String, TextSearchOptions)`
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/meta/#text-score-metadata--meta---textscore- textScore]]
    */
   def metaTextScore(fieldName: String): Bson = JProjections.metaTextScore(fieldName)
+
+  /**
+   * Creates a projection to the given field name of the searchScore,
+   * for use with `Aggregates.search(SearchOperator, SearchOptions)` / `Aggregates.search(SearchCollector, SearchOptions)`.
+   * Calling this method is equivalent to calling [[Projections.meta]] with `"searchScore"` as the second argument.
+   *
+   * @param fieldName the field name
+   * @return the projection
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   */
+  def metaSearchScore(fieldName: String): Bson = JProjections.metaSearchScore(fieldName)
+
+  /**
+   * Creates a projection to the given field name of the searchHighlights,
+   * for use with `Aggregates.search(SearchOperator, SearchOptions)` / `Aggregates.search(SearchCollector, SearchOptions)`.
+   * Calling this method is equivalent to calling [[Projections.meta]] with `"searchHighlights"` as the second argument.
+   *
+   * @param fieldName the field name
+   * @return the projection
+   * @see [[org.mongodb.scala.model.search.SearchHighlight]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/highlighting/ Highlighting]]
+   */
+  def metaSearchHighlights(fieldName: String): Bson = JProjections.metaSearchHighlights(fieldName)
 
   /**
    * Creates a projection to the given field name of a slice of the array value of that field.

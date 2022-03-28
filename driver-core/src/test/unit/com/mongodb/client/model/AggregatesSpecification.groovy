@@ -566,9 +566,7 @@ class AggregatesSpecification extends Specification {
         then:
         searchDoc == parse('''{
                 "$search": {
-                    "exists": {
-                        "path": "fieldName"
-                    }
+                    "exists": { "path": "fieldName" }
                 }
         }''')
 
@@ -592,32 +590,18 @@ class AggregatesSpecification extends Specification {
         searchDoc == parse('''{
                 "$search": {
                     "facet": {
-                        "operator": {
-                            "exists": {
-                                "path": "fieldName"
-                            }
-                        },
+                        "operator": { "exists": { "path": "fieldName" } },
                         "facets": {
-                            "stringFacetName": {
-                                "type" : "string",
-                                "path": "fieldName1"
-                            }
+                            "stringFacetName": { "type" : "string", "path": "fieldName1" }
                         }
                     },
                     "index": "indexName",
-                    "count": {
-                        "type": "total"
-                    },
+                    "count": { "type": "total" },
                     "highlight": {
                         "path": [
                             "fieldName1",
-                            {
-                                "value": "fieldName2",
-                                "multi": "analyzerName"
-                            },
-                            {
-                                "wildcard": "field.name*"
-                            }
+                            { "value": "fieldName2", "multi": "analyzerName" },
+                            { "wildcard": "field.name*" }
                         ]
                     }
                 }
@@ -626,37 +610,37 @@ class AggregatesSpecification extends Specification {
 
     def 'should render $search with null options'() {
         when:
-        BsonDocument searchDoc = toBson(search((SearchOperator) exists(fieldPath('fieldName')), null))
+        BsonDocument searchDoc = toBson(
+                search(
+                        (SearchOperator) exists(fieldPath('fieldName')),
+                        null
+                )
+        )
 
         then:
         searchDoc == parse('''{
                 "$search": {
-                    "exists": {
-                        "path": "fieldName"
-                    }
+                    "exists": { "path": "fieldName" }
                 }
         }''')
 
         when:
-        searchDoc = toBson(search((SearchCollector) facet(exists(fieldPath('fieldName')),
-                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)]),
-                null))
+        searchDoc = toBson(
+                search(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)]),
+                        null
+                )
+        )
 
         then:
         searchDoc == parse('''{
                 "$search": {
                     "facet": {
-                        "operator": {
-                            "exists": {
-                                "path": "fieldName"
-                            }
-                        },
+                        "operator": { "exists": { "path": "fieldName" } },
                         "facets": {
-                            "facetName": {
-                                "type": "string",
-                                "path": "fieldName",
-                                "numBuckets": 3
-                            }
+                          "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
                         }
                     }
                 }

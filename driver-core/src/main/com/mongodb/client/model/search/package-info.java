@@ -15,8 +15,11 @@
  */
 
 /**
- * Contains builders related to the embedded full-text search in MongoDB Atlas.
+ * Query building API for MongoDB Atlas full-text search.
  *
+ * @see com.mongodb.client.model.Aggregates#search(SearchOperator, SearchOptions)
+ * @see com.mongodb.client.model.Aggregates#search(SearchCollector, SearchOptions)
+ * @mongodb.atlas.manual atlas-search/ Atlas search
  * @mongodb.atlas.manual atlas-search/query-syntax/ Atlas search aggregation pipeline stages
  * @since 4.6
  */

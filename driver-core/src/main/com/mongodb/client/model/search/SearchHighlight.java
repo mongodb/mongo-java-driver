@@ -77,10 +77,10 @@ public interface SearchHighlight extends Bson {
      * <pre>{@code
      *  SearchHighlight highlight1 = SearchHighlight.paths(Arrays.asList(
      *          SearchPath.fieldPath("fieldName"),
-     *          SearchPath.wildcardPath("wildk*rd")));
+     *          SearchPath.wildcardPath("wildc*rd")));
      *  SearchHighlight highlight2 = SearchHighlight.of(new BsonDocument("path", new BsonArray(Arrays.asList(
      *          SearchPath.fieldPath("fieldName").toBsonValue(),
-     *          SearchPath.wildcardPath("wildk*rd").toBsonValue()))));
+     *          SearchPath.wildcardPath("wildc*rd").toBsonValue()))));
      * }</pre>
      *
      * @param highlight A {@link Bson} representing the required {@link SearchHighlight}.

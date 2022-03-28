@@ -22,8 +22,10 @@ import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 /**
- * This interface represents optional fields of a {@link Aggregates#search(SearchOperator, SearchOptions) $search} pipeline stage.
+ * This interface represents optional fields of the {@code $search} pipeline stage of an aggregation pipeline.
  *
+ * @see Aggregates#search(SearchOperator, SearchOptions)
+ * @see Aggregates#search(SearchCollector, SearchOptions)
  * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search syntax
  * @since 4.6
  */

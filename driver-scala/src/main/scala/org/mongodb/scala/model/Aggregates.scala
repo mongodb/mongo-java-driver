@@ -22,6 +22,7 @@ import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions }
 
 /**
  * Builders for aggregation pipeline stages.
@@ -477,4 +478,42 @@ object Aggregates {
   @Beta
   def setWindowFields[TExpression](partitionBy: TExpression, sortBy: Bson, output: WindowedComputation*): Bson =
     JAggregates.setWindowFields(partitionBy, sortBy, output.asJava)
+
+  /**
+   * Creates a `\$search` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "searchScore"` expression, e.g., via [[Projections.metaSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * `Filters.text(String, TextSearchOptions)` is a legacy text search alternative.
+   *
+   * @param operator A search operator.
+   * @param options Optional `\$search` pipeline stage fields.
+   * Specifying `null` is equivalent to specifying `SearchOptions.defaultSearchOptions`.
+   * @return The `\$search` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   * @since 4.6
+   */
+  def search(operator: SearchOperator, options: SearchOptions): Bson =
+    JAggregates.search(operator, options)
+
+  /**
+   * Creates a `\$search` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "searchScore"` expression, e.g., via [[Projections.metaSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * `Filters.text(String, TextSearchOptions)` is a legacy text search alternative.
+   *
+   * @param collector A search collector.
+   * @param options Optional `\$search` pipeline stage fields.
+   * Specifying `null` is equivalent to specifying `SearchOptions.defaultSearchOptions`.
+   * @return The `\$search` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   * @since 4.6
+   */
+  def search(collector: SearchCollector, options: SearchOptions): Bson =
+    JAggregates.search(collector, options)
 }

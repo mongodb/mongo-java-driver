@@ -88,12 +88,12 @@ final class SearchHighlghtTest {
     private static SearchHighlight docExamplePredefined() {
         return SearchHighlight.paths(asList(
                 fieldPath("fieldName"),
-                wildcardPath("wildk*rd")));
+                wildcardPath("wildc*rd")));
     }
 
     private static BsonDocument docExampleCustom() {
         return new BsonDocument("path", new BsonArray(asList(
                 fieldPath("fieldName").toBsonValue(),
-                wildcardPath("wildk*rd").toBsonValue())));
+                wildcardPath("wildc*rd").toBsonValue())));
     }
 }

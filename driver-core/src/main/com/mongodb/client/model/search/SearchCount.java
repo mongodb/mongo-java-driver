@@ -28,7 +28,6 @@ import static org.bson.assertions.Assertions.notNull;
  * Counting options.
  * You may use the {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)},
  * to extract the results of counting.
- * You may use {@link Projections#computedSearchMeta(String)} to extract the count results.
  *
  * @mongodb.atlas.manual atlas-search/counting/ Counting
  * @since 4.6
