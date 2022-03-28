@@ -155,6 +155,12 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
     }
 
     @Override
+    public FindPublisher<T> let(@Nullable final Bson variables) {
+        findOptions.let(variables);
+        return this;
+    }
+
+    @Override
     public FindPublisher<T> max(@Nullable final Bson max) {
         findOptions.max(max);
         return this;

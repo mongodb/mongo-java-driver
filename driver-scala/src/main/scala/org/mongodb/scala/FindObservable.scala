@@ -251,6 +251,21 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   }
 
   /**
+   * Add top-level variables to the operation. A null value means no variables are set.
+   *
+   * Allows for improved command readability by separating the variables from the query text.
+   *
+   * @param let the top-level variables for the find operation or null
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 5.0 or greater
+   */
+  def let(let: Bson): FindObservable[TResult] = {
+    wrapped.let(let)
+    this
+  }
+
+  /**
    * Sets the exclusive upper bound for a specific index. A null value means no max is set.
    *
    * @param max the max

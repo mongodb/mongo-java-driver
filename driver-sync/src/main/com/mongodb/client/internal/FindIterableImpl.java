@@ -172,6 +172,12 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    public FindIterable<TResult> let(@Nullable final Bson variables) {
+        findOptions.let(variables);
+        return this;
+    }
+
+    @Override
     public FindIterable<TResult> max(@Nullable final Bson max) {
         findOptions.max(max);
         return this;

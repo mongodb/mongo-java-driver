@@ -170,7 +170,6 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      */
     AggregateIterable<TResult> let(@Nullable Bson variables);
 
-
     /**
      * Explain the execution plan for this operation with the server's default verbosity level
      *

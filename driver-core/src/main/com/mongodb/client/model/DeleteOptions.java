@@ -33,6 +33,7 @@ public class DeleteOptions {
     private String hintString;
     private Collation collation;
     private BsonValue comment;
+    private Bson variables;
 
     /**
      * Returns the collation options
@@ -150,6 +151,36 @@ public class DeleteOptions {
         return this;
     }
 
+    /**
+     * Add top-level variables to the operation
+     *
+     * <p>The value of let will be passed to all update and delete, but not insert, commands.
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     * <p>For bulk operations use: {@link BulkWriteOptions#let(Bson)}
+     *
+     * @param variables for the operation or null
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public DeleteOptions let(final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "DeleteOptions{"
@@ -157,6 +188,7 @@ public class DeleteOptions {
                 + ", hint=" + hint
                 + ", hintString='" + hintString + '\''
                 + ", comment=" + comment
+                + ", let=" + variables
                 + '}';
     }
 }

@@ -145,6 +145,12 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     }
 
     @Override
+    public FindIterable<T> let(@Nullable final Bson variables) {
+        wrapped.let(variables);
+        return this;
+    }
+
+    @Override
     public FindIterable<T> max(@Nullable final Bson max) {
         wrapped.max(max);
         return this;
