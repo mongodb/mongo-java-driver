@@ -106,7 +106,7 @@ $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend
 ```
 
 If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
-the number of available file descriptors prior to starting mongod as described in [https://docs.mongodb.com/manual/reference/ulimit/](https://docs.mongodb.com/manual/reference/ulimit/)
+the number of available file descriptors prior to starting mongod as described in [https://www.mongodb.com/manual/reference/ulimit/](https://www.mongodb.com/manual/reference/ulimit/)
 
 ## IntelliJ IDEA
 
