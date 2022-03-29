@@ -26,7 +26,7 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +36,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -50,62 +52,55 @@ public abstract class AbstractSessionsProseTest {
     public void shouldCreateServerSessionOnlyAfterConnectionCheckout() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(3, 6));
 
-        int minLsidSetSize = Integer.MAX_VALUE;
+        Set<BsonDocument> lsidSet = ConcurrentHashMap.newKeySet();
+        MongoCollection<Document> collection;
+        try (MongoClient client = getMongoClient(MongoClientSettings.builder()
+                .applyConnectionString(getConnectionString())
+                .applyToConnectionPoolSettings(builder -> builder.maxSize(1))
+                .addCommandListener(new CommandListener() {
+                    @Override
+                    public void commandStarted(final CommandStartedEvent event) {
+                        lsidSet.add(event.getCommand().getDocument("lsid"));
+                    }
+                })
+                .build())) {
+            collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
 
-        for (int i = 0; i < 5; i++) {
-            // given
-            Set<BsonDocument> lsidSet = ConcurrentHashMap.newKeySet();
-            MongoClient client = getMongoClient(MongoClientSettings.builder()
-                    .applyConnectionString(getConnectionString())
-                    .applyToConnectionPoolSettings(builder -> builder.maxSize(1))
-                    .addCommandListener(new CommandListener() {
-                        @Override
-                        public void commandStarted(final CommandStartedEvent event) {
-                            lsidSet.add(event.getCommand().getDocument("lsid"));
-                        }
-                    })
-                    .build());
-            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
+            List<Runnable> operations = asList(
+                    () -> collection.insertOne(new Document()),
+                    () -> collection.deleteOne(Filters.eq("_id", 1)),
+                    () -> collection.updateOne(Filters.eq("_id", 1), Updates.set("x", 1)),
+                    () -> collection.bulkWrite(singletonList(new UpdateOneModel<>(Filters.eq("_id", 1), Updates.set("x", 1)))),
+                    () -> collection.findOneAndDelete(Filters.eq("_id", 1)),
+                    () -> collection.findOneAndUpdate(Filters.eq("_id", 1), Updates.set("x", 1)),
+                    () -> collection.findOneAndReplace(Filters.eq("_id", 1), new Document("_id", 1)),
+                    () -> collection.find().first()
+            );
 
-            // when executing 8 operations concurrently
-            ExecutorService executor = Executors.newFixedThreadPool(3);
-            executor.submit(() -> {
-                collection.insertOne(new Document());
-            });
-            executor.submit(() -> {
-                collection.deleteOne(Filters.eq("_id", 1));
-            });
-            executor.submit(() -> {
-                collection.updateOne(Filters.eq("_id", 1), Updates.set("x", 1));
-            });
-            executor.submit(() -> {
-                collection.bulkWrite(Collections.singletonList(
-                        new UpdateOneModel<>(Filters.eq("_id", 1), Updates.set("x", 1))));
-            });
-            executor.submit(() -> {
-                // Test fineOneAndDelete, since there is specialized code for retryable writes, that uses sessions
-                collection.findOneAndDelete(Filters.eq("_id", 1));
-            });
-            executor.submit(() -> {
-                // Test fineOneAndDelete, since there is specialized code for retryable writes, that uses sessions
-                collection.findOneAndUpdate(Filters.eq("_id", 1), Updates.set("x", 1));
-            });
-            executor.submit(() -> {
-                // Test fineOneAndDelete, since there is specialized code for retryable writes, that uses sessions
-                collection.findOneAndReplace(Filters.eq("_id", 1), new Document("_id", 1));
-            });
-            executor.submit(() -> {
-                collection.find().first();
-            });
+            int minLsidSetSize = Integer.MAX_VALUE;
 
-            executor.shutdown();
-            boolean terminated = executor.awaitTermination(5, TimeUnit.SECONDS);
+            // Try up to times, counting on at least one time that only one lsid will be used
+            for (int i = 0; i < 5; i++) {
+                // given
+                lsidSet.clear();
 
-            // then
-            assertTrue(terminated);
-            assertTrue(lsidSet.size() < 8);
-            minLsidSetSize = Math.min(minLsidSetSize, lsidSet.size());
+                // when executing numConcurrentOperations operations concurrently
+                ExecutorService executor = Executors.newFixedThreadPool(operations.size());
+
+                operations.forEach(executor::submit);
+
+                executor.shutdown();
+                boolean terminated = executor.awaitTermination(5, TimeUnit.SECONDS);
+
+                // then
+                assertTrue(terminated);
+                assertTrue(lsidSet.size() < operations.size());
+                minLsidSetSize = Math.min(minLsidSetSize, lsidSet.size());
+                if (minLsidSetSize == 1) {
+                    break;
+                }
+            }
+            assertEquals(1, minLsidSetSize);
         }
-        assertEquals(1, minLsidSetSize);
     }
 }
