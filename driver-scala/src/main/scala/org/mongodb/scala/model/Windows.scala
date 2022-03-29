@@ -49,10 +49,10 @@ import org.mongodb.scala.bson.conversions.Bson
  *      `\$dateAdd`/`\$dateSubtract` aggregation pipeline stage specification.
  *
  * @see WindowedComputation
- * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/isNumber/ \$isNumber aggregation pipeline stage]]
- * @see [[http://docs.mongodb.org/manual/reference/bson-types/#date BSON Date type]]
- * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/dateAdd/ \$dateAdd aggregation pipeline stage]]
- * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/dateSubtract/ \$dateSubtract aggregation pipeline stage]]
+ * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/isNumber/ \$isNumber aggregation pipeline stage]]
+ * @see [[https://www.mongodb.com/docs/manual/reference/bson-types/#date BSON Date type]]
+ * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateAdd/ \$dateAdd aggregation pipeline stage]]
+ * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateSubtract/ \$dateSubtract aggregation pipeline stage]]
  * @since 4.3
  * @note Requires MongoDB 5.0 or greater.
  */

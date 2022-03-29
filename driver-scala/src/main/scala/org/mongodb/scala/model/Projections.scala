@@ -74,7 +74,7 @@ object Projections {
    *
    * @param fieldName the field name whose value is the array
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/positional/#projection Project the first matching element (\$ operator)]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/projection/positional/#projection Project the first matching element (\$ operator)]]
    */
   def elemMatch(fieldName: String): Bson = JProjections.elemMatch(fieldName)
 
@@ -85,7 +85,7 @@ object Projections {
    * @param fieldName the field name
    * @param filter    the filter to apply
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/elemMatch elemMatch]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/projection/elemMatch elemMatch]]
    */
   def elemMatch(fieldName: String, filter: Bson): Bson = JProjections.elemMatch(fieldName, filter)
 
@@ -95,7 +95,7 @@ object Projections {
    * @param fieldName the field name
    * @param metaFieldName the meta field name
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/meta/#projection meta]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/projection/meta/#projection meta]]
    * @since 4.1
    */
   def meta(fieldName: String, metaFieldName: String): Bson = JProjections.meta(fieldName, metaFieldName)
@@ -105,7 +105,7 @@ object Projections {
    *
    * @param fieldName the field name
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/meta/#projection textScore]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/projection/meta/#projection textScore]]
    */
   def metaTextScore(fieldName: String): Bson = JProjections.metaTextScore(fieldName)
 
@@ -115,7 +115,7 @@ object Projections {
    * @param fieldName the field name
    * @param limit the number of elements to project.
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/slice Slice]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/projection/slice Slice]]
    */
   def slice(fieldName: String, limit: Int): Bson = JProjections.slice(fieldName, limit)
 
@@ -126,7 +126,7 @@ object Projections {
    * @param skip the number of elements to skip before applying the limit
    * @param limit the number of elements to project
    * @return the projection
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/projection/slice Slice]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/projection/slice Slice]]
    */
   def slice(fieldName: String, skip: Int, limit: Int): Bson = JProjections.slice(fieldName, skip, limit)
 

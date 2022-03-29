@@ -53,12 +53,12 @@ import static java.lang.String.format;
  * <ul>
  *  <li><em>Strict mode</em> that conforms to the <a href="http://www.json.org/">JSON RFC specifications.</a></li>
  *  <li><em>JavaScript mode</em> that that most JavaScript interpreters can process</li>
- *  <li><em>Shell mode</em> that the <a href="http://docs.mongodb.org/manual/reference/mongo/#mongo">mongo</a> shell can process.
+ *  <li><em>Shell mode</em> that the <a href="https://www.mongodb.com/docs/manual/reference/mongo/#mongo">mongo</a> shell can process.
  * This is also called "extended" JavaScript format.</li>
  * </ul>
  * For more information about this modes please see
- * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">
- * http://docs.mongodb.org/manual/reference/mongodb-extended-json/
+ * <a href="https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/">
+ * https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/
  * </a>
  *
  * @since 3.0

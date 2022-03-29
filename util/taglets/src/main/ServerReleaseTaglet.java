@@ -28,7 +28,7 @@ public class ServerReleaseTaglet extends DocTaglet {
 
     @Override
     protected String getBaseDocURI() {
-        return "http://docs.mongodb.org/manual/release-notes/";
+        return "https://www.mongodb.com/docs/manual/release-notes/";
     }
 
 }

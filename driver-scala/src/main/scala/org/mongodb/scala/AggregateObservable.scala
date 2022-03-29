@@ -40,7 +40,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Enables writing to temporary files. A null value indicates that it's unspecified.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/aggregate/ Aggregation]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/aggregate/ Aggregation]]
    *
    * @param allowDiskUse true if writing to temporary files is enabled
    * @return this
@@ -53,7 +53,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -65,7 +65,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Sets the maximum await execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    * @since 2.2
@@ -81,7 +81,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    *
    * '''Note:''': This only applies when an `\$out` stage is specified.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/aggregate/ Aggregation]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/aggregate/ Aggregation]]
    * @note Requires MongoDB 3.2 or greater
    * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
    * @return this
@@ -193,7 +193,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Aggregates documents according to the specified aggregation pipeline, which must end with a `\$out` stage.
    *
-   * [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    * @return an empty Observable that indicates when the operation has completed
    */
   def toCollection(): SingleObservable[Void] = wrapped.toCollection()

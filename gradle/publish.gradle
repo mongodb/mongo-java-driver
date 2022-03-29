@@ -24,7 +24,7 @@ ext {
         { ->
                 name = project.hasProperty('pomName') ? project.getProperty('pomName') : project.name
                 description = project.description
-                url = project.hasProperty('pomURL') ? project.getProperty('pomURL') : 'http://www.mongodb.org'
+                url = project.hasProperty('pomURL') ? project.getProperty('pomURL') : 'https://www.mongodb.com/'
                 licenses {
                     license {
                         name = 'The Apache License, Version 2.0'

@@ -28,7 +28,7 @@ public class DochubTaglet extends DocTaglet {
 
     @Override
     protected String getBaseDocURI() {
-        return "http://dochub.mongodb.org/";
+        return "https://dochub.mongodb.org/";
     }
 
 }

@@ -23,9 +23,9 @@ import org.mongodb.scala.bson.conversions.Bson
 /**
  * Builders for accumulators used in the group pipeline stage of an aggregation pipeline.
  *
- * @see [[http://docs.mongodb.org/manual/core/aggregation-pipeline/ Aggregation pipeline]]
- * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator Accumulators]]
- * @see [[http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#aggregation-expressions Expressions]]
+ * @see [[https://www.mongodb.com/docs/manual/core/aggregation-pipeline/ Aggregation pipeline]]
+ * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/group/#accumulator-operator Accumulators]]
+ * @see [[https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/#aggregation-expressions Expressions]]
  *
  * @since 1.0
  */
@@ -35,7 +35,7 @@ object Accumulators {
    * Gets a field name for a `\$group` operation representing the sum of the values of the given expression when applied to all members of
    * the group.
    *
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/sum/ \$sum]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/sum/ \$sum]]
    * @param fieldName the field name
    * @param expression the expression
    * @tparam TExpression the expression type
@@ -51,7 +51,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/avg/ \$avg]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/avg/ \$avg]]
    */
   def avg[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.avg(fieldName, expression)
 
@@ -63,7 +63,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/first/ \$first]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/first/ \$first]]
    */
   def first[TExpression](fieldName: String, expression: TExpression): BsonField =
     JAccumulators.first(fieldName, expression)
@@ -76,7 +76,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/last/ \$last]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/last/ \$last]]
    */
   def last[TExpression](fieldName: String, expression: TExpression): BsonField =
     JAccumulators.last(fieldName, expression)
@@ -89,7 +89,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/max/ \$max]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/max/ \$max]]
    */
   def max[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.max(fieldName, expression)
 
@@ -101,7 +101,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/min/ \$min]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/min/ \$min]]
    */
   def min[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.min(fieldName, expression)
 
@@ -113,7 +113,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/push/ \$push]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/push/ \$push]]
    */
   def push[TExpression](fieldName: String, expression: TExpression): BsonField =
     JAccumulators.push(fieldName, expression)
@@ -126,7 +126,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/addToSet/ \$addToSet]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/addToSet/ \$addToSet]]
    */
   def addToSet[TExpression](fieldName: String, expression: TExpression): BsonField =
     JAccumulators.addToSet(fieldName, expression)
@@ -140,7 +140,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/mergeObjects/ \$mergeObjects]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/mergeObjects/ \$mergeObjects]]
    * @since 4.4
    */
   def mergeObjects[TExpression](fieldName: String, expression: TExpression): BsonField =
@@ -158,7 +158,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/stdDevPop/ \$stdDevPop]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/stdDevPop/ \$stdDevPop]]
    * @since 1.1
    */
   def stdDevPop[TExpression](fieldName: String, expression: TExpression): BsonField =
@@ -175,7 +175,7 @@ object Accumulators {
    * @param expression the expression
    * @tparam TExpression the expression type
    * @return the field
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/stdDevSamp/ \$stdDevSamp]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/stdDevSamp/ \$stdDevSamp]]
    * @since 1.1
    */
   def stdDevSamp[TExpression](fieldName: String, expression: TExpression): BsonField =
@@ -190,7 +190,7 @@ object Accumulators {
    * @param mergeFunction        a function used to merge two internal states, e.g. accumulated on different shards or
    *                             threads. It returns the resulting state of the accumulator.
    * @return the `\$accumulator` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater
    */
@@ -212,7 +212,7 @@ object Accumulators {
    *                             threads. It returns the resulting state of the accumulator.
    * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
    * @return the `\$accumulator` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater
    */
@@ -238,7 +238,7 @@ object Accumulators {
    *                             threads. It returns the resulting state of the accumulator.
    * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
    * @return the `\$accumulator` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater
    */
@@ -275,7 +275,7 @@ object Accumulators {
    * @param finalizeFunction     a function used to finalize the state and return the result (may be null)
    * @param lang                 a language specifier
    * @return the `\$accumulator` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/accumulator/ \$accumulator]]
    * @since 1.2
    * @note Requires MongoDB 4.4 or greater
    */

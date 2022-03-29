@@ -156,7 +156,7 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
   /**
    * Get a list of the database names
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/listDatabases List Databases]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/listDatabases List Databases]]
    * @return an iterable containing all the names of all the databases
    */
   def listDatabaseNames(): Observable[String] = wrapped.listDatabaseNames()
@@ -164,7 +164,7 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
   /**
    * Get a list of the database names
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/listDatabases List Databases]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/listDatabases List Databases]]
    *
    * @param clientSession the client session with which to associate this operation
    * @return an iterable containing all the names of all the databases

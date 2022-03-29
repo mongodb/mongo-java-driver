@@ -23,7 +23,7 @@ import com.mongodb.client.model.{ BucketGranularity => JBucketGranularity }
 /**
  * Granularity values for automatic bucketing.
  *
- * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
+ * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
  * @see [[https://en.wikipedia.org/wiki/Preferred_number">Preferred numbers]]
  * @since 1.2
  */

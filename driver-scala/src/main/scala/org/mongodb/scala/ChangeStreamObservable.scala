@@ -89,7 +89,7 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
    * @since 2.7
    * @note Requires MongoDB 4.2 or greater
    * @note The server will report an error if both `startAfter` and `resumeAfter` are specified.
-   * @see [[http://docs.mongodb.org/manual/changeStreams/#change-stream-start-after Change stream start after]]
+   * @see [[https://www.mongodb.com/docs/manual/changeStreams/#change-stream-start-after Change stream start after]]
    */
   def startAfter(startAfter: Document): ChangeStreamObservable[TResult] = {
     wrapped.startAfter(startAfter.underlying)
@@ -110,7 +110,7 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
   /**
    * Sets the maximum await execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */

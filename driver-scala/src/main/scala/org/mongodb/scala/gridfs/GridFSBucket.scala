@@ -98,7 +98,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * @return the ReadConcern
    * @note Requires MongoDB 3.2 or greater
-   * @see [[http://docs.mongodb.org/manual/reference/readConcern Read Concern]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/readConcern Read Concern]]
    */
   lazy val readConcern: ReadConcern = wrapped.getReadConcern
 
@@ -133,7 +133,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param readConcern the new ReadConcern for the database
    * @return a new GridFSBucket instance with the different ReadConcern
    * @note Requires MongoDB 3.2 or greater
-   * @see [[http://docs.mongodb.org/manual/reference/readConcern Read Concern]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/readConcern Read Concern]]
    */
   def withReadConcern(readConcern: ReadConcern): GridFSBucket = GridFSBucket(wrapped.withReadConcern(readConcern))
 
@@ -404,7 +404,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * Finds all documents in the files collection.
    *
    * @return the GridFS find iterable interface
-   * @see [[http://docs.mongodb.org/manual/tutorial/query-documents/ Find]]
+   * @see [[https://www.mongodb.com/docs/manual/tutorial/query-documents/ Find]]
    */
   def find(): GridFSFindObservable = GridFSFindObservable(wrapped.find())
 
@@ -428,7 +428,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * @param clientSession the client session with which to associate this operation
    * @return the GridFS find iterable interface
-   * @see [[http://docs.mongodb.org/manual/tutorial/query-documents/ Find]]
+   * @see [[https://www.mongodb.com/docs/manual/tutorial/query-documents/ Find]]
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */

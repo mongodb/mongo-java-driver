@@ -204,7 +204,7 @@ package object model {
    * The default options for a collection to apply on the creation of indexes.
    *
    * @note Requires MongoDB 3.2 or greater
-   * @see [[http://docs.mongodb.org/manual/reference/command/createIndexes Index options]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Index options]]
    * @since 1.1
    */
   type IndexOptionDefaults = com.mongodb.client.model.IndexOptionDefaults
@@ -577,7 +577,7 @@ package object model {
   /**
    * Text search options for the [[Filters]] text helper
    *
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/text \$text]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/text \$text]]
    * @since 1.1
    */
   type TextSearchOptions = com.mongodb.client.model.TextSearchOptions

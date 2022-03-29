@@ -312,7 +312,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Gets the distinct values of the specified field name.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/distinct/ Distinct]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/distinct/ Distinct]]
    * @param fieldName the field name
    * @tparam C       the target type of the observable.
    * @return a Observable emitting the sequence of distinct values
@@ -323,7 +323,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Gets the distinct values of the specified field name.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/distinct/ Distinct]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/distinct/ Distinct]]
    * @param fieldName the field name
    * @param filter  the query filter
    * @tparam C       the target type of the observable.
@@ -335,7 +335,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Gets the distinct values of the specified field name.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/distinct/ Distinct]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/distinct/ Distinct]]
    * @param clientSession the client session with which to associate this operation
    * @param fieldName the field name
    * @tparam C       the target type of the observable.
@@ -349,7 +349,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Gets the distinct values of the specified field name.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/distinct/ Distinct]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/distinct/ Distinct]]
    * @param clientSession the client session with which to associate this operation
    * @param fieldName the field name
    * @param filter  the query filter
@@ -366,7 +366,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Finds all documents in the collection.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/query-documents/ Find]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/query-documents/ Find]]
    *
    * @tparam C   the target document type of the observable.
    * @return the find Observable
@@ -377,7 +377,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Finds all documents in the collection.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/query-documents/ Find]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/query-documents/ Find]]
    * @param filter the query filter
    * @tparam C    the target document type of the observable.
    * @return the find Observable
@@ -388,7 +388,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Finds all documents in the collection.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/query-documents/ Find]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/query-documents/ Find]]
    *
    * @param clientSession the client session with which to associate this operation
    * @tparam C   the target document type of the observable.
@@ -402,7 +402,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Finds all documents in the collection.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/query-documents/ Find]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/query-documents/ Find]]
    * @param clientSession the client session with which to associate this operation
    * @param filter the query filter
    * @tparam C    the target document type of the observable.
@@ -421,7 +421,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param pipeline the aggregate pipeline
    * @return a Observable containing the result of the aggregation operation
-   *         [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   *         [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    */
   def aggregate[C](pipeline: Seq[Bson])(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): AggregateObservable[C] =
     AggregateObservable(wrapped.aggregate[C](pipeline.asJava, ct))
@@ -432,7 +432,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param pipeline the aggregate pipeline
    * @return a Observable containing the result of the aggregation operation
-   *         [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   *         [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -449,7 +449,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
    * @tparam C            the target document type of the observable.
    * @return a Observable containing the result of the map-reduce operation
-   *         [[http://docs.mongodb.org/manual/reference/command/mapReduce/ map-reduce]]
+   *         [[https://www.mongodb.com/docs/manual/reference/command/mapReduce/ map-reduce]]
    */
   @deprecated("Superseded by aggregate")
   def mapReduce[C](
@@ -466,7 +466,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
    * @tparam C            the target document type of the observable.
    * @return a Observable containing the result of the map-reduce operation
-   *         [[http://docs.mongodb.org/manual/reference/command/mapReduce/ map-reduce]]
+   *         [[https://www.mongodb.com/docs/manual/reference/command/mapReduce/ map-reduce]]
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -733,7 +733,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Replace a document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/#replace-the-document Replace]]
    * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @return a Observable with a single element the UpdateResult
@@ -744,7 +744,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Replace a document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/#replace-the-document Replace]]
    * @param clientSession the client session with which to associate this operation
    * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
@@ -758,7 +758,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Replace a document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/#replace-the-document Replace]]
    * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
    * @param options     the options to apply to the replace operation
@@ -770,7 +770,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Replace a document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/#replace-the-document Replace]]
    * @param clientSession the client session with which to associate this operation
    * @param filter      the query filter to apply the replace operation
    * @param replacement the replacement document
@@ -790,8 +790,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a document describing the update, which may not be null. The update to apply must include only update operators. This
@@ -804,8 +804,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a document describing the update, which may not be null. The update to apply must include only update operators. This
@@ -819,8 +819,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -836,8 +836,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -859,8 +859,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a pipeline describing the update.
@@ -874,8 +874,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a pipeline describing the update.
@@ -890,8 +890,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -906,8 +906,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update a single document in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -928,8 +928,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a document describing the update, which may not be null. The update to apply must include only update operators. This
@@ -942,8 +942,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a document describing the update, which may not be null. The update to apply must include only update operators. This
@@ -957,8 +957,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -974,8 +974,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -997,8 +997,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a pipeline describing the update.
@@ -1012,8 +1012,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param update  a pipeline describing the update.
@@ -1028,8 +1028,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -1044,8 +1044,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Update all documents in the collection according to the specified arguments.
    *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/ Updates]]
-   * [[http://docs.mongodb.org/manual/reference/operator/update/ Update Operators]]
+   * [[https://www.mongodb.com/docs/manual/tutorial/modify-documents/ Updates]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/update/ Update Operators]]
    * @param clientSession the client session with which to associate this operation
    * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -1321,7 +1321,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Drops this collection from the Database.
    *
    * @return an empty Observable that indicates when the operation has completed
-   *         [[http://docs.mongodb.org/manual/reference/command/drop/ Drop Collection]]
+   *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
    */
   def drop(): SingleObservable[Void] = wrapped.drop()
 
@@ -1330,14 +1330,14 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param clientSession the client session with which to associate this operation
    * @return an empty Observable that indicates when the operation has completed
-   *         [[http://docs.mongodb.org/manual/reference/command/drop/ Drop Collection]]
+   *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
   def drop(clientSession: ClientSession): SingleObservable[Void] = wrapped.drop(clientSession)
 
   /**
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @return an empty Observable that indicates when the operation has completed
@@ -1345,7 +1345,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   def createIndex(key: Bson): SingleObservable[String] = wrapped.createIndex(key)
 
   /**
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
    * @param options the options for the index
@@ -1355,7 +1355,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.createIndex(key, options)
 
   /**
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param clientSession the client session with which to associate this operation
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -1367,7 +1367,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
     wrapped.createIndex(clientSession, key)
 
   /**
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param clientSession the client session with which to associate this operation
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is
    *                registered
@@ -1382,7 +1382,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Create multiple indexes.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param models the list of indexes to create
    * @return a Observable with the names of the indexes
    */
@@ -1391,7 +1391,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Create multiple indexes.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param models the list of indexes to create
    * @param createIndexOptions options to use when creating indexes
    * @return a Observable with the names of the indexes
@@ -1403,7 +1403,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Create multiple indexes.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param clientSession the client session with which to associate this operation
    * @param models the list of indexes to create
    * @return a Observable with the names of the indexes
@@ -1416,7 +1416,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Create multiple indexes.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/createIndexes Create Index]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param clientSession the client session with which to associate this operation
    * @param models the list of indexes to create
    * @param createIndexOptions options to use when creating indexes
@@ -1434,7 +1434,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Get all the indexes in this collection.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/listIndexes/ listIndexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/listIndexes/ listIndexes]]
    * @tparam C   the target document type of the observable.
    * @return the fluent list indexes interface
    */
@@ -1444,7 +1444,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Get all the indexes in this collection.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/listIndexes/ listIndexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/listIndexes/ listIndexes]]
    * @param clientSession the client session with which to associate this operation
    * @tparam C   the target document type of the observable.
    * @return the fluent list indexes interface
@@ -1459,7 +1459,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drops the given index.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param indexName the name of the index to remove
    * @return an empty Observable that indicates when the operation has completed
    */
@@ -1468,7 +1468,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drops the given index.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param indexName the name of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
    * @return an empty Observable that indicates when the operation has completed
@@ -1499,7 +1499,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drops the given index.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @param indexName the name of the index to remove
    * @return an empty Observable that indicates when the operation has completed
@@ -1512,7 +1512,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drops the given index.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @param indexName the name of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
@@ -1559,7 +1559,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drop all the indexes on this collection, except for the default on _id.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @return an empty Observable that indicates when the operation has completed
    */
   def dropIndexes(): SingleObservable[Void] = wrapped.dropIndexes()
@@ -1567,7 +1567,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drop all the indexes on this collection, except for the default on _id.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param dropIndexOptions options to use when dropping indexes
    * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
@@ -1578,7 +1578,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drop all the indexes on this collection, except for the default on _id.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @return an empty Observable that indicates when the operation has completed
    * @since 2.2
@@ -1590,7 +1590,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drop all the indexes on this collection, except for the default on _id.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/dropIndexes/ Drop Indexes]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @param dropIndexOptions options to use when dropping indexes
    * @return an empty Observable that indicates when the operation has completed
@@ -1603,7 +1603,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Rename the collection with oldCollectionName to the newCollectionName.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/renameCollection Rename collection]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/renameCollection Rename collection]]
    * @param newCollectionNamespace the name the collection will be renamed to
    * @return an empty Observable that indicates when the operation has completed
    */
@@ -1613,7 +1613,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Rename the collection with oldCollectionName to the newCollectionName.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/renameCollection Rename collection]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/renameCollection Rename collection]]
    * @param newCollectionNamespace the name the collection will be renamed to
    * @param options                the options for renaming a collection
    * @return an empty Observable that indicates when the operation has completed
@@ -1627,7 +1627,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Rename the collection with oldCollectionName to the newCollectionName.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/renameCollection Rename collection]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/renameCollection Rename collection]]
    * @param clientSession the client session with which to associate this operation
    * @param newCollectionNamespace the name the collection will be renamed to
    * @return an empty Observable that indicates when the operation has completed
@@ -1643,7 +1643,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Rename the collection with oldCollectionName to the newCollectionName.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/renameCollection Rename collection]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/renameCollection Rename collection]]
    * @param clientSession the client session with which to associate this operation
    * @param newCollectionNamespace the name the collection will be renamed to
    * @param options                the options for renaming a collection
