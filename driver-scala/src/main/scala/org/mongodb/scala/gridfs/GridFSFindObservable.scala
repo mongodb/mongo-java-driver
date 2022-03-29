@@ -42,7 +42,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    *
    * @param filter the filter, which may be null.
    * @return this
-   * @see [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Filter]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Filter]]
    * @see [[org.mongodb.scala.model.Filters]]
    */
   def filter(filter: Bson): GridFSFindObservable = {
@@ -55,7 +55,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    *
    * @param limit the limit, which may be null
    * @return this
-   * @see [[http://docs.mongodb.org/manual/reference/method/cursor.limit/#cursor.limit Limit]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/method/cursor.limit/#cursor.limit Limit]]
    */
   def limit(limit: Int): GridFSFindObservable = {
     wrapped.limit(limit)
@@ -67,7 +67,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    *
    * @param skip the number of documents to skip
    * @return this
-   * @see [[http://docs.mongodb.org/manual/reference/method/cursor.skip/#cursor.skip Skip]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/method/cursor.skip/#cursor.skip Skip]]
    */
   def skip(skip: Int): GridFSFindObservable = {
     wrapped.skip(skip)
@@ -79,7 +79,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    *
    * @param sort the sort criteria, which may be null.
    * @return this
-   * @see [[http://docs.mongodb.org/manual/reference/method/cursor.sort/ Sort]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/method/cursor.sort/ Sort]]
    */
   def sort(sort: Bson): GridFSFindObservable = {
     wrapped.sort(sort)
@@ -101,7 +101,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * @see [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -115,7 +115,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    *
    * @param batchSize the batch size
    * @return this
-   * @see [[http://docs.mongodb.org/manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size]]
    */
   def batchSize(batchSize: Int): GridFSFindObservable = {
     wrapped.batchSize(batchSize)

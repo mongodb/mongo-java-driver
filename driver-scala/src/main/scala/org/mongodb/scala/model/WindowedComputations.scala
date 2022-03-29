@@ -33,7 +33,7 @@ import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedCompu
  * A windowed computation is similar to an [[Accumulators accumulator]] but does not result in folding documents constituting
  * the window into a single document.
  *
- * @see [[http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#field-paths Field paths]]
+ * @see [[https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/#field-paths Field paths]]
  * @since 4.3
  * @note Requires MongoDB 5.0 or greater.
  */

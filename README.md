@@ -9,7 +9,7 @@ Reference and API documentation is available [here](http://mongodb.github.io/mon
 ## Support / Feedback
 
 For issues with, questions about, or feedback for the MongoDB Java driver, please look into
-our [support channels](http://www.mongodb.org/about/support). Please
+our [support channels](https://www.mongodb.com/docs/manual/support/). Please
 do not email any of the Java driver developers directly with issues or
 questions - you're more likely to get an answer on the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver).
 
@@ -30,7 +30,7 @@ case in our issue management tool, JIRA:
 Bug reports in JIRA for the driver and the Core Server (i.e. SERVER) project are **public**.
 
 If you’ve identified a security vulnerability in a driver or any other
-MongoDB project, please report it according to the [instructions here](http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
+MongoDB project, please report it according to the [instructions here](https://www.mongodb.com/docs/manual/tutorial/create-a-vulnerability-report).
 
 ## Versioning
 
@@ -99,14 +99,14 @@ $ cd mongo-java-driver
 $ ./gradlew check
 ```
 
-The test suite requires mongod to be running with [`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands), which may be set with the `--setParameter enableTestCommands=1`
+The test suite requires mongod to be running with [`enableTestCommands`](https://www.mongodb.com/docs/manual/reference/parameters/#param.enableTestCommands), which may be set with the `--setParameter enableTestCommands=1`
 command-line parameter:
 ```
 $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend --fork --setParameter enableTestCommands=1
 ```
 
 If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
-the number of available file descriptors prior to starting mongod as described in [https://docs.mongodb.com/manual/reference/ulimit/](https://docs.mongodb.com/manual/reference/ulimit/)
+the number of available file descriptors prior to starting mongod as described in [https://www.mongodb.com/docs/manual/reference/ulimit/](https://www.mongodb.com/docs/manual/reference/ulimit/)
 
 ## IntelliJ IDEA
 
