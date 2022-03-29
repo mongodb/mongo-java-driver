@@ -26,7 +26,7 @@ import org.mongodb.scala.bson.conversions.Bson
 /**
  * Builders for aggregation pipeline stages.
  *
- * @see [[http://docs.mongodb.org/manual/core/aggregation-pipeline/ Aggregation pipeline]]
+ * @see [[https://www.mongodb.com/docs/manual/core/aggregation-pipeline/ Aggregation pipeline]]
  *
  * @since 1.0
  */
@@ -37,7 +37,7 @@ object Aggregates {
    *
    * @param fields the fields to add
    * @return the `\$addFields` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/addFields/ \$addFields]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/addFields/ \$addFields]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -48,7 +48,7 @@ object Aggregates {
    *
    * @param fields the fields to add
    * @return the \$set pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/set/ \$set]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/set/ \$set]]
    * @since 4.3
    * @note Requires MongoDB 4.2 or greater
    */
@@ -62,7 +62,7 @@ object Aggregates {
    * @tparam TExpression the groupBy expression type
    * @tparam TBoundary    the boundary type
    * @return the `\$bucket` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucket/ \$bucket]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bucket/ \$bucket]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -78,7 +78,7 @@ object Aggregates {
    * @tparam TExpression the groupBy expression type
    * @tparam TBoundary    the boundary type
    * @return the `\$bucket` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucket/ \$bucket]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bucket/ \$bucket]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -92,7 +92,7 @@ object Aggregates {
    * @param buckets the number of the buckets
    * @tparam TExpression the groupBy expression type
    * @return the `\$bucketAuto` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -107,7 +107,7 @@ object Aggregates {
    * @param options the optional values for the `\$bucketAuto` stage
    * @tparam TExpression the groupBy expression type
    * @return the `\$bucketAuto` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bucketAuto/ \$bucketAuto]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -118,7 +118,7 @@ object Aggregates {
    * Creates a `\$count` pipeline stage using the field name "count" to store the result
    *
    * @return the `\$count` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/count/ \$count]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/count/ \$count]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -129,7 +129,7 @@ object Aggregates {
    *
    * @param field the field in which to store the count
    * @return the `\$count` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/count/ \$count]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/count/ \$count]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -141,7 +141,7 @@ object Aggregates {
    * @param filter the filter to match
    * @return the `\$match` pipeline stage
    * @see Filters
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/match/ \$match]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/match/ \$match]]
    */
   def `match`(filter: Bson): Bson = JAggregates.`match`(filter) //scalastyle:ignore
 
@@ -153,7 +153,7 @@ object Aggregates {
    * @param filter the filter to match against
    * @return the `\$match` pipeline stage
    * @see Filters
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/match/ \$match]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/match/ \$match]]
    */
   def filter(filter: Bson): Bson = `match`(filter) //scalastyle:ignore
 
@@ -162,7 +162,7 @@ object Aggregates {
    *
    * @param facets the facets to use
    * @return the new pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/facet/ \$facet]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/facet/ \$facet]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -178,7 +178,7 @@ object Aggregates {
    * @param as               name of field in output document
    * @tparam TExpression the expression type
    * @return the `\$graphLookup` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/graphLookup/ \$graphLookup]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/graphLookup/ \$graphLookup]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -202,7 +202,7 @@ object Aggregates {
    * @param options          optional values for the graphLookup
    * @tparam TExpression the expression type
    * @return the `\$graphLookup` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/graphLookup/ \$graphLookup]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/graphLookup/ \$graphLookup]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -222,7 +222,7 @@ object Aggregates {
    * @param projection the projection
    * @return the `\$project` pipeline stage
    * @see Projections
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/project/ \$project]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/project/ \$project]]
    */
   def project(projection: Bson): Bson = JAggregates.project(projection)
 
@@ -232,7 +232,7 @@ object Aggregates {
    * @param value the new root value
    * @tparam TExpression the new root type
    * @return the `\$replaceRoot` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/replaceRoot/ \$replaceRoot]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/replaceRoot/ \$replaceRoot]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -249,7 +249,7 @@ object Aggregates {
    * @param value the new root value
    * @tparam TExpression the new root type
    * @return the `\$replaceRoot` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/replaceWith/ \$replaceWith]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/replaceWith/ \$replaceWith]]
    * @since 2.7
    */
   def replaceWith[TExpression](value: TExpression): Bson = JAggregates.replaceWith(value)
@@ -259,7 +259,7 @@ object Aggregates {
    *
    * @param sort the sort specification
    * @see Sorts
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/sort/#sort-aggregation \$sort]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/sort/#sort-aggregation \$sort]]
    */
   def sort(sort: Bson): Bson = JAggregates.sort(sort)
 
@@ -270,7 +270,7 @@ object Aggregates {
    * @tparam TExpression the expression type
    * @return the `\$sortByCount` pipeline stage
    * @see Sorts
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/sortByCount \$sortByCount]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/sortByCount \$sortByCount]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -281,7 +281,7 @@ object Aggregates {
    *
    * @param skip the number of documents to skip
    * @return the `\$skip` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/ reference/operator/aggregation/skip/ \$skip]]
+   * @see [[https://www.mongodb.com/docs/manual/ reference/operator/aggregation/skip/ \$skip]]
    */
   def skip(skip: Int): Bson = JAggregates.skip(skip)
 
@@ -291,7 +291,7 @@ object Aggregates {
    * @param size the sample size
    * @return the `\$sample` pipeline stage
    * @since 1.1
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/sample/ \$sample]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/sample/ \$sample]]
    */
   def sample(size: Int): Bson = JAggregates.sample(size)
 
@@ -300,7 +300,7 @@ object Aggregates {
    *
    * @param limit the limit
    * @return the `\$limit` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/limit/ \$limit]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/limit/ \$limit]]
    */
   def limit(limit: Int): Bson = JAggregates.limit(limit)
 
@@ -313,7 +313,7 @@ object Aggregates {
    * @param as the name of the new array field to add to the input documents.
    * @return the `\$lookup` pipeline stage
    * @since 1.1
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/lookup/ \$lookup]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/lookup/ \$lookup]]
    * @note Requires MongoDB 3.2 or greater
    */
   def lookup(from: String, localField: String, foreignField: String, as: String): Bson =
@@ -327,7 +327,7 @@ object Aggregates {
    * @param as       the name of the new array field to add to the input documents.
    * @return         the `\$lookup` pipeline stage:
    * @since 2.3
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/lookup/ \$lookup]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/lookup/ \$lookup]]
    * @note Requires MongoDB 3.6 or greater
    */
   def lookup(from: String, pipeline: Seq[_ <: Bson], as: String): Bson =
@@ -342,7 +342,7 @@ object Aggregates {
    * @param as       the name of the new array field to add to the input documents.
    * @return         the `\$lookup` pipeline stage
    * @since 2.3
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/lookup/ \$lookup]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/lookup/ \$lookup]]
    * @note Requires MongoDB 3.6 or greater
    */
   def lookup[T](from: String, let: Seq[Variable[T]], pipeline: Seq[_ <: Bson], as: String): Bson =
@@ -355,8 +355,8 @@ object Aggregates {
    * @param fieldAccumulators zero or more field accumulator pairs
    * @tparam TExpression the expression type
    * @return the `\$group` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/group/ \$group]]
-   * @see [[http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#aggregation-expressions Expressions]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/group/ \$group]]
+   * @see [[https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/#aggregation-expressions Expressions]]
    */
   def group[TExpression](id: TExpression, fieldAccumulators: BsonField*): Bson =
     JAggregates.group(id, fieldAccumulators.asJava)
@@ -366,7 +366,7 @@ object Aggregates {
    *
    * @param fieldName the field name, prefixed by a  `\$` sign
    * @return the `\$unwind` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/unwind/ \$unwind]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/unwind/ \$unwind]]
    */
   def unwind(fieldName: String): Bson = JAggregates.unwind(fieldName)
 
@@ -375,7 +375,7 @@ object Aggregates {
    *
    * @param fieldName the field name, prefixed by a  `\$` sign
    * @return the `\$unwind` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/unwind/ \$unwind]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/unwind/ \$unwind]]
    * @since 1.1
    */
   def unwind(fieldName: String, unwindOptions: UnwindOptions): Bson = JAggregates.unwind(fieldName, unwindOptions)
@@ -385,7 +385,7 @@ object Aggregates {
    *
    * @param collectionName the collection name
    * @return the `\$out` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/out/  \$out]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/out/  \$out]]
    */
   def out(collectionName: String): Bson = JAggregates.out(collectionName)
 
@@ -395,7 +395,7 @@ object Aggregates {
    * @param databaseName   the database name
    * @param collectionName the collection name
    * @return the `\$out` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/out/  \$out]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/out/  \$out]]
    */
   def out(databaseName: String, collectionName: String): Bson = JAggregates.out(databaseName, collectionName)
 
@@ -405,7 +405,7 @@ object Aggregates {
    * @param collectionName the name of the collection to merge into
    * @return the `\$merge` pipeline stage
    * @since 2.7
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/merge/]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/merge/]]
    */
   def merge(collectionName: String): Bson = JAggregates.merge(collectionName)
 
@@ -416,7 +416,7 @@ object Aggregates {
    * @param mergeOptions the mergeOptions
    * @return the `\$merge` pipeline stage
    * @since 2.7
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/merge/]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/merge/]]
    */
   def merge(collectionName: String, mergeOptions: MergeOptions): Bson =
     JAggregates.merge(collectionName, mergeOptions.wrapped)
@@ -427,7 +427,7 @@ object Aggregates {
    * @param namespace the namespace to merge into
    * @return the `\$merge` pipeline stage
    * @since 2.7
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/merge/]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/merge/]]
    */
   def merge(namespace: MongoNamespace): Bson = JAggregates.merge(namespace)
 
@@ -438,7 +438,7 @@ object Aggregates {
    * @param mergeOptions the mergeOptions
    * @return the `\$merge` pipeline stage
    * @since 2.7
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/merge/]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/merge/]]
    */
   def merge(namespace: MongoNamespace, mergeOptions: MergeOptions): Bson =
     JAggregates.merge(namespace, mergeOptions.wrapped)
@@ -449,7 +449,7 @@ object Aggregates {
    * @param collection    the name of the collection in the same database to perform the union with.
    * @param pipeline      the pipeline to run on the union.
    * @return the `\$unionWith` pipeline stage
-   * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/unionWith/]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/unionWith/]]
    */
   def unionWith(collection: String, pipeline: Bson*): Bson =
     JAggregates.unionWith(collection, pipeline.asJava)
@@ -470,7 +470,7 @@ object Aggregates {
    * @param output      A nonempty list of [[WindowedComputation windowed computations]].
    * @tparam TExpression The `partitionBy` expression type.
    * @return The `\$setWindowFields` pipeline stage.
-   * @see [[http://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
+   * @see [[https://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */

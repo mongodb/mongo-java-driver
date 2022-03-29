@@ -71,7 +71,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  *   .applyConnectionString("mongodb://localhost")
  *   .build())
  * </pre>
- * <p>You can connect to a <a href="https://www.mongodb.com/manual/replication/">replica set</a> by passing a
+ * <p>You can connect to a <a href="https://www.mongodb.com/docs/manual/replication/">replica set</a> by passing a
  * list of servers to a MongoClient constructor. For example:</p>
  * <pre>
  * new MongoClient("mongodb://localhost:27017,localhost:27018,localhost:27019")

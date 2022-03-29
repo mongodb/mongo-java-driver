@@ -182,7 +182,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Drops this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
    * @return a Observable identifying when the database has been dropped
    */
   def drop(): SingleObservable[Void] = wrapped.drop()
@@ -190,7 +190,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Drops this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
    * @param clientSession the client session with which to associate this operation
    * @return a Observable identifying when the database has been dropped
    * @since 2.2
@@ -208,7 +208,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Finds all the collections in this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/listCollections listCollections]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @tparam TResult the target document type of the iterable.
    * @return the fluent list collections interface
    */
@@ -231,7 +231,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Finds all the collections in this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/listCollections listCollections]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @param clientSession the client session with which to associate this operation
    * @tparam TResult the target document type of the iterable.
    * @return the fluent list collections interface
@@ -248,7 +248,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Create a new collection with the given name.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param collectionName the name for the new collection to create
    * @return a Observable identifying when the collection has been created
    */
@@ -258,7 +258,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Create a new collection with the selected options
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param collectionName the name for the new collection to create
    * @param options        various options for creating the collection
    * @return a Observable identifying when the collection has been created
@@ -269,7 +269,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Create a new collection with the given name.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param collectionName the name for the new collection to create
    * @return a Observable identifying when the collection has been created
@@ -282,7 +282,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Create a new collection with the selected options
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param collectionName the name for the new collection to create
    * @param options        various options for creating the collection
@@ -300,7 +300,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param viewName the name of the view to create
    * @param viewOn   the backing collection/view for the view
    * @param pipeline the pipeline that defines the view
@@ -313,7 +313,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param viewName          the name of the view to create
    * @param viewOn            the backing collection/view for the view
    * @param pipeline          the pipeline that defines the view
@@ -332,7 +332,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param viewName the name of the view to create
    * @param viewOn   the backing collection/view for the view
@@ -351,7 +351,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param viewName          the name of the view to create
    * @param viewOn            the backing collection/view for the view
@@ -427,7 +427,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    *
    * @param pipeline the aggregate pipeline
    * @return a Observable containing the result of the aggregation operation
-   *         [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   *         [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    * @since 2.6
    * @note Requires MongoDB 3.6 or greater
    */
@@ -440,7 +440,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @param clientSession the client session with which to associate this operation
    * @param pipeline the aggregate pipeline
    * @return a Observable containing the result of the aggregation operation
-   *         [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   *         [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    * @since 2.6
    * @note Requires MongoDB 3.6 or greater
    */

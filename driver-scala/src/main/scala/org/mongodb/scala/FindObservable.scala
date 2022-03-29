@@ -48,7 +48,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the query filter to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Filter]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Filter]]
    * @param filter the filter, which may be null.
    * @return this
    */
@@ -60,7 +60,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the limit to apply.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.limit/#cursor.limit Limit]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.limit/#cursor.limit Limit]]
    * @param limit the limit, which may be null
    * @return this
    */
@@ -72,7 +72,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the number of documents to skip.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.skip/#cursor.skip Skip]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.skip/#cursor.skip Skip]]
    * @param skip the number of documents to skip
    * @return this
    */
@@ -84,7 +84,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -105,7 +105,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    *
    * A zero value will be ignored.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return the maximum await execution time in the given time unit
    * @since 1.1
@@ -118,7 +118,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets a document describing the fields to return for all matching documents.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Projection]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Projection]]
    * @param projection the project document, which may be null.
    * @return this
    */
@@ -130,7 +130,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the sort criteria to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.sort/ Sort]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.sort/ Sort]]
    * @param sort the sort criteria, which may be null.
    * @return this
    */

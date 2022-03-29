@@ -46,7 +46,7 @@ object Updates {
    * @param value     the value
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/set/ \$set]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/set/ \$set]]
    */
   def set[TItem](fieldName: String, value: TItem): Bson = JUpdates.set(fieldName, value)
 
@@ -55,7 +55,7 @@ object Updates {
    *
    * @param fieldName the non-null field name
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/unset/ \$unset]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/unset/ \$unset]]
    */
   def unset(fieldName: String): Bson = JUpdates.unset(fieldName)
 
@@ -67,7 +67,7 @@ object Updates {
    * @param value     the value
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/setOnInsert/ \$setOnInsert]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/setOnInsert/ \$setOnInsert]]
    * @see UpdateOptions#upsert(boolean)
    */
   def setOnInsert[TItem](fieldName: String, value: TItem): Bson = JUpdates.setOnInsert(fieldName, value)
@@ -78,7 +78,7 @@ object Updates {
    * @param fieldName    the non-null field name
    * @param newFieldName the non-null new field name
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/rename/ \$rename]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/rename/ \$rename]]
    */
   def rename(fieldName: String, newFieldName: String): Bson = JUpdates.rename(fieldName, newFieldName)
 
@@ -88,7 +88,7 @@ object Updates {
    * @param fieldName the non-null field name
    * @param number     the value
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/inc/ \$inc]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/inc/ \$inc]]
    */
   def inc(fieldName: String, number: Number): Bson = JUpdates.inc(fieldName, number)
 
@@ -98,7 +98,7 @@ object Updates {
    * @param fieldName the non-null field name
    * @param number    the non-null number
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/mul/ \$mul]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/mul/ \$mul]]
    */
   def mul(fieldName: String, number: Number): Bson = JUpdates.mul(fieldName, number)
 
@@ -110,7 +110,7 @@ object Updates {
    * @param value     the value
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/min/ \$min]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/min/ \$min]]
    */
   def min[TItem](fieldName: String, value: TItem): Bson = JUpdates.min(fieldName, value)
 
@@ -122,7 +122,7 @@ object Updates {
    * @param value     the value
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/min/ \$min]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/min/ \$min]]
    */
   def max[TItem](fieldName: String, value: TItem): Bson = JUpdates.max(fieldName, value)
 
@@ -131,8 +131,8 @@ object Updates {
    *
    * @param fieldName the non-null field name
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/currentDate/ \$currentDate]]
-   * @see [[http://www.mongodb.com/manual/reference/bson-types/#date Date]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/currentDate/ \$currentDate]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/bson-types/#date Date]]
    */
   def currentDate(fieldName: String): Bson = JUpdates.currentDate(fieldName)
 
@@ -141,8 +141,8 @@ object Updates {
    *
    * @param fieldName the non-null field name
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/currentDate/ \$currentDate]]
-   * @see [[http://www.mongodb.com/manual/reference/bson-types/#document-bson-type-timestamp Timestamp]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/currentDate/ \$currentDate]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/bson-types/#document-bson-type-timestamp Timestamp]]
    */
   def currentTimestamp(fieldName: String): Bson = JUpdates.currentTimestamp(fieldName)
 
@@ -154,7 +154,7 @@ object Updates {
    * @param value     the value
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/addToSet/ \$addToSet]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/addToSet/ \$addToSet]]
    */
   def addToSet[TItem](fieldName: String, value: TItem): Bson = JUpdates.addToSet(fieldName, value)
 
@@ -166,7 +166,7 @@ object Updates {
    * @param values     the values
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/addToSet/ \$addToSet]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/addToSet/ \$addToSet]]
    */
   def addEachToSet[TItem](fieldName: String, values: TItem*): Bson = JUpdates.addEachToSet(fieldName, values.asJava)
 
@@ -177,7 +177,7 @@ object Updates {
    * @param value     the value
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/push/ \$push]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/push/ \$push]]
    */
   def push[TItem](fieldName: String, value: TItem): Bson = JUpdates.push(fieldName, value)
 
@@ -188,7 +188,7 @@ object Updates {
    * @param values    the values
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/push/ \$push]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/push/ \$push]]
    */
   def pushEach[TItem](fieldName: String, values: TItem*): Bson = JUpdates.pushEach(fieldName, values.asJava)
 
@@ -201,7 +201,7 @@ object Updates {
    * @param options   the non-null push options
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/push/ \$push]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/push/ \$push]]
    */
   def pushEach[TItem](fieldName: String, options: JPushOptions, values: TItem*): Bson =
     JUpdates.pushEach(fieldName, values.asJava, options)
@@ -213,7 +213,7 @@ object Updates {
    * @param value     the value
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/pull/ \$pull]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/pull/ \$pull]]
    */
   def pull[TItem](fieldName: String, value: TItem): Bson = JUpdates.pull(fieldName, value)
 
@@ -222,7 +222,7 @@ object Updates {
    *
    * @param filter the query filter
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/pull/ \$pull]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/pull/ \$pull]]
    */
   def pullByFilter(filter: Bson): Bson = JUpdates.pullByFilter(filter)
 
@@ -233,7 +233,7 @@ object Updates {
    * @param values    the values
    * @tparam TItem   the value type
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/pull/ \$pull]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/pull/ \$pull]]
    */
   def pullAll[TItem](fieldName: String, values: TItem*): Bson = JUpdates.pullAll(fieldName, values.asJava)
 
@@ -242,7 +242,7 @@ object Updates {
    *
    * @param fieldName the non-null field name
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/pop/ \$pop]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/pop/ \$pop]]
    */
   def popFirst(fieldName: String): Bson = JUpdates.popFirst(fieldName)
 
@@ -251,7 +251,7 @@ object Updates {
    *
    * @param fieldName the non-null field name
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/pop/ \$pop]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/pop/ \$pop]]
    */
   def popLast(fieldName: String): Bson = JUpdates.popLast(fieldName)
 
@@ -271,7 +271,7 @@ object Updates {
    * @param fieldName the field name
    * @param value     the value
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/bit/ \$bit]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/bit/ \$bit]]
    */
   def bitwiseAnd(fieldName: String, value: Long): Bson = JUpdates.bitwiseAnd(fieldName, value)
 
@@ -282,7 +282,7 @@ object Updates {
    * @param fieldName the field name
    * @param value     the value
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/bit/ \$bit]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/bit/ \$bit]]
    */
   def bitwiseOr(fieldName: String, value: Int): Bson = JUpdates.bitwiseOr(fieldName, value)
 
@@ -292,7 +292,7 @@ object Updates {
    * @param fieldName the field name
    * @param value     the value
    * @return the update
-   * @see [[http://www.mongodb.com/manual/reference/operator/update/bit/ \$bit]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/update/bit/ \$bit]]
    */
   def bitwiseOr(fieldName: String, value: Long): Bson = JUpdates.bitwiseOr(fieldName, value)
 

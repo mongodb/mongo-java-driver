@@ -45,8 +45,8 @@ import static java.util.Collections.unmodifiableList;
 
 
 /**
- * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">Connection String</a>. The Connection String describes the
- * hosts to be used and options.</p>
+ * <p>Represents a <a href="https://www.mongodb.com/docs/manual/reference/connection-string/">Connection String</a>.
+ * The Connection String describes the hosts to be used and options.</p>
  *
  * <p>The format of the Connection String is:</p>
  * <pre>

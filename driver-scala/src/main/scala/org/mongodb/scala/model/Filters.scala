@@ -45,7 +45,7 @@ object Filters {
    * @param value     the value
    * @tparam TItem  the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/eq \$eq]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/eq \$eq]]
    */
   def eq[TItem](fieldName: String, value: TItem): Bson = JFilters.eq(fieldName, value)
 
@@ -70,7 +70,7 @@ object Filters {
    * @param value     the value
    * @tparam TItem  the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/eq \$eq]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/eq \$eq]]
    */
   def equal[TItem](fieldName: String, value: TItem): Bson = eq(fieldName, value)
 
@@ -91,7 +91,7 @@ object Filters {
    * @param value     the value
    * @tparam TItem  the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/ne \$ne]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/ne \$ne]]
    */
   def ne[TItem](fieldName: String, value: TItem): Bson = JFilters.ne(fieldName, value)
 
@@ -104,7 +104,7 @@ object Filters {
    * @param value     the value
    * @tparam TItem  the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/ne \$ne]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/ne \$ne]]
    */
   def notEqual[TItem](fieldName: String, value: TItem): Bson = JFilters.ne(fieldName, value)
 
@@ -115,7 +115,7 @@ object Filters {
    * @param value the value
    * @tparam TItem the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/gt \$gt]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/gt \$gt]]
    */
   def gt[TItem](fieldName: String, value: TItem): Bson = JFilters.gt(fieldName, value)
 
@@ -126,7 +126,7 @@ object Filters {
    * @param value the value
    * @tparam TItem the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/lt \$lt]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/lt \$lt]]
    */
   def lt[TItem](fieldName: String, value: TItem): Bson = JFilters.lt(fieldName, value)
 
@@ -137,7 +137,7 @@ object Filters {
    * @param value the value
    * @tparam TItem the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/gte \$gte]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/gte \$gte]]
    */
   def gte[TItem](fieldName: String, value: TItem): Bson = JFilters.gte(fieldName, value)
 
@@ -148,7 +148,7 @@ object Filters {
    * @param value the value
    * @tparam TItem the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/lte \$lte]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/lte \$lte]]
    */
   def lte[TItem](fieldName: String, value: TItem): Bson = JFilters.lte(fieldName: String, value: TItem)
 
@@ -159,7 +159,7 @@ object Filters {
    * @param values    the list of values
    * @tparam TItem   the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/in \$in]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/in \$in]]
    */
   def in[TItem](fieldName: String, values: TItem*): Bson = JFilters.in(fieldName, values.asJava)
 
@@ -170,7 +170,7 @@ object Filters {
    * @param values    the list of values
    * @tparam TItem   the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/nin \$nin]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/nin \$nin]]
    */
   def nin[TItem](fieldName: String, values: TItem*): Bson = JFilters.nin(fieldName, values.asJava)
 
@@ -191,7 +191,7 @@ object Filters {
    *
    * @param filters the list of filters to and together
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/and \$and]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/and \$and]]
    */
   def and(filters: Bson*): Bson = JFilters.and(filters.asJava)
 
@@ -200,7 +200,7 @@ object Filters {
    *
    * @param filters the list of filters to and together
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/or \$or]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/or \$or]]
    */
   def or(filters: Bson*): Bson = JFilters.or(filters.asJava)
 
@@ -215,7 +215,7 @@ object Filters {
    *
    * @param filter     the value
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/not \$not]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/not \$not]]
    */
   def not(filter: Bson): Bson = JFilters.not(filter)
 
@@ -224,7 +224,7 @@ object Filters {
    *
    * @param filters    the list of values
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/nor \$nor]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/nor \$nor]]
    */
   def nor(filters: Bson*): Bson = JFilters.nor(filters.asJava)
 
@@ -233,7 +233,7 @@ object Filters {
    *
    * @param fieldName the field name
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/exists \$exists]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/exists \$exists]]
    */
   def exists(fieldName: String): Bson = JFilters.exists(fieldName)
 
@@ -244,7 +244,7 @@ object Filters {
    * @param fieldName the field name
    * @param exists    true to check for existence, false to check for absence
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/exists \$exists]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/exists \$exists]]
    */
   def exists(fieldName: String, exists: Boolean): Bson = JFilters.exists(fieldName, exists)
 
@@ -254,7 +254,7 @@ object Filters {
    * @param fieldName the field name
    * @param bsonType      the BSON type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/type \$type]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/type \$type]]
    */
   def `type`(fieldName: String, bsonType: BsonType): Bson = JFilters.`type`(fieldName, bsonType) //scalastyle:ignore
 
@@ -266,7 +266,7 @@ object Filters {
    * @param fieldName the field name
    * @param bsonType      the BSON type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/type \$type]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/type \$type]]
    */
   def bsonType(fieldName: String, bsonType: BsonType): Bson = JFilters.`type`(fieldName, bsonType)
 
@@ -278,7 +278,7 @@ object Filters {
    * @param divisor   the modulus
    * @param remainder the remainder
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/mod \$mod]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/mod \$mod]]
    */
   def mod(fieldName: String, divisor: Long, remainder: Long): Bson = JFilters.mod(fieldName, divisor, remainder)
 
@@ -288,7 +288,7 @@ object Filters {
    * @param fieldName the field name
    * @param pattern   the pattern
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/regex \$regex]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/regex \$regex]]
    */
   def regex(fieldName: String, pattern: String): Bson = JFilters.regex(fieldName, pattern)
 
@@ -300,7 +300,7 @@ object Filters {
    * @param pattern   the pattern
    * @param options   the options
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/regex \$regex]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/regex \$regex]]
    */
   def regex(fieldName: String, pattern: String, options: String): Bson =
     JFilters.regex(fieldName: String, pattern: String, options: String)
@@ -311,7 +311,7 @@ object Filters {
    * @param fieldName the field name
    * @param regex   the regex
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/regex \$regex]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/regex \$regex]]
    * @since 1.0
    */
   def regex(fieldName: String, regex: Regex): Bson = JFilters.regex(fieldName, regex.pattern)
@@ -321,7 +321,7 @@ object Filters {
    *
    * @param search the search term
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/text \$text]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/text \$text]]
    */
   def text(search: String): Bson = JFilters.text(search)
 
@@ -331,7 +331,7 @@ object Filters {
    * @param search   the search term
    * @param textSearchOptions the text search options to use
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/text \$text]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/text \$text]]
    * @since 1.1
    */
   def text(search: String, textSearchOptions: TextSearchOptions): Bson = JFilters.text(search, textSearchOptions)
@@ -341,7 +341,7 @@ object Filters {
    *
    * @param javaScriptExpression the JavaScript expression
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/where \$where]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/where \$where]]
    */
   def where(javaScriptExpression: String): Bson = JFilters.where(javaScriptExpression)
 
@@ -352,7 +352,7 @@ object Filters {
    * @param values    the list of values
    * @tparam TItem   the value type
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/all \$all]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/all \$all]]
    */
   def all[TItem](fieldName: String, values: TItem*): Bson = JFilters.all(fieldName, values.toList.asJava)
 
@@ -363,7 +363,7 @@ object Filters {
    * @param fieldName the field name
    * @param filter    the filter to apply to each element
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/elemMatch \$elemMatch]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/elemMatch \$elemMatch]]
    */
   def elemMatch(fieldName: String, filter: Bson): Bson = JFilters.elemMatch(fieldName, filter)
 
@@ -373,7 +373,7 @@ object Filters {
    * @param fieldName the field name
    * @param size      the size of the array
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/size \$size]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/size \$size]]
    */
   def size(fieldName: String, size: Int): Bson = JFilters.size(fieldName, size)
 
@@ -384,7 +384,7 @@ object Filters {
    * @param fieldName the field name
    * @param bitmask   the bitmask
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/bitsAllClear \$bitsAllClear]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/bitsAllClear \$bitsAllClear]]
    * @since 1.1
    */
   def bitsAllClear(fieldName: String, bitmask: Long): Bson = JFilters.bitsAllClear(fieldName, bitmask)
@@ -396,7 +396,7 @@ object Filters {
    * @param fieldName the field name
    * @param bitmask   the bitmask
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/bitsAllSet \$bitsAllSet]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/bitsAllSet \$bitsAllSet]]
    * @since 1.1
    */
   def bitsAllSet(fieldName: String, bitmask: Long): Bson = JFilters.bitsAllSet(fieldName, bitmask)
@@ -408,7 +408,7 @@ object Filters {
    * @param fieldName the field name
    * @param bitmask   the bitmask
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/bitsAnyClear \$bitsAnyClear]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/bitsAnyClear \$bitsAnyClear]]
    * @since 1.1
    */
   def bitsAnyClear(fieldName: String, bitmask: Long): Bson = JFilters.bitsAnyClear(fieldName, bitmask)
@@ -420,7 +420,7 @@ object Filters {
    * @param fieldName the field name
    * @param bitmask   the bitmask
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/bitsAnySet \$bitsAnySet]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/bitsAnySet \$bitsAnySet]]
    * @since 1.1
    */
   def bitsAnySet(fieldName: String, bitmask: Long): Bson = JFilters.bitsAnySet(fieldName, bitmask)
@@ -431,7 +431,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoWithin/ \$geoWithin]]
    */
   def geoWithin(fieldName: String, geometry: Geometry): Bson = JFilters.geoWithin(fieldName, geometry)
 
@@ -441,7 +441,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoWithin/ \$geoWithin]]
    */
   def geoWithin(fieldName: String, geometry: Bson): Bson = JFilters.geoWithin(fieldName, geometry)
 
@@ -455,8 +455,8 @@ object Filters {
    * @param upperRightX the upper left x coordinate of the box
    * @param upperRightY the upper left y coordinate of the box
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/box/#op._S_box \$box]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoWithin/ \$geoWithin]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/box/#op._S_box \$box]]
    */
   def geoWithinBox(
       fieldName: String,
@@ -474,8 +474,8 @@ object Filters {
    * @param fieldName the field name
    * @param points    a Seq of pairs of x, y coordinates.  Any extra dimensions are ignored
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/polygon/#op._S_polygon \$polygon]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoWithin/ \$geoWithin]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/polygon/#op._S_polygon \$polygon]]
    */
   def geoWithinPolygon(fieldName: String, points: Seq[Seq[Double]]): Bson =
     JFilters.geoWithinPolygon(fieldName, points.map(_.asInstanceOf[Seq[lang.Double]].asJava).asJava)
@@ -489,8 +489,8 @@ object Filters {
    * @param y         the y coordinate of the circle
    * @param radius    the radius of the circle, as measured in the units used by the coordinate system
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/center/#op._S_center \$center]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoWithin/ \$geoWithin]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/center/#op._S_center \$center]]
    */
   def geoWithinCenter(fieldName: String, x: Double, y: Double, radius: Double): Bson =
     JFilters.geoWithinCenter(fieldName, x, y, radius)
@@ -504,8 +504,8 @@ object Filters {
    * @param y         the y coordinate of the circle
    * @param radius    the radius of the circle, in radians
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/centerSphere/#op._S_centerSphere \$centerSphere]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoWithin/ \$geoWithin]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/centerSphere/#op._S_centerSphere \$centerSphere]]
    */
   def geoWithinCenterSphere(fieldName: String, x: Double, y: Double, radius: Double): Bson =
     JFilters.geoWithinCenterSphere(fieldName, x, y, radius)
@@ -516,7 +516,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoIntersects/ \$geoIntersects]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoIntersects/ \$geoIntersects]]
    */
   def geoIntersects(fieldName: String, geometry: Bson): Bson = JFilters.geoIntersects(fieldName, geometry)
 
@@ -526,7 +526,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoIntersects/ \$geoIntersects]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/geoIntersects/ \$geoIntersects]]
    */
   def geoIntersects(fieldName: String, geometry: Geometry): Bson = JFilters.geoIntersects(fieldName, geometry)
 
@@ -536,7 +536,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def near(fieldName: String, geometry: Point): Bson = JFilters.near(fieldName, geometry, null, null)
 
@@ -548,7 +548,7 @@ object Filters {
    * @param maxDistance the optional maximum distance from the point, in meters
    * @param minDistance the optional minimum distance from the point, in meters
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def near(fieldName: String, geometry: Point, maxDistance: Option[Double], minDistance: Option[Double]): Bson = {
     JFilters.near(fieldName, geometry, maxDistance.asJava, minDistance.asJava)
@@ -560,7 +560,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def near(fieldName: String, geometry: Bson): Bson = JFilters.near(fieldName, geometry, null, null)
 
@@ -572,7 +572,7 @@ object Filters {
    * @param maxDistance the optional maximum distance from the point, in meters
    * @param minDistance the optional minimum distance from the point, in meters
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def near(fieldName: String, geometry: Bson, maxDistance: Option[Double], minDistance: Option[Double]): Bson = {
     JFilters.near(fieldName, geometry, maxDistance.asJava, minDistance.asJava)
@@ -585,7 +585,7 @@ object Filters {
    * @param x the x coordinate
    * @param y the y coordinate
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def near(fieldName: String, x: Double, y: Double): Bson = JFilters.near(fieldName, x, y, null, null)
 
@@ -598,7 +598,7 @@ object Filters {
    * @param maxDistance the optional maximum distance from the point, in radians
    * @param minDistance the optional minimum distance from the point, in radians
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def near(fieldName: String, x: Double, y: Double, maxDistance: Option[Double], minDistance: Option[Double]): Bson = {
     JFilters.near(fieldName, x, y, maxDistance.asJava, minDistance.asJava)
@@ -611,7 +611,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def nearSphere(fieldName: String, geometry: Point): Bson = JFilters.nearSphere(fieldName, geometry, null, null)
 
@@ -624,7 +624,7 @@ object Filters {
    * @param maxDistance the optional maximum distance from the point, in meters
    * @param minDistance the optional minimum distance from the point, in meters
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def nearSphere(fieldName: String, geometry: Point, maxDistance: Option[Double], minDistance: Option[Double]): Bson = {
     JFilters.nearSphere(fieldName, geometry, maxDistance.asJava, minDistance.asJava)
@@ -637,7 +637,7 @@ object Filters {
    * @param fieldName the field name
    * @param geometry the bounding GeoJSON geometry object
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def nearSphere(fieldName: String, geometry: Bson): Bson = JFilters.nearSphere(fieldName, geometry, null, null)
 
@@ -650,7 +650,7 @@ object Filters {
    * @param maxDistance the optional maximum distance from the point, in meters
    * @param minDistance the optional minimum distance from the point, in meters
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def nearSphere(fieldName: String, geometry: Bson, maxDistance: Option[Double], minDistance: Option[Double]): Bson = {
     JFilters.nearSphere(fieldName, geometry, maxDistance.asJava, minDistance.asJava)
@@ -664,7 +664,7 @@ object Filters {
    * @param x the x coordinate
    * @param y the y coordinate
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def nearSphere(fieldName: String, x: Double, y: Double): Bson = JFilters.nearSphere(fieldName, x, y, null, null)
 
@@ -678,7 +678,7 @@ object Filters {
    * @param maxDistance the optional maximum distance from the point, in radians
    * @param minDistance the optional minimum distance from the point, in radians
    * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def nearSphere(
       fieldName: String,

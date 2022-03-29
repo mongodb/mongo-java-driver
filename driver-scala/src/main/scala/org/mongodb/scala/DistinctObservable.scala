@@ -36,7 +36,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
   /**
    * Sets the query filter to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Filter]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Filter]]
    * @param filter the filter, which may be null.
    * @return this
    */
@@ -48,7 +48,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
