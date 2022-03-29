@@ -470,7 +470,7 @@ object Aggregates {
    * @param output      A nonempty list of [[WindowedComputation windowed computations]].
    * @tparam TExpression The `partitionBy` expression type.
    * @return The `\$setWindowFields` pipeline stage.
-   * @see [[http://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
+   * @see [[https://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */
