@@ -33,9 +33,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,8 +54,8 @@ public abstract class AbstractSessionsProseTest {
 
         Set<BsonDocument> lsidSet = ConcurrentHashMap.newKeySet();
         MongoCollection<Document> collection;
-        try (MongoClient client = getMongoClient(MongoClientSettings.builder()
-                .applyConnectionString(getConnectionString())
+        try (MongoClient client = getMongoClient(
+                getMongoClientSettingsBuilder()
                 .applyToConnectionPoolSettings(builder -> builder.maxSize(1))
                 .addCommandListener(new CommandListener() {
                     @Override
@@ -79,7 +79,7 @@ public abstract class AbstractSessionsProseTest {
 
             int minLsidSetSize = Integer.MAX_VALUE;
 
-            // Try up to times, counting on at least one time that only one lsid will be used
+            // Try up to five times, counting on at least one time that only one lsid will be used
             for (int i = 0; i < 5; i++) {
                 // given
                 lsidSet.clear();
