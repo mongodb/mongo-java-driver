@@ -30,7 +30,7 @@ import java.util.Objects;
  * While instances are not {@link Immutable immutable},
  * instances with {@link BsonDocument#isEmpty() empty} values are treated specially and are immutable.
  *
- * @param <S> A type defined by the concrete class that extends this abstract class.
+ * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
  */
 public abstract class AbstractConstructibleBsonField<S extends AbstractConstructibleBsonField<S>> implements Bson {

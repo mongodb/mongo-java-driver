@@ -28,9 +28,7 @@ import java.util.Objects;
  * While instances are not {@link Immutable immutable},
  * {@link BsonDocument#isEmpty() empty} instances are treated specially and are immutable.
  *
- * @param <S> A type defined by the concrete class that extends this abstract class.
- * The presence of this type parameter is an artifact of not having in Java anything resembling
- * the <a href="https://doc.rust-lang.org/std/keyword.SelfTy.html">{@code Self} keyword</a> in Rust.
+ * @param <S> A type introduced by the concrete class that extends this abstract class.
  */
 public abstract class AbstractConstructibleBson<S extends AbstractConstructibleBson<S>> implements Bson {
     private final BsonDocument doc;
