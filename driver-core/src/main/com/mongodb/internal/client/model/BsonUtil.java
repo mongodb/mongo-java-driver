@@ -13,17 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.bson.internal;
+package com.mongodb.internal.client.model;
 
+import com.mongodb.client.model.search.SearchPath;
+import org.bson.BsonArray;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonNumber;
+import org.bson.BsonValue;
 
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class NumberHelper {
+import static com.mongodb.assertions.Assertions.fail;
+
+public final class BsonUtil {
+    public static final String SEARCH_PATH_VALUE_KEY = "value";
+
+    /**
+     * If {@code nonEmptyPaths} has exactly one element, then returns the result of {@link SearchPath#toBsonValue()},
+     * otherwise returns a {@link BsonArray} of such results.
+     *
+     * @param nonEmptyPaths One or more {@link SearchPath} to convert.
+     * @return A single {@link BsonValue} representing the specified paths.
+     */
+    public static BsonValue toBsonValue(final Iterator<? extends SearchPath> nonEmptyPaths) {
+        BsonValue firstPath = nonEmptyPaths.next().toBsonValue();
+        if (nonEmptyPaths.hasNext()) {
+            BsonArray bsonArray = new BsonArray();
+            bsonArray.add(firstPath);
+            while (nonEmptyPaths.hasNext()) {
+                bsonArray.add(nonEmptyPaths.next().toBsonValue());
+            }
+            return bsonArray;
+        } else {
+            return firstPath;
+        }
+    }
+
     /**
      * Must handle the same {@link Number}s as those handled by {@code org.bson.BasicBSONEncoder.putNumber}.
      */
@@ -39,6 +68,7 @@ public final class NumberHelper {
         }
     }
 
-    private NumberHelper() {
+    private BsonUtil() {
+        throw fail();
     }
 }

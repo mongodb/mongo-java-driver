@@ -23,7 +23,7 @@ import org.bson.conversions.Bson;
 import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.client.model.search.BsonUtil.toBsonValue;
+import static com.mongodb.internal.client.model.BsonUtil.toBsonValue;
 
 /**
  * Highlighting options.
@@ -64,7 +64,7 @@ public interface SearchHighlight extends Bson {
         if (!pathIterator.hasNext()) {
             throw new IllegalArgumentException("paths must not be empty");
         }
-        return new ConstructibleBsonToManifoldAdapter(new BsonDocument("path", toBsonValue(pathIterator)));
+        return new SearchConstructibleBson(new BsonDocument("path", toBsonValue(pathIterator)));
     }
 
     /**
@@ -87,6 +87,6 @@ public interface SearchHighlight extends Bson {
      * @return The requested {@link SearchHighlight}.
      */
     static SearchHighlight of(final Bson highlight) {
-        return new ConstructibleBsonToManifoldAdapter(notNull("highlight", highlight));
+        return new SearchConstructibleBson(notNull("highlight", highlight));
     }
 }

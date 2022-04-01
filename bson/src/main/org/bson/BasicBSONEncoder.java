@@ -296,7 +296,7 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     protected void putNumber(final String name, final Number number) {
         putName(name);
-        // must handle the same `Number`s as those handled by `NumberHandler.toBsonNumber`
+        // must handle the same `Number`s as those handled by `com.mongodb.internal.client.model.BsonUtil.toBsonNumber`
         if (number instanceof Integer || number instanceof Short || number instanceof Byte || number instanceof AtomicInteger) {
             bsonWriter.writeInt32(number.intValue());
         } else if (number instanceof Long || number instanceof AtomicLong) {

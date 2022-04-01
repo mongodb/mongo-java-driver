@@ -81,6 +81,6 @@ public interface SearchOptions extends Bson {
      * @return {@link SearchOptions} that represents server defaults.
      */
     static SearchOptions defaultSearchOptions() {
-        return ConstructibleBsonToManifoldAdapter.EMPTY;
+        return SearchConstructibleBson.EMPTY;
     }
 }

@@ -24,7 +24,7 @@ import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class ConstructibleBsonToManifoldAdapter extends AbstractConstructibleBson<ConstructibleBsonToManifoldAdapter> implements
+final class SearchConstructibleBson extends AbstractConstructibleBson<SearchConstructibleBson> implements
         SearchOperator,
         SearchCollector,
         SearchOptions,
@@ -32,15 +32,15 @@ final class ConstructibleBsonToManifoldAdapter extends AbstractConstructibleBson
         TotalSearchCount, LowerBoundSearchCount,
         FieldSearchPath, WildcardSearchPath,
         SearchFacet {
-    static final ConstructibleBsonToManifoldAdapter EMPTY = new ConstructibleBsonToManifoldAdapter(new BsonDocument());
+    static final SearchConstructibleBson EMPTY = new SearchConstructibleBson(new BsonDocument());
 
-    ConstructibleBsonToManifoldAdapter(final Bson doc) {
+    SearchConstructibleBson(final Bson doc) {
         super(doc);
     }
 
     @Override
-    protected ConstructibleBsonToManifoldAdapter newSelf(final BsonDocument doc) {
-        return new ConstructibleBsonToManifoldAdapter(doc);
+    protected SearchConstructibleBson newSelf(final BsonDocument doc) {
+        return new SearchConstructibleBson(doc);
     }
 
     @Override

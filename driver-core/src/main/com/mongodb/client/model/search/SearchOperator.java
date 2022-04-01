@@ -38,7 +38,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/exists/ exists operator
      */
     static ExistsSearchOperator exists(final FieldSearchPath path) {
-        return new ConstructibleBsonFieldToManifoldAdapter("exists", new BsonDocument("path", (notNull("path", path)).toBsonValue()));
+        return new SearchConstructibleBsonElement("exists", new BsonDocument("path", (notNull("path", path)).toBsonValue()));
     }
 
     /**
@@ -59,6 +59,6 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      */
     static SearchOperator of(final Bson operator) {
-        return new ConstructibleBsonToManifoldAdapter(notNull("operator", operator));
+        return new SearchConstructibleBson(notNull("operator", operator));
     }
 }

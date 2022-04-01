@@ -15,19 +15,18 @@
  */
 package com.mongodb.client.model.search;
 
-import com.mongodb.internal.client.model.AbstractConstructibleBsonField;
+import com.mongodb.internal.client.model.AbstractConstructibleBsonElement;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.conversions.Bson;
 
 import static org.bson.assertions.Assertions.notNull;
 
-final class ConstructibleBsonFieldToManifoldAdapter extends AbstractConstructibleBsonField<ConstructibleBsonFieldToManifoldAdapter>
-        implements
+final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
         ExistsSearchOperator,
         FacetSearchCollector,
         StringSearchFacet, NumericSearchFacet, DateSearchFacet {
-    ConstructibleBsonFieldToManifoldAdapter(final String name, final Bson value) {
+    SearchConstructibleBsonElement(final String name, final Bson value) {
         super(name, value);
     }
 
@@ -37,12 +36,12 @@ final class ConstructibleBsonFieldToManifoldAdapter extends AbstractConstructibl
     }
 
     @Override
-    public ConstructibleBsonFieldToManifoldAdapter defaultBucket(final String name) {
+    public SearchConstructibleBsonElement defaultBucket(final String name) {
         return newWithAppendedValue("default", new BsonString(notNull("name", name)));
     }
 
     @Override
-    protected ConstructibleBsonFieldToManifoldAdapter newSelf(final String name, final Bson value) {
-        return new ConstructibleBsonFieldToManifoldAdapter(name, value);
+    protected SearchConstructibleBsonElement newSelf(final String name, final Bson value) {
+        return new SearchConstructibleBsonElement(name, value);
     }
 }

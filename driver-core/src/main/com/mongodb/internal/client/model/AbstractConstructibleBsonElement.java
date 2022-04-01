@@ -33,11 +33,11 @@ import java.util.Objects;
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
  */
-public abstract class AbstractConstructibleBsonField<S extends AbstractConstructibleBsonField<S>> implements Bson {
+public abstract class AbstractConstructibleBsonElement<S extends AbstractConstructibleBsonElement<S>> implements Bson {
     private final String name;
     private final AbstractConstructibleBson<?> value;
 
-    protected AbstractConstructibleBsonField(final String name, final Bson value) {
+    protected AbstractConstructibleBsonElement(final String name, final Bson value) {
         this.name = name;
         this.value = AbstractConstructibleBson.of(value.toBsonDocument());
     }
@@ -67,7 +67,7 @@ public abstract class AbstractConstructibleBsonField<S extends AbstractConstruct
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AbstractConstructibleBsonField<?> that = (AbstractConstructibleBsonField<?>) o;
+        final AbstractConstructibleBsonElement<?> that = (AbstractConstructibleBsonElement<?>) o;
         return name.equals(that.name) && value.equals(that.value);
     }
 

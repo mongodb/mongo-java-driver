@@ -17,6 +17,7 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
+import com.mongodb.internal.client.model.BsonUtil;
 import org.bson.BsonArray;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
@@ -24,7 +25,6 @@ import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
-import org.bson.internal.NumberHelper;
 
 import java.time.Instant;
 import java.util.Iterator;
@@ -55,7 +55,7 @@ public interface SearchFacet extends Bson {
      * @mongodb.atlas.manual atlas-search/facet/#string-facets String facet definition
      */
     static StringSearchFacet stringFacet(final String name, final FieldSearchPath path) {
-        return new ConstructibleBsonFieldToManifoldAdapter(notNull("name", name),
+        return new SearchConstructibleBsonElement(notNull("name", name),
                 new BsonDocument("type", new BsonString("string"))
                         .append("path", notNull("path", path).toBsonValue()));
     }
@@ -74,9 +74,9 @@ public interface SearchFacet extends Bson {
      */
     static NumericSearchFacet numberFacet(final String name, final FieldSearchPath path, final Iterable<? extends Number> boundaries) {
         final BsonArray boundariesArray = stream(notNull("boundaries", boundaries).spliterator(), false)
-                .map(NumberHelper::toBsonNumber).collect(toCollection(BsonArray::new));
+                .map(BsonUtil::toBsonNumber).collect(toCollection(BsonArray::new));
         isTrueArgument("boundaries must contain at least 2 elements", boundariesArray.size() >= 2);
-        return new ConstructibleBsonFieldToManifoldAdapter(notNull("name", name),
+        return new SearchConstructibleBsonElement(notNull("name", name),
                 new BsonDocument("type", new BsonString("number"))
                         .append("path", notNull("path", path).toBsonValue())
                         .append("boundaries", notNull("boundaries", boundariesArray)));
@@ -96,7 +96,7 @@ public interface SearchFacet extends Bson {
         final BsonArray boundariesArray = stream(notNull("boundaries", boundaries).spliterator(), false)
                 .map(Instant::toEpochMilli).map(BsonDateTime::new).collect(toCollection(BsonArray::new));
         isTrueArgument("boundaries must contain at least 2 elements", boundariesArray.size() >= 2);
-        return new ConstructibleBsonFieldToManifoldAdapter(notNull("name", name),
+        return new SearchConstructibleBsonElement(notNull("name", name),
                 new BsonDocument("type", new BsonString("date"))
                         .append("path", notNull("path", path).toBsonValue())
                         .append("boundaries", notNull("boundaries", boundariesArray)));
@@ -120,7 +120,7 @@ public interface SearchFacet extends Bson {
      * @return The requested {@link SearchFacet}.
      */
     static SearchFacet of(final Bson facet) {
-        return new ConstructibleBsonToManifoldAdapter(notNull("facet", facet));
+        return new SearchConstructibleBson(notNull("facet", facet));
     }
 
     /**

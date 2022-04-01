@@ -41,7 +41,7 @@ public interface SearchCount extends Bson {
      * @return The requested {@link SearchCount}.
      */
     static TotalSearchCount total() {
-        return new ConstructibleBsonToManifoldAdapter(new BsonDocument("type", new BsonString("total")));
+        return new SearchConstructibleBson(new BsonDocument("type", new BsonString("total")));
     }
 
     /**
@@ -51,7 +51,7 @@ public interface SearchCount extends Bson {
      * @return The requested {@link SearchCount}.
      */
     static LowerBoundSearchCount lowerBound() {
-        return new ConstructibleBsonToManifoldAdapter(new BsonDocument("type", new BsonString("lowerBound")));
+        return new SearchConstructibleBson(new BsonDocument("type", new BsonString("lowerBound")));
     }
 
     /**
@@ -70,6 +70,6 @@ public interface SearchCount extends Bson {
      * @return The requested {@link SearchCount}.
      */
     static SearchCount of(final Bson count) {
-        return new ConstructibleBsonToManifoldAdapter(notNull("count", count));
+        return new SearchConstructibleBson(notNull("count", count));
     }
 }

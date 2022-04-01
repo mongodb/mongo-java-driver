@@ -16,14 +16,14 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
-import com.mongodb.internal.client.model.search.BsonUtil;
+import com.mongodb.internal.client.model.BsonUtil;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.client.model.search.BsonUtil.SEARCH_PATH_VALUE_KEY;
+import static com.mongodb.internal.client.model.BsonUtil.SEARCH_PATH_VALUE_KEY;
 
 /**
  * A specification of document fields to be searched.
@@ -45,7 +45,7 @@ public interface SearchPath extends Bson {
         if (path.contains("*")) {
             throw new IllegalArgumentException("path must not contain '*'");
         }
-        return new ConstructibleBsonToManifoldAdapter(new BsonDocument(SEARCH_PATH_VALUE_KEY, new BsonString(path)));
+        return new SearchConstructibleBson(new BsonDocument(SEARCH_PATH_VALUE_KEY, new BsonString(path)));
     }
 
     /**
@@ -64,7 +64,7 @@ public interface SearchPath extends Bson {
         if (!wildcardPath.contains("*")) {
             throw new IllegalArgumentException("wildcardPath must contain '*'");
         }
-        return new ConstructibleBsonToManifoldAdapter(new BsonDocument("wildcard", new BsonString(wildcardPath)));
+        return new SearchConstructibleBson(new BsonDocument("wildcard", new BsonString(wildcardPath)));
     }
 
     /**

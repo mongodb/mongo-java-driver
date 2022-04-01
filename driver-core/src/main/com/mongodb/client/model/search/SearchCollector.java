@@ -48,7 +48,7 @@ public interface SearchCollector extends Bson {
     static FacetSearchCollector facet(final SearchOperator operator, final Iterable<? extends SearchFacet> facets) {
         notNull("operator", operator);
         notNull("facets", facets);
-        return new ConstructibleBsonFieldToManifoldAdapter("facet", new BsonDocument("operator", operator.toBsonDocument())
+        return new SearchConstructibleBsonElement("facet", new BsonDocument("operator", operator.toBsonDocument())
                 .append("facets", combineToBsonDocument(facets)));
     }
 
@@ -88,6 +88,6 @@ public interface SearchCollector extends Bson {
      * @return The requested {@link SearchCollector}.
      */
     static SearchCollector of(final Bson collector) {
-        return new ConstructibleBsonToManifoldAdapter(notNull("collector", collector));
+        return new SearchConstructibleBson(notNull("collector", collector));
     }
 }
