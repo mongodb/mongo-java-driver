@@ -1417,7 +1417,7 @@ class DefaultConnectionPool implements ConnectionPool {
         void start() {
             if (maintainer != null) {
                 assertTrue(cancellationHandle == null);
-                cancellationHandle = doIgnoringRejectedExecution(() -> maintainer.scheduleAtFixedRate(
+                cancellationHandle = ignoreRejectedExectution(() -> maintainer.scheduleAtFixedRate(
                         DefaultConnectionPool.this::doMaintenance,
                         initialStart ? settings.getMaintenanceInitialDelay(MILLISECONDS) : 0,
                         settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS));
@@ -1431,7 +1431,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     cancellationHandle.cancel(false);
                     cancellationHandle = null;
                 }
-                doIgnoringRejectedExecution(() -> maintainer.execute(DefaultConnectionPool.this::doMaintenance));
+                ignoreRejectedExectution(() -> maintainer.execute(DefaultConnectionPool.this::doMaintenance));
             }
         }
 
@@ -1442,15 +1442,15 @@ class DefaultConnectionPool implements ConnectionPool {
             }
         }
 
-        private void doIgnoringRejectedExecution(final Runnable action) {
-            doIgnoringRejectedExecution(() -> {
+        private void ignoreRejectedExectution(final Runnable action) {
+            ignoreRejectedExectution(() -> {
                 action.run();
                 return null;
             });
         }
 
         @Nullable
-        private <T> T doIgnoringRejectedExecution(final Supplier<T> action) {
+        private <T> T ignoreRejectedExectution(final Supplier<T> action) {
             try {
                 return action.get();
             } catch (RejectedExecutionException ignored) {

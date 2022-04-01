@@ -444,6 +444,17 @@ public class DefaultConnectionPoolTest {
     }
 
     @Test
+    public void readyAfterCloseMustNotThrow() {
+        provider = new DefaultConnectionPool(
+                SERVER_ID,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).build(),
+                mockSdamProvider());
+        provider.close();
+        provider.ready();
+    }
+
+    @Test
     public void invalidateAfterCloseMustNotThrow() {
         provider = new DefaultConnectionPool(
                 SERVER_ID,
@@ -456,23 +467,23 @@ public class DefaultConnectionPoolTest {
     }
 
     @Test
-    public void invalidateConcurrentWithCloseMustNotThrow() throws ExecutionException, InterruptedException {
-        Future<?> backgroundTask = null;
-        for (int i = 0; i < 10_000; i++) {
+    public void readyInvalidateConcurrentWithCloseMustNotThrow() throws ExecutionException, InterruptedException {
+        Future<?> readyAndInvalidateResult = null;
+        for (int i = 0; i < 3_000; i++) {
             provider = new DefaultConnectionPool(
                     SERVER_ID,
                     connectionFactory,
                     ConnectionPoolSettings.builder().maxSize(1).build(),
                     mockSdamProvider());
             try {
-                backgroundTask = cachedExecutor.submit(() -> {
+                readyAndInvalidateResult = cachedExecutor.submit(() -> {
                     provider.ready();
                     provider.invalidate(null);
                 });
             } finally {
                 provider.close();
-                if (backgroundTask != null) {
-                    backgroundTask.get();
+                if (readyAndInvalidateResult != null) {
+                    readyAndInvalidateResult.get();
                 }
             }
         }
