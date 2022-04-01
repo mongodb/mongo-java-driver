@@ -443,6 +443,52 @@ public class DefaultConnectionPoolTest {
         }
     }
 
+    @Test
+    public void readyAfterCloseMustNotThrow() {
+        provider = new DefaultConnectionPool(
+                SERVER_ID,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).build(),
+                mockSdamProvider());
+        provider.close();
+        provider.ready();
+    }
+
+    @Test
+    public void invalidateAfterCloseMustNotThrow() {
+        provider = new DefaultConnectionPool(
+                SERVER_ID,
+                connectionFactory,
+                ConnectionPoolSettings.builder().maxSize(1).build(),
+                mockSdamProvider());
+        provider.ready();
+        provider.close();
+        provider.invalidate(null);
+    }
+
+    @Test
+    public void readyInvalidateConcurrentWithCloseMustNotThrow() throws ExecutionException, InterruptedException {
+        Future<?> readyAndInvalidateResult = null;
+        for (int i = 0; i < 3_000; i++) {
+            provider = new DefaultConnectionPool(
+                    SERVER_ID,
+                    connectionFactory,
+                    ConnectionPoolSettings.builder().maxSize(1).build(),
+                    mockSdamProvider());
+            try {
+                readyAndInvalidateResult = cachedExecutor.submit(() -> {
+                    provider.ready();
+                    provider.invalidate(null);
+                });
+            } finally {
+                provider.close();
+                if (readyAndInvalidateResult != null) {
+                    readyAndInvalidateResult.get();
+                }
+            }
+        }
+    }
+
     private static void assertUseConcurrently(final DefaultConnectionPool pool, final int concurrentUsersCount,
                                               final boolean sync, final boolean async,
                                               final float invalidateAndReadyProb, final float invalidateProb, final float readyProb,
