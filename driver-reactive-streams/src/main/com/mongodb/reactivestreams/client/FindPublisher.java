@@ -203,6 +203,19 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     FindPublisher<TResult> hintString(@Nullable String hint);
 
     /**
+     * Add top-level variables to the operation. A null value means no variables are set.
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.</p>
+     *
+     * @param variables for find operation or null
+     * @return this
+     * @mongodb.driver.manual reference/command/find/
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    FindPublisher<TResult> let(@Nullable Bson variables);
+
+    /**
      * Sets the exclusive upper bound for a specific index. A null value means no max is set.
      *
      * @param max the max

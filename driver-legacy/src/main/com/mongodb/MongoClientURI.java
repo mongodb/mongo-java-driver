@@ -24,7 +24,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
+ * Represents a <a href="https://www.mongodb.com/docs/manual/reference/connection-string/">URI</a>
  * which can be used to create a MongoClient instance. The URI describes the hosts to
  * be used and options.
  * <p>The format of the URI is:

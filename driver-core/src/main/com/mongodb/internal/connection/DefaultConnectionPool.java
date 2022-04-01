@@ -69,6 +69,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1416,18 +1417,21 @@ class DefaultConnectionPool implements ConnectionPool {
         void start() {
             if (maintainer != null) {
                 assertTrue(cancellationHandle == null);
-                cancellationHandle = maintainer.scheduleAtFixedRate(DefaultConnectionPool.this::doMaintenance,
+                cancellationHandle = ignoreRejectedExectution(() -> maintainer.scheduleAtFixedRate(
+                        DefaultConnectionPool.this::doMaintenance,
                         initialStart ? settings.getMaintenanceInitialDelay(MILLISECONDS) : 0,
-                        settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
+                        settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS));
                 initialStart = false;
             }
         }
 
         void runOnceAndStop() {
             if (maintainer != null) {
-                assertNotNull(cancellationHandle).cancel(false);
-                cancellationHandle = null;
-                maintainer.execute(DefaultConnectionPool.this::doMaintenance);
+                if (cancellationHandle != null) {
+                    cancellationHandle.cancel(false);
+                    cancellationHandle = null;
+                }
+                ignoreRejectedExectution(() -> maintainer.execute(DefaultConnectionPool.this::doMaintenance));
             }
         }
 
@@ -1435,6 +1439,23 @@ class DefaultConnectionPool implements ConnectionPool {
         public void close() {
             if (maintainer != null) {
                 maintainer.shutdownNow();
+            }
+        }
+
+        private void ignoreRejectedExectution(final Runnable action) {
+            ignoreRejectedExectution(() -> {
+                action.run();
+                return null;
+            });
+        }
+
+        @Nullable
+        private <T> T ignoreRejectedExectution(final Supplier<T> action) {
+            try {
+                return action.get();
+            } catch (RejectedExecutionException ignored) {
+                // `close` either completed or is in progress
+                return null;
             }
         }
     }

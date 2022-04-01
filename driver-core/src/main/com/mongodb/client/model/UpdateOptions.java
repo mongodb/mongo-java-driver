@@ -39,6 +39,7 @@ public class UpdateOptions {
     private Bson hint;
     private String hintString;
     private BsonValue comment;
+    private Bson variables;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -225,6 +226,36 @@ public class UpdateOptions {
         return this;
     }
 
+    /**
+     * Add top-level variables to the operation
+     *
+     * <p>The value of let will be passed to all update and delete, but not insert, commands.
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     * <p>For bulk operations use: {@link BulkWriteOptions#let(Bson)}
+     *
+     * @param variables for the operation or null
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public UpdateOptions let(final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "UpdateOptions{"
@@ -235,6 +266,7 @@ public class UpdateOptions {
                 + ", hint=" + hint
                 + ", hintString=" + hintString
                 + ", comment=" + comment
+                + ", let=" + variables
                 + '}';
     }
 }

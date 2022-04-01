@@ -37,7 +37,7 @@ object Sorts {
    *
    * @param fieldNames the field names, which must contain at least one
    * @return the sort specification
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/meta/orderby Sort]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/meta/orderby Sort]]
    */
   def ascending(fieldNames: String*): Bson = JSorts.ascending(fieldNames.asJava)
 
@@ -46,7 +46,7 @@ object Sorts {
    *
    * @param fieldNames the field names, which must contain at least one
    * @return the sort specification
-   * @see [[http://http://docs.mongodb.org/manual/reference/operator/meta/orderby Sort]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/meta/orderby Sort]]
    */
   def descending(fieldNames: String*): Bson = JSorts.descending(fieldNames.asJava)
 

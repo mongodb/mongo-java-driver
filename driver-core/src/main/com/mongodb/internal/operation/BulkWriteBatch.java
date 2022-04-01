@@ -90,6 +90,7 @@ public final class BulkWriteBatch {
     private final List<WriteRequestWithIndex> unprocessed;
     private final SessionContext sessionContext;
     private final BsonValue comment;
+    private final BsonDocument variables;
 
     static BulkWriteBatch createBulkWriteBatch(final MongoNamespace namespace,
                                                       final ServerDescription serverDescription,
@@ -98,7 +99,7 @@ public final class BulkWriteBatch {
                                                       final Boolean bypassDocumentValidation, final boolean retryWrites,
                                                       final List<? extends WriteRequest> writeRequests,
                                                       final SessionContext sessionContext,
-                                                      @Nullable final BsonValue comment) {
+                                                      @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
         if (sessionContext.hasSession() && !sessionContext.isImplicitSession() && !sessionContext.hasActiveTransaction()
                 && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
@@ -117,14 +118,14 @@ public final class BulkWriteBatch {
         }
         return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation,
                 canRetryWrites, new BulkWriteBatchCombiner(connectionDescription.getServerAddress(), ordered, writeConcern),
-                writeRequestsWithIndex, sessionContext, comment);
+                writeRequestsWithIndex, sessionContext, comment, variables);
     }
 
     private BulkWriteBatch(final MongoNamespace namespace, final ConnectionDescription connectionDescription,
                            final boolean ordered, final WriteConcern writeConcern, final Boolean bypassDocumentValidation,
                            final boolean retryWrites, final BulkWriteBatchCombiner bulkWriteBatchCombiner,
                            final List<WriteRequestWithIndex> writeRequestsWithIndices, final SessionContext sessionContext,
-                           @Nullable final BsonValue comment) {
+                           @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
         this.namespace = namespace;
         this.connectionDescription = connectionDescription;
         this.ordered = ordered;
@@ -159,6 +160,7 @@ public final class BulkWriteBatch {
         this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems);
         this.sessionContext = sessionContext;
         this.comment = comment;
+        this.variables = variables;
         this.command = new BsonDocument();
 
         if (!payloadItems.isEmpty()) {
@@ -171,6 +173,7 @@ public final class BulkWriteBatch {
                 command.put("bypassDocumentValidation", new BsonBoolean(bypassDocumentValidation));
             }
             putIfNotNull(command, "comment", comment);
+            putIfNotNull(command, "let", variables);
             if (retryWrites) {
                 command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
             }
@@ -182,7 +185,7 @@ public final class BulkWriteBatch {
                            final boolean retryWrites, final BulkWriteBatchCombiner bulkWriteBatchCombiner, final IndexMap indexMap,
                            final WriteRequest.Type batchType, final BsonDocument command, final SplittablePayload payload,
                            final List<WriteRequestWithIndex> unprocessed, final SessionContext sessionContext,
-                           @Nullable final BsonValue comment) {
+                           @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
         this.namespace = namespace;
         this.connectionDescription = connectionDescription;
         this.ordered = ordered;
@@ -196,6 +199,7 @@ public final class BulkWriteBatch {
         this.retryWrites = retryWrites;
         this.sessionContext = sessionContext;
         this.comment = comment;
+        this.variables = variables;
         if (retryWrites) {
             command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
         }
@@ -260,10 +264,11 @@ public final class BulkWriteBatch {
 
 
             return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, retryWrites,
-                    bulkWriteBatchCombiner, nextIndexMap, batchType, command, payload.getNextSplit(), unprocessed, sessionContext, comment);
+                    bulkWriteBatchCombiner, nextIndexMap, batchType, command, payload.getNextSplit(), unprocessed, sessionContext,
+                    comment, variables);
         } else {
             return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, retryWrites,
-                    bulkWriteBatchCombiner, unprocessed, sessionContext, comment);
+                    bulkWriteBatchCombiner, unprocessed, sessionContext, comment, variables);
         }
     }
 
