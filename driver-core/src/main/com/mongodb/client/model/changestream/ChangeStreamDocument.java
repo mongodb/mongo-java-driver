@@ -131,7 +131,7 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
-     * Returns the namespace cocument, derived from the "ns" field in a change stream document.
+     * Returns the namespace document, derived from the "ns" field in a change stream document.
      *
      * The namespace document is a BsonDocument containing the values associated with a MongoNamespace. The
      * 'db' key refers to the database name and the 'coll' key refers to the collection name.
