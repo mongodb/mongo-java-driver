@@ -55,7 +55,7 @@ object SearchFacet {
    * @return The requested `SearchFacet`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#numeric-facets Numeric facet definition]]
    */
-  def numberFacet(name: String, path: FieldSearchPath, boundaries: Iterable[_ <: Number]): NumericSearchFacet =
+  def numberFacet(name: String, path: FieldSearchPath, boundaries: Iterable[Number]): NumericSearchFacet =
     JSearchFacet.numberFacet(name, path, boundaries.asJava)
 
   /**

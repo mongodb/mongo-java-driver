@@ -47,7 +47,7 @@ object SearchHighlight {
    * The following code creates two functionally equivalent `SearchHighlight`s,
    * though they may not be equal.
    * {{{
-   *  val highlight1: SearchHighlight = SearchHighlight.paths(List(
+   *  val highlight1: SearchHighlight = SearchHighlight.paths(Seq(
    *    SearchPath.fieldPath("fieldName"),
    *    SearchPath.wildcardPath("wildc*rd")))
    *  val highlight2: SearchHighlight = SearchHighlight.of(BsonDocument("path" -> BsonArray(
