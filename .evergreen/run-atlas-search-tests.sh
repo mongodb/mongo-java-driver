@@ -13,7 +13,7 @@ source "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 echo "Running Atlas Search tests"
 ./gradlew -version
-#./gradlew --stacktrace --info \
-#    -Dorg.mongodb.test.atlas.search=true \
-#    -Dorg.mongodb.test.uri=${MONGODB_URI} \
-#    driver-core:test --tests AggregatesSearchIntegrationTest
+./gradlew --stacktrace --info \
+    -Dorg.mongodb.test.atlas.search=true \
+    -Dorg.mongodb.test.uri=${MONGODB_URI} \
+    driver-core:test --tests AggregatesSearchIntegrationTest

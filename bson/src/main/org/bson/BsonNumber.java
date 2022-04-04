@@ -23,8 +23,7 @@ import org.bson.types.Decimal128;
  *
  * @since 3.0
  */
-public abstract class
-BsonNumber extends BsonValue {
+public abstract class BsonNumber extends BsonValue {
     /**
      * Returns the value of the specified number as an {@code int}, which may involve rounding or truncation.
      *

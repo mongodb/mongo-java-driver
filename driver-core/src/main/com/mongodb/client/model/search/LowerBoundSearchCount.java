@@ -30,7 +30,7 @@ public interface LowerBoundSearchCount extends SearchCount {
      * then to count roughly.
      *
      * @param threshold The number of documents to include in the exact count.
-     * @return The requested {@link LowerBoundSearchCount}.
+     * @return A new {@link LowerBoundSearchCount}.
      */
     LowerBoundSearchCount threshold(int threshold);
 }

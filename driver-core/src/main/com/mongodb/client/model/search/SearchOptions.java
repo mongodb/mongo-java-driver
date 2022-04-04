@@ -71,7 +71,7 @@ public interface SearchOptions extends Bson {
      *
      * @param name A {@link Bson} representing the required {@link SearchOptions}.
      * @param value A {@link Bson} representing the required {@link SearchOptions}.
-     * @return The requested {@link SearchCount}.
+     * @return A new {@link SearchOptions}.
      */
     SearchOptions option(String name, BsonValue value);
 
