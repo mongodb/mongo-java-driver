@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.junit.jupiter.api.Test;
@@ -103,6 +104,17 @@ final class SearchOptionsTest {
     }
 
     @Test
+    void returnStoredSource() {
+        assertEquals(
+                new BsonDocument()
+                        .append("returnStoredSource", new BsonBoolean(true)),
+                SearchOptions.defaultSearchOptions()
+                        .returnStoredSource(true)
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
     void options() {
         assertEquals(
                 new BsonDocument()
@@ -110,13 +122,15 @@ final class SearchOptionsTest {
                         .append("name", new BsonArray(singletonList(new BsonString("value"))))
                         .append("highlight", new BsonDocument()
                                 .append("path", fieldPath("fieldName").toBsonValue()))
-                        .append("count", new BsonDocument("type", new BsonString("total"))),
+                        .append("count", new BsonDocument("type", new BsonString("total")))
+                        .append("returnStoredSource", new BsonBoolean(true)),
                 SearchOptions.defaultSearchOptions()
                         .index("indexName")
                         .option("name", new BsonArray(singletonList(new BsonString("value"))))
                         .highlight(
                                 paths(singleton(fieldPath("fieldName"))))
                         .count(total())
+                        .returnStoredSource(true)
                         .toBsonDocument()
         );
     }

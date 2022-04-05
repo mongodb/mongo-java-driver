@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.internal.client.model.AbstractConstructibleBson;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -56,6 +57,11 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     @Override
     public SearchOptions count(final SearchCount option) {
         return newAppended("count", notNull("option", option).toBsonDocument());
+    }
+
+    @Override
+    public SearchOptions returnStoredSource(final boolean returnStoredSource) {
+        return newAppended("returnStoredSource", new BsonBoolean(returnStoredSource));
     }
 
     @Override

@@ -58,38 +58,44 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
- * These tests require the following Atlas Search indices:
+ * These tests require the following Atlas Search index for the {@code sample_mflix.movies} namespace:
  * <pre>{@code
- * {
- *   "mappings": {
- *     "dynamic": true,
- *     "fields": {
- *       "fullplot": {
- *         "type": "stringFacet"
- *       },
- *       "released": {
- *         "type": "dateFacet"
- *       },
- *       "title": {
- *         "multi": {
- *           "keyword": {
- *             "analyzer": "lucene.keyword",
- *             "type": "string"
- *           }
- *         },
- *         "type": "string"
- *       },
- *       "tomatoes.viewer.meter": {
- *         "type": "numberFacet"
- *       }
- *     }
- *   }
- * }
+ *  {
+ *    "mappings": {
+ *      "dynamic": true,
+ *      "fields": {
+ *        "fullplot": {
+ *          "type": "stringFacet"
+ *        },
+ *        "released": {
+ *          "type": "dateFacet"
+ *        },
+ *        "title": {
+ *          "multi": {
+ *            "keyword": {
+ *              "analyzer": "lucene.keyword",
+ *              "type": "string"
+ *            }
+ *          },
+ *          "type": "string"
+ *        },
+ *        "tomatoes.viewer.meter": {
+ *          "type": "numberFacet"
+ *        }
+ *      }
+ *    },
+ *    "storedSource": {
+ *      "include": [
+ *        "plot"
+ *      ]
+ *    }
+ *  }
  * }</pre>
  */
 final class AggregatesSearchIntegrationTest {
@@ -123,7 +129,8 @@ final class AggregatesSearchIntegrationTest {
                                 null
                         ),
                         asList(limit(1), project(metaSearchScore("score"))),
-                        Asserters.score(BigDecimal.ONE)),
+                        Asserters.score(BigDecimal.ONE)
+                ),
                 arguments(
                         search(
                                 exists(fieldPath("tomatoes")),
@@ -132,7 +139,22 @@ final class AggregatesSearchIntegrationTest {
                                         .count(lowerBound().threshold(1_000))
                         ),
                         asList(limit(1), project(computedSearchMeta("meta"))),
-                        Asserters.countLowerBound(1_000)),
+                        Asserters.countLowerBound(1_000)
+                ),
+                arguments(
+                        search(
+                                exists(fieldPath("plot")),
+                                defaultSearchOptions()
+                                        .returnStoredSource(true)
+                        ),
+                        singleton(limit(1)),
+                        Asserters.firstResult(doc -> {
+                            // assert that the fields specified in `storedSource` and "id" were returned
+                            assertNotNull(doc.get("_id"));
+                            assertFalse(doc.get("plot").asString().getValue().isEmpty());
+                            assertEquals(2, doc.size());
+                        })
+                ),
                 arguments(
                         search(
                                 facet(
@@ -160,7 +182,8 @@ final class AggregatesSearchIntegrationTest {
                         ),
                         asList(limit(1), project(computedSearchMeta("meta")), replaceWith("$meta")),
                         Asserters.firstResult(doc -> assertEquals(5, doc.getDocument("facet")
-                                .getDocument("tomatoesMeterFacet").getArray("buckets").size()))),
+                                .getDocument("tomatoesMeterFacet").getArray("buckets").size()))
+                ),
                 arguments(
                         search(
                                 exists(fieldPath("tomatoes")),
@@ -170,7 +193,8 @@ final class AggregatesSearchIntegrationTest {
                                                 .maxCharsToExamine(100))
                         ),
                         asList(limit(1), project(metaSearchHighlights("highlights"))),
-                        Asserters.nonEmpty())
+                        Asserters.nonEmpty()
+                )
         );
     }
 

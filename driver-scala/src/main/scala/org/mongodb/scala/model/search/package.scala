@@ -20,8 +20,8 @@ import com.mongodb.annotations.{ Beta, Evolving }
 /**
  * Query building API for MongoDB Atlas full-text search.
  *
- * @see [[https://www.mongodb.com/docs/atlas/atlas-search/ Atlas search]]
- * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/ Atlas search aggregation pipeline stages]]
+ * @see [[https://www.mongodb.com/docs/atlas/atlas-search/ Atlas Search]]
+ * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/ Atlas Search aggregation pipeline stages]]
  * @since 4.6
  */
 package object search {

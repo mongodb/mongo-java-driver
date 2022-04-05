@@ -57,6 +57,16 @@ public interface SearchOptions extends Bson {
     SearchOptions count(SearchCount option);
 
     /**
+     * Creates a new {@link SearchOptions} that instruct to return only stored source fields.
+     *
+     * @param returnStoredSource The option to return only stored source fields.
+     * @return A new {@link SearchOptions}.
+     * @mongodb.atlas.manual atlas-search/return-stored-source/ Return stored source fields
+     */
+    @Beta
+    SearchOptions returnStoredSource(boolean returnStoredSource);
+
+    /**
      * Creates a new {@link SearchOptions} with the specified option in situations when there is no builder method
      * that better satisfies your needs.
      * This method cannot be used to validate the syntax.
