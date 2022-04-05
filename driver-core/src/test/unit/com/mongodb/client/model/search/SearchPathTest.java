@@ -27,9 +27,8 @@ final class SearchPathTest {
     @Test
     void fieldPath() {
         assertAll(
-                () -> assertThrows(
-                        IllegalArgumentException.class, () ->
-                                SearchPath.fieldPath("wildc*rd")
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        SearchPath.fieldPath("wildc*rd")
                 ),
                 () -> assertEquals(
                         new BsonString("fieldName"),
@@ -49,13 +48,11 @@ final class SearchPathTest {
     @Test
     void wildcardPath() {
         assertAll(
-                () -> assertThrows(
-                        IllegalArgumentException.class, () ->
-                                SearchPath.wildcardPath("wildcard")
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        SearchPath.wildcardPath("wildcard")
                 ),
-                () -> assertThrows(
-                        IllegalArgumentException.class, () ->
-                                SearchPath.wildcardPath("wildc**rd")
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        SearchPath.wildcardPath("wildc**rd")
                 ),
                 () -> assertEquals(
                         new BsonDocument("wildcard", new BsonString("wildc*rd")),

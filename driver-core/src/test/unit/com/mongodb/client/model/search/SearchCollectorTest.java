@@ -24,11 +24,33 @@ import static com.mongodb.client.model.search.SearchFacet.stringFacet;
 import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static java.util.Arrays.asList;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class SearchCollectorTest {
     @Test
     void of() {
+        assertAll(
+                () -> assertEquals(
+                        docExampleCustom(),
+                        docExamplePredefined()
+                                .toBsonDocument()
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        new BsonDocument("facet",
+                                new BsonDocument("operator", exists(
+                                        fieldPath("fieldName")).toBsonDocument())
+                                        .append("facets", combineToBsonDocument(asList(
+                                                stringFacet(
+                                                        "duplicateFacetName",
+                                                        fieldPath("stringFieldName")),
+                                                numberFacet(
+                                                        "duplicateFacetName",
+                                                        fieldPath("numberFieldName"),
+                                                        asList(10, 20, 30))))))
+                )
+        );
         assertEquals(
                 docExamplePredefined()
                         .toBsonDocument(),
@@ -39,10 +61,25 @@ final class SearchCollectorTest {
 
     @Test
     void facet() {
-        assertEquals(
-                docExampleCustom(),
-                docExamplePredefined()
-                        .toBsonDocument()
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        SearchCollector.facet(
+                                exists(
+                                        fieldPath("fieldName")),
+                                asList(
+                                        stringFacet(
+                                                "duplicateFacetName",
+                                                fieldPath("stringFieldName")),
+                                        numberFacet(
+                                                "duplicateFacetName",
+                                                fieldPath("numberFieldName"),
+                                                asList(10, 20, 30))))
+                ),
+                () -> assertEquals(
+                        docExampleCustom(),
+                        docExamplePredefined()
+                                .toBsonDocument()
+                )
         );
     }
 

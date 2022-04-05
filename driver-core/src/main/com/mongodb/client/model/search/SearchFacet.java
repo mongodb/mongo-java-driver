@@ -27,11 +27,14 @@ import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.StreamSupport.stream;
 import static org.bson.assertions.Assertions.notNull;
@@ -135,11 +138,16 @@ public interface SearchFacet extends Bson {
         if (!facetIterator.hasNext()) {
             throw new IllegalArgumentException("facets must not be empty");
         }
+        Set<String> names = new HashSet<>();
         BsonDocument result = new BsonDocument();
         while (facetIterator.hasNext()) {
             BsonDocument doc = facetIterator.next().toBsonDocument();
             assertTrue(doc.size() == 1);
             Map.Entry<String, BsonValue> entry = doc.entrySet().iterator().next();
+            String name = entry.getKey();
+            if (!names.add(name)) {
+                throw new IllegalArgumentException(format("Facet names must be unique. '%s' is used at least twice in %s", names, facets));
+            }
             result.append(entry.getKey(), entry.getValue());
         }
         return result;
