@@ -52,7 +52,7 @@ public class ClientSideEncryptionSimpleTour {
            }});
         }};
 
-        String keyVaultNamespace = "admin.datakeys";
+        String keyVaultNamespace = "encryption.__keyVault";
 
         AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
                 .keyVaultNamespace(keyVaultNamespace)
