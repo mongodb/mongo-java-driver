@@ -71,7 +71,6 @@ public interface SearchFacet extends Bson {
      * @param name The facet name.
      * @param path The path to facet on.
      * @param boundaries Bucket boundaries in ascending order. Must contain at least two boundaries.
-     * The supported {@link Number} types are the same as those supported by {@code org.bson.BasicBSONEncoder.putNumber}.
      * @return The requested {@link SearchFacet}.
      * @mongodb.atlas.manual atlas-search/facet/#numeric-facets Numeric facet definition
      */

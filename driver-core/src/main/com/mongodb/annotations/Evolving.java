@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 
 /**
  * Signifies that the annotated program element is subject to incompatible changes by means of adding abstract methods.
- * This, in turn, means that implementing interfaces or extending classes annotated with {@code @}{@link Evolving} bears the risk
+ * This, in turn, means that implementing interfaces or extending classes annotated with {@link Evolving} bears the risk
  * of doing extra work during upgrades.
  * Using such program elements is no different from using ordinary unannotated program elements.
  * Note that the presence of this annotation implies nothing about the quality or performance of the API in question.

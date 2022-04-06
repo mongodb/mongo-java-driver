@@ -51,7 +51,6 @@ object SearchFacet {
    * @param name The facet name.
    * @param path The path to facet on.
    * @param boundaries Bucket boundaries in ascending order. Must contain at least two boundaries.
-   * The supported `Number` types are the same as those supported by org.bson.BasicBSONEncoder.putNumber`.
    * @return The requested `SearchFacet`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#numeric-facets Numeric facet definition]]
    */

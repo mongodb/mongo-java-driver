@@ -26,7 +26,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.Month;
 import java.time.Year;
@@ -64,7 +63,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
- * These tests require the following Atlas Search index for the {@code sample_mflix.movies} namespace:
+ * These tests require the <a href="https://www.mongodb.com/docs/atlas/sample-data/">sample data</a>
+ * and the following Atlas Search index for the {@code sample_mflix.movies} namespace:
  * <pre>{@code
  *  {
  *    "mappings": {
@@ -129,7 +129,7 @@ final class AggregatesSearchIntegrationTest {
                                 null
                         ),
                         asList(limit(1), project(metaSearchScore("score"))),
-                        Asserters.score(BigDecimal.ONE)
+                        Asserters.score(1)
                 ),
                 arguments(
                         search(
@@ -206,11 +206,11 @@ final class AggregatesSearchIntegrationTest {
         /**
          * Checks the value of the {@code "score"} field.
          */
-        private static Consumer<List<BsonDocument>> score(final BigDecimal expectedScore) {
+        private static Consumer<List<BsonDocument>> score(final double expectedScore) {
             return results -> {
                 assertFalse(results.isEmpty());
                 for (BsonDocument result : results) {
-                    assertEquals(expectedScore, result.getNumber("score").decimal128Value().bigDecimalValue());
+                    assertEquals(expectedScore, result.getNumber("score").doubleValue(), 0.000_1);
                 }
             };
         }

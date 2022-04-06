@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.TextSearchOptions;
 import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
@@ -376,7 +374,6 @@ public class QueryBuilder {
      *
      * @param search the search terms to apply to the text index.
      * @return {@code this}
-     * @see Filters#text(String)
      */
     public QueryBuilder text(final String search) {
         return text(search, null);
@@ -388,7 +385,6 @@ public class QueryBuilder {
      * @param search   the search terms to apply to the text index.
      * @param language the language to use.
      * @return {@code this}
-     * @see Filters#text(String, TextSearchOptions)
      */
     public QueryBuilder text(final String search, @Nullable final String language) {
         if (_currentKey != null) {
