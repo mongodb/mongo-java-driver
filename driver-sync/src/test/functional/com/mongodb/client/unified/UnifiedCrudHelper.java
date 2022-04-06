@@ -82,6 +82,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
@@ -90,6 +91,8 @@ import static java.util.stream.Collectors.toList;
 
 final class UnifiedCrudHelper {
     private final Entities entities;
+    private final AtomicInteger uniqueId = new AtomicInteger();
+
     private final Codec<ChangeStreamDocument<BsonDocument>> changeStreamDocumentCodec = ChangeStreamDocument.createCodec(
             BsonDocument.class,
             CodecRegistries.fromProviders(asList(new BsonCodecProvider(), new ValueCodecProvider())));
@@ -226,7 +229,8 @@ final class UnifiedCrudHelper {
     OperationResult createFindCursor(final BsonDocument operation) {
         FindIterable<BsonDocument> iterable = createFindIterable(operation);
         return resultOf(() -> {
-            entities.addCursor(operation.getString("saveResultAsEntity").getValue(), iterable.cursor());
+            entities.addCursor(operation.getString("saveResultAsEntity", new BsonString(createRandomEntityId())).getValue(),
+                    iterable.cursor());
             return null;
         });
     }
@@ -1053,13 +1057,17 @@ final class UnifiedCrudHelper {
                     break;
                 case "pipeline":
                     break;
+                case "comment":
+                    iterable.comment(cur.getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
         return resultOf(() -> {
-            entities.addChangeStreamCursor(operation.getString("saveResultAsEntity").getValue(), iterable.cursor());
+            entities.addChangeStreamCursor(operation.getString("saveResultAsEntity",
+                    new BsonString(createRandomEntityId())).getValue(), iterable.cursor());
             return null;
         });
     }
@@ -1168,5 +1176,10 @@ final class UnifiedCrudHelper {
 
         return resultOf(() ->
                 new BsonInt64(collection.estimatedDocumentCount(options)));
+    }
+
+    @NotNull
+    private String createRandomEntityId() {
+        return "random-entity-id" + uniqueId.getAndIncrement();
     }
 }
