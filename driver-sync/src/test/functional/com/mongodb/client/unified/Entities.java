@@ -30,7 +30,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
-import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
@@ -102,7 +101,6 @@ public final class Entities {
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
-    private final Map<String, MongoCursor<ChangeStreamDocument<BsonDocument>>> changeStreamCursors = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
     private final Map<String, Long> successCounts = new HashMap<>();
     private final Map<String, Long> iterationCounts = new HashMap<>();
@@ -172,18 +170,6 @@ public final class Entities {
 
     public BsonValue getResult(final String id) {
         return getEntity(id, results, "result");
-    }
-
-    public void addChangeStreamCursor(final String id, final MongoCursor<ChangeStreamDocument<BsonDocument>> cursor) {
-        putEntity(id, cursor, changeStreamCursors);
-    }
-
-    public MongoCursor<ChangeStreamDocument<BsonDocument>> getChangeStreamCursor(final String id) {
-        return getEntity(id, changeStreamCursors, "change stream cursors");
-    }
-
-    public boolean hasCursor(final String id) {
-        return cursors.containsKey(id);
     }
 
     public void addCursor(final String id, final MongoCursor<BsonDocument> cursor) {
@@ -512,9 +498,6 @@ public final class Entities {
     }
 
     public void close() {
-        for (MongoCursor<ChangeStreamDocument<BsonDocument>> cursor : changeStreamCursors.values()) {
-             cursor.close();
-        }
         for (MongoCursor<BsonDocument> cursor : cursors.values()) {
             cursor.close();
         }

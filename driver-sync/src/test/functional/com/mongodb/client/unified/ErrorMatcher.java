@@ -21,6 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoQueryException;
+import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -77,11 +78,11 @@ final class ErrorMatcher {
                     errorCode);
         }
         if (expectedError.containsKey("errorCodeName")) {
-            assertTrue(context.getMessage("Exception must be of type MongoCommandException when checking for error codes"),
-                    e instanceof MongoCommandException);
-            MongoCommandException mongoCommandException = (MongoCommandException) e;
+            assertTrue(context.getMessage("Exception must be of type MongoServerException when checking for error codes"),
+                    e instanceof MongoServerException);
+            MongoServerException mongoServerException = (MongoServerException) e;
             assertEquals(context.getMessage("Error code names must match"), expectedError.getString("errorCodeName").getValue(),
-                    mongoCommandException.getErrorCodeName());
+                    mongoServerException.getErrorCodeName());
         }
         if (expectedError.containsKey("errorLabelsOmit")) {
             assertTrue(context.getMessage("Exception must be of type MongoException when checking for error labels"),
