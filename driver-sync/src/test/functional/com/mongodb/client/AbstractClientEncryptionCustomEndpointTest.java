@@ -205,7 +205,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                         + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\",\n"
                         + "  endpoint: \"kms.us-east-2.amazonaws.com\"\n"
                         + "}"),
-                false, MongoClientException.class, MongoCryptException.class, "us-east-1"});
+                false, MongoClientException.class, MongoCryptException.class, "Credential should be scoped to a valid region"});
         data.add(new Object[]{"6. [aws] invalid endpoint host",
                 "aws",
                 BsonDocument.parse("{\n"
