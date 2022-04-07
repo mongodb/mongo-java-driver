@@ -34,3 +34,7 @@ afterEvaluate {
             '*',
     ].join(',')
 }
+
+tasks.withType(Test) {
+    test.onlyIf { javaVersion.isCompatibleWith(javaVersion.VERSION_17) }
+}
