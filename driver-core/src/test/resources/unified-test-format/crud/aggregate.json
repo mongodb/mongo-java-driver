@@ -330,11 +330,7 @@
       "description": "aggregate with comment sets comment on getMore",
       "runOnRequirements": [
         {
-          "minServerVersion": "4.4.0",
-          "topologies": [
-            "single",
-            "replicaset"
-          ]
+          "minServerVersion": "4.4.0"
         }
       ],
       "operations": [
@@ -351,7 +347,9 @@
               }
             ],
             "batchSize": 2,
-            "comment": "comment"
+            "comment": {
+              "content": "test"
+            }
           },
           "object": "collection0",
           "expectResult": [
@@ -398,7 +396,9 @@
                   "cursor": {
                     "batchSize": 2
                   },
-                  "comment": "comment"
+                  "comment": {
+                    "content": "test"
+                  }
                 },
                 "commandName": "aggregate",
                 "databaseName": "aggregate-tests"
@@ -415,7 +415,9 @@
                   },
                   "collection": "coll0",
                   "batchSize": 2,
-                  "comment": "comment"
+                  "comment": {
+                    "content": "test"
+                  }
                 },
                 "commandName": "getMore",
                 "databaseName": "aggregate-tests"
@@ -432,7 +434,9 @@
                   },
                   "collection": "coll0",
                   "batchSize": 2,
-                  "comment": "comment"
+                  "comment": {
+                    "content": "test"
+                  }
                 },
                 "commandName": "getMore",
                 "databaseName": "aggregate-tests"
@@ -443,15 +447,11 @@
       ]
     },
     {
-      "description": "aggregate with comment sets comment on getMore - pre 4.4",
+      "description": "aggregate with comment does not set comment on getMore - pre 4.4",
       "runOnRequirements": [
         {
           "minServerVersion": "3.6.0",
-          "maxServerVersion": "4.4.0",
-          "topologies": [
-            "single",
-            "replicaset"
-          ]
+          "maxServerVersion": "4.3.99"
         }
       ],
       "operations": [
@@ -531,7 +531,10 @@
                     ]
                   },
                   "collection": "coll0",
-                  "batchSize": 2
+                  "batchSize": 2,
+                  "comment": {
+                    "$$exists": false
+                  }
                 },
                 "commandName": "getMore",
                 "databaseName": "aggregate-tests"
@@ -547,7 +550,10 @@
                     ]
                   },
                   "collection": "coll0",
-                  "batchSize": 2
+                  "batchSize": 2,
+                  "comment": {
+                    "$$exists": false
+                  }
                 },
                 "commandName": "getMore",
                 "databaseName": "aggregate-tests"

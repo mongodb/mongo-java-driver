@@ -77,7 +77,7 @@
           },
           "expectResult": [
             {
-              "_id": 1, "x": 11
+              "_id": 1
             }
           ]
         }
@@ -195,15 +195,10 @@
       ]
     },
     {
-      "description": "find with comment sets comment on getMore - pre 4.4",
+      "description": "find with comment sets comment on getMore",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.6.0",
-          "maxServerVersion": "4.4.0",
-          "topologies": [
-            "single",
-            "replicaset"
-          ]
+          "minServerVersion": "4.4.0"
         }
       ],
       "operations": [
@@ -217,7 +212,9 @@
               }
             },
             "batchSize": 2,
-            "comment": "comment"
+            "comment": {
+              "key": "value"
+            }
           },
           "expectResult": [
             {
@@ -257,7 +254,9 @@
                     }
                   },
                   "batchSize": 2,
-                  "comment": "comment"
+                  "comment": {
+                    "key": "value"
+                  }
                 }
               }
             },
@@ -271,7 +270,10 @@
                     ]
                   },
                   "collection": "coll0",
-                  "batchSize": 2
+                  "batchSize": 2,
+                  "comment": {
+                    "key": "value"
+                  }
                 }
               }
             },
@@ -285,7 +287,10 @@
                     ]
                   },
                   "collection": "coll0",
-                  "batchSize": 2
+                  "batchSize": 2,
+                  "comment": {
+                    "key": "value"
+                  }
                 }
               }
             }
@@ -294,14 +299,11 @@
       ]
     },
     {
-      "description": "find with comment sets comment on getMore",
+      "description": "find with comment does not set comment on getMore - pre 4.4",
       "runOnRequirements": [
         {
-          "minServerVersion": "4.4.0",
-          "topologies": [
-            "single",
-            "replicaset"
-          ]
+          "minServerVersion": "3.6.0",
+          "maxServerVersion": "4.3.99"
         }
       ],
       "operations": [
@@ -370,7 +372,9 @@
                   },
                   "collection": "coll0",
                   "batchSize": 2,
-                  "comment": "comment"
+                  "comment": {
+                    "$$exists": false
+                  }
                 }
               }
             },
@@ -385,7 +389,9 @@
                   },
                   "collection": "coll0",
                   "batchSize": 2,
-                  "comment": "comment"
+                  "comment": {
+                    "$$exists": false
+                  }
                 }
               }
             }

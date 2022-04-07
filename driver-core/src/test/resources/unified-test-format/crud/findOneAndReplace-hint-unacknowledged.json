@@ -146,9 +146,9 @@
             },
             "hint": "_id_"
           },
-            "expectResult": {
-              "$$unsetOrMatches": null
-            }
+          "expectResult": {
+            "$$unsetOrMatches": null
+          }
         }
       ],
       "expectEvents": [
