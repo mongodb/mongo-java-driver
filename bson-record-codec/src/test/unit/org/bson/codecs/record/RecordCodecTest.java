@@ -87,4 +87,22 @@ public class RecordCodecTest {
         // then
         assertEquals(testRecord, decoded);
     }
+
+    @Test
+    public void testSimpleRecordWithExtraData() {
+        var identifier = new ObjectId();
+        var testRecord = new TestRecord("Felix", 13, List.of("rugby", "badminton"), identifier.toHexString());
+
+        var document = new BsonDocument("_id", new BsonObjectId(identifier))
+                .append("nationality", new BsonString("British"))
+                .append("name", new BsonString("Felix"))
+                .append("hobbies", new BsonArray(List.of(new BsonString("rugby"), new BsonString("badminton"))))
+                .append("a", new BsonInt32(13));
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
 }

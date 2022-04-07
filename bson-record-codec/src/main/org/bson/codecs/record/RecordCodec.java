@@ -28,6 +28,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.record.annotations.BsonProperty;
 import org.bson.codecs.record.annotations.BsonId;
 import org.bson.codecs.record.annotations.BsonRepresentation;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
@@ -44,6 +46,7 @@ import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 
 final class RecordCodec<T extends Record> implements Codec<T> {
+    private static final Logger LOGGER = Loggers.getLogger("RecordCodec");
     private final Class<T> clazz;
     private final Constructor<?> canonicalConstructor;
     private final List<ComponentModel> componentModels;
@@ -118,7 +121,14 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             var fieldName = reader.readName();
             var componentModel = fieldNameToComponentModel.get(fieldName);
-            constructorArguments[componentModel.index] = decoderContext.decodeWithChildContext(componentModel.codec, reader);
+            if (componentModel == null) {
+                reader.skipValue();
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("Found property not present in the ClassModel: %s", fieldName));
+                }
+            } else {
+                constructorArguments[componentModel.index] = decoderContext.decodeWithChildContext(componentModel.codec, reader);
+            }
         }
         reader.readEndDocument();
 
