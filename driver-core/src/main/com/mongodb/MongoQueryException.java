@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import static java.lang.String.format;
 
 /**
@@ -42,13 +44,32 @@ public class MongoQueryException extends MongoServerException {
     }
 
     /**
+     * Construct an instance.
+     *
+     * @param address the server address
+     * @param errorCode the error code
+     * @param errorCodeName the error code name
+     * @param errorMessage the error message
+     * @since 4.6
+     */
+    public MongoQueryException(final ServerAddress address, final int errorCode, final @Nullable String errorCodeName,
+            final String errorMessage) {
+        super(errorCode, errorCodeName,
+                format("Query failed with error code %d with name '%s' and error message '%s' on server %s", errorCode, errorCodeName,
+                        errorMessage, address),
+                address);
+        this.errorMessage = errorMessage;
+    }
+
+    /**
      * Construct an instance from a command exception.
      *
      * @param commandException the command exception
      * @since 3.7
      */
     public MongoQueryException(final MongoCommandException commandException) {
-        this(commandException.getServerAddress(), commandException.getErrorCode(), commandException.getErrorMessage());
+        this(commandException.getServerAddress(), commandException.getErrorCode(), commandException.getErrorCodeName(),
+                commandException.getErrorMessage());
         addLabels(commandException.getErrorLabels());
     }
 

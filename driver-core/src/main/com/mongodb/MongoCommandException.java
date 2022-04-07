@@ -46,7 +46,7 @@ public class MongoCommandException extends MongoServerException {
      * @param address the address of the server that generated the response
      */
     public MongoCommandException(final BsonDocument response, final ServerAddress address) {
-        super(extractErrorCode(response),
+        super(extractErrorCode(response), extractErrorCodeName(response),
               format("Command failed with error %s: '%s' on server %s. The full response is %s", extractErrorCodeAndName(response),
                      extractErrorMessage(response), address, getResponseAsJson(response)), address);
         this.response = response;
@@ -70,7 +70,7 @@ public class MongoCommandException extends MongoServerException {
      * @mongodb.server.release 3.4
      */
     public String getErrorCodeName() {
-        return extractErrorCodeName(response);
+        return super.getErrorCodeName();
     }
 
     /**
