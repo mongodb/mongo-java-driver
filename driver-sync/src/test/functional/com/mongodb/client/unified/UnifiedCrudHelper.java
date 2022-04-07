@@ -16,9 +16,12 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
+import com.mongodb.ServerCursor;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
@@ -30,6 +33,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.MongoChangeStreamCursor;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -61,6 +65,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -91,14 +96,16 @@ import static java.util.stream.Collectors.toList;
 
 final class UnifiedCrudHelper {
     private final Entities entities;
+    private final String testDescription;
     private final AtomicInteger uniqueIdGenerator = new AtomicInteger();
 
     private final Codec<ChangeStreamDocument<BsonDocument>> changeStreamDocumentCodec = ChangeStreamDocument.createCodec(
             BsonDocument.class,
             CodecRegistries.fromProviders(asList(new BsonCodecProvider(), new ValueCodecProvider())));
 
-    UnifiedCrudHelper(final Entities entities) {
+    UnifiedCrudHelper(final Entities entities, final String testDescription) {
         this.entities = entities;
+        this.testDescription = testDescription;
     }
 
     static ReadConcern asReadConcern(final BsonDocument readConcernDocument) {
@@ -972,6 +979,33 @@ final class UnifiedCrudHelper {
         });
     }
 
+    public OperationResult executeRenameCollection(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        String newCollectionName = arguments.getString("to").getValue();
+        ClientSession session = getSession(arguments);
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "to":
+                case "session":
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        return resultOf(() -> {
+            MongoNamespace newCollectionNamespace = new MongoNamespace(collection.getNamespace().getDatabaseName(), newCollectionName);
+            if (session == null) {
+                collection.renameCollection(newCollectionNamespace);
+            } else {
+                collection.renameCollection(session, newCollectionNamespace);
+            }
+            return null;
+        });
+    }
+
     private TimeSeriesOptions createTimeSeriesOptions(final BsonDocument timeSeriesDocument) {
         TimeSeriesOptions options = new TimeSeriesOptions(timeSeriesDocument.getString("timeField").getValue());
 
@@ -1066,46 +1100,27 @@ final class UnifiedCrudHelper {
         }
 
         return resultOf(() -> {
-            entities.addChangeStreamCursor(operation.getString("saveResultAsEntity",
-                    new BsonString(createRandomEntityId())).getValue(), iterable.cursor());
+            entities.addCursor(operation.getString("saveResultAsEntity",
+                    new BsonString(createRandomEntityId())).getValue(), createChangeStreamWrappingCursor(iterable));
             return null;
         });
     }
 
     public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
         String id = operation.getString("object").getValue();
-        if (entities.hasCursor(id)) {
-            MongoCursor<BsonDocument> cursor = entities.getCursor(id);
+        MongoCursor<BsonDocument> cursor = entities.getCursor(id);
 
-            if (operation.containsKey("arguments")) {
-                throw new UnsupportedOperationException("Unexpected arguments");
-            }
-
-            return resultOf(cursor::next);
-        } else {
-            MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = entities.getChangeStreamCursor(id);
-
-            if (operation.containsKey("arguments")) {
-                throw new UnsupportedOperationException("Unexpected arguments");
-            }
-
-            return resultOf(() -> {
-                BsonDocumentWriter bsonDocumentWriter = new BsonDocumentWriter(new BsonDocument());
-                changeStreamDocumentCodec.encode(bsonDocumentWriter, cursor.next(), EncoderContext.builder().build());
-                return bsonDocumentWriter.getDocument();
-            });
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments");
         }
+
+        return resultOf(cursor::next);
     }
 
     public OperationResult close(final BsonDocument operation) {
         String id = operation.getString("object").getValue();
-        if (entities.hasCursor(id)) {
-            MongoCursor<BsonDocument> cursor = entities.getCursor(id);
-            cursor.close();
-        } else {
-            MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = entities.getChangeStreamCursor(id);
-            cursor.close();
-        }
+        MongoCursor<BsonDocument> cursor = entities.getCursor(id);
+        cursor.close();
         return OperationResult.NONE;
     }
 
@@ -1181,5 +1196,73 @@ final class UnifiedCrudHelper {
     @NotNull
     private String createRandomEntityId() {
         return "random-entity-id" + uniqueIdGenerator.getAndIncrement();
+    }
+
+    /**
+     * The tests in this list can not currently pass when using {@link ChangeStreamDocument} because there is information loss when
+     * decoding into an instance of that class.  So for these tests, we just decode directly into {@link BsonDocument}.  For all
+     * others, we decode into {@link ChangeStreamDocument} and from there to {@link BsonDocument} so that there is some integration test
+     * coverage of {@link ChangeStreamDocument}.
+     */
+    private static final List<String> BSON_DOCUMENT_CHANGE_STREAM_TESTS = asList(
+                    "Test newField added in response MUST NOT err",
+                    "Test projection in change stream returns expected fields");
+
+    @NotNull
+    private MongoCursor<BsonDocument> createChangeStreamWrappingCursor(final ChangeStreamIterable<BsonDocument> iterable) {
+        if (BSON_DOCUMENT_CHANGE_STREAM_TESTS.contains(testDescription)) {
+            return iterable.withDocumentClass(BsonDocument.class).cursor();
+        } else {
+            MongoChangeStreamCursor<ChangeStreamDocument<BsonDocument>> wrappedCursor = iterable.cursor();
+            return new MongoCursor<BsonDocument>() {
+                @Override
+                public void close() {
+                    wrappedCursor.close();
+                }
+
+                @Override
+                public boolean hasNext() {
+                    return wrappedCursor.hasNext();
+                }
+
+                @NonNull
+                @Override
+                public BsonDocument next() {
+                    return encodeChangeStreamDocumentToBsonDocument(wrappedCursor.next());
+                }
+
+                @Override
+                public int available() {
+                    return wrappedCursor.available();
+                }
+
+                @Override
+                public BsonDocument tryNext() {
+                    ChangeStreamDocument<BsonDocument> next = wrappedCursor.tryNext();
+                    if (next == null) {
+                        return null;
+                    } else {
+                        return encodeChangeStreamDocumentToBsonDocument(next);
+                    }
+                }
+
+                @Override
+                public ServerCursor getServerCursor() {
+                    return wrappedCursor.getServerCursor();
+                }
+
+                @NonNull
+                @Override
+                public ServerAddress getServerAddress() {
+                    return wrappedCursor.getServerAddress();
+                }
+
+                private BsonDocument encodeChangeStreamDocumentToBsonDocument(final ChangeStreamDocument<BsonDocument> next) {
+                    BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                    changeStreamDocumentCodec.encode(writer, next, EncoderContext.builder().build());
+                    return writer.getDocument();
+                }
+            };
+        }
     }
 }

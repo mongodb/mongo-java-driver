@@ -84,7 +84,7 @@ public abstract class UnifiedTest {
     private final BsonDocument definition;
     private final AssertionContext context = new AssertionContext();
     private final Entities entities = new Entities();
-    private final UnifiedCrudHelper crudHelper = new UnifiedCrudHelper(entities);
+    private final UnifiedCrudHelper crudHelper;
     private final UnifiedGridFSHelper gridFSHelper = new UnifiedGridFSHelper(entities);
     private final ValueMatcher valueMatcher = new ValueMatcher(entities, context);
     private final ErrorMatcher errorMatcher = new ErrorMatcher(context);
@@ -100,6 +100,7 @@ public abstract class UnifiedTest {
         this.initialData = initialData;
         this.definition = definition;
         this.context.push(ContextElement.ofTest(definition));
+        crudHelper = new UnifiedCrudHelper(entities, definition.getString("description").getValue());
     }
 
     public Entities getEntities() {
@@ -315,6 +316,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeDropCollection(operation);
                 case "createCollection":
                     return crudHelper.executeCreateCollection(operation);
+                case "rename":
+                    return crudHelper.executeRenameCollection(operation);
                 case "createIndex":
                     return crudHelper.executeCreateIndex(operation);
                 case "startTransaction":
