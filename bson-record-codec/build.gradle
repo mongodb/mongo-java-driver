@@ -38,3 +38,7 @@ afterEvaluate {
 tasks.withType(Test) {
     test.onlyIf { javaVersion.isCompatibleWith(javaVersion.VERSION_17) }
 }
+
+tasks.withType(Javadoc) {
+    dependsOn(project(':bson').tasks.withType(Javadoc), project(':driver-core').tasks.withType(Javadoc))
+}
