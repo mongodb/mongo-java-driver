@@ -91,7 +91,7 @@ import static java.util.stream.Collectors.toList;
 
 final class UnifiedCrudHelper {
     private final Entities entities;
-    private final AtomicInteger uniqueId = new AtomicInteger();
+    private final AtomicInteger uniqueIdGenerator = new AtomicInteger();
 
     private final Codec<ChangeStreamDocument<BsonDocument>> changeStreamDocumentCodec = ChangeStreamDocument.createCodec(
             BsonDocument.class,
@@ -1180,6 +1180,6 @@ final class UnifiedCrudHelper {
 
     @NotNull
     private String createRandomEntityId() {
-        return "random-entity-id" + uniqueId.getAndIncrement();
+        return "random-entity-id" + uniqueIdGenerator.getAndIncrement();
     }
 }
