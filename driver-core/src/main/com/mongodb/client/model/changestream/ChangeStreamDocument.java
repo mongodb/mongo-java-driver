@@ -17,11 +17,9 @@
 package com.mongodb.client.model.changestream;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
-import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -29,6 +27,8 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
+
+import java.util.Objects;
 
 /**
  * Represents the {@code $changeStream} aggregation output document.
@@ -48,10 +48,53 @@ public final class ChangeStreamDocument<TDocument> {
     private final TDocument fullDocument;
     private final BsonDocument documentKey;
     private final BsonTimestamp clusterTime;
+    @BsonProperty("operationType")
+    private final String operationTypeString;
+    @BsonIgnore
     private final OperationType operationType;
     private final UpdateDescription updateDescription;
     private final BsonInt64 txnNumber;
     private final BsonDocument lsid;
+
+    /**
+     * Creates a new instance
+     *
+     * @param operationTypeString the operation type
+     * @param resumeToken the resume token
+     * @param namespaceDocument the BsonDocument representing the namespace
+     * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
+     * @param fullDocument the full document
+     * @param documentKey a document containing the _id of the changed document
+     * @param clusterTime the cluster time at which the change occured
+     * @param updateDescription the update description
+     * @param txnNumber the transaction number
+     * @param lsid the identifier for the session associated with the transaction
+     *
+     * @since 4.6
+     */
+    @BsonCreator
+    public ChangeStreamDocument(@BsonProperty("operationType") final String operationTypeString,
+                                @BsonProperty("resumeToken") final BsonDocument resumeToken,
+                                @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
+                                @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
+                                @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
+                                @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
+                                @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
+                                @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
+                                @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
+                                @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
+        this.resumeToken = resumeToken;
+        this.namespaceDocument = namespaceDocument;
+        this.destinationNamespaceDocument = destinationNamespaceDocument;
+        this.documentKey = documentKey;
+        this.fullDocument = fullDocument;
+        this.clusterTime = clusterTime;
+        this.operationTypeString = operationTypeString;
+        this.operationType = OperationType.fromString(operationTypeString);
+        this.updateDescription = updateDescription;
+        this.txnNumber = txnNumber;
+        this.lsid = lsid;
+    }
 
     /**
      * Creates a new instance
@@ -69,33 +112,19 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @since 3.11
      */
-    @BsonCreator
-    public ChangeStreamDocument(@BsonProperty("operationType") final OperationType operationType,
-                                @BsonProperty("resumeToken") final BsonDocument resumeToken,
-                                @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
-                                @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
-                                @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
-                                @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
-                                @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
-                                @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
-                                @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
-                                @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
-        this.resumeToken = resumeToken;
-        this.namespaceDocument = namespaceDocument;
-        this.destinationNamespaceDocument = destinationNamespaceDocument;
-        this.documentKey = documentKey;
-        this.fullDocument = fullDocument;
-        this.clusterTime = clusterTime;
-        this.operationType = operationType;
-        this.updateDescription = updateDescription;
-        this.txnNumber = txnNumber;
-        this.lsid = lsid;
-    }
-
-    private static BsonDocument namespaceToDocument(final MongoNamespace namespace) {
-        Assertions.notNull("namespace", namespace);
-        return new BsonDocument("db", new BsonString(namespace.getDatabaseName()))
-                .append("coll", new BsonString(namespace.getCollectionName()));
+    @Deprecated
+    public ChangeStreamDocument(final OperationType operationType,
+            final BsonDocument resumeToken,
+            final BsonDocument namespaceDocument,
+            final BsonDocument destinationNamespaceDocument,
+            final TDocument fullDocument,
+            final BsonDocument documentKey,
+            final BsonTimestamp clusterTime,
+            final UpdateDescription updateDescription,
+            final BsonInt64 txnNumber,
+            final BsonDocument lsid) {
+        this(operationType.getValue(), resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, documentKey,
+                clusterTime, updateDescription, txnNumber, lsid);
     }
 
     /**
@@ -240,6 +269,24 @@ public final class ChangeStreamDocument<TDocument> {
         return clusterTime;
     }
 
+
+    /**
+     * Returns the operation type as a string.
+     *
+     * <p>
+     * This method is useful when using a driver release that has not yet been updated to include a newer operation type in the
+     * {@link OperationType} enum.  In that case, {@link #getOperationType()} will return {@link OperationType#OTHER} and this method can
+     * be used to retrieve the actual operation type as a string value.
+     * </p>
+     *
+     * @return the operation type as a string
+     * @since 4.6
+     * @see #getOperationType()
+     */
+    public String getOperationTypeString() {
+        return operationTypeString;
+    }
+
     /**
      * Returns the operationType
      *
@@ -324,10 +371,10 @@ public final class ChangeStreamDocument<TDocument> {
         if (documentKey != null ? !documentKey.equals(that.documentKey) : that.documentKey != null) {
             return false;
         }
-        if (clusterTime != null ? !clusterTime.equals(that.clusterTime) : that.clusterTime != null) {
+        if (!Objects.equals(operationTypeString, that.operationTypeString)) {
             return false;
         }
-        if (operationType != that.operationType) {
+        if (clusterTime != null ? !clusterTime.equals(that.clusterTime) : that.clusterTime != null) {
             return false;
         }
         if (updateDescription != null ? !updateDescription.equals(that.updateDescription) : that.updateDescription != null) {
@@ -351,7 +398,7 @@ public final class ChangeStreamDocument<TDocument> {
         result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
         result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
         result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
-        result = 31 * result + (operationType != null ? operationType.hashCode() : 0);
+        result = 31 * result + (operationTypeString != null ? operationTypeString.hashCode() : 0);
         result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
         result = 31 * result + (txnNumber != null ? txnNumber.hashCode() : 0);
         result = 31 * result + (lsid != null ? lsid.hashCode() : 0);
@@ -361,7 +408,7 @@ public final class ChangeStreamDocument<TDocument> {
     @Override
     public String toString() {
         return "ChangeStreamDocument{"
-                + " operationType=" + operationType
+                + " operationType=" + operationTypeString
                 + ", resumeToken=" + resumeToken
                 + ", namespace=" + getNamespace()
                 + ", destinationNamespace=" + getDestinationNamespace()

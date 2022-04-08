@@ -40,11 +40,11 @@ class ChangeStreamDocumentSpecification extends Specification {
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.UPDATE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), null)
-        def txnNumber = new BsonInt64(1);
-        def lsid = BsonDocument.parse('{id: 1, uid: 1}');
+        def txnNumber = new BsonInt64(1)
+        def lsid = BsonDocument.parse('{id: 1, uid: 1}')
 
         when:
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
                 destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, null, null)
 
         then:
@@ -56,6 +56,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getNamespaceDocument() == namespaceDocument
         changeStreamDocument.getDestinationNamespace() == destinationNamespace
         changeStreamDocument.getDestinationNamespaceDocument() == destinationNamespaceDocument
+        changeStreamDocument.getOperationTypeString() == operationType.value
         changeStreamDocument.getOperationType() == operationType
         changeStreamDocument.getUpdateDescription() == updateDesc
         changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
@@ -63,7 +64,28 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getLsid() == null
 
         when:
-        def changeStreamDocumentWithTxnInfo = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken,
+        //noinspection GrDeprecatedAPIUsage
+        changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
+                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, null, null)
+
+        then:
+        changeStreamDocument.getResumeToken() == resumeToken
+        changeStreamDocument.getFullDocument() == fullDocument
+        changeStreamDocument.getDocumentKey() == documentKey
+        changeStreamDocument.getClusterTime() == clusterTime
+        changeStreamDocument.getNamespace() == namespace
+        changeStreamDocument.getNamespaceDocument() == namespaceDocument
+        changeStreamDocument.getDestinationNamespace() == destinationNamespace
+        changeStreamDocument.getDestinationNamespaceDocument() == destinationNamespaceDocument
+        changeStreamDocument.getOperationTypeString() == operationType.value
+        changeStreamDocument.getOperationType() == operationType
+        changeStreamDocument.getUpdateDescription() == updateDesc
+        changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
+        changeStreamDocument.getTxnNumber() == null
+        changeStreamDocument.getLsid() == null
+
+        when:
+        def changeStreamDocumentWithTxnInfo = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
                 namespaceDocument, destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc,
                 txnNumber, lsid)
 
@@ -76,6 +98,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocumentWithTxnInfo.getNamespaceDocument() == namespaceDocument
         changeStreamDocumentWithTxnInfo.getDestinationNamespace() == destinationNamespace
         changeStreamDocumentWithTxnInfo.getDestinationNamespaceDocument() == destinationNamespaceDocument
+        changeStreamDocumentWithTxnInfo.getOperationTypeString() == operationType.value
         changeStreamDocumentWithTxnInfo.getOperationType() == operationType
         changeStreamDocumentWithTxnInfo.getUpdateDescription() == updateDesc
         changeStreamDocumentWithTxnInfo.getDatabaseName() == namespace.getDatabaseName()
@@ -91,8 +114,8 @@ class ChangeStreamDocumentSpecification extends Specification {
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.DROP_DATABASE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), emptyList())
-        def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, (BsonDocument) null,
-                (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
+        def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
+                (BsonDocument) null, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
 
         expect:
         changeStreamDocumentNullNamespace.getDatabaseName() == null
@@ -113,9 +136,9 @@ class ChangeStreamDocumentSpecification extends Specification {
         def operationType = OperationType.DROP_DATABASE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), singletonList(new TruncatedArray('d', 1)))
 
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
                 (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
-        def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken,
+        def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
                 namespaceDocumentEmpty, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc,
         null, null)
 
