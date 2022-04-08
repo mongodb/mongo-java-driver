@@ -43,7 +43,6 @@ final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocu
 
         ClassModelBuilder<ChangeStreamDocument> classModelBuilder = ClassModel.builder(ChangeStreamDocument.class);
         ((PropertyModelBuilder<TResult>) classModelBuilder.getProperty("fullDocument")).codec(codecRegistry.get(fullDocumentClass));
-        ((PropertyModelBuilder<OperationType>) classModelBuilder.getProperty("operationType")).codec(OPERATION_TYPE_CODEC);
         ClassModel<ChangeStreamDocument> changeStreamDocumentClassModel = classModelBuilder.build();
 
         PojoCodecProvider provider = PojoCodecProvider.builder()

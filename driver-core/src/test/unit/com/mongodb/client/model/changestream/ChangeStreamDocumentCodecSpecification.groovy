@@ -46,6 +46,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
         then:
         BsonDocument.parse(json) == writer.getDocument()
 
+        when:
         BsonReader bsonReader = new BsonDocumentReader(writer.getDocument())
         ChangeStreamDocument actual = codec.decode(bsonReader, DecoderContext.builder().build())
 
@@ -54,7 +55,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
 
         where:
         changeStreamDocument << [
-                new ChangeStreamDocument<Document>(OperationType.INSERT,
+                new ChangeStreamDocument<Document>(OperationType.INSERT.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
@@ -64,7 +65,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null, null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.UPDATE,
+                new ChangeStreamDocument<Document>(OperationType.UPDATE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
@@ -75,7 +76,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         new UpdateDescription(['phoneNumber'], BsonDocument.parse('{email: "alice@10gen.com"}'), null),
                         null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.UPDATE,
+                new ChangeStreamDocument<Document>(OperationType.UPDATE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
@@ -87,7 +88,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                                 singletonList(new TruncatedArray('education', 2))),
                         null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.REPLACE,
+                new ChangeStreamDocument<Document>(OperationType.REPLACE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
@@ -97,7 +98,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null, null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.DELETE,
+                new ChangeStreamDocument<Document>(OperationType.DELETE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
@@ -107,7 +108,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null, null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.DROP,
+                new ChangeStreamDocument<Document>(OperationType.DROP.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
@@ -117,7 +118,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null, null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.RENAME,
+                new ChangeStreamDocument<Document>(OperationType.RENAME.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         BsonDocument.parse('{db: "engineering", coll: "people"}'),
@@ -127,7 +128,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null, null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.DROP_DATABASE,
+                new ChangeStreamDocument<Document>(OperationType.DROP_DATABASE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering"}'),
                         null,
@@ -137,7 +138,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null, null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.INVALIDATE,
+                new ChangeStreamDocument<Document>(OperationType.INVALIDATE.value,
                         BsonDocument.parse('{token: true}'),
                         null,
                         null,
@@ -147,7 +148,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null, null, null
                 ),
-                new ChangeStreamDocument<Document>(OperationType.INSERT,
+                new ChangeStreamDocument<Document>(OperationType.INSERT.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
                         null,
