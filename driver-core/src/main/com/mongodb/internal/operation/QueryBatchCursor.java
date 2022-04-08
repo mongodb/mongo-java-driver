@@ -86,7 +86,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final Decoder<T> decoder;
     private final long maxTimeMS;
     private int batchSize;
-    private BsonValue comment;
+    private final BsonValue comment;
     private List<T> nextBatch;
     private int count;
     private BsonDocument postBatchResumeToken;
