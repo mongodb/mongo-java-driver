@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 /**
  * An annotation that configures a record component.
  *
- * @since 4.XXX
+ * @since 4.6
  */
 @Documented
 @Target({ElementType.RECORD_COMPONENT})
@@ -37,11 +37,4 @@ public @interface BsonProperty {
      * @return the field name to use for the record component
      */
     String value() default "";
-
-//    /**
-//     * TODO: is this needed?  If so, needs to be tested and implemented
-//     *
-//     * @return whether to include a discriminator when serializing nested records.
-//     */
-//    boolean useDiscriminator() default false;
 }
