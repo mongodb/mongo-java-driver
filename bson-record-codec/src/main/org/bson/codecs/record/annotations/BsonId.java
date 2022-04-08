@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 /**
  * An annotation that configures the record component as the _id field of the document
  *
- * @since 4.XXX
+ * @since 4.6
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

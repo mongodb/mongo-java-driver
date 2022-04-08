@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 /**
  * An annotation that specifies what type the record component is stored as in the database.
  *
- * @since 4.XXX
+ * @since 4.6
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

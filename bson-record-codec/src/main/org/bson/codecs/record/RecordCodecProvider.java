@@ -23,7 +23,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 /**
  * Provides Codec instances for Java records.
  *
- * @since 4.XXXXX
+ * @since 4.6
  * @see Record
  */
 public final class RecordCodecProvider implements CodecProvider {
