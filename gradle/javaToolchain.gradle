@@ -31,7 +31,12 @@ allprojects {
         }
     }
 
-    if (project in javaMainProjects) {
+    if (project == project(":bson-record-codec")) {
+        tasks.withType(JavaCompile) {
+            options.encoding = "UTF-8"
+            options.release.set(17)
+        }
+    } else if (project in javaMainProjects) {
         tasks.withType(JavaCompile) {
             options.encoding = "UTF-8"
             options.release.set(8)

@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':driver-scala'
-include 'util:spock'
-include 'util:taglets'
+/**
+ * This package contains annotations for encoding and decoding Java records.
+ */
+package org.bson.codecs.record.annotations;
