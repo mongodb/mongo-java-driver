@@ -21,47 +21,21 @@ import org.scalatest.time.{ Millis, Seconds, Span }
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
-import scala.util.{ Failure, Success }
 
 trait FuturesSpec extends ScalaFutures {
 
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(60, Seconds), interval = Span(5, Millis))
 
-  implicit def observableToFuture[TResult](observable: Observable[TResult]): Future[Seq[TResult]] =
+  implicit def observableToFuture[T](observable: Observable[T]): Future[Seq[T]] =
+    observable.collect().toFuture()
+
+  implicit def singleObservableToFuture[T](observable: SingleObservable[T]): Future[T] =
     observable.toFuture()
 
-  implicit def observableToFutureConcept[T](observable: Observable[T]): FutureConcept[Seq[T]] = {
-    val future: Future[Seq[T]] = observable
-    new FutureConcept[Seq[T]] {
-      def eitherValue: Option[Either[Throwable, Seq[T]]] = {
-        future.value.map {
-          case Success(o) => Right(o)
-          case Failure(e) => Left(e)
-        }
-      }
-      def isExpired: Boolean = false
+  implicit def observableToFutureConcept[T](observable: Observable[T]): FutureConcept[Seq[T]] =
+    convertScalaFuture(observable.collect().toFuture())
 
-      // Scala Futures themselves don't support the notion of a timeout
-      def isCanceled: Boolean = false // Scala Futures don't seem to be cancelable either
-    }
-  }
-
-  implicit def observableToFuture[TResult](observable: SingleObservable[TResult]): Future[TResult] =
-    observable.toFuture()
-  implicit def observableToFutureConcept[T](observable: SingleObservable[T]): FutureConcept[T] = {
-    val future: Future[T] = observable.toFuture()
-    new FutureConcept[T] {
-      def eitherValue: Option[Either[Throwable, T]] = {
-        future.value.map {
-          case Success(o) => Right(o)
-          case Failure(e) => Left(e)
-        }
-      }
-      def isExpired: Boolean = false
-
-      // Scala Futures themselves don't support the notion of a timeout
-      def isCanceled: Boolean = false // Scala Futures don't seem to be cancelable either
-    }
-  }
+  implicit def singleObservableToFutureConcept[T](observable: SingleObservable[T]): FutureConcept[T] =
+    convertScalaFuture(observable.toFuture())
 
 }
