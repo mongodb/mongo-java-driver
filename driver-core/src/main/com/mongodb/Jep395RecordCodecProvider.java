@@ -33,7 +33,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 public class Jep395RecordCodecProvider implements CodecProvider {
 
     @Nullable
-    private static final CodecProvider recordCodecProvider;
+    private static final CodecProvider RECORD_CODEC_PROVIDER;
     static {
 
         CodecProvider possibleCodecProvider;
@@ -44,18 +44,18 @@ public class Jep395RecordCodecProvider implements CodecProvider {
             // No JEP-395 support
             possibleCodecProvider = null;
         }
-        recordCodecProvider = possibleCodecProvider;
+        RECORD_CODEC_PROVIDER = possibleCodecProvider;
     }
 
     @Override
     @Nullable
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        return recordCodecProvider != null ? recordCodecProvider.get(clazz, registry) : null;
+        return RECORD_CODEC_PROVIDER != null ? RECORD_CODEC_PROVIDER.get(clazz, registry) : null;
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
     public boolean hasRecordSupport() {
-        return recordCodecProvider != null;
+        return RECORD_CODEC_PROVIDER != null;
     }
 }
 
