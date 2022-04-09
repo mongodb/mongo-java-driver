@@ -63,7 +63,7 @@ public interface SearchCount extends Bson {
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
      *  SearchCount count1 = SearchCount.lowerBound();
-     *  SearchCount count1 = SearchCount.of(new BsonDocument("type", new BsonString("lowerBound")));
+     *  SearchCount count1 = SearchCount.of(new Document("type", "lowerBound"));
      * }</pre>
      *
      * @param count A {@link Bson} representing the required {@link SearchCount}.

@@ -17,13 +17,12 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
-import com.mongodb.internal.client.model.BsonUtil;
-import org.bson.BsonArray;
-import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
+import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.time.Instant;
@@ -33,10 +32,10 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.StreamSupport.stream;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -75,13 +74,11 @@ public interface SearchFacet extends Bson {
      * @mongodb.atlas.manual atlas-search/facet/#numeric-facets Numeric facet definition
      */
     static NumericSearchFacet numberFacet(final String name, final FieldSearchPath path, final Iterable<? extends Number> boundaries) {
-        final BsonArray boundariesArray = stream(notNull("boundaries", boundaries).spliterator(), false)
-                .map(BsonUtil::toBsonNumber).collect(toCollection(BsonArray::new));
-        isTrueArgument("boundaries must contain at least 2 elements", boundariesArray.size() >= 2);
+        isTrueArgument("boundaries must contain at least 2 elements", sizeAtLeast(boundaries, 2));
         return new SearchConstructibleBsonElement(notNull("name", name),
-                new BsonDocument("type", new BsonString("number"))
+                new Document("type", "number")
                         .append("path", notNull("path", path).toBsonValue())
-                        .append("boundaries", notNull("boundaries", boundariesArray)));
+                        .append("boundaries", notNull("boundaries", boundaries)));
     }
 
     /**
@@ -95,13 +92,11 @@ public interface SearchFacet extends Bson {
      * @mongodb.atlas.manual atlas-search/facet/#date-facets Date facet definition
      */
     static DateSearchFacet dateFacet(final String name, final FieldSearchPath path, final Iterable<Instant> boundaries) {
-        final BsonArray boundariesArray = stream(notNull("boundaries", boundaries).spliterator(), false)
-                .map(Instant::toEpochMilli).map(BsonDateTime::new).collect(toCollection(BsonArray::new));
-        isTrueArgument("boundaries must contain at least 2 elements", boundariesArray.size() >= 2);
+        isTrueArgument("boundaries must contain at least 2 elements", sizeAtLeast(boundaries, 2));
         return new SearchConstructibleBsonElement(notNull("name", name),
-                new BsonDocument("type", new BsonString("date"))
+                new Document("type", "date")
                         .append("path", notNull("path", path).toBsonValue())
-                        .append("boundaries", notNull("boundaries", boundariesArray)));
+                        .append("boundaries", notNull("boundaries", boundaries)));
     }
 
     /**
@@ -114,7 +109,7 @@ public interface SearchFacet extends Bson {
      * <pre>{@code
      *  SearchFacet facet1 = SearchFacet.stringFacet("facetName",
      *          SearchPath.fieldPath("fieldName"));
-     *  SearchFacet facet2 = SearchFacet.of(new BsonDocument("facetName", new BsonDocument("type", new BsonString("string"))
+     *  SearchFacet facet2 = SearchFacet.of(new Document("facetName", new Document("type", "string")
      *          .append("path", SearchPath.fieldPath("fieldName").toBsonValue())));
      * }</pre>
      *
@@ -126,29 +121,30 @@ public interface SearchFacet extends Bson {
     }
 
     /**
-     * Combines {@link SearchFacet}s into a {@link BsonDocument}.
+     * Combines {@link SearchFacet}s into a {@link Bson}.
      *
      * @param facets Non-empty facet definitions.
-     * @return A {@link BsonDocument} representing combined {@code facets}.
+     * @return A {@link Bson} representing combined {@code facets}.
      */
-    static BsonDocument combineToBsonDocument(final Iterable<? extends SearchFacet> facets) {
+    static Bson combineToBson(final Iterable<? extends SearchFacet> facets) {
         notNull("facets", facets);
         Iterator<? extends SearchFacet> facetIterator = facets.iterator();
-        if (!facetIterator.hasNext()) {
-            throw new IllegalArgumentException("facets must not be empty");
-        }
-        Set<String> names = new HashSet<>();
-        BsonDocument result = new BsonDocument();
-        while (facetIterator.hasNext()) {
-            BsonDocument doc = facetIterator.next().toBsonDocument();
-            assertTrue(doc.size() == 1);
-            Map.Entry<String, BsonValue> entry = doc.entrySet().iterator().next();
-            String name = entry.getKey();
-            if (!names.add(name)) {
-                throw new IllegalArgumentException(format("Facet names must be unique. '%s' is used at least twice in %s", names, facets));
+        isTrueArgument("facets must not be empty", facetIterator.hasNext());
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                Set<String> names = new HashSet<>();
+                BsonDocument result = new BsonDocument();
+                while (facetIterator.hasNext()) {
+                    BsonDocument doc = facetIterator.next().toBsonDocument(documentClass, codecRegistry);
+                    assertTrue(doc.size() == 1);
+                    Map.Entry<String, BsonValue> entry = doc.entrySet().iterator().next();
+                    String name = entry.getKey();
+                    isTrue(format("facet names must be unique. '%s' is used at least twice in %s", names, facets), names.add(name));
+                    result.append(entry.getKey(), entry.getValue());
+                }
+                return result;
             }
-            result.append(entry.getKey(), entry.getValue());
-        }
-        return result;
+        };
     }
 }

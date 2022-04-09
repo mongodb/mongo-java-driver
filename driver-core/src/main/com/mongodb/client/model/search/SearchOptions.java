@@ -18,7 +18,6 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
-import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 /**
@@ -76,14 +75,14 @@ public interface SearchOptions extends Bson {
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
      *  SearchOptions options1 = SearchOptions.defaultSearchOptions().index("indexName")
-     *  SearchOptions options2 = SearchOptions.defaultSearchOptions().option("index", new BsonString("indexName"))
+     *  SearchOptions options2 = SearchOptions.defaultSearchOptions().option("index", "indexName")
      * }</pre>
      *
-     * @param name A {@link Bson} representing the required {@link SearchOptions}.
-     * @param value A {@link Bson} representing the required {@link SearchOptions}.
+     * @param name The option name.
+     * @param value The option value.
      * @return A new {@link SearchOptions}.
      */
-    SearchOptions option(String name, BsonValue value);
+    SearchOptions option(String name, Object value);
 
     /**
      * Returns {@link SearchOptions} that represents server defaults.

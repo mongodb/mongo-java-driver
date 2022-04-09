@@ -15,9 +15,9 @@
  */
 package com.mongodb.client.model.search;
 
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -42,7 +42,8 @@ final class SearchHighlghtTest {
     void paths() {
         assertAll(
                 () -> assertEquals(
-                        docExampleCustom(),
+                        docExampleCustom()
+                                .toBsonDocument(),
                         docExamplePredefined()
                                 .toBsonDocument()
                 ),
@@ -91,9 +92,9 @@ final class SearchHighlghtTest {
                 wildcardPath("wildc*rd")));
     }
 
-    private static BsonDocument docExampleCustom() {
-        return new BsonDocument("path", new BsonArray(asList(
+    private static Document docExampleCustom() {
+        return new Document("path", asList(
                 fieldPath("fieldName").toBsonValue(),
-                wildcardPath("wildc*rd").toBsonValue())));
+                wildcardPath("wildc*rd").toBsonValue()));
     }
 }

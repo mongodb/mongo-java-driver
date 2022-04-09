@@ -17,7 +17,6 @@ package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ SearchFacet => JSearchFacet }
-import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
 
 import java.time.Instant
@@ -80,8 +79,8 @@ object SearchFacet {
    * {{{
    *  val facet1: SearchFacet = SearchFacet.stringFacet("facetName",
    *    SearchPath.fieldPath("fieldName"))
-   *  val facet2: SearchFacet = SearchFacet.of(new BsonDocument("facetName", BsonDocument("type" -> BsonString("string"),
-   *    "path"-> SearchPath.fieldPath("fieldName").toBsonValue)))
+   *  val facet2: SearchFacet = SearchFacet.of(Document("facetName" -> Document("type" -> "string",
+   *    "path" -> SearchPath.fieldPath("fieldName").toBsonValue)))
    * }}}
    *
    * @param facet A `Bson` representing the required `SearchFacet`.
@@ -91,11 +90,11 @@ object SearchFacet {
   def of(facet: Bson): SearchFacet = JSearchFacet.of(facet)
 
   /**
-   * Combines `SearchFacet`s into a `BsonDocument`.
+   * Combines `SearchFacet`s into a `Bson`.
    *
    * @param facets Non-empty facet definitions.
-   * @return A `BsonDocument` representing combined `facets`.
+   * @return A `Bson` representing combined `facets`.
    */
-  def combineToBsonDocument(facets: Iterable[_ <: SearchFacet]): BsonDocument =
-    JSearchFacet.combineToBsonDocument(facets.asJava)
+  def combineToBson(facets: Iterable[_ <: SearchFacet]): Bson =
+    JSearchFacet.combineToBson(facets.asJava)
 }

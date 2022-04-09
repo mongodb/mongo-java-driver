@@ -45,8 +45,8 @@ object SearchOperator {
    * {{{
    *  val operator1: SearchOperator = SearchOperator.exists(
    *    SearchPath.fieldPath("fieldName"))
-   *  val operator2: SearchOperator = SearchOperator.of(BsonDocument("exists" ->
-   *    BsonDocument("path" -> SearchPath.fieldPath("fieldName").toBsonValue)))
+   *  val operator2: SearchOperator = SearchOperator.of(Document("exists" ->
+   *    Document("path" -> SearchPath.fieldPath("fieldName").toBsonValue)))
    * }}}
    *
    * @param operator A `Bson` representing the required `SearchOperator`.

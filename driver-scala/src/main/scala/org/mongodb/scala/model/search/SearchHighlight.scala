@@ -50,7 +50,7 @@ object SearchHighlight {
    *  val highlight1: SearchHighlight = SearchHighlight.paths(Seq(
    *    SearchPath.fieldPath("fieldName"),
    *    SearchPath.wildcardPath("wildc*rd")))
-   *  val highlight2: SearchHighlight = SearchHighlight.of(BsonDocument("path" -> BsonArray(
+   *  val highlight2: SearchHighlight = SearchHighlight.of(Document("path" -> Seq(
    *    SearchPath.fieldPath("fieldName").toBsonValue,
    *    SearchPath.wildcardPath("wildc*rd").toBsonValue)))
    * }}}

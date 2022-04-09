@@ -64,17 +64,17 @@ object SearchCollector {
    *        "numberFacetName",
    *        SearchPath.fieldPath("numberFieldName"),
    *        Seq(10, 20, 30))))
-   *  val collector2: SearchCollector = SearchCollector.of(BsonDocument("facet" ->
-   *    BsonDocument("operator" -> SearchOperator.exists(
+   *  val collector2: SearchCollector = SearchCollector.of(Document("facet" ->
+   *    Document("operator" -> SearchOperator.exists(
    *      SearchPath.fieldPath("fieldName")).toBsonDocument,
-   *      "facets" -> SearchFacet.combineToBsonDocument(Seq(
+   *      "facets" -> SearchFacet.combineToBson(Seq(
    *        SearchFacet.stringFacet(
    *          "stringFacetName",
    *          SearchPath.fieldPath("stringFieldName")),
    *        SearchFacet.numberFacet(
    *          "numberFacetName",
    *          SearchPath.fieldPath("numberFieldName"),
-   *          Seq(10, 20, 30)))))))
+   *          Seq(10, 20, 30)))).toBsonDocument)))
    * }}}
    *
    * @param collector A `Bson` representing the required `SearchCollector`.

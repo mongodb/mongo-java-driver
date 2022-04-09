@@ -15,7 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
-import org.bson.BsonDocument;
+import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -35,7 +35,8 @@ final class SearchOperatorTest {
     @Test
     void exists() {
         assertEquals(
-                docExampleCustom(),
+                docExampleCustom()
+                        .toBsonDocument(),
                 docExamplePredefined()
                         .toBsonDocument()
         );
@@ -46,8 +47,8 @@ final class SearchOperatorTest {
                 fieldPath("fieldName"));
     }
 
-    private static BsonDocument docExampleCustom() {
-        return new BsonDocument("exists",
-                new BsonDocument("path", fieldPath("fieldName").toBsonValue()));
+    private static Document docExampleCustom() {
+        return new Document("exists",
+                new Document("path", fieldPath("fieldName").toBsonValue()));
     }
 }

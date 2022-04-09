@@ -51,8 +51,8 @@ public interface SearchOperator extends Bson {
      * <pre>{@code
      *  SearchOperator operator1 = SearchOperator.exists(
      *          SearchPath.fieldPath("fieldName"));
-     *  SearchOperator operator2 = SearchOperator.of(new BsonDocument("exists",
-     *          new BsonDocument("path", SearchPath.fieldPath("fieldName").toBsonValue())));
+     *  SearchOperator operator2 = SearchOperator.of(new Document("exists",
+     *          new Document("path", SearchPath.fieldPath("fieldName").toBsonValue())));
      * }</pre>
      *
      * @param operator A {@link Bson} representing the required {@link SearchOperator}.

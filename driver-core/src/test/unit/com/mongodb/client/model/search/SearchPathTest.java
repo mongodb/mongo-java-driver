@@ -28,6 +28,7 @@ final class SearchPathTest {
     void fieldPath() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
+                        // path must not contain '*'
                         SearchPath.fieldPath("wildc*rd")
                 ),
                 () -> assertEquals(
@@ -49,9 +50,11 @@ final class SearchPathTest {
     void wildcardPath() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
+                        // wildcardPath must contain '*'
                         SearchPath.wildcardPath("wildcard")
                 ),
                 () -> assertThrows(IllegalArgumentException.class, () ->
+                        // wildcardPath must not contain '**'
                         SearchPath.wildcardPath("wildc**rd")
                 ),
                 () -> assertEquals(

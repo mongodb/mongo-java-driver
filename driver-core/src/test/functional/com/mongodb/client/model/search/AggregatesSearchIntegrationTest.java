@@ -135,7 +135,7 @@ final class AggregatesSearchIntegrationTest {
                         search(
                                 exists(fieldPath("tomatoes")),
                                 defaultSearchOptions()
-                                        .index("default")
+                                        .option("index", "default")
                                         .count(lowerBound().threshold(1_000))
                         ),
                         asList(limit(1), project(computedSearchMeta("meta"))),

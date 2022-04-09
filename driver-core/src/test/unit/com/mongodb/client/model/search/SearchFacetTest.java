@@ -22,6 +22,7 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,7 +52,8 @@ final class SearchFacetTest {
     void stringFacet() {
         assertAll(
                 () -> assertEquals(
-                        docExampleCustom(),
+                        docExampleCustom()
+                                .toBsonDocument(),
                         docExamplePredefined()
                                 .toBsonDocument()
                 ),
@@ -70,6 +73,7 @@ final class SearchFacetTest {
     void numberFacet() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
+                        // boundaries must contain at least 2 elements
                         SearchFacet.numberFacet("facetName",
                                 fieldPath("fieldName"),
                                 singleton(1))
@@ -121,6 +125,7 @@ final class SearchFacetTest {
     void dateFacet() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
+                        // boundaries must contain at least 2 elements
                         SearchFacet.dateFacet("facetName",
                                         fieldPath("fieldName"),
                                         singleton(Instant.now()))
@@ -156,13 +161,37 @@ final class SearchFacetTest {
         );
     }
 
+    @Test
+    void combineToBson() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // facets must not be empty
+                        SearchFacet.combineToBson(emptyList())
+                ),
+                () -> assertThrows(IllegalStateException.class, () ->
+                        // facet names must be unique
+                        SearchFacet.combineToBson(asList(
+                                        SearchFacet.stringFacet("duplicateFacetName", fieldPath("fieldName1")),
+                                        SearchFacet.numberFacet("duplicateFacetName", fieldPath("fieldName2"), asList(1, 2))))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("facetName", new BsonDocument("type", new BsonString("string"))
+                                .append("path", fieldPath("fieldName").toBsonValue())),
+                        SearchFacet.combineToBson(singleton(SearchFacet.stringFacet("facetName",
+                                        fieldPath("fieldName"))))
+                                .toBsonDocument()
+                )
+        );
+    }
+
     private static SearchFacet docExamplePredefined() {
         return SearchFacet.stringFacet("facetName",
                 fieldPath("fieldName"));
     }
 
-    private static BsonDocument docExampleCustom() {
-        return new BsonDocument("facetName", new BsonDocument("type", new BsonString("string"))
+    private static Document docExampleCustom() {
+        return new Document("facetName", new Document("type", "string")
                 .append("path", fieldPath("fieldName").toBsonValue()));
     }
 }

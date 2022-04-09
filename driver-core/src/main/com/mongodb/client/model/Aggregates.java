@@ -1669,17 +1669,17 @@ public final class Aggregates {
         }
 
         @Override
-        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
             writer.writeStartDocument("$search");
-            BsonDocument operatorOrCollectorDoc = operatorOrCollector.toBsonDocument(tDocumentClass, codecRegistry);
+            BsonDocument operatorOrCollectorDoc = operatorOrCollector.toBsonDocument(documentClass, codecRegistry);
             assertTrue(operatorOrCollectorDoc.size() == 1);
             Map.Entry<String, BsonValue> operatorOrCollectorEntry = operatorOrCollectorDoc.entrySet().iterator().next();
             writer.writeName(operatorOrCollectorEntry.getKey());
             BuildersHelper.encodeValue(writer, operatorOrCollectorEntry.getValue(), codecRegistry);
             if (options != null) {
-                options.toBsonDocument().forEach((optionName, optionValue) -> {
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
                     writer.writeName(optionName);
                     BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
                 });

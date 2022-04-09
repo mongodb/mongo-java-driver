@@ -22,8 +22,9 @@ import org.bson.conversions.Bson;
 
 import java.util.Iterator;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.client.model.BsonUtil.toBsonValue;
+import static com.mongodb.internal.client.model.Util.combineToBsonValue;
 
 /**
  * Highlighting options.
@@ -61,10 +62,8 @@ public interface SearchHighlight extends Bson {
      */
     static SearchHighlight paths(final Iterable<? extends SearchPath> paths) {
         Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
-        if (!pathIterator.hasNext()) {
-            throw new IllegalArgumentException("paths must not be empty");
-        }
-        return new SearchConstructibleBson(new BsonDocument("path", toBsonValue(pathIterator)));
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new SearchConstructibleBson(new BsonDocument("path", combineToBsonValue(pathIterator)));
     }
 
     /**
@@ -78,9 +77,9 @@ public interface SearchHighlight extends Bson {
      *  SearchHighlight highlight1 = SearchHighlight.paths(Arrays.asList(
      *          SearchPath.fieldPath("fieldName"),
      *          SearchPath.wildcardPath("wildc*rd")));
-     *  SearchHighlight highlight2 = SearchHighlight.of(new BsonDocument("path", new BsonArray(Arrays.asList(
+     *  SearchHighlight highlight2 = SearchHighlight.of(new Document("path", Arrays.asList(
      *          SearchPath.fieldPath("fieldName").toBsonValue(),
-     *          SearchPath.wildcardPath("wildc*rd").toBsonValue()))));
+     *          SearchPath.wildcardPath("wildc*rd").toBsonValue())));
      * }</pre>
      *
      * @param highlight A {@link Bson} representing the required {@link SearchHighlight}.

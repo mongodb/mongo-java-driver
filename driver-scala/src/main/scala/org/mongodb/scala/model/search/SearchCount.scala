@@ -16,7 +16,7 @@
 package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.Beta
-import com.mongodb.client.model.search.{ TotalSearchCount, SearchCount => JSearchCount }
+import com.mongodb.client.model.search.{ SearchCount => JSearchCount }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Projections
 
@@ -55,7 +55,7 @@ object SearchCount {
    * though they may not be equal.
    * {{{
    *  val count1: SearchCount = SearchCount.lowerBound()
-   *  val count2: SearchCount = SearchCount.of(BsonDocument("type" -> BsonString("lowerBound")))
+   *  val count2: SearchCount = SearchCount.of(Document("type" -> "lowerBound"))
    * }}}
    *
    * @param count A `Bson` representing the required `SearchCount`.

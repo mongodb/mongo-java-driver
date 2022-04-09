@@ -51,6 +51,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.Document;
+import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
@@ -80,7 +81,8 @@ public final class CollectionHelper<T> {
                                                                    new ValueCodecProvider(),
                                                                    new DocumentCodecProvider(),
                                                                    new GeoJsonCodecProvider(),
-                                                                   new Jsr310CodecProvider());
+                                                                   new Jsr310CodecProvider(),
+                                                                   new BsonCodecProvider());
     private MongoNamespace namespace;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {

@@ -15,12 +15,13 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Immutable;
 import com.mongodb.internal.client.model.AbstractConstructibleBson;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -33,15 +34,22 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
         TotalSearchCount, LowerBoundSearchCount,
         FieldSearchPath, WildcardSearchPath,
         SearchFacet {
+    /**
+     * An {@linkplain Immutable immutable} empty instance.
+     */
     static final SearchConstructibleBson EMPTY = new SearchConstructibleBson(new BsonDocument());
 
-    SearchConstructibleBson(final Bson doc) {
-        super(doc);
+    SearchConstructibleBson(final Bson base) {
+        super(base);
+    }
+
+    private SearchConstructibleBson(final Bson base, final Document appended) {
+        super(base, appended);
     }
 
     @Override
-    protected SearchConstructibleBson newSelf(final BsonDocument doc) {
-        return new SearchConstructibleBson(doc);
+    protected SearchConstructibleBson newSelf(final Bson base, final Document appended) {
+        return new SearchConstructibleBson(base, appended);
     }
 
     @Override
@@ -51,12 +59,12 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
 
     @Override
     public SearchOptions highlight(final SearchHighlight option) {
-        return newAppended("highlight", notNull("option", option).toBsonDocument());
+        return newAppended("highlight", notNull("option", option));
     }
 
     @Override
     public SearchOptions count(final SearchCount option) {
-        return newAppended("count", notNull("option", option).toBsonDocument());
+        return newAppended("count", notNull("option", option));
     }
 
     @Override
@@ -65,7 +73,7 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     }
 
     @Override
-    public SearchOptions option(final String name, final BsonValue value) {
+    public SearchOptions option(final String name, final Object value) {
         return newAppended(notNull("name", name), notNull("value", value));
     }
 

@@ -15,10 +15,11 @@
  */
 package com.mongodb.client.model.search;
 
-import org.bson.BsonDocument;
+import org.bson.Document;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.junit.jupiter.api.Test;
 
-import static com.mongodb.client.model.search.SearchFacet.combineToBsonDocument;
+import static com.mongodb.client.model.search.SearchFacet.combineToBson;
 import static com.mongodb.client.model.search.SearchFacet.numberFacet;
 import static com.mongodb.client.model.search.SearchFacet.stringFacet;
 import static com.mongodb.client.model.search.SearchOperator.exists;
@@ -31,26 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 final class SearchCollectorTest {
     @Test
     void of() {
-        assertAll(
-                () -> assertEquals(
-                        docExampleCustom(),
-                        docExamplePredefined()
-                                .toBsonDocument()
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        new BsonDocument("facet",
-                                new BsonDocument("operator", exists(
-                                        fieldPath("fieldName")).toBsonDocument())
-                                        .append("facets", combineToBsonDocument(asList(
-                                                stringFacet(
-                                                        "duplicateFacetName",
-                                                        fieldPath("stringFieldName")),
-                                                numberFacet(
-                                                        "duplicateFacetName",
-                                                        fieldPath("numberFieldName"),
-                                                        asList(10, 20, 30))))))
-                )
-        );
         assertEquals(
                 docExamplePredefined()
                         .toBsonDocument(),
@@ -62,21 +43,19 @@ final class SearchCollectorTest {
     @Test
     void facet() {
         assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () ->
+                () -> assertThrows(CodecConfigurationException.class, () ->
+                        // facet names must be unique; `BsonCodec` wraps our `IllegalStateException` into `CodecConfigurationException`
                         SearchCollector.facet(
-                                exists(
-                                        fieldPath("fieldName")),
+                                exists(fieldPath("fieldName")),
                                 asList(
-                                        stringFacet(
-                                                "duplicateFacetName",
-                                                fieldPath("stringFieldName")),
-                                        numberFacet(
-                                                "duplicateFacetName",
-                                                fieldPath("numberFieldName"),
-                                                asList(10, 20, 30))))
+                                        stringFacet("duplicateFacetName", fieldPath("stringFieldName")),
+                                        numberFacet("duplicateFacetName", fieldPath("numberFieldName"), asList(10, 20, 30))))
+                                // we have to render into `BsonDocument` in order to trigger the lazy check
+                                .toBsonDocument()
                 ),
                 () -> assertEquals(
-                        docExampleCustom(),
+                        docExampleCustom()
+                                .toBsonDocument(),
                         docExamplePredefined()
                                 .toBsonDocument()
                 )
@@ -97,11 +76,11 @@ final class SearchCollectorTest {
                                 asList(10, 20, 30))));
     }
 
-    private static BsonDocument docExampleCustom() {
-        return new BsonDocument("facet",
-                new BsonDocument("operator", exists(
-                        fieldPath("fieldName")).toBsonDocument())
-                        .append("facets", combineToBsonDocument(asList(
+    private static Document docExampleCustom() {
+        return new Document("facet",
+                new Document("operator", exists(
+                        fieldPath("fieldName")))
+                        .append("facets", combineToBson(asList(
                                 stringFacet(
                                         "stringFacetName",
                                         fieldPath("stringFieldName")),

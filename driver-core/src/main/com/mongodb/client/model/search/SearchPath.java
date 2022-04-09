@@ -16,17 +16,21 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
-import com.mongodb.internal.client.model.BsonUtil;
+import com.mongodb.internal.client.model.Util;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.client.model.BsonUtil.SEARCH_PATH_VALUE_KEY;
+import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
 
 /**
  * A specification of document fields to be searched.
+ * <p>
+ * Despite {@link SearchPath} being {@link Bson},
+ * its value conforming to the correct syntax must be obtained via {@link #toBsonValue()}.</p>
  *
  * @mongodb.atlas.manual atlas-search/path-construction/ Path
  * @since 4.6
@@ -42,9 +46,7 @@ public interface SearchPath extends Bson {
      */
     static FieldSearchPath fieldPath(final String path) {
         notNull("path", path);
-        if (path.contains("*")) {
-            throw new IllegalArgumentException("path must not contain '*'");
-        }
+        isTrueArgument("path must not contain '*'", !path.contains("*"));
         return new SearchConstructibleBson(new BsonDocument(SEARCH_PATH_VALUE_KEY, new BsonString(path)));
     }
 
@@ -58,18 +60,14 @@ public interface SearchPath extends Bson {
      */
     static WildcardSearchPath wildcardPath(final String wildcardPath) {
         notNull("wildcardPath", wildcardPath);
-        if (wildcardPath.contains("**")) {
-            throw new IllegalArgumentException("wildcardPath must not contain '**'");
-        }
-        if (!wildcardPath.contains("*")) {
-            throw new IllegalArgumentException("wildcardPath must contain '*'");
-        }
+        isTrueArgument("wildcardPath must contain '*'", wildcardPath.contains("*"));
+        isTrueArgument("wildcardPath must not contain '**'", !wildcardPath.contains("**"));
         return new SearchConstructibleBson(new BsonDocument("wildcard", new BsonString(wildcardPath)));
     }
 
     /**
      * Converts this object to {@link BsonValue}.
-     * If {@link #toBsonDocument()} contains only the {@value BsonUtil#SEARCH_PATH_VALUE_KEY} key,
+     * If {@link #toBsonDocument()} contains only the {@value Util#SEARCH_PATH_VALUE_KEY} key,
      * then returns {@link BsonString} representing the value of this key,
      * otherwise returns {@link #toBsonDocument()}.
      *
@@ -82,7 +80,7 @@ public interface SearchPath extends Bson {
         } else {
             final BsonString value = doc.getString(SEARCH_PATH_VALUE_KEY, null);
             if (value != null) {
-                // paths that contain only `SEARCH_PATH_VALUE_KEY` can be represented as a `BsonString`
+                // paths that contain only `SEARCH_PATH_VALUE_KEY` must be represented as a `BsonString`
                 return value;
             } else {
                 return doc;

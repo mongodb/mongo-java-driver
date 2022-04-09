@@ -39,7 +39,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
 
     protected AbstractConstructibleBsonElement(final String name, final Bson value) {
         this.name = name;
-        this.value = AbstractConstructibleBson.of(value.toBsonDocument());
+        this.value = AbstractConstructibleBson.of(value);
     }
 
     protected abstract S newSelf(String name, Bson value);
@@ -48,7 +48,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
      * Creates a new instance with a value that contains all mapping from {@code this} value and the specified new mapping.
      *
      * @return A new instance.
-     * @see AbstractConstructibleBson#newAppended(String, BsonValue)
+     * @see AbstractConstructibleBson#newAppended(String, Object)
      */
     protected final S newWithAppendedValue(final String name, final BsonValue value) {
         return newSelf(this.name, this.value.newAppended(name, value));
@@ -56,7 +56,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
 
     @Override
     public final <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocument(name, value.toBsonDocument());
+        return new BsonDocument(name, value.toBsonDocument(documentClass, codecRegistry));
     }
 
     @Override
@@ -78,6 +78,8 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
 
     @Override
     public String toString() {
-        return toBsonDocument().toString();
+        return "{\""
+                + name + "\": " + value.toString()
+                + '}';
     }
 }

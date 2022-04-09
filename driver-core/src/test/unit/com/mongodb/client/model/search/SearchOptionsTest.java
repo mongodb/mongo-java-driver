@@ -43,13 +43,23 @@ final class SearchOptionsTest {
 
     @Test
     void option() {
-        assertEquals(
-                SearchOptions.defaultSearchOptions()
-                        .index("indexName")
-                        .toBsonDocument(),
-                SearchOptions.defaultSearchOptions()
-                        .option("index", new BsonString("indexName"))
-                        .toBsonDocument()
+        assertAll(
+                () -> assertEquals(
+                        SearchOptions.defaultSearchOptions()
+                                .index("indexName")
+                                .toBsonDocument(),
+                        SearchOptions.defaultSearchOptions()
+                                .option("index", new BsonString("indexName"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        SearchOptions.defaultSearchOptions()
+                                .option("index", "indexName")
+                                .toBsonDocument(),
+                        SearchOptions.defaultSearchOptions()
+                                .option("index", new BsonString("indexName"))
+                                .toBsonDocument()
+                )
         );
     }
 

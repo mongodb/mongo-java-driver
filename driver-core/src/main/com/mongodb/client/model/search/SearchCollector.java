@@ -19,10 +19,10 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
-import org.bson.BsonDocument;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import static com.mongodb.client.model.search.SearchFacet.combineToBsonDocument;
+import static com.mongodb.client.model.search.SearchFacet.combineToBson;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -48,8 +48,8 @@ public interface SearchCollector extends Bson {
     static FacetSearchCollector facet(final SearchOperator operator, final Iterable<? extends SearchFacet> facets) {
         notNull("operator", operator);
         notNull("facets", facets);
-        return new SearchConstructibleBsonElement("facet", new BsonDocument("operator", operator.toBsonDocument())
-                .append("facets", combineToBsonDocument(facets)));
+        return new SearchConstructibleBsonElement("facet", new Document("operator", operator)
+                .append("facets", combineToBson(facets)));
     }
 
     /**
@@ -71,10 +71,10 @@ public interface SearchCollector extends Bson {
      *                          "numberFacetName",
      *                          SearchPath.fieldPath("numberFieldName"),
      *                          Arrays.asList(10, 20, 30))));
-     *  SearchCollector collector2 = SearchCollector.of(new BsonDocument("facet",
-     *          new BsonDocument("operator", SearchOperator.exists(
-     *                  SearchPath.fieldPath("fieldName")).toBsonDocument())
-     *                  .append("facets", SearchFacet.combineToBsonDocument(Arrays.asList(
+     *  SearchCollector collector2 = SearchCollector.of(new Document("facet",
+     *          new Document("operator", SearchOperator.exists(
+     *                  SearchPath.fieldPath("fieldName")))
+     *                  .append("facets", SearchFacet.combineToBson(Arrays.asList(
      *                          SearchFacet.stringFacet(
      *                                  "stringFacetName",
      *                                  SearchPath.fieldPath("stringFieldName")),
