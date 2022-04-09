@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':driver-scala'
-include 'util:spock'
-include 'util:taglets'
+package org.bson.codecs.record;
+
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+
+/**
+ * Provides Codec instances for Java records.
+ *
+ * @since 4.6
+ * @see Record
+ */
+public final class RecordCodecProvider implements CodecProvider {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+        if (!clazz.isRecord()) {
+            return null;
+        }
+
+        return (Codec<T>) new RecordCodec(clazz, registry);
+    }
+}
