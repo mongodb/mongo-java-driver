@@ -102,6 +102,7 @@ $ ./gradlew check
 The test suite requires mongod to be running with [`enableTestCommands`](https://www.mongodb.com/docs/manual/reference/parameters/#param.enableTestCommands), which may be set with the `--setParameter enableTestCommands=1`
 command-line parameter:
 ```
+$ mkdir -p data/db
 $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend --fork --setParameter enableTestCommands=1
 ```
 
