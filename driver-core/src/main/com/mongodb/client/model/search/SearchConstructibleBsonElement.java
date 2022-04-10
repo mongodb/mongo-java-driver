@@ -16,8 +16,6 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.internal.client.model.AbstractConstructibleBsonElement;
-import org.bson.BsonInt32;
-import org.bson.BsonString;
 import org.bson.conversions.Bson;
 
 import static org.bson.assertions.Assertions.notNull;
@@ -32,12 +30,12 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
 
     @Override
     public StringSearchFacet numBuckets(final int max) {
-        return newWithAppendedValue("numBuckets", new BsonInt32(max));
+        return newWithAppendedValue("numBuckets", max);
     }
 
     @Override
     public SearchConstructibleBsonElement defaultBucket(final String name) {
-        return newWithAppendedValue("default", new BsonString(notNull("name", name)));
+        return newWithAppendedValue("default", notNull("name", name));
     }
 
     @Override

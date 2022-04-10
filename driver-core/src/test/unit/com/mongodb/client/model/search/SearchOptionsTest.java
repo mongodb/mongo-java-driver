@@ -144,4 +144,18 @@ final class SearchOptionsTest {
                         .toBsonDocument()
         );
     }
+
+    @Test
+    void defaultSearchOptionsIsUnmodifiable() {
+        String expected = SearchOptions.defaultSearchOptions().toBsonDocument().toJson();
+        SearchOptions.defaultSearchOptions().option("name", "value");
+        assertEquals(expected, SearchOptions.defaultSearchOptions().toBsonDocument().toJson());
+    }
+
+    @Test
+    void defaultSearchOptionsIsImmutable() {
+        String expected = SearchOptions.defaultSearchOptions().toBsonDocument().toJson();
+        SearchOptions.defaultSearchOptions().toBsonDocument().append("name", new BsonString("value"));
+        assertEquals(expected, SearchOptions.defaultSearchOptions().toBsonDocument().toJson());
+    }
 }

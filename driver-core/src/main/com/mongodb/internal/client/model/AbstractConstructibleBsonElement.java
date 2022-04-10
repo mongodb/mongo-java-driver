@@ -17,7 +17,6 @@ package com.mongodb.internal.client.model;
 
 import com.mongodb.annotations.Immutable;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -25,10 +24,11 @@ import java.util.Objects;
 
 /**
  * A {@link Bson} that contains exactly one name/value pair
- * and allows constructing new instances via {@link #newWithAppendedValue(String, BsonValue)} instead of mutating {@code this}.
+ * and allows constructing new instances via {@link #newWithAppendedValue(String, Object)} instead of mutating {@code this}.
  * The value must itself be a {@code Bson}.
  * While instances are not {@link Immutable immutable},
- * instances with {@link BsonDocument#isEmpty() empty} values are treated specially and are immutable.
+ * instances with {@link BsonDocument#isEmpty() empty} values are treated specially and are immutable,
+ * provided that the constructor arguments are not mutated.
  *
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
@@ -50,13 +50,17 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
      * @return A new instance.
      * @see AbstractConstructibleBson#newAppended(String, Object)
      */
-    protected final S newWithAppendedValue(final String name, final BsonValue value) {
+    protected final S newWithAppendedValue(final String name, final Object value) {
         return newSelf(this.name, this.value.newAppended(name, value));
     }
 
     @Override
     public final <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
         return new BsonDocument(name, value.toBsonDocument(documentClass, codecRegistry));
+    }
+
+    public static AbstractConstructibleBsonElement<?> of(final String name, final Bson value) {
+        return new AbstractConstructibleBsonElement.ConstructibleBsonElement(name, value);
     }
 
     @Override
@@ -81,5 +85,16 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
         return "{\""
                 + name + "\": " + value.toString()
                 + '}';
+    }
+
+    private static final class ConstructibleBsonElement extends AbstractConstructibleBsonElement<ConstructibleBsonElement> {
+        private ConstructibleBsonElement(final String name, final Bson value) {
+            super(name, value);
+        }
+
+        @Override
+        protected ConstructibleBsonElement newSelf(final String name, final Bson value) {
+            return new ConstructibleBsonElement(name, value);
+        }
     }
 }

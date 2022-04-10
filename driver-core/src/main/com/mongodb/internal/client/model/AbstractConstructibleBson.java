@@ -27,7 +27,8 @@ import java.util.Objects;
 /**
  * A {@link Bson} that allows constructing new instances via {@link #newAppended(String, Object)} instead of mutating {@code this}.
  * While instances are not {@link Immutable immutable},
- * {@link BsonDocument#isEmpty() empty} instances are treated specially and are immutable.
+ * {@link BsonDocument#isEmpty() empty} instances are treated specially and are immutable,
+ * provided that the constructor arguments are not mutated.
  *
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  */
