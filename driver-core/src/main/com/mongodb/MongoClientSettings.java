@@ -120,6 +120,7 @@ public final class MongoClientSettings {
      * <li>{@link org.bson.codecs.JsonObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.BsonCodecProvider}</li>
      * <li>{@link org.bson.codecs.EnumCodecProvider}</li>
+     * <li>{@link com.mongodb.Jep395RecordCodecProvider}</li>
      * </ul>
      *
      * <p>

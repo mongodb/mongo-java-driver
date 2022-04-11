@@ -29,6 +29,8 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  * A CodecProvider for Java Records.
  *
  * <p>Requires java.lang.Record support - eg Java 17 or greater.</p>
+ *
+ * @since 4.6
  */
 public class Jep395RecordCodecProvider implements CodecProvider {
 
