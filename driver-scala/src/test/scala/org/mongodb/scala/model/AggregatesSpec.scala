@@ -497,7 +497,7 @@ class AggregatesSpec extends BaseSpec {
 
   it should "render $search" in {
     toBson(
-      search(
+      Aggregates.search(
         exists(fieldPath("fieldName")),
         defaultSearchOptions()
       )
@@ -509,7 +509,7 @@ class AggregatesSpec extends BaseSpec {
       }""")
     )
     toBson(
-      search(
+      Aggregates.search(
         SearchCollector
           .facet(exists(fieldPath("fieldName")), List(stringFacet("stringFacetName", fieldPath("fieldName1")))),
         defaultSearchOptions()
@@ -546,7 +546,7 @@ class AggregatesSpec extends BaseSpec {
 
   it should "render $search with null options" in {
     toBson(
-      search(
+      Aggregates.search(
         exists(fieldPath("fieldName")),
         null
       )
@@ -558,7 +558,7 @@ class AggregatesSpec extends BaseSpec {
       }""")
     )
     toBson(
-      search(
+      Aggregates.search(
         SearchCollector.facet(
           exists(fieldPath("fieldName")),
           List(
