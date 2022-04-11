@@ -91,7 +91,7 @@ Example for Maven:
 
 ## Build
 
-Java 9+ is required to build and compile the source. To build and test the driver:
+Java 17+ and git is required to build and compile the source. To build and test the driver:
 
 ```
 $ git clone https://github.com/mongodb/mongo-java-driver.git
