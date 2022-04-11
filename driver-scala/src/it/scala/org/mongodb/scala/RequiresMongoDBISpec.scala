@@ -75,7 +75,8 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
 
   def withDatabase(dbName: String)(testCode: MongoDatabase => Any): Unit = {
     withClient { client =>
-      val databaseName = if (dbName.startsWith(DB_PREFIX)) dbName.take(63) else s"$DB_PREFIX$dbName".take(63) // scalastyle:ignore
+      val databaseName =
+        if (dbName.startsWith(DB_PREFIX)) dbName.take(63) else s"$DB_PREFIX$dbName".take(63) // scalastyle:ignore
       val mongoDatabase = client.getDatabase(databaseName)
       try testCode(mongoDatabase) // "loan" the fixture to the test
       finally {
@@ -98,18 +99,19 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
     }
   }
 
-  lazy val isSharded: Boolean = if (!TestMongoClientHelper.isMongoDBOnline) {
-    false
-  } else {
-    Await
-      .result(
-        mongoClient().getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(),
-        WAIT_DURATION
-      )
-      .getOrElse("msg", BsonString(""))
-      .asString()
-      .getValue == "isdbgrid"
-  }
+  lazy val isSharded: Boolean =
+    if (!TestMongoClientHelper.isMongoDBOnline) {
+      false
+    } else {
+      Await
+        .result(
+          mongoClient().getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(),
+          WAIT_DURATION
+        )
+        .getOrElse("msg", BsonString(""))
+        .asString()
+        .getValue == "isdbgrid"
+    }
 
   lazy val buildInfo: Document = {
     if (TestMongoClientHelper.isMongoDBOnline) {

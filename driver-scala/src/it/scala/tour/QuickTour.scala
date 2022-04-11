@@ -51,7 +51,7 @@ import scala.collection.immutable.IndexedSeq
  * The QuickTour code example
  */
 object QuickTour {
-  //scalastyle:off method.length
+  // scalastyle:off method.length
 
   /**
    * Run this main method to see the output of this quick example.
@@ -116,7 +116,7 @@ object QuickTour {
     // Projection
     collection.find().projection(excludeId()).first().printHeadResult()
 
-    //Aggregation
+    // Aggregation
     collection
       .aggregate(
         Seq(

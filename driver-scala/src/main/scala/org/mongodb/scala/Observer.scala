@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import org.reactivestreams.{ Subscription => JSubscription, Subscriber }
+import org.reactivestreams.{ Subscriber, Subscription => JSubscription }
 
 /**
  * A Scala based wrapper of the `Subscriber` interface which provides a mechanism for receiving push-based notifications.
