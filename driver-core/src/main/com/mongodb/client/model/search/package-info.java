@@ -16,6 +16,12 @@
 
 /**
  * Query building API for MongoDB Atlas full-text search.
+ * <p>
+ * While all the building blocks of this API, such as
+ * {@link com.mongodb.client.model.search.SearchOptions}, {@link com.mongodb.client.model.search.SearchHighlight}, etc.,
+ * are not necessary {@link com.mongodb.annotations.Immutable immutable}, they are unmodifiable due to methods like
+ * {@link com.mongodb.client.model.search.SearchHighlight#maxCharsToExamine(int)} returning new instances instead of modifying the instance
+ * on which they are called. This allows storing and using such instances as templates.</p>
  *
  * @see com.mongodb.client.model.Aggregates#search(SearchOperator, SearchOptions)
  * @see com.mongodb.client.model.Aggregates#search(SearchCollector, SearchOptions)

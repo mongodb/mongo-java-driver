@@ -664,8 +664,28 @@ public final class Aggregates {
      * {@link Filters#text(String, TextSearchOptions)} is a legacy text search alternative.</p>
      *
      * @param operator A search operator.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.6
+     */
+    public static Bson search(final SearchOperator operator) {
+        return search(operator, null);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "searchScore"} expression, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * <p>
+     * {@link Filters#text(String, TextSearchOptions)} is a legacy text search alternative.</p>
+     *
+     * @param operator A search operator.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to specifying {@link SearchOptions#defaultSearchOptions()}.
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * or calling {@link #search(SearchOperator)}.
      * @return The {@code $search} pipeline stage.
      *
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
@@ -683,8 +703,26 @@ public final class Aggregates {
      * to extract the relevance score assigned to each found document.
      *
      * @param collector A search collector.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.6
+     */
+    public static Bson search(final SearchCollector collector) {
+        return new SearchStage(collector, null);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use {@code $meta: "searchScore"}, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param collector A search collector.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to specifying {@link SearchOptions#defaultSearchOptions()}.
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * or calling {@link #search(SearchCollector)}.
      * @return The {@code $search} pipeline stage.
      *
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
