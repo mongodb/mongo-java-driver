@@ -58,7 +58,9 @@ class ProjectionsSpec extends BaseSpec {
   }
 
   it should "elemMatch" in {
-    toBson(model.Projections.elemMatch("x", Filters.and(model.Filters.eq("y", 1), model.Filters.eq("z", 2)))) should equal(
+    toBson(
+      model.Projections.elemMatch("x", Filters.and(model.Filters.eq("y", 1), model.Filters.eq("z", 2)))
+    ) should equal(
       Document("""{x : {$elemMatch : {$and: [{y : 1}, {z : 2}]}}}""")
     )
   }
@@ -77,7 +79,9 @@ class ProjectionsSpec extends BaseSpec {
   }
 
   it should "combine fields" in {
-    toBson(model.Projections.fields(model.Projections.include("x", "y"), model.Projections.exclude("_id"))) should equal(
+    toBson(
+      model.Projections.fields(model.Projections.include("x", "y"), model.Projections.exclude("_id"))
+    ) should equal(
       Document("""{x : 1, y : 1, _id : 0}""")
     )
     toBson(model.Projections.fields(model.Projections.include("x", "y"), model.Projections.exclude("x"))) should equal(

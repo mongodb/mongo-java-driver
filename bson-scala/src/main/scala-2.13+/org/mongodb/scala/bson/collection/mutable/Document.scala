@@ -140,7 +140,7 @@ case class Document(protected[scala] val underlying: BsonDocument)
   @inline final def ++(suffix: IterableOnce[(String, BsonValue)]): Document = concat(suffix)
   // scalastyle:on method.name
   def map[B](f: ((String, BsonValue)) => (String, BsonValue)): Document = strictOptimizedMap(newSpecificBuilder, f)
-  //TODO other operations
+  // TODO other operations
 
   // scalastyle:off method.name
   /**

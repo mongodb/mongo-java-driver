@@ -86,7 +86,7 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
     case None    => default.value
   }
 
-  //scalastyle:off spaces.after.plus  method.name
+  // scalastyle:off spaces.after.plus  method.name
   /**
    * Creates a new document containing a new key/value and all the existing key/values.
    *
@@ -101,7 +101,7 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
     elems.foreach(elem => bsonDocument.put(elem.key, elem.value))
     apply(bsonDocument)
   }
-  //scalastyle:on spaces.after.plus
+  // scalastyle:on spaces.after.plus
 
   /**
    * Removes one or more elements to this document and returns a new document.

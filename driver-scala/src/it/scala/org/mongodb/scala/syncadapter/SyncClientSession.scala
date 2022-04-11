@@ -17,7 +17,7 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.{ ClientSessionOptions, MongoInterruptedException, ServerAddress, TransactionOptions }
-import com.mongodb.client.{ TransactionBody, ClientSession => JClientSession }
+import com.mongodb.client.{ ClientSession => JClientSession, TransactionBody }
 import com.mongodb.session.ServerSession
 import org.bson.{ BsonDocument, BsonTimestamp }
 import org.mongodb.scala._

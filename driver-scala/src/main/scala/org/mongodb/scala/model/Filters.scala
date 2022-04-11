@@ -256,7 +256,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/type \$type]]
    */
-  def `type`(fieldName: String, bsonType: BsonType): Bson = JFilters.`type`(fieldName, bsonType) //scalastyle:ignore
+  def `type`(fieldName: String, bsonType: BsonType): Bson = JFilters.`type`(fieldName, bsonType) // scalastyle:ignore
 
   /**
    * Creates a filter that matches all documents where the value of the field is of the specified BSON type.

@@ -127,18 +127,15 @@ private[codecs] object CaseClassCodec {
 
     val fields: Map[Type, List[(TermName, Type)]] = {
       knownTypes
-        .map(
-          t =>
-            (
-              t,
-              t.members.sorted
-                .filter(_.isMethod)
-                .map(_.asMethod)
-                .filter(m => m.isGetter && m.isParamAccessor)
-                .map(
-                  m => (m.name, m.returnType.asSeenFrom(t, t.typeSymbol))
-                )
-            )
+        .map(t =>
+          (
+            t,
+            t.members.sorted
+              .filter(_.isMethod)
+              .map(_.asMethod)
+              .filter(m => m.isGetter && m.isParamAccessor)
+              .map(m => (m.name, m.returnType.asSeenFrom(t, t.typeSymbol)))
+          )
         )
         .toMap
     }
@@ -242,8 +239,8 @@ private[codecs] object CaseClassCodec {
           q"""
             typeArgs += ($key -> {
               val tpeArgs = mutable.ListBuffer.empty[Class[_]]
-              ..${flattenTypeArgs(f).map(
-            t => q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]"
+              ..${flattenTypeArgs(f).map(t =>
+            q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]"
           )}
               tpeArgs.toList
             })"""
@@ -293,11 +290,10 @@ private[codecs] object CaseClassCodec {
      */
     def classToCaseClassMap = {
       val flattenedFieldTypes = fields.flatMap({ case (t, types) => types.map(f => f._2) :+ t })
-      val setClassToCaseClassMap = flattenedFieldTypes.map(
-        t =>
-          q"""classToCaseClassMap ++= ${flattenTypeArgs(t).map(
-            t => q"(classOf[${t.finalResultType.erasure}], ${isCaseClass(t) || isCaseObject(t) || isSealed(t)})"
-          )}"""
+      val setClassToCaseClassMap = flattenedFieldTypes.map(t =>
+        q"""classToCaseClassMap ++= ${flattenTypeArgs(t).map(t =>
+          q"(classOf[${t.finalResultType.erasure}], ${isCaseClass(t) || isCaseObject(t) || isSealed(t)})"
+        )}"""
       )
 
       q"""
@@ -329,7 +325,7 @@ private[codecs] object CaseClassCodec {
                 writer.writeName($key)
                 this.writeFieldValue($key, writer, this.bsonNull, encoderContext)
               }"""
-              case _                              => q"""
+              case _ => q"""
               val localVal = instanceValue.$name
               writer.writeName($key)
               this.writeFieldValue($key, writer, localVal, encoderContext)

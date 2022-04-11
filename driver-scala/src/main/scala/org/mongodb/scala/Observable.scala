@@ -411,20 +411,29 @@ trait Observable[T] extends Publisher[T] {
       }
 
       override def onError(throwable: Throwable): Unit =
-        completeWith("onError", { () =>
-          promise.failure(throwable)
-        })
+        completeWith(
+          "onError",
+          { () =>
+            promise.failure(throwable)
+          }
+        )
 
       override def onComplete(): Unit = {
-        if (!terminated) completeWith("onComplete", { () =>
-          promise.success(None)
-        }) // Completed with no values
+        if (!terminated) completeWith(
+          "onComplete",
+          { () =>
+            promise.success(None)
+          }
+        ) // Completed with no values
       }
 
       override def onNext(tResult: T): Unit = {
-        completeWith("onNext", { () =>
-          promise.success(Some(tResult))
-        })
+        completeWith(
+          "onNext",
+          { () =>
+            promise.success(Some(tResult))
+          }
+        )
       }
 
       private def completeWith(method: String, action: () => Any): Unit = {

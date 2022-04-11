@@ -19,7 +19,7 @@ package org.mongodb.scala
 import java.io.Closeable
 
 import com.mongodb.connection.ClusterDescription
-import com.mongodb.reactivestreams.client.{ MongoClients, MongoClient => JMongoClient }
+import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient, MongoClients }
 import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo

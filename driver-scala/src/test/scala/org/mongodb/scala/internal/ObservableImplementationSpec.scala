@@ -222,21 +222,30 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
     Table(
       "observable",
       TestObservable(failOn = failOn),
-      AndThenObservable[Int, Int](TestObservable(failOn = failOn), {
-        case Success(r)  => 1000
-        case Failure(ex) => 0
-      }),
+      AndThenObservable[Int, Int](
+        TestObservable(failOn = failOn),
+        {
+          case Success(r)  => 1000
+          case Failure(ex) => 0
+        }
+      ),
       FilterObservable[Int](TestObservable(failOn = failOn), (i: Int) => i % 2 != 0),
       FlatMapObservable[Int, Int](TestObservable(), (i: Int) => TestObservable(failOn = failOn)),
       FoldLeftObservable(TestObservable(1 to 100, failOn = failOn), 0, (v: Int, i: Int) => v + i),
       MapObservable[Int, Int](TestObservable(failOn = failOn), (i: Int) => i * 100),
       RecoverObservable[Int, Int](TestObservable(failOn = failOn), { case e: ArithmeticException => 999 }),
-      RecoverWithObservable[Int, Int](TestObservable(failOn = failOn), {
-        case e: ArithmeticException => TestObservable()
-      }),
-      RecoverWithObservable[Int, Int](TestObservable(failOn = failOn), {
-        case e => TestObservable(failOn = failOn)
-      }),
+      RecoverWithObservable[Int, Int](
+        TestObservable(failOn = failOn),
+        {
+          case e: ArithmeticException => TestObservable()
+        }
+      ),
+      RecoverWithObservable[Int, Int](
+        TestObservable(failOn = failOn),
+        {
+          case e => TestObservable(failOn = failOn)
+        }
+      ),
       ZipObservable[Int, Int](TestObservable(), TestObservable(failOn = failOn)).map[Int](a => a._1),
       ZipObservable[Int, Int](TestObservable(failOn = failOn), TestObservable()).map[Int](a => a._1)
     )
@@ -244,40 +253,59 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
   private def failingFunctionsObservables =
     Table(
       "observable",
-      FilterObservable[Int](TestObservable(), (i: Int) => {
-        if (i > 10) {
-          throw new RuntimeException("Error")
+      FilterObservable[Int](
+        TestObservable(),
+        (i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          i % 2 == 0
         }
-        i % 2 == 0
-      }),
-      FlatMapObservable[Int, Int](TestObservable(), (i: Int) => {
-        if (i > 10) {
-          throw new RuntimeException("Error")
+      ),
+      FlatMapObservable[Int, Int](
+        TestObservable(),
+        (i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          TestObservable(1 to 2)
         }
-        TestObservable(1 to 2)
-      }),
-      FoldLeftObservable(TestObservable(1 to 100), 0, (v: Int, i: Int) => {
-        if (i > 10) {
-          throw new RuntimeException("Error")
+      ),
+      FoldLeftObservable(
+        TestObservable(1 to 100),
+        0,
+        (v: Int, i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          v + i
         }
-        v + i
-      }),
-      MapObservable[Int, Int](TestObservable(), (i: Int) => {
-        if (i > 10) {
-          throw new RuntimeException("Error")
+      ),
+      MapObservable[Int, Int](
+        TestObservable(),
+        (i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          i * 100
         }
-        i * 100
-      })
+      )
     )
 
   private def happyObservables =
     Table(
       ("observable", "observer"),
       (TestObservable(), TestObserver[Int]()),
-      (AndThenObservable[Int, Int](TestObservable(), {
-        case Success(r)  => 1000
-        case Failure(ex) => 0
-      }), TestObserver[Int]()),
+      (
+        AndThenObservable[Int, Int](
+          TestObservable(),
+          {
+            case Success(r)  => 1000
+            case Failure(ex) => 0
+          }
+        ),
+        TestObserver[Int]()
+      ),
       (FilterObservable[Int](TestObservable(), (i: Int) => i % 2 != 0), TestObserver[Int]()),
       (
         FlatMapObservable[Int, Int](TestObservable(), (i: Int) => TestObservable(1 to 1)),

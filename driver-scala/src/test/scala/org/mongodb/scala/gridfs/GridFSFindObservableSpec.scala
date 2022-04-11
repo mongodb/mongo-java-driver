@@ -45,7 +45,7 @@ class GridFSFindObservableSpec extends BaseSpec with MockitoSugar {
     val batchSize = 20
     val filter = Document("{a: 1}")
     val limit = 10
-    val maxTime = Duration(10, "second") //scalatyle:ignore
+    val maxTime = Duration(10, "second") // scalatyle:ignore
     val skip = 5
     val sort = Document("{_id: 1}")
 

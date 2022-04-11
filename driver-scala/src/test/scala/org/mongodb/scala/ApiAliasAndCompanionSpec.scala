@@ -105,12 +105,12 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
 
     val classFilter = (f: Class[_ <: Object]) => {
       isPublic(f.getModifiers) &&
-        !f.getName.contains("$") &&
-        !f.getSimpleName.contains("Spec") &&
-        !f.getSimpleName.contains("Test") &&
-        !f.getSimpleName.contains("Tour") &&
-        !f.getSimpleName.contains("Fixture") &&
-        !javaExclusions.contains(f.getSimpleName)
+      !f.getName.contains("$") &&
+      !f.getSimpleName.contains("Spec") &&
+      !f.getSimpleName.contains("Test") &&
+      !f.getSimpleName.contains("Tour") &&
+      !f.getSimpleName.contains("Fixture") &&
+      !javaExclusions.contains(f.getSimpleName)
     }
     val filters = FilterBuilder.parse(
       """
@@ -390,15 +390,14 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
   it should "mirror com.mongodb.reactivestreams.client.gridfs in org.mongdb.scala.gridfs" in {
     val javaExclusions = Set("GridFSBuckets", "GridFSDownloadByNameOptions")
     val wrapped: Set[String] = Set("com.mongodb.reactivestreams.client.gridfs", "com.mongodb.client.gridfs.model")
-      .flatMap(
-        packageName =>
-          new Reflections(packageName, new SubTypesScanner(false))
-            .getSubTypesOf(classOf[Object])
-            .asScala
-            .filter(_.getPackage.getName == packageName)
-            .filter(classFilter)
-            .map(_.getSimpleName.replace("Publisher", "Observable"))
-            .toSet
+      .flatMap(packageName =>
+        new Reflections(packageName, new SubTypesScanner(false))
+          .getSubTypesOf(classOf[Object])
+          .asScala
+          .filter(_.getPackage.getName == packageName)
+          .filter(classFilter)
+          .map(_.getSimpleName.replace("Publisher", "Observable"))
+          .toSet
       ) -- javaExclusions + "MongoGridFSException"
 
     val scalaPackageName = "org.mongodb.scala.gridfs"

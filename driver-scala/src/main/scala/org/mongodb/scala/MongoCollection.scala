@@ -472,8 +472,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    */
   @deprecated("Superseded by aggregate")
   def mapReduce[C](clientSession: ClientSession, mapFunction: String, reduceFunction: String)(
-      implicit
-      e: C DefaultsTo TResult,
+      implicit e: C DefaultsTo TResult,
       ct: ClassTag[C]
   ): MapReduceObservable[C] =
     MapReduceObservable(wrapped.mapReduce(clientSession, mapFunction, reduceFunction, ct))

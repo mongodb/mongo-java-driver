@@ -57,7 +57,11 @@ class IterableCodecSpec extends BaseSpec {
 
     writer.writeStartDocument()
     writer.writeName("array")
-    codec.encode(writer, List(Map("a" -> 1, "b" -> 2, "c" -> null)), EncoderContext.builder().build()) // scalastyle:ignore
+    codec.encode(
+      writer,
+      List(Map("a" -> 1, "b" -> 2, "c" -> null)),
+      EncoderContext.builder().build()
+    ) // scalastyle:ignore
     writer.writeEndDocument()
     writer.getDocument should equal(BsonDocument("{array : [{a: 1, b: 2, c: null}]}"))
   }
@@ -98,9 +102,13 @@ class IterableCodecSpec extends BaseSpec {
   }
 
   it should "use the provided transformer" in {
-    val codec = IterableCodec(DEFAULT_CODEC_REGISTRY, BsonTypeClassMap(), new Transformer {
-      override def transform(objectToTransform: Any): AnyRef = s"$objectToTransform"
-    })
+    val codec = IterableCodec(
+      DEFAULT_CODEC_REGISTRY,
+      BsonTypeClassMap(),
+      new Transformer {
+        override def transform(objectToTransform: Any): AnyRef = s"$objectToTransform"
+      }
+    )
     val reader = new BsonDocumentReader(BsonDocument("{array : [1, 2, 3]}"))
 
     reader.readStartDocument()

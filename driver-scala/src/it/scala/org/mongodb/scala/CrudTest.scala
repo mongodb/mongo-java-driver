@@ -17,7 +17,7 @@
 package org.mongodb.scala
 
 import com.mongodb.client.Fixture.getMongoClientSettingsBuilder
-import com.mongodb.client.{ AbstractCrudTest }
+import com.mongodb.client.AbstractCrudTest
 import com.mongodb.event.CommandListener
 import org.bson.{ BsonArray, BsonDocument }
 import org.mongodb.scala.syncadapter.SyncMongoClient

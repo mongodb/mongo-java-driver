@@ -27,7 +27,7 @@ import tour.Helpers._
  * The QuickTour code example
  */
 object QuickTourCaseClass {
-  //scalastyle:off method.length
+  // scalastyle:off method.length
 
   /**
    * Run this main method to see the output of this quick example.

@@ -146,7 +146,9 @@ class AggregatesSpec extends BaseSpec {
       )
     )
 
-    toBson(graphLookup("contacts", "$friends", "friends", "name", "socialNetwork", GraphLookupOptions().maxDepth(1))) should equal(
+    toBson(
+      graphLookup("contacts", "$friends", "friends", "name", "socialNetwork", GraphLookupOptions().maxDepth(1))
+    ) should equal(
       Document(
         """{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
           |  as: "socialNetwork", maxDepth: 1 } }""".stripMargin
