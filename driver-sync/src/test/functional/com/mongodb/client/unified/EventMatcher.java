@@ -32,6 +32,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 final class EventMatcher {
     private final ValueMatcher valueMatcher;
@@ -42,11 +43,17 @@ final class EventMatcher {
         this.context = context;
     }
 
-    public void assertCommandEventsEquality(final String client, final BsonArray expectedEventDocuments, final List<CommandEvent> events) {
+    public void assertCommandEventsEquality(final String client, final boolean ignoreExtraEvents, final BsonArray expectedEventDocuments,
+                                            final List<CommandEvent> events) {
         context.push(ContextElement.ofCommandEvents(client, expectedEventDocuments, events));
-        assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
+        if (ignoreExtraEvents) {
+            assertTrue(context.getMessage("Number of events must be greater than or equal to the expected number of events"),
+                    events.size() >= expectedEventDocuments.size());
+        } else {
+            assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
+        }
 
-        for (int i = 0; i < events.size(); i++) {
+        for (int i = 0; i < expectedEventDocuments.size(); i++) {
             CommandEvent actual = events.get(i);
             BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
             String eventType = expectedEventDocument.getFirstKey();
@@ -106,11 +113,17 @@ final class EventMatcher {
         context.pop();
     }
 
-    public void assertConnectionPoolEventsEquality(final String client, final BsonArray expectedEventDocuments, final List<Object> events) {
+    public void assertConnectionPoolEventsEquality(final String client, final boolean ignoreExtraEvents, final BsonArray expectedEventDocuments,
+                                                   final List<Object> events) {
         context.push(ContextElement.ofConnectionPoolEvents(client, expectedEventDocuments, events));
-        assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
+        if (ignoreExtraEvents) {
+            assertTrue(context.getMessage("Number of events must be greater than or equal to the expected number of events"),
+                    events.size() >= expectedEventDocuments.size());
+        } else {
+            assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
+        }
 
-        for (int i = 0; i < events.size(); i++) {
+        for (int i = 0; i < expectedEventDocuments.size(); i++) {
             Object actual = events.get(i);
             BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
             String eventType = expectedEventDocument.getFirstKey();
