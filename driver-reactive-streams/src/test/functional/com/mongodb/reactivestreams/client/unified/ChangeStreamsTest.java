@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
@@ -34,9 +35,8 @@ import static org.junit.Assume.assumeFalse;
 
 public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
 
-    @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     private static final List<String> ERROR_REQUIRED_FROM_CHANGE_STREAM_INITIALIZATION_TESTS =
-            Arrays.asList(
+            Collections.singletonList(
                     "Test with document comment - pre 4.4"
             );
 
