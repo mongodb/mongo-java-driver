@@ -188,17 +188,20 @@ public abstract class UnifiedTest {
         }
     }
 
-    private void compareEvents(final BsonDocument operation) {
-        for (BsonValue cur : operation.getArray("expectEvents")) {
+    private void compareEvents(final BsonDocument definition) {
+        for (BsonValue cur : definition.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
             String client = curClientEvents.getString("client").getValue();
+            boolean ignoreExtraEvents = curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.FALSE).getValue();
             String eventType = curClientEvents.getString("eventType", new BsonString("command")).getValue();
             if (eventType.equals("command")) {
                 TestCommandListener listener = entities.getClientCommandListener(client);
-                eventMatcher.assertCommandEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+                eventMatcher.assertCommandEventsEquality(client, ignoreExtraEvents, curClientEvents.getArray("events"),
+                        listener.getEvents());
             } else if (eventType.equals("cmap")) {
                 TestConnectionPoolListener listener = entities.getConnectionPoolListener(client);
-                eventMatcher.assertConnectionPoolEventsEquality(client, curClientEvents.getArray("events"), listener.getEvents());
+                eventMatcher.assertConnectionPoolEventsEquality(client, ignoreExtraEvents, curClientEvents.getArray("events"),
+                        listener.getEvents());
             } else {
                 throw new UnsupportedOperationException("Unexpected event type: " + eventType);
             }
