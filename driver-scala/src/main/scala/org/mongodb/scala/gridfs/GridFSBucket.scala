@@ -18,7 +18,7 @@ package org.mongodb.scala.gridfs
 
 import java.nio.ByteBuffer
 
-import com.mongodb.reactivestreams.client.gridfs.{ GridFSBuckets, GridFSBucket => JGridFSBucket }
+import com.mongodb.reactivestreams.client.gridfs.{ GridFSBucket => JGridFSBucket, GridFSBuckets }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{ BsonObjectId, BsonValue, ObjectId }
 import org.mongodb.scala.{

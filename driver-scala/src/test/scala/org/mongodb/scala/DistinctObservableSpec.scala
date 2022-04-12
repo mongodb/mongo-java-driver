@@ -18,14 +18,14 @@ package org.mongodb.scala
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.reactivestreams.client.DistinctPublisher
+import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
 import org.reactivestreams.Publisher
-import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
 
-class DistinctObservableSpec extends BaseSpec with MockFactory {
+class DistinctObservableSpec extends BaseSpec with MockitoSugar {
 
   "DistinctObservable" should "have the same methods as the wrapped DistinctObservable" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
@@ -47,14 +47,15 @@ class DistinctObservableSpec extends BaseSpec with MockFactory {
     val collation = Collation.builder().locale("en").build()
     val batchSize = 10
 
-    wrapper.expects(Symbol("filter"))(filter).once()
-    wrapper.expects(Symbol("maxTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("collation"))(collation).once()
-    wrapper.expects(Symbol("batchSize"))(batchSize).once()
-
     observable.filter(filter)
     observable.maxTime(duration)
     observable.collation(collation)
     observable.batchSize(batchSize)
+
+    verify(wrapper).filter(filter)
+    verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).collation(collation)
+    verify(wrapper).batchSize(batchSize)
+    verifyNoMoreInteractions(wrapper)
   }
 }

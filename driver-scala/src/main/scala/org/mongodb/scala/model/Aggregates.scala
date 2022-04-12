@@ -144,7 +144,7 @@ object Aggregates {
    * @see Filters
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/match/ \$match]]
    */
-  def `match`(filter: Bson): Bson = JAggregates.`match`(filter) //scalastyle:ignore
+  def `match`(filter: Bson): Bson = JAggregates.`match`(filter) // scalastyle:ignore
 
   /**
    * Creates a `\$match` pipeline stage for the specified filter
@@ -156,7 +156,7 @@ object Aggregates {
    * @see Filters
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/match/ \$match]]
    */
-  def filter(filter: Bson): Bson = `match`(filter) //scalastyle:ignore
+  def filter(filter: Bson): Bson = `match`(filter) // scalastyle:ignore
 
   /**
    * Creates a `\$facet` pipeline stage

@@ -19,17 +19,17 @@ package org.mongodb.scala
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
+import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.bson.BsonTimestamp
 import org.mongodb.scala.model.Collation
 import org.mongodb.scala.model.changestream.FullDocument
 import org.reactivestreams.Publisher
-import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
-import scala.util.{ Failure, Success }
+import scala.util.Success
 
-class ChangeStreamObservableSpec extends BaseSpec with MockFactory {
+class ChangeStreamObservableSpec extends BaseSpec with MockitoSugar {
 
   "ChangeStreamObservable" should "have the same methods as the wrapped ChangeStreamObservable" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
@@ -55,15 +55,6 @@ class ChangeStreamObservableSpec extends BaseSpec with MockFactory {
     val collation = Collation.builder().locale("en").build()
     val batchSize = 10
 
-    wrapper.expects(Symbol("batchSize"))(batchSize).once()
-    wrapper.expects(Symbol("fullDocument"))(fullDocument).once()
-    wrapper.expects(Symbol("resumeAfter"))(resumeToken.underlying).once()
-    wrapper.expects(Symbol("startAfter"))(resumeToken.underlying).once()
-    wrapper.expects(Symbol("startAtOperationTime"))(startAtTime).once()
-    wrapper.expects(Symbol("maxAwaitTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("collation"))(collation).once()
-    wrapper.expects(Symbol("withDocumentClass"))(classOf[Int]).once()
-
     observable.batchSize(batchSize)
     observable.fullDocument(fullDocument)
     observable.resumeAfter(resumeToken)
@@ -72,6 +63,17 @@ class ChangeStreamObservableSpec extends BaseSpec with MockFactory {
     observable.maxAwaitTime(duration)
     observable.collation(collation)
     observable.withDocumentClass(classOf[Int])
+
+    verify(wrapper).batchSize(batchSize)
+    verify(wrapper).fullDocument(fullDocument)
+    verify(wrapper).resumeAfter(resumeToken.underlying)
+    verify(wrapper).startAfter(resumeToken.underlying)
+    verify(wrapper).startAtOperationTime(startAtTime)
+    verify(wrapper).maxAwaitTime(duration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).collation(collation)
+    verify(wrapper).withDocumentClass(classOf[Int])
+
+    verifyNoMoreInteractions(wrapper)
   }
 
   it should "mirror FullDocument" in {

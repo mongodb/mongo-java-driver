@@ -19,13 +19,14 @@ package org.mongodb.scala.gridfs
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher
+import org.mockito.Mockito.verify
 import org.mongodb.scala.{ BaseSpec, Document }
 import org.reactivestreams.Publisher
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
 
-class GridFSFindObservableSpec extends BaseSpec with MockFactory {
+class GridFSFindObservableSpec extends BaseSpec with MockitoSugar {
   val wrapper = mock[GridFSFindPublisher]
   val gridFSFindObservable = GridFSFindObservable(wrapper)
 
@@ -44,17 +45,9 @@ class GridFSFindObservableSpec extends BaseSpec with MockFactory {
     val batchSize = 20
     val filter = Document("{a: 1}")
     val limit = 10
-    val maxTime = Duration(10, "second") //scalatyle:ignore
+    val maxTime = Duration(10, "second") // scalatyle:ignore
     val skip = 5
     val sort = Document("{_id: 1}")
-
-    wrapper.expects(Symbol("batchSize"))(batchSize).once()
-    wrapper.expects(Symbol("filter"))(filter).once()
-    wrapper.expects(Symbol("limit"))(limit).once()
-    wrapper.expects(Symbol("maxTime"))(maxTime.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("noCursorTimeout"))(true).once()
-    wrapper.expects(Symbol("skip"))(skip).once()
-    wrapper.expects(Symbol("sort"))(sort).once()
 
     gridFSFindObservable.batchSize(batchSize)
     gridFSFindObservable.filter(filter)
@@ -63,6 +56,14 @@ class GridFSFindObservableSpec extends BaseSpec with MockFactory {
     gridFSFindObservable.noCursorTimeout(true)
     gridFSFindObservable.skip(skip)
     gridFSFindObservable.sort(sort)
+
+    verify(wrapper).batchSize(batchSize)
+    verify(wrapper).filter(filter)
+    verify(wrapper).limit(limit)
+    verify(wrapper).maxTime(maxTime.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).noCursorTimeout(true)
+    verify(wrapper).skip(skip)
+    verify(wrapper).sort(sort)
   }
 
 }

@@ -55,7 +55,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     private final int maxSize;
     private final ItemFactory<T> itemFactory;
 
-    private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
+    private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<>();
     private final StateAndPermits stateAndPermits;
     private final String poolClosedMessage;
 
@@ -162,8 +162,6 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     @Override
     public T get(final long timeout, final TimeUnit timeUnit) {
-        stateAndPermits.throwIfClosedOrPaused();
-
         if (!stateAndPermits.acquirePermit(timeout, timeUnit)) {
             throw new MongoTimeoutException(String.format("Timeout waiting for a pooled item after %d %s", timeout, timeUnit));
         }
@@ -183,7 +181,6 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     @Nullable
     T getImmediateUnfair() {
-        stateAndPermits.throwIfClosedOrPaused();
         T element = null;
         if (stateAndPermits.acquirePermitImmediateUnfair()) {
             element = available.pollLast();
@@ -221,7 +218,6 @@ public class ConcurrentPool<T> implements Pool<T> {
      * Otherwise, the action must {@linkplain #release(Object) release} the item.
      */
     public void ensureMinSize(final int minSize, final Consumer<T> initAndRelease) {
-        stateAndPermits.throwIfClosedOrPaused();
         while (getCount() < minSize) {
             if (!stateAndPermits.acquirePermit(0, TimeUnit.MILLISECONDS)) {
                 break;
@@ -284,12 +280,9 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     public String toString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append("pool: ")
-           .append(" maxSize: ").append(sizeToString(maxSize))
-           .append(" availableCount ").append(getAvailableCount())
-           .append(" inUseCount ").append(getInUseCount());
-        return buf.toString();
+        return "pool:  maxSize: " + sizeToString(maxSize)
+                + " availableCount " + getAvailableCount()
+                + " inUseCount " + getInUseCount();
     }
 
     /**
@@ -332,7 +325,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     @ThreadSafe
     private static final class StateAndPermits {
         private final Supplier<MongoServerUnavailableException> poolClosedExceptionSupplier;
-        private final ReentrantReadWriteLock lock;
+        private final ReentrantLock lock;
         private final Condition permitAvailableOrClosedOrPausedCondition;
         private volatile boolean paused;
         private volatile boolean closed;
@@ -373,8 +366,8 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         StateAndPermits(final int maxPermits, final Supplier<MongoServerUnavailableException> poolClosedExceptionSupplier) {
             this.poolClosedExceptionSupplier = poolClosedExceptionSupplier;
-            lock = new ReentrantReadWriteLock(true);
-            permitAvailableOrClosedOrPausedCondition = lock.writeLock().newCondition();
+            lock = new ReentrantLock(true);
+            permitAvailableOrClosedOrPausedCondition = lock.newCondition();
             paused = false;
             closed = false;
             this.maxPermits = maxPermits;
@@ -388,7 +381,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            lockUnfair(lock.writeLock());
+            lockUnfair(lock);
             try {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
@@ -399,7 +392,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                     return false;
                 }
             } finally {
-                lock.writeLock().unlock();
+                lock.unlock();
             }
         }
 
@@ -412,9 +405,9 @@ public class ConcurrentPool<T> implements Pool<T> {
         boolean acquirePermit(final long timeout, final TimeUnit unit) throws MongoInterruptedException {
             long remainingNanos = unit.toNanos(timeout);
             if (waitersEstimate.get() == 0) {
-                lockInterruptiblyUnfair(lock.writeLock());
+                lockInterruptiblyUnfair(lock);
             } else {
-                lockInterruptibly(lock.writeLock());
+                lockInterruptibly(lock);
             }
             try {
                 while (permits == 0
@@ -440,24 +433,24 @@ public class ConcurrentPool<T> implements Pool<T> {
                 permits--;
                 return true;
             } finally {
-                lock.writeLock().unlock();
+                lock.unlock();
             }
         }
 
         void releasePermit() {
-            lockUnfair(lock.writeLock());
+            lockUnfair(lock);
             try {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
                 permits++;
                 permitAvailableOrClosedOrPausedCondition.signal();
             } finally {
-                lock.writeLock().unlock();
+                lock.unlock();
             }
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            lockUnfair(lock.writeLock());
+            lockUnfair(lock);
             try {
                 if (!paused) {
                     this.paused = true;
@@ -465,18 +458,18 @@ public class ConcurrentPool<T> implements Pool<T> {
                 }
                 this.causeSupplier = assertNotNull(causeSupplier);
             } finally {
-                lock.writeLock().unlock();
+                lock.unlock();
             }
         }
 
         void ready() {
             if (paused) {
-                lockUnfair(lock.writeLock());
+                lockUnfair(lock);
                 try {
                     this.paused = false;
                     this.causeSupplier = null;
                 } finally {
-                    lock.writeLock().unlock();
+                    lock.unlock();
                 }
             }
         }
@@ -486,7 +479,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                lockUnfair(lock.writeLock());
+                lockUnfair(lock);
                 try {
                     if (!closed) {
                         closed = true;
@@ -494,13 +487,15 @@ public class ConcurrentPool<T> implements Pool<T> {
                         return true;
                     }
                 } finally {
-                    lock.writeLock().unlock();
+                    lock.unlock();
                 }
             }
             return false;
         }
 
         /**
+         * This method must be called by a {@link Thread} that holds the {@link #lock}.
+         *
          * @return {@code false} which means that the method did not throw.
          * The method returns to allow using it conveniently as part of a condition check when waiting on a {@link Condition}.
          * Short-circuiting operators {@code &&} and {@code ||} must not be used with this method to ensure that it is called.
@@ -514,14 +509,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                 throw poolClosedExceptionSupplier.get();
             }
             if (paused) {
-                lock.readLock().lock();
-                try {
-                    if (paused) {
-                        throw assertNotNull(assertNotNull(causeSupplier).get());
-                    }
-                } finally {
-                    lock.readLock().unlock();
-                }
+                throw assertNotNull(assertNotNull(causeSupplier).get());
             }
             return false;
         }
@@ -546,9 +534,9 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
     }
 
-    private static void lockInterruptiblyUnfair(final ReentrantReadWriteLock.WriteLock lock) throws MongoInterruptedException {
+    private static void lockInterruptiblyUnfair(final ReentrantLock lock) throws MongoInterruptedException {
         throwIfInterrupted();
-        // `WriteLock.tryLock` is unfair
+        // `ReentrantLock.tryLock` is unfair
         if (!lock.tryLock()) {
             try {
                 lock.lockInterruptibly();
@@ -561,13 +549,6 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     static void lockUnfair(final ReentrantLock lock) {
         // `ReentrantLock.tryLock` is unfair
-        if (!lock.tryLock()) {
-            lock.lock();
-        }
-    }
-
-    private static void lockUnfair(final ReentrantReadWriteLock.WriteLock lock) {
-        // `WriteLock.tryLock` is unfair
         if (!lock.tryLock()) {
             lock.lock();
         }

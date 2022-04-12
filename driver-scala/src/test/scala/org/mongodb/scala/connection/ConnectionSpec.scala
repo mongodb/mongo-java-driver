@@ -20,11 +20,11 @@ import java.net.{ InetAddress, InetSocketAddress }
 
 import com.mongodb.{ ServerAddress => JServerAddress }
 import org.mongodb.scala.{ BaseSpec, ServerAddress }
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
 
-class ConnectionSpec extends BaseSpec with MockFactory {
+class ConnectionSpec extends BaseSpec with MockitoSugar {
 
   "The connection namespace" should "have a AsynchronousSocketChannelStreamFactoryFactory companion" in {
     val asynchronousSocketChannelStreamFactoryFactory = AsynchronousSocketChannelStreamFactoryFactory()
