@@ -24,6 +24,7 @@ ext {
 dependencies {
     api project(path: ':bson', configuration: 'default')
     testImplementation project(':bson').sourceSets.test.output
+    testImplementation project(':driver-core')
 }
 
 afterEvaluate {
