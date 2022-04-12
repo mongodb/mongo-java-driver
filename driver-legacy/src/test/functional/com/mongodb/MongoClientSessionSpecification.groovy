@@ -35,6 +35,7 @@ import static Fixture.getMongoClientURI
 import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.Fixture.getMongoClient
 import static com.mongodb.MongoCredential.createCredential
 
@@ -325,7 +326,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         readConcern << [ReadConcern.DEFAULT, ReadConcern.LOCAL, ReadConcern.MAJORITY]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isAuthenticated() })
+    @IgnoreIf({ (!serverVersionAtLeast(3, 6) || !isAuthenticated()) || serverVersionGreaterThan('5.0') })
     @SuppressWarnings('deprecation')
     def 'should not use a default session when there is more than one authenticated user'() {
         given:

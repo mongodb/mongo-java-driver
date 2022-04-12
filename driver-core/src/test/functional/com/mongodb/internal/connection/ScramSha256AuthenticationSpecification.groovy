@@ -37,6 +37,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.createAsyncCluster
 import static com.mongodb.ClusterFixture.createCluster
 import static com.mongodb.ClusterFixture.isAuthenticated
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
@@ -115,9 +116,26 @@ class ScramSha256AuthenticationSpecification extends Specification {
                         [sha256Explicit],
                         [bothImplicit],
                         [bothExplicitSha1],
-                        [bothExplicitSha256],
-                        [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256]
+                        [bothExplicitSha256]
         ]
+    }
+
+    @IgnoreIf({ serverVersionGreaterThan('5.0') })
+    def 'test authentication and authorization with multiple credentials'() {
+        given:
+        def cluster = createCluster(
+                [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256])
+
+        when:
+        new CommandReadOperation<Document>('admin',
+                new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
+                .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT))
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        cluster.close()
     }
 
     def 'test authentication and authorization async'() {
@@ -145,10 +163,30 @@ class ScramSha256AuthenticationSpecification extends Specification {
                         [sha256Explicit],
                         [bothImplicit],
                         [bothExplicitSha1],
-                        [bothExplicitSha256],
-                        [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256]
+                        [bothExplicitSha256]
         ]
     }
+
+    @IgnoreIf({ serverVersionGreaterThan('5.0') })
+    def 'test authentication and authorization with multiple credentials async'() {
+        given:
+        def cluster = createAsyncCluster(
+                [sha1Implicit, sha1Explicit, sha256Implicit, sha256Explicit, bothImplicit, bothExplicitSha1, bothExplicitSha256])
+        def callback = new FutureResultCallback()
+
+        when:
+        // make this synchronous
+        new CommandReadOperation<Document>('admin',
+                new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
+                .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT), callback)
+        callback.get()
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        cluster.close()
+   }
 
     def 'test authentication and authorization failure with wrong mechanism'() {
         given:
