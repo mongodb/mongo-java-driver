@@ -24,6 +24,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Subject
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
@@ -51,7 +52,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
+    @IgnoreIf({ serverVersionAtLeast(3, 0) || serverVersionGreaterThan('5.0') })
     def 'should use provided hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -69,7 +70,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) || serverVersionGreaterThan('5.0') })
     def 'should use provided hints for queries mongod > 3.0'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -115,7 +116,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) || serverVersionGreaterThan('5.0') })
     def 'should use provided string hints for queries mongodb > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -198,7 +199,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.next().get('cursor') == 'BtreeCursor a_1'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) || serverVersionGreaterThan('5.0') })
     def 'should be able to use addSpecial with $explain mongod > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
