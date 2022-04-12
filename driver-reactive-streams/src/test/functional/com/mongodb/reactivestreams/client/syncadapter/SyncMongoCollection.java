@@ -260,7 +260,7 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public ChangeStreamIterable<T> watch(final List<? extends Bson> pipeline) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(wrapped.getDocumentClass()));
+        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline, wrapped.getDocumentClass()));
     }
 
     @Override
@@ -737,44 +737,44 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public void dropIndexes() {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes()).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes(unwrap(clientSession))).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes(dropIndexOptions)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final ClientSession clientSession, final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes(unwrap(clientSession), dropIndexOptions)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.renameCollection(newCollectionNamespace)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions renameCollectionOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.renameCollection(newCollectionNamespace, renameCollectionOptions)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(
             final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
             final RenameCollectionOptions renameCollectionOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace, renameCollectionOptions)).block(TIMEOUT_DURATION);
     }
 
     private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {
