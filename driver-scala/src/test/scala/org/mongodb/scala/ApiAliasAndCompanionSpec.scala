@@ -55,6 +55,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "DocumentToDBRefTransformer",
       "Function",
       "FutureResultCallback",
+      "Jep395RecordCodecProvider",
       "KerberosSubjectProvider",
       "MongoClients",
       "NonNull",
