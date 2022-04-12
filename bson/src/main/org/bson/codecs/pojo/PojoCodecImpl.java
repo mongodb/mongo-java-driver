@@ -15,28 +15,36 @@
  */
 package org.bson.codecs.pojo;
 
+import org.bson.BsonDocument;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonReaderMark;
 import org.bson.BsonType;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.RawBsonDocument;
+import org.bson.codecs.BsonValueCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static java.lang.String.format;
 
 
 final class PojoCodecImpl<T> extends PojoCodec<T> {
     private static final Logger LOGGER = Loggers.getLogger("PojoCodec");
+    private static final Codec<BsonValue> BSON_VALUE_CODEC = new BsonValueCodec();
     private final ClassModel<T> classModel;
     private final CodecRegistry registry;
     private final PropertyCodecRegistry propertyCodecRegistry;
@@ -142,7 +150,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private <S> void encodeProperty(final BsonWriter writer, final T instance, final EncoderContext encoderContext,
                                     final PropertyModel<S> propertyModel) {
         if (propertyModel != null && propertyModel.isReadable()) {
@@ -151,43 +158,57 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <S> void encodeValue(final BsonWriter writer,  final EncoderContext encoderContext, final PropertyModel<S> propertyModel,
                                  final S propertyValue) {
         if (propertyModel.shouldSerialize(propertyValue)) {
-            writer.writeName(propertyModel.getReadName());
-            if (propertyValue == null) {
-                writer.writeNull();
-            } else {
-                try {
-                    encoderContext.encodeWithChildContext(propertyModel.getCachedCodec(), writer, propertyValue);
-                } catch (CodecConfigurationException e) {
-                    throw new CodecConfigurationException(format("Failed to encode '%s'. Encoding '%s' errored with: %s",
-                            classModel.getName(), propertyModel.getReadName(), e.getMessage()), e);
+            try {
+                if (propertyModel.getPropertySerialization().inline()) {
+                    new RawBsonDocument(propertyValue, propertyModel.getCachedCodec()).forEach((k, v) -> {
+                        writer.writeName(k);
+                        encoderContext.encodeWithChildContext((Encoder<BsonValue>) registry.get(v.getClass()), writer, v);
+                    });
+                } else {
+                    writer.writeName(propertyModel.getReadName());
+                    if (propertyValue == null) {
+                        writer.writeNull();
+                    } else {
+                        encoderContext.encodeWithChildContext(propertyModel.getCachedCodec(), writer, propertyValue);
+                    }
                 }
+            } catch (CodecConfigurationException e) {
+                throw new CodecConfigurationException(format("Failed to encode '%s'. Encoding '%s' errored with: %s",
+                        classModel.getName(), propertyModel.getReadName(), e.getMessage()), e);
             }
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void decodeProperties(final BsonReader reader, final DecoderContext decoderContext, final InstanceCreator<T> instanceCreator) {
+        PropertyModel<?> inlineElementsPropertyModel = classModel.getPropertyModels()
+                .stream()
+                .filter(p -> p.getPropertySerialization().inline())
+                .findFirst()
+                .orElse(null);
+
+        BsonDocument extraElements = new BsonDocument();
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String name = reader.readName();
             if (classModel.useDiscriminator() && classModel.getDiscriminatorKey().equals(name)) {
                 reader.readString();
             } else {
-                decodePropertyModel(reader, decoderContext, instanceCreator, name, getPropertyModelByWriteName(classModel, name));
+                decodePropertyModel(reader, decoderContext, instanceCreator, name, getPropertyModelByWriteName(classModel, name), extraElements);
             }
         }
         reader.readEndDocument();
+        setPropertyValueBsonExtraElements(instanceCreator, extraElements, inlineElementsPropertyModel);
     }
 
-    @SuppressWarnings("unchecked")
     private <S> void decodePropertyModel(final BsonReader reader, final DecoderContext decoderContext,
                                          final InstanceCreator<T> instanceCreator, final String name,
-                                         final PropertyModel<S> propertyModel) {
+                                         final PropertyModel<S> propertyModel, @Nullable final BsonDocument extraElements) {
         if (propertyModel != null) {
-            try {
+            setPropertyValue(instanceCreator, () -> {
                 S value = null;
                 if (reader.getCurrentBsonType() == BsonType.NULL) {
                     reader.readNull();
@@ -199,18 +220,39 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                     }
                     value = decoderContext.decodeWithChildContext(codec, reader);
                 }
-                if (propertyModel.isWritable()) {
-                    instanceCreator.set(value, propertyModel);
-                }
-            } catch (BsonInvalidOperationException | CodecConfigurationException e) {
-                throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding '%s' errored with: %s",
-                        classModel.getName(), name, e.getMessage()), e);
-            }
-        } else {
+                return value;
+            }, propertyModel);
+        } else if (extraElements == null) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Found property not present in the ClassModel: %s", name));
             }
             reader.skipValue();
+        } else {
+            try {
+                extraElements.append(name, decoderContext.decodeWithChildContext(BSON_VALUE_CODEC, reader));
+            } catch (CodecConfigurationException e) {
+                throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding '%s' errored with: %s",
+                        classModel.getName(), name, e.getMessage()), e);
+            }
+        }
+    }
+
+    private <S> void setPropertyValue(final InstanceCreator<T> instanceCreator, final Supplier<S> valueSupplier,
+            final PropertyModel<S> propertyModel) {
+        try {
+            instanceCreator.set(valueSupplier.get(), propertyModel);
+        } catch (BsonInvalidOperationException | CodecConfigurationException e) {
+            throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding '%s' errored with: %s",
+                    classModel.getName(), propertyModel.getName(), e.getMessage()), e);
+        }
+    }
+
+    private <S> void setPropertyValueBsonExtraElements(final InstanceCreator<T> instanceCreator, final BsonDocument extraElements,
+             final PropertyModel<S> inlineElementsPropertyModel) {
+        if (!extraElements.isEmpty() && inlineElementsPropertyModel != null && inlineElementsPropertyModel.isWritable()) {
+            setPropertyValue(instanceCreator, () ->
+                    new RawBsonDocument(extraElements, BSON_VALUE_CODEC)
+                            .decode(inlineElementsPropertyModel.getCachedCodec()), inlineElementsPropertyModel);
         }
     }
 

@@ -16,11 +16,11 @@
 
 package org.bson.codecs.pojo;
 
-
 import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonExtraElements;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static java.lang.reflect.Modifier.isPublic;
@@ -91,6 +92,8 @@ final class ConventionAnnotationImpl implements Convention {
                 BsonRepresentation bsonRepresentation = (BsonRepresentation) annotation;
                 BsonType bsonRep =  bsonRepresentation.value();
                 propertyModelBuilder.bsonRepresentation(bsonRep);
+            } else if (annotation instanceof BsonExtraElements) {
+                processBsonExtraElementsAnnotation(propertyModelBuilder);
             }
         }
 
@@ -235,5 +238,23 @@ final class ConventionAnnotationImpl implements Convention {
         for (String propertyName : propertiesToRemove) {
             classModelBuilder.removeProperty(propertyName);
         }
+    }
+
+    private <T> void processBsonExtraElementsAnnotation(final PropertyModelBuilder<T> propertyModelBuilder) {
+        PropertyAccessor<T> propertyAccessor = propertyModelBuilder.getPropertyAccessor();
+        if (!(propertyAccessor instanceof PropertyAccessorImpl)) {
+            throw new CodecConfigurationException(format("The @BsonExtraElements annotation is not compatible with "
+                            + "propertyModelBuilder instances that have custom implementations of org.bson.codecs.pojo.PropertyAccessor: %s",
+                    propertyModelBuilder.getPropertyAccessor().getClass().getName()));
+        }
+
+        if (!Map.class.isAssignableFrom(propertyModelBuilder.getTypeData().getType())) {
+            throw new CodecConfigurationException(format("The @BsonExtraElements annotation is not compatible with "
+                            + "propertyModelBuilder with the following type: %s. "
+                            + "Please use a Document, BsonDocument or Map<String, Object> type.",
+                    propertyModelBuilder.getTypeData()));
+        }
+        propertyModelBuilder.propertySerialization(new PropertyModelSerializationInlineImpl<>(propertyModelBuilder.getPropertySerialization()));
+        propertyModelBuilder.propertyAccessor(new FieldPropertyAccessor<>((PropertyAccessorImpl<T>) propertyAccessor));
     }
 }
