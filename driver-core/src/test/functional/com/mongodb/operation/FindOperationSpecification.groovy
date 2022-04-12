@@ -698,7 +698,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
-    @IgnoreIf({ serverVersionGreaterThan('4.4') && isSharded() })
+    @IgnoreIf({ serverVersionGreaterThan('4.4') })
     def 'should explain with $explain modifier'() {
         given:
         def operation = new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec())
