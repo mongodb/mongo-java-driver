@@ -58,7 +58,7 @@ public class ClientEncryptionCustomEndpointTest {
     // Delay loading this class because one of the expected classes is MongoCryptException, which should only be loaded after we
     // determine that we're running on Java 8+ (since MongoCryptException is compiled with Java 8 target version)
     private final String wrappedExceptionClassName;
-    private final String messageContainedInException;
+    private final String    messageContainedInException;
 
     public ClientEncryptionCustomEndpointTest(@SuppressWarnings("unused") final String name,
                                               final BsonDocument masterKey,
@@ -154,7 +154,7 @@ public class ClientEncryptionCustomEndpointTest {
                 MongoClientException.class, "java.net.ConnectException", "Connection refused"});
         data.add(new Object[]{"invalid amazon region in endpoint",
                 getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-2.amazonaws.com")),
-                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "us-east-1"});
+                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", null});
         data.add(new Object[]{"invalid endpoint host",
                 getDefaultMasterKey().append("endpoint", new BsonString("example.com")),
                 MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "parse error"});

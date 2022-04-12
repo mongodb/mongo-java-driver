@@ -143,7 +143,7 @@ public class ClientEncryptionCustomEndpointTest {
                 MongoClientException.class, "java.net.ConnectException", "Connection refused"});
         data.add(new Object[]{"invalid amazon region in endpoint",
                 getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-2.amazonaws.com")),
-                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "us-east-1"});
+                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", null});
         data.add(new Object[]{"invalid endpoint host",
                 getDefaultMasterKey().append("endpoint", new BsonString("example.com")),
                 MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "parse error"});
