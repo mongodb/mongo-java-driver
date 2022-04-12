@@ -50,13 +50,6 @@ tasks.withType(Test) {
     }
 }
 
-tasks.withType(ScalaCompile) {
-    if(scalaVersion.startsWith("2.11")) {
-        // Better support SAM style closures in scala 2.11
-        scalaCompileOptions.additionalParameters = ["-Xexperimental"]
-    }
-}
-
 task integrationTest(type: Test) {
     delete 'build/test-it'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs

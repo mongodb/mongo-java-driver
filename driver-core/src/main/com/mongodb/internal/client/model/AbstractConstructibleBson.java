@@ -55,7 +55,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
         return baseDoc.isEmpty() && appended.isEmpty()
                 // eliminate the possibility of exposing internal state when it is empty to enforce immutability of empty objects
                 ? new BsonDocument()
-                : appended.isEmpty() ? baseDoc : newAppended(baseDoc, appended.toBsonDocument(documentClass, codecRegistry));
+                : appended.isEmpty() ? baseDoc : newMerged(baseDoc, appended.toBsonDocument(documentClass, codecRegistry));
     }
 
     /**
@@ -96,7 +96,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
                 + '}';
     }
 
-    private static BsonDocument newAppended(final BsonDocument base, final BsonDocument appended) {
+    private static BsonDocument newMerged(final BsonDocument base, final BsonDocument appended) {
         final BsonDocument result = base.clone();
         result.putAll(appended);
         return result;
