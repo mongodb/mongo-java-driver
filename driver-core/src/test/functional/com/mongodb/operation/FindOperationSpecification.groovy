@@ -436,6 +436,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @IgnoreIf({ serverVersionGreaterThan('5.0') })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
