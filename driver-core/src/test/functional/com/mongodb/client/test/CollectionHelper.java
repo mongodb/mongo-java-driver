@@ -16,6 +16,7 @@
 
 package com.mongodb.client.test;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
@@ -23,7 +24,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
-import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -55,7 +55,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
-import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -70,7 +69,7 @@ import static java.util.Collections.singletonList;
 public final class CollectionHelper<T> {
 
     private Codec<T> codec;
-    private CodecRegistry registry = CodecRegistries.fromProviders(Bson.DEFAULT_CODEC_REGISTRY, new GeoJsonCodecProvider());
+    private CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
     private MongoNamespace namespace;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
