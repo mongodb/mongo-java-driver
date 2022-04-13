@@ -40,7 +40,7 @@ ext {
     jnrUnixsocketVersion = '0.18'
     nettyVersion = '4.1.17.Final'
     snappyVersion = '1.1.4'
-    zstdVersion = '1.3.8-3'
+    zstdVersion = '1.4.9-1'
     mongoCryptVersion = '1.0.1'
     gitVersion = getGitVersion()
 }
