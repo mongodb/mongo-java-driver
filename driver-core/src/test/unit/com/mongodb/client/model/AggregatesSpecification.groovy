@@ -57,6 +57,7 @@ import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.search
+import static com.mongodb.client.model.Aggregates.searchMeta
 import static com.mongodb.client.model.Aggregates.set
 import static com.mongodb.client.model.Aggregates.setWindowFields
 import static com.mongodb.client.model.Aggregates.skip
@@ -608,12 +609,11 @@ class AggregatesSpecification extends Specification {
         }''')
     }
 
-    def 'should render $search with null options'() {
+    def 'should render $search with no options'() {
         when:
         BsonDocument searchDoc = toBson(
                 search(
-                        (SearchOperator) exists(fieldPath('fieldName')),
-                        null
+                        (SearchOperator) exists(fieldPath('fieldName'))
                 )
         )
 
@@ -629,14 +629,104 @@ class AggregatesSpecification extends Specification {
                 search(
                         (SearchCollector) facet(
                                 exists(fieldPath('fieldName')),
-                                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)]),
-                        null
+                                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)])
                 )
         )
 
         then:
         searchDoc == parse('''{
                 "$search": {
+                    "facet": {
+                        "operator": { "exists": { "path": "fieldName" } },
+                        "facets": {
+                          "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
+                        }
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $searchMeta'() {
+        when:
+        BsonDocument searchDoc = toBson(
+                searchMeta(
+                        (SearchOperator) exists(fieldPath('fieldName')),
+                        defaultSearchOptions()
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
+                    "exists": { "path": "fieldName" }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(
+                searchMeta(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('stringFacetName', fieldPath('fieldName1'))]),
+                        defaultSearchOptions()
+                                .index('indexName')
+                                .count(total())
+                                .highlight(paths([
+                                        fieldPath('fieldName1'),
+                                        fieldPath('fieldName2').multi('analyzerName'),
+                                        wildcardPath('field.name*')]))
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
+                    "facet": {
+                        "operator": { "exists": { "path": "fieldName" } },
+                        "facets": {
+                            "stringFacetName": { "type" : "string", "path": "fieldName1" }
+                        }
+                    },
+                    "index": "indexName",
+                    "count": { "type": "total" },
+                    "highlight": {
+                        "path": [
+                            "fieldName1",
+                            { "value": "fieldName2", "multi": "analyzerName" },
+                            { "wildcard": "field.name*" }
+                        ]
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $searchMeta with no options'() {
+        when:
+        BsonDocument searchDoc = toBson(
+                searchMeta(
+                        (SearchOperator) exists(fieldPath('fieldName'))
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
+                    "exists": { "path": "fieldName" }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(
+                searchMeta(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)])
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
                     "facet": {
                         "operator": { "exists": { "path": "fieldName" } },
                         "facets": {

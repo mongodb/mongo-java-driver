@@ -18,6 +18,9 @@ package org.mongodb.scala.model.search
 import com.mongodb.client.model.search.{ SearchPath => JSearchPath }
 
 /**
+ * A specification of document fields to be searched.
+ *
+ * @see [[https://www.mongodb.com/docs/atlas/atlas-search/path-construction/ Path]]
  * @since 4.7
  */
 object SearchPath {

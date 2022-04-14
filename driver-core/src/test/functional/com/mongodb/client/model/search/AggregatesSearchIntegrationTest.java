@@ -16,11 +16,14 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.assertions.Assertions;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonWriterSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -30,15 +33,19 @@ import java.time.Instant;
 import java.time.Month;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isAtlasSearchTest;
 import static com.mongodb.client.model.Aggregates.limit;
 import static com.mongodb.client.model.Aggregates.project;
 import static com.mongodb.client.model.Aggregates.replaceWith;
-import static com.mongodb.client.model.Aggregates.search;
 import static com.mongodb.client.model.Projections.computedSearchMeta;
 import static com.mongodb.client.model.Projections.metaSearchHighlights;
 import static com.mongodb.client.model.Projections.metaSearchScore;
@@ -54,6 +61,7 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -107,56 +115,128 @@ final class AggregatesSearchIntegrationTest {
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), new MongoNamespace("sample_mflix", "movies"));
     }
 
+    /**
+     * @param stageUnderTestCreator A {@link CustomizableSearchStageCreator} that is used to create both
+     * {@code $search} and {@code $searchMeta} stages. Any combination of an {@link SearchOperator}/{@link SearchCollector} and
+     * {@link SearchOptions} that is valid for the {@code $search} stage is also valid for the {@code $searchMeta} stage.
+     * This is why we use the same creator for both.
+     * @param accessories A list of {@link Accessory} objects that specify additional pipeline stages and an asserter.
+     * <ul>
+     *  <li>The item with index 0 is used with {@code $search};</li>
+     *  <li>the idem with index 1 is used with {@code $searchMeta}.</li>
+     * </ul>
+     */
     @ParameterizedTest(name = "{index} {0}")
     @MethodSource("args")
     void test(
-            final Bson stageUnderTest,
-            @Nullable final Iterable<Bson> postStages,
-            final Consumer<List<BsonDocument>> resultAsserter) {
-        final List<Bson> pipeline = new ArrayList<>();
-        pipeline.add(stageUnderTest);
-        if (postStages != null) {
-            postStages.forEach(pipeline::add);
+            final CustomizableSearchStageCreator stageUnderTestCreator,
+            final List<Accessory> accessories) {
+        List<BiFunction<Bson, SearchOptions, Bson>> stageUnderTestCustomizers = asList(
+                (bsonOperatorOrCollector, options) -> {
+                    if (bsonOperatorOrCollector instanceof SearchOperator) {
+                        return Aggregates.search((SearchOperator) bsonOperatorOrCollector, options);
+                    } else if (bsonOperatorOrCollector instanceof SearchCollector) {
+                        return Aggregates.search((SearchCollector) bsonOperatorOrCollector, options);
+                    } else {
+                        throw Assertions.fail();
+                    }
+                },
+                (bsonOperatorOrCollector, options) -> {
+                    if (bsonOperatorOrCollector instanceof SearchOperator) {
+                        return Aggregates.searchMeta((SearchOperator) bsonOperatorOrCollector, options);
+                    } else if (bsonOperatorOrCollector instanceof SearchCollector) {
+                        return Aggregates.searchMeta((SearchCollector) bsonOperatorOrCollector, options);
+                    } else {
+                        throw Assertions.fail();
+                    }
+                }
+        );
+        Assertions.assertTrue(stageUnderTestCustomizers.size() == accessories.size());
+        for (int i = 0; i < stageUnderTestCustomizers.size(); i++) {
+            Bson stageUnderTest = stageUnderTestCreator.apply(stageUnderTestCustomizers.get(i));
+            Accessory accessory = accessories.get(i);
+            final List<Bson> pipeline = new ArrayList<>();
+            pipeline.add(stageUnderTest);
+            pipeline.addAll(accessory.postStages);
+            accessory.resultAsserter.accept(
+                    collectionHelper.aggregate(pipeline),
+                    () -> "For reference, the pipeline (" + pipeline.size() + " elements) used in the test is\n[\n"
+                            + pipeline.stream()
+                            .map(Bson::toBsonDocument)
+                            .map(doc -> doc.toJson(JsonWriterSettings.builder().indent(true).build()))
+                            .collect(Collectors.joining(",\n"))
+                    + "\n]\n");
         }
-        resultAsserter.accept(collectionHelper.aggregate(pipeline));
     }
 
+    /**
+     * @see #test(CustomizableSearchStageCreator, List)
+     */
     private static Stream<Arguments> args() {
         return Stream.of(
+                // 1
                 arguments(
-                        search(
+                        stageCreator(
                                 exists(fieldPath("tomatoes.dvd")),
                                 null
                         ),
-                        asList(limit(1), project(metaSearchScore("score"))),
-                        Asserters.score(1)
+                        asList(
+                                new Accessory(
+                                        asList(limit(1), project(metaSearchScore("score"))),
+                                        Asserters.score(1)
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        // specifying a bare operator works as if `SearchCount.lowerBound` were specified
+                                        Asserters.countLowerBound(1_001)
+                                )
+                        )
                 ),
+                // 2
                 arguments(
-                        search(
+                        stageCreator(
                                 exists(fieldPath("tomatoes")),
                                 defaultSearchOptions()
                                         .option("index", "default")
-                                        .count(lowerBound().threshold(1_000))
+                                        .count(lowerBound().threshold(2_000))
                         ),
-                        asList(limit(1), project(computedSearchMeta("meta"))),
-                        Asserters.countLowerBound(1_000)
+                        asList(
+                                new Accessory(
+                                        asList(limit(1), project(computedSearchMeta("meta"))),
+                                        Asserters.countLowerBound("meta", 2_000)
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.countLowerBound(2_000)
+                                )
+                        )
                 ),
+                // 3
                 arguments(
-                        search(
+                        stageCreator(
                                 exists(fieldPath("plot")),
                                 defaultSearchOptions()
                                         .returnStoredSource(true)
                         ),
-                        singleton(limit(1)),
-                        Asserters.firstResult(doc -> {
-                            // assert that the fields specified in `storedSource` and "id" were returned
-                            assertNotNull(doc.get("_id"));
-                            assertFalse(doc.get("plot").asString().getValue().isEmpty());
-                            assertEquals(2, doc.size());
-                        })
+                        asList(
+                                new Accessory(
+                                        singleton(limit(1)),
+                                        Asserters.firstResult((doc, msgSupplier) -> {
+                                            // assert that the fields specified in `storedSource` and "id" were returned
+                                            assertNotNull(doc.get("_id"), msgSupplier);
+                                            assertFalse(doc.get("plot").asString().getValue().isEmpty(), msgSupplier);
+                                            assertEquals(2, doc.size(), msgSupplier);
+                                        })
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.nonEmpty()
+                                )
+                        )
                 ),
+                // 4
                 arguments(
-                        search(
+                        stageCreator(
                                 facet(
                                         exists(fieldPath("tomatoes")),
                                         asList(
@@ -180,56 +260,117 @@ final class AggregatesSearchIntegrationTest {
                                         )),
                                 defaultSearchOptions()
                         ),
-                        asList(limit(1), project(computedSearchMeta("meta")), replaceWith("$meta")),
-                        Asserters.firstResult(doc -> assertEquals(5, doc.getDocument("facet")
-                                .getDocument("tomatoesMeterFacet").getArray("buckets").size()))
+                        asList(
+                                new Accessory(
+                                        asList(limit(1), project(computedSearchMeta("meta")), replaceWith("$meta")),
+                                        Asserters.firstResult((doc, msgSupplier) -> assertEquals(5, doc.getDocument("facet")
+                                                .getDocument("tomatoesMeterFacet").getArray("buckets").size(), msgSupplier))
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.firstResult((doc, msgSupplier) -> assertEquals(5, doc.getDocument("facet")
+                                                .getDocument("tomatoesMeterFacet").getArray("buckets").size(), msgSupplier))
+                                )
+                        )
                 ),
+                // 5
                 arguments(
-                        search(
+                        stageCreator(
                                 exists(fieldPath("tomatoes")),
                                 defaultSearchOptions()
                                         .highlight(paths(
                                                 singleton(wildcardPath("pl*t")))
                                                 .maxCharsToExamine(100))
                         ),
-                        asList(limit(1), project(metaSearchHighlights("highlights"))),
-                        Asserters.nonEmpty()
+                        asList(
+                                new Accessory(
+                                        asList(limit(1), project(metaSearchHighlights("highlights"))),
+                                        Asserters.nonEmpty()
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.nonEmpty()
+                                )
+                        )
                 )
         );
     }
 
     private static final class Asserters {
-        private static Consumer<List<BsonDocument>> nonEmpty() {
-            return results -> assertFalse(results.isEmpty());
+        static Asserter nonEmpty() {
+            return decorate((results, msgSupplier) -> assertFalse(results.isEmpty(), msgSupplier));
         }
 
         /**
-         * Checks the value of the {@code "score"} field.
+         * Checks the value of the {@code "score"} field for each result document.
          */
-        private static Consumer<List<BsonDocument>> score(final double expectedScore) {
-            return results -> {
-                assertFalse(results.isEmpty());
+        static Asserter score(final double expectedScore) {
+            return decorate((results, msgSupplier) -> {
+                assertFalse(results.isEmpty(), msgSupplier);
                 for (BsonDocument result : results) {
-                    assertEquals(expectedScore, result.getNumber("score").doubleValue(), 0.000_1);
+                    assertEquals(expectedScore, result.getNumber("score").doubleValue(), 0.000_1, msgSupplier);
                 }
-            };
+            });
         }
 
         /**
-         * Checks the value of the {@code "meta.count.lowerBound"} field.
+         * Checks the value of the {@code "customMetaField.count.lowerBound"} field.
          */
-        private static Consumer<List<BsonDocument>> countLowerBound(final int expectedAtLeast) {
-            return firstResult(doc -> assertTrue(doc.getDocument("meta")
+        static Asserter countLowerBound(final String customMetaField, final int expectedAtLeast) {
+            return firstResult((doc, msgSupplier) -> assertTrue(doc.getDocument(customMetaField)
                     .getDocument("count")
                     .getNumber("lowerBound")
                     .intValue() >= expectedAtLeast));
         }
 
-        private static Consumer<List<BsonDocument>> firstResult(final Consumer<BsonDocument> asserter) {
-            return results -> {
-                assertFalse(results.isEmpty());
-                asserter.accept(results.get(0));
-            };
+        /**
+         * Checks the value of the {@code "count.lowerBound"} field.
+         */
+        static Asserter countLowerBound(final int expectedAtLeast) {
+            return firstResult((doc, msgSupplier) -> assertTrue(doc.getDocument("count")
+                    .getNumber("lowerBound")
+                    .intValue() >= expectedAtLeast));
+        }
+
+        static Asserter firstResult(final BiConsumer<BsonDocument, Supplier<String>> asserter) {
+            return decorate((results, msgSupplier) -> {
+                assertFalse(results.isEmpty(), msgSupplier);
+                asserter.accept(results.get(0), msgSupplier);
+            });
+        }
+
+        private static Asserter decorate(final Asserter asserter) {
+            return (results, msgSupplier) -> asserter.accept(
+                    results,
+                    () -> msgSupplier.get()
+                            + "\nthe results (" + results.size() + " elements) are\n["
+                            + results.stream()
+                            .map(doc -> doc.toJson(JsonWriterSettings.builder().indent(true).build()))
+                            .collect(Collectors.joining(",\n"))
+                            + "\n]\n"
+            );
+        }
+    }
+
+    private static CustomizableSearchStageCreator stageCreator(final Bson operatorOrCollector, @Nullable final SearchOptions options) {
+        return customizer -> customizer.apply(operatorOrCollector, options);
+    }
+
+    @FunctionalInterface
+    private interface CustomizableSearchStageCreator extends Function<BiFunction<Bson, SearchOptions, Bson>, Bson> {
+    }
+
+    @FunctionalInterface
+    private interface Asserter extends BiConsumer<List<BsonDocument>, Supplier<String>> {
+    }
+
+    private static final class Accessory {
+        private final Collection<Bson> postStages;
+        private final BiConsumer<List<BsonDocument>, Supplier<String>> resultAsserter;
+
+        Accessory(final Collection<Bson> postStages, final BiConsumer<List<BsonDocument>, Supplier<String>> resultAsserter) {
+            this.postStages = postStages;
+            this.resultAsserter = resultAsserter;
         }
     }
 }

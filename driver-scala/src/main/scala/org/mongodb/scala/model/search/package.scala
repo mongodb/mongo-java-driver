@@ -20,6 +20,13 @@ import com.mongodb.annotations.{ Beta, Evolving }
 /**
  * Query building API for MongoDB Atlas full-text search.
  *
+ * While all the building blocks of this API, such as
+ * [[SearchOptions]], [[SearchHighlight]], etc.,
+ * are not necessary immutable, they are unmodifiable due to methods like
+ * `SearchHighlight.maxCharsToExamine` returning new instances instead of modifying the instance
+ * on which they are called. This allows storing and using such instances as templates.
+ *
+ * @see `Aggregates.search`
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/ Atlas Search]]
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/ Atlas Search aggregation pipeline stages]]
  * @since 4.7
@@ -58,7 +65,7 @@ package object search {
   type FacetSearchCollector = com.mongodb.client.model.search.FacetSearchCollector
 
   /**
-   * This interface represents optional fields of the `\$search` pipeline stage of an aggregation pipeline.
+   * Represents optional fields of the `\$search` pipeline stage of an aggregation pipeline.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search syntax]]
    */

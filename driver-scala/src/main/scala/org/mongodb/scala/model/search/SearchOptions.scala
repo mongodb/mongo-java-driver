@@ -18,7 +18,7 @@ package org.mongodb.scala.model.search
 import com.mongodb.client.model.search.{ SearchOptions => JSearchOptions }
 
 /**
- * This interface represents optional fields of the `\$search` pipeline stage of an aggregation pipeline.
+ * Represents optional fields of the `\$search` pipeline stage of an aggregation pipeline.
  *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search syntax]]
  * @since 4.7

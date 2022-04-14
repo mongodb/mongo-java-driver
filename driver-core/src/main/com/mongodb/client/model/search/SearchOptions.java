@@ -21,7 +21,7 @@ import com.mongodb.client.model.Aggregates;
 import org.bson.conversions.Bson;
 
 /**
- * This interface represents optional fields of the {@code $search} pipeline stage of an aggregation pipeline.
+ * Represents optional fields of the {@code $search} pipeline stage of an aggregation pipeline.
  *
  * @see Aggregates#search(SearchOperator, SearchOptions)
  * @see Aggregates#search(SearchCollector, SearchOptions)
