@@ -46,14 +46,6 @@ public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
                     "Test that comment is not set on getMore - pre 4.4"
             );
 
-    private static final List<String> CURSOR_OPEN_TIMING_SENSITIVE_TESTS =
-            Arrays.asList(
-                    "Test with document comment",
-                    "Test with document comment - pre 4.4",
-                    "Test with string comment",
-                    "Test that comment is set on getMore"
-            );
-
     public ChangeStreamsTest(@SuppressWarnings("unused") final String fileDescription,
                              @SuppressWarnings("unused") final String testDescription,
                              final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
@@ -63,9 +55,7 @@ public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
         assumeFalse(ERROR_REQUIRED_FROM_CHANGE_STREAM_INITIALIZATION_TESTS.contains(testDescription));
         assumeFalse(EVENT_SENSITIVE_TESTS.contains(testDescription));
 
-        if (CURSOR_OPEN_TIMING_SENSITIVE_TESTS.contains(testDescription)) {
-            enableSleepAfterCursorOpen(256);
-        }
+        enableSleepAfterCursorOpen(256);
     }
 
     @After
