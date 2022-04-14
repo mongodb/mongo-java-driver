@@ -645,6 +645,11 @@
     },
     {
       "description": "Test server error on projecting out _id",
+      "runOnRequirements": [
+        {
+          "minServerVersion": "4.2"
+        }
+      ],
       "operations": [
         {
           "name": "createChangeStream",
