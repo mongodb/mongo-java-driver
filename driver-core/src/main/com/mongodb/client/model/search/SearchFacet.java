@@ -27,7 +27,6 @@ import org.bson.conversions.Bson;
 
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -128,15 +127,14 @@ public interface SearchFacet extends Bson {
      */
     static Bson combineToBson(final Iterable<? extends SearchFacet> facets) {
         notNull("facets", facets);
-        Iterator<? extends SearchFacet> facetIterator = facets.iterator();
-        isTrueArgument("facets must not be empty", facetIterator.hasNext());
+        isTrueArgument("facets must not be empty", sizeAtLeast(facets, 1));
         return new Bson() {
             @Override
             public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
                 Set<String> names = new HashSet<>();
                 BsonDocument result = new BsonDocument();
-                while (facetIterator.hasNext()) {
-                    BsonDocument doc = facetIterator.next().toBsonDocument(documentClass, codecRegistry);
+                for (final SearchFacet facet : facets) {
+                    BsonDocument doc = facet.toBsonDocument(documentClass, codecRegistry);
                     assertTrue(doc.size() == 1);
                     Map.Entry<String, BsonValue> entry = doc.entrySet().iterator().next();
                     String name = entry.getKey();
