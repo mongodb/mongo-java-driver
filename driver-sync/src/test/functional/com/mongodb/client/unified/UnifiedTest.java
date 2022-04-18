@@ -145,7 +145,8 @@ public abstract class UnifiedTest {
                 || schemaVersion.startsWith("1.3")
                 || schemaVersion.startsWith("1.4")
                 || schemaVersion.startsWith("1.5")
-                || schemaVersion.startsWith("1.6"));
+                || schemaVersion.startsWith("1.6")
+                || schemaVersion.startsWith("1.7"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
