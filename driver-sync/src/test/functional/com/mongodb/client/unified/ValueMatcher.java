@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 final class ValueMatcher {
@@ -39,92 +41,105 @@ final class ValueMatcher {
     }
 
     public void assertValuesMatch(final BsonValue expected, final BsonValue actual) {
-        assertValuesMatch(expected, actual, true, null, -1);
+        assertValuesMatch(expected, actual, null, -1);
     }
 
-    private void assertValuesMatch(final BsonValue initialExpected, final BsonValue actual, final boolean isRoot,
-                                   final @Nullable String keyContext, final int arrayPositionContext) {
+    private void assertValuesMatch(final BsonValue initialExpected, final @Nullable BsonValue actual,
+            final @Nullable String keyContext, final int arrayPositionContext) {
         BsonValue expected = initialExpected;
         context.push(ContextElement.ofValueMatcher(expected, actual, keyContext, arrayPositionContext));
-        if (initialExpected.isDocument() && initialExpected.asDocument().size() == 1
-                && initialExpected.asDocument().getFirstKey().startsWith("$$")) {
-            BsonDocument expectedDocument = initialExpected.asDocument();
 
-            switch (expectedDocument.getFirstKey()) {
-                case "$$unsetOrMatches":
-                    if (actual == null) {
+        try {
+            if (initialExpected.isDocument() && initialExpected.asDocument().size() == 1
+                    && initialExpected.asDocument().getFirstKey().startsWith("$$")) {
+                BsonDocument expectedDocument = initialExpected.asDocument();
+
+                switch (expectedDocument.getFirstKey()) {
+                    case "$$exists":
+                        if (expectedDocument.getBoolean("$$exists").getValue()) {
+                            assertNotNull(context.getMessage("Actual document must contain key " + keyContext), actual);
+                        } else {
+                            assertNull(context.getMessage("Actual document must not contain key " + keyContext), actual);
+                        }
                         return;
-                    }
-                    expected = expectedDocument.get("$$unsetOrMatches");
-                    break;
-                case "$$type":
-                    assertExpectedType(actual, expectedDocument.get("$$type"));
-                    return;
-                case "$$matchesHexBytes":
-                    expected = expectedDocument.getString("$$matchesHexBytes");
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
-            }
-        }
-
-        if (expected.isDocument()) {
-            BsonDocument expectedDocument = expected.asDocument();
-            assertTrue(context.getMessage("Actual value must be a document but is " + actual.getBsonType()), actual.isDocument());
-            BsonDocument actualDocument = actual.asDocument();
-            expectedDocument.forEach((key, value) -> {
-                if (value.isDocument() && value.asDocument().size() == 1 && value.asDocument().getFirstKey().startsWith("$$")) {
-                    switch (value.asDocument().getFirstKey()) {
-                        case "$$exists":
-                            if (value.asDocument().getBoolean("$$exists").getValue()) {
-                                assertTrue(context.getMessage("Actual document must contain key " + key),
-                                        actualDocument.containsKey(key));
-                            } else {
-                                assertFalse(context.getMessage("Actual document must not contain key " + key),
-                                        actualDocument.containsKey(key));
-                            }
+                    case "$$unsetOrMatches":
+                        if (actual == null) {
                             return;
-                        case "$$type":
-                            assertExpectedType(actualDocument.get(key), value.asDocument().get("$$type"));
-                            return;
-                        case "$$unsetOrMatches":
-                            if (!actualDocument.containsKey(key)) {
-                                return;
-                            }
-                            value = value.asDocument().get("$$unsetOrMatches");
-                            break;
-                        case "$$matchesEntity":
-                            value = entities.getResult(value.asDocument().getString("$$matchesEntity").getValue());
-                            break;
-                        case "$$matchesHexBytes":
-                            value = value.asDocument().getString("$$matchesHexBytes");
-                            break;
-                        case "$$sessionLsid":
-                            value = entities.getSessionIdentifier(value.asDocument().getString("$$sessionLsid").getValue());
-                            break;
-                        default:
-                            throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
-                    }
+                        }
+                        expected = expectedDocument.get("$$unsetOrMatches");
+                        break;
+                    case "$$type":
+                        assertExpectedType(actual, expectedDocument.get("$$type"));
+                        return;
+                    case "$$matchesHexBytes":
+                        expected = expectedDocument.getString("$$matchesHexBytes");
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
                 }
-
-                assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
-                assertValuesMatch(value, actualDocument.get(key), false, key, -1);
-            });
-        } else if (expected.isArray()) {
-            assertTrue(context.getMessage("Actual value must be an array but is " + actual.getBsonType()), actual.isArray());
-            assertEquals(context.getMessage("Arrays must be the same size"), expected.asArray().size(), actual.asArray().size());
-            for (int i = 0; i < expected.asArray().size(); i++) {
-                assertValuesMatch(expected.asArray().get(i), actual.asArray().get(i), false, keyContext, i);
             }
-        } else if (expected.isNumber()) {
-            assertTrue(context.getMessage("Expected a number"), actual.isNumber());
-            assertEquals(context.getMessage("Expected BSON numbers to be equal"),
-                    expected.asNumber().doubleValue(), actual.asNumber().doubleValue(), 0.0);
-        } else {
-            assertEquals(context.getMessage("Expected BSON types to be equal"), expected.getBsonType(), actual.getBsonType());
-            assertEquals(context.getMessage("Expected BSON values to be equal"), expected, actual);
+
+            assertNotNull(context.getMessage("Actual value must contain key " + keyContext), actual);
+
+            if (expected.isDocument()) {
+                BsonDocument expectedDocument = expected.asDocument();
+                assertTrue(context.getMessage("Actual value must be a document but is " + actual.getBsonType()), actual.isDocument());
+                BsonDocument actualDocument = actual.asDocument();
+                expectedDocument.forEach((key, value) -> {
+                    if (value.isDocument() && value.asDocument().size() == 1 && value.asDocument().getFirstKey().startsWith("$$")) {
+                        switch (value.asDocument().getFirstKey()) {
+                            case "$$exists":
+                                if (value.asDocument().getBoolean("$$exists").getValue()) {
+                                    assertTrue(context.getMessage("Actual document must contain key " + key),
+                                            actualDocument.containsKey(key));
+                                } else {
+                                    assertFalse(context.getMessage("Actual document must not contain key " + key),
+                                            actualDocument.containsKey(key));
+                                }
+                                return;
+                            case "$$type":
+                                assertExpectedType(actualDocument.get(key), value.asDocument().get("$$type"));
+                                return;
+                            case "$$unsetOrMatches":
+                                if (!actualDocument.containsKey(key)) {
+                                    return;
+                                }
+                                value = value.asDocument().get("$$unsetOrMatches");
+                                break;
+                            case "$$matchesEntity":
+                                value = entities.getResult(value.asDocument().getString("$$matchesEntity").getValue());
+                                break;
+                            case "$$matchesHexBytes":
+                                value = value.asDocument().getString("$$matchesHexBytes");
+                                break;
+                            case "$$sessionLsid":
+                                value = entities.getSessionIdentifier(value.asDocument().getString("$$sessionLsid").getValue());
+                                break;
+                            default:
+                                throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
+                        }
+                    }
+
+                    assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
+                    assertValuesMatch(value, actualDocument.get(key), key, -1);
+                });
+            } else if (expected.isArray()) {
+                assertTrue(context.getMessage("Actual value must be an array but is " + actual.getBsonType()), actual.isArray());
+                assertEquals(context.getMessage("Arrays must be the same size"), expected.asArray().size(), actual.asArray().size());
+                for (int i = 0; i < expected.asArray().size(); i++) {
+                    assertValuesMatch(expected.asArray().get(i), actual.asArray().get(i), keyContext, i);
+                }
+            } else if (expected.isNumber()) {
+                assertTrue(context.getMessage("Expected a number"), actual.isNumber());
+                assertEquals(context.getMessage("Expected BSON numbers to be equal"),
+                        expected.asNumber().doubleValue(), actual.asNumber().doubleValue(), 0.0);
+            } else {
+                assertEquals(context.getMessage("Expected BSON types to be equal"), expected.getBsonType(), actual.getBsonType());
+                assertEquals(context.getMessage("Expected BSON values to be equal"), expected, actual);
+            }
+        } finally {
+            context.pop();
         }
-        context.pop();
     }
 
     private void assertExpectedType(final BsonValue actualValue, final BsonValue expectedTypes) {
