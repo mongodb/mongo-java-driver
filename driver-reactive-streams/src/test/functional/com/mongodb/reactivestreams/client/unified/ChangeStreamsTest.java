@@ -37,7 +37,9 @@ public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
     private static final List<String> ERROR_REQUIRED_FROM_CHANGE_STREAM_INITIALIZATION_TESTS =
             Arrays.asList(
                     "Test with document comment - pre 4.4",
-                    "Change Stream should error when an invalid aggregation stage is passed in"
+                    "Change Stream should error when an invalid aggregation stage is passed in",
+                    "The watch helper must not throw a custom exception when executed against a single server topology, " +
+                            "but instead depend on a server error"
             );
 
     private static final List<String> EVENT_SENSITIVE_TESTS =
