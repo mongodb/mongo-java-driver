@@ -151,6 +151,12 @@
                       "u": {
                         "_id": 1,
                         "x": "replaced"
+                      },
+                      "multi": {
+                        "$$unsetOrMatches": false
+                      },
+                      "upsert": {
+                        "$$unsetOrMatches": false
                       }
                     }
                   ],
@@ -172,6 +178,12 @@
                         "$set": {
                           "x": "updated"
                         }
+                      },
+                      "multi": {
+                        "$$unsetOrMatches": false
+                      },
+                      "upsert": {
+                        "$$unsetOrMatches": false
                       }
                     }
                   ],
@@ -330,6 +342,12 @@
                       "u": {
                         "_id": 1,
                         "x": "replaced"
+                      },
+                      "multi": {
+                        "$$unsetOrMatches": false
+                      },
+                      "upsert": {
+                        "$$unsetOrMatches": false
                       }
                     }
                   ],
@@ -353,6 +371,12 @@
                         "$set": {
                           "x": "updated"
                         }
+                      },
+                      "multi": {
+                        "$$unsetOrMatches": false
+                      },
+                      "upsert": {
+                        "$$unsetOrMatches": false
                       }
                     }
                   ],
