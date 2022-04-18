@@ -320,7 +320,7 @@ Prerequisites  The example below requires a restaurants collection in the test d
       <pubDate>Thu, 09 Jun 2016 12:47:43 -0400</pubDate>
       
       <guid>/mongo-java-driver/4.5/whats-new/</guid>
-      <description>What&amp;rsquo;s new in 4.4  Compatibility with MongoDB 5.1 and support for Java 17 Added support for index hints in an AggregateIterable Added support for the $merge and $out aggregation stages on secondaries Use of the mergeObjects() method in the Updates builder DocumentCodec does not ignore a CodecRegistry when writing to an Iterable or a Map instance  What&amp;rsquo;s new in 4.3 This release fully supports all MongoDB releases from versions 2.</description>
+      <description>What&amp;rsquo;s new in 4.5  Refer to What&amp;rsquo;s New - Java Sync Documentation for more information.  What&amp;rsquo;s new in 4.4  Compatibility with MongoDB 5.1 and support for Java 17 Added support for index hints in an AggregateIterable Added support for the $merge and $out aggregation stages on secondaries Use of the mergeObjects() method in the Updates builder DocumentCodec does not ignore a CodecRegistry when writing to an Iterable or a Map instance  What&amp;rsquo;s new in 4.</description>
     </item>
     
     <item>
@@ -1237,7 +1237,7 @@ Previous Releases    Release Documentation     4.4.x Reference &amp;#124; API   
       
       <guid>/mongo-java-driver/4.5/</guid>
       <description>MongoDB Java Driver Documentation Welcome to the MongoDB JVM driver documentation hub for the 4.4 drivers release. Please note that the primary documentation is now located on the MongoDB domain
-What&amp;rsquo;s New in 4.4 For key new features of 4.4, see What&amp;rsquo;s New.
+What&amp;rsquo;s New in 4.5 For key new features of 4.5, see What&amp;rsquo;s New.
 Upgrade To upgrade, refer to the Upgrade Considerations documentation.
 MongoDB Driver For the synchronous MongoDB Driver, see MongoDB Driver section.
 MongoDB Reactive Streams Driver For the MongoDB Reactive Streams Driver, see MongoDB Reactive Streams Driver section.</description>
