@@ -55,6 +55,9 @@ public class Jep395RecordCodecProvider implements CodecProvider {
         return RECORD_CODEC_PROVIDER != null ? RECORD_CODEC_PROVIDER.get(clazz, registry) : null;
     }
 
+    /**
+     * @return true if records are supported
+     */
     @VisibleForTesting(otherwise = PRIVATE)
     public boolean hasRecordSupport() {
         return RECORD_CODEC_PROVIDER != null;
