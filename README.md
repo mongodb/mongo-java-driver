@@ -116,13 +116,17 @@ A couple of manual configuration steps are required to run the code in IntelliJ:
 - Java 9+ is required to build and compile the source.
 
 - **Error:** `java: cannot find symbol: class SNIHostName location: package javax.net.ssl`<br>
- **Fix:** Settings > Build, Execution, Deployment > Compiler > Java Compiler - untick "Use '--release' option for cross-compilation (Java 9 and later)"
+ **Fix:** Settings/Preferences > Build, Execution, Deployment > Compiler > Java Compiler - untick "Use '--release' option for 
+  cross-compilation (Java 9 and later)"
 
 - **Error:** `java: package com.mongodb.internal.build does not exist`<br>
  **Fixes:** Any of the following: <br>
- - Run the `compileBuildConfig` task: eg: `./gradlew compileBuildConfig` or via Gradle > driver-core > Tasks > other > compileBuildConfig
- - Set `compileBuildConfig` to execute Before Build. via Gradle > Tasks > other > right click compileBuildConfig - click on "Execute Before Build" 
- - Delegate all build actions to Gradle: Settings > Build, Execution, Deployment > Build Tools > Gradle > Runner - tick "Delegate IDE build/run actions to gradle"
+  - Run the `generateBuildConfig` task: eg: `./gradlew generateBuildConfig` or via Gradle > driver-core > Tasks > buildconfig >
+ generateBuildConfig
+  - Set `generateBuildConfig` to execute Before Build. via Gradle > Tasks > buildconfig > right click generateBuildConfig - click on 
+   "Execute Before Build" 
+  - Delegate all build actions to Gradle: Settings/Preferences > Build, Execution, Deployment > Build Tools > Gradle > Build and run 
+  using/Run tests using - select "Gradle"
 
 ## Maintainers
 
