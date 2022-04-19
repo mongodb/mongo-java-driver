@@ -23,13 +23,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation that stores extra bson elements into a field and serializes them back inline.
+ * An annotation that configures a property to be used as storage for any extra BSON elements that are not already mapped to other
+ * properties. All extra elements will be encoded from the BSON document into the annotated property, and encoded from the annotated
+ * property into the BSON document.
  *
- * <p>Can only be used on a single field in a POJO. Field must be either {@code Document}, {@code BsonDocument} or
- * {@code Map<String, Object>}.
+ * <p>Can only be used on a single field in a POJO. Field must be a {@code Map<String, Object>} instance eg. {@code Document}.
  * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
  *
- * @since 4.6
+ * @since 4.7
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION
  */
 @Documented

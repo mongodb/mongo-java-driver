@@ -16,13 +16,14 @@
 package org.bson.codecs.pojo;
 
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
+import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonReaderMark;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonValueCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -164,10 +165,12 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         if (propertyModel.shouldSerialize(propertyValue)) {
             try {
                 if (propertyModel.getPropertySerialization().inline()) {
-                    new RawBsonDocument(propertyValue, propertyModel.getCachedCodec()).forEach((k, v) -> {
-                        writer.writeName(k);
-                        encoderContext.encodeWithChildContext((Encoder<BsonValue>) registry.get(v.getClass()), writer, v);
-                    });
+                    if (propertyValue != null) {
+                        new BsonDocumentWrapper<>(propertyValue, propertyModel.getCachedCodec()).forEach((k, v) -> {
+                            writer.writeName(k);
+                            encoderContext.encodeWithChildContext((Encoder<BsonValue>) registry.get(v.getClass()), writer, v);
+                        });
+                    }
                 } else {
                     writer.writeName(propertyModel.getReadName());
                     if (propertyValue == null) {
@@ -190,7 +193,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 .findFirst()
                 .orElse(null);
 
-        BsonDocument extraElements = new BsonDocument();
+        BsonDocument extraElements = inlineElementsPropertyModel  == null ? null : new BsonDocument();
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String name = reader.readName();
@@ -247,12 +250,16 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         }
     }
 
-    private <S> void setPropertyValueBsonExtraElements(final InstanceCreator<T> instanceCreator, final BsonDocument extraElements,
+    private <S> void setPropertyValueBsonExtraElements(final InstanceCreator<T> instanceCreator, @Nullable final BsonDocument extraElements,
              final PropertyModel<S> inlineElementsPropertyModel) {
-        if (!extraElements.isEmpty() && inlineElementsPropertyModel != null && inlineElementsPropertyModel.isWritable()) {
+        if (extraElements != null
+                && !extraElements.isEmpty()
+                && inlineElementsPropertyModel != null
+                && inlineElementsPropertyModel.isWritable()) {
             setPropertyValue(instanceCreator, () ->
-                    new RawBsonDocument(extraElements, BSON_VALUE_CODEC)
-                            .decode(inlineElementsPropertyModel.getCachedCodec()), inlineElementsPropertyModel);
+                    inlineElementsPropertyModel.getCachedCodec()
+                            .decode(new BsonDocumentReader(extraElements), DecoderContext.builder().build()),
+                    inlineElementsPropertyModel);
         }
     }
 

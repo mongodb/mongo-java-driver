@@ -520,7 +520,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(BsonRepresentationModel.class),
                 "{'_id': {'$oid': '111111111111111111111111'}, 'age': 1}"));
 
-        data.add(new TestData("BsonExtraElements will no extra data",
+        data.add(new TestData("BsonExtraElements with no extra data",
                 new BsonExtraElementsModel(42, "myString", null),
                 getPojoCodecProviderBuilder(BsonExtraElementsModel.class),
                 "{'integerField': 42, 'stringField': 'myString'}"));
