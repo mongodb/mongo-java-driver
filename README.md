@@ -113,7 +113,7 @@ the number of available file descriptors prior to starting mongod as described i
 
 A couple of manual configuration steps are required to run the code in IntelliJ:
 
-- Java 9+ is required to build and compile the source.
+- Java 17+ is required to build and compile the source.
 
 - **Error:** `java: cannot find symbol: class SNIHostName location: package javax.net.ssl`<br>
  **Fix:** Settings > Build, Execution, Deployment > Compiler > Java Compiler - untick "Use '--release' option for cross-compilation (Java 9 and later)"
