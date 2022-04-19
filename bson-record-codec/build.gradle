@@ -30,10 +30,6 @@ dependencies {
 afterEvaluate {
     jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.bson.record.codec'
     jar.manifest.attributes['Bundle-SymbolicName'] = 'org.mongodb.bson-record-codec'
-    jar.manifest.attributes['Import-Package'] = [
-            'org.slf4j.*;resolution:=optional',
-            '*',
-    ].join(',')
 }
 
 tasks.withType(Test) {
