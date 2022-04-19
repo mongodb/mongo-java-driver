@@ -79,6 +79,7 @@ task aggregatedScalaDoc(type: ScalaDoc) {
 
     scalaDocOptions.additionalParameters = ["-doc-root-content", "${project.rootDir}/driver-scala/rootdoc.txt" as String]
 }
+project.parent.tasks.named("docs"){ it.dependsOn(aggregatedScalaDoc) }
 
 configurations {
     integrationTestImplementation {
