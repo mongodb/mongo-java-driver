@@ -22,7 +22,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * The core part of the `\$search` pipeline stage of an aggregation pipeline.
  *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
- * @since 4.6
+ * @since 4.7
  */
 object SearchOperator {
 

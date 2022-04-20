@@ -31,7 +31,7 @@ import static org.bson.assertions.Assertions.notNull;
  * You may use the {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}, to extract this metadata.
  *
  * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
- * @since 4.6
+ * @since 4.7
  */
 @Evolving
 public interface SearchCollector extends Bson {

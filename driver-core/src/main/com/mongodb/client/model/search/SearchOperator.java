@@ -26,7 +26,7 @@ import static org.bson.assertions.Assertions.notNull;
  * The core part of the {@link Aggregates#search(SearchOperator, SearchOptions) $search} pipeline stage of an aggregation pipeline.
  *
  * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
- * @since 4.6
+ * @since 4.7
  */
 @Evolving
 public interface SearchOperator extends Bson {

@@ -669,7 +669,7 @@ public final class Aggregates {
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
      * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @since 4.6
+     * @since 4.7
      */
     public static Bson search(final SearchOperator operator) {
         return search(operator, null);
@@ -691,7 +691,7 @@ public final class Aggregates {
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
      * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @since 4.6
+     * @since 4.7
      */
     public static Bson search(final SearchOperator operator, @Nullable final SearchOptions options) {
         return new SearchStage(notNull("operator", operator), options);
@@ -708,7 +708,7 @@ public final class Aggregates {
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
      * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @since 4.6
+     * @since 4.7
      */
     public static Bson search(final SearchCollector collector) {
         return new SearchStage(collector, null);
@@ -728,7 +728,7 @@ public final class Aggregates {
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
      * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @since 4.6
+     * @since 4.7
      */
     public static Bson search(final SearchCollector collector, @Nullable final SearchOptions options) {
         return new SearchStage(notNull("collector", collector), options);

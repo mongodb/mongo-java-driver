@@ -493,7 +493,7 @@ object Aggregates {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
-   * @since 4.6
+   * @since 4.7
    */
   def search(operator: SearchOperator, options: SearchOptions): Bson =
     JAggregates.search(operator, options)
@@ -512,7 +512,7 @@ object Aggregates {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
-   * @since 4.6
+   * @since 4.7
    */
   def search(collector: SearchCollector, options: SearchOptions): Bson =
     JAggregates.search(collector, options)

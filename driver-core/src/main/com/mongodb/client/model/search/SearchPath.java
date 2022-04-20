@@ -33,7 +33,7 @@ import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
  * its value conforming to the correct syntax must be obtained via {@link #toBsonValue()}.</p>
  *
  * @mongodb.atlas.manual atlas-search/path-construction/ Path
- * @since 4.6
+ * @since 4.7
  */
 @Evolving
 public interface SearchPath extends Bson {

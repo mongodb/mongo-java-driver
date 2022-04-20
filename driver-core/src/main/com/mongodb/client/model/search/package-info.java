@@ -27,7 +27,7 @@
  * @see com.mongodb.client.model.Aggregates#search(SearchCollector, SearchOptions)
  * @mongodb.atlas.manual atlas-search/ Atlas Search
  * @mongodb.atlas.manual atlas-search/query-syntax/ Atlas Search aggregation pipeline stages
- * @since 4.6
+ * @since 4.7
  */
 @NonNullApi
 package com.mongodb.client.model.search;

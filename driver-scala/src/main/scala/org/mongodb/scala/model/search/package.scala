@@ -22,7 +22,7 @@ import com.mongodb.annotations.{ Beta, Evolving }
  *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/ Atlas Search]]
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/ Atlas Search aggregation pipeline stages]]
- * @since 4.6
+ * @since 4.7
  */
 package object search {
 

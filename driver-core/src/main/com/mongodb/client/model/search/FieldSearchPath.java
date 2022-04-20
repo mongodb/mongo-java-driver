@@ -19,7 +19,7 @@ import com.mongodb.annotations.Evolving;
 
 /**
  * @see SearchPath#fieldPath(String)
- * @since 4.6
+ * @since 4.7
  */
 @Evolving
 public interface FieldSearchPath extends SearchPath {

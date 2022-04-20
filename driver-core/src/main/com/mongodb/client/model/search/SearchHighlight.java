@@ -32,7 +32,7 @@ import static com.mongodb.internal.client.model.Util.combineToBsonValue;
  * to extract the results of highlighting.
  *
  * @mongodb.atlas.manual atlas-search/highlighting/ Highlighting
- * @since 4.6
+ * @since 4.7
  */
 @Evolving
 public interface SearchHighlight extends Bson {

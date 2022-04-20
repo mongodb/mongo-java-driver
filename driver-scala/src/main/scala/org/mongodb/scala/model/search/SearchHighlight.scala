@@ -27,7 +27,7 @@ import collection.JavaConverters._
  * to extract the results of highlighting.
  *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/highlighting/ Highlighting]]
- * @since 4.6
+ * @since 4.7
  */
 object SearchHighlight {
 

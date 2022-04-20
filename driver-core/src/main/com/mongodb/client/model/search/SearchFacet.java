@@ -41,7 +41,7 @@ import static org.bson.assertions.Assertions.notNull;
  * A facet definition for {@link FacetSearchCollector}.
  *
  * @mongodb.atlas.manual atlas-search/facet/#facet-definition Facet definition
- * @since 4.6
+ * @since 4.7
  */
 @Beta
 @Evolving

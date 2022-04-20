@@ -26,7 +26,7 @@ import org.bson.conversions.Bson;
  * @see Aggregates#search(SearchOperator, SearchOptions)
  * @see Aggregates#search(SearchCollector, SearchOptions)
  * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search syntax
- * @since 4.6
+ * @since 4.7
  */
 @Evolving
 public interface SearchOptions extends Bson {

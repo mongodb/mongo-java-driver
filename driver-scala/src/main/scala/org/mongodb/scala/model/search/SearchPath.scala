@@ -18,7 +18,7 @@ package org.mongodb.scala.model.search
 import com.mongodb.client.model.search.{ SearchPath => JSearchPath }
 
 /**
- * @since 4.6
+ * @since 4.7
  */
 object SearchPath {
 

@@ -71,7 +71,7 @@ public final class Projections {
      * @return the projection
      * @see SearchCount
      * @see SearchCollector
-     * @since 4.6
+     * @since 4.7
      */
     public static Bson computedSearchMeta(final String fieldName) {
         return computed(fieldName, "$$SEARCH_META");
@@ -189,7 +189,7 @@ public final class Projections {
      * @param fieldName the field name
      * @return the projection
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @since 4.6
+     * @since 4.7
      */
     public static Bson metaSearchScore(final String fieldName) {
         return meta(fieldName, "searchScore");
@@ -204,7 +204,7 @@ public final class Projections {
      * @return the projection
      * @see com.mongodb.client.model.search.SearchHighlight
      * @mongodb.atlas.manual atlas-search/highlighting/ Highlighting
-     * @since 4.6
+     * @since 4.7
      */
     public static Bson metaSearchHighlights(final String fieldName) {
         return meta(fieldName, "searchHighlights");

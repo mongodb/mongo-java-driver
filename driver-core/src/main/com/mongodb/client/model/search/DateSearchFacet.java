@@ -20,7 +20,7 @@ import com.mongodb.annotations.Evolving;
 
 /**
  * @see SearchFacet#dateFacet(String, FieldSearchPath, Iterable)
- * @since 4.6
+ * @since 4.7
  */
 @Beta
 @Evolving

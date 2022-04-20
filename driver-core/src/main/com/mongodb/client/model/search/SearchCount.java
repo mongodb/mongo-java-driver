@@ -30,7 +30,7 @@ import static org.bson.assertions.Assertions.notNull;
  * to extract the results of counting.
  *
  * @mongodb.atlas.manual atlas-search/counting/ Counting
- * @since 4.6
+ * @since 4.7
  */
 @Beta
 @Evolving

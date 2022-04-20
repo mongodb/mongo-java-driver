@@ -19,7 +19,7 @@ import com.mongodb.annotations.Evolving;
 
 /**
  * @see SearchOperator#exists(FieldSearchPath)
- * @since 4.6
+ * @since 4.7
  */
 @Evolving
 public interface ExistsSearchOperator extends SearchOperator {

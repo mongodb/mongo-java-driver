@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
  * You may use the `$$SEARCH_META` variable, e.g., via [[Projections.computedSearchMeta]], to extract this metadata.
  *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
- * @since 4.6
+ * @since 4.7
  */
 object SearchCollector {
 

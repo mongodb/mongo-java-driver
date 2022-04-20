@@ -26,7 +26,7 @@ import collection.JavaConverters._
  * A facet definition for [[FacetSearchCollector]].
  *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#facet-definition Facet definition]]
- * @since 4.6
+ * @since 4.7
  */
 @Beta
 object SearchFacet {

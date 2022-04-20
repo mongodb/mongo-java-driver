@@ -26,7 +26,7 @@ import org.mongodb.scala.model.Projections
  * to extract the results of counting.
  *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/counting/ Counting]]
- * @since 4.6
+ * @since 4.7
  */
 @Beta
 object SearchCount {
