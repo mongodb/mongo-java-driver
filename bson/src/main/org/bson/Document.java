@@ -60,7 +60,27 @@ import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentati
  * @since 3.0.0
  */
 public class Document implements Map<String, Object>, Serializable, Bson {
-    private static final Codec<Document> DEFAULT_CODEC =
+
+    /**
+     * Sets the default {@link UuidRepresentation} to use when converting to and from JSON.
+     *
+     * <p>
+     * This method is particularly useful if you want to change the process-wide default for the {@link UuidRepresentation} this is
+     * applied during any conversions. The default codec applies {@link UuidRepresentation#STANDARD}.
+     * </p>
+     *
+     * @param codec the default codec, which may not be null
+     * @see #parse(String)
+     * @see UuidRepresentation#STANDARD
+     * @see #toJson()
+     * @see #toJson(JsonWriterSettings)
+     * @since 4.7
+     */
+    public static void setDefaultCodec(final Codec<Document> codec) {
+        defaultCodec = notNull("defaultCodec", codec);
+    }
+
+    private static volatile Codec<Document> defaultCodec =
             withUuidRepresentation(fromProviders(asList(new ValueCodecProvider(), new IterableCodecProvider(),
                     new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider())), UuidRepresentation.STANDARD)
                     .get(Document.class);
@@ -109,7 +129,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static Document parse(final String json) {
-        return parse(json, DEFAULT_CODEC);
+        return parse(json, defaultCodec);
     }
 
     /**
@@ -427,7 +447,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the document contains types not in the default registry
      */
     public String toJson(final JsonWriterSettings writerSettings) {
-        return toJson(writerSettings, DEFAULT_CODEC);
+        return toJson(writerSettings, defaultCodec);
     }
 
     /**

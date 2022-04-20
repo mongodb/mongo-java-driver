@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 /**
@@ -60,7 +61,26 @@ import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentati
 public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     private static final long serialVersionUID = -4415279469780082174L;
 
-    private static final Codec<BasicDBObject> DEFAULT_CODEC =
+    /**
+     * Sets the default {@link UuidRepresentation} to use when converting to and from JSON.
+     *
+     * <p>
+     * This method is particularly useful if you want to change the process-wide default for the {@link UuidRepresentation} this is
+     * applied during any conversions.  The default codec applies {@link UuidRepresentation#STANDARD}.
+     * </p>
+     *
+     * @param codec the default codec, which may not be null
+     * @see #parse(String)
+     * @see UuidRepresentation#STANDARD
+     * @see #toJson()
+     * @see #toJson(JsonWriterSettings)
+     * @since 4.7
+     */
+    public static void setDefaultCodec(final Codec<BasicDBObject> codec) {
+        defaultCodec = notNull("defaultCodec", codec);
+    }
+
+    private static volatile Codec<BasicDBObject> defaultCodec =
             withUuidRepresentation(DBObjectCodec.getDefaultRegistry(), UuidRepresentation.STANDARD)
                     .get(BasicDBObject.class);
 
@@ -78,7 +98,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static BasicDBObject parse(final String json) {
-        return parse(json, DEFAULT_CODEC);
+        return parse(json, defaultCodec);
     }
 
     /**
@@ -176,7 +196,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the document contains types not in the default registry
      */
     public String toJson(final JsonWriterSettings writerSettings) {
-        return toJson(writerSettings, DEFAULT_CODEC);
+        return toJson(writerSettings, defaultCodec);
     }
 
     /**
@@ -238,7 +258,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      */
     private static byte[] toBson(final BasicDBObject dbObject) {
         OutputBuffer outputBuffer = new BasicOutputBuffer();
-        DEFAULT_CODEC.encode(new BsonBinaryWriter(outputBuffer), dbObject, EncoderContext.builder().build());
+        defaultCodec.encode(new BsonBinaryWriter(outputBuffer), dbObject, EncoderContext.builder().build());
         return outputBuffer.toByteArray();
     }
 
