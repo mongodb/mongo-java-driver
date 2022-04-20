@@ -505,8 +505,7 @@ object Aggregates {
    *
    * @param operator A search operator.
    * @param options Optional `\$search` pipeline stage fields.
-   * Specifying `null` is equivalent to specifying `SearchOptions.defaultSearchOptions`
-   * or calling `Aggregates.search(SearchOperator)`.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.search(SearchOperator)`.
    * @return The `\$search` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
@@ -542,8 +541,7 @@ object Aggregates {
    *
    * @param collector A search collector.
    * @param options Optional `\$search` pipeline stage fields.
-   * Specifying `null` is equivalent to specifying `SearchOptions.defaultSearchOptions`
-   * or calling `Aggregates.search(SearchCollector)`.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.search(SearchCollector)`.
    * @return The `\$search` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
@@ -576,8 +574,7 @@ object Aggregates {
    *
    * @param operator A search operator.
    * @param options Optional `\$search` pipeline stage fields.
-   * Specifying `null` is equivalent to specifying `SearchOptions.defaultSearchOptions`
-   * or calling `Aggregates.searchMeta(SearchOperator)`.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.searchMeta(SearchOperator)`.
    * @return The `\$searchMeta` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-searchmeta \$searchMeta]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
@@ -609,8 +606,7 @@ object Aggregates {
    *
    * @param collector A search collector.
    * @param options Optional `\$search` pipeline stage fields.
-   * Specifying `null` is equivalent to specifying `SearchOptions.defaultSearchOptions`
-   * or calling `Aggregates.searchMeta(SearchCollector)`.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.searchMeta(SearchCollector)`.
    * @return The `\$searchMeta` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-searchmeta \$searchMeta]]
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
