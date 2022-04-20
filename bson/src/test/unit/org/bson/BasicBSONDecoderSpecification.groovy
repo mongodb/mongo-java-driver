@@ -91,6 +91,7 @@ class BasicBSONDecoderSpecification extends Specification {
         ['k1': new MinKey()]                                     | [9, 0, 0, 0, -1, 107, 49, 0, 0]
         ['k2': new MaxKey()]                                     | [9, 0, 0, 0, 127, 107, 50, 0, 0]
         ['f': Decimal128.parse('0E-6176')]                       | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ['u': new UUID(1, 2)]                                    | [29, 0, 0, 0, 5, 117, 0, 16, 0, 0, 0, 3, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
 
         type = BsonType.findByValue(bytes[4])
     }

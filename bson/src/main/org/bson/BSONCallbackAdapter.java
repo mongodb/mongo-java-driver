@@ -16,12 +16,34 @@
 
 package org.bson;
 
+import org.bson.internal.UuidHelper;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
-import static org.bson.Bits.readLong;
+import java.util.UUID;
+
+import static org.bson.assertions.Assertions.notNull;
 
 class BSONCallbackAdapter extends AbstractBsonWriter {
+
+    /**
+     * Sets the default {@link UuidRepresentation} to use when decoding BSON binary values with subtype 3.
+     *
+     * <p>
+     * If unset, the default is {@link UuidRepresentation#JAVA_LEGACY}.
+     * </p>
+     *
+     * @param uuidRepresentation the uuid representation, which may not be null
+     * @see #doWriteBinaryData(BsonBinary)
+     * @see BSONCallback#gotUUID(String, long, long)
+     * @see BasicBSONEncoder#setDefaultUuidRepresentation(UuidRepresentation)
+     * @since 4.7
+     */
+    public static void setDefaultUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        defaultUuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+    }
+
+    private static volatile UuidRepresentation defaultUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
     private BSONCallback bsonCallback;
 
@@ -84,9 +106,8 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
     @Override
     protected void doWriteBinaryData(final BsonBinary value) {
         if (value.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
-            bsonCallback.gotUUID(getName(),
-                    readLong(value.getData(), 0),
-                    readLong(value.getData(), 8));
+            UUID uuid = UuidHelper.decodeBinaryToUuid(value.getData(), value.getType(), defaultUuidRepresentation);
+            bsonCallback.gotUUID(getName(), uuid.getMostSignificantBits(), uuid.getLeastSignificantBits());
         } else {
             bsonCallback.gotBinary(getName(), value.getType(), value.getData());
         }

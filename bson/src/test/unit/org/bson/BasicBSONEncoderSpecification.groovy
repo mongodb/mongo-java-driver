@@ -89,6 +89,7 @@ class BasicBSONEncoderSpecification extends Specification {
         ['k': new MinKey()]                                      | [8, 0, 0, 0, -1, 107, 0, 0]
         ['k': new MaxKey()]                                      | [8, 0, 0, 0, 127, 107, 0, 0]
         ['f': Decimal128.parse('0E-6176')]                       | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ['u': new UUID(1, 2)]                                    | [29, 0, 0, 0, 5, 117, 0, 16, 0, 0, 0, 3, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
 
         aClass = document.find { true }.value.getClass()
     }
