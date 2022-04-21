@@ -364,7 +364,9 @@ public class BasicBSONEncoder implements BSONEncoder {
     protected void putUUID(final String name, final UUID uuid) {
         putName(name);
         byte[] bytes = UuidHelper.encodeUuidToBinary(uuid, defaultUuidRepresentation);
-        bsonWriter.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, bytes));
+        bsonWriter.writeBinaryData(new BsonBinary(
+                defaultUuidRepresentation == UuidRepresentation.STANDARD ? BsonBinarySubType.UUID_STANDARD : BsonBinarySubType.UUID_LEGACY,
+                bytes));
     }
 
     /**

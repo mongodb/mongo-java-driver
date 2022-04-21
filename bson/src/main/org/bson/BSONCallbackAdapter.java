@@ -105,11 +105,20 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
 
     @Override
     protected void doWriteBinaryData(final BsonBinary value) {
-        if (value.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
-            UUID uuid = UuidHelper.decodeBinaryToUuid(value.getData(), value.getType(), defaultUuidRepresentation);
-            bsonCallback.gotUUID(getName(), uuid.getMostSignificantBits(), uuid.getLeastSignificantBits());
+        if (defaultUuidRepresentation == UuidRepresentation.STANDARD) {
+            if (value.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
+                bsonCallback.gotBinary(getName(), value.getType(), value.getData());
+            } else {
+                UUID uuid = UuidHelper.decodeBinaryToUuid(value.getData(), value.getType(), defaultUuidRepresentation);
+                bsonCallback.gotUUID(getName(), uuid.getMostSignificantBits(), uuid.getLeastSignificantBits());
+            }
         } else {
-            bsonCallback.gotBinary(getName(), value.getType(), value.getData());
+            if (value.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
+                UUID uuid = UuidHelper.decodeBinaryToUuid(value.getData(), value.getType(), defaultUuidRepresentation);
+                bsonCallback.gotUUID(getName(), uuid.getMostSignificantBits(), uuid.getLeastSignificantBits());
+            } else {
+                bsonCallback.gotBinary(getName(), value.getType(), value.getData());
+            }
         }
     }
 
