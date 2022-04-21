@@ -32,9 +32,15 @@ final class FieldPropertyAccessor<T> implements PropertyAccessor<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <S> T get(final S instance) {
-        return wrapped.get(instance);
+        try {
+            return (T) wrapped.getPropertyMetadata().getField().get(instance);
+        } catch (Exception e) {
+            throw new CodecConfigurationException(format("Unable to get value for property '%s' in %s",
+                    wrapped.getPropertyMetadata().getName(), wrapped.getPropertyMetadata().getDeclaringClassName()), e);
+        }
     }
 
     @Override

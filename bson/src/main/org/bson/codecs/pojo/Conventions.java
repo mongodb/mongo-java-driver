@@ -69,8 +69,17 @@ public final class Conventions {
      */
     public static final Convention USE_GETTERS_FOR_SETTERS = new ConventionUseGettersAsSettersImpl();
 
-
     /**
+     * A convention that <em>only uses fields</em> for setting and getting values to be serialized. Automatically,
+     * removes any properties that are not explicitly backed by a field.
+     *
+     * <p>Note: This convention is not part of the {@code DEFAULT_CONVENTIONS} list and must explicitly be set.</p>
+     *
+     * @since 4.7
+     */
+    public static final Convention GET_AND_SET_FIELDS_CONVENTION = new ConventionGetAndSetFieldsImpl();
+
+        /**
      * A convention that sets the IdGenerator if the id property is either a {@link org.bson.types.ObjectId} or
      * {@link org.bson.BsonObjectId}.
      *

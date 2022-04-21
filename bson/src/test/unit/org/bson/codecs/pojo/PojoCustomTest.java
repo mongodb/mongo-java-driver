@@ -41,6 +41,7 @@ import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.GetAndSetMutatesModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.InvalidCollectionModel;
 import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
@@ -97,6 +98,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
+import static org.bson.codecs.pojo.Conventions.GET_AND_SET_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
@@ -665,6 +667,21 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test(expected = CodecConfigurationException.class)
     public void testBsonExtraElementsInvalidModel() {
         getPojoCodecProviderBuilder(BsonExtraElementsInvalidModel.class).build();
+    }
+
+    @Test
+    public void testGetAndSetConvention(){
+        encodesTo(getCodec(GetAndSetMutatesModel.class),
+                new GetAndSetMutatesModel("one", "two"),
+                "{fieldOne: 'getone', fieldTwo: 'gettwo'}");
+        decodesTo(getCodec(GetAndSetMutatesModel.class),
+                "{fieldOne: 'one', fieldTwo: 'two'}",
+                new GetAndSetMutatesModel("setone", "settwo"));
+
+        roundTrip(getPojoCodecProviderBuilder(GetAndSetMutatesModel.class)
+                .conventions(singletonList(GET_AND_SET_FIELDS_CONVENTION)),
+                new GetAndSetMutatesModel("one", "two"),
+                "{fieldOne: 'one', fieldTwo: 'two'}");
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {
