@@ -224,8 +224,7 @@ abstract class PojoTestCase {
     }
 
     CodecRegistry getCodecRegistry(final PojoCodecProvider.Builder builder) {
-        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), new Jsr310CodecProvider(),
-                new EnumCodecProvider(),
+        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), new Jsr310CodecProvider(), new EnumCodecProvider(),
                 builder.build());
     }
 

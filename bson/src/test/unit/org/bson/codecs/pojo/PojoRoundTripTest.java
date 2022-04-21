@@ -77,6 +77,8 @@ import org.bson.codecs.pojo.entities.SimpleWithStaticModel;
 import org.bson.codecs.pojo.entities.TreeWithIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
+import org.bson.codecs.pojo.entities.conventions.BsonExtraElementsMapModel;
+import org.bson.codecs.pojo.entities.conventions.BsonExtraElementsModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreSyntheticProperty;
@@ -517,6 +519,24 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("BsonRepresentation is encoded and decoded correctly", new BsonRepresentationModel(1),
                 getPojoCodecProviderBuilder(BsonRepresentationModel.class),
                 "{'_id': {'$oid': '111111111111111111111111'}, 'age': 1}"));
+
+        data.add(new TestData("BsonExtraElements with no extra data",
+                new BsonExtraElementsModel(42, "myString", null),
+                getPojoCodecProviderBuilder(BsonExtraElementsModel.class),
+                "{'integerField': 42, 'stringField': 'myString'}"));
+
+        data.add(new TestData("BsonExtraElements are encoded and decoded correctly",
+                new BsonExtraElementsModel(42, "myString", BsonDocument.parse("{a: 1, b: 2, c: [1, 2, {a: 1}]}")),
+                getPojoCodecProviderBuilder(BsonExtraElementsModel.class),
+                "{'integerField': 42, 'stringField': 'myString', 'a': 1, 'b': 2,  c: [1, 2, {a: 1}]}"));
+
+        Map<String, String> stringMap = new HashMap<>();
+        stringMap.put("a", "a");
+        stringMap.put("b", "b");
+        data.add(new TestData("BsonExtraElements are encoded and decoded correctly to a Map",
+                new BsonExtraElementsMapModel(42, "myString", stringMap),
+                getPojoCodecProviderBuilder(BsonExtraElementsMapModel.class),
+                "{'integerField': 42, 'stringField': 'myString', 'a': 'a', 'b': 'b'}"));
 
         return data;
     }

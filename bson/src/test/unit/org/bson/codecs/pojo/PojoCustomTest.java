@@ -66,6 +66,7 @@ import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
 import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
+import org.bson.codecs.pojo.entities.conventions.BsonExtraElementsInvalidModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNonEmptyModel;
@@ -659,6 +660,11 @@ public final class PojoCustomTest extends PojoTestCase {
                 + "'myLongField': {'$numberLong': '42'}}}";
 
         roundTrip(actualRegistry, model, json);
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testBsonExtraElementsInvalidModel() {
+        getPojoCodecProviderBuilder(BsonExtraElementsInvalidModel.class).build();
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {

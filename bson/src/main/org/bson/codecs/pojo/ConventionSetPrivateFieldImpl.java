@@ -42,36 +42,7 @@ final class ConventionSetPrivateFieldImpl implements Convention {
 
     @SuppressWarnings("unchecked")
     private <T> void setPropertyAccessor(final PropertyModelBuilder<T> propertyModelBuilder) {
-        propertyModelBuilder.propertyAccessor(new PrivatePropertyAccessor<T>(
-                (PropertyAccessorImpl<T>) propertyModelBuilder.getPropertyAccessor()));
+        propertyModelBuilder.propertyAccessor(new FieldPropertyAccessor<>((PropertyAccessorImpl<T>) propertyModelBuilder.getPropertyAccessor()));
     }
 
-    private static final class PrivatePropertyAccessor<T> implements PropertyAccessor<T> {
-        private final PropertyAccessorImpl<T> wrapped;
-
-        private PrivatePropertyAccessor(final PropertyAccessorImpl<T> wrapped) {
-            this.wrapped = wrapped;
-            try {
-                wrapped.getPropertyMetadata().getField().setAccessible(true);
-             } catch (Exception e) {
-                throw new CodecConfigurationException(format("Unable to make private field accessible '%s' in %s",
-                        wrapped.getPropertyMetadata().getName(), wrapped.getPropertyMetadata().getDeclaringClassName()), e);
-            }
-        }
-
-        @Override
-        public <S> T get(final S instance) {
-            return wrapped.get(instance);
-        }
-
-        @Override
-        public <S> void set(final S instance, final T value) {
-            try {
-                wrapped.getPropertyMetadata().getField().set(instance, value);
-            } catch (Exception e) {
-                throw new CodecConfigurationException(format("Unable to set value for property '%s' in %s",
-                        wrapped.getPropertyMetadata().getName(), wrapped.getPropertyMetadata().getDeclaringClassName()), e);
-            }
-        }
-    }
 }

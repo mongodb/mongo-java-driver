@@ -16,27 +16,21 @@
 
 package org.bson.codecs.pojo;
 
-/**
- * An interface allowing a {@link PropertyModel} to determine if a value should be serialized.
- *
- * @param <T> the type of the property.
- * @since 3.5
- */
-public interface PropertySerialization<T> {
+class PropertyModelSerializationInlineImpl<T> implements PropertySerialization<T> {
 
-    /**
-     * Determines if a value should be serialized
-     *
-     * @param value the value to check
-     * @return true if the value should be serialized
-     */
-    boolean shouldSerialize(T value);
+    private final PropertySerialization<T> wrapped;
 
-    /**
-     * @return true if serialized inline
-     * @since 4.6
-     */
-    default boolean inline() {
-        return false;
+    PropertyModelSerializationInlineImpl(final PropertySerialization<T> wrapped) {
+        this.wrapped = wrapped;
+    }
+
+    @Override
+    public boolean shouldSerialize(final T value) {
+        return wrapped.shouldSerialize(value);
+    }
+
+    @Override
+    public boolean inline() {
+        return true;
     }
 }
