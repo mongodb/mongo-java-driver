@@ -25,12 +25,16 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
+import static org.junit.Assume.assumeFalse;
+
 public final class ChangeStreamsTest extends UnifiedSyncTest {
     public ChangeStreamsTest(@SuppressWarnings("unused") final String fileDescription,
                              @SuppressWarnings("unused") final String testDescription,
                              final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                              final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        assumeFalse(isServerlessTest());
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
