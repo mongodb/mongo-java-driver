@@ -17,12 +17,12 @@ package com.mongodb.internal.client.model;
 
 import com.mongodb.annotations.Immutable;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * A {@link Bson} that allows constructing new instances via {@link #newAppended(String, Object)} instead of mutating {@code this}.
@@ -59,17 +59,30 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
     }
 
     /**
-     * Creates a new instance that contains all mapping from {@code this} and the specified new mapping.
+     * {@linkplain Document#append(String, Object) Appends} the specified mapping via {@link #newMutated(Consumer)}.
      *
      * @return A new instance.
-     * @see BsonDocument#append(String, BsonValue)
      */
     protected final S newAppended(final String name, final Object value) {
-        return newSelf(base, new Document(appended).append(name, value));
+        return newMutated(doc -> doc.append(name, value));
+    }
+
+    /**
+     * Creates a {@link Document#Document(java.util.Map) shallow copy} of {@code this} and mutates it via the specified {@code mutator}.
+     *
+     * @return A new instance.
+     */
+    protected final S newMutated(final Consumer<Document> mutator) {
+        Document newAppended = new Document(appended);
+        mutator.accept(newAppended);
+        return newSelf(base, newAppended);
     }
 
     public static AbstractConstructibleBson<?> of(final Bson doc) {
-        return new ConstructibleBson(doc);
+        return doc instanceof AbstractConstructibleBson
+                // prevent double wrapping
+                ? (AbstractConstructibleBson<?>) doc
+                : new ConstructibleBson(doc);
     }
 
     @Override

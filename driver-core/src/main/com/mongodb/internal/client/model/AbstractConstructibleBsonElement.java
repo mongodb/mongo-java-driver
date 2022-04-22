@@ -17,10 +17,12 @@ package com.mongodb.internal.client.model;
 
 import com.mongodb.annotations.Immutable;
 import org.bson.BsonDocument;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * A {@link Bson} that contains exactly one name/value pair
@@ -39,19 +41,32 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
 
     protected AbstractConstructibleBsonElement(final String name, final Bson value) {
         this.name = name;
-        this.value = AbstractConstructibleBson.of(value);
+        this.value = value instanceof AbstractConstructibleBson
+                // prevent double wrapping
+                ? (AbstractConstructibleBson<?>) value
+                : AbstractConstructibleBson.of(value);
     }
 
     protected abstract S newSelf(String name, Bson value);
 
     /**
-     * Creates a new instance with a value that contains all mapping from {@code this} value and the specified new mapping.
+     * {@linkplain Document#append(String, Object) Appends} the specified mapping to the value via {@link #newWithMutatedValue(Consumer)}.
      *
      * @return A new instance.
-     * @see AbstractConstructibleBson#newAppended(String, Object)
      */
     protected final S newWithAppendedValue(final String name, final Object value) {
-        return newSelf(this.name, this.value.newAppended(name, value));
+        return newWithMutatedValue(doc -> doc.append(name, value));
+    }
+
+    /**
+     * Creates a copy of {@code this} with a value that is
+     * a {@linkplain AbstractConstructibleBson#newMutated(Consumer) shallow copy} of this value mutated via the specified {@code mutator}.
+     *
+     * @return A new instance.
+     * @see AbstractConstructibleBson#newMutated(Consumer)
+     */
+    protected final S newWithMutatedValue(final Consumer<Document> mutator) {
+        return newSelf(this.name, this.value.newMutated(mutator));
     }
 
     @Override
@@ -60,7 +75,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
     }
 
     public static AbstractConstructibleBsonElement<?> of(final String name, final Bson value) {
-        return new AbstractConstructibleBsonElement.ConstructibleBsonElement(name, value);
+        return new ConstructibleBsonElement(name, value);
     }
 
     @Override

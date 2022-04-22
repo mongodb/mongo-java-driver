@@ -18,6 +18,8 @@ package org.mongodb.scala.model.search
 import com.mongodb.client.model.search.{ SearchOperator => JSearchOperator }
 import org.mongodb.scala.bson.conversions.Bson
 
+import collection.JavaConverters._
+
 /**
  * The core part of the `\$search` pipeline stage of an aggregation pipeline.
  *
@@ -34,6 +36,17 @@ object SearchOperator {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/exists/ exists operator]]
    */
   def exists(path: FieldSearchPath): ExistsSearchOperator = JSearchOperator.exists(path)
+
+  /**
+   * Returns a `SearchOperator` that performs a full-text search.
+   *
+   * @param queries Non-empty terms to search for.
+   * @param paths Non-empty document fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
+   */
+  def text(queries: Iterable[String], paths: Iterable[_ <: SearchPath]): TextSearchOperator =
+    JSearchOperator.text(queries.asJava, paths.asJava)
 
   /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.

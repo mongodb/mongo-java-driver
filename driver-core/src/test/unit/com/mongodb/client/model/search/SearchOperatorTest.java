@@ -15,11 +15,20 @@
  */
 package com.mongodb.client.model.search;
 
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
+import static com.mongodb.client.model.search.SearchPath.wildcardPath;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class SearchOperatorTest {
     @Test
@@ -39,6 +48,76 @@ final class SearchOperatorTest {
                         .toBsonDocument(),
                 docExamplePredefined()
                         .toBsonDocument()
+        );
+    }
+
+    @Test
+    void text() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.text(emptyList(), singleton(fieldPath("fieldName")))
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.text(singleton("term"), emptyList())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("text",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", new BsonString("fieldName"))
+                        ),
+                        SearchOperator.text(
+                                singleton("term"),
+                                singleton(fieldPath("fieldName")))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("text",
+                                new BsonDocument("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
+                                        .append("path", new BsonArray(asList(
+                                                new BsonString("fieldName"),
+                                                new BsonDocument("wildcard", new BsonString("wildc*rd")))))
+                        ),
+                        SearchOperator.text(
+                                        asList(
+                                                "term1",
+                                                "term2"),
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("text",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", new BsonString("fieldName"))
+                                        .append("synonyms", new BsonString("synonymMappingName"))
+                        ),
+                        SearchOperator.text(
+                                        singleton("term"),
+                                        singleton(fieldPath("fieldName")))
+                                .fuzzy(FuzzySearchOptions.defaultFuzzySearchOptions())
+                                // synonyms overrides fuzzy
+                                .synonyms("synonymMappingName")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("text",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", new BsonString("fieldName"))
+                                        .append("fuzzy", new BsonDocument())
+                        ),
+                        SearchOperator.text(
+                                        singleton("term"),
+                                        singleton(fieldPath("fieldName")))
+                                .synonyms("synonymMappingName")
+                                // fuzzy overrides synonyms
+                                .fuzzy(FuzzySearchOptions.defaultFuzzySearchOptions())
+                                .toBsonDocument()
+                )
         );
     }
 

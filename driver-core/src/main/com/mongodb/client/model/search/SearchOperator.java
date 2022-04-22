@@ -18,8 +18,13 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
 import org.bson.BsonDocument;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.util.Iterator;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.client.model.Util.combineToBsonValue;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -39,6 +44,24 @@ public interface SearchOperator extends Bson {
      */
     static ExistsSearchOperator exists(final FieldSearchPath path) {
         return new SearchConstructibleBsonElement("exists", new BsonDocument("path", (notNull("path", path)).toBsonValue()));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a full-text search.
+     *
+     * @param queries Non-empty terms to search for.
+     * @param paths Non-empty document fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/text/ text operator
+     */
+    static TextSearchOperator text(final Iterable<String> queries, final Iterable<? extends SearchPath> paths) {
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new SearchConstructibleBsonElement("text", new Document("query", queryIterator.hasNext() ? queries : firstQuery)
+                .append("path", combineToBsonValue(pathIterator)));
     }
 
     /**

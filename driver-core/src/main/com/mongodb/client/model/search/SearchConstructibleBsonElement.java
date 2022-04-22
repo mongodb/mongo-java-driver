@@ -21,11 +21,16 @@ import org.bson.conversions.Bson;
 import static org.bson.assertions.Assertions.notNull;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
-        ExistsSearchOperator,
+        ExistsSearchOperator, TextSearchOperator,
         FacetSearchCollector,
         StringSearchFacet, NumericSearchFacet, DateSearchFacet {
     SearchConstructibleBsonElement(final String name, final Bson value) {
         super(name, value);
+    }
+
+    @Override
+    protected SearchConstructibleBsonElement newSelf(final String name, final Bson value) {
+        return new SearchConstructibleBsonElement(name, value);
     }
 
     @Override
@@ -39,7 +44,18 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    protected SearchConstructibleBsonElement newSelf(final String name, final Bson value) {
-        return new SearchConstructibleBsonElement(name, value);
+    public TextSearchOperator fuzzy(final FuzzySearchOptions options) {
+        return newWithMutatedValue(doc -> {
+            doc.remove("synonyms");
+            doc.append("fuzzy", notNull("options", options));
+        });
+    }
+
+    @Override
+    public TextSearchOperator synonyms(final String name) {
+        return newWithMutatedValue(doc -> {
+            doc.remove("fuzzy");
+            doc.append("synonyms", notNull("name", name));
+        });
     }
 }

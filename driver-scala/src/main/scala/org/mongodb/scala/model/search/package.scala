@@ -21,7 +21,7 @@ import com.mongodb.annotations.{ Beta, Evolving }
  * Query building API for MongoDB Atlas full-text search.
  *
  * While all the building blocks of this API, such as
- * [[SearchOptions]], [[SearchHighlight]], etc.,
+ * `SearchOptions`, `SearchHighlight`, etc.,
  * are not necessary immutable, they are unmodifiable due to methods like
  * `SearchHighlight.maxCharsToExamine` returning new instances instead of modifying the instance
  * on which they are called. This allows storing and using such instances as templates.
@@ -46,6 +46,21 @@ package object search {
    */
   @Evolving
   type ExistsSearchOperator = com.mongodb.client.model.search.ExistsSearchOperator
+
+  /**
+   * @see `SearchOperator.text(Iterable, Iterable)`
+   */
+  @Evolving
+  type TextSearchOperator = com.mongodb.client.model.search.TextSearchOperator
+
+  /**
+   * Fuzzy search options that may be used with some [[SearchOperator]]s.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
+   */
+  @Evolving
+  type FuzzySearchOptions = com.mongodb.client.model.search.FuzzySearchOptions
 
   /**
    * The core part of the `\$search` pipeline stage of an aggregation pipeline.
