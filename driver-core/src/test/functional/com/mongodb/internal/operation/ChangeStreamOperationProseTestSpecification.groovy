@@ -23,6 +23,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.changestream.FullDocument
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonArray
 import org.bson.BsonDocument
@@ -52,7 +53,8 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
         given:
         def helper = getHelper()
         def pipeline = [BsonDocument.parse('{$project: {"_id": 0}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:
         def cursor = execute(operation, async)
@@ -88,7 +90,8 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
         def failPointDocument = createFailPointDocument('getMore', 10107)
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         def cursor = execute(operation, async)
 
@@ -120,7 +123,8 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
     def 'should not resume for aggregation errors'() {
         given:
         def pipeline = [BsonDocument.parse('{$unsupportedStage: {_id: 0}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:
         def cursor = execute(operation, async)

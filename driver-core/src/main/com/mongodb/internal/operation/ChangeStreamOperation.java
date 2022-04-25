@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -59,6 +60,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     private static final RawBsonDocumentCodec RAW_BSON_DOCUMENT_CODEC = new RawBsonDocumentCodec();
     private final AggregateOperationImpl<RawBsonDocument> wrapped;
     private final FullDocument fullDocument;
+    private final FullDocumentBeforeChange fullDocumentBeforeChange;
     private final Decoder<T> decoder;
     private final ChangeStreamLevel changeStreamLevel;
 
@@ -74,9 +76,9 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      * @param pipeline     the aggregation pipeline.
      * @param decoder      the decoder for the result documents.
      */
-    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument, final List<BsonDocument> pipeline,
-                                 final Decoder<T> decoder) {
-        this(namespace, fullDocument, pipeline, decoder, ChangeStreamLevel.COLLECTION);
+    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
+            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
+        this(namespace, fullDocument, fullDocumentBeforeChange, pipeline, decoder, ChangeStreamLevel.COLLECTION);
     }
 
     /**
@@ -90,11 +92,13 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      *
      * @since 3.8
      */
-    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument, final List<BsonDocument> pipeline,
-                                 final Decoder<T> decoder, final ChangeStreamLevel changeStreamLevel) {
+    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
+            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline,
+            final Decoder<T> decoder, final ChangeStreamLevel changeStreamLevel) {
         this.wrapped = new AggregateOperationImpl<RawBsonDocument>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
                 getAggregateTarget(), getPipelineCreator());
         this.fullDocument = notNull("fullDocument", fullDocument);
+        this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
         this.decoder = notNull("decoder", decoder);
         this.changeStreamLevel = notNull("changeStreamLevel", changeStreamLevel);
     }
@@ -431,6 +435,9 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                 BsonDocument changeStream = new BsonDocument();
                 if (fullDocument != FullDocument.DEFAULT) {
                     changeStream.append("fullDocument", new BsonString(fullDocument.getValue()));
+                }
+                if (fullDocumentBeforeChange != FullDocumentBeforeChange.DEFAULT) {
+                    changeStream.append("fullDocumentBeforeChange", new BsonString(fullDocumentBeforeChange.getValue()));
                 }
 
                 if (changeStreamLevel == ChangeStreamLevel.CLIENT) {

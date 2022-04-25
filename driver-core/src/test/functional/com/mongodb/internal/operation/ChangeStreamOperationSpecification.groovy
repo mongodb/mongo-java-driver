@@ -24,6 +24,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.FullDocument
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange
 import com.mongodb.client.model.changestream.OperationType
 import com.mongodb.client.model.changestream.UpdateDescription
 import com.mongodb.client.test.CollectionHelper
@@ -56,6 +57,7 @@ import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
+import static com.mongodb.client.model.changestream.ChangeStreamDocument.createCodec
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -66,7 +68,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should have the correct defaults'() {
         when:
-        ChangeStreamOperation operation = new ChangeStreamOperation<Document>(getNamespace(), FullDocument.DEFAULT, [], new DocumentCodec())
+        ChangeStreamOperation operation = new ChangeStreamOperation<Document>(getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, [], new DocumentCodec())
 
         then:
         operation.getBatchSize() == null
@@ -79,8 +82,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should set optional values correctly'() {
         when:
-        ChangeStreamOperation operation = new ChangeStreamOperation<Document>(getNamespace(), FullDocument.UPDATE_LOOKUP, [],
-                new DocumentCodec())
+        ChangeStreamOperation operation = new ChangeStreamOperation<Document>(getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, [], new DocumentCodec())
                 .batchSize(5)
                 .collation(defaultCollation)
                 .maxAwaitTime(15, MILLISECONDS)
@@ -111,8 +114,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 .append('cursor', new BsonDocument('id', new BsonInt64(0)).append('ns', new BsonString('db.coll'))
                 .append('firstBatch', new BsonArrayWrapper([])))
 
-        def operation = new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT, pipeline, new DocumentCodec(),
-                changeStreamLevel)
+        def operation = new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, new DocumentCodec(), changeStreamLevel)
                 .batchSize(5)
                 .collation(defaultCollation)
                 .maxAwaitTime(15, MILLISECONDS)
@@ -148,7 +151,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:
         def cursor = execute(operation, async)
@@ -187,8 +191,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
 
         when:
         def cursor = execute(operation, false)
@@ -213,8 +218,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "update"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
         when:
@@ -240,8 +246,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "replace"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
         when:
@@ -267,8 +274,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "delete"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
         when:
@@ -294,8 +302,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "invalidate"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
         when:
@@ -322,8 +331,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "drop"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
         when:
@@ -350,8 +360,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "dropDatabase"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())),
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())),
                 ChangeStreamLevel.DATABASE)
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
@@ -379,8 +390,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "rename"}}')]
-        def operation = new ChangeStreamOperation<ChangeStreamDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
-                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def operation = new ChangeStreamOperation<ChangeStreamDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT, pipeline,
+                createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
         def newNamespace = new MongoNamespace('JavaDriverTest', 'newCollectionName')
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
@@ -407,7 +419,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         given:
         def helper = getHelper()
         def pipeline = [BsonDocument.parse('{$project: {"_id": 0}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:
         def cursor = execute(operation, async)
@@ -430,7 +443,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:
         def cursor = execute(operation, async)
@@ -458,7 +472,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:
         def cursor = execute(operation, async)
@@ -498,7 +513,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         def cursor = execute(operation, async)
 
@@ -533,7 +549,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         def cursor = execute(operation, async)
 
@@ -569,7 +586,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+                FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         def cursor = execute(operation, async)
 
@@ -601,7 +619,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
     def 'should support hasNext on the sync API'() {
         given:
         def helper = getHelper()
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, FullDocumentBeforeChange
+                .DEFAULT, [], CODEC)
 
         when:
         def cursor = execute(operation, false)
@@ -641,7 +660,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         }
 
         when: 'set resumeAfter'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
                 .execute(binding)
 
@@ -650,7 +669,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         !changeStream.containsKey('startAtOperationTime')
 
         when: 'set startAfter'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAfter(new BsonDocument())
                 .execute(binding)
 
@@ -660,7 +679,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         when: 'set startAtOperationTime'
         def startAtTime = new BsonTimestamp(42)
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAtOperationTime(startAtTime)
                 .execute(binding)
 
@@ -698,7 +717,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         }
 
         when: 'set resumeAfter'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
                 .executeAsync(binding, Stub(SingleResultCallback))
 
@@ -707,7 +726,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         !changeStream.containsKey('startAtOperationTime')
 
         when: 'set startAfter'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAfter(new BsonDocument())
                 .executeAsync(binding, Stub(SingleResultCallback))
 
@@ -717,7 +736,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         when: 'set startAtOperationTime'
         def startAtTime = new BsonTimestamp(42)
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAtOperationTime(startAtTime)
                 .executeAsync(binding, Stub(SingleResultCallback))
 

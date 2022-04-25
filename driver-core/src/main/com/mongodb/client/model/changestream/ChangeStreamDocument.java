@@ -46,6 +46,7 @@ public final class ChangeStreamDocument<TDocument> {
     private final BsonDocument namespaceDocument;
     private final BsonDocument destinationNamespaceDocument;
     private final TDocument fullDocument;
+    private final TDocument fullDocumentBeforeChange;
     private final BsonDocument documentKey;
     private final BsonTimestamp clusterTime;
     @BsonProperty("operationType")
@@ -64,6 +65,49 @@ public final class ChangeStreamDocument<TDocument> {
      * @param namespaceDocument the BsonDocument representing the namespace
      * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
      * @param fullDocument the full document
+     * @param fullDocumentBeforeChange the full document before change
+     * @param documentKey a document containing the _id of the changed document
+     * @param clusterTime the cluster time at which the change occured
+     * @param updateDescription the update description
+     * @param txnNumber the transaction number
+     * @param lsid the identifier for the session associated with the transaction
+     *
+     * @since 4.7
+     */
+    @BsonCreator
+    public ChangeStreamDocument(@BsonProperty("operationType") final String operationTypeString,
+            @BsonProperty("resumeToken") final BsonDocument resumeToken,
+            @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
+            @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
+            @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
+            @Nullable @BsonProperty("fullDocumentBeforeChange") final TDocument fullDocumentBeforeChange,
+            @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
+            @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
+            @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
+            @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
+            @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
+        this.resumeToken = resumeToken;
+        this.namespaceDocument = namespaceDocument;
+        this.destinationNamespaceDocument = destinationNamespaceDocument;
+        this.fullDocumentBeforeChange = fullDocumentBeforeChange;
+        this.documentKey = documentKey;
+        this.fullDocument = fullDocument;
+        this.clusterTime = clusterTime;
+        this.operationTypeString = operationTypeString;
+        this.operationType = OperationType.fromString(operationTypeString);
+        this.updateDescription = updateDescription;
+        this.txnNumber = txnNumber;
+        this.lsid = lsid;
+    }
+
+    /**
+     * Creates a new instance
+     *
+     * @param operationTypeString the operation type
+     * @param resumeToken the resume token
+     * @param namespaceDocument the BsonDocument representing the namespace
+     * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
+     * @param fullDocument the full document
      * @param documentKey a document containing the _id of the changed document
      * @param clusterTime the cluster time at which the change occured
      * @param updateDescription the update description
@@ -72,7 +116,6 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @since 4.6
      */
-    @BsonCreator
     public ChangeStreamDocument(@BsonProperty("operationType") final String operationTypeString,
                                 @BsonProperty("resumeToken") final BsonDocument resumeToken,
                                 @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
@@ -83,17 +126,8 @@ public final class ChangeStreamDocument<TDocument> {
                                 @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
                                 @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
                                 @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
-        this.resumeToken = resumeToken;
-        this.namespaceDocument = namespaceDocument;
-        this.destinationNamespaceDocument = destinationNamespaceDocument;
-        this.documentKey = documentKey;
-        this.fullDocument = fullDocument;
-        this.clusterTime = clusterTime;
-        this.operationTypeString = operationTypeString;
-        this.operationType = OperationType.fromString(operationTypeString);
-        this.updateDescription = updateDescription;
-        this.txnNumber = txnNumber;
-        this.lsid = lsid;
+        this(operationTypeString, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
+                clusterTime, updateDescription, txnNumber, lsid);
     }
 
     /**
@@ -123,7 +157,7 @@ public final class ChangeStreamDocument<TDocument> {
             final UpdateDescription updateDescription,
             final BsonInt64 txnNumber,
             final BsonDocument lsid) {
-        this(operationType.getValue(), resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, documentKey,
+        this(operationType.getValue(), resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
                 clusterTime, updateDescription, txnNumber, lsid);
     }
 
@@ -232,13 +266,55 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
-     * Returns the fullDocument
+     * Returns the fullDocument.
+     *
+     * <p>
+     * Always present for operations of type {@link OperationType#INSERT} and {@link OperationType#REPLACE}. Also present for operations
+     * of type {@link OperationType#UPDATE} if the user has specified {@link FullDocument#UPDATE_LOOKUP} for the {@code fullDocument}
+     * option when creating the change stream.
+     * </p>
+     *
+     * <p>
+     * For operations of type {@link OperationType#INSERT} and {@link OperationType#REPLACE}, the value will contain the document being
+     * inserted or the new version of the document that is replacing the existing document, respectively.
+     * </p>
+     *
+     * <p>
+     * For operations of type {@link OperationType#UPDATE}, the value will contain a copy of the full version of the document from some
+     * point after the update occurred. If the document was deleted since the updated happened, the value will be null.
+     * </p>
+     *
+     * <p>
+     * Contains the point-in-time post-image of the modified document if the post-image is available and either
+     * {@link FullDocument#REQUIRED} or {@link FullDocument#WHEN_AVAILABLE} was specified for the {@code fullDocument} option when
+     * creating the change stream. A post-image is always available for {@link OperationType#INSERT} and {@link OperationType#REPLACE}
+     * events.
+     * </p>
      *
      * @return the fullDocument
      */
     @Nullable
     public TDocument getFullDocument() {
         return fullDocument;
+    }
+
+    /**
+     * Returns the fullDocument before change
+     *
+     * <p>
+     * Contains the pre-image of the modified or deleted document if the pre-image is available for the change event and either
+     * {@link FullDocumentBeforeChange#REQUIRED} or {@link FullDocumentBeforeChange#WHEN_AVAILABLE} was specified for the
+     * {@code fullDocumentBeforeChange} option when creating the change stream. If {@link FullDocumentBeforeChange#WHEN_AVAILABLE} was
+     * specified but the pre-image is unavailable, the value will be null.
+     * </p>
+     *
+     * @return the fulDocument before change
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    @Nullable
+    public TDocument getFullDocumentBeforeChange() {
+        return fullDocumentBeforeChange;
     }
 
     /**
@@ -368,6 +444,10 @@ public final class ChangeStreamDocument<TDocument> {
         if (fullDocument != null ? !fullDocument.equals(that.fullDocument) : that.fullDocument != null) {
             return false;
         }
+        if (fullDocumentBeforeChange != null ? !fullDocumentBeforeChange.equals(that.fullDocumentBeforeChange)
+                : that.fullDocumentBeforeChange != null) {
+            return false;
+        }
         if (documentKey != null ? !documentKey.equals(that.documentKey) : that.documentKey != null) {
             return false;
         }
@@ -396,6 +476,7 @@ public final class ChangeStreamDocument<TDocument> {
         result = 31 * result + (namespaceDocument != null ? namespaceDocument.hashCode() : 0);
         result = 31 * result + (destinationNamespaceDocument != null ? destinationNamespaceDocument.hashCode() : 0);
         result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
+        result = 31 * result + (fullDocumentBeforeChange != null ? fullDocumentBeforeChange.hashCode() : 0);
         result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
         result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
         result = 31 * result + (operationTypeString != null ? operationTypeString.hashCode() : 0);
@@ -413,6 +494,7 @@ public final class ChangeStreamDocument<TDocument> {
                 + ", namespace=" + getNamespace()
                 + ", destinationNamespace=" + getDestinationNamespace()
                 + ", fullDocument=" + fullDocument
+                + ", fullDocumentBeforeChange=" + fullDocumentBeforeChange
                 + ", documentKey=" + documentKey
                 + ", clusterTime=" + clusterTime
                 + ", updateDescription=" + updateDescription

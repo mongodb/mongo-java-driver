@@ -33,5 +33,10 @@ package object changestream {
    */
   type FullDocument = com.mongodb.client.model.changestream.FullDocument
 
+  /**
+   * Change Stream fullDocumentBeforeChange configuration.
+   */
+  type FullDocumentBeforeChange = com.mongodb.client.model.changestream.FullDocumentBeforeChange
+
   object F
 }

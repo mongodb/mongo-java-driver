@@ -47,6 +47,23 @@ object FullDocument {
   val UPDATE_LOOKUP = JFullDocument.UPDATE_LOOKUP
 
   /**
+   * Configures the change stream to return the post-image of the modified document for replace and update change events, if it
+   * is available.
+   *
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  val WHEN_AVAILABLE = JFullDocument.WHEN_AVAILABLE
+
+  /**
+   * The same behavior as [[WHEN_AVAILABLE]] except that an error is raised if the post-image is not available.
+   *
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  val REQUIRED = JFullDocument.REQUIRED
+
+  /**
    * Returns the FullDocument from the string value.
    *
    * @param fullDocument the string value.

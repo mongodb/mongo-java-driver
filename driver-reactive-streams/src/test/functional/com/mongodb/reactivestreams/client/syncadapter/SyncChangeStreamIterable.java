@@ -25,6 +25,7 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import org.bson.BsonDocument;
@@ -91,6 +92,12 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     @Override
     public ChangeStreamIterable<T> fullDocument(final FullDocument fullDocument) {
         wrapped.fullDocument(fullDocument);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<T> fullDocumentBeforeChange(final FullDocumentBeforeChange fullDocumentBeforeChange) {
+        wrapped.fullDocumentBeforeChange(fullDocumentBeforeChange);
         return this;
     }
 
