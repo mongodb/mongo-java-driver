@@ -69,7 +69,7 @@ public enum UuidRepresentation {
      * Gets the BSON binary subtype for the representation.
      *
      * @return the BSON binary subtype for the representation
-     * @throws BsonInvalidOperationException if this is {@link #UNSPECIFIED}
+     * @throws BSONException if this is {@link #UNSPECIFIED}
      * @since 4.7
      */
     public BsonBinarySubType getSubtype() {
@@ -81,7 +81,7 @@ public enum UuidRepresentation {
             case C_SHARP_LEGACY:
                 return UUID_LEGACY;
             default:
-                throw new BsonInvalidOperationException(format("No BsonBinarySubType for %s", this));
+                throw new BSONException(format("No BsonBinarySubType for %s", this));
         }
     }
 }

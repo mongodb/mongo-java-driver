@@ -30,10 +30,11 @@ import static org.bson.assertions.Assertions.notNull;
 public class BasicBSONDecoder implements BSONDecoder {
 
     /**
-     * Sets the default {@link UuidRepresentation} to use when decoding BSON binary values.
+     * Sets the global (JVM-wide) {@link UuidRepresentation} to use when decoding BSON binary values.
      *
      * <p>
-     * If unset, the default is {@link UuidRepresentation#JAVA_LEGACY}.
+     * Defaults to {@link UuidRepresentation#JAVA_LEGACY}. If set to {@link UuidRepresentation#UNSPECIFIED}, attempting to decode any
+     * UUID will throw a {@link BSONException}.
      * </p>
      *
      * @param uuidRepresentation the uuid representation, which may not be null
