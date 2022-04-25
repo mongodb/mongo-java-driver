@@ -30,7 +30,14 @@ import static org.bson.assertions.Assertions.notNull;
 public class BasicBSONDecoder implements BSONDecoder {
 
     /**
-     * Sets the global (JVM-wide) {@link UuidRepresentation} to use when decoding BSON binary values.
+     * Sets the global (JVM-wide) {@link UuidRepresentation} to use when decoding BSON binary values with subtypes of either
+     * {@link BsonBinarySubType#UUID_STANDARD} or {@link BsonBinarySubType#UUID_LEGACY}.
+     *
+     * <p>
+     * If the {@link BsonBinarySubType} of the value to be decoded matches the binary subtype of the {@link UuidRepresentation},
+     * then the value will be decoded to an instance of {@link java.util.UUID}, according to the semantics of the
+     * {@link UuidRepresentation}.  Otherwise, it will be decoded to an instance of {@link org.bson.types.Binary}.
+     * </p>
      *
      * <p>
      * Defaults to {@link UuidRepresentation#JAVA_LEGACY}. If set to {@link UuidRepresentation#UNSPECIFIED}, attempting to decode any
