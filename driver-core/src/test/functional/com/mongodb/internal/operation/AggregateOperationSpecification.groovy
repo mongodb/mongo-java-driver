@@ -232,6 +232,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def nextDoc = next(cursor, async).collect { doc ->
             doc.remove('_id')
             doc.remove('clusterTime')
+            doc.remove('wallTime')
             doc
         }
         nextDoc == expected
