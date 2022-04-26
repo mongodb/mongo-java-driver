@@ -757,6 +757,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         next?.collect { doc ->
             doc.remove('_id')
             doc.remove('clusterTime')
+            doc.remove('wallTime')
             doc
         }
     }
