@@ -25,6 +25,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.LongCodec;
 import org.bson.codecs.MapCodec;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -32,6 +33,8 @@ import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
 import org.bson.codecs.pojo.entities.AsymmetricalIgnoreModel;
 import org.bson.codecs.pojo.entities.AsymmetricalModel;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
@@ -41,7 +44,6 @@ import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
-import org.bson.codecs.pojo.entities.GetAndSetMutatesModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.InvalidCollectionModel;
 import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
@@ -55,8 +57,17 @@ import org.bson.codecs.pojo.entities.Optional;
 import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndGetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMatchingGetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMatchingSetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMethodModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMethodPrefixModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndSetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldOnlyModel;
+import org.bson.codecs.pojo.entities.PropertyMethodGetOnlyModel;
+import org.bson.codecs.pojo.entities.PropertyMethodOnlyModel;
+import org.bson.codecs.pojo.entities.PropertyMethodSetOnlyModel;
 import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
-import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
@@ -64,10 +75,9 @@ import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
-import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
-import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.BsonExtraElementsInvalidModel;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNonEmptyModel;
@@ -79,17 +89,16 @@ import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNullModel;
-import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -97,14 +106,15 @@ import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.GET_AND_SET_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
-import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public final class PojoCustomTest extends PojoTestCase {
@@ -670,18 +680,119 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test
-    public void testGetAndSetConvention(){
-        encodesTo(getCodec(GetAndSetMutatesModel.class),
-                new GetAndSetMutatesModel("one", "two"),
-                "{fieldOne: 'getone', fieldTwo: 'gettwo'}");
-        decodesTo(getCodec(GetAndSetMutatesModel.class),
-                "{fieldOne: 'one', fieldTwo: 'two'}",
-                new GetAndSetMutatesModel("setone", "settwo"));
+    public void testPropertyModels(){
+        // public getters
+        encodesTo(getCodec(PropertyMethodGetOnlyModel.class), new PropertyMethodGetOnlyModel(),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}");
+        decodesTo(getCodec(PropertyMethodGetOnlyModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyMethodGetOnlyModel());
 
-        roundTrip(getPojoCodecProviderBuilder(GetAndSetMutatesModel.class)
-                .conventions(singletonList(GET_AND_SET_FIELDS_CONVENTION)),
-                new GetAndSetMutatesModel("one", "two"),
-                "{fieldOne: 'one', fieldTwo: 'two'}");
+        // public setters
+        assertThrows("Inaccessible properties protected and private", CodecConfigurationException.class, () ->
+                encodesTo(getCodec(PropertyMethodSetOnlyModel.class), new PropertyMethodSetOnlyModel(), "{}"));
+        decodesTo(getCodec(PropertyMethodSetOnlyModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyMethodSetOnlyModel());
+
+        // public getters and setters
+        encodesTo(getCodec(PropertyMethodOnlyModel.class), new PropertyMethodOnlyModel(),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}");
+        decodesTo(getCodec(PropertyMethodOnlyModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyMethodOnlyModel());
+
+        // Field Only
+        encodesTo(getCodec(PropertyFieldOnlyModel.class),
+                new PropertyFieldOnlyModel("public", "protected", "private"),
+                "{publicProperty: 'public'}");
+        decodesTo(getCodec(PropertyFieldOnlyModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyFieldOnlyModel("public", null, null));
+
+        // Has getters - only public properties are discoverable eg: has a public field, getter or setter
+        encodesTo(getCodec(PropertyFieldAndMatchingGetModel.class),
+                new PropertyFieldAndMatchingGetModel("public", "protected", "private"),
+                "{publicProperty: 'public'}");
+        decodesTo(getCodec(PropertyFieldAndMatchingGetModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyFieldAndMatchingGetModel("public", null, null));
+
+        // Has setters - only public fields / getters / setters are discoverable
+        encodesTo(getCodec(PropertyFieldAndMatchingSetModel.class),
+                new PropertyFieldAndMatchingSetModel("public", "protected", "private"),
+                "{publicProperty: 'public'}");
+        decodesTo(getCodec(PropertyFieldAndMatchingSetModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyFieldAndMatchingSetModel("public", null, null));
+
+        // public getters, no setters
+        encodesTo(getCodec(PropertyFieldAndGetModel.class),
+                new PropertyFieldAndGetModel("public", "protected", "private"),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}");
+        decodesTo(getCodec(PropertyFieldAndGetModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyFieldAndGetModel("public", null, null));
+
+        // public setters, no getters
+        assertThrows("Inaccessible properties protected and private", CodecConfigurationException.class, () ->
+        encodesTo(getCodec(PropertyFieldAndSetModel.class),
+                    new PropertyFieldAndSetModel("public", "protected", "private"),
+                    "{publicProperty: 'public'}"));
+        decodesTo(getCodec(PropertyFieldAndSetModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyFieldAndSetModel("public", "protected", "private"));
+
+        // public getters and setters
+        roundTrip(getPojoCodecProviderBuilder(PropertyFieldAndMethodModel.class),
+                new PropertyFieldAndMethodModel("public", "protected", "private"),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}");
+
+        // public getters and setters that prefix the data
+        encodesTo(getCodec(PropertyFieldAndMethodPrefixModel.class),
+                new PropertyFieldAndMethodPrefixModel("public", "protected", "private"),
+                "{publicProperty: '[get] public', protectedProperty: '[get] protected', privateProperty: '[get] private'}");
+        decodesTo(getCodec(PropertyFieldAndMethodPrefixModel.class),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyFieldAndMethodPrefixModel("[set] public", "[set] protected", "[set] private"));
+    }
+
+    @Test
+    public void testGetAndSetConvention() {
+        List<Convention> conventions = singletonList(GET_AND_SET_FIELDS_CONVENTION);
+
+        // Only public properties are discoverable eg: has a public field, getter or setter
+        encodesTo(getPojoCodecProviderBuilder(PropertyFieldOnlyModel.class).conventions(conventions),
+                new PropertyFieldOnlyModel("public", "protected", "private"),
+                "{publicProperty: 'public'}");
+
+        decodesTo(getPojoCodecProviderBuilder(PropertyFieldOnlyModel.class).conventions(conventions),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyFieldOnlyModel("public", null, null));
+
+        // Ensure fields are used to get and set values
+        roundTrip(getPojoCodecProviderBuilder(PropertyFieldAndMethodPrefixModel.class).conventions(conventions),
+                new PropertyFieldAndMethodPrefixModel("public", "protected", "private"),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}");
+
+        // No fields
+        encodesTo(getPojoCodecProviderBuilder(PropertyMethodOnlyModel.class).conventions(conventions),
+                new PropertyMethodOnlyModel(), "{}");
+        decodesTo(getPojoCodecProviderBuilder(PropertyMethodOnlyModel.class).conventions(conventions),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyMethodOnlyModel());
+
+        encodesTo(getPojoCodecProviderBuilder(PropertyMethodGetOnlyModel.class).conventions(conventions),
+                new PropertyMethodGetOnlyModel(), "{}");
+        decodesTo(getPojoCodecProviderBuilder(PropertyMethodGetOnlyModel.class).conventions(conventions),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyMethodGetOnlyModel());
+
+        encodesTo(getPojoCodecProviderBuilder(PropertyMethodSetOnlyModel.class).conventions(conventions),
+                new PropertyMethodSetOnlyModel(), "{}");
+        decodesTo(getPojoCodecProviderBuilder(PropertyMethodSetOnlyModel.class).conventions(conventions),
+                "{publicProperty: 'public', protectedProperty: 'protected', privateProperty: 'private'}",
+                new PropertyMethodSetOnlyModel());
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {

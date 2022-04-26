@@ -20,6 +20,16 @@ import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.entities.BsonIdModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndGetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMatchingGetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMatchingSetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMethodModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndMethodPrefixModel;
+import org.bson.codecs.pojo.entities.PropertyFieldAndSetModel;
+import org.bson.codecs.pojo.entities.PropertyFieldOnlyModel;
+import org.bson.codecs.pojo.entities.PropertyMethodGetOnlyModel;
+import org.bson.codecs.pojo.entities.PropertyMethodOnlyModel;
+import org.bson.codecs.pojo.entities.PropertyMethodSetOnlyModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonRepresentation;
@@ -38,17 +48,25 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMultipleStaticCre
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeMethodModel;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
 import static org.bson.codecs.pojo.Conventions.ANNOTATION_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
+import static org.bson.codecs.pojo.Conventions.GET_AND_SET_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class ConventionsTest {
 
@@ -167,6 +185,26 @@ public final class ConventionsTest {
         assertNull(idPropertyModel.useDiscriminator());
     }
 
+    @Test
+    public void testGetAndSetFieldsConvention() {
+        List<Convention> conventions = singletonList(GET_AND_SET_FIELDS_CONVENTION);
+
+        Assertions.assertAll(
+                () -> assertPropertyNames(PropertyMethodGetOnlyModel.class, conventions),
+                () -> assertPropertyNames(PropertyMethodSetOnlyModel.class, conventions),
+                () -> assertPropertyNames(PropertyMethodOnlyModel.class, conventions),
+
+                () -> assertPropertyNames(PropertyFieldOnlyModel.class, conventions, "publicProperty"),
+                () -> assertPropertyNames(PropertyFieldAndMatchingGetModel.class, conventions, "publicProperty"),
+                () -> assertPropertyNames(PropertyFieldAndMatchingSetModel.class, conventions, "publicProperty"),
+
+                () -> assertPropertyNames(PropertyFieldAndGetModel.class, conventions, "publicProperty", "protectedProperty", "privateProperty"),
+                () -> assertPropertyNames(PropertyFieldAndSetModel.class, conventions, "publicProperty", "protectedProperty", "privateProperty"),
+                () -> assertPropertyNames(PropertyFieldAndMethodModel.class, conventions, "publicProperty", "protectedProperty", "privateProperty"),
+                () -> assertPropertyNames(PropertyFieldAndMethodPrefixModel.class, conventions, "publicProperty", "protectedProperty", "privateProperty")
+        );
+    }
+
     @Test(expected = CodecConfigurationException.class)
     public void testAnnotationCollision() {
         ClassModel.builder(AnnotationCollision.class).conventions(DEFAULT_CONVENTIONS).build();
@@ -235,6 +273,19 @@ public final class ConventionsTest {
     public void testBsonIgnoreDuplicatePropertyMultipleTypesModel() {
         ClassModel.builder(BsonIgnoreDuplicatePropertyMultipleTypes.class)
                 .conventions(NO_CONVENTIONS).build();
+    }
+
+    private void assertPropertyNames(final Class<?> clazz, final List<Convention> conventions, final String... propertyNames) {
+        Set<String> expected = new HashSet<String>(asList(propertyNames));
+        Set<String> actual =
+                ClassModel.builder(clazz)
+                        .conventions(conventions)
+                        .build()
+                        .getPropertyModels()
+                        .stream()
+                        .map(PropertyModel::getName)
+                        .collect(Collectors.toSet());
+        assertEquals(expected, actual);
     }
 
     private class PropertyAccessorTest<T> implements PropertyAccessor<T> {
