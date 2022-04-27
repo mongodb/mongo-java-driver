@@ -281,7 +281,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * <p>
      * For operations of type {@link OperationType#UPDATE}, the value will contain a copy of the full version of the document from some
-     * point after the update occurred. If the document was deleted since the updated happened, the value will be null.
+     * point after the update occurred. If the document was deleted since the updated happened, the value may be null.
      * </p>
      *
      * <p>
