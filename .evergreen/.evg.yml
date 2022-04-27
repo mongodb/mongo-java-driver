@@ -1394,6 +1394,13 @@ axes:
            # Multiple mongos instances can be specified in the connection string
            # for this version.
            SAFE_FOR_MULTI_MONGOS: true
+      - id: "6.0"
+        display_name: "6.0"
+        variables:
+          VERSION: "6.0"
+          # Multiple mongos instances can be specified in the connection string
+          # for this version.
+          SAFE_FOR_MULTI_MONGOS: true
       - id: "5.0"
         display_name: "5.0"
         variables:
@@ -1584,7 +1591,7 @@ buildvariants:
 
 - matrix_name: "tests-zlib-compression"
   matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8",
-                 version: ["3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
+                 version: ["3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "latest"],
                  topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1593,7 +1600,7 @@ buildvariants:
 
 - matrix_name: "tests-snappy-compression"
   matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8",
-                 version: ["3.4", "3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
+                 version: ["3.4", "3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "latest"],
                  topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1602,7 +1609,7 @@ buildvariants:
 
 - matrix_name: "tests-zstd-compression"
   matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8",
-                 version: ["4.2", "4.4", "5.0", "latest"],
+                 version: ["4.2", "4.4", "5.0", "6.0", "latest"],
                  topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1617,7 +1624,7 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-jdk8-unsecure-standalone"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "latest"],
                  topology: "standalone", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1625,7 +1632,7 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-jdk-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk17"], version: ["3.6", "4.0", "4.2", "4.4", "5.0", "latest"],
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk17"], version: ["3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "latest"],
                  topology: ["replicaset", "sharded-cluster"], os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -1633,21 +1640,21 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-jdk-secure-jdk11"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["5.0"], topology: ["replicaset"], os: "linux" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["6.0"], topology: ["replicaset"], os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
     - name: "test"
 
 - matrix_name: "tests-require-api-version"
-  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk17"], version: ["5.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk17"], version: ["5.0", "6.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${topology} ${api-version} "
   tags: ["tests-variant"]
   tasks:
     - name: "test"
 
 - matrix_name: "tests-load-balancer-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk17"], version: ["latest"], topology: "sharded-cluster", os: "ubuntu" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk17"], version: ["6.0", "latest"], topology: "sharded-cluster", os: "ubuntu" }
   display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
   tasks:
     - name: "load-balancer-test"
@@ -1659,42 +1666,42 @@ buildvariants:
     - name: "serverless-test"
 
 - matrix_name: "tests-slow"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["5.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["6.0"], topology: "standalone", os: "linux" }
   display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-slow-variant"]
   tasks:
   - name: "slow-test"
 
 - matrix_name: "tests-socket"
-  matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: ["6.0"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
 
 - matrix_name: "tests-netty"
-  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["5.0"], topology: "replicaset", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["6.0"], topology: "replicaset", os: "linux" }
   display_name: "Netty: ${version} ${topology} ${ssl} ${auth} ${jdk} ${os} "
   tags: ["tests-netty-variant"]
   tasks:
     - name: "netty-test"
 
 - matrix_name: "tests-netty-ssl-provider"
-  matrix_spec: { netty-ssl-provider: "*", auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["5.0"], topology: "replicaset", os: "linux" }
+  matrix_spec: { netty-ssl-provider: "*", auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["6.0"], topology: "replicaset", os: "linux" }
   display_name: "Netty SSL provider: ${version} ${topology} ${ssl} SslProvider.${netty-ssl-provider} ${auth} ${jdk} ${os} "
   tags: ["tests-netty-variant"]
   tasks:
     - name: "netty-test"
 
 - matrix_name: "tests-socket-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["6.0"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
 
 - matrix_name: "tests-socket-zstd-compression"
-  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["6.0"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
@@ -1722,7 +1729,7 @@ buildvariants:
     - name: "plain-auth-test"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "latest"], os: "ubuntu" }
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
   display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
   run_on: ubuntu1804-test
   tasks:
@@ -1734,14 +1741,14 @@ buildvariants:
     - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
-  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "6.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "Accept API Version 2 ${version}"
   run_on: ubuntu1804-test
   tasks:
     - name: "accept-api-version-2-test"
 
 - matrix_name: "ocsp-test"
-  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk17", version: ["4.4", "5.0", "latest"], os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk17", version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
   display_name: "OCSP test ${version} ${os}"
   tasks:
     - name: ".ocsp"
@@ -1765,7 +1772,7 @@ buildvariants:
     - name: "reactive-streams-tck-test"
 
 - matrix_name: "scala-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["5.0"], topology: "replicaset", scala: "*", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["6.0"], topology: "replicaset", scala: "*", os: "ubuntu" }
   display_name: "${scala} ${version} ${topology} ${os}"
   tags: ["test-scala-variant"]
   tasks:
