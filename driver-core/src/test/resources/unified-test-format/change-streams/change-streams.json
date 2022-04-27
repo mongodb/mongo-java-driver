@@ -625,21 +625,6 @@
     },
     {
       "description": "Test new structure in ns document MUST NOT err",
-      "runOnRequirements": [
-        {
-          "minServerVersion": "3.6",
-          "topologies": [
-            "replicaset"
-          ]
-        },
-        {
-          "minServerVersion": "3.6",
-          "maxServerVersion": "5.0",
-          "topologies": [
-            "sharded-replicaset"
-          ]
-        }
-      ],
       "operations": [
         {
           "name": "createChangeStream",
