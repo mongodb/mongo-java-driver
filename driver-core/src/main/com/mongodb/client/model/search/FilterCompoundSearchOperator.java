@@ -17,11 +17,10 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 
-
 /**
- * @see SearchOperatorCombination#mustNot(Iterable)
+ * @see CompoundSearchOperatorBase#filter(Iterable)
  * @since 4.7
  */
 @Evolving
-public interface MustNotSearchOperatorCombination extends SearchOperatorCombination {
+public interface FilterCompoundSearchOperator extends CompoundSearchOperator {
 }

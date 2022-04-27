@@ -59,8 +59,6 @@ import static com.mongodb.client.model.search.SearchHighlight.paths;
 import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchOperator.text;
-import static com.mongodb.client.model.search.SearchOperatorCombination.must;
-import static com.mongodb.client.model.search.SearchOperatorCombination.should;
 import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
@@ -300,16 +298,17 @@ final class AggregatesSearchIntegrationTest {
                 ),
                 // 6
                 arguments(
-                        stageCreator(
-                                compound(singleton(should(asList(
-                                        compound(singleton(must(singleton(exists(fieldPath("fieldName")))))),
+                        stageCreator(compound()
+                                .should(asList(
                                         exists(fieldPath("fieldName")),
                                         text(singleton("term"), singleton(wildcardPath("wildc*rd")))
                                                 .fuzzy(defaultFuzzySearchOptions()
                                                         .maxEdits(1)
                                                         .prefixLength(2)
-                                                        .maxExpansions(3))
-                                )))).minimumShouldMatch(0),
+                                                        .maxExpansions(3))))
+                                .minimumShouldMatch(0)
+                                .mustNot(singleton(
+                                        compound().must(singleton(exists(fieldPath("fieldName")))))),
                                 null
                         ),
                         asList(

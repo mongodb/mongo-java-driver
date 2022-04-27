@@ -36,8 +36,14 @@ import java.util.function.Consumer;
  * @see AbstractConstructibleBson
  */
 public abstract class AbstractConstructibleBsonElement<S extends AbstractConstructibleBsonElement<S>> implements Bson {
+    private static final BsonDocument EMPTY_VALUE = new BsonDocument();
+
     private final String name;
     private final AbstractConstructibleBson<?> value;
+
+    protected AbstractConstructibleBsonElement(final String name) {
+        this(name, EMPTY_VALUE);
+    }
 
     protected AbstractConstructibleBsonElement(final String name, final Bson value) {
         this.name = name;

@@ -17,11 +17,18 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 
-
 /**
- * @see SearchOperatorCombination#filter(Iterable)
+ * @see CompoundSearchOperatorBase#should(Iterable)
  * @since 4.7
  */
 @Evolving
-public interface FilterSearchOperatorCombination extends SearchOperatorCombination {
+public interface ShouldCompoundSearchOperator extends CompoundSearchOperator {
+    /**
+     * Creates a new {@link ShouldCompoundSearchOperator} that requires at least the requested number of clauses of those specified via
+     * {@link CompoundSearchOperatorBase#should(Iterable)} to be satisfied.
+     *
+     * @param minimumShouldMatch The minimum number of clauses that must be satisfied.
+     * @return A new {@link ShouldCompoundSearchOperator}.
+     */
+    ShouldCompoundSearchOperator minimumShouldMatch(int minimumShouldMatch);
 }

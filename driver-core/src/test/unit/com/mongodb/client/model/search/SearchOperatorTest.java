@@ -22,10 +22,6 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
-import static com.mongodb.client.model.search.SearchOperatorCombination.filter;
-import static com.mongodb.client.model.search.SearchOperatorCombination.must;
-import static com.mongodb.client.model.search.SearchOperatorCombination.mustNot;
-import static com.mongodb.client.model.search.SearchOperatorCombination.should;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static java.util.Arrays.asList;
@@ -50,45 +46,54 @@ final class SearchOperatorTest {
     @Test
     void compound() {
         assertAll(
+                // combinations must not be empty
                 () -> assertThrows(IllegalArgumentException.class, () ->
-                        // combinations must not be empty
-                        SearchOperator.compound(emptyList())
+                        SearchOperator.compound().must(emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        SearchOperator.compound().mustNot(emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        SearchOperator.compound().should(emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        SearchOperator.compound().filter(emptyList())
                 ),
                 () -> assertEquals(
                         new BsonDocument("compound", new BsonDocument()
-                                .append("must",
-                                        new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName1")).toBsonDocument())))
-                                .append("mustNot",
-                                        new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName2")).toBsonDocument())))
-                                .append("should",
-                                        new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName4")).toBsonDocument())))
-                                .append("filter",
-                                        new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName5")).toBsonDocument())))
+                                .append("must", new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName1")).toBsonDocument())))
+                                .append("mustNot", new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName2")).toBsonDocument())))
+                                .append("should", new BsonArray(asList(
+                                        SearchOperator.exists(fieldPath("fieldName3")).toBsonDocument(),
+                                        SearchOperator.exists(fieldPath("fieldName4")).toBsonDocument(),
+                                        SearchOperator.exists(fieldPath("fieldName5")).toBsonDocument())))
+                                .append("filter", new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName6")).toBsonDocument())))
                                 .append("minimumShouldMatch", new BsonInt32(1))
                         ),
-                        SearchOperator.compound(asList(
-                                must(singleton(SearchOperator.exists(fieldPath("fieldName1")))),
-                                mustNot(singleton(SearchOperator.exists(fieldPath("fieldName2")))),
-                                should(singleton(SearchOperator.exists(fieldPath("fieldName3")))),
-                                // the last `should` overrides the previous ones
-                                should(singleton(SearchOperator.exists(fieldPath("fieldName4")))),
-                                filter(singleton(SearchOperator.exists(fieldPath("fieldName5"))))))
+                        SearchOperator.compound()
+                                .must(singleton(SearchOperator.exists(fieldPath("fieldName1"))))
+                                .mustNot(singleton(SearchOperator.exists(fieldPath("fieldName2"))))
+                                .should(singleton(SearchOperator.exists(fieldPath("fieldName3"))))
+                                // appends to the existing operators combined with the same rule
+                                .should(asList(
+                                        SearchOperator.exists(fieldPath("fieldName4")),
+                                        SearchOperator.exists(fieldPath("fieldName5"))))
+                                .minimumShouldMatch(2)
+                                // overrides the previous value
                                 .minimumShouldMatch(1)
+                                .filter(singleton(SearchOperator.exists(fieldPath("fieldName6"))))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("compound", new BsonDocument(
                                 "filter", new BsonArray(singletonList(
-                                        SearchOperator.compound(singleton(
-                                                mustNot(singleton(
-                                                        SearchOperator.exists(fieldPath("fieldName")))))).toBsonDocument())))
+                                SearchOperator.compound().filter(singleton(
+                                        SearchOperator.exists(fieldPath("fieldName")))).toBsonDocument())))
                         ),
-                        SearchOperator.compound(singleton(
-                                filter(singleton(
-                                        // nested compound operators are allowed
-                                        SearchOperator.compound(singleton(
-                                                mustNot(singleton(
-                                                        SearchOperator.exists(fieldPath("fieldName"))))))))))
+                        SearchOperator.compound().filter(singleton(
+                                // nested compound operators are allowed
+                                SearchOperator.compound().filter(singleton(
+                                        SearchOperator.exists(fieldPath("fieldName"))))))
                                 .toBsonDocument()
                 )
         );

@@ -18,18 +18,13 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Iterator;
-import java.util.Map;
 
-import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
-import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -41,35 +36,14 @@ import static org.bson.assertions.Assertions.notNull;
 @Evolving
 public interface SearchOperator extends Bson {
     /**
-     * Returns a {@link SearchOperator} that may combine multiple {@link SearchOperator}s.
-     * If there are multiple combinations for the same rule, only the latest in the {@linkplain Iterator#next() iteration order} has effect.
+     * Returns a base for a {@link SearchOperator} that may combine multiple {@link SearchOperator}s.
+     * Combining {@link SearchOperator}s affects calculation of the relevance score.
      *
-     * @param combinations Non-empty combinations of clauses.
-     * @return The requested {@link SearchOperator}.
+     * @return A base for a {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/compound/ compound operator
      */
-    static CompoundSearchOperator compound(final Iterable<? extends SearchOperatorCombination> combinations) {
-        notNull("combinations", combinations);
-        isTrueArgument("combinations must not be empty", sizeAtLeast(combinations, 1));
-        Bson compoundValue = new Bson() {
-            @Override
-            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-                BsonDocument result = new BsonDocument();
-                for (final SearchOperatorCombination combination : combinations) {
-                    BsonDocument doc = combination.toBsonDocument(documentClass, codecRegistry);
-                    assertTrue(doc.size() == 1);
-                    Map.Entry<String, BsonValue> entry = doc.entrySet().iterator().next();
-                    result.append(entry.getKey(), entry.getValue());
-                }
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return combinations.toString();
-            }
-        };
-        return new SearchConstructibleBsonElement("compound", compoundValue);
+    static CompoundSearchOperatorBase compound() {
+        return new SearchConstructibleBsonElement("compound");
     }
 
     /**

@@ -21,30 +21,37 @@ import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.search.FuzzySearchOptions.defaultFuzzySearchOptions
 import org.mongodb.scala.model.search.SearchOperator.{ compound, exists, text }
-import org.mongodb.scala.model.search.SearchOperatorCombination.{ must, should }
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
+
+import scala.collection.JavaConverters._
 
 class SearchOperatorSpec extends BaseSpec {
   it should "render all operators" in {
     toDocument(
-      compound(Seq(should(Seq(
-        compound(Seq(must(Seq(exists(fieldPath("fieldName")))))),
-        exists(fieldPath("fieldName")),
-        text(Seq("term"), Seq(wildcardPath("wildc*rd")))
-          .fuzzy(defaultFuzzySearchOptions()
-            .maxEdits(1)
-            .prefixLength(2)
-            .maxExpansions(3))
-      )))).minimumShouldMatch(0)
+      compound()
+        .should(Seq(
+          exists(fieldPath("fieldName")),
+          text(Seq("term"), Seq(wildcardPath("wildc*rd")))
+            .fuzzy(defaultFuzzySearchOptions()
+              .maxEdits(1)
+              .prefixLength(2)
+              .maxExpansions(3))
+        ).asJava)
+        .minimumShouldMatch(1)
+        .mustNot(Seq(
+          compound().must(Seq(exists(fieldPath("fieldName"))).asJava)
+        ).asJava)
     ) should equal(
       Document("""{
         "compound": {
           "should": [
-            { "compound": { "must": [ { "exists": { "path": "fieldName" } } ] } },
             { "exists": { "path": "fieldName" } },
             { "text": { "query": "term", "path": { "wildcard": "wildc*rd" }, "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
           ],
-          "minimumShouldMatch": 0
+          "minimumShouldMatch": 1,
+          "mustNot": [
+            { "compound": { "must": [ { "exists": { "path": "fieldName" } } ] } }
+          ]
         }
       }""")
     )

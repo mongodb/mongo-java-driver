@@ -19,12 +19,24 @@ import com.mongodb.internal.client.model.AbstractConstructibleBsonElement;
 import org.bson.BsonInt32;
 import org.bson.conversions.Bson;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static org.bson.assertions.Assertions.notNull;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
-        CompoundSearchOperator, ExistsSearchOperator, TextSearchOperator,
+        CompoundSearchOperatorBase, CompoundSearchOperator,
+        MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
+        ExistsSearchOperator, TextSearchOperator,
         FacetSearchCollector,
         StringSearchFacet, NumericSearchFacet, DateSearchFacet {
+    SearchConstructibleBsonElement(final String name) {
+        super(name);
+    }
+
     SearchConstructibleBsonElement(final String name, final Bson value) {
         super(name, value);
     }
@@ -61,7 +73,44 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public CompoundSearchOperator minimumShouldMatch(final int minimumShouldMatch) {
+    public MustCompoundSearchOperator must(final Iterable<? extends SearchOperator> clauses) {
+        return newCombined("must", clauses);
+    }
+
+    @Override
+    public MustNotCompoundSearchOperator mustNot(final Iterable<? extends SearchOperator> clauses) {
+        return newCombined("mustNot", clauses);
+    }
+
+    @Override
+    public ShouldCompoundSearchOperator should(final Iterable<? extends SearchOperator> clauses) {
+        return newCombined("should", clauses);
+    }
+
+    @Override
+    public FilterCompoundSearchOperator filter(final Iterable<? extends SearchOperator> clauses) {
+        return newCombined("filter", clauses);
+    }
+
+    SearchConstructibleBsonElement newCombined(final String ruleName, final Iterable<? extends SearchOperator> clauses) {
+        notNull("clauses", clauses);
+        isTrueArgument("clauses must not be empty", sizeAtLeast(clauses, 1));
+        return newWithMutatedValue(doc -> {
+            Iterable<?> existingClauses = doc.get(ruleName, Iterable.class);
+            final Iterable<?> newClauses;
+            if (existingClauses == null) {
+                newClauses = clauses;
+            } else {
+                newClauses = Stream.concat(
+                        StreamSupport.stream(existingClauses.spliterator(), false),
+                        StreamSupport.stream(clauses.spliterator(), false)).collect(Collectors.toList());
+            }
+            doc.append(ruleName, newClauses);
+        });
+    }
+
+    @Override
+    public ShouldCompoundSearchOperator minimumShouldMatch(final int minimumShouldMatch) {
         return newWithAppendedValue("minimumShouldMatch", new BsonInt32(minimumShouldMatch));
     }
 }

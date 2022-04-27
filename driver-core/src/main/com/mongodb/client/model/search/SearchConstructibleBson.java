@@ -33,9 +33,7 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
         SearchHighlight,
         TotalSearchCount, LowerBoundSearchCount,
         FieldSearchPath, WildcardSearchPath,
-        SearchFacet,
-        MustSearchOperatorCombination, MustNotSearchOperatorCombination,
-        ShouldSearchOperatorCombination, FilterSearchOperatorCombination {
+        SearchFacet {
     /**
      * An {@linkplain Immutable immutable} empty instance.
      */
