@@ -27,7 +27,7 @@ import static org.bson.assertions.Assertions.notNull;
 
 /**
  * The core part of the {@link Aggregates#search(SearchCollector, SearchOptions) $search} pipeline stage of an aggregation pipeline.
- * {@link SearchCollector}s allow returning metadata together with the matching search results.
+ * {@link SearchCollector}s allow returning metadata together with the search results.
  * You may use the {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}, to extract this metadata.
  *
  * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors

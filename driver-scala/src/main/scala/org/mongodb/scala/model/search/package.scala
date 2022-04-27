@@ -42,6 +42,12 @@ package object search {
   type SearchOperator = com.mongodb.client.model.search.SearchOperator
 
   /**
+   * @see `SearchOperator.compound(Iterable)`
+   */
+  @Evolving
+  type CompoundSearchOperator = com.mongodb.client.model.search.CompoundSearchOperator
+
+  /**
    * @see `SearchOperator.exists(FieldSearchPath)`
    */
   @Evolving
@@ -172,4 +178,39 @@ package object search {
    */
   @Evolving
   type WildcardSearchPath = com.mongodb.client.model.search.WildcardSearchPath
+
+  /**
+   * Represents a combination of `SearchOperator`s with a rule affecting how they are used when matching documents
+   * and calculating the relevance score assigned to each found document.
+   * These `SearchOperator`s are called "clauses" in the context of a [[CompoundSearchOperator]].
+   *
+   * @see `SearchOperator.compound(Iterable)`
+   * @since 4.7
+   */
+  @Evolving
+  type SearchOperatorCombination = com.mongodb.client.model.search.SearchOperatorCombination
+
+  /**
+   * @see `SearchOperatorCombination.must(Iterable)`
+   */
+  @Evolving
+  type MustSearchOperatorCombination = com.mongodb.client.model.search.MustSearchOperatorCombination
+
+  /**
+   * @see `SearchOperatorCombination.mustNot(Iterable)`
+   */
+  @Evolving
+  type MustNotSearchOperatorCombination = com.mongodb.client.model.search.MustNotSearchOperatorCombination
+
+  /**
+   * @see `SearchOperatorCombination.should(Iterable)`
+   */
+  @Evolving
+  type ShouldSearchOperatorCombination = com.mongodb.client.model.search.ShouldSearchOperatorCombination
+
+  /**
+   * @see `SearchOperatorCombination.filter(Iterable)`
+   */
+  @Evolving
+  type FilterSearchOperatorCombination = com.mongodb.client.model.search.FilterSearchOperatorCombination
 }

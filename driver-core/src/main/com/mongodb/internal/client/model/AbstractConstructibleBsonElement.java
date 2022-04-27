@@ -98,7 +98,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
     @Override
     public String toString() {
         return "{\""
-                + name + "\": " + value.toString()
+                + name + "\": " + value
                 + '}';
     }
 

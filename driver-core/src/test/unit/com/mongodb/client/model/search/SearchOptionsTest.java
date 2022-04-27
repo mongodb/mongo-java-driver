@@ -132,7 +132,7 @@ final class SearchOptionsTest {
                         .append("name", new BsonArray(singletonList(new BsonString("value"))))
                         .append("highlight", new BsonDocument()
                                 .append("path", fieldPath("fieldName").toBsonValue()))
-                        .append("count", new BsonDocument("type", new BsonString("total")))
+                        .append("count", total().toBsonDocument())
                         .append("returnStoredSource", new BsonBoolean(true)),
                 SearchOptions.defaultSearchOptions()
                         .index("indexName")

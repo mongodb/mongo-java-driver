@@ -16,12 +16,13 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.internal.client.model.AbstractConstructibleBsonElement;
+import org.bson.BsonInt32;
 import org.bson.conversions.Bson;
 
 import static org.bson.assertions.Assertions.notNull;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
-        ExistsSearchOperator, TextSearchOperator,
+        CompoundSearchOperator, ExistsSearchOperator, TextSearchOperator,
         FacetSearchCollector,
         StringSearchFacet, NumericSearchFacet, DateSearchFacet {
     SearchConstructibleBsonElement(final String name, final Bson value) {
@@ -57,5 +58,10 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
             doc.remove("fuzzy");
             doc.append("synonyms", notNull("name", name));
         });
+    }
+
+    @Override
+    public CompoundSearchOperator minimumShouldMatch(final int minimumShouldMatch) {
+        return newWithAppendedValue("minimumShouldMatch", new BsonInt32(minimumShouldMatch));
     }
 }

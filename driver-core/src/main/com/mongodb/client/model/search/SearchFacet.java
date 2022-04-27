@@ -143,6 +143,11 @@ public interface SearchFacet extends Bson {
                 }
                 return result;
             }
+
+            @Override
+            public String toString() {
+                return facets.toString();
+            }
         };
     }
 }

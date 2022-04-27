@@ -29,6 +29,16 @@ import collection.JavaConverters._
 object SearchOperator {
 
   /**
+   * Returns a `SearchOperator` that may combine multiple `SearchOperator`s.
+   *
+   * @param combinations Non-empty combinations of clauses.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/compound/ compound operator]]
+   */
+  def compound(combinations: Iterable[_ <: SearchOperatorCombination]): CompoundSearchOperator =
+    JSearchOperator.compound(combinations.asJava)
+
+  /**
    * Returns a `SearchOperator` that tests if the `path` exists in a document.
    *
    * @param path The path to test.

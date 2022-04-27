@@ -49,13 +49,18 @@ import static com.mongodb.client.model.Aggregates.replaceWith;
 import static com.mongodb.client.model.Projections.computedSearchMeta;
 import static com.mongodb.client.model.Projections.metaSearchHighlights;
 import static com.mongodb.client.model.Projections.metaSearchScore;
+import static com.mongodb.client.model.search.FuzzySearchOptions.defaultFuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchCollector.facet;
 import static com.mongodb.client.model.search.SearchCount.lowerBound;
 import static com.mongodb.client.model.search.SearchFacet.dateFacet;
 import static com.mongodb.client.model.search.SearchFacet.numberFacet;
 import static com.mongodb.client.model.search.SearchFacet.stringFacet;
 import static com.mongodb.client.model.search.SearchHighlight.paths;
+import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.exists;
+import static com.mongodb.client.model.search.SearchOperator.text;
+import static com.mongodb.client.model.search.SearchOperatorCombination.must;
+import static com.mongodb.client.model.search.SearchOperatorCombination.should;
 import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
@@ -126,7 +131,7 @@ final class AggregatesSearchIntegrationTest {
      *  <li>the idem with index 1 is used with {@code $searchMeta}.</li>
      * </ul>
      */
-    @ParameterizedTest(name = "{index} {0}")
+    @ParameterizedTest(name = "{index}")
     @MethodSource("args")
     void test(
             final CustomizableSearchStageCreator stageUnderTestCreator,
@@ -292,11 +297,40 @@ final class AggregatesSearchIntegrationTest {
                                         Asserters.nonEmpty()
                                 )
                         )
+                ),
+                // 6
+                arguments(
+                        stageCreator(
+                                compound(singleton(should(asList(
+                                        compound(singleton(must(singleton(exists(fieldPath("fieldName")))))),
+                                        exists(fieldPath("fieldName")),
+                                        text(singleton("term"), singleton(wildcardPath("wildc*rd")))
+                                                .fuzzy(defaultFuzzySearchOptions()
+                                                        .maxEdits(1)
+                                                        .prefixLength(2)
+                                                        .maxExpansions(3))
+                                )))).minimumShouldMatch(0),
+                                null
+                        ),
+                        asList(
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.empty()
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.countLowerBound(0)
+                                )
+                        )
                 )
         );
     }
 
     private static final class Asserters {
+        static Asserter empty() {
+            return decorate((results, msgSupplier) -> assertTrue(results.isEmpty(), msgSupplier));
+        }
+
         static Asserter nonEmpty() {
             return decorate((results, msgSupplier) -> assertFalse(results.isEmpty(), msgSupplier));
         }
