@@ -52,6 +52,7 @@ import static com.mongodb.client.model.Projections.metaSearchScore;
 import static com.mongodb.client.model.search.FuzzySearchOptions.defaultFuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchCollector.facet;
 import static com.mongodb.client.model.search.SearchCount.lowerBound;
+import static com.mongodb.client.model.search.SearchCount.total;
 import static com.mongodb.client.model.search.SearchFacet.dateFacet;
 import static com.mongodb.client.model.search.SearchFacet.numberFacet;
 import static com.mongodb.client.model.search.SearchFacet.stringFacet;
@@ -129,9 +130,10 @@ final class AggregatesSearchIntegrationTest {
      *  <li>the idem with index 1 is used with {@code $searchMeta}.</li>
      * </ul>
      */
-    @ParameterizedTest(name = "{index}")
+    @ParameterizedTest(name = "{index} {0}")
     @MethodSource("args")
     void test(
+            @SuppressWarnings("unused") final String testDescription,
             final CustomizableSearchStageCreator stageUnderTestCreator,
             final List<Accessory> accessories) {
         List<BiFunction<Bson, SearchOptions, Bson>> stageUnderTestCustomizers = asList(
@@ -173,12 +175,12 @@ final class AggregatesSearchIntegrationTest {
     }
 
     /**
-     * @see #test(CustomizableSearchStageCreator, List)
+     * @see #test(String, CustomizableSearchStageCreator, List)
      */
     private static Stream<Arguments> args() {
         return Stream.of(
-                // 1
                 arguments(
+                        "default options",
                         stageCreator(
                                 exists(fieldPath("tomatoes.dvd")),
                                 null
@@ -195,8 +197,8 @@ final class AggregatesSearchIntegrationTest {
                                 )
                         )
                 ),
-                // 2
                 arguments(
+                        "`index`, `count` options",
                         stageCreator(
                                 exists(fieldPath("tomatoes")),
                                 defaultSearchOptions()
@@ -214,8 +216,28 @@ final class AggregatesSearchIntegrationTest {
                                 )
                         )
                 ),
-                // 3
                 arguments(
+                        "`highlight` option",
+                        stageCreator(
+                                text(asList("factory", "century"), singleton(fieldPath("plot"))),
+                                defaultSearchOptions()
+                                        .highlight(paths(
+                                                singleton(wildcardPath("pl*t")))
+                                                .maxCharsToExamine(100_000))
+                        ),
+                        asList(
+                                new Accessory(
+                                        asList(limit(1), project(metaSearchHighlights("highlights"))),
+                                        Asserters.firstResult((doc, msgSupplier) -> assertEquals(1, doc.getArray("highlights").size(), msgSupplier))
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.nonEmpty()
+                                )
+                        )
+                ),
+                arguments(
+                        "`returnStoredSource` option",
                         stageCreator(
                                 exists(fieldPath("plot")),
                                 defaultSearchOptions()
@@ -237,8 +259,26 @@ final class AggregatesSearchIntegrationTest {
                                 )
                         )
                 ),
-                // 4
                 arguments(
+                        "alternate analyzer (`multi` field path)",
+                        stageCreator(
+                                text(singleton("The Cheat"), singleton(fieldPath("title").multi("keyword"))),
+                                defaultSearchOptions().count(total())
+                        ),
+                        asList(
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.firstResult((doc, msgSupplier) -> assertEquals(
+                                                "The Cheat", doc.getString("title").getValue(), msgSupplier))
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.countTotal(1)
+                                )
+                        )
+                ),
+                arguments(
+                        "facet collector",
                         stageCreator(
                                 facet(
                                         exists(fieldPath("tomatoes")),
@@ -276,28 +316,8 @@ final class AggregatesSearchIntegrationTest {
                                 )
                         )
                 ),
-                // 5
                 arguments(
-                        stageCreator(
-                                exists(fieldPath("tomatoes")),
-                                defaultSearchOptions()
-                                        .highlight(paths(
-                                                singleton(wildcardPath("pl*t")))
-                                                .maxCharsToExamine(100))
-                        ),
-                        asList(
-                                new Accessory(
-                                        asList(limit(1), project(metaSearchHighlights("highlights"))),
-                                        Asserters.nonEmpty()
-                                ),
-                                new Accessory(
-                                        emptyList(),
-                                        Asserters.nonEmpty()
-                                )
-                        )
-                ),
-                // 6
-                arguments(
+                        "all operators in a `compound` operator",
                         stageCreator(compound()
                                 .should(asList(
                                         exists(fieldPath("fieldName")),
@@ -350,19 +370,24 @@ final class AggregatesSearchIntegrationTest {
          * Checks the value of the {@code "customMetaField.count.lowerBound"} field.
          */
         static Asserter countLowerBound(final String customMetaField, final int expectedAtLeast) {
-            return firstResult((doc, msgSupplier) -> assertTrue(doc.getDocument(customMetaField)
-                    .getDocument("count")
-                    .getNumber("lowerBound")
-                    .intValue() >= expectedAtLeast));
+            return firstResult((doc, msgSupplier) -> assertTrue(
+                    doc.getDocument(customMetaField).getDocument("count").getNumber("lowerBound").intValue() >= expectedAtLeast, msgSupplier));
         }
 
         /**
          * Checks the value of the {@code "count.lowerBound"} field.
          */
         static Asserter countLowerBound(final int expectedAtLeast) {
-            return firstResult((doc, msgSupplier) -> assertTrue(doc.getDocument("count")
-                    .getNumber("lowerBound")
-                    .intValue() >= expectedAtLeast));
+            return firstResult((doc, msgSupplier) -> assertTrue(
+                    doc.getDocument("count").getNumber("lowerBound").intValue() >= expectedAtLeast, msgSupplier));
+        }
+
+        /**
+         * Checks the value of the {@code "count.total"} field.
+         */
+        static Asserter countTotal(final int expected) {
+            return firstResult((doc, msgSupplier) -> assertEquals(
+                    expected, doc.getDocument("count").getNumber("total").intValue(), msgSupplier));
         }
 
         static Asserter firstResult(final BiConsumer<BsonDocument, Supplier<String>> asserter) {
@@ -373,12 +398,14 @@ final class AggregatesSearchIntegrationTest {
         }
 
         private static Asserter decorate(final Asserter asserter) {
+            int maxRenderedResults = 20;
             return (results, msgSupplier) -> asserter.accept(
                     results,
                     () -> msgSupplier.get()
-                            + "\nthe results (" + results.size() + " elements) are\n["
+                            + "\ntop " + maxRenderedResults + " out of total " + results.size() + " results are\n["
                             + results.stream()
                             .map(doc -> doc.toJson(JsonWriterSettings.builder().indent(true).build()))
+                            .limit(maxRenderedResults)
                             .collect(Collectors.joining(",\n"))
                             + "\n]\n"
             );
