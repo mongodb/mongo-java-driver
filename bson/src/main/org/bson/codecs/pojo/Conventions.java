@@ -70,10 +70,8 @@ public final class Conventions {
     public static final Convention USE_GETTERS_FOR_SETTERS = new ConventionUseGettersAsSettersImpl();
 
     /**
-     * A convention that <em>only uses fields</em> for setting and getting values to be serialized. Automatically,
-     * removes any properties that are not explicitly backed by a field.
-     *
-     * <p>For a field to be discoverable by the PojoCodec and therefore this convention it must have a public: field, getter or setter.</p>
+     * A convention that <em>only uses fields</em> for setting and getting values. Properties that are not explicitly backed by a field
+     * are ignored.
      * <p>Note: This convention is not part of the {@code DEFAULT_CONVENTIONS} list and must explicitly be set.</p>
      *
      * @since 4.7
