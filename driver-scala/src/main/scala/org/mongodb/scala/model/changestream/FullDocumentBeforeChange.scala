@@ -47,10 +47,10 @@ object FullDocumentBeforeChange {
   val WHEN_AVAILABLE = JFullDocumentBeforeChange.WHEN_AVAILABLE
 
   /**
-   * The same behavior as [[WHEN_AVAILABLE]] except that an error is raised if the post-image is not available.
+   * The same behavior as [[WHEN_AVAILABLE]] except that an error is raised if the pre-image is not available.
    */
   val REQUIRED = JFullDocumentBeforeChange.REQUIRED
-
+                                                                                       
   /**
    * Returns the FullDocumentBeforeChange from the string value.
    *
