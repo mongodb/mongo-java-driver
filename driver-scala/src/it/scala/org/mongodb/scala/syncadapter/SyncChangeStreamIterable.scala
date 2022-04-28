@@ -17,7 +17,7 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.client.model.Collation
-import com.mongodb.client.model.changestream.{ ChangeStreamDocument, FullDocument }
+import com.mongodb.client.model.changestream.{ ChangeStreamDocument, FullDocument, FullDocumentBeforeChange }
 import com.mongodb.client.{ ChangeStreamIterable, MongoChangeStreamCursor }
 import com.mongodb.{ ServerAddress, ServerCursor }
 import org.bson.{ BsonDocument, BsonTimestamp, BsonValue }
@@ -45,6 +45,11 @@ case class SyncChangeStreamIterable[T](wrapped: ChangeStreamObservable[T])
 
   override def fullDocument(fullDocument: FullDocument): ChangeStreamIterable[T] = {
     wrapped.fullDocument(fullDocument)
+    this
+  }
+
+  override def fullDocumentBeforeChange(fullDocumentBeforeChange: FullDocumentBeforeChange): ChangeStreamIterable[T] = {
+    wrapped.fullDocumentBeforeChange(fullDocumentBeforeChange)
     this
   }
 

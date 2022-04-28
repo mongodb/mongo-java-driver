@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.AsyncReadOperation;
@@ -50,6 +51,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     private final ChangeStreamLevel changeStreamLevel;
 
     private FullDocument fullDocument = FullDocument.DEFAULT;
+    private FullDocumentBeforeChange fullDocumentBeforeChange = FullDocumentBeforeChange.DEFAULT;
     private BsonDocument resumeToken;
     private BsonDocument startAfter;
     private long maxAwaitTimeMS;
@@ -84,6 +86,12 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     @Override
     public ChangeStreamPublisher<T> fullDocument(final FullDocument fullDocument) {
         this.fullDocument = notNull("fullDocument", fullDocument);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamPublisher<T> fullDocumentBeforeChange(final FullDocumentBeforeChange fullDocumentBeforeChange) {
+        this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
         return this;
     }
 
@@ -154,7 +162,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
-        return new ChangeStreamOperation<>(getNamespace(), fullDocument,
+        return new ChangeStreamOperation<>(getNamespace(), fullDocument, fullDocumentBeforeChange,
                                            createBsonDocumentList(pipeline), codec, changeStreamLevel)
                 .batchSize(initialBatchSize)
                 .collation(collation)

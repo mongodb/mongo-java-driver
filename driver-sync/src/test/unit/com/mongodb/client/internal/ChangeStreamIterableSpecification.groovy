@@ -25,6 +25,7 @@ import com.mongodb.client.ClientSession
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.FullDocument
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.operation.AggregateResponseBatchCursor
 import com.mongodb.internal.operation.ChangeStreamOperation
@@ -71,7 +72,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT,
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION).retryReads(true))
         readPreference == secondary()
 
@@ -79,13 +80,16 @@ class ChangeStreamIterableSpecification extends Specification {
         def resumeToken = RawBsonDocument.parse('{_id: {a: 1}}')
         def startAtOperationTime = new BsonTimestamp(99)
         changeStreamIterable.collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
+                .fullDocument(FullDocument.UPDATE_LOOKUP)
+                .fullDocumentBeforeChange(FullDocumentBeforeChange.WHEN_AVAILABLE)
+                .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
                 .startAfter(resumeToken).iterator()
 
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.WHEN_AVAILABLE,
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION)
                 .retryReads(true)
                 .collation(collation).maxAwaitTime(99, MILLISECONDS)

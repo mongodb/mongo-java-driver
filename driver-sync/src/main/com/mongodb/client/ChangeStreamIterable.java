@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -54,6 +55,17 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      * @return this
      */
     ChangeStreamIterable<TResult> fullDocument(FullDocument fullDocument);
+
+
+    /**
+     * Sets the fullDocumentBeforeChange value.
+     *
+     * @param fullDocumentBeforeChange the fullDocumentBeforeChange
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    ChangeStreamIterable<TResult> fullDocumentBeforeChange(FullDocumentBeforeChange fullDocumentBeforeChange);
 
     /**
      * Sets the logical starting point for the new change stream.

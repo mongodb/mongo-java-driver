@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
 import org.mongodb.scala.bson.{ BsonTimestamp, BsonValue }
 import org.mongodb.scala.model.Collation
-import org.mongodb.scala.model.changestream.{ ChangeStreamDocument, FullDocument }
+import org.mongodb.scala.model.changestream.{ ChangeStreamDocument, FullDocument, FullDocumentBeforeChange }
 
 import scala.concurrent.duration.Duration
 
@@ -47,6 +47,19 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
    */
   def fullDocument(fullDocument: FullDocument): ChangeStreamObservable[TResult] = {
     wrapped.fullDocument(fullDocument)
+    this
+  }
+
+  /**
+   * Sets the fullDocumentBeforeChange value.
+   *
+   * @param fullDocumentBeforeChange the fullDocumentBeforeChange
+   * @return this
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  def fullDocumentBeforeChange(fullDocumentBeforeChange: FullDocumentBeforeChange): ChangeStreamObservable[TResult] = {
+    wrapped.fullDocumentBeforeChange(fullDocumentBeforeChange)
     this
   }
 

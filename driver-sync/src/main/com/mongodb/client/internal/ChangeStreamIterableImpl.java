@@ -27,6 +27,7 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ChangeStreamOperation;
@@ -61,6 +62,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     private final ChangeStreamLevel changeStreamLevel;
 
     private FullDocument fullDocument = FullDocument.DEFAULT;
+    private FullDocumentBeforeChange fullDocumentBeforeChange = FullDocumentBeforeChange.DEFAULT;
     private BsonDocument resumeToken;
     private BsonDocument startAfter;
     private long maxAwaitTimeMS;
@@ -91,6 +93,12 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     @Override
     public ChangeStreamIterable<TResult> fullDocument(final FullDocument fullDocument) {
         this.fullDocument = notNull("fullDocument", fullDocument);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<TResult> fullDocumentBeforeChange(final FullDocumentBeforeChange fullDocumentBeforeChange) {
+        this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
         return this;
     }
 
@@ -194,7 +202,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     private ReadOperation<BatchCursor<RawBsonDocument>> createChangeStreamOperation() {
-        return new ChangeStreamOperation<>(namespace, fullDocument,  createBsonDocumentList(pipeline),
+        return new ChangeStreamOperation<>(namespace, fullDocument, fullDocumentBeforeChange, createBsonDocumentList(pipeline),
                 new RawBsonDocumentCodec(), changeStreamLevel)
                         .batchSize(getBatchSize())
                         .collation(collation)

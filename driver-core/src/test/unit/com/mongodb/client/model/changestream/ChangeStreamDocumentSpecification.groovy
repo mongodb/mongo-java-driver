@@ -36,6 +36,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def destinationNamespaceDocument = BsonDocument.parse('{db: "databaseName2", coll: "collectionName2"}')
         def destinationNamespace = new MongoNamespace('databaseName2.collectionName2')
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
+        def fullDocumentBeforeChange = BsonDocument.parse('{key: "value for fullDocumentBeforeChange"}')
         def documentKey = BsonDocument.parse('{_id : 1}')
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.UPDATE
@@ -45,11 +46,34 @@ class ChangeStreamDocumentSpecification extends Specification {
 
         when:
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
+                destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, null, null)
+
+        then:
+        changeStreamDocument.getResumeToken() == resumeToken
+        changeStreamDocument.getFullDocument() == fullDocument
+        changeStreamDocument.getFullDocumentBeforeChange() == fullDocumentBeforeChange
+        changeStreamDocument.getDocumentKey() == documentKey
+        changeStreamDocument.getClusterTime() == clusterTime
+        changeStreamDocument.getNamespace() == namespace
+        changeStreamDocument.getNamespaceDocument() == namespaceDocument
+        changeStreamDocument.getDestinationNamespace() == destinationNamespace
+        changeStreamDocument.getDestinationNamespaceDocument() == destinationNamespaceDocument
+        changeStreamDocument.getOperationTypeString() == operationType.value
+        changeStreamDocument.getOperationType() == operationType
+        changeStreamDocument.getUpdateDescription() == updateDesc
+        changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
+        changeStreamDocument.getTxnNumber() == null
+        changeStreamDocument.getLsid() == null
+
+        when:
+        //noinspection GrDeprecatedAPIUsage
+        changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
                 destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, null, null)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
         changeStreamDocument.getFullDocument() == fullDocument
+        changeStreamDocument.getFullDocumentBeforeChange() == null
         changeStreamDocument.getDocumentKey() == documentKey
         changeStreamDocument.getClusterTime() == clusterTime
         changeStreamDocument.getNamespace() == namespace
