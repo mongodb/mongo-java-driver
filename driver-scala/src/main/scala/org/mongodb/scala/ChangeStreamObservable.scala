@@ -51,11 +51,12 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
   }
 
   /**
-   * Sets the fullDocument before change value.
+   * Sets the fullDocumentBeforeChange value.
    *
-   * @param fullDocumentBeforeChange the fullDocument before change
+   * @param fullDocumentBeforeChange the fullDocumentBeforeChange
    * @return this
    * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
    */
   def fullDocumentBeforeChange(fullDocumentBeforeChange: FullDocumentBeforeChange): ChangeStreamObservable[TResult] = {
     wrapped.fullDocumentBeforeChange(fullDocumentBeforeChange)

@@ -25,34 +25,29 @@ import scala.util.Try
  *
  * Determines what to return for update operations when using a Change Stream. Defaults to [[FullDocumentBeforeChange#DEFAULT]].
  *
- * @note Requires MongoDB 6.0 or greater
  * @since 4.7
+ * @note Requires MongoDB 6.0 or greater
  */
 object FullDocumentBeforeChange {
 
   /**
-   * Default
-   *
-   * Returns the servers default value in the `fullDocument` field.
+   * The default value
    */
   val DEFAULT = JFullDocumentBeforeChange.DEFAULT
 
   /**
-   * Lookup
-   *
-   * The change stream for partial updates will include both a delta describing the changes to the document as well as a copy of the
-   * entire document that was changed from *some time* after the change occurred.
+   * Configures the change stream to not include the pre-image of the modified document.
    */
   val OFF = JFullDocumentBeforeChange.OFF
 
   /**
-   * Configures the change stream to return the post-image of the modified document for replace and update change events, if it
+   * Configures the change stream to return the pre-image of the modified document for replace, update, and delete change events if it
    * is available.
    */
   val WHEN_AVAILABLE = JFullDocumentBeforeChange.WHEN_AVAILABLE
 
   /**
-   * The same behavior as WHEN_AVAILABLE except that an error is raised if the post-image is not available.
+   * The same behavior as [[WHEN_AVAILABLE]] except that an error is raised if the post-image is not available.
    */
   val REQUIRED = JFullDocumentBeforeChange.REQUIRED
 
