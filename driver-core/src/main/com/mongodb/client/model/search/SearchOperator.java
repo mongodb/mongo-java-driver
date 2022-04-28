@@ -25,6 +25,7 @@ import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
+import static java.util.Collections.singleton;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -60,7 +61,19 @@ public interface SearchOperator extends Bson {
     /**
      * Returns a {@link SearchOperator} that performs a full-text search.
      *
-     * @param queries Non-empty terms to search for.
+     * @param query A string to search for.
+     * @param path A document field to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/text/ text operator
+     */
+    static TextSearchOperator text(final String query, final SearchPath path) {
+        return text(singleton(notNull("query", query)), singleton(notNull("path", path)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a full-text search.
+     *
+     * @param queries Non-empty strings to search for.
      * @param paths Non-empty document fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/text/ text operator

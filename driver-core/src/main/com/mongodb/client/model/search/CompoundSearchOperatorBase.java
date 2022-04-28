@@ -55,7 +55,7 @@ public interface CompoundSearchOperatorBase {
 
     /**
      * Creates a new {@link CompoundSearchOperator} by adding to it {@code clauses} that, similarly to {@link #must(Iterable)},
-     * must all be satisfied. The difference is that {@link #filter(Iterable)} does not affect the relevance score.
+     * must all be satisfied. The difference is that this method does not affect the relevance score.
      * <p>
      * This method may be called multiple times.</p>
      *

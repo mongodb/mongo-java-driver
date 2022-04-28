@@ -126,26 +126,26 @@ final class SearchOperatorTest {
                                         .append("path", fieldPath("fieldName").toBsonValue())
                         ),
                         SearchOperator.text(
-                                singleton("term"),
-                                singleton(fieldPath("fieldName")))
+                                "term",
+                                fieldPath("fieldName"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
                                 new BsonDocument("query", new BsonArray(asList(
-                                                new BsonString("term1"),
-                                                new BsonString("term2"))))
+                                        new BsonString("term1"),
+                                        new BsonString("term2"))))
                                         .append("path", new BsonArray(asList(
                                                 fieldPath("fieldName").toBsonValue(),
                                                 wildcardPath("wildc*rd").toBsonValue())))
                         ),
                         SearchOperator.text(
-                                        asList(
-                                                "term1",
-                                                "term2"),
-                                        asList(
-                                                fieldPath("fieldName"),
-                                                wildcardPath("wildc*rd")))
+                                asList(
+                                        "term1",
+                                        "term2"),
+                                asList(
+                                        fieldPath("fieldName"),
+                                        wildcardPath("wildc*rd")))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(

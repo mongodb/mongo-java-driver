@@ -29,7 +29,7 @@ import collection.JavaConverters._
 object SearchOperator {
 
   /**
-   * Returns a base for a `SearchOperator`` that may combine multiple `SearchOperator`s.
+   * Returns a base for a `SearchOperator` that may combine multiple `SearchOperator`s.
    * Combining `SearchOperator`s affects calculation of the relevance score.
    *
    * @return A base for a `SearchOperator`.
@@ -45,6 +45,16 @@ object SearchOperator {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/exists/ exists operator]]
    */
   def exists(path: FieldSearchPath): ExistsSearchOperator = JSearchOperator.exists(path)
+
+  /**
+   * Returns a `SearchOperator` that performs a full-text search.
+   *
+   * @param query A string to search for.
+   * @param path A document field to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
+   */
+  def text(query: String, path: SearchPath): TextSearchOperator = JSearchOperator.text(query, path)
 
   /**
    * Returns a `SearchOperator` that performs a full-text search.

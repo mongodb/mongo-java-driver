@@ -320,15 +320,16 @@ final class AggregatesSearchIntegrationTest {
                         "all operators in a `compound` operator",
                         stageCreator(compound()
                                 .should(asList(
-                                        exists(fieldPath("fieldName")),
-                                        text(singleton("term"), singleton(wildcardPath("wildc*rd")))
+                                        exists(fieldPath("fieldName1")),
+                                        text("term1", fieldPath("fieldName2")),
+                                        text(asList("term2", "term3"), singleton(wildcardPath("wildc*rd")))
                                                 .fuzzy(defaultFuzzySearchOptions()
                                                         .maxEdits(1)
                                                         .prefixLength(2)
                                                         .maxExpansions(3))))
-                                .minimumShouldMatch(0)
+                                .minimumShouldMatch(1)
                                 .mustNot(singleton(
-                                        compound().must(singleton(exists(fieldPath("fieldName")))))),
+                                        compound().must(singleton(exists(fieldPath("fieldName3")))))),
                                 null
                         ),
                         asList(

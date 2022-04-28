@@ -30,8 +30,9 @@ class SearchOperatorSpec extends BaseSpec {
     toDocument(
       compound()
         .should(Seq(
-          exists(fieldPath("fieldName")),
-          text(Seq("term"), Seq(wildcardPath("wildc*rd")))
+          exists(fieldPath("fieldName1")),
+          text("term1", fieldPath("fieldName2")),
+          text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd")))
             .fuzzy(defaultFuzzySearchOptions()
               .maxEdits(1)
               .prefixLength(2)
@@ -39,18 +40,20 @@ class SearchOperatorSpec extends BaseSpec {
         ).asJava)
         .minimumShouldMatch(1)
         .mustNot(Seq(
-          compound().must(Seq(exists(fieldPath("fieldName"))).asJava)
+          compound().must(Seq(exists(fieldPath("fieldName3"))).asJava)
         ).asJava)
     ) should equal(
       Document("""{
         "compound": {
           "should": [
-            { "exists": { "path": "fieldName" } },
-            { "text": { "query": "term", "path": { "wildcard": "wildc*rd" }, "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
+            { "exists": { "path": "fieldName1" } },
+            { "text": { "query": "term1", "path": "fieldName2" } },
+            { "text": { "query": [ "term2", "term3" ], "path": { "wildcard": "wildc*rd" },
+              "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
           ],
           "minimumShouldMatch": 1,
           "mustNot": [
-            { "compound": { "must": [ { "exists": { "path": "fieldName" } } ] } }
+            { "compound": { "must": [ { "exists": { "path": "fieldName3" } } ] } }
           ]
         }
       }""")
