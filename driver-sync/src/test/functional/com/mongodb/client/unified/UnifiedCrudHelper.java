@@ -61,6 +61,8 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -1094,6 +1096,12 @@ final class UnifiedCrudHelper {
                 case "comment":
                     iterable.comment(cur.getValue());
                     break;
+                case "fullDocument":
+                    iterable.fullDocument(FullDocument.fromString(cur.getValue().asString().getValue()));
+                    break;
+                case "fullDocumentBeforeChange":
+                    iterable.fullDocumentBeforeChange(FullDocumentBeforeChange.fromString(cur.getValue().asString().getValue()));
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -1206,7 +1214,9 @@ final class UnifiedCrudHelper {
      */
     private static final List<String> BSON_DOCUMENT_CHANGE_STREAM_TESTS = asList(
                     "Test newField added in response MUST NOT err",
-                    "Test projection in change stream returns expected fields");
+                    "Test projection in change stream returns expected fields",
+                    "fullDocument:whenAvailable with changeStreamPreAndPostImages disabled",
+                    "fullDocumentBeforeChange:whenAvailable with changeStreamPreAndPostImages disabled");
 
     @NotNull
     private MongoCursor<BsonDocument> createChangeStreamWrappingCursor(final ChangeStreamIterable<BsonDocument> iterable) {

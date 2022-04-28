@@ -44,7 +44,25 @@ public enum FullDocument {
      * <p>The change stream for partial updates will include both a delta describing the changes to the document as well as a copy of the
      * entire document that was changed from <em>some time</em> after the change occurred.</p>
      */
-    UPDATE_LOOKUP("updateLookup");
+    UPDATE_LOOKUP("updateLookup"),
+
+    /**
+     * Configures the change stream to return the post-image of the modified document for replace and update change events, if it
+     * is available.
+     *
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    WHEN_AVAILABLE("whenAvailable"),
+
+    /**
+     * The same behavior as {@link #WHEN_AVAILABLE} except that an error is raised if the post-image is not available.
+     *
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    REQUIRED("required");
+
 
     private final String value;
     FullDocument(final String caseFirst) {
