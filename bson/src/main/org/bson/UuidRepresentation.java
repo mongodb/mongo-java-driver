@@ -16,6 +16,10 @@
 
 package org.bson;
 
+import static java.lang.String.format;
+import static org.bson.BsonBinarySubType.UUID_LEGACY;
+import static org.bson.BsonBinarySubType.UUID_STANDARD;
+
 /**
  * The representation to use when converting a UUID to a BSON binary value.
  * This class is necessary because the different drivers used to have different
@@ -59,5 +63,25 @@ public enum UuidRepresentation {
      *
      * BSON binary subtype 3
      */
-    PYTHON_LEGACY
+    PYTHON_LEGACY;
+
+    /**
+     * Gets the BSON binary subtype for the representation.
+     *
+     * @return the BSON binary subtype for the representation
+     * @throws BSONException if this is {@link #UNSPECIFIED}
+     * @since 4.7
+     */
+    public BsonBinarySubType getSubtype() {
+        switch (this) {
+            case STANDARD:
+                return UUID_STANDARD;
+            case JAVA_LEGACY:
+            case PYTHON_LEGACY:
+            case C_SHARP_LEGACY:
+                return UUID_LEGACY;
+            default:
+                throw new BSONException(format("No BsonBinarySubType for %s", this));
+        }
+    }
 }

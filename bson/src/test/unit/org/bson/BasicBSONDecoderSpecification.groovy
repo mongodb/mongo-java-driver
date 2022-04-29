@@ -16,6 +16,9 @@
 
 package org.bson
 
+import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.EncoderContext
+import org.bson.io.BasicOutputBuffer
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
@@ -29,6 +32,14 @@ import spock.lang.Subject
 import spock.lang.Unroll
 
 import java.util.regex.Pattern
+
+import static org.bson.BasicBSONDecoder.getDefaultUuidRepresentation
+import static org.bson.BasicBSONDecoder.setDefaultUuidRepresentation
+import static org.bson.BsonBinarySubType.UUID_LEGACY
+import static org.bson.BsonBinarySubType.UUID_STANDARD
+import static org.bson.UuidRepresentation.JAVA_LEGACY
+import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.internal.UuidHelper.encodeUuidToBinary
 
 @SuppressWarnings(['LineLength', 'DuplicateMapLiteral', 'UnnecessaryBooleanExpression'])
 class BasicBSONDecoderSpecification extends Specification {
@@ -91,6 +102,7 @@ class BasicBSONDecoderSpecification extends Specification {
         ['k1': new MinKey()]                                     | [9, 0, 0, 0, -1, 107, 49, 0, 0]
         ['k2': new MaxKey()]                                     | [9, 0, 0, 0, 127, 107, 50, 0, 0]
         ['f': Decimal128.parse('0E-6176')]                       | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ['u': new UUID(1, 2)]                                    | [29, 0, 0, 0, 5, 117, 0, 16, 0, 0, 0, 3, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
 
         type = BsonType.findByValue(bytes[4])
     }
@@ -164,5 +176,48 @@ class BasicBSONDecoderSpecification extends Specification {
         BsonSerializationException | [12, 0, 2, 0, 16, 97, 0, 1, 0, 0, 0, 0]
         BsonSerializationException | [5, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]
         BsonSerializationException | [5, 0, 0, 0, 16, 97, 45, 1, 0, 0, 0, 0]
+    }
+
+
+    def 'default value of defaultUuidRepresentation is JAVA_LEGACY'() {
+        expect:
+        getDefaultUuidRepresentation() == JAVA_LEGACY
+    }
+
+    @Unroll
+    def 'should decode UUID according to default uuid representation'() {
+        given:
+        def uuid = new UUID(1, 2)
+        def output = new BasicOutputBuffer()
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(output),
+                new BsonDocument('u', new BsonBinary(uuid, encodedUuidRepresentation)), EncoderContext.builder().build())
+
+        when:
+        setDefaultUuidRepresentation(decodedUuidRepresentation)
+
+        then:
+        getDefaultUuidRepresentation() == decodedUuidRepresentation
+
+        when:
+        def decodedUuid = bsonDecoder.readObject(output.getInternalBuffer()).get('u')
+
+        then:
+        decodedUuid == expectedUuid
+
+        cleanup:
+        setDefaultUuidRepresentation(JAVA_LEGACY)
+
+        where:
+        [encodedUuidRepresentation, decodedUuidRepresentation, expectedUuid] << [
+                [JAVA_LEGACY, JAVA_LEGACY,
+                 new UUID(1, 2)],
+                [JAVA_LEGACY, STANDARD,
+                 new Binary(UUID_LEGACY, encodeUuidToBinary(new UUID(1, 2), JAVA_LEGACY))],
+                [STANDARD, JAVA_LEGACY,
+                 new Binary(UUID_STANDARD, encodeUuidToBinary(new UUID(1, 2), STANDARD))],
+                [STANDARD, STANDARD,
+                 new UUID(1, 2)]
+
+        ]
     }
 }

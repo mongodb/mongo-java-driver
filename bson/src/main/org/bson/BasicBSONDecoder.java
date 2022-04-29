@@ -22,10 +22,54 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import static org.bson.assertions.Assertions.notNull;
+
 /**
  * Basic implementation of BSONDecoder interface that creates BasicBSONObject instances
  */
 public class BasicBSONDecoder implements BSONDecoder {
+
+    /**
+     * Sets the global (JVM-wide) {@link UuidRepresentation} to use when decoding BSON binary values with subtypes of either
+     * {@link BsonBinarySubType#UUID_STANDARD} or {@link BsonBinarySubType#UUID_LEGACY}.
+     *
+     * <p>
+     * If the {@link BsonBinarySubType} of the value to be decoded matches the binary subtype of the {@link UuidRepresentation},
+     * then the value will be decoded to an instance of {@link java.util.UUID}, according to the semantics of the
+     * {@link UuidRepresentation}.  Otherwise, it will be decoded to an instance of {@link org.bson.types.Binary}.
+     * </p>
+     *
+     * <p>
+     * Defaults to {@link UuidRepresentation#JAVA_LEGACY}. If set to {@link UuidRepresentation#UNSPECIFIED}, attempting to decode any
+     * UUID will throw a {@link BSONException}.
+     * </p>
+     *
+     * @param uuidRepresentation the uuid representation, which may not be null
+     * @see BSONCallback#gotUUID(String, long, long)
+     * @see BasicBSONEncoder#setDefaultUuidRepresentation(UuidRepresentation)
+     * @since 4.7
+     */
+    public static void setDefaultUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        defaultUuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+    }
+
+    /**
+     * Gets the default {@link UuidRepresentation} to use when decoding BSON binary values.
+     *
+     * <p>
+     * If unset, the default is {@link UuidRepresentation#JAVA_LEGACY}.
+     * </p>
+     *
+     * @return the uuid representation, which may not be null
+     * @see BSONCallback#gotUUID(String, long, long)
+     * @see BasicBSONEncoder#setDefaultUuidRepresentation(UuidRepresentation)
+     * @since 4.7
+     */
+    public static UuidRepresentation getDefaultUuidRepresentation() {
+        return defaultUuidRepresentation;
+    }
+
+    private static volatile UuidRepresentation defaultUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
     @Override
     public BSONObject readObject(final byte[] bytes) {

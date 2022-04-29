@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.internal.UuidHelper;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
@@ -37,10 +38,47 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
+import static org.bson.assertions.Assertions.notNull;
+
 /**
  * This is meant to be pooled or cached. There is some per instance memory for string conversion, etc...
  */
 public class BasicBSONEncoder implements BSONEncoder {
+
+    /**
+     * Sets the global (JVM-wide) {@link UuidRepresentation} to use when encoding UUID values to BSON binary.
+     *
+     * <p>
+     * Defaults to {@link UuidRepresentation#JAVA_LEGACY}. If set to {@link UuidRepresentation#UNSPECIFIED}, attempting to encode any
+     * UUID will throw a {@link BSONException}.
+     * </p>
+     *
+     * @param uuidRepresentation the uuid representation, which may not be null
+     * @see #putUUID(String, UUID)
+     * @see BasicBSONDecoder#setDefaultUuidRepresentation(UuidRepresentation)
+     * @since 4.7
+     */
+    public static void setDefaultUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        defaultUuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+    }
+
+    /**
+     * Sets the default {@link UuidRepresentation} to use when encoding UUID values to BSON binary.
+     *
+     * <p>
+     * If unset, the default is {@link UuidRepresentation#JAVA_LEGACY}.
+     * </p>
+     *
+     * @return the uuid representation, which may not be null
+     * @see #putUUID(String, UUID)
+     * @see BasicBSONDecoder#setDefaultUuidRepresentation(UuidRepresentation)
+     * @since 4.7
+     */
+    public static UuidRepresentation getDefaultUuidRepresentation() {
+        return defaultUuidRepresentation;
+    }
+
+    private static volatile UuidRepresentation defaultUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
     private BsonBinaryWriter bsonWriter;
     private OutputBuffer outputBuffer;
@@ -342,10 +380,11 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     protected void putUUID(final String name, final UUID uuid) {
         putName(name);
-        byte[] bytes = new byte[16];
-        writeLongToArrayLittleEndian(bytes, 0, uuid.getMostSignificantBits());
-        writeLongToArrayLittleEndian(bytes, 8, uuid.getLeastSignificantBits());
-        bsonWriter.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, bytes));
+        UuidRepresentation uuidRepresentation = defaultUuidRepresentation;
+        byte[] bytes = UuidHelper.encodeUuidToBinary(uuid, uuidRepresentation);
+        bsonWriter.writeBinaryData(new BsonBinary(
+                uuidRepresentation == UuidRepresentation.STANDARD ? BsonBinarySubType.UUID_STANDARD : BsonBinarySubType.UUID_LEGACY,
+                bytes));
     }
 
     /**

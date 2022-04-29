@@ -16,6 +16,8 @@
 
 package org.bson
 
+import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DecoderContext
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.OutputBuffer
 import org.bson.types.BSONTimestamp
@@ -32,7 +34,13 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
+import java.nio.ByteBuffer
 import java.util.regex.Pattern
+
+import static org.bson.BasicBSONEncoder.getDefaultUuidRepresentation
+import static org.bson.BasicBSONEncoder.setDefaultUuidRepresentation
+import static org.bson.UuidRepresentation.JAVA_LEGACY
+import static org.bson.UuidRepresentation.STANDARD
 
 @SuppressWarnings(['LineLength', 'DuplicateMapLiteral'])
 class BasicBSONEncoderSpecification extends Specification {
@@ -89,6 +97,7 @@ class BasicBSONEncoderSpecification extends Specification {
         ['k': new MinKey()]                                      | [8, 0, 0, 0, -1, 107, 0, 0]
         ['k': new MaxKey()]                                      | [8, 0, 0, 0, 127, 107, 0, 0]
         ['f': Decimal128.parse('0E-6176')]                       | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ['u': new UUID(1, 2)]                                    | [29, 0, 0, 0, 5, 117, 0, 16, 0, 0, 0, 3, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
 
         aClass = document.find { true }.value.getClass()
     }
@@ -178,5 +187,29 @@ class BasicBSONEncoderSpecification extends Specification {
         then:
         1 * buffer.writeCString('a')
         1 * buffer.writeInt32(2)
+    }
+
+    def 'should encode UUID according to default uuid representation'() {
+        given:
+        def defaultUuidRepresentation = getDefaultUuidRepresentation()
+        def uuid = new UUID(1, 2)
+        def document = new BasicBSONObject()
+        document.append('u', uuid)
+
+        when:
+        setDefaultUuidRepresentation(uuidRepresentation)
+        def bytes = bsonEncoder.encode(new BasicBSONObject(document))
+        def decodedDocument = new BsonDocumentCodec().decode(new BsonBinaryReader(ByteBuffer.wrap(bytes)),
+                DecoderContext.builder().build())
+
+        then:
+        defaultUuidRepresentation == JAVA_LEGACY
+        decodedDocument.getBinary('u').asUuid(uuidRepresentation) == uuid
+
+        cleanup:
+        setDefaultUuidRepresentation(defaultUuidRepresentation)
+
+        where:
+        uuidRepresentation << [JAVA_LEGACY, STANDARD]
     }
 }
