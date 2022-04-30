@@ -4,8 +4,8 @@
 set -o errexit  # Exit the script with error if any of the commands fail
 
 # Supported/used environment variables:
-#       JDK                       Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#       MONGODB_URI               The URI, without credentials
+#       JAVA_VERSION               Set the version of java to be used
+#       SERVERLESS_URI             The URI, without credentials
 #       SERVERLESS_ATLAS_USER
 #       SERVERLESS_ATLAS_PASSWORD
 # Support arguments:
@@ -19,11 +19,10 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 
 echo "Running serverless tests with Java ${JAVA_VERSION}"
 
-# assume "mongodb" protocol for single server, and "mongodb+srv" protocol for multi server
-SINGLE_SERVER_URI="mongodb://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${SINGLE_ATLASPROXY_SERVERLESS_URI:10}"
-MULTI_SERVER_URI="mongodb+srv://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${MULTI_ATLASPROXY_SERVERLESS_URI:14}"
+# Assume "mongodb+srv" protocol
+MONGODB_URI="mongodb+srv://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${SERVERLESS_URI:14}"
 
 ./gradlew -version
 
-./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${SINGLE_SERVER_URI}  -Dorg.mongodb.test.multi.mongos.uri=${MULTI_SERVER_URI} \
+./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
    -Dorg.mongodb.test.serverless=true --stacktrace --info --continue driver-sync:test
