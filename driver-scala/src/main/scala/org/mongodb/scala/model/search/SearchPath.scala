@@ -20,6 +20,9 @@ import com.mongodb.client.model.search.{ SearchPath => JSearchPath }
 /**
  * A specification of document fields to be searched.
  *
+ * Despite `SearchPath` being `Bson`,
+ * its value conforming to the correct syntax must be obtained via either `SearchPath.toBsonValue` or `FieldSearchPath.toValue`.
+ *
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/path-construction/ Path]]
  * @since 4.7
  */

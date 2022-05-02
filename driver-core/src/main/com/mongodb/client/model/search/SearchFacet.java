@@ -18,7 +18,6 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -57,8 +56,8 @@ public interface SearchFacet extends Bson {
      */
     static StringSearchFacet stringFacet(final String name, final FieldSearchPath path) {
         return new SearchConstructibleBsonElement(notNull("name", name),
-                new BsonDocument("type", new BsonString("string"))
-                        .append("path", notNull("path", path).toBsonValue()));
+                new Document("type", "string")
+                        .append("path", notNull("path", path).toValue()));
     }
 
     /**
@@ -76,7 +75,7 @@ public interface SearchFacet extends Bson {
         isTrueArgument("boundaries must contain at least 2 elements", sizeAtLeast(boundaries, 2));
         return new SearchConstructibleBsonElement(notNull("name", name),
                 new Document("type", "number")
-                        .append("path", notNull("path", path).toBsonValue())
+                        .append("path", notNull("path", path).toValue())
                         .append("boundaries", notNull("boundaries", boundaries)));
     }
 
@@ -94,7 +93,7 @@ public interface SearchFacet extends Bson {
         isTrueArgument("boundaries must contain at least 2 elements", sizeAtLeast(boundaries, 2));
         return new SearchConstructibleBsonElement(notNull("name", name),
                 new Document("type", "date")
-                        .append("path", notNull("path", path).toBsonValue())
+                        .append("path", notNull("path", path).toValue())
                         .append("boundaries", notNull("boundaries", boundaries)));
     }
 
@@ -109,7 +108,7 @@ public interface SearchFacet extends Bson {
      *  SearchFacet facet1 = SearchFacet.stringFacet("facetName",
      *          SearchPath.fieldPath("fieldName"));
      *  SearchFacet facet2 = SearchFacet.of(new Document("facetName", new Document("type", "string")
-     *          .append("path", SearchPath.fieldPath("fieldName").toBsonValue())));
+     *          .append("path", SearchPath.fieldPath("fieldName").toValue())));
      * }</pre>
      *
      * @param facet A {@link Bson} representing the required {@link SearchFacet}.

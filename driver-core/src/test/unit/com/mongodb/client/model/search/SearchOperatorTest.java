@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
+import static com.mongodb.client.model.search.SearchScore.boost;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
@@ -62,7 +63,8 @@ final class SearchOperatorTest {
                 () -> assertEquals(
                         new BsonDocument("compound", new BsonDocument()
                                 .append("must", new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName1")).toBsonDocument())))
-                                .append("mustNot", new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName2")).toBsonDocument())))
+                                .append("mustNot", new BsonArray(singletonList(SearchOperator.exists(fieldPath("fieldName2"))
+                                        .score(boost(0.1f)).toBsonDocument())))
                                 .append("should", new BsonArray(asList(
                                         SearchOperator.exists(fieldPath("fieldName3")).toBsonDocument(),
                                         SearchOperator.exists(fieldPath("fieldName4")).toBsonDocument(),
@@ -72,7 +74,8 @@ final class SearchOperatorTest {
                         ),
                         SearchOperator.compound()
                                 .must(singleton(SearchOperator.exists(fieldPath("fieldName1"))))
-                                .mustNot(singleton(SearchOperator.exists(fieldPath("fieldName2"))))
+                                .mustNot(singleton(SearchOperator.exists(fieldPath("fieldName2"))
+                                        .score(boost(0.1f))))
                                 .should(singleton(SearchOperator.exists(fieldPath("fieldName3"))))
                                 // appends to the existing operators combined with the same rule
                                 .should(asList(
@@ -101,11 +104,21 @@ final class SearchOperatorTest {
 
     @Test
     void exists() {
-        assertEquals(
-                docExampleCustom()
-                        .toBsonDocument(),
-                docExamplePredefined()
-                        .toBsonDocument()
+        assertAll(
+                () -> assertEquals(
+                        docExampleCustom()
+                                .toBsonDocument(),
+                        docExamplePredefined()
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("exists", new BsonDocument("path", new BsonString(fieldPath("fieldName").toValue()))),
+                        SearchOperator.exists(
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzerName"))
+                                .toBsonDocument()
+                )
         );
     }
 
@@ -186,6 +199,6 @@ final class SearchOperatorTest {
 
     private static Document docExampleCustom() {
         return new Document("exists",
-                new Document("path", fieldPath("fieldName").toBsonValue()));
+                new Document("path", fieldPath("fieldName").toValue()));
     }
 }

@@ -17,7 +17,6 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -37,6 +36,14 @@ import static org.bson.assertions.Assertions.notNull;
 @Evolving
 public interface SearchOperator extends Bson {
     /**
+     * Creates a new {@link SearchOperator} with the scoring modifier specified.
+     *
+     * @param modifier The scoring modifier.
+     * @return A new {@link SearchOperator}.
+     */
+    SearchOperator score(SearchScore modifier);
+
+    /**
      * Returns a base for a {@link SearchOperator} that may combine multiple {@link SearchOperator}s.
      * Combining {@link SearchOperator}s affects calculation of the relevance score.
      *
@@ -55,7 +62,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/exists/ exists operator
      */
     static ExistsSearchOperator exists(final FieldSearchPath path) {
-        return new SearchConstructibleBsonElement("exists", new BsonDocument("path", (notNull("path", path)).toBsonValue()));
+        return new SearchConstructibleBsonElement("exists", new Document("path", (notNull("path", path)).toValue()));
     }
 
     /**
@@ -99,7 +106,7 @@ public interface SearchOperator extends Bson {
      *  SearchOperator operator1 = SearchOperator.exists(
      *          SearchPath.fieldPath("fieldName"));
      *  SearchOperator operator2 = SearchOperator.of(new Document("exists",
-     *          new Document("path", SearchPath.fieldPath("fieldName").toBsonValue())));
+     *          new Document("path", SearchPath.fieldPath("fieldName").toValue())));
      * }</pre>
      *
      * @param operator A {@link Bson} representing the required {@link SearchOperator}.

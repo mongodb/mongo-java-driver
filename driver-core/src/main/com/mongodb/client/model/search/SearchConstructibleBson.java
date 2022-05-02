@@ -28,6 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class SearchConstructibleBson extends AbstractConstructibleBson<SearchConstructibleBson> implements
         SearchOperator,
+        BoostSearchScore,
         SearchCollector,
         SearchOptions,
         SearchHighlight,
@@ -95,5 +96,10 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     @Override
     public FieldSearchPath multi(final String analyzerName) {
         return newAppended("multi", new BsonString(notNull("analyzerName", analyzerName)));
+    }
+
+    @Override
+    public SearchOperator score(final SearchScore modifier) {
+        return newAppended("score", notNull("modifier", modifier));
     }
 }

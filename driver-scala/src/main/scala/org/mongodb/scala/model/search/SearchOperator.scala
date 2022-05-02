@@ -78,14 +78,12 @@ object SearchOperator {
    *  val operator1: SearchOperator = SearchOperator.exists(
    *    SearchPath.fieldPath("fieldName"))
    *  val operator2: SearchOperator = SearchOperator.of(Document("exists" ->
-   *    Document("path" -> SearchPath.fieldPath("fieldName").toBsonValue)))
+   *    Document("path" -> SearchPath.fieldPath("fieldName").toValue)))
    * }}}
    *
    * @param operator A `Bson` representing the required `SearchOperator`.
    *
    * @return The requested `SearchOperator`.
    */
-  def of(operator: Bson): SearchOperator = {
-    JSearchOperator.of(operator)
-  }
+  def of(operator: Bson): SearchOperator = JSearchOperator.of(operator)
 }

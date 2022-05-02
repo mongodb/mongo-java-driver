@@ -30,7 +30,7 @@ import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
  * A specification of document fields to be searched.
  * <p>
  * Despite {@link SearchPath} being {@link Bson},
- * its value conforming to the correct syntax must be obtained via {@link #toBsonValue()}.</p>
+ * its value conforming to the correct syntax must be obtained via either {@link #toBsonValue()} or {@link FieldSearchPath#toValue()}.</p>
  *
  * @mongodb.atlas.manual atlas-search/path-construction/ Path
  * @since 4.7
@@ -70,8 +70,13 @@ public interface SearchPath extends Bson {
      * If {@link #toBsonDocument()} contains only the {@value Util#SEARCH_PATH_VALUE_KEY} key,
      * then returns {@link BsonString} representing the value of this key,
      * otherwise returns {@link #toBsonDocument()}.
+     * <p>
+     * This method may be useful when using the {@code of} methods, e.g., {@link SearchHighlight#of(Bson)}.
+     * Depending on the syntax of the document being constructed,
+     * it may be required to use the method {@link FieldSearchPath#toValue()} instead.</p>
      *
      * @return A {@link BsonValue} representing this {@link SearchPath}.
+     * @see FieldSearchPath#toValue()
      */
     default BsonValue toBsonValue() {
         final BsonDocument doc = toBsonDocument();

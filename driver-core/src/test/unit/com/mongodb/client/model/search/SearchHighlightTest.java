@@ -27,7 +27,7 @@ import static java.util.Collections.singleton;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-final class SearchHighlghtTest {
+final class SearchHighlightTest {
     @Test
     void of() {
         assertEquals(

@@ -113,4 +113,9 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     public ShouldCompoundSearchOperator minimumShouldMatch(final int minimumShouldMatch) {
         return newWithAppendedValue("minimumShouldMatch", new BsonInt32(minimumShouldMatch));
     }
+
+    @Override
+    public SearchOperator score(final SearchScore modifier) {
+        return newWithAppendedValue("score", notNull("modifier", modifier));
+    }
 }

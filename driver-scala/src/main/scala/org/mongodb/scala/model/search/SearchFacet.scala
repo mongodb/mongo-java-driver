@@ -80,7 +80,7 @@ object SearchFacet {
    *  val facet1: SearchFacet = SearchFacet.stringFacet("facetName",
    *    SearchPath.fieldPath("fieldName"))
    *  val facet2: SearchFacet = SearchFacet.of(Document("facetName" -> Document("type" -> "string",
-   *    "path" -> SearchPath.fieldPath("fieldName").toBsonValue)))
+   *    "path" -> SearchPath.fieldPath("fieldName").toValue)))
    * }}}
    *
    * @param facet A `Bson` representing the required `SearchFacet`.

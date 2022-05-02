@@ -192,6 +192,9 @@ package object search {
   /**
    * A specification of document fields to be searched.
    *
+   * Despite `SearchPath` being `Bson`,
+   * its value conforming to the correct syntax must be obtained via either `SearchPath.toBsonValue` or `FieldSearchPath.toValue`.
+   *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/path-construction/ Path]]
    */
   @Evolving
@@ -208,4 +211,20 @@ package object search {
    */
   @Evolving
   type WildcardSearchPath = com.mongodb.client.model.search.WildcardSearchPath
+
+  /**
+   * A modifier of the relevance score.
+   * You may use the `\$meta: "searchScore"` expression, e.g., via [[Projections.metaSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   */
+  @Evolving
+  type SearchScore = com.mongodb.client.model.search.SearchScore
+
+  /**
+   * @see `SearchScore.boost`
+   */
+  @Evolving
+  type BoostSearchScore = com.mongodb.client.model.search.BoostSearchScore
 }

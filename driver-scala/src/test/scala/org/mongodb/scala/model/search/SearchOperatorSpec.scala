@@ -24,6 +24,7 @@ import org.mongodb.scala.model.search.SearchOperator.{ compound, exists, text }
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 
 import scala.collection.JavaConverters._
+import org.mongodb.scala.model.search.SearchScore.boost
 
 class SearchOperatorSpec extends BaseSpec {
   it should "render all operators" in {
@@ -31,7 +32,8 @@ class SearchOperatorSpec extends BaseSpec {
       compound()
         .should(Seq(
           exists(fieldPath("fieldName1")),
-          text("term1", fieldPath("fieldName2")),
+          text("term1", fieldPath("fieldName2"))
+            .score(boost(0.5f)),
           text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd")))
             .fuzzy(defaultFuzzySearchOptions()
               .maxEdits(1)
@@ -47,7 +49,7 @@ class SearchOperatorSpec extends BaseSpec {
         "compound": {
           "should": [
             { "exists": { "path": "fieldName1" } },
-            { "text": { "query": "term1", "path": "fieldName2" } },
+            { "text": { "query": "term1", "path": "fieldName2", "score": { "boost": { "value": 0.5 } } } },
             { "text": { "query": [ "term2", "term3" ], "path": { "wildcard": "wildc*rd" },
               "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
           ],

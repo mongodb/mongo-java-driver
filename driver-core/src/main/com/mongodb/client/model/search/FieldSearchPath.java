@@ -16,6 +16,9 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
+import org.bson.conversions.Bson;
+
+import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
 
 /**
  * @see SearchPath#fieldPath(String)
@@ -30,4 +33,19 @@ public interface FieldSearchPath extends SearchPath {
      * @return A new {@link FieldSearchPath}.
      */
     FieldSearchPath multi(String analyzerName);
+
+    /**
+     * Returns the name of the field represented by this path.
+     * <p>
+     * This method may be useful when using the {@code of} methods, e.g., {@link SearchScore#of(Bson)}.
+     * Depending on the syntax of the document being constructed,
+     * it may be required to use the method {@link SearchPath#toBsonValue()} instead.</p>
+     *
+     * @return A {@link String} {@linkplain String#equals(Object) equal} to the one used to {@linkplain SearchPath#fieldPath(String) create}
+     * this path.
+     * @see SearchPath#toBsonValue()
+     */
+    default String toValue() {
+        return toBsonDocument().getString(SEARCH_PATH_VALUE_KEY).getValue();
+    }
 }

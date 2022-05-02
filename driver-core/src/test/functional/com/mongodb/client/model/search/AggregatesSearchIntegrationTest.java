@@ -63,6 +63,7 @@ import static com.mongodb.client.model.search.SearchOperator.text;
 import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
+import static com.mongodb.client.model.search.SearchScore.boost;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -163,14 +164,19 @@ final class AggregatesSearchIntegrationTest {
             final List<Bson> pipeline = new ArrayList<>();
             pipeline.add(stageUnderTest);
             pipeline.addAll(accessory.postStages);
-            accessory.resultAsserter.accept(
-                    collectionHelper.aggregate(pipeline),
-                    () -> "For reference, the pipeline (" + pipeline.size() + " elements) used in the test is\n[\n"
-                            + pipeline.stream()
-                            .map(Bson::toBsonDocument)
-                            .map(doc -> doc.toJson(JsonWriterSettings.builder().indent(true).build()))
-                            .collect(Collectors.joining(",\n"))
-                    + "\n]\n");
+            Supplier<String> msgSupplier = () -> "For reference, the pipeline (" + pipeline.size() + " elements) used in the test is\n[\n"
+                    + pipeline.stream()
+                    .map(Bson::toBsonDocument)
+                    .map(doc -> doc.toJson(JsonWriterSettings.builder().indent(true).build()))
+                    .collect(Collectors.joining(",\n"))
+                    + "\n]\n";
+            List<BsonDocument> results;
+            try {
+                results = collectionHelper.aggregate(pipeline);
+            } catch (RuntimeException e) {
+                throw new RuntimeException(msgSupplier.get(), e);
+            }
+            accessory.resultAsserter.accept(results, msgSupplier);
         }
     }
 
@@ -200,7 +206,8 @@ final class AggregatesSearchIntegrationTest {
                 arguments(
                         "`index`, `count` options",
                         stageCreator(
-                                exists(fieldPath("tomatoes")),
+                                // `multi` is used here only to verify that it is tolerated
+                                exists(fieldPath("title").multi("keyword")),
                                 defaultSearchOptions()
                                         .option("index", "default")
                                         .count(lowerBound().threshold(2_000))
@@ -221,8 +228,9 @@ final class AggregatesSearchIntegrationTest {
                         stageCreator(
                                 text(asList("factory", "century"), singleton(fieldPath("plot"))),
                                 defaultSearchOptions()
-                                        .highlight(paths(
-                                                singleton(wildcardPath("pl*t")))
+                                        .highlight(paths(asList(
+                                                fieldPath("title").multi("keyword"),
+                                                wildcardPath("pl*t")))
                                                 .maxCharsToExamine(100_000))
                         ),
                         asList(
@@ -321,7 +329,8 @@ final class AggregatesSearchIntegrationTest {
                         stageCreator(compound()
                                 .should(asList(
                                         exists(fieldPath("fieldName1")),
-                                        text("term1", fieldPath("fieldName2")),
+                                        text("term1", fieldPath("fieldName2"))
+                                                .score(boost(Float.MAX_VALUE / 2)),
                                         text(asList("term2", "term3"), singleton(wildcardPath("wildc*rd")))
                                                 .fuzzy(defaultFuzzySearchOptions()
                                                         .maxEdits(1)

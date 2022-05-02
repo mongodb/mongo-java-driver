@@ -59,10 +59,12 @@ final class SearchFacetTest {
                 ),
                 () -> assertEquals(
                         new BsonDocument("facetName", new BsonDocument("type", new BsonString("string"))
-                                .append("path", fieldPath("fieldName").toBsonValue())
+                                .append("path", new BsonString(fieldPath("fieldName").toValue()))
                                 .append("numBuckets", new BsonInt32(3))),
                         SearchFacet.stringFacet("facetName",
-                                fieldPath("fieldName"))
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzerName"))
                                 .numBuckets(3)
                                 .toBsonDocument()
                 )
@@ -80,12 +82,14 @@ final class SearchFacetTest {
                 ),
                 () -> assertEquals(
                         new BsonDocument("facetName", new BsonDocument("type", new BsonString("number"))
-                                .append("path", fieldPath("fieldName").toBsonValue())
+                                .append("path", new BsonString(fieldPath("fieldName").toValue()))
                                 .append("boundaries", new BsonArray(asList(
                                         new BsonInt32(1),
                                         new BsonInt32(2))))),
                         SearchFacet.numberFacet("facetName",
-                                fieldPath("fieldName"),
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzerName"),
                                 asList(
                                         1,
                                         2))
@@ -93,7 +97,7 @@ final class SearchFacetTest {
                 ),
                 () -> assertEquals(
                         new BsonDocument("facetName", new BsonDocument("type", new BsonString("number"))
-                                .append("path", fieldPath("fieldName").toBsonValue())
+                                .append("path", new BsonString(fieldPath("fieldName").toValue()))
                                 .append("boundaries", new BsonArray(asList(
                                         new BsonInt32(-1),
                                         new BsonInt32(0),
@@ -132,12 +136,14 @@ final class SearchFacetTest {
                 ),
                 () -> assertEquals(
                         new BsonDocument("facetName", new BsonDocument("type", new BsonString("date"))
-                                .append("path", fieldPath("fieldName").toBsonValue())
+                                .append("path", new BsonString(fieldPath("fieldName").toValue()))
                                 .append("boundaries", new BsonArray(asList(
                                         new BsonDateTime(0),
                                         new BsonDateTime(1))))),
                         SearchFacet.dateFacet("facetName",
-                                fieldPath("fieldName"),
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzerName"),
                                 asList(
                                         Instant.ofEpochMilli(0),
                                         Instant.ofEpochMilli(1)))
@@ -145,7 +151,7 @@ final class SearchFacetTest {
                 ),
                 () -> assertEquals(
                         new BsonDocument("facetName", new BsonDocument("type", new BsonString("date"))
-                                .append("path", fieldPath("fieldName").toBsonValue())
+                                .append("path", new BsonString(fieldPath("fieldName").toValue()))
                                 .append("boundaries", new BsonArray(asList(
                                         new BsonDateTime(0),
                                         new BsonDateTime(1))))
@@ -192,6 +198,6 @@ final class SearchFacetTest {
 
     private static Document docExampleCustom() {
         return new Document("facetName", new Document("type", "string")
-                .append("path", fieldPath("fieldName").toBsonValue()));
+                .append("path", fieldPath("fieldName").toValue()));
     }
 }
