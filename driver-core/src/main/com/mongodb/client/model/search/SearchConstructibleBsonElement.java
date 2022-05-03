@@ -57,10 +57,10 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public TextSearchOperator fuzzy(final FuzzySearchOptions options) {
+    public TextSearchOperator fuzzy(final SearchFuzzy option) {
         return newWithMutatedValue(doc -> {
             doc.remove("synonyms");
-            doc.append("fuzzy", notNull("options", options));
+            doc.append("fuzzy", notNull("option", option));
         });
     }
 

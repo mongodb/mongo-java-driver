@@ -27,14 +27,14 @@ public interface TextSearchOperator extends SearchOperator {
      * Creates a new {@link TextSearchOperator} that uses fuzzy search
      * and does not use {@linkplain #synonyms(String) synonyms}.
      *
-     * @param options Fuzzy search options.
+     * @param option Fuzzy search option.
      * @return A new {@link TextSearchOperator}.
      */
-    TextSearchOperator fuzzy(FuzzySearchOptions options);
+    TextSearchOperator fuzzy(SearchFuzzy option);
 
     /**
      * Creates a new {@link TextSearchOperator} that uses synonyms
-     * and does not use {@linkplain #fuzzy(FuzzySearchOptions) fuzzy search}.
+     * and does not use {@linkplain #fuzzy(SearchFuzzy) fuzzy search}.
      *
      * @param name The name of the synonym mapping.
      * @return A new {@link TextSearchOperator}.

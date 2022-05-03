@@ -22,6 +22,7 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
+import static com.mongodb.client.model.search.SearchFuzzy.defaultSearchFuzzy;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static com.mongodb.client.model.search.SearchScore.boost;
@@ -170,7 +171,7 @@ final class SearchOperatorTest {
                         SearchOperator.text(
                                         singleton("term"),
                                         singleton(fieldPath("fieldName")))
-                                .fuzzy(FuzzySearchOptions.defaultFuzzySearchOptions())
+                                .fuzzy(defaultSearchFuzzy())
                                 // synonyms overrides fuzzy
                                 .synonyms("synonymMappingName")
                                 .toBsonDocument()
@@ -186,7 +187,7 @@ final class SearchOperatorTest {
                                         singleton(fieldPath("fieldName")))
                                 .synonyms("synonymMappingName")
                                 // fuzzy overrides synonyms
-                                .fuzzy(FuzzySearchOptions.defaultFuzzySearchOptions())
+                                .fuzzy(defaultSearchFuzzy())
                                 .toBsonDocument()
                 )
         );

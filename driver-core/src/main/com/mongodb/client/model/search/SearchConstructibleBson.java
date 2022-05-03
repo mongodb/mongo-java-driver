@@ -33,6 +33,7 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
         SearchOptions,
         SearchHighlight,
         TotalSearchCount, LowerBoundSearchCount,
+        SearchFuzzy,
         FieldSearchPath, WildcardSearchPath,
         SearchFacet {
     /**
@@ -91,6 +92,21 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     @Override
     public LowerBoundSearchCount threshold(final int threshold) {
         return newAppended("threshold", new BsonInt32(threshold));
+    }
+
+    @Override
+    public SearchFuzzy maxEdits(final int maxEdits) {
+        return newAppended("maxEdits", maxEdits);
+    }
+
+    @Override
+    public SearchFuzzy prefixLength(final int prefixLength) {
+        return newAppended("prefixLength", prefixLength);
+    }
+
+    @Override
+    public SearchFuzzy maxExpansions(final int maxExpansions) {
+        return newAppended("maxExpansions", maxExpansions);
     }
 
     @Override

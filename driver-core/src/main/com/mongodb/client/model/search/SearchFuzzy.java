@@ -18,6 +18,8 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 import org.bson.conversions.Bson;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Fuzzy search options that may be used with some {@link SearchOperator}s.
  *
@@ -26,58 +28,58 @@ import org.bson.conversions.Bson;
  * @since 4.7
  */
 @Evolving
-public interface FuzzySearchOptions extends Bson {
+public interface SearchFuzzy extends Bson {
     /**
-     * Creates a new {@link FuzzySearchOptions} with the maximum
+     * Creates a new {@link SearchFuzzy} with the maximum
      * <a href="https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance">number of single-character edits</a>
      * required to match a search term.
      *
      * @param maxEdits The maximum number of single-character edits required to match a search term.
-     * @return A new {@link FuzzySearchOptions}.
+     * @return A new {@link SearchFuzzy}.
      */
-    FuzzySearchOptions maxEdits(int maxEdits);
+    SearchFuzzy maxEdits(int maxEdits);
 
     /**
-     * Creates a new {@link FuzzySearchOptions} with the number of characters at the beginning of a search term that must exactly match.
+     * Creates a new {@link SearchFuzzy} with the number of characters at the beginning of a search term that must exactly match.
      *
      * @param prefixLength The number of characters at the beginning of a search term that must exactly match.
-     * @return A new {@link FuzzySearchOptions}.
+     * @return A new {@link SearchFuzzy}.
      */
-    FuzzySearchOptions prefixLength(int prefixLength);
+    SearchFuzzy prefixLength(int prefixLength);
 
     /**
-     * Creates a new {@link FuzzySearchOptions} with the maximum number of variations to generate and consider to match a search term.
+     * Creates a new {@link SearchFuzzy} with the maximum number of variations to generate and consider to match a search term.
      *
      * @param maxExpansions The maximum number of variations to generate and consider to match a search term.
-     * @return A new {@link FuzzySearchOptions}.
+     * @return A new {@link SearchFuzzy}.
      */
-    FuzzySearchOptions maxExpansions(int maxExpansions);
+    SearchFuzzy maxExpansions(int maxExpansions);
 
     /**
-     * Creates a new {@link FuzzySearchOptions} with the specified option in situations when there is no builder method
-     * that better satisfies your needs.
+     * Creates a new {@link SearchFuzzy} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
      * <i>Example</i><br>
-     * The following code creates two functionally equivalent {@link FuzzySearchOptions} objects,
+     * The following code creates two functionally equivalent {@link SearchFuzzy} objects,
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
-     *  FuzzySearchOptions options1 = FuzzySearchOptions.defaultFuzzySearchOptions().maxEdits(1)
-     *  FuzzySearchOptions options2 = FuzzySearchOptions.defaultFuzzySearchOptions().option("maxEdits", 1)
+     *  SearchFuzzy fuzzy1 = SearchFuzzy.defaultSearchFuzzy().maxEdits(1);
+     *  SearchFuzzy fuzzy2 = SearchFuzzy.of(new Document("maxEdits", 1));
      * }</pre>
      *
-     * @param name The option name.
-     * @param value The option value.
-     * @return A new {@link FuzzySearchOptions}.
+     * @param fuzzy A {@link Bson} representing the required {@link SearchFuzzy}.
+     * @return A new {@link SearchFuzzy}.
      */
-    FuzzySearchOptions option(String name, Object value);
+    static SearchFuzzy of(final Bson fuzzy) {
+        return new SearchConstructibleBson(notNull("fuzzy", fuzzy));
+    }
 
     /**
-     * Returns {@link FuzzySearchOptions} that represents server defaults.
+     * Returns {@link SearchFuzzy} that represents server defaults.
      *
-     * @return {@link FuzzySearchOptions} that represents server defaults.
+     * @return {@link SearchFuzzy} that represents server defaults.
      */
-    static FuzzySearchOptions defaultFuzzySearchOptions() {
-        return FuzzySearchOptionsConstructibleBson.EMPTY;
+    static SearchFuzzy defaultSearchFuzzy() {
+        return SearchConstructibleBson.EMPTY;
     }
 }

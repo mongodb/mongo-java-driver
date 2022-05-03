@@ -19,7 +19,7 @@ import org.bson.BsonDocument
 import org.mongodb.scala.{ BaseSpec, MongoClient }
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.search.FuzzySearchOptions.defaultFuzzySearchOptions
+import org.mongodb.scala.model.search.SearchFuzzy.defaultSearchFuzzy
 import org.mongodb.scala.model.search.SearchOperator.{ compound, exists, text }
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 
@@ -35,7 +35,7 @@ class SearchOperatorSpec extends BaseSpec {
           text("term1", fieldPath("fieldName2"))
             .score(boost(0.5f)),
           text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd")))
-            .fuzzy(defaultFuzzySearchOptions()
+            .fuzzy(defaultSearchFuzzy()
               .maxEdits(1)
               .prefixLength(2)
               .maxExpansions(3))

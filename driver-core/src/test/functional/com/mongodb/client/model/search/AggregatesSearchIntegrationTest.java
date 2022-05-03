@@ -49,7 +49,7 @@ import static com.mongodb.client.model.Aggregates.replaceWith;
 import static com.mongodb.client.model.Projections.computedSearchMeta;
 import static com.mongodb.client.model.Projections.metaSearchHighlights;
 import static com.mongodb.client.model.Projections.metaSearchScore;
-import static com.mongodb.client.model.search.FuzzySearchOptions.defaultFuzzySearchOptions;
+import static com.mongodb.client.model.search.SearchFuzzy.defaultSearchFuzzy;
 import static com.mongodb.client.model.search.SearchCollector.facet;
 import static com.mongodb.client.model.search.SearchCount.lowerBound;
 import static com.mongodb.client.model.search.SearchCount.total;
@@ -332,7 +332,7 @@ final class AggregatesSearchIntegrationTest {
                                         text("term1", fieldPath("fieldName2"))
                                                 .score(boost(Float.MAX_VALUE / 2)),
                                         text(asList("term2", "term3"), singleton(wildcardPath("wildc*rd")))
-                                                .fuzzy(defaultFuzzySearchOptions()
+                                                .fuzzy(defaultSearchFuzzy()
                                                         .maxEdits(1)
                                                         .prefixLength(2)
                                                         .maxExpansions(3))))

@@ -96,7 +96,7 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
    */
   @Evolving
-  type FuzzySearchOptions = com.mongodb.client.model.search.FuzzySearchOptions
+  type SearchFuzzy = com.mongodb.client.model.search.SearchFuzzy
 
   /**
    * The core part of the `\$search` pipeline stage of an aggregation pipeline.
