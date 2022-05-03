@@ -30,20 +30,31 @@ import org.mongodb.scala.model.Projections
 object SearchScore {
 
   /**
-   * Returns a `SearchScore` that instructs to multiply the score by the value of the specified field.
+   * Returns a `SearchScore` that instructs to multiply the score by the specified `value`.
    *
-   * @param path The numeric field whose value to multiply the score by.
+   * @param value The positive value to multiply the score by.
    * @return The requested `SearchScore`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#boost boost modifier]]
    */
-  def boost(path: Float): ValueBoostSearchScore = JSearchScore.boost(path)
+  def boost(value: Float): ValueBoostSearchScore = JSearchScore.boost(value)
 
   /**
    * Returns a `SearchScore` that instructs to multiply the score by the value of the specified field.
    *
    * @param path The numeric field whose value to multiply the score by.
    * @return The requested `SearchScore`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#boost boost modifier]]
    */
   def boost(path: FieldSearchPath): PathBoostSearchScore = JSearchScore.boost(path)
+
+  /**
+   * Returns a `SearchScore` that instructs to replace the score with the specified `value`.
+   *
+   * @param value The value to replace the score with.
+   * @return The requested `SearchScore`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#constant constant modifier]]
+   */
+  def constant(value: Float): ConstantSearchScore = JSearchScore.constant(value)
 
   /**
    * Creates a `SearchScore` from a `Bson` in situations when there is no builder method that better satisfies your needs.

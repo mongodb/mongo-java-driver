@@ -258,4 +258,10 @@ package object search {
    */
   @Evolving
   type PathBoostSearchScore = com.mongodb.client.model.search.PathBoostSearchScore
+
+  /**
+   * @see `SearchScore.constant(float)`
+   */
+  @Evolving
+  type ConstantSearchScore = com.mongodb.client.model.search.ConstantSearchScore
 }

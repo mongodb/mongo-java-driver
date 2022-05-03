@@ -81,6 +81,26 @@ final class SearchScoreTest {
         );
     }
 
+    @Test
+    void constant() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // value must be positive
+                        SearchScore.constant(0f)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // value must be positive
+                        SearchScore.constant(-1f)
+                ),
+                () -> assertEquals(
+                        new BsonDocument("constant",
+                                new BsonDocument("value", new BsonDouble(0.5))),
+                        SearchScore.constant(0.5f)
+                                .toBsonDocument()
+                )
+        );
+    }
+
     private static SearchScore docExamplePredefined() {
         return SearchScore.boost(
                 fieldPath("fieldName"));

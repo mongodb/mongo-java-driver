@@ -59,6 +59,18 @@ public interface SearchScore extends Bson {
     }
 
     /**
+     * Returns a {@link SearchScore} that instructs to replace the score with the specified {@code value}.
+     *
+     * @param value The value to replace the score with.
+     * @return The requested {@link SearchScore}.
+     * @mongodb.atlas.manual atlas-search/scoring/#constant constant modifier
+     */
+    static ConstantSearchScore constant(final float value) {
+        isTrueArgument("value must be positive", value > 0);
+        return new SearchConstructibleBsonElement("constant", new BsonDocument("value", new BsonDouble(value)));
+    }
+
+    /**
      * Creates a {@link SearchScore} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>

@@ -64,6 +64,7 @@ import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static com.mongodb.client.model.search.SearchScore.boost;
+import static com.mongodb.client.model.search.SearchScore.constant;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -307,8 +308,7 @@ final class AggregatesSearchIntegrationTest {
                                                                 Instant.EPOCH,
                                                                 Instant.from(Year.of(1985)
                                                                         .atMonth(Month.JANUARY).atDay(1).atStartOfDay().atOffset(UTC)),
-                                                                Instant.now()))
-                                        )),
+                                                                Instant.now())))),
                                 defaultSearchOptions()
                         ),
                         asList(
@@ -330,9 +330,11 @@ final class AggregatesSearchIntegrationTest {
                                 .should(asList(
                                         exists(fieldPath("fieldName1"))
                                                 .score(boost(Float.MAX_VALUE / 2)),
-                                        exists(fieldPath("fieldName1"))
-                                                .score(SearchScore.boost(fieldPath("boostFieldName"))
-                                                        .undefined(-1)))),
+                                        exists(fieldPath("fieldName2"))
+                                                .score(boost(fieldPath("boostFieldName"))
+                                                        .undefined(-1)),
+                                        exists(fieldPath("fieldName3"))
+                                                .score(constant(1.2f)))),
                                 null
                         ),
                         asList(
