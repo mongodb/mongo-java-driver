@@ -17,9 +17,11 @@ package com.mongodb.client.model.search;
 
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
+import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,7 +38,7 @@ final class SearchScoreTest {
     }
 
     @Test
-    void boost() {
+    void valueBoost() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // value must be positive
@@ -47,12 +49,6 @@ final class SearchScoreTest {
                         SearchScore.boost(-1f)
                 ),
                 () -> assertEquals(
-                        docExampleCustom()
-                                .toBsonDocument(),
-                        docExamplePredefined()
-                                .toBsonDocument()
-                ),
-                () -> assertEquals(
                         new BsonDocument("boost",
                                 new BsonDocument("value", new BsonDouble(0.5))),
                         SearchScore.boost(0.5f)
@@ -61,13 +57,37 @@ final class SearchScoreTest {
         );
     }
 
+    @Test
+    void pathBoost() {
+        assertAll(
+                () -> assertEquals(
+                        docExampleCustom()
+                                .toBsonDocument(),
+                        docExamplePredefined()
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("boost",
+                                new BsonDocument("path",
+                                        new BsonString(fieldPath("fieldName").toValue()))
+                                        .append("undefined", new BsonDouble(1))),
+                        SearchScore.boost(
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzerName"))
+                                .undefined(1f)
+                                .toBsonDocument()
+                )
+        );
+    }
+
     private static SearchScore docExamplePredefined() {
         return SearchScore.boost(
-                SearchPath.fieldPath("fieldName"));
+                fieldPath("fieldName"));
     }
 
     private static Document docExampleCustom() {
         return new Document("boost",
-                new Document("path", SearchPath.fieldPath("fieldName").toValue()));
+                new Document("path", fieldPath("fieldName").toValue()));
     }
 }

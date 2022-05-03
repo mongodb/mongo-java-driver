@@ -35,7 +35,7 @@ object SearchScore {
    * @param path The numeric field whose value to multiply the score by.
    * @return The requested `SearchScore`.
    */
-  def boost(path: Float): BoostSearchScore = JSearchScore.boost(path)
+  def boost(path: Float): ValueBoostSearchScore = JSearchScore.boost(path)
 
   /**
    * Returns a `SearchScore` that instructs to multiply the score by the value of the specified field.
@@ -43,7 +43,7 @@ object SearchScore {
    * @param path The numeric field whose value to multiply the score by.
    * @return The requested `SearchScore`.
    */
-  def boost(path: FieldSearchPath): BoostSearchScore = JSearchScore.boost(path)
+  def boost(path: FieldSearchPath): PathBoostSearchScore = JSearchScore.boost(path)
 
   /**
    * Creates a `SearchScore` from a `Bson` in situations when there is no builder method that better satisfies your needs.

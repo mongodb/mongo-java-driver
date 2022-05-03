@@ -325,12 +325,33 @@ final class AggregatesSearchIntegrationTest {
                         )
                 ),
                 arguments(
+                        "score modifier",
+                        stageCreator(compound()
+                                .should(asList(
+                                        exists(fieldPath("fieldName1"))
+                                                .score(boost(Float.MAX_VALUE / 2)),
+                                        exists(fieldPath("fieldName1"))
+                                                .score(SearchScore.boost(fieldPath("boostFieldName"))
+                                                        .undefined(-1)))),
+                                null
+                        ),
+                        asList(
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.empty()
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.nonEmpty()
+                                )
+                        )
+                ),
+                arguments(
                         "all operators in a `compound` operator",
                         stageCreator(compound()
                                 .should(asList(
                                         exists(fieldPath("fieldName1")),
-                                        text("term1", fieldPath("fieldName2"))
-                                                .score(boost(Float.MAX_VALUE / 2)),
+                                        text("term1", fieldPath("fieldName2")),
                                         text(asList("term2", "term3"), singleton(wildcardPath("wildc*rd")))
                                                 .fuzzy(defaultSearchFuzzy()
                                                         .maxEdits(1)

@@ -246,4 +246,16 @@ package object search {
    */
   @Evolving
   type BoostSearchScore = com.mongodb.client.model.search.BoostSearchScore
+
+  /**
+   * @see `SearchScore.boost(float)`
+   */
+  @Evolving
+  type ValueBoostSearchScore = com.mongodb.client.model.search.ValueBoostSearchScore
+
+  /**
+   * @see `SearchScore.boost(FieldSearchPath)`
+   */
+  @Evolving
+  type PathBoostSearchScore = com.mongodb.client.model.search.PathBoostSearchScore
 }

@@ -17,6 +17,8 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Projections;
+import org.bson.BsonDocument;
+import org.bson.BsonDouble;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -40,9 +42,9 @@ public interface SearchScore extends Bson {
      * @return The requested {@link SearchScore}.
      * @mongodb.atlas.manual atlas-search/scoring/#boost boost modifier
      */
-    static BoostSearchScore boost(final float value) {
+    static ValueBoostSearchScore boost(final float value) {
         isTrueArgument("value must be positive", value > 0);
-        return new SearchConstructibleBson(new Document("boost", new Document("value", value)));
+        return new SearchConstructibleBsonElement("boost", new BsonDocument("value", new BsonDouble(value)));
     }
 
     /**
@@ -52,8 +54,8 @@ public interface SearchScore extends Bson {
      * @return The requested {@link SearchScore}.
      * @mongodb.atlas.manual atlas-search/scoring/#boost boost modifier
      */
-    static BoostSearchScore boost(final FieldSearchPath path) {
-        return new SearchConstructibleBson(new Document("boost", new Document("path", notNull("value", (path)).toValue())));
+    static PathBoostSearchScore boost(final FieldSearchPath path) {
+        return new SearchConstructibleBsonElement("boost", new Document("path", notNull("value", (path)).toValue()));
     }
 
     /**

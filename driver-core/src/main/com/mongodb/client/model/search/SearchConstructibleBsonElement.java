@@ -31,6 +31,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         CompoundSearchOperatorBase, CompoundSearchOperator,
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
         ExistsSearchOperator, TextSearchOperator,
+        ValueBoostSearchScore, PathBoostSearchScore,
         FacetSearchCollector,
         StringSearchFacet, NumericSearchFacet, DateSearchFacet {
     SearchConstructibleBsonElement(final String name) {
@@ -117,5 +118,10 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     @Override
     public SearchOperator score(final SearchScore modifier) {
         return newWithAppendedValue("score", notNull("modifier", modifier));
+    }
+
+    @Override
+    public PathBoostSearchScore undefined(final float fallback) {
+        return newWithAppendedValue("undefined", fallback);
     }
 }
