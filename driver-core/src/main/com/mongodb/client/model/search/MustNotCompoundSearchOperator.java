@@ -18,6 +18,10 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
+ * A representation of a {@link CompoundSearchOperator} that allows changing
+ * {@link CompoundSearchOperator#mustNot(Iterable) mustNot}-specific options, if any.
+ * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+ *
  * @see CompoundSearchOperatorBase#mustNot(Iterable)
  * @since 4.7
  */

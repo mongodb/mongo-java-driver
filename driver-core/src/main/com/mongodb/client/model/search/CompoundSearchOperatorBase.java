@@ -18,6 +18,9 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
+ * A base for a {@link CompoundSearchOperator} which allows creating instances of this operator.
+ * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+ *
  * @see SearchOperator#compound()
  * @since 4.7
  */

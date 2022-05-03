@@ -42,6 +42,9 @@ package object search {
   type SearchOperator = com.mongodb.client.model.search.SearchOperator
 
   /**
+   * A base for a [[CompoundSearchOperator]] which allows creating instances of this operator.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
    * @see `SearchOperator.compound()`
    */
   @Evolving
@@ -54,24 +57,40 @@ package object search {
   type CompoundSearchOperator = com.mongodb.client.model.search.CompoundSearchOperator
 
   /**
+   * A representation of a [[CompoundSearchOperator]] that allows changing
+   * `must`-specific options, if any.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
    * @see `CompoundSearchOperatorBase.must(Iterable)`
    */
   @Evolving
   type MustCompoundSearchOperator = com.mongodb.client.model.search.MustCompoundSearchOperator
 
   /**
+   * A representation of a [[CompoundSearchOperator]] that allows changing
+   * `mustNot`-specific options, if any.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
    * @see `CompoundSearchOperatorBase.mustNot(Iterable)`
    */
   @Evolving
   type MustNotCompoundSearchOperator = com.mongodb.client.model.search.MustNotCompoundSearchOperator
 
   /**
+   * A representation of a [[CompoundSearchOperator]] that allows changing
+   * `should`-specific options, if any.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
    * @see `CompoundSearchOperatorBase.should(Iterable)`
    */
   @Evolving
   type ShouldCompoundSearchOperator = com.mongodb.client.model.search.ShouldCompoundSearchOperator
 
   /**
+   * A representation of a [[CompoundSearchOperator]] that allows changing
+   * `filter`-specific options, if any.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
    * @see `CompoundSearchOperatorBase.filter(Iterable)`
    */
   @Evolving
