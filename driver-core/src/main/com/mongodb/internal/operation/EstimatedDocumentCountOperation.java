@@ -22,13 +22,10 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
@@ -42,11 +39,8 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeRetry
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.OperationHelper.validateReadConcern;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFiveDotZero;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
@@ -102,45 +96,16 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     private long transformResult(final BsonDocument result, final ConnectionDescription connectionDescription) {
-        if (serverIsAtLeastVersionFiveDotZero(connectionDescription)) {
-            QueryResult<BsonDocument> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
-                    connectionDescription.getServerAddress());
-            return queryResult.getResults().get(0).getNumber("n").longValue();
-        } else {
-            return (result.getNumber("n")).longValue();
-        }
+        return (result.getNumber("n")).longValue();
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
         return (serverDescription, connectionDescription) -> {
-            if (serverIsAtLeastVersionFiveDotZero(connectionDescription)) {
-                return getAggregateCommand(sessionContext, connectionDescription);
-            } else {
-                validateReadConcern(connectionDescription, sessionContext.getReadConcern());
-                return getCountCommand(sessionContext, connectionDescription);
-            }
+            validateReadConcern(connectionDescription, sessionContext.getReadConcern());
+            BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
+            appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
+            putIfNotZero(document, "maxTimeMS", maxTimeMS);
+            return document;
         };
-    }
-
-    private BsonDocument getAggregateCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
-        BsonDocument document = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()))
-                .append("cursor", new BsonDocument())
-                .append("pipeline", new BsonArray(asList(
-                     new BsonDocument("$collStats", new BsonDocument("count", new BsonDocument())),
-                     new BsonDocument("$group", new BsonDocument("_id", new BsonInt32(1))
-                             .append("n", new BsonDocument("$sum", new BsonString("$count")))
-                ))));
-
-        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
-        putIfNotZero(document, "maxTimeMS", maxTimeMS);
-        return document;
-    }
-
-    private BsonDocument getCountCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
-        BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
-
-        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
-        putIfNotZero(document, "maxTimeMS", maxTimeMS);
-        return document;
     }
 }
