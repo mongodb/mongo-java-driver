@@ -319,17 +319,27 @@ public interface MongoCollection<TDocument> {
     /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
      *
+     * <p>
+     * Implementation note: this method is implemented using the MongoDB server's count command
+     * </p>
+     *
      * @return the number of documents in the collection
      * @since 3.8
+     * @mongodb.driver.manual manual/reference/command/count/#behavior
      */
     long estimatedDocumentCount();
 
     /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
      *
+     * <p>
+     * Implementation note: this method is implemented using the MongoDB server's count command
+     * </p>
+     *
      * @param options the options describing the count
      * @return the number of documents in the collection
      * @since 3.8
+     * @mongodb.driver.manual manual/reference/command/count/#behavior
      */
     long estimatedDocumentCount(EstimatedDocumentCountOptions options);
 

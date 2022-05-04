@@ -134,6 +134,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @return a publisher with a single element indicating the estimated number of documents
    * @since 2.4
+   * @note this method is implemented using the MongoDB server's count command
    */
   def estimatedDocumentCount(): SingleObservable[Long] = wrapped.estimatedDocumentCount()
 
@@ -143,6 +144,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param options the options describing the count
    * @return a publisher with a single element indicating the estimated number of documents
    * @since 2.4
+   * @note this method is implemented using the MongoDB server's count command
    */
   def estimatedDocumentCount(options: EstimatedDocumentCountOptions): SingleObservable[Long] =
     wrapped.estimatedDocumentCount(options)

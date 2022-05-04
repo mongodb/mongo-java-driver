@@ -953,32 +953,62 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments");
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
-        CreateCollectionOptions options = new CreateCollectionOptions();
 
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "collection":
-                case "session":
-                    break;
-                case "expireAfterSeconds":
-                    options.expireAfter(cur.getValue().asNumber().longValue(), TimeUnit.SECONDS);
-                    break;
-                case "timeseries":
-                    options.timeSeriesOptions(createTimeSeriesOptions(cur.getValue().asDocument()));
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+        // In Java driver there is a separate method for creating a view, but in the unified test CRUD format
+        // views and collections are both created with the createCollection operation. We branch off the "viewOn" key's
+        // existence to determine which path to follow here
+        if (arguments.containsKey("viewOn")) {
+            String viewOn = arguments.getString("viewOn").getValue();
+            List<BsonDocument> pipeline =
+                    arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
+
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "collection":
+                    case "session":
+                    case "viewOn":
+                    case "pipeline":
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
             }
+
+            return resultOf(() -> {
+                if (session == null) {
+                    database.createView(collectionName, viewOn, pipeline);
+                } else {
+                    database.createView(session, collectionName, viewOn, pipeline);
+                }
+                return null;
+            });
+        } else {
+            CreateCollectionOptions options = new CreateCollectionOptions();
+
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "collection":
+                    case "session":
+                        break;
+                    case "expireAfterSeconds":
+                        options.expireAfter(cur.getValue().asNumber().longValue(), TimeUnit.SECONDS);
+                        break;
+                    case "timeseries":
+                        options.timeSeriesOptions(createTimeSeriesOptions(cur.getValue().asDocument()));
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
+            }
+            return resultOf(() -> {
+                if (session == null) {
+                    database.createCollection(collectionName, options);
+                } else {
+                    database.createCollection(session, collectionName, options);
+                }
+                return null;
+            });
         }
-
-        return resultOf(() -> {
-            if (session == null) {
-                database.createCollection(collectionName, options);
-            } else {
-                database.createCollection(session, collectionName, options);
-            }
-            return null;
-        });
     }
 
     public OperationResult executeRenameCollection(final BsonDocument operation) {
@@ -1213,10 +1243,10 @@ final class UnifiedCrudHelper {
      * coverage of {@link ChangeStreamDocument}.
      */
     private static final List<String> BSON_DOCUMENT_CHANGE_STREAM_TESTS = asList(
-                    "Test newField added in response MUST NOT err",
-                    "Test projection in change stream returns expected fields",
-                    "fullDocument:whenAvailable with changeStreamPreAndPostImages disabled",
-                    "fullDocumentBeforeChange:whenAvailable with changeStreamPreAndPostImages disabled");
+            "Test newField added in response MUST NOT err",
+            "Test projection in change stream returns expected fields",
+            "fullDocument:whenAvailable with changeStreamPreAndPostImages disabled",
+            "fullDocumentBeforeChange:whenAvailable with changeStreamPreAndPostImages disabled");
 
     @NotNull
     private MongoCursor<BsonDocument> createChangeStreamWrappingCursor(final ChangeStreamIterable<BsonDocument> iterable) {
