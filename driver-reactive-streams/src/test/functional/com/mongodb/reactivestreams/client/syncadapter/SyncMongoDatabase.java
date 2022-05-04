@@ -209,25 +209,26 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public void createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(viewName, viewOn, pipeline)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
                            final CreateViewOptions createViewOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(viewName, viewOn, pipeline, createViewOptions)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createView(final ClientSession clientSession, final String viewName, final String viewOn,
                            final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(unwrap(clientSession), viewName, viewOn, pipeline)).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createView(final ClientSession clientSession, final String viewName, final String viewOn,
                            final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(unwrap(clientSession), viewName, viewOn, pipeline, createViewOptions))
+                .block(TIMEOUT_DURATION);
     }
 
     @Override
