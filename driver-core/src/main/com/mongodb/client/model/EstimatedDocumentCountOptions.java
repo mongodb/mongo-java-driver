@@ -16,6 +16,10 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -28,6 +32,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class EstimatedDocumentCountOptions {
     private long maxTimeMS;
+    private BsonValue comment;
 
     /**
      * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
@@ -53,10 +58,47 @@ public class EstimatedDocumentCountOptions {
         return this;
     }
 
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.7
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 4.4
+     */
+    public EstimatedDocumentCountOptions comment(@Nullable final String comment) {
+        this.comment = comment == null ? null : new BsonString(comment);
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 4.4
+     */
+    public EstimatedDocumentCountOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "EstimatedCountOptions{"
                 + ", maxTimeMS=" + maxTimeMS
+                + ", comment=" + comment
                 + '}';
     }
 }

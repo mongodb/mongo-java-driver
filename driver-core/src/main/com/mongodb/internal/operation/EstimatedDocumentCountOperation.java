@@ -25,8 +25,10 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
@@ -48,6 +50,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     private final MongoNamespace namespace;
     private boolean retryReads;
     private long maxTimeMS;
+    private BsonValue comment;
 
     public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
         this.namespace = notNull("namespace", namespace);
@@ -61,6 +64,16 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     public EstimatedDocumentCountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
+    }
+
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    public EstimatedDocumentCountOperation comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
         return this;
     }
 
@@ -105,6 +118,9 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
             putIfNotZero(document, "maxTimeMS", maxTimeMS);
+            if (comment != null) {
+                document.put("comment", comment);
+            }
             return document;
         };
     }

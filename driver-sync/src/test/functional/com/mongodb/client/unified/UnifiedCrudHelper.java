@@ -1217,10 +1217,12 @@ final class UnifiedCrudHelper {
 
         EstimatedDocumentCountOptions options = new EstimatedDocumentCountOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            //noinspection SwitchStatementWithTooFewBranches
             switch (cur.getKey()) {
                 case "maxTimeMS":
                     options.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
+                    break;
+                case "comment":
+                    options.comment(cur.getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
