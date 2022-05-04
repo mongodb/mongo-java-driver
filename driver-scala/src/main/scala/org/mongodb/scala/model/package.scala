@@ -166,6 +166,22 @@ package object model {
   }
 
   /**
+   * Options for creating a collection
+   *
+   * @since 4.6
+   */
+  type DropCollectionOptions = com.mongodb.client.model.DropCollectionOptions
+
+  /**
+   * Options for creating a collection
+   *
+   * @since 4.6
+   */
+  object DropCollectionOptions {
+    def apply(): DropCollectionOptions = new com.mongodb.client.model.DropCollectionOptions()
+  }
+
+  /**
    * Options for creating a time-series collection
    */
   type TimeSeriesOptions = com.mongodb.client.model.TimeSeriesOptions

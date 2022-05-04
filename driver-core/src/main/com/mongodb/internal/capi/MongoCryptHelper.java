@@ -26,6 +26,7 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.internal.authentication.AwsCredentialHelper;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
@@ -43,17 +44,24 @@ import static java.lang.String.format;
 
 public final class MongoCryptHelper {
 
+    public static MongoCryptOptions createMongoCryptOptions(final Map<String, Map<String, Object>> kmsProviders) {
+        return createMongoCryptOptions(kmsProviders, null, null, false);
+    }
+
     public static MongoCryptOptions createMongoCryptOptions(final Map<String, Map<String, Object>> kmsProviders,
-                                                            final Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap) {
+            @Nullable final Map<String, BsonDocument> localSchemaMap,
+            @Nullable final Map<String, BsonDocument> encryptedFieldsMap,
+            final boolean bypassQueryAnalysis) {
         MongoCryptOptions.Builder mongoCryptOptionsBuilder = MongoCryptOptions.builder();
 
         BsonDocument bsonKmsProviders = getKmsProvidersAsBsonDocument(kmsProviders);
         mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
-        mongoCryptOptionsBuilder.localSchemaMap(namespaceToLocalSchemaDocumentMap);
         mongoCryptOptionsBuilder.needsKmsCredentialsStateEnabled(true);
+        mongoCryptOptionsBuilder.localSchemaMap(localSchemaMap);
+        mongoCryptOptionsBuilder.encryptedFieldsMap(encryptedFieldsMap);
+        mongoCryptOptionsBuilder.bypassQueryAnalysis(bypassQueryAnalysis);
         return mongoCryptOptionsBuilder.build();
     }
-
     public static BsonDocument fetchCredentials(final Map<String, Map<String, Object>> kmsProviders,
             final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
         BsonDocument kmsProvidersDocument = MongoCryptHelper.getKmsProvidersAsBsonDocument(kmsProviders);

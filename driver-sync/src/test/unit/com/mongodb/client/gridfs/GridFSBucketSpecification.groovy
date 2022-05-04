@@ -59,7 +59,8 @@ class GridFSBucketSpecification extends Specification {
     def registry = MongoClientSettings.getDefaultCodecRegistry()
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
-        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern, JAVA_LEGACY, executor)
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern,
+                JAVA_LEGACY, null, executor)
     }
 
     def 'should return the correct bucket name'() {
@@ -154,7 +155,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                false, false, readConcern, JAVA_LEGACY, new TestOperationExecutor([]))
+                false, false, readConcern, JAVA_LEGACY, null, new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)

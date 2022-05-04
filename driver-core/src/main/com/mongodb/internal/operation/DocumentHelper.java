@@ -20,6 +20,7 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 final class DocumentHelper {
@@ -48,6 +49,12 @@ final class DocumentHelper {
     static void putIfNotNull(final BsonDocument command, final String key, final BsonValue value) {
         if (value != null) {
             command.put(key, value);
+        }
+    }
+
+    static void putIfNotNull(final BsonDocument command, final String key, final String value) {
+        if (value != null) {
+            command.put(key, new BsonString(value));
         }
     }
 

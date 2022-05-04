@@ -747,6 +747,10 @@ public final class MongoClientSettings {
      * <p>
      * Automatic encryption requires the authenticated user to have the listCollections privilege action.
      * </p>
+     * <p>
+     * Supplying an {@code encryptedFieldsMap} provides more security than relying on an encryptedFields obtained from the server.
+     * It protects against a malicious server advertising false encryptedFields.
+     * </p>
      *
      * @return the auto-encryption settings, which may be null
      * @since 3.11

@@ -101,7 +101,9 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getReadPreference(),
                                                                      settings.getReadConcern(), settings.getWriteConcern(),
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
-                                                                     settings.getUuidRepresentation(), this.executor);
+                                                                     settings.getUuidRepresentation(),
+                                                                     settings.getAutoEncryptionSettings(),
+                                                                     this.executor);
         this.closed = new AtomicBoolean();
         LOGGER.info(format("MongoClient with metadata %s created with settings %s",
                 createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation).toJson(), settings));

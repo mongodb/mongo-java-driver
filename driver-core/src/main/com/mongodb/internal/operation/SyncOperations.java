@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -26,6 +27,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -218,8 +220,9 @@ public final class SyncOperations<TDocument> {
     }
 
 
-    public WriteOperation<Void> dropCollection() {
-        return operations.dropCollection();
+    public WriteOperation<Void> dropCollection(final DropCollectionOptions dropCollectionOptions,
+            final AutoEncryptionSettings autoEncryptionSettings) {
+        return operations.dropCollection(dropCollectionOptions, autoEncryptionSettings);
     }
 
     public WriteOperation<Void> renameCollection(final MongoNamespace newCollectionNamespace,

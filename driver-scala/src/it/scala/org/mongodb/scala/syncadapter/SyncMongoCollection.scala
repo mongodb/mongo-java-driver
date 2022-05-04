@@ -467,6 +467,12 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
 
   override def drop(clientSession: ClientSession): Unit = wrapped.drop(unwrap(clientSession)).toFuture().get()
 
+  override def drop(dropCollectionOptions: DropCollectionOptions): Unit =
+    wrapped.drop(dropCollectionOptions).toFuture().get()
+
+  override def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): Unit =
+    wrapped.drop(unwrap(clientSession), dropCollectionOptions).toFuture().get()
+
   override def createIndex(keys: Bson): String = wrapped.createIndex(keys).toFuture().get()
 
   override def createIndex(keys: Bson, indexOptions: IndexOptions) =
