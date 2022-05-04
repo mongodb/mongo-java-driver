@@ -18,17 +18,17 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see BoostSearchScore#boost(FieldSearchPath)
+ * @see SearchScoreExpression#pathExpression(FieldSearchPath)
  * @since 4.7
  */
 @Evolving
-public interface PathBoostSearchScore extends SearchScore {
+public interface PathSearchScoreExpression extends SearchScoreExpression {
     /**
-     * Creates a new {@link PathBoostSearchScore} with the value to use for boosting
-     * if the field specified via {@link SearchScore#boost(FieldSearchPath)} is not found in a document.
+     * Creates a new {@link PathSearchScoreExpression} with the value to use
+     * if the field specified via {@link SearchScoreExpression#pathExpression(FieldSearchPath)} is not found in a document.
      *
-     * @param fallback The fallback value. Unlike {@link SearchScore#constant(float)}, does not have constraints.
-     * @return A new {@link PathBoostSearchScore}.
+     * @param fallback The fallback value.
+     * @return A new {@link PathSearchScoreExpression}.
      */
-    PathBoostSearchScore undefined(float fallback);
+    PathSearchScoreExpression undefined(float fallback);
 }

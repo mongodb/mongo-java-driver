@@ -65,6 +65,10 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static com.mongodb.client.model.search.SearchScore.boost;
 import static com.mongodb.client.model.search.SearchScore.constant;
+import static com.mongodb.client.model.search.SearchScore.function;
+import static com.mongodb.client.model.search.SearchScoreExpression.constantExpression;
+import static com.mongodb.client.model.search.SearchScoreExpression.pathExpression;
+import static com.mongodb.client.model.search.SearchScoreExpression.relevanceExpression;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -331,10 +335,21 @@ final class AggregatesSearchIntegrationTest {
                                         exists(fieldPath("fieldName1"))
                                                 .score(boost(Float.MAX_VALUE / 2)),
                                         exists(fieldPath("fieldName2"))
+                                                .score(boost(fieldPath("boostFieldName"))),
+                                        exists(fieldPath("fieldName3"))
                                                 .score(boost(fieldPath("boostFieldName"))
                                                         .undefined(-1)),
-                                        exists(fieldPath("fieldName3"))
-                                                .score(constant(1.2f)))),
+                                        exists(fieldPath("fieldName4"))
+                                                .score(constant(1.2f)),
+                                        exists(fieldPath("fieldName6"))
+                                                .score(function(relevanceExpression())),
+                                        exists(fieldPath("fieldName6"))
+                                                .score(function(pathExpression(fieldPath("expressionFieldName")))),
+                                        exists(fieldPath("fieldName7"))
+                                                .score(function(pathExpression(fieldPath("expressionFieldName"))
+                                                        .undefined(-1))),
+                                        exists(fieldPath("fieldName5"))
+                                                .score(function(constantExpression(-1.2f))))),
                                 null
                         ),
                         asList(

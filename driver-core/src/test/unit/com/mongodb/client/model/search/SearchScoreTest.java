@@ -22,6 +22,7 @@ import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
+import static com.mongodb.client.model.search.SearchScoreExpression.constantExpression;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -98,6 +99,17 @@ final class SearchScoreTest {
                         SearchScore.constant(0.5f)
                                 .toBsonDocument()
                 )
+        );
+    }
+
+    @Test
+    void function() {
+        assertEquals(
+                new BsonDocument("function",
+                        constantExpression(1.5f).toBsonDocument()),
+                SearchScore.function(
+                        constantExpression(1.5f))
+                        .toBsonDocument()
         );
     }
 

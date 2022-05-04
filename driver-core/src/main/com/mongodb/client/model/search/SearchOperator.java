@@ -62,7 +62,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/exists/ exists operator
      */
     static ExistsSearchOperator exists(final FieldSearchPath path) {
-        return new SearchConstructibleBsonElement("exists", new Document("path", (notNull("path", path)).toValue()));
+        return new SearchConstructibleBsonElement("exists", new Document("path", notNull("path", path).toValue()));
     }
 
     /**

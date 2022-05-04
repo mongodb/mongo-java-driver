@@ -34,7 +34,7 @@ object SearchScore {
    *
    * @param value The positive value to multiply the score by.
    * @return The requested `SearchScore`.
-   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#boost boost modifier]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#boost boost score modifier]]
    */
   def boost(value: Float): ValueBoostSearchScore = JSearchScore.boost(value)
 
@@ -43,18 +43,29 @@ object SearchScore {
    *
    * @param path The numeric field whose value to multiply the score by.
    * @return The requested `SearchScore`.
-   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#boost boost modifier]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#boost boost score modifier]]
+   * @see [[SearchScoreExpression.pathExpression]]
    */
   def boost(path: FieldSearchPath): PathBoostSearchScore = JSearchScore.boost(path)
 
   /**
    * Returns a `SearchScore` that instructs to replace the score with the specified `value`.
    *
-   * @param value The value to replace the score with.
+   * @param value The positive value to replace the score with.
    * @return The requested `SearchScore`.
-   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#constant constant modifier]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#constant constant score modifier]]
+   * @see [[SearchScoreExpression.constantExpression]]
    */
   def constant(value: Float): ConstantSearchScore = JSearchScore.constant(value)
+
+  /**
+   * Returns a `SearchScore` that instructs to compute the score using the specified `expression`.
+   *
+   * @param expression The expression to use when calculating the score.
+   * @return The requested `SearchScore`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#function function score modifier]]
+   */
+  def function(expression: SearchScoreExpression): FunctionSearchScore = JSearchScore.function(expression)
 
   /**
    * Creates a `SearchScore` from a `Bson` in situations when there is no builder method that better satisfies your needs.

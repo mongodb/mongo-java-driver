@@ -260,8 +260,39 @@ package object search {
   type PathBoostSearchScore = com.mongodb.client.model.search.PathBoostSearchScore
 
   /**
-   * @see `SearchScore.constant(float)`
+   * @see `SearchScore.constant`
    */
   @Evolving
   type ConstantSearchScore = com.mongodb.client.model.search.ConstantSearchScore
+
+  /**
+   * @see `SearchScore.function`
+   */
+  @Evolving
+  type FunctionSearchScore = com.mongodb.client.model.search.FunctionSearchScore
+
+  /**
+   * @see `SearchScore.function`
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#expressions Expressions for the function score modifier]]
+   */
+  @Evolving
+  type SearchScoreExpression = com.mongodb.client.model.search.SearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.relevanceExpression`
+   */
+  @Evolving
+  type RelevanceSearchScoreExpression = com.mongodb.client.model.search.RelevanceSearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.pathExpression`
+   */
+  @Evolving
+  type PathSearchScoreExpression = com.mongodb.client.model.search.PathSearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.constantExpression`
+   */
+  @Evolving
+  type ConstantSearchScoreExpression = com.mongodb.client.model.search.ConstantSearchScoreExpression
 }

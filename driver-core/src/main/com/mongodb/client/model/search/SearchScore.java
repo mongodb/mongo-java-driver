@@ -40,7 +40,7 @@ public interface SearchScore extends Bson {
      *
      * @param value The positive value to multiply the score by.
      * @return The requested {@link SearchScore}.
-     * @mongodb.atlas.manual atlas-search/scoring/#boost boost modifier
+     * @mongodb.atlas.manual atlas-search/scoring/#boost boost score modifier
      */
     static ValueBoostSearchScore boost(final float value) {
         isTrueArgument("value must be positive", value > 0);
@@ -52,22 +52,35 @@ public interface SearchScore extends Bson {
      *
      * @param path The numeric field whose value to multiply the score by.
      * @return The requested {@link SearchScore}.
-     * @mongodb.atlas.manual atlas-search/scoring/#boost boost modifier
+     * @mongodb.atlas.manual atlas-search/scoring/#boost boost score modifier
+     * @see SearchScoreExpression#pathExpression(FieldSearchPath)
      */
     static PathBoostSearchScore boost(final FieldSearchPath path) {
-        return new SearchConstructibleBsonElement("boost", new Document("path", notNull("value", (path)).toValue()));
+        return new SearchConstructibleBsonElement("boost", new Document("path", notNull("value", path).toValue()));
     }
 
     /**
      * Returns a {@link SearchScore} that instructs to replace the score with the specified {@code value}.
      *
-     * @param value The value to replace the score with.
+     * @param value The positive value to replace the score with.
      * @return The requested {@link SearchScore}.
-     * @mongodb.atlas.manual atlas-search/scoring/#constant constant modifier
+     * @mongodb.atlas.manual atlas-search/scoring/#constant constant score modifier
+     * @see SearchScoreExpression#constantExpression(float)
      */
     static ConstantSearchScore constant(final float value) {
         isTrueArgument("value must be positive", value > 0);
         return new SearchConstructibleBsonElement("constant", new BsonDocument("value", new BsonDouble(value)));
+    }
+
+    /**
+     * Returns a {@link SearchScore} that instructs to compute the score using the specified {@code expression}.
+     *
+     * @param expression The expression to use when calculating the score.
+     * @return The requested {@link SearchScore}.
+     * @mongodb.atlas.manual atlas-search/scoring/#function function score modifier
+     */
+    static FunctionSearchScore function(final SearchScoreExpression expression) {
+        return new SearchConstructibleBsonElement("function", notNull("expression", expression));
     }
 
     /**

@@ -29,8 +29,8 @@ import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
 /**
  * A specification of document fields to be searched.
  * <p>
- * Despite {@link SearchPath} being {@link Bson},
- * its value conforming to the correct syntax must be obtained via either {@link #toBsonValue()} or {@link FieldSearchPath#toValue()}.</p>
+ * Depending on the context, one of the following methods may be used to get a representation of a {@link SearchPath}
+ * with the correct syntax: {@link #toBsonDocument()}, {@link #toBsonValue()}, {@link FieldSearchPath#toValue()}.</p>
  *
  * @mongodb.atlas.manual atlas-search/path-construction/ Path
  * @since 4.7
