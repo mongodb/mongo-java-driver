@@ -38,6 +38,9 @@ import com.mongodb.{ AutoEncryptionSettings => JAutoEncryptionSettings }
  *
  * Automatic encryption requires the authenticated user to have the listCollections privilege action.
  *
+ * Supplying an `encryptedFieldsMap` provides more security than relying on an encryptedFields obtained from the server.
+ * It protects against a malicious server advertising false encryptedFields.
+ *
  * @since 2.7
  */
 object AutoEncryptionSettings {

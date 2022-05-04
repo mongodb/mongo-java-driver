@@ -55,6 +55,10 @@ import static java.util.Collections.unmodifiableMap;
  * <p>
  * Automatic encryption requires the authenticated user to have the listCollections privilege action.
  * </p>
+ * <p>
+ * Supplying an {@code encryptedFieldsMap} provides more security than relying on an encryptedFields obtained from the server.
+ * It protects against a malicious server advertising false encryptedFields.
+ * </p>
  *
  * @since 3.11
  */
@@ -67,6 +71,8 @@ public final class AutoEncryptionSettings {
     private final Map<String, BsonDocument> schemaMap;
     private final Map<String, Object> extraOptions;
     private final boolean bypassAutoEncryption;
+    private final Map<String, BsonDocument> encryptedFieldsMap;
+    private final boolean bypassQueryAnalysis;
 
     /**
      * A builder for {@code AutoEncryptionSettings} so that {@code AutoEncryptionSettings} can be immutable, and to support easier
@@ -82,6 +88,8 @@ public final class AutoEncryptionSettings {
         private Map<String, BsonDocument> schemaMap = Collections.emptyMap();
         private Map<String, Object> extraOptions = Collections.emptyMap();
         private boolean bypassAutoEncryption;
+        private Map<String, BsonDocument> encryptedFieldsMap = Collections.emptyMap();
+        private boolean bypassQueryAnalysis;
 
         /**
          * Sets the key vault settings.
@@ -182,6 +190,42 @@ public final class AutoEncryptionSettings {
          */
         public Builder bypassAutoEncryption(final boolean bypassAutoEncryption) {
             this.bypassAutoEncryption = bypassAutoEncryption;
+            return this;
+        }
+
+        /**
+         * Maps a collection namespace to an encryptedFields.
+         *
+         * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
+         * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, libmongocrypt will error on
+         * initialization.
+         * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code createCollection()} and
+         * {@code collection.drop()} is altered.
+         *
+         * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
+         * used by libmongocrypt.
+         *
+         * @param encryptedFieldsMap the mapping of the collection namespace to the encryptedFields
+         * @return this
+         * @since 4.7
+         */
+        public Builder encryptedFieldsMap(final Map<String, BsonDocument> encryptedFieldsMap) {
+            this.encryptedFieldsMap = notNull("encryptedFieldsMap", encryptedFieldsMap);;
+            return this;
+        }
+
+        /**
+         * Disable automatic analysis of outgoing commands.
+         *
+         * <p>Set bypassQueryAnalysis to true to use explicit encryption on indexed fields
+         * without the MongoDB Enterprise Advanced licensed csfle shared library.</p>
+         *
+         * @param bypassQueryAnalysis whether query analysis should be bypassed
+         * @return this
+         * @since 4.7
+         */
+        public Builder bypassQueryAnalysis(final boolean bypassQueryAnalysis) {
+            this.bypassQueryAnalysis = bypassQueryAnalysis;
             return this;
         }
 
@@ -392,6 +436,38 @@ public final class AutoEncryptionSettings {
         return bypassAutoEncryption;
     }
 
+    /**
+     * Gets the mapping of a collection namespace to encryptedFields.
+     *
+     * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
+     * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, libmongocrypt will error on
+     * initialization.
+     * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code createCollection()} and
+     * {@code collection.drop()} is altered.
+     *
+     * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
+     * used by libmongocrypt.
+     *
+     * @return the mapping of the collection namespaces to encryptedFields
+     * @since 4.7
+     */
+    public Map<String, BsonDocument> getEncryptedFieldsMap() {
+        return encryptedFieldsMap;
+    }
+
+    /**
+     * Gets whether automatic analysis of outgoing commands is set.
+     *
+     * <p>Set bypassQueryAnalysis to true to use explicit encryption on indexed fields
+     * without the MongoDB Enterprise Advanced licensed csfle shared library.</p>
+     *
+     * @return true if query analysis should be bypassed
+     * @since 4.7
+     */
+    public boolean isBypassQueryAnalysis() {
+        return bypassQueryAnalysis;
+    }
+
     private AutoEncryptionSettings(final Builder builder) {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
@@ -401,6 +477,8 @@ public final class AutoEncryptionSettings {
         this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
+        this.encryptedFieldsMap = notNull("encryptedFieldsMap", builder.encryptedFieldsMap);
+        this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
     }
 
     @Override

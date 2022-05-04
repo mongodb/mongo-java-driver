@@ -44,12 +44,15 @@ public final class Crypts {
         MongoClient collectionInfoRetrieverClient = internalClient;
         MongoClient keyVaultClient = keyVaultMongoClientSettings == null
                 ? internalClient : MongoClients.create(keyVaultMongoClientSettings);
-        return new Crypt(MongoCrypts.create(createMongoCryptOptions(options.getKmsProviders(),
-                options.getSchemaMap())),
+        return new Crypt(
+                MongoCrypts.create(
+                        createMongoCryptOptions(options.getKmsProviders(), options.getSchemaMap(), options.getEncryptedFieldsMap(),
+                                options.isBypassQueryAnalysis())),
                 options.getKmsProviders(),
                 options.getKmsProviderPropertySuppliers(),
                 options.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(collectionInfoRetrieverClient),
-                new CommandMarker(options.isBypassAutoEncryption(), options.getExtraOptions()),
+                new CommandMarker(options.isBypassAutoEncryption() || options.isBypassQueryAnalysis(),
+                        options.getExtraOptions()),
                 new KeyRetriever(keyVaultClient, new MongoNamespace(options.getKeyVaultNamespace())),
                 createKeyManagementService(options.getKmsProviderSslContextMap()),
                 options.isBypassAutoEncryption(),
@@ -58,7 +61,7 @@ public final class Crypts {
 
     static Crypt create(final MongoClient keyVaultClient, final ClientEncryptionSettings options) {
         return new Crypt(MongoCrypts.create(
-                createMongoCryptOptions(options.getKmsProviders(), null)),
+                createMongoCryptOptions(options.getKmsProviders())),
                 options.getKmsProviders(),
                 options.getKmsProviderPropertySuppliers(),
                 createKeyRetriever(keyVaultClient, options.getKeyVaultNamespace()),
