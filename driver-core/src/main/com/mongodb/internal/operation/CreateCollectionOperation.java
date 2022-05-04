@@ -28,12 +28,16 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -42,14 +46,16 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeComma
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.internal.operation.DocumentHelper.putIfFalse;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.validateCollation;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * An operation to create a collection
@@ -58,6 +64,10 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @mongodb.driver.manual reference/method/db.createCollection Create Collection
  */
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private static final String ENCRYPT_PREFIX = "enxcol_.";
+    private static final BsonDocument ENCRYPT_CLUSTERED_INDEX = BsonDocument.parse("{key: {_id: 1}, unique: true}");
+    private static final BsonArray SAFE_CONTENT_ARRAY = new BsonArray(
+            singletonList(BsonDocument.parse("{key: {__safeContent__: 1}, name: '__safeContent___1'}")));
     private final String databaseName;
     private final String collectionName;
     private final WriteConcern writeConcern;
@@ -77,6 +87,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private BsonDocument clusteredIndexKey;
     private boolean clusteredIndexUnique;
     private String clusteredIndexName;
+    private BsonDocument encryptedFields;
 
     /**
      * Construct a new instance.
@@ -361,7 +372,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
-
     public CreateCollectionOperation changeStreamPreAndPostImagesOptions(
             @Nullable final ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions) {
         this.changeStreamPreAndPostImagesOptions = changeStreamPreAndPostImagesOptions;
@@ -382,47 +392,95 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         this.clusteredIndexName = clusteredIndexName;
         return this;
     }
+    public CreateCollectionOperation encryptedFields(final BsonDocument encryptedFields) {
+        this.encryptedFields = encryptedFields;
+        return this;
+    }
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                validateCollation(connection, collation);
-                executeCommand(binding, databaseName, getCommand(connection.getDescription()), connection,
-                        writeConcernErrorTransformer());
-                return null;
-            }
+        return withConnection(binding, connection -> {
+            validateCollation(connection, collation);
+            getCommandFunctions().forEach(commandCreator ->
+                executeCommand(binding, databaseName, commandCreator.apply(connection.getDescription()), connection,
+                        writeConcernErrorTransformer())
+            );
+            return null;
         });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                executeCommandAsync(binding, databaseName, getCommand(connection.getDescription()),
-                                        connection, writeConcernErrorWriteTransformer(), wrappedCallback);
-                            }
-                        }
-                    });
-                }
+        withAsyncConnection(binding, (connection, t) -> {
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else {
+                validateCollation(connection, collation, (connection1, t1) ->
+                    new ProcessCommandsCallback(binding, connection1, releasingCallback(errHandlingCallback, connection))
+                            .onResult(null, t1));
             }
         });
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
+    private String getGranularityAsString(final TimeSeriesGranularity granularity) {
+        switch (granularity) {
+            case SECONDS:
+                return "seconds";
+            case MINUTES:
+                return "minutes";
+            case HOURS:
+                return "hours";
+            default:
+                throw new AssertionError("Unexpected granularity " + granularity);
+        }
+    }
+
+    /**
+     * With FLE2 creating a collection can involve more logic and commands.
+     *
+     * <p>
+     *   If the collection namespace has an associated encryptedFields, then do the following operations.
+     *   If any of the following operations error, the remaining operations are not attempted:
+     *   <ol>
+     * <li>Create the collection with name encryptedFields["escCollection"] using default options.
+     *   If encryptedFields["escCollection"] is not set, use the collection name enxcol_.<collectionName>.esc.
+     *   Creating this collection MUST NOT check if the collection namespace is in the AutoEncryptionOpts.encryptedFieldsMap.
+     * <li>Create the collection with name encryptedFields["eccCollection"] using default options.
+     *   If encryptedFields["eccCollection"] is not set, use the collection name enxcol_.<collectionName>.ecc.
+     *   Creating this collection MUST NOT check if the collection namespace is in the AutoEncryptionOpts.encryptedFieldsMap.
+     * <li>Create the collection with name encryptedFields["ecocCollection"] using default options.
+     *   If encryptedFields["ecocCollection"] is not set, use the collection name enxcol_.<collectionName>.ecoc.
+     *   Creating this collection MUST NOT check if the collection namespace is in the AutoEncryptionOpts.encryptedFieldsMap.
+     * <li>Create the collection collectionName with collectionOptions and the option encryptedFields set to the encryptedFields.
+     * <li>Create the the index {"__safeContent__": 1} on collection collectionName.
+     *  </ol>
+     * </p>
+     * @return the list of commands to run to create the collection
+     */
+    private List<Function<ConnectionDescription, BsonDocument>> getCommandFunctions() {
+        if (encryptedFields == null) {
+            return singletonList(this::getCreateCollectionCommand);
+        }
+        return asList(
+                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("esc"),
+                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("ecc"),
+                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("ecoc"),
+                this::getCreateCollectionCommand,
+                connectionDescription -> new BsonDocument("createIndexes", new BsonString(collectionName))
+                        .append("indexes", SAFE_CONTENT_ARRAY)
+        );
+    }
+
+    private BsonDocument getCreateEncryptedFieldsCollectionCommand(final String collectionSuffix) {
+        return new BsonDocument()
+                .append("create", encryptedFields
+                        .getOrDefault(collectionSuffix + "Collection",
+                                new BsonString(ENCRYPT_PREFIX + collectionName + "." + collectionSuffix)))
+                .append("clusteredIndex", ENCRYPT_CLUSTERED_INDEX);
+    }
+
+    private BsonDocument getCreateCollectionCommand(final ConnectionDescription description) {
         BsonDocument document = new BsonDocument("create", new BsonString(collectionName));
         putIfFalse(document, "autoIndexId", autoIndex);
         document.put("capped", BsonBoolean.valueOf(capped));
@@ -430,15 +488,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             putIfNotZero(document, "size", sizeInBytes);
             putIfNotZero(document, "max", maxDocuments);
         }
-        if (storageEngineOptions != null) {
-            document.put("storageEngine", storageEngineOptions);
-        }
-        if (indexOptionDefaults != null) {
-            document.put("indexOptionDefaults", indexOptionDefaults);
-        }
-        if (validator != null) {
-            document.put("validator", validator);
-        }
+        putIfNotNull(document, "storageEngine", storageEngineOptions);
+        putIfNotNull(document, "indexOptionDefaults", indexOptionDefaults);
+        putIfNotNull(document, "validator", validator);
         if (validationLevel != null) {
             document.put("validationLevel", new BsonString(validationLevel.getValue()));
         }
@@ -475,19 +527,40 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             }
             document.put("clusteredIndex", clusteredIndexDocument);
         }
+        putIfNotNull(document, "encryptedFields", encryptedFields);
         return document;
     }
 
-    private String getGranularityAsString(final TimeSeriesGranularity granularity) {
-        switch (granularity) {
-            case SECONDS:
-                return "seconds";
-            case MINUTES:
-                return "minutes";
-            case HOURS:
-                return "hours";
-            default:
-                throw new AssertionError("Unexpected granularity " + granularity);
+    /**
+     * A SingleResultCallback that can be repeatedly called via onResult until all commands have been run.
+     */
+    class ProcessCommandsCallback implements SingleResultCallback<Void> {
+        private final AsyncWriteBinding binding;
+        private final AsyncConnection connection;
+        private final SingleResultCallback<Void>  finalCallback;
+        private final Deque<Function<ConnectionDescription, BsonDocument>> commands;
+
+        ProcessCommandsCallback(
+                final AsyncWriteBinding binding, final AsyncConnection connection, final SingleResultCallback<Void> finalCallback) {
+            this.binding = binding;
+            this.connection = connection;
+            this.finalCallback = finalCallback;
+            this.commands = new ArrayDeque<>(getCommandFunctions());
+        }
+
+        @Override
+        public void onResult(final Void result, final Throwable t) {
+            if (t != null) {
+                finalCallback.onResult(null, t);
+            }
+            Function<ConnectionDescription, BsonDocument> nextCommandFunction = commands.poll();
+            if (nextCommandFunction == null) {
+                finalCallback.onResult(null, null);
+            } else {
+                executeCommandAsync(binding, databaseName, nextCommandFunction.apply(connection.getDescription()),
+                        connection, writeConcernErrorWriteTransformer(), this);
+            }
         }
     }
+
 }

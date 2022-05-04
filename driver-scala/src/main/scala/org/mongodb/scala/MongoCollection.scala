@@ -16,8 +16,9 @@
 
 package org.mongodb.scala
 
-import java.util
+import com.mongodb.client.model.DropCollectionOptions
 
+import java.util
 import com.mongodb.reactivestreams.client.{ MongoCollection => JMongoCollection }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
@@ -1336,6 +1337,30 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @note Requires MongoDB 3.6 or greater
    */
   def drop(clientSession: ClientSession): SingleObservable[Void] = wrapped.drop(clientSession)
+
+  /**
+   * Drops this collection from the Database.
+   *
+   * @param dropCollectionOptions various options for dropping the collection
+   * @return an empty Observable that indicates when the operation has completed
+   *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  def drop(dropCollectionOptions: DropCollectionOptions): SingleObservable[Void] = wrapped.drop(dropCollectionOptions)
+
+  /**
+   * Drops this collection from the Database.
+   *
+   * @param clientSession the client session with which to associate this operation
+   * @param dropCollectionOptions various options for dropping the collection
+   * @return an empty Observable that indicates when the operation has completed
+   *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): SingleObservable[Void] =
+    wrapped.drop(clientSession, dropCollectionOptions)
 
   /**
    * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]

@@ -126,9 +126,7 @@ public abstract class AbstractClientSideEncryptionTest {
         String collectionName = specDocument.getString("collection_name").getValue();
         collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), new MongoNamespace(databaseName, collectionName));
         MongoDatabase database = getMongoClient().getDatabase(databaseName);
-        MongoCollection<BsonDocument> collection = database
-                .getCollection(collectionName, BsonDocument.class);
-        collection.drop();
+        database.drop();
 
         /* Create the collection for auto encryption. */
         if (specDocument.containsKey("json_schema")) {
@@ -148,7 +146,8 @@ public abstract class AbstractClientSideEncryptionTest {
 
         /* Insert data into the "keyvault.datakeys" key vault. */
         BsonArray data = specDocument.getArray("key_vault_data", new BsonArray());
-        collection = getMongoClient().getDatabase("keyvault").getCollection("datakeys", BsonDocument.class)
+        MongoCollection<BsonDocument> collection = getMongoClient().getDatabase("keyvault")
+                .getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
         collection.drop();
         if (!data.isEmpty()) {
@@ -159,22 +158,29 @@ public abstract class AbstractClientSideEncryptionTest {
             collection.insertMany(documents);
         }
 
-
         commandListener = new TestCommandListener();
 
         BsonDocument clientOptions = definition.getDocument("clientOptions");
         BsonDocument cryptOptions = clientOptions.getDocument("autoEncryptOpts");
         BsonDocument kmsProviders = cryptOptions.getDocument("kmsProviders");
         boolean bypassAutoEncryption = cryptOptions.getBoolean("bypassAutoEncryption", BsonBoolean.FALSE).getValue();
+        boolean bypassQueryAnalysis = cryptOptions.getBoolean("bypassQueryAnalysis", BsonBoolean.FALSE).getValue();
 
         Map<String, BsonDocument> namespaceToSchemaMap = new HashMap<String, BsonDocument>();
 
         if (cryptOptions.containsKey("schemaMap")) {
             BsonDocument autoEncryptMapDocument = cryptOptions.getDocument("schemaMap");
-
             for (Map.Entry<String, BsonValue> entries : autoEncryptMapDocument.entrySet()) {
                 final BsonDocument autoEncryptOptionsDocument = entries.getValue().asDocument();
                 namespaceToSchemaMap.put(entries.getKey(), autoEncryptOptionsDocument);
+            }
+        }
+
+        Map<String, BsonDocument> encryptedFieldsMap = new HashMap<>();
+        if (cryptOptions.containsKey("encryptedFieldsMap")) {
+            BsonDocument encryptedFieldsMapDocument = cryptOptions.getDocument("encryptedFieldsMap");
+            for (Map.Entry<String, BsonValue> entries : encryptedFieldsMapDocument.entrySet()) {
+                encryptedFieldsMap.put(entries.getKey(), entries.getValue().asDocument());
             }
         }
 
@@ -244,6 +250,8 @@ public abstract class AbstractClientSideEncryptionTest {
                 .keyVaultNamespace(keyVaultNamespace)
                 .kmsProviders(kmsProvidersMap)
                 .schemaMap(namespaceToSchemaMap)
+                .encryptedFieldsMap(encryptedFieldsMap)
+                .bypassQueryAnalysis(bypassQueryAnalysis)
                 .bypassAutoEncryption(bypassAutoEncryption)
                 .extraOptions(extraOptions)
                 .build(), commandListener);
@@ -296,7 +304,6 @@ public abstract class AbstractClientSideEncryptionTest {
                     throw e;
                 }
             }
-
         }
 
         if (definition.containsKey("expectations")) {
@@ -326,11 +333,13 @@ public abstract class AbstractClientSideEncryptionTest {
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption")) {
-            BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
-            for (BsonValue test : specDocument.getArray("tests")) {
-                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
-                        specDocument.getArray("data", new BsonArray()), test.asDocument(), skipTest(specDocument, test.asDocument())});
-            }
+                BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
+                boolean fle2Test = file.getName().startsWith("fle2"); // TODO enable fle2 test JAVA-4589
+                for (BsonValue test : specDocument.getArray("tests")) {
+                    data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
+                            specDocument.getArray("data", new BsonArray()), test.asDocument(),
+                            fle2Test || skipTest(specDocument, test.asDocument())});
+                }
         }
         return data;
     }

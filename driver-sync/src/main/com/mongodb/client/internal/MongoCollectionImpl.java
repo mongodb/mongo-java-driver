@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -35,6 +36,7 @@ import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.internal.client.model.AggregationLevel;
@@ -94,12 +96,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final ReadConcern readConcern;
     private final SyncOperations<TDocument> operations;
     private final UuidRepresentation uuidRepresentation;
+    @Nullable
+    private final AutoEncryptionSettings autoEncryptionSettings;
     private final OperationExecutor executor;
 
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
                         final boolean retryReads, final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
-                        final OperationExecutor executor) {
+                        @Nullable final AutoEncryptionSettings autoEncryptionSettings, final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -110,6 +114,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+        this.autoEncryptionSettings = autoEncryptionSettings;
         this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 retryWrites, retryReads);
     }
@@ -147,31 +152,31 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
         return new MongoCollectionImpl<>(namespace, clazz, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoCollectionImpl<>(namespace, documentClass, withUuidRepresentation(codecRegistry, uuidRepresentation),
-                readPreference, writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, executor);
+                readPreference, writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadConcern(final ReadConcern readConcern) {
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
@@ -788,17 +793,27 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void drop() {
-        executeDrop(null);
+        executeDrop(null, new DropCollectionOptions());
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
         notNull("clientSession", clientSession);
-        executeDrop(clientSession);
+        executeDrop(clientSession, new DropCollectionOptions());
     }
 
-    private void executeDrop(@Nullable final ClientSession clientSession) {
-        executor.execute(operations.dropCollection(), readConcern, clientSession);
+    @Override
+    public void drop(final DropCollectionOptions dropCollectionOptions) {
+        executeDrop(null, dropCollectionOptions);
+    }
+
+    @Override
+    public void drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
+        executeDrop(clientSession, dropCollectionOptions);
+    }
+
+    private void executeDrop(@Nullable final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
+        executor.execute(operations.dropCollection(dropCollectionOptions, autoEncryptionSettings), readConcern, clientSession);
     }
 
     @Override

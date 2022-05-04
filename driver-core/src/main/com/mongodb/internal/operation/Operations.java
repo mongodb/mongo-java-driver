@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -27,6 +28,7 @@ import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -64,6 +66,7 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -503,8 +506,21 @@ public final class Operations<TDocument> {
     }
 
 
-    public DropCollectionOperation dropCollection() {
-        return new DropCollectionOperation(namespace, writeConcern);
+    public DropCollectionOperation dropCollection(
+            final DropCollectionOptions dropCollectionOptions,
+            final AutoEncryptionSettings autoEncryptionSettings) {
+        DropCollectionOperation operation = new DropCollectionOperation(namespace, writeConcern);
+        Bson encryptedFields = dropCollectionOptions.getEncryptedFields();
+        if (encryptedFields != null) {
+            operation.encryptedFields(toBsonDocument(encryptedFields));
+        } else if (autoEncryptionSettings != null) {
+            Map<String, BsonDocument> encryptedFieldsMap = autoEncryptionSettings.getEncryptedFieldsMap();
+            if (encryptedFieldsMap != null) {
+                operation.encryptedFields(encryptedFieldsMap.getOrDefault(namespace.getFullName(), null));
+                operation.autoEncryptedFields(true);
+            }
+        }
+        return operation;
     }
 
 

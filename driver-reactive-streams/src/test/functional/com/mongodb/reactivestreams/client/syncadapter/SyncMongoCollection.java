@@ -32,6 +32,7 @@ import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -631,6 +632,16 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     @Override
     public void drop(final ClientSession clientSession) {
         Mono.from(wrapped.drop(unwrap(clientSession))).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public void drop(final DropCollectionOptions dropCollectionOptions) {
+        Mono.from(wrapped.drop(dropCollectionOptions)).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public void drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
+        Mono.from(wrapped.drop(unwrap(clientSession), dropCollectionOptions)).block(TIMEOUT_DURATION);
     }
 
     @Override

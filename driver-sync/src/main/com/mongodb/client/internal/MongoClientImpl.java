@@ -92,7 +92,7 @@ public final class MongoClientImpl implements MongoClient {
     public MongoDatabase getDatabase(final String databaseName) {
         return new MongoDatabaseImpl(databaseName, delegate.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
                 settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(),
-                settings.getUuidRepresentation(), delegate.getOperationExecutor());
+                settings.getUuidRepresentation(), settings.getAutoEncryptionSettings(), delegate.getOperationExecutor());
     }
 
     @Override
