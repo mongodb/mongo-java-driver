@@ -39,6 +39,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
@@ -1192,10 +1193,15 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");
         ClientSession session = getSession(arguments);
+        CountOptions options = new CountOptions();
+
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "filter":
                 case "session":
+                    break;
+                case "comment":
+                    options.comment(cur.getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1204,9 +1210,9 @@ final class UnifiedCrudHelper {
 
         return resultOf(() -> {
             if (session == null) {
-                return new BsonInt64(collection.countDocuments(filter));
+                return new BsonInt64(collection.countDocuments(filter, options));
             } else {
-                return new BsonInt64(collection.countDocuments(session, filter));
+                return new BsonInt64(collection.countDocuments(session, filter, options));
             }
         });
     }
