@@ -31,7 +31,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         CompoundSearchOperatorBase, CompoundSearchOperator,
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
         ExistsSearchOperator, TextSearchOperator,
-        ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore,
+        ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore, GaussSearchScoreExpression,
         PathSearchScoreExpression,
         FacetSearchCollector,
         StringSearchFacet, NumericSearchFacet, DateSearchFacet {
@@ -124,5 +124,17 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     @Override
     public SearchConstructibleBsonElement undefined(final float fallback) {
         return newWithAppendedValue("undefined", fallback);
+    }
+
+    @Override
+    public GaussSearchScoreExpression offset(final double offset) {
+        return newWithAppendedValue("offset", offset);
+    }
+
+    @Override
+    public GaussSearchScoreExpression decay(final double decay) {
+        isTrueArgument("decay must be greater than 0", decay > 0);
+        isTrueArgument("decay must be less than 1", decay < 1);
+        return newWithAppendedValue("decay", decay);
     }
 }

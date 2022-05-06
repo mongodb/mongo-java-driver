@@ -29,7 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 final class SearchConstructibleBson extends AbstractConstructibleBson<SearchConstructibleBson> implements
         SearchOperator,
         SearchScore,
-        RelevanceSearchScoreExpression, ConstantSearchScoreExpression,
+        RelevanceSearchScoreExpression, ConstantSearchScoreExpression, LogSearchScoreExpression, Log1pSearchScoreExpression,
         SearchCollector,
         SearchOptions,
         SearchHighlight,

@@ -51,6 +51,47 @@ object SearchScoreExpression {
   def constantExpression(value: Float): ConstantSearchScoreExpression = JSearchScoreExpression.constantExpression(value)
 
   /**
+   * Returns a `SearchScoreExpression` that represents a Gaussian function whose output is within the interval [0, 1].
+   * Roughly speaking, the further the value of the `path` expression is from the `origin`,
+   * the smaller the output of the function.
+   *
+   * The `scale` and `decay` are parameters of the Gaussian function,
+   * they define the rate at which the function decays.
+   * The input of the Gaussian function is the output of another function:
+   * max(0, abs(`pathValue` - `origin`) - `offset`),
+   * where `pathValue` is the value of the `path` expression.
+   *
+   * @param origin The point of origin, see `GaussSearchScoreExpression.offset`.
+   * The value of the Gaussian function is 1 if the value of the `path` expression is `origin`.
+   * @param path The expression whose value is used to calculate the input of the Gaussian function.
+   * @param scale The non-zero distance from the points `origin` ± `offset`
+   * at which the output of the Gaussian function must decay by the factor of `decay`.
+   * @return The requested `SearchScoreExpression`.
+   */
+  def gaussExpression(origin: Double, path: PathSearchScoreExpression, scale: Double): GaussSearchScoreExpression =
+    JSearchScoreExpression.gaussExpression(origin, path, scale)
+
+  /**
+   * Returns a `SearchScoreExpression` that evaluates into log10(`expressionValue`),
+   * where `expressionValue` is the value of the `expression`.
+   *
+   * @param expression The expression whose value is the input of the log10 function.
+   * @return The requested `SearchScoreExpression`.
+   */
+  def logExpression(expression: SearchScoreExpression): LogSearchScoreExpression =
+    JSearchScoreExpression.logExpression(expression)
+
+  /**
+   * Returns a `SearchScoreExpression` that evaluates into log10(`expressionValue` + 1),
+   * where `expressionValue` is the value of the `expression`.
+   *
+   * @param expression The expression whose value is used to calculate the input of the log10 function.
+   * @return The requested `SearchScoreExpression`.
+   */
+  def log1pExpression(expression: SearchScoreExpression): Log1pSearchScoreExpression =
+    JSearchScoreExpression.log1pExpression(expression)
+
+  /**
    * Creates a `SearchScoreExpression` from a `Bson` in situations when there is no builder method
    * that better satisfies your needs.
    * This method cannot be used to validate the syntax.

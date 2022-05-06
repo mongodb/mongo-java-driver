@@ -24,7 +24,7 @@ import com.mongodb.annotations.Evolving;
 @Evolving
 public interface PathBoostSearchScore extends SearchScore {
     /**
-     * Creates a new {@link PathBoostSearchScore} with the value to use for boosting
+     * Creates a new {@link PathBoostSearchScore} with the value to fall back to
      * if the field specified via {@link SearchScore#boost(FieldSearchPath)} is not found in a document.
      *
      * @param fallback The fallback value. Unlike {@link SearchScore#constant(float)}, does not have constraints.

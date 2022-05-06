@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class SearchScoreExpressionTest {
     @Test
@@ -73,6 +74,88 @@ final class SearchScoreExpressionTest {
         assertEquals(
                 new BsonDocument("constant", new BsonDouble(-1.5)),
                 SearchScoreExpression.constantExpression(-1.5f)
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
+    void gaussExpression() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // scale must not be 0
+                        SearchScoreExpression.gaussExpression(0, SearchScoreExpression.pathExpression(fieldPath("fieldName")), 0)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // decay must be positive
+                        SearchScoreExpression.gaussExpression(0, SearchScoreExpression.pathExpression(fieldPath("fieldName")), 1)
+                                .decay(-1)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // decay must be positive
+                        SearchScoreExpression.gaussExpression(0, SearchScoreExpression.pathExpression(fieldPath("fieldName")), 1)
+                                .decay(0)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // decay must be less than 1
+                        SearchScoreExpression.gaussExpression(0, SearchScoreExpression.pathExpression(fieldPath("fieldName")), 1)
+                                .decay(1)
+                ),
+                () -> assertEquals(
+                        new BsonDocument("gauss",
+                                new BsonDocument("origin", new BsonDouble(50))
+                                        .append("path", SearchScoreExpression.pathExpression(
+                                                fieldPath("fieldName"))
+                                                .toBsonDocument().values().iterator().next())
+                                        .append("scale", new BsonDouble(1))),
+                        SearchScoreExpression.gaussExpression(
+                                50,
+                                SearchScoreExpression.pathExpression(
+                                        fieldPath("fieldName")),
+                                1)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("gauss",
+                                new BsonDocument("origin", new BsonDouble(50))
+                                        .append("path", SearchScoreExpression.pathExpression(
+                                                fieldPath("fieldName"))
+                                                .undefined(-1.5f)
+                                                .toBsonDocument().values().iterator().next())
+                                .append("scale", new BsonDouble(1))
+                                .append("offset", new BsonDouble(0))
+                                .append("decay", new BsonDouble(0.5))
+                        ),
+                        SearchScoreExpression.gaussExpression(
+                                50,
+                                SearchScoreExpression.pathExpression(
+                                        fieldPath("fieldName"))
+                                        .undefined(-1.5f),
+                                1)
+                                .offset(0)
+                                .decay(0.5)
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void logExpression() {
+        assertEquals(
+                new BsonDocument("log",
+                        SearchScoreExpression.constantExpression(3).toBsonDocument()),
+                SearchScoreExpression.logExpression(
+                        SearchScoreExpression.constantExpression(3))
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
+    void log1pExpression() {
+        assertEquals(
+                new BsonDocument("log1p",
+                        SearchScoreExpression.constantExpression(3).toBsonDocument()),
+                SearchScoreExpression.log1pExpression(
+                        SearchScoreExpression.constantExpression(3))
                         .toBsonDocument()
         );
     }

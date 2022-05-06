@@ -67,6 +67,9 @@ import static com.mongodb.client.model.search.SearchScore.boost;
 import static com.mongodb.client.model.search.SearchScore.constant;
 import static com.mongodb.client.model.search.SearchScore.function;
 import static com.mongodb.client.model.search.SearchScoreExpression.constantExpression;
+import static com.mongodb.client.model.search.SearchScoreExpression.gaussExpression;
+import static com.mongodb.client.model.search.SearchScoreExpression.log1pExpression;
+import static com.mongodb.client.model.search.SearchScoreExpression.logExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.pathExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.relevanceExpression;
 import static java.time.ZoneOffset.UTC;
@@ -341,15 +344,32 @@ final class AggregatesSearchIntegrationTest {
                                                         .undefined(-1)),
                                         exists(fieldPath("fieldName4"))
                                                 .score(constant(1.2f)),
-                                        exists(fieldPath("fieldName6"))
+                                        exists(fieldPath("fieldName5"))
                                                 .score(function(relevanceExpression())),
                                         exists(fieldPath("fieldName6"))
                                                 .score(function(pathExpression(fieldPath("expressionFieldName")))),
                                         exists(fieldPath("fieldName7"))
                                                 .score(function(pathExpression(fieldPath("expressionFieldName"))
                                                         .undefined(-1))),
-                                        exists(fieldPath("fieldName5"))
-                                                .score(function(constantExpression(-1.2f))))),
+                                        exists(fieldPath("fieldName8"))
+                                                .score(function(constantExpression(-1.2f))),
+                                        exists(fieldPath("fieldName9"))
+                                                .score(function(
+                                                        gaussExpression(-10, pathExpression(fieldPath("gaussianFeldName")), Double.MAX_VALUE / -2))),
+                                        exists(fieldPath("fieldName10"))
+                                                .score(function(
+                                                        gaussExpression(
+                                                                -10,
+                                                                pathExpression(fieldPath("gaussianFeldName"))
+                                                                        .undefined(0),
+                                                                Double.MAX_VALUE / -2)
+                                                        .offset(Double.MAX_VALUE / -2)
+                                                        .decay(Double.MIN_VALUE))),
+                                        exists(fieldPath("fieldName11"))
+                                                .score(function(logExpression(constantExpression(3)))),
+                                        exists(fieldPath("fieldName12"))
+                                                .score(function(log1pExpression(constantExpression(-3))))
+                                )),
                                 null
                         ),
                         asList(

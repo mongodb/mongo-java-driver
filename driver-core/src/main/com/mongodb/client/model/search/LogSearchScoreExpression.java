@@ -18,17 +18,9 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see SearchScoreExpression#pathExpression(FieldSearchPath)
+ * @see SearchScoreExpression#logExpression(SearchScoreExpression)
  * @since 4.7
  */
 @Evolving
-public interface PathSearchScoreExpression extends SearchScoreExpression {
-    /**
-     * Creates a new {@link PathSearchScoreExpression} with the value to fall back to
-     * if the field specified via {@link SearchScoreExpression#pathExpression(FieldSearchPath)} is not found in a document.
-     *
-     * @param fallback The fallback value.
-     * @return A new {@link PathSearchScoreExpression}.
-     */
-    PathSearchScoreExpression undefined(float fallback);
+public interface LogSearchScoreExpression extends SearchScoreExpression {
 }

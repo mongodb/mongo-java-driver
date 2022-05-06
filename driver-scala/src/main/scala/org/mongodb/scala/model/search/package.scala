@@ -295,4 +295,22 @@ package object search {
    */
   @Evolving
   type ConstantSearchScoreExpression = com.mongodb.client.model.search.ConstantSearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.gaussExpression`
+   */
+  @Evolving
+  type GaussSearchScoreExpression = com.mongodb.client.model.search.GaussSearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.log`
+   */
+  @Evolving
+  type LogSearchScoreExpression = com.mongodb.client.model.search.LogSearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.log1p`
+   */
+  @Evolving
+  type Log1pSearchScoreExpression = com.mongodb.client.model.search.Log1pSearchScoreExpression
 }
