@@ -103,10 +103,18 @@ package object search {
   type ExistsSearchOperator = com.mongodb.client.model.search.ExistsSearchOperator
 
   /**
+   * @see `SearchOperator.text(String, SearchPath)`
    * @see `SearchOperator.text(Iterable, Iterable)`
    */
   @Evolving
   type TextSearchOperator = com.mongodb.client.model.search.TextSearchOperator
+
+  /**
+   * @see `SearchOperator.autocomplete(String, FieldSearchPath)`
+   * @see `SearchOperator.autocomplete(Iterable, FieldSearchPath)`
+   */
+  @Evolving
+  type AutocompleteSearchOperator = com.mongodb.client.model.search.AutocompleteSearchOperator
 
   /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.

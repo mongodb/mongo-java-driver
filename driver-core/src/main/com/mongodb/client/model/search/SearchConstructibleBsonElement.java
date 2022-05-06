@@ -30,7 +30,7 @@ import static org.bson.assertions.Assertions.notNull;
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
         CompoundSearchOperatorBase, CompoundSearchOperator,
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
-        ExistsSearchOperator, TextSearchOperator,
+        ExistsSearchOperator, TextSearchOperator, AutocompleteSearchOperator,
         ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore, GaussSearchScoreExpression,
         PathSearchScoreExpression,
         FacetSearchCollector,
@@ -59,7 +59,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public TextSearchOperator fuzzy(final SearchFuzzy option) {
+    public SearchConstructibleBsonElement fuzzy(final SearchFuzzy option) {
         return newWithMutatedValue(doc -> {
             doc.remove("synonyms");
             doc.append("fuzzy", notNull("option", option));
@@ -72,6 +72,16 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
             doc.remove("fuzzy");
             doc.append("synonyms", notNull("name", name));
         });
+    }
+
+    @Override
+    public AutocompleteSearchOperator anyTokenOrder() {
+        return newWithAppendedValue("tokenOrder", "any");
+    }
+
+    @Override
+    public AutocompleteSearchOperator sequentialTokenOrder() {
+        return newWithAppendedValue("tokenOrder", "sequential");
     }
 
     @Override

@@ -57,6 +57,7 @@ import static com.mongodb.client.model.search.SearchFacet.dateFacet;
 import static com.mongodb.client.model.search.SearchFacet.numberFacet;
 import static com.mongodb.client.model.search.SearchFacet.stringFacet;
 import static com.mongodb.client.model.search.SearchHighlight.paths;
+import static com.mongodb.client.model.search.SearchOperator.autocomplete;
 import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchOperator.text;
@@ -99,15 +100,21 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  *        "released": {
  *          "type": "dateFacet"
  *        },
- *        "title": {
- *          "multi": {
- *            "keyword": {
- *              "analyzer": "lucene.keyword",
- *              "type": "string"
- *            }
+ *        "title": [
+ *          {
+ *            "multi": {
+ *              "keyword": {
+ *                "analyzer": "lucene.keyword",
+ *                "searchAnalyzer": "lucene.keyword",
+ *                "type": "string"
+ *              }
+ *            },
+ *            "type": "string"
  *          },
- *          "type": "string"
- *        },
+ *          {
+ *            "type": "autocomplete"
+ *          }
+ *        ],
  *        "tomatoes.viewer.meter": {
  *          "type": "numberFacet"
  *        }
@@ -397,21 +404,30 @@ final class AggregatesSearchIntegrationTest {
                         stageCreator(compound()
                                 .should(asList(
                                         exists(fieldPath("fieldName1")),
-                                        text("term1", fieldPath("fieldName2")),
-                                        text(asList("term2", "term3"), singleton(wildcardPath("wildc*rd")))
+                                        text("term1", fieldPath("fieldName2"))
+                                                .score(function(logExpression(constantExpression(3)))),
+                                        text(asList("term2", "term3"), asList(wildcardPath("wildc*rd"), fieldPath("fieldName3")))
                                                 .fuzzy(defaultSearchFuzzy()
                                                         .maxEdits(1)
                                                         .prefixLength(2)
-                                                        .maxExpansions(3))))
+                                                        .maxExpansions(3)),
+                                        autocomplete("term4", fieldPath("title")
+                                                // `multi` is used here only to verify that it is tolerated
+                                                .multi("keyword")),
+                                        // this operator produces non-empty search results
+                                        autocomplete(asList("Traffic in", "term5"), fieldPath("title"))
+                                                .fuzzy(defaultSearchFuzzy())
+                                                .sequentialTokenOrder()
+                                ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(
-                                        compound().must(singleton(exists(fieldPath("fieldName3")))))),
+                                        compound().must(singleton(exists(fieldPath("fieldName")))))),
                                 null
                         ),
                         asList(
                                 new Accessory(
                                         emptyList(),
-                                        Asserters.empty()
+                                        Asserters.nonEmpty()
                                 ),
                                 new Accessory(
                                         emptyList(),

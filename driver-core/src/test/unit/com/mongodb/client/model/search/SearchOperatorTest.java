@@ -193,6 +193,56 @@ final class SearchOperatorTest {
         );
     }
 
+    @Test
+    void autocomplete() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.autocomplete(emptyList(), fieldPath("fieldName"))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("autocomplete",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                        ),
+                        SearchOperator.autocomplete(
+                                "term",
+                                fieldPath("fieldName"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("autocomplete",
+                                new BsonDocument("query", new BsonArray(asList(
+                                        new BsonString("term1"),
+                                        new BsonString("term2"))))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                        ),
+                        SearchOperator.autocomplete(
+                                asList(
+                                        "term1",
+                                        "term2"),
+                                fieldPath("fieldName"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("autocomplete",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                        .append("fuzzy", new BsonDocument())
+                                        .append("tokenOrder", new BsonString("any"))
+                        ),
+                        SearchOperator.autocomplete(
+                                singleton("term"),
+                                fieldPath("fieldName"))
+                                .fuzzy(defaultSearchFuzzy())
+                                .sequentialTokenOrder()
+                                // anyTokenOrder overrides sequentialTokenOrder
+                                .anyTokenOrder()
+                                .toBsonDocument()
+                )
+        );
+    }
+
     private static SearchOperator docExamplePredefined() {
         return SearchOperator.exists(
                 fieldPath("fieldName"));

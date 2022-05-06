@@ -18,6 +18,7 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
+ * @see SearchOperator#text(String, SearchPath)
  * @see SearchOperator#text(Iterable, Iterable)
  * @since 4.7
  */

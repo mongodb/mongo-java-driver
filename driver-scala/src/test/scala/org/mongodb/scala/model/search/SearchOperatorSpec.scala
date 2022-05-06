@@ -20,8 +20,10 @@ import org.mongodb.scala.{ BaseSpec, MongoClient }
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.search.SearchFuzzy.defaultSearchFuzzy
-import org.mongodb.scala.model.search.SearchOperator.{ compound, exists, text }
+import org.mongodb.scala.model.search.SearchOperator.{ autocomplete, compound, exists, text }
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
+import org.mongodb.scala.model.search.SearchScore.function
+import org.mongodb.scala.model.search.SearchScoreExpression.{ constantExpression, logExpression }
 
 import scala.collection.JavaConverters._
 
@@ -31,12 +33,22 @@ class SearchOperatorSpec extends BaseSpec {
       compound()
         .should(Seq(
           exists(fieldPath("fieldName1")),
-          text("term1", fieldPath("fieldName2")),
+          text("term1", fieldPath("fieldName2"))
+            .score(function(logExpression(constantExpression(3)))),
           text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd")))
             .fuzzy(defaultSearchFuzzy()
               .maxEdits(1)
               .prefixLength(2)
-              .maxExpansions(3))
+              .maxExpansions(3)),
+          autocomplete(
+            "term4",
+            fieldPath("title")
+              // multi must be ignored
+              .multi("keyword")
+          ),
+          autocomplete(Seq("Traffic in", "term5"), fieldPath("title"))
+            .fuzzy(defaultSearchFuzzy())
+            .sequentialTokenOrder()
         ).asJava)
         .minimumShouldMatch(1)
         .mustNot(Seq(
@@ -47,9 +59,11 @@ class SearchOperatorSpec extends BaseSpec {
         "compound": {
           "should": [
             { "exists": { "path": "fieldName1" } },
-            { "text": { "query": "term1", "path": "fieldName2" } },
+            { "text": { "query": "term1", "path": "fieldName2", "score": { "function": { "log": { "constant": 3.0 } } } } },
             { "text": { "query": [ "term2", "term3" ], "path": { "wildcard": "wildc*rd" },
               "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
+            { "autocomplete": { "query": "term4", "path": "title" } },
+            { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } }
           ],
           "minimumShouldMatch": 1,
           "mustNot": [

@@ -96,6 +96,34 @@ public interface SearchOperator extends Bson {
     }
 
     /**
+     * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
+     *
+     * @param query A string to search for.
+     * @param path A document field to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
+     */
+    static AutocompleteSearchOperator autocomplete(final String query, final FieldSearchPath path) {
+        return autocomplete(singleton(notNull("query", query)), notNull("path", path));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
+     *
+     * @param queries Non-empty strings to search for.
+     * @param path A document field to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
+     */
+    static AutocompleteSearchOperator autocomplete(final Iterable<String> queries, final FieldSearchPath path) {
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        return new SearchConstructibleBsonElement("autocomplete", new Document("query", queryIterator.hasNext() ? queries : firstQuery)
+                .append("path", notNull("path", path).toValue()));
+    }
+
+    /**
      * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
