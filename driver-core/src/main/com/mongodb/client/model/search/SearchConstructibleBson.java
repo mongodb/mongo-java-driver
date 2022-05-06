@@ -30,6 +30,7 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
         SearchOperator,
         SearchScore,
         RelevanceSearchScoreExpression, ConstantSearchScoreExpression, LogSearchScoreExpression, Log1pSearchScoreExpression,
+        AddSearchScoreExpression, MultiplySearchScoreExpression,
         SearchCollector,
         SearchOptions,
         SearchHighlight,

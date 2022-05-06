@@ -313,4 +313,16 @@ package object search {
    */
   @Evolving
   type Log1pSearchScoreExpression = com.mongodb.client.model.search.Log1pSearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.addExpression`
+   */
+  @Evolving
+  type AddSearchScoreExpression = com.mongodb.client.model.search.AddSearchScoreExpression
+
+  /**
+   * @see `SearchScoreExpression.multiplyExpression`
+   */
+  @Evolving
+  type MultiplySearchScoreExpression = com.mongodb.client.model.search.MultiplySearchScoreExpression
 }

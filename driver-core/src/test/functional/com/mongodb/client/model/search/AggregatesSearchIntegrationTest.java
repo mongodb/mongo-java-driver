@@ -66,10 +66,12 @@ import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static com.mongodb.client.model.search.SearchScore.boost;
 import static com.mongodb.client.model.search.SearchScore.constant;
 import static com.mongodb.client.model.search.SearchScore.function;
+import static com.mongodb.client.model.search.SearchScoreExpression.addExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.constantExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.gaussExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.log1pExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.logExpression;
+import static com.mongodb.client.model.search.SearchScoreExpression.multiplyExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.pathExpression;
 import static com.mongodb.client.model.search.SearchScoreExpression.relevanceExpression;
 import static java.time.ZoneOffset.UTC;
@@ -368,7 +370,14 @@ final class AggregatesSearchIntegrationTest {
                                         exists(fieldPath("fieldName11"))
                                                 .score(function(logExpression(constantExpression(3)))),
                                         exists(fieldPath("fieldName12"))
-                                                .score(function(log1pExpression(constantExpression(-3))))
+                                                .score(function(log1pExpression(constantExpression(-3)))),
+                                        exists(fieldPath("fieldName13"))
+                                                .score(function(addExpression(asList(
+                                                        logExpression(multiplyExpression(asList(
+                                                                constantExpression(2),
+                                                                constantExpression(3),
+                                                                relevanceExpression()))),
+                                                        gaussExpression(0, pathExpression(fieldPath("gaussianFeldName")), 1)))))
                                 )),
                                 null
                         ),

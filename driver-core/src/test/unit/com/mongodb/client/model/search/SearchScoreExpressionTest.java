@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonString;
@@ -22,6 +23,8 @@ import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -157,6 +160,44 @@ final class SearchScoreExpressionTest {
                 SearchScoreExpression.log1pExpression(
                         SearchScoreExpression.constantExpression(3))
                         .toBsonDocument()
+        );
+    }
+
+    @Test
+    void addExpression() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // expressions must contain at least 2 elements
+                        SearchScoreExpression.addExpression(singleton(SearchScoreExpression.constantExpression(1)))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("add", new BsonArray(asList(
+                                SearchScoreExpression.constantExpression(1.5f).toBsonDocument(),
+                                SearchScoreExpression.relevanceExpression().toBsonDocument()))),
+                        SearchScoreExpression.addExpression(asList(
+                                SearchScoreExpression.constantExpression(1.5f),
+                                SearchScoreExpression.relevanceExpression()))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void multiplyExpression() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // expressions must contain at least 2 elements
+                        SearchScoreExpression.multiplyExpression(singleton(SearchScoreExpression.constantExpression(1)))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("multiply", new BsonArray(asList(
+                                SearchScoreExpression.constantExpression(1.5f).toBsonDocument(),
+                                SearchScoreExpression.relevanceExpression().toBsonDocument()))),
+                        SearchScoreExpression.multiplyExpression(asList(
+                                        SearchScoreExpression.constantExpression(1.5f),
+                                        SearchScoreExpression.relevanceExpression()))
+                                .toBsonDocument()
+                )
         );
     }
 

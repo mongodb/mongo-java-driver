@@ -18,6 +18,8 @@ package org.mongodb.scala.model.search
 import com.mongodb.client.model.search.{ SearchScoreExpression => JSearchScoreExpression }
 import org.mongodb.scala.bson.conversions.Bson
 
+import collection.JavaConverters._
+
 /**
  * @see [[SearchScore.function]]
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#expressions Expressions for the function score modifier]]
@@ -90,6 +92,24 @@ object SearchScoreExpression {
    */
   def log1pExpression(expression: SearchScoreExpression): Log1pSearchScoreExpression =
     JSearchScoreExpression.log1pExpression(expression)
+
+  /**
+   * Returns a `SearchScoreExpression` that evaluates into the sum of the values of the specified `expressions`.
+   *
+   * @param expressions The expressions whose values to add. Must contain at least two expressions.
+   * @return The requested `SearchScoreExpression`.
+   */
+  def addExpression(expressions: Iterable[_ <: SearchScoreExpression]): AddSearchScoreExpression =
+    JSearchScoreExpression.addExpression(expressions.asJava)
+
+  /**
+   * Returns a `SearchScoreExpression` that evaluates into the product of the values of the specified `expressions`.
+   *
+   * @param expressions The expressions whose values to multiply. Must contain at least two expressions.
+   * @return The requested `SearchScoreExpression`.
+   */
+  def multiplyExpression(expressions: Iterable[_ <: SearchScoreExpression]): MultiplySearchScoreExpression =
+    JSearchScoreExpression.multiplyExpression(expressions.asJava)
 
   /**
    * Creates a `SearchScoreExpression` from a `Bson` in situations when there is no builder method

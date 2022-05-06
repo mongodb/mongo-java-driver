@@ -26,6 +26,7 @@ import org.bson.conversions.Bson;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
+import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -128,6 +129,30 @@ public interface SearchScoreExpression extends Bson {
      */
     static Log1pSearchScoreExpression log1pExpression(final SearchScoreExpression expression) {
         return new SearchConstructibleBson(new Document("log1p", notNull("expression", expression)));
+    }
+
+    /**
+     * Returns a {@link SearchScoreExpression} that evaluates into the sum of the values of the specified {@code expressions}.
+     *
+     * @param expressions The expressions whose values to add. Must contain at least two expressions.
+     * @return The requested {@link SearchScoreExpression}.
+     */
+    static AddSearchScoreExpression addExpression(final Iterable<? extends SearchScoreExpression> expressions) {
+        notNull("expressions", expressions);
+        isTrueArgument("expressions must contain at least 2 elements", sizeAtLeast(expressions, 2));
+        return new SearchConstructibleBson(new Document("add", expressions));
+    }
+
+    /**
+     * Returns a {@link SearchScoreExpression} that evaluates into the product of the values of the specified {@code expressions}.
+     *
+     * @param expressions The expressions whose values to multiply. Must contain at least two expressions.
+     * @return The requested {@link SearchScoreExpression}.
+     */
+    static MultiplySearchScoreExpression multiplyExpression(final Iterable<? extends SearchScoreExpression> expressions) {
+        notNull("expressions", expressions);
+        isTrueArgument("expressions must contain at least 2 elements", sizeAtLeast(expressions, 2));
+        return new SearchConstructibleBson(new Document("multiply", expressions));
     }
 
     /**
