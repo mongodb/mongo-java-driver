@@ -146,7 +146,8 @@ public final class Operations<TDocument> {
     public EstimatedDocumentCountOperation estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
         return new EstimatedDocumentCountOperation(namespace)
                 .retryReads(retryReads)
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .comment(options.getComment());
     }
 
     public <TResult> FindOperation<TResult> findFirst(final Bson filter, final Class<TResult> resultClass,
