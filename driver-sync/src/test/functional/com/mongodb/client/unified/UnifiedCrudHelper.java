@@ -39,6 +39,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
@@ -209,7 +210,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeListIndexes(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         ListIndexesIterable<BsonDocument> iterable = session == null
                 ? collection.listIndexes(BsonDocument.class)
@@ -997,6 +998,9 @@ final class UnifiedCrudHelper {
                     case "timeseries":
                         options.timeSeriesOptions(createTimeSeriesOptions(cur.getValue().asDocument()));
                         break;
+                    case "clusteredIndex":
+                        options.clusteredIndexOptions(createClusteredIndexOptions(cur.getValue().asDocument()));
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
                 }
@@ -1051,6 +1055,25 @@ final class UnifiedCrudHelper {
                     break;
                 case "granularity":
                     options.granularity(createTimeSeriesGranularity(cur.getValue().asString().getValue()));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        return options;
+    }
+
+    private ClusteredIndexOptions createClusteredIndexOptions(final BsonDocument clusteredIndexDocument) {
+        ClusteredIndexOptions options = new ClusteredIndexOptions(clusteredIndexDocument.getDocument("key"),
+                clusteredIndexDocument.getBoolean("unique").getValue());
+
+        for (Map.Entry<String, BsonValue> cur : clusteredIndexDocument.entrySet()) {
+            switch (cur.getKey()) {
+                case "key":
+                case "unique":
+                    break;
+                case "name":
+                    options.name(cur.getValue().asString().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
