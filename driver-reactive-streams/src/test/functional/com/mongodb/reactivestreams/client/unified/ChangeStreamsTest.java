@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
 import static org.junit.Assume.assumeFalse;
@@ -55,7 +54,6 @@ public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
                              final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
 
-        assumeFalse(isServerlessTest());
         assumeFalse(ERROR_REQUIRED_FROM_CHANGE_STREAM_INITIALIZATION_TESTS.contains(testDescription));
         assumeFalse(EVENT_SENSITIVE_TESTS.contains(testDescription));
 
