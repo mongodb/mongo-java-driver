@@ -57,6 +57,8 @@ class OperationUnitSpecification extends Specification {
             [5, 0]: 13,
             [5, 1]: 14,
             [5, 2]: 15,
+            [5, 3]: 16,
+            [6, 0]: 17,
     ]
 
     static int getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
