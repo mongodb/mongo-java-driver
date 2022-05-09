@@ -651,6 +651,32 @@ package object model {
      */
     def apply(filter: Bson, update: Bson, updateOptions: UpdateOptions): UpdateManyModel[Nothing] =
       new com.mongodb.client.model.UpdateManyModel(filter, update, updateOptions)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the new UpdateManyModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     */
+    def apply(filter: Bson, update: Seq[Bson]): UpdateManyModel[Nothing] =
+      new com.mongodb.client.model.UpdateManyModel(filter, update.asJava)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply
+     * @return the new UpdateManyModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     *
+     */
+    def apply(filter: Bson, update: Seq[Bson], updateOptions: UpdateOptions): UpdateManyModel[Nothing] =
+      new com.mongodb.client.model.UpdateManyModel(filter, update.asJava, updateOptions)
   }
 
   /**
@@ -700,6 +726,32 @@ package object model {
      */
     def apply(filter: Bson, update: Bson, updateOptions: UpdateOptions): UpdateOneModel[Nothing] =
       new com.mongodb.client.model.UpdateOneModel(filter, update, updateOptions)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the new UpdateOneModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     */
+    def apply(filter: Bson, update: Seq[Bson]): UpdateOneModel[Nothing] =
+      new com.mongodb.client.model.UpdateOneModel(filter, update.asJava)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply
+     * @return the new UpdateOneModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     *
+     */
+    def apply(filter: Bson, update: Seq[Bson], updateOptions: UpdateOptions): UpdateOneModel[Nothing] =
+      new com.mongodb.client.model.UpdateOneModel(filter, update.asJava, updateOptions)
   }
 
   /**
