@@ -26,7 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Options for creating a collection
  *
- * @mongodb.driver.manual reference/method/db.createCollection/ Create Collection
+ * @mongodb.driver.manual reference/command/create/ Create Collection
  * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  * @since 3.0
  */
@@ -40,6 +40,7 @@ public class CreateCollectionOptions {
     private Collation collation;
     private long expireAfterSeconds;
     private TimeSeriesOptions timeSeriesOptions;
+    private ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions;
     private ClusteredIndexOptions clusteredIndexOptions;
 
     /**
@@ -288,6 +289,30 @@ public class CreateCollectionOptions {
         return this;
     }
 
+    /**
+     * Gets change stream pre- and post- images options.
+     *
+     * @return the options for change stream pre- and post- images
+     * @since 4.7
+     */
+    @Nullable
+    public ChangeStreamPreAndPostImagesOptions getChangeStreamPreAndPostImagesOptions() {
+        return changeStreamPreAndPostImagesOptions;
+    }
+
+    /**
+     * Sets the change stream pre- and post- images options.
+     *
+     * @param changeStreamPreAndPostImagesOptions the change stream pre- and post- images options
+     * @return this
+     * @since 4.7
+     */
+    public CreateCollectionOptions changeStreamPreAndPostImagesOptions(
+            final ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions) {
+        this.changeStreamPreAndPostImagesOptions = changeStreamPreAndPostImagesOptions;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "CreateCollectionOptions{"
@@ -300,6 +325,7 @@ public class CreateCollectionOptions {
                 + ", collation=" + collation
                 + ", expireAfterSeconds=" + expireAfterSeconds
                 + ", timeSeriesOptions=" + timeSeriesOptions
+                + ", changeStreamPreAndPostImagesOptions=" + changeStreamPreAndPostImagesOptions
                 + '}';
     }
 }

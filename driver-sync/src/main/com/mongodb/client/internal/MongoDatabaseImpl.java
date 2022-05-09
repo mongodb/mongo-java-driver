@@ -292,7 +292,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
                 .maxDocuments(createCollectionOptions.getMaxDocuments())
                 .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()))
                 .expireAfter(createCollectionOptions.getExpireAfter(TimeUnit.SECONDS))
-                .timeSeriesOptions(createCollectionOptions.getTimeSeriesOptions());
+                .timeSeriesOptions(createCollectionOptions.getTimeSeriesOptions())
+                .changeStreamPreAndPostImagesOptions(createCollectionOptions.getChangeStreamPreAndPostImagesOptions());
 
         ClusteredIndexOptions clusteredIndexOptions = createCollectionOptions.getClusteredIndexOptions();
         if (clusteredIndexOptions != null) {
