@@ -20,11 +20,12 @@ import org.mongodb.scala.{ BaseSpec, MongoClient }
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.search.SearchFuzzy.defaultSearchFuzzy
-import org.mongodb.scala.model.search.SearchOperator.{ autocomplete, compound, exists, text }
+import org.mongodb.scala.model.search.SearchOperator.{ autocomplete, compound, dateRange, exists, numberRange, text }
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 import org.mongodb.scala.model.search.SearchScore.function
 import org.mongodb.scala.model.search.SearchScoreExpression.{ constantExpression, logExpression }
 
+import java.time.Instant
 import scala.collection.JavaConverters._
 
 class SearchOperatorSpec extends BaseSpec {
@@ -35,7 +36,7 @@ class SearchOperatorSpec extends BaseSpec {
           exists(fieldPath("fieldName1")),
           text("term1", fieldPath("fieldName2"))
             .score(function(logExpression(constantExpression(3)))),
-          text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd")))
+          text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd"), fieldPath("fieldName3")))
             .fuzzy(defaultSearchFuzzy()
               .maxEdits(1)
               .prefixLength(2)
@@ -48,11 +49,15 @@ class SearchOperatorSpec extends BaseSpec {
           ),
           autocomplete(Seq("Traffic in", "term5"), fieldPath("title"))
             .fuzzy(defaultSearchFuzzy())
-            .sequentialTokenOrder()
+            .sequentialTokenOrder(),
+          numberRange(Seq(fieldPath("fieldName4"), fieldPath("fieldName5")))
+            .gtLt(1, 1.5),
+          dateRange(fieldPath("fieldName6"))
+            .lte(Instant.ofEpochMilli(1))
         ).asJava)
         .minimumShouldMatch(1)
         .mustNot(Seq(
-          compound().must(Seq(exists(fieldPath("fieldName3"))).asJava)
+          compound().must(Seq(exists(fieldPath("fieldName"))).asJava)
         ).asJava)
     ) should equal(
       Document("""{
@@ -60,14 +65,18 @@ class SearchOperatorSpec extends BaseSpec {
           "should": [
             { "exists": { "path": "fieldName1" } },
             { "text": { "query": "term1", "path": "fieldName2", "score": { "function": { "log": { "constant": 3.0 } } } } },
-            { "text": { "query": [ "term2", "term3" ], "path": { "wildcard": "wildc*rd" },
+            { "text": {
+              "query": [ "term2", "term3" ],
+              "path": [ { "wildcard": "wildc*rd" }, "fieldName3" ],
               "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
             { "autocomplete": { "query": "term4", "path": "title" } },
-            { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } }
+            { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } },
+            { "range": { "path": [ "fieldName4", "fieldName5" ], "gt": 1, "lt": 1.5 } },
+            { "range": { "path": "fieldName6", "lte": {"$date": "1970-01-01T00:00:00.001Z"} } }
           ],
           "minimumShouldMatch": 1,
           "mustNot": [
-            { "compound": { "must": [ { "exists": { "path": "fieldName3" } } ] } }
+            { "compound": { "must": [ { "exists": { "path": "fieldName" } } ] } }
           ]
         }
       }""")

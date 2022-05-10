@@ -15,8 +15,11 @@
  */
 package com.mongodb.internal.client.model;
 
+import com.mongodb.Function;
+import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchPath;
 import org.bson.BsonArray;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.Iterator;
@@ -31,15 +34,26 @@ public final class Util {
      * otherwise returns a {@link BsonArray} of such results.
      *
      * @param nonEmptyPaths One or more {@link SearchPath} to convert.
+     * @param valueOnly If {@code true}, then {@link FieldSearchPath#toValue()} is used when possible;
+     * if {@code false}, then {@link SearchPath#toBsonValue()} is used.
      * @return A single {@link BsonValue} representing the specified paths.
      */
-    public static BsonValue combineToBsonValue(final Iterator<? extends SearchPath> nonEmptyPaths) {
-        BsonValue firstPath = nonEmptyPaths.next().toBsonValue();
+    public static BsonValue combineToBsonValue(final Iterator<? extends SearchPath> nonEmptyPaths, final boolean valueOnly) {
+        Function<SearchPath, BsonValue> toBsonValueFunc = valueOnly
+                ? path -> {
+                    if (path instanceof FieldSearchPath) {
+                        return new BsonString(((FieldSearchPath) path).toValue());
+                    } else {
+                        return path.toBsonValue();
+                    }
+                }
+                : SearchPath::toBsonValue;
+        BsonValue firstPath = toBsonValueFunc.apply(nonEmptyPaths.next());
         if (nonEmptyPaths.hasNext()) {
             BsonArray bsonArray = new BsonArray();
             bsonArray.add(firstPath);
             while (nonEmptyPaths.hasNext()) {
-                bsonArray.add(nonEmptyPaths.next().toBsonValue());
+                bsonArray.add(toBsonValueFunc.apply(nonEmptyPaths.next()));
             }
             return bsonArray;
         } else {

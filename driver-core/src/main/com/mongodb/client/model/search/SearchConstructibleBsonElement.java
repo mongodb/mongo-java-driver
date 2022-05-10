@@ -104,7 +104,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         return newCombined("filter", clauses);
     }
 
-    SearchConstructibleBsonElement newCombined(final String ruleName, final Iterable<? extends SearchOperator> clauses) {
+    private SearchConstructibleBsonElement newCombined(final String ruleName, final Iterable<? extends SearchOperator> clauses) {
         notNull("clauses", clauses);
         isTrueArgument("clauses must not be empty", sizeAtLeast(clauses, 1));
         return newWithMutatedValue(doc -> {

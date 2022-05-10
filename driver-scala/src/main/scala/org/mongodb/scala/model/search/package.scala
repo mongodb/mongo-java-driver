@@ -117,6 +117,25 @@ package object search {
   type AutocompleteSearchOperator = com.mongodb.client.model.search.AutocompleteSearchOperator
 
   /**
+   * A base for a [[RangeSearchOperatorBase]] which allows creating instances of this operator.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
+   * @tparam T The type of the bounds.
+   * @see `SearchOperator.numberRange`
+   * @see `SearchOperator.dateRange`
+   */
+  @Evolving
+  type RangeSearchOperatorBase[T] = com.mongodb.client.model.search.RangeSearchOperatorBase[T]
+
+  /**
+   * @tparam T The type of the bounds.
+   * @see `SearchOperator.numberRange`
+   * @see `SearchOperator.dateRange`
+   */
+  @Evolving
+  type RangeSearchOperator[T] = com.mongodb.client.model.search.RangeSearchOperator[T]
+
+  /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]

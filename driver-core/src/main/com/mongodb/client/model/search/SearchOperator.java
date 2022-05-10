@@ -17,9 +17,11 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
+import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.time.Instant;
 import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -47,7 +49,7 @@ public interface SearchOperator extends Bson {
      * Returns a base for a {@link SearchOperator} that may combine multiple {@link SearchOperator}s.
      * Combining {@link SearchOperator}s affects calculation of the relevance score.
      *
-     * @return A base for a {@link SearchOperator}.
+     * @return A base for a {@link CompoundSearchOperator}.
      * @mongodb.atlas.manual atlas-search/compound/ compound operator
      */
     static CompoundSearchOperatorBase compound() {
@@ -69,7 +71,7 @@ public interface SearchOperator extends Bson {
      * Returns a {@link SearchOperator} that performs a full-text search.
      *
      * @param query A string to search for.
-     * @param path A document field to be searched.
+     * @param path A field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/text/ text operator
      */
@@ -81,7 +83,7 @@ public interface SearchOperator extends Bson {
      * Returns a {@link SearchOperator} that performs a full-text search.
      *
      * @param queries Non-empty strings to search for.
-     * @param paths Non-empty document fields to be searched.
+     * @param paths Non-empty fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/text/ text operator
      */
@@ -92,14 +94,14 @@ public interface SearchOperator extends Bson {
         Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
         isTrueArgument("paths must not be empty", pathIterator.hasNext());
         return new SearchConstructibleBsonElement("text", new Document("query", queryIterator.hasNext() ? queries : firstQuery)
-                .append("path", combineToBsonValue(pathIterator)));
+                .append("path", combineToBsonValue(pathIterator, false)));
     }
 
     /**
      * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
      *
      * @param query A string to search for.
-     * @param path A document field to be searched.
+     * @param path A field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
      */
@@ -111,7 +113,7 @@ public interface SearchOperator extends Bson {
      * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
      *
      * @param queries Non-empty strings to search for.
-     * @param path A document field to be searched.
+     * @param path A field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
      */
@@ -121,6 +123,60 @@ public interface SearchOperator extends Bson {
         String firstQuery = queryIterator.next();
         return new SearchConstructibleBsonElement("autocomplete", new Document("query", queryIterator.hasNext() ? queries : firstQuery)
                 .append("path", notNull("path", path).toValue()));
+    }
+
+    /**
+     * Returns a base for a {@link SearchOperator} that tests if the values of
+     * a BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} field
+     * are within an interval.
+     *
+     * @param path The field to be searched.
+     * @return A base for a {@link RangeSearchOperator}.
+     * @mongodb.atlas.manual atlas-search/range/ range operator
+     */
+    static RangeSearchOperatorBase<Number> numberRange(final FieldSearchPath path) {
+        return numberRange(singleton(path));
+    }
+
+    /**
+     * Returns a base for a {@link SearchOperator} that tests if the values of
+     * BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} fields
+     * are within an interval.
+     *
+     * @param paths Non-empty fields to be searched.
+     * @return A base for a {@link RangeSearchOperator}.
+     * @mongodb.atlas.manual atlas-search/range/ range operator
+     */
+    static RangeSearchOperatorBase<Number> numberRange(final Iterable<? extends FieldSearchPath> paths) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new RangeConstructibleBsonElement<>("range", new Document("path", combineToBsonValue(pathIterator, true)));
+    }
+
+    /**
+     * Returns a base for a {@link SearchOperator} that tests if the values of
+     * a BSON {@link BsonType#DATE_TIME Date} fields are within an interval.
+     *
+     * @param path The field to be searched.
+     * @return A base for a {@link RangeSearchOperator}.
+     * @mongodb.atlas.manual atlas-search/range/ range operator
+     */
+    static RangeSearchOperatorBase<Instant> dateRange(final FieldSearchPath path) {
+        return dateRange(singleton(path));
+    }
+
+    /**
+     * Returns a base for a {@link SearchOperator} that tests if the values of
+     * BSON {@link BsonType#DATE_TIME Date} fields are within an interval.
+     *
+     * @param paths Non-empty fields to be searched.
+     * @return A base for a {@link RangeSearchOperator}.
+     * @mongodb.atlas.manual atlas-search/range/ range operator
+     */
+    static RangeSearchOperatorBase<Instant> dateRange(final Iterable<? extends FieldSearchPath> paths) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new RangeConstructibleBsonElement<>("range", new Document("path", combineToBsonValue(pathIterator, true)));
     }
 
     /**

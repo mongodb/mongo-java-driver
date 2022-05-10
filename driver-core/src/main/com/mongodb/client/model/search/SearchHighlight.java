@@ -57,13 +57,13 @@ public interface SearchHighlight extends Bson {
     /**
      * Returns a {@link SearchHighlight} for the given {@code paths}.
      *
-     * @param paths Non-empty document fields to be searched.
+     * @param paths Non-empty fields to be searched.
      * @return The requested {@link SearchHighlight}.
      */
     static SearchHighlight paths(final Iterable<? extends SearchPath> paths) {
         Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
         isTrueArgument("paths must not be empty", pathIterator.hasNext());
-        return new SearchConstructibleBson(new BsonDocument("path", combineToBsonValue(pathIterator)));
+        return new SearchConstructibleBson(new BsonDocument("path", combineToBsonValue(pathIterator, false)));
     }
 
     /**

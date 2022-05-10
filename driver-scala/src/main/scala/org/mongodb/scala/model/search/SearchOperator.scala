@@ -18,6 +18,7 @@ package org.mongodb.scala.model.search
 import com.mongodb.client.model.search.{ SearchOperator => JSearchOperator }
 import org.mongodb.scala.bson.conversions.Bson
 
+import java.time.Instant
 import collection.JavaConverters._
 
 /**
@@ -32,7 +33,7 @@ object SearchOperator {
    * Returns a base for a `SearchOperator` that may combine multiple `SearchOperator`s.
    * Combining `SearchOperator`s affects calculation of the relevance score.
    *
-   * @return A base for a `SearchOperator`.
+   * @return A base for a `CompoundSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/compound/ compound operator]]
    */
   def compound(): CompoundSearchOperatorBase = JSearchOperator.compound()
@@ -88,6 +89,52 @@ object SearchOperator {
    */
   def autocomplete(queries: Iterable[String], path: FieldSearchPath): AutocompleteSearchOperator =
     JSearchOperator.autocomplete(queries.asJava, path)
+
+  /**
+   * Returns a base for a `SearchOperator` that tests if the values of
+   * a BSON `32-bit integer` / `64-bit integer` / `Double` field
+   * are within an interval.
+   *
+   * @param path The field to be searched.
+   * @return A base for a `RangeSearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
+   */
+  def numberRange(path: FieldSearchPath): RangeSearchOperatorBase[Number] = JSearchOperator.numberRange(path)
+
+  /**
+   * Returns a base for a `SearchOperator` that tests if the values of
+   * BSON `32-bit integer` / `64-bit integer` / `Double` fields
+   * are within an interval.
+   *
+   * @param paths Non-empty fields to be searched.
+   * @return A base for a `RangeSearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
+   */
+  def numberRange(paths: Iterable[_ <: FieldSearchPath]): RangeSearchOperatorBase[Number] =
+    JSearchOperator.numberRange(paths.asJava)
+
+  /**
+   * Returns a base for a `SearchOperator` that tests if the values of
+   * a BSON `Date` field
+   * are within an interval.
+   *
+   * @param path The field to be searched.
+   * @return A base for a `RangeSearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
+   */
+  def dateRange(path: FieldSearchPath): RangeSearchOperatorBase[Instant] = JSearchOperator.dateRange(path)
+
+  /**
+   * Returns a base for a `SearchOperator` that tests if the values of
+   * BSON `Date` fields
+   * are within an interval.
+   *
+   * @param paths Non-empty fields to be searched.
+   * @return A base for a `RangeSearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
+   */
+  def dateRange(paths: Iterable[_ <: FieldSearchPath]): RangeSearchOperatorBase[Instant] =
+    JSearchOperator.dateRange(paths.asJava)
 
   /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.

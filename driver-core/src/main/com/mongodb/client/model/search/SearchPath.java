@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
 
 /**
- * A specification of document fields to be searched.
+ * A specification of fields to be searched.
  * <p>
  * Depending on the context, one of the following methods may be used to get a representation of a {@link SearchPath}
  * with the correct syntax: {@link #toBsonDocument()}, {@link #toBsonValue()}, {@link FieldSearchPath#toValue()}.</p>

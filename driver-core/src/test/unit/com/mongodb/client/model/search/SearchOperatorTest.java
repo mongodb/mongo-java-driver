@@ -16,11 +16,16 @@
 package com.mongodb.client.model.search;
 
 import org.bson.BsonArray;
+import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
+import org.bson.BsonDouble;
 import org.bson.BsonInt32;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 import static com.mongodb.client.model.search.SearchFuzzy.defaultSearchFuzzy;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -221,7 +226,9 @@ final class SearchOperatorTest {
                                 asList(
                                         "term1",
                                         "term2"),
-                                fieldPath("fieldName"))
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzerName"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
@@ -233,11 +240,265 @@ final class SearchOperatorTest {
                         ),
                         SearchOperator.autocomplete(
                                 singleton("term"),
-                                fieldPath("fieldName"))
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzerName"))
                                 .fuzzy(defaultSearchFuzzy())
                                 .sequentialTokenOrder()
                                 // anyTokenOrder overrides sequentialTokenOrder
                                 .anyTokenOrder()
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void numberRange() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.numberRange(emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in an open interval
+                        SearchOperator.numberRange(fieldPath("fieldName")).gtLt(0, 0)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in an open interval
+                        SearchOperator.numberRange(fieldPath("fieldName")).gtLt(1, 0)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.numberRange(fieldPath("fieldName")).gtLte(0, 0)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.numberRange(fieldPath("fieldName")).gtLte(1, 0)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.numberRange(fieldPath("fieldName")).gteLt(0, 0)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.numberRange(fieldPath("fieldName")).gteLt(1, 0)
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gt", new BsonDouble(Double.MIN_VALUE))
+                        ),
+                        SearchOperator.numberRange(
+                                singleton(fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzeName")))
+                                .gteLte(-1, 1)
+                                // overrides
+                                .gt(Double.MIN_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("lt", new BsonInt32(Integer.MAX_VALUE))
+                        ),
+                        SearchOperator.numberRange(
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzeName"))
+                                .lt(Integer.MAX_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gte", new BsonDouble(Float.MIN_VALUE))
+                        ),
+                        SearchOperator.numberRange(
+                                fieldPath("fieldName"))
+                                .gte(Float.MIN_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("lte", new BsonInt64(Long.MAX_VALUE))
+                        ),
+                        SearchOperator.numberRange(
+                                fieldPath("fieldName"))
+                                .lte(Long.MAX_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gt", new BsonInt32(-1)).append("lt", new BsonInt32(1))
+                        ),
+                        SearchOperator.numberRange(
+                                fieldPath("fieldName"))
+                                .gtLt(-1, 1)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gte", new BsonInt32(-1)).append("lte", new BsonInt32(1))
+                        ),
+                        SearchOperator.numberRange(
+                                fieldPath("fieldName"))
+                                .gteLte(-1, 1)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gt", new BsonInt32(-1)).append("lte", new BsonInt32(1))
+                        ),
+                        SearchOperator.numberRange(
+                                fieldPath("fieldName"))
+                                .gtLte(-1, 1)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gte", new BsonInt32(-1)).append("lt", new BsonInt32(1))
+                        ),
+                        SearchOperator.numberRange(
+                                fieldPath("fieldName"))
+                                .gteLt(-1, 1)
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void dateRange() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.dateRange(emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in an open interval
+                        SearchOperator.dateRange(fieldPath("fieldName")).gtLt(Instant.EPOCH, Instant.EPOCH)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in an open interval
+                        SearchOperator.dateRange(fieldPath("fieldName")).gtLt(Instant.now(), Instant.EPOCH)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.dateRange(fieldPath("fieldName")).gtLte(Instant.EPOCH, Instant.EPOCH)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.dateRange(fieldPath("fieldName")).gtLte(Instant.now(), Instant.EPOCH)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.dateRange(fieldPath("fieldName")).gteLt(Instant.EPOCH, Instant.EPOCH)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // l must be smaller than u in a half-open interval
+                        SearchOperator.dateRange(fieldPath("fieldName")).gteLt(Instant.now(), Instant.EPOCH)
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gt", new BsonDateTime(0))
+                        ),
+                        SearchOperator.dateRange(
+                                singleton(fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzeName")))
+                                .gteLte(Instant.ofEpochMilli(-1), Instant.ofEpochMilli(1))
+                                // overrides
+                                .gt(Instant.EPOCH)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("lt", new BsonDateTime(0))
+                        ),
+                        SearchOperator.dateRange(
+                                fieldPath("fieldName")
+                                        // multi must be ignored
+                                        .multi("analyzeName"))
+                                .lt(Instant.EPOCH)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gte", new BsonDateTime(0))
+                        ),
+                        SearchOperator.dateRange(
+                                fieldPath("fieldName"))
+                                .gte(Instant.EPOCH)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("lte", new BsonDateTime(0))
+                        ),
+                        SearchOperator.dateRange(
+                                fieldPath("fieldName"))
+                                .lte(Instant.EPOCH)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gt", new BsonDateTime(-1))
+                                        .append("lt", new BsonDateTime(1))
+                        ),
+                        SearchOperator.dateRange(
+                                fieldPath("fieldName"))
+                                .gtLt(
+                                        Instant.ofEpochMilli(-1),
+                                        Instant.ofEpochMilli(1))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gte", new BsonDateTime(-1))
+                                        .append("lte", new BsonDateTime(1))
+                        ),
+                        SearchOperator.dateRange(
+                                fieldPath("fieldName"))
+                                .gteLte(
+                                        Instant.ofEpochMilli(-1),
+                                        Instant.ofEpochMilli(1))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gt", new BsonDateTime(-1))
+                                        .append("lte", new BsonDateTime(1))
+                        ),
+                        SearchOperator.dateRange(
+                                fieldPath("fieldName"))
+                                .gtLte(
+                                        Instant.ofEpochMilli(-1),
+                                        Instant.ofEpochMilli(1))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("range",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("gte", new BsonDateTime(-1))
+                                        .append("lt", new BsonDateTime(1))
+                        ),
+                        SearchOperator.dateRange(
+                                fieldPath("fieldName"))
+                                .gteLt(
+                                        Instant.ofEpochMilli(-1),
+                                        Instant.ofEpochMilli(1))
                                 .toBsonDocument()
                 )
         );

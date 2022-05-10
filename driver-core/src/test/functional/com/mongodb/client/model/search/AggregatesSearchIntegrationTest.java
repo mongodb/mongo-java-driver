@@ -59,7 +59,9 @@ import static com.mongodb.client.model.search.SearchFacet.stringFacet;
 import static com.mongodb.client.model.search.SearchHighlight.paths;
 import static com.mongodb.client.model.search.SearchOperator.autocomplete;
 import static com.mongodb.client.model.search.SearchOperator.compound;
+import static com.mongodb.client.model.search.SearchOperator.dateRange;
 import static com.mongodb.client.model.search.SearchOperator.exists;
+import static com.mongodb.client.model.search.SearchOperator.numberRange;
 import static com.mongodb.client.model.search.SearchOperator.text;
 import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -417,7 +419,11 @@ final class AggregatesSearchIntegrationTest {
                                         // this operator produces non-empty search results
                                         autocomplete(asList("Traffic in", "term5"), fieldPath("title"))
                                                 .fuzzy(defaultSearchFuzzy())
-                                                .sequentialTokenOrder()
+                                                .sequentialTokenOrder(),
+                                        numberRange(asList(fieldPath("fieldName4"), fieldPath("fieldName5")))
+                                                .gtLt(1, 1.5),
+                                        dateRange(fieldPath("fieldName6"))
+                                                .lte(Instant.ofEpochMilli(1))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(
