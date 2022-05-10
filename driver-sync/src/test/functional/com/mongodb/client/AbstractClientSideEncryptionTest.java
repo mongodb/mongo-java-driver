@@ -166,15 +166,23 @@ public abstract class AbstractClientSideEncryptionTest {
         BsonDocument cryptOptions = clientOptions.getDocument("autoEncryptOpts");
         BsonDocument kmsProviders = cryptOptions.getDocument("kmsProviders");
         boolean bypassAutoEncryption = cryptOptions.getBoolean("bypassAutoEncryption", BsonBoolean.FALSE).getValue();
+        boolean bypassQueryAnalysis = cryptOptions.getBoolean("bypassQueryAnalysis", BsonBoolean.FALSE).getValue();
 
         Map<String, BsonDocument> namespaceToSchemaMap = new HashMap<String, BsonDocument>();
 
         if (cryptOptions.containsKey("schemaMap")) {
             BsonDocument autoEncryptMapDocument = cryptOptions.getDocument("schemaMap");
-
             for (Map.Entry<String, BsonValue> entries : autoEncryptMapDocument.entrySet()) {
                 final BsonDocument autoEncryptOptionsDocument = entries.getValue().asDocument();
                 namespaceToSchemaMap.put(entries.getKey(), autoEncryptOptionsDocument);
+            }
+        }
+
+        Map<String, BsonDocument> encryptedFieldsMap = new HashMap<>();
+        if (cryptOptions.containsKey("encryptedFieldsMap")) {
+            BsonDocument encryptedFieldsMapDocument = cryptOptions.getDocument("encryptedFieldsMap");
+            for (Map.Entry<String, BsonValue> entries : encryptedFieldsMapDocument.entrySet()) {
+                encryptedFieldsMap.put(entries.getKey(), entries.getValue().asDocument());
             }
         }
 
@@ -244,12 +252,15 @@ public abstract class AbstractClientSideEncryptionTest {
                 .keyVaultNamespace(keyVaultNamespace)
                 .kmsProviders(kmsProvidersMap)
                 .schemaMap(namespaceToSchemaMap)
+                .encryptedFieldsMap(encryptedFieldsMap)
+                .bypassQueryAnalysis(bypassQueryAnalysis)
                 .bypassAutoEncryption(bypassAutoEncryption)
                 .extraOptions(extraOptions)
                 .build(), commandListener);
 
         database = getDatabase(databaseName);
-        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection("default", BsonDocument.class));
+        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection("default", BsonDocument.class),
+                null, getMongoClient());
     }
 
     protected abstract void createMongoClient(AutoEncryptionSettings build, CommandListener commandListener);
@@ -326,11 +337,13 @@ public abstract class AbstractClientSideEncryptionTest {
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption")) {
-            BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
-            for (BsonValue test : specDocument.getArray("tests")) {
-                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
-                        specDocument.getArray("data", new BsonArray()), test.asDocument(), skipTest(specDocument, test.asDocument())});
-            }
+                BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
+                boolean fle2Test = file.getName().startsWith("fle2"); // TODO enable fle2 test JAVA-4589
+                for (BsonValue test : specDocument.getArray("tests")) {
+                    data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
+                            specDocument.getArray("data", new BsonArray()), test.asDocument(),
+                            fle2Test || skipTest(specDocument, test.asDocument())});
+                }
         }
         return data;
     }

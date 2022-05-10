@@ -71,6 +71,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.opentest4j.AssertionFailedError;
 import util.Hex;
 
 import java.io.ByteArrayInputStream;
@@ -86,6 +87,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
@@ -119,22 +122,38 @@ public class JsonPoweredCrudTestHelper {
 
         String methodName = createMethodName(operation.getString("name").getValue(),
                 operation.getString("object", new BsonString("")).getValue());
-        try {
-            Method method = getClass().getDeclaredMethod(methodName, BsonDocument.class, BsonDocument.class, ClientSession.class);
-            return (BsonDocument) method.invoke(this, collectionOptions, arguments, clientSession);
-        } catch (NoSuchMethodException e) {
-            throw new UnsupportedOperationException("No handler for operation " + methodName);
-        } catch (InvocationTargetException e) {
-            if (e.getTargetException() instanceof MongoException) {
-                throw (MongoException) e.getTargetException();
-            }
-            throw (RuntimeException) e.getTargetException();
-        } catch (IllegalAccessException e) {
-            throw new UnsupportedOperationException("Invalid handler access for operation " + methodName);
+
+        switch (methodName) {
+            case "assertCollectionExists":
+                assertCollectionExists(arguments, clientSession);
+                return new BsonDocument();
+            case "assertCollectionNotExists":
+                assertCollectionNotExists(arguments, clientSession);
+                return new BsonDocument();
+            case "assertIndexExists":
+                assertIndexExists(arguments, clientSession);
+                return new BsonDocument();
+            default:
+                try {
+                    Method method = getClass().getDeclaredMethod(methodName, BsonDocument.class, BsonDocument.class, ClientSession.class);
+                    return (BsonDocument) method.invoke(this, collectionOptions, arguments, clientSession);
+                } catch (NoSuchMethodException e) {
+                    throw new UnsupportedOperationException("No handler for operation " + methodName);
+                } catch (InvocationTargetException e) {
+                    if (e.getTargetException() instanceof MongoException) {
+                        throw (MongoException) e.getTargetException();
+                    }
+                    throw (RuntimeException) e.getTargetException();
+                } catch (IllegalAccessException e) {
+                    throw new UnsupportedOperationException("Invalid handler access for operation " + methodName);
+                }
         }
     }
 
     private String createMethodName(final String name, final String object) {
+        if (object.equals("testRunner")) {
+            return name;
+        }
         StringBuilder builder = new StringBuilder();
         builder.append("get");
         if (!object.isEmpty() && !object.equals("collection") && !object.equals("gridfsbucket")) {
@@ -219,6 +238,17 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument toResult(@Nullable final BsonValue results) {
         return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
+    }
+
+    void assertCollectionExists(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
+        assertTrue(mongoClient.getDatabase(arguments.getString("database").getValue())
+                    .listCollectionNames().into(new ArrayList<>()).contains(arguments.getString("database").getValue()));
+    }
+
+    void assertIndexExists(final BsonDocument arguments, @Nullable final ClientSession clientSession) {;
+    }
+
+    void assertCollectionNotExists(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
     }
 
     BsonDocument getDatabaseRunCommandResult(final BsonDocument collectionOptions, final BsonDocument arguments,
