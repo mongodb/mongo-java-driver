@@ -24,6 +24,9 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface AutocompleteSearchOperator extends SearchOperator {
+    @Override
+    AutocompleteSearchOperator score(SearchScore modifier);
+
     /**
      * Creates a new {@link AutocompleteSearchOperator} that uses fuzzy search.
      *

@@ -23,4 +23,6 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface CompoundSearchOperator extends CompoundSearchOperatorBase, SearchOperator {
+    @Override
+    CompoundSearchOperator score(SearchScore modifier);
 }

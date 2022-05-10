@@ -127,7 +127,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public SearchOperator score(final SearchScore modifier) {
+    public SearchConstructibleBsonElement score(final SearchScore modifier) {
         return newWithAppendedValue("score", notNull("modifier", modifier));
     }
 

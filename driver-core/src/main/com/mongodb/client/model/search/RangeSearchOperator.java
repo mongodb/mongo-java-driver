@@ -25,4 +25,6 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface RangeSearchOperator<T> extends RangeSearchOperatorBase<T>, SearchOperator {
+    @Override
+    RangeSearchOperator<T> score(SearchScore modifier);
 }

@@ -27,4 +27,6 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface FilterCompoundSearchOperator extends CompoundSearchOperator {
+    @Override
+    FilterCompoundSearchOperator score(SearchScore modifier);
 }

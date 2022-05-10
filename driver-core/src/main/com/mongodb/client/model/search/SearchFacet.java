@@ -120,6 +120,8 @@ public interface SearchFacet extends Bson {
 
     /**
      * Combines {@link SearchFacet}s into a {@link Bson}.
+     * <p>
+     * This method may be useful when using {@link SearchCollector#of(Bson)}.</p>
      *
      * @param facets Non-empty facet definitions.
      * @return A {@link Bson} representing combined {@code facets}.

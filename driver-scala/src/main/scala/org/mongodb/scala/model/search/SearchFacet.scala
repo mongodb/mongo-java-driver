@@ -92,6 +92,8 @@ object SearchFacet {
   /**
    * Combines `SearchFacet`s into a `Bson`.
    *
+   * This method may be useful when using [[SearchCollector.of]].
+   *
    * @param facets Non-empty facet definitions.
    * @return A `Bson` representing combined `facets`.
    */

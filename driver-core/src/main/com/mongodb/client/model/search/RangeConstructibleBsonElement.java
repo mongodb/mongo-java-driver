@@ -34,7 +34,7 @@ final class RangeConstructibleBsonElement<T> extends AbstractConstructibleBsonEl
     }
 
     @Override
-    public SearchOperator score(final SearchScore modifier) {
+    public RangeConstructibleBsonElement<T> score(final SearchScore modifier) {
         return newWithAppendedValue("score", notNull("modifier", modifier));
     }
 

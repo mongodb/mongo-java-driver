@@ -27,6 +27,8 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface ShouldCompoundSearchOperator extends CompoundSearchOperator {
+    @Override
+    ShouldCompoundSearchOperator score(SearchScore modifier);
     /**
      * Creates a new {@link ShouldCompoundSearchOperator} that requires at least the requested number of clauses of those specified via
      * {@link CompoundSearchOperatorBase#should(Iterable)} to be satisfied.

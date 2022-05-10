@@ -23,4 +23,6 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface ExistsSearchOperator extends SearchOperator {
+    @Override
+    ExistsSearchOperator score(SearchScore modifier);
 }

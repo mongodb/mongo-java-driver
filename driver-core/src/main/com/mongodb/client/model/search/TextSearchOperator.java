@@ -24,6 +24,9 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface TextSearchOperator extends SearchOperator {
+    @Override
+    TextSearchOperator score(SearchScore modifier);
+
     /**
      * Creates a new {@link TextSearchOperator} that uses fuzzy search
      * and does not use {@linkplain #synonyms(String) synonyms}.

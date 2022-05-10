@@ -27,4 +27,6 @@ import com.mongodb.annotations.Evolving;
  */
 @Evolving
 public interface MustNotCompoundSearchOperator extends CompoundSearchOperator {
+    @Override
+    MustNotCompoundSearchOperator score(SearchScore modifier);
 }
