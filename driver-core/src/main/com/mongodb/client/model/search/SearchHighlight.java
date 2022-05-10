@@ -25,6 +25,7 @@ import java.util.Iterator;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
+import static java.util.Collections.singleton;
 
 /**
  * Highlighting options.
@@ -53,6 +54,16 @@ public interface SearchHighlight extends Bson {
      * @return A new {@link SearchHighlight}.
      */
     SearchHighlight maxNumPassages(int maxNumPassages);
+
+    /**
+     * Returns a {@link SearchHighlight} for the given {@code path}.
+     *
+     * @param path The field to be searched.
+     * @return The requested {@link SearchHighlight}.
+     */
+    static SearchHighlight path(final SearchPath path) {
+        return paths(singleton(path));
+    }
 
     /**
      * Returns a {@link SearchHighlight} for the given {@code paths}.

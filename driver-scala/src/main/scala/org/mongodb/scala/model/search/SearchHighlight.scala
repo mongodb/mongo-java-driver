@@ -32,6 +32,14 @@ import collection.JavaConverters._
 object SearchHighlight {
 
   /**
+   * Returns a `SearchHighlight` for the given `path`.
+   *
+   * @param path The field to be searched.
+   * @return The requested `SearchHighlight`.
+   */
+  def path(path: SearchPath): SearchHighlight = JSearchHighlight.path(path)
+
+  /**
    * Returns a `SearchHighlight` for the given `paths`.
    *
    * @param paths Non-empty document fields to be searched.

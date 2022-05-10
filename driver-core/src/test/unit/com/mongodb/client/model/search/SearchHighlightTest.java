@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
@@ -23,9 +24,11 @@ import org.junit.jupiter.api.Test;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class SearchHighlightTest {
     @Test
@@ -39,8 +42,23 @@ final class SearchHighlightTest {
     }
 
     @Test
+    void path() {
+        assertEquals(
+                new BsonDocument("path",
+                        fieldPath("fieldName").toBsonValue()),
+                SearchHighlight.path(
+                        fieldPath("fieldName"))
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
     void paths() {
         assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchHighlight.paths(emptyList())
+                ),
                 () -> assertEquals(
                         docExampleCustom()
                                 .toBsonDocument(),
@@ -48,10 +66,12 @@ final class SearchHighlightTest {
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
-                        new BsonDocument("path",
-                                fieldPath("fieldName").toBsonValue()),
-                        SearchHighlight.paths(
-                                singleton(fieldPath("fieldName")))
+                        new BsonDocument("path", new BsonArray(asList(
+                                fieldPath("fieldName").toBsonValue(),
+                                wildcardPath("wildc*rd").toBsonValue()))),
+                        SearchHighlight.paths(asList(
+                                fieldPath("fieldName"),
+                                wildcardPath("wildc*rd")))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(

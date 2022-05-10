@@ -22,11 +22,11 @@ import org.bson.BsonString;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchCount.total;
+import static com.mongodb.client.model.search.SearchHighlight.path;
 import static com.mongodb.client.model.search.SearchHighlight.paths;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -75,7 +75,7 @@ final class SearchOptionsTest {
     }
 
     @Test
-    void highlightSingle() {
+    void highlight() {
         assertAll(
                 () -> assertEquals(
                         new BsonDocument()
@@ -83,7 +83,7 @@ final class SearchOptionsTest {
                                         .append("path", wildcardPath("wildc*rd").toBsonValue())),
                         SearchOptions.defaultSearchOptions()
                                 .highlight(
-                                        paths(singleton(wildcardPath("wildc*rd"))))
+                                        path(wildcardPath("wildc*rd")))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
@@ -138,7 +138,7 @@ final class SearchOptionsTest {
                         .index("indexName")
                         .option("name", new BsonArray(singletonList(new BsonString("value"))))
                         .highlight(
-                                paths(singleton(fieldPath("fieldName"))))
+                                path(fieldPath("fieldName")))
                         .count(total())
                         .returnStoredSource(true)
                         .toBsonDocument()
