@@ -178,6 +178,19 @@ package object model {
   }
 
   /**
+   * Options for creating a clustered index on a collection
+   */
+  type ClusteredIndexOptions = com.mongodb.client.model.ClusteredIndexOptions
+
+  /**
+   * Options for creating a clustered index on a collection
+   */
+  object ClusteredIndexOptions {
+    def apply(key: Bson, unique: Boolean): ClusteredIndexOptions =
+      new com.mongodb.client.model.ClusteredIndexOptions(key, unique)
+  }
+
+  /**
    * Enumeration of values for time-series data granularity
    */
   type TimeSeriesGranularity = com.mongodb.client.model.TimeSeriesGranularity
