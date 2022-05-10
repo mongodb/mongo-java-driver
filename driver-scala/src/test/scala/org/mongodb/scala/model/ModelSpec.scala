@@ -99,6 +99,12 @@ class ModelSpec extends BaseSpec {
 
     val model2 = UpdateManyModel(Document("a" -> 1), Document("$set" -> Document("a" -> 2)), UpdateOptions())
     model2 shouldBe a[com.mongodb.client.model.UpdateManyModel[_]]
+
+    val model3 = UpdateManyModel(Document("a" -> 1), Seq(Document("$set" -> Document("a" -> 2))))
+    model3 shouldBe a[com.mongodb.client.model.UpdateManyModel[_]]
+
+    val model4 = UpdateManyModel(Document("a" -> 1), Seq(Document("$set" -> Document("a" -> 2))), UpdateOptions())
+    model4 shouldBe a[com.mongodb.client.model.UpdateManyModel[_]]
   }
 
   it should "be able to create UpdateOneModel" in {
@@ -107,6 +113,12 @@ class ModelSpec extends BaseSpec {
 
     val model2 = UpdateOneModel(Document("a" -> 1), Document("$set" -> Document("a" -> 2)), UpdateOptions())
     model2 shouldBe a[com.mongodb.client.model.UpdateOneModel[_]]
+
+    val model3 = UpdateOneModel(Document("a" -> 1), Seq(Document("$set" -> Document("a" -> 2))))
+    model3 shouldBe a[com.mongodb.client.model.UpdateOneModel[_]]
+
+    val model4 = UpdateOneModel(Document("a" -> 1), Seq(Document("$set" -> Document("a" -> 2))), UpdateOptions())
+    model4 shouldBe a[com.mongodb.client.model.UpdateOneModel[_]]
   }
 
   it should "be able to create BsonField" in {
