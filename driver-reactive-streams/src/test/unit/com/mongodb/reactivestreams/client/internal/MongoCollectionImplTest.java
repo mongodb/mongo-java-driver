@@ -24,6 +24,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -411,18 +412,27 @@ public class MongoCollectionImplTest extends TestHelper {
 
     @Test
     public void testDrop() {
+        DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
         assertAll("drop",
                   () -> assertAll("check validation",
-                                  () -> assertThrows(IllegalArgumentException.class, () -> collection.drop(null))
+                                  () -> assertThrows(IllegalArgumentException.class, () -> collection.drop(null, null))
                   ),
                   () -> {
-                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(null);
+                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(null, null);
                       assertPublisherIsTheSameAs(expected, collection.drop(), "Default");
                   },
                   () -> {
-                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(clientSession);
+                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(clientSession, null);
                       assertPublisherIsTheSameAs(expected, collection.drop(clientSession), "With client session");
-                  }
+                  },
+                () -> {
+                    Publisher<Void> expected = mongoOperationPublisher.dropCollection(null, dropCollectionOptions);
+                    assertPublisherIsTheSameAs(expected, collection.drop(dropCollectionOptions), "Default");
+                },
+                () -> {
+                    Publisher<Void> expected = mongoOperationPublisher.dropCollection(clientSession, dropCollectionOptions);
+                    assertPublisherIsTheSameAs(expected, collection.drop(clientSession, dropCollectionOptions), "With client session");
+                }
         );
     }
 

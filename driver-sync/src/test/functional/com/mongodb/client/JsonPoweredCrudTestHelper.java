@@ -38,9 +38,11 @@ import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -71,7 +73,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.opentest4j.AssertionFailedError;
+import org.jetbrains.annotations.NotNull;
 import util.Hex;
 
 import java.io.ByteArrayInputStream;
@@ -86,9 +88,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.client.Fixture.getMongoClient;
 import static java.lang.String.format;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
@@ -125,13 +127,16 @@ public class JsonPoweredCrudTestHelper {
 
         switch (methodName) {
             case "assertCollectionExists":
-                assertCollectionExists(arguments, clientSession);
+                assertCollectionExists(operation, true);
                 return new BsonDocument();
             case "assertCollectionNotExists":
-                assertCollectionNotExists(arguments, clientSession);
+                assertCollectionExists(operation, false);
                 return new BsonDocument();
             case "assertIndexExists":
-                assertIndexExists(arguments, clientSession);
+                assertIndexExists(operation, true);
+                return new BsonDocument();
+            case "assertIndexNotExists":
+                assertIndexExists(operation, false);
                 return new BsonDocument();
             default:
                 try {
@@ -240,15 +245,39 @@ public class JsonPoweredCrudTestHelper {
         return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
     }
 
-    void assertCollectionExists(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
-        assertTrue(mongoClient.getDatabase(arguments.getString("database").getValue())
-                    .listCollectionNames().into(new ArrayList<>()).contains(arguments.getString("database").getValue()));
+    private void assertCollectionExists(final BsonDocument operation, final boolean shouldExist) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        String databaseName = arguments.getString("database").getValue();
+        String collection = arguments.getString("collection").getValue();
+        assertEquals(shouldExist, collectionExists(databaseName, collection));
     }
 
-    void assertIndexExists(final BsonDocument arguments, @Nullable final ClientSession clientSession) {;
+    private boolean collectionExists(final String databaseName, final String collectionName) {
+        return getMongoClient().getDatabase(databaseName).listCollectionNames().into(new ArrayList<>()).contains(collectionName);
     }
 
-    void assertCollectionNotExists(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
+    private void assertIndexExists(final BsonDocument operation, final boolean shouldExist) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        String db = arguments.getString("database").getValue();
+        String collection = arguments.getString("collection").getValue();
+        String index = arguments.getString("index").getValue();
+        assertEquals(shouldExist, indexExists(db, collection, index));
+    }
+
+    private boolean indexExists(final String databaseName, final String collectionName, final String indexName) {
+        List<Document> indexes = getMongoClient()
+                .getDatabase(databaseName)
+                .getCollection(collectionName)
+                .listIndexes()
+                .into(new ArrayList<>());
+        return indexes.stream().anyMatch(document -> document.get("name").equals(indexName));
+    }
+
+    @NotNull
+    private List<String> getCollectionNames(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
+        MongoDatabase database = mongoClient.getDatabase(arguments.getString("database").getValue());
+        MongoIterable<String> collectionNames = clientSession != null ? database.listCollectionNames(clientSession) : database.listCollectionNames();
+        return collectionNames.into(new ArrayList<>());
     }
 
     BsonDocument getDatabaseRunCommandResult(final BsonDocument collectionOptions, final BsonDocument arguments,
@@ -415,11 +444,16 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getDatabaseCreateCollectionResult(final BsonDocument databaseOptions, final BsonDocument arguments,
                                                    @Nullable final ClientSession clientSession) {
-        String index;
+        String collectionName = arguments.getString("collection").getValue();
+        CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions();
+        if (arguments.containsKey("encryptedFields")) {
+            createCollectionOptions.encryptedFields(arguments.getDocument("encryptedFields"));
+        }
+
         if (clientSession == null) {
-            database.createCollection(arguments.getString("collection").getValue());
+            database.createCollection(collectionName, createCollectionOptions);
         } else {
-            database.createCollection(clientSession, arguments.getString("collection").getValue());
+            database.createCollection(clientSession, collectionName, createCollectionOptions);
         }
         return new BsonDocument("ok", new BsonInt32(1));
     }
@@ -436,10 +470,16 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getDatabaseDropCollectionResult(final BsonDocument databaseOptions, final BsonDocument arguments,
                                                  @Nullable final ClientSession clientSession) {
+        String collectionName = arguments.getString("collection").getValue();
+        DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
+        if (arguments.containsKey("encryptedFields")) {
+            dropCollectionOptions.encryptedFields(arguments.getDocument("encryptedFields"));
+        }
+
         if (clientSession == null) {
-            database.getCollection(arguments.getString("collection").getValue()).drop();
+            database.getCollection(collectionName).drop(dropCollectionOptions);
         } else {
-            database.getCollection(arguments.getString("collection").getValue()).drop(clientSession);
+            database.getCollection(collectionName).drop(clientSession, dropCollectionOptions);
         }
         return new BsonDocument("ok", new BsonInt32(1));
     }

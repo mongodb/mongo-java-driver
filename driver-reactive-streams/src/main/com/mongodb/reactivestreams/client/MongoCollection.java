@@ -26,6 +26,7 @@ import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -1374,6 +1375,27 @@ public interface MongoCollection<TDocument> {
      * @since 1.7
      */
     Publisher<Void> drop(ClientSession clientSession);
+
+    /**
+     * Drops this collection from the Database.
+     *
+     * @param dropCollectionOptions various options for dropping the collection
+     * @mongodb.driver.manual reference/command/drop/ Drop Collection
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    Publisher<Void> drop(DropCollectionOptions dropCollectionOptions);
+
+    /**
+     * Drops this collection from the Database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param dropCollectionOptions various options for dropping the collection
+     * @mongodb.driver.manual reference/command/drop/ Drop Collection
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    Publisher<Void> drop(ClientSession clientSession, DropCollectionOptions dropCollectionOptions);
 
     /**
      * Creates an index.

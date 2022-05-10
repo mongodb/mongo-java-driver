@@ -126,9 +126,7 @@ public abstract class AbstractClientSideEncryptionTest {
         String collectionName = specDocument.getString("collection_name").getValue();
         collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), new MongoNamespace(databaseName, collectionName));
         MongoDatabase database = getMongoClient().getDatabase(databaseName);
-        MongoCollection<BsonDocument> collection = database
-                .getCollection(collectionName, BsonDocument.class);
-        collection.drop();
+        database.drop();
 
         /* Create the collection for auto encryption. */
         if (specDocument.containsKey("json_schema")) {
@@ -148,7 +146,8 @@ public abstract class AbstractClientSideEncryptionTest {
 
         /* Insert data into the "keyvault.datakeys" key vault. */
         BsonArray data = specDocument.getArray("key_vault_data", new BsonArray());
-        collection = getMongoClient().getDatabase("keyvault").getCollection("datakeys", BsonDocument.class)
+        MongoCollection<BsonDocument> collection = getMongoClient().getDatabase("keyvault")
+                .getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
         collection.drop();
         if (!data.isEmpty()) {
@@ -158,7 +157,6 @@ public abstract class AbstractClientSideEncryptionTest {
             }
             collection.insertMany(documents);
         }
-
 
         commandListener = new TestCommandListener();
 
@@ -307,7 +305,6 @@ public abstract class AbstractClientSideEncryptionTest {
                     throw e;
                 }
             }
-
         }
 
         if (definition.containsKey("expectations")) {
@@ -338,11 +335,12 @@ public abstract class AbstractClientSideEncryptionTest {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption")) {
                 BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
-                boolean fle2Test = file.getName().startsWith("fle2"); // TODO enable fle2 test JAVA-4589
+                // TODO enable fle2 tests JAVA-4597
+                boolean fle2Test = file.getName().startsWith("fle2") ;
                 for (BsonValue test : specDocument.getArray("tests")) {
                     data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
                             specDocument.getArray("data", new BsonArray()), test.asDocument(),
-                            fle2Test || skipTest(specDocument, test.asDocument())});
+                            !fle2Test || skipTest(specDocument, test.asDocument())});
                 }
         }
         return data;

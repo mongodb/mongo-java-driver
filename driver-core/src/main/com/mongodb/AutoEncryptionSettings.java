@@ -210,7 +210,7 @@ public final class AutoEncryptionSettings {
          * @since 4.7
          */
         public Builder encryptedFieldsMap(final Map<String, BsonDocument> encryptedFieldsMap) {
-            this.encryptedFieldsMap = notNull("encryptedFieldsMap", encryptedFieldsMap);;
+            this.encryptedFieldsMap = notNull("encryptedFieldsMap", encryptedFieldsMap);
             return this;
         }
 
@@ -451,6 +451,7 @@ public final class AutoEncryptionSettings {
      * @return the mapping of the collection namespaces to encryptedFields
      * @since 4.7
      */
+    @Nullable
     public Map<String, BsonDocument> getEncryptedFieldsMap() {
         return encryptedFieldsMap;
     }
@@ -477,7 +478,7 @@ public final class AutoEncryptionSettings {
         this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
-        this.encryptedFieldsMap = notNull("encryptedFieldsMap", builder.encryptedFieldsMap);
+        this.encryptedFieldsMap = builder.encryptedFieldsMap;
         this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
     }
 

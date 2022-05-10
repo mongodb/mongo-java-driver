@@ -42,6 +42,7 @@ public class CreateCollectionOptions {
     private TimeSeriesOptions timeSeriesOptions;
     private ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions;
     private ClusteredIndexOptions clusteredIndexOptions;
+    private Bson encryptedFields;
 
     /**
      * Gets the maximum number of documents allowed in a capped collection.
@@ -313,6 +314,29 @@ public class CreateCollectionOptions {
         return this;
     }
 
+    /**
+     * @return the encrypted fields document
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    @Nullable
+    public Bson getEncryptedFields() {
+        return encryptedFields;
+    }
+
+    /**
+     * Sets the encrypted fields document
+     * @param encryptedFields the encrypted fields document
+     * @return this
+     * @since 4.7
+     * @mongodb.driver.manual core/security-client-side-encryption/ Client side encryption
+     * @mongodb.server.release 6.0
+     */
+    public CreateCollectionOptions encryptedFields(@Nullable final Bson encryptedFields) {
+        this.encryptedFields = encryptedFields;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "CreateCollectionOptions{"
@@ -326,6 +350,7 @@ public class CreateCollectionOptions {
                 + ", expireAfterSeconds=" + expireAfterSeconds
                 + ", timeSeriesOptions=" + timeSeriesOptions
                 + ", changeStreamPreAndPostImagesOptions=" + changeStreamPreAndPostImagesOptions
+                + ", encryptedFields=" + encryptedFields
                 + '}';
     }
 }

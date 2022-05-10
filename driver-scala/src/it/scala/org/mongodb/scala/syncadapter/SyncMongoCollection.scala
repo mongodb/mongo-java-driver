@@ -467,6 +467,34 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
 
   override def drop(clientSession: ClientSession): Unit = wrapped.drop(unwrap(clientSession)).toFuture().get()
 
+  override def drop(dropCollectionOptions: DropCollectionOptions): Unit =
+    wrapped.drop(dropCollectionOptions).toFuture().get()
+
+  override def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): Unit =
+    wrapped.drop(unwrap(clientSession), dropCollectionOptions).toFuture().get()
+
+  /*
+
+    /**
+   * Drops this collection from the Database.
+   *
+   * @mongodb.driver.manual reference/command/drop/ Drop Collection
+   * @since 4.7
+   * @mongodb.server.release 6.0
+   */
+    void drop(DropCollectionOptions dropCollectionOptions);
+
+    /**
+   * Drops this collection from the Database.
+   *
+   * @param clientSession the client session with which to associate this operation
+   * @mongodb.driver.manual reference/command/drop/ Drop Collection
+   * @since 4.7
+   * @mongodb.server.release 6.0
+   */
+    void drop(ClientSession clientSession, DropCollectionOptions dropCollectionOptions);
+   */
+
   override def createIndex(keys: Bson): String = wrapped.createIndex(keys).toFuture().get()
 
   override def createIndex(keys: Bson, indexOptions: IndexOptions) =

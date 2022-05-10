@@ -25,6 +25,7 @@ import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -627,12 +628,22 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public Publisher<Void> drop() {
-        return mongoOperationPublisher.dropCollection(null);
+        return mongoOperationPublisher.dropCollection(null, null);
     }
 
     @Override
     public Publisher<Void> drop(final ClientSession clientSession) {
-        return mongoOperationPublisher.dropCollection(notNull("clientSession", clientSession));
+        return mongoOperationPublisher.dropCollection(notNull("clientSession", clientSession), null);
+    }
+
+    @Override
+    public Publisher<Void> drop(final DropCollectionOptions dropCollectionOptions) {
+        return mongoOperationPublisher.dropCollection(null, dropCollectionOptions);
+    }
+
+    @Override
+    public Publisher<Void> drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
+        return mongoOperationPublisher.dropCollection(notNull("clientSession", clientSession), dropCollectionOptions);
     }
 
     @Override

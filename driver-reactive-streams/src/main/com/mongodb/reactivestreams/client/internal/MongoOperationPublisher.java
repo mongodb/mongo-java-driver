@@ -15,6 +15,7 @@
  */
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
@@ -35,6 +36,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -91,27 +93,31 @@ public final class MongoOperationPublisher<T> {
 
     private final Operations<T> operations;
     private final UuidRepresentation uuidRepresentation;
+    private final AutoEncryptionSettings autoEncryptionSettings;
     private final OperationExecutor executor;
 
     MongoOperationPublisher(
             final Class<T> documentClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
-            final UuidRepresentation uuidRepresentation, final OperationExecutor executor) {
+            final UuidRepresentation uuidRepresentation, @Nullable final AutoEncryptionSettings autoEncryptionSettings,
+            final OperationExecutor executor) {
         this(new MongoNamespace("_ignored", "_ignored"), documentClass,
              codecRegistry, readPreference, readConcern, writeConcern, retryWrites, retryReads,
-             uuidRepresentation, executor);
+             uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     MongoOperationPublisher(
             final MongoNamespace namespace, final Class<T> documentClass, final CodecRegistry codecRegistry,
             final ReadPreference readPreference, final ReadConcern readConcern, final WriteConcern writeConcern,
             final boolean retryWrites, final boolean retryReads, final UuidRepresentation uuidRepresentation,
+            @Nullable final AutoEncryptionSettings autoEncryptionSettings,
             final OperationExecutor executor) {
         this.operations = new Operations<>(namespace, notNull("documentClass", documentClass),
                                            notNull("readPreference", readPreference), notNull("codecRegistry", codecRegistry),
                                            notNull("readConcern", readConcern), notNull("writeConcern", writeConcern),
                                            retryWrites, retryReads);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+        this.autoEncryptionSettings = autoEncryptionSettings;
         this.executor = notNull("executor", executor);
     }
 
@@ -175,14 +181,14 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(notNull("namespace", namespace), notNull("documentClass", documentClass),
                                              getCodecRegistry(), getReadPreference(), getReadConcern(), getWriteConcern(),
-                                             getRetryWrites(), getRetryReads(), uuidRepresentation, executor);
+                                             getRetryWrites(), getRetryReads(), uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     MongoOperationPublisher<T> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                                              withUuidRepresentation(notNull("codecRegistry", codecRegistry), uuidRepresentation),
                                              getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                                             uuidRepresentation, executor);
+                                             uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     MongoOperationPublisher<T> withReadPreference(final ReadPreference readPreference) {
@@ -192,7 +198,7 @@ public final class MongoOperationPublisher<T> {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(),
                                              notNull("readPreference", readPreference),
                                              getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                                             uuidRepresentation, executor);
+                                             uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     MongoOperationPublisher<T> withWriteConcern(final WriteConcern writeConcern) {
@@ -201,7 +207,7 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(), getReadPreference(), getReadConcern(),
                                              notNull("writeConcern", writeConcern),
-                                             getRetryWrites(), getRetryReads(), uuidRepresentation, executor);
+                                             getRetryWrites(), getRetryReads(), uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     MongoOperationPublisher<T> withReadConcern(final ReadConcern readConcern) {
@@ -210,7 +216,8 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                                              getCodecRegistry(), getReadPreference(), notNull("readConcern", readConcern),
-                                             getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation, executor);
+                                             getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
+                                             autoEncryptionSettings, executor);
     }
 
     Publisher<Void> dropDatabase(@Nullable final ClientSession clientSession) {
@@ -414,9 +421,8 @@ public final class MongoOperationPublisher<T> {
                                         clientSession);
     }
 
-
-    Publisher<Void> dropCollection(@Nullable final ClientSession clientSession) {
-        return createWriteOperationMono(operations::dropCollection, clientSession);
+    Publisher<Void> dropCollection(@Nullable final ClientSession clientSession, @Nullable final DropCollectionOptions dropCollectionOptions) {
+        return createWriteOperationMono(() -> operations.dropCollection(dropCollectionOptions, autoEncryptionSettings), clientSession);
     }
 
     Publisher<String> createIndex(@Nullable final ClientSession clientSession, final Bson key, final IndexOptions options) {

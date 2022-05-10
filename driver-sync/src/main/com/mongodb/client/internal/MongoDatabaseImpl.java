@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
@@ -50,6 +51,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
@@ -67,12 +69,15 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private final boolean retryWrites;
     private final boolean retryReads;
     private final ReadConcern readConcern;
+    @Nullable
+    private final AutoEncryptionSettings autoEncryptionSettings;
     private final OperationExecutor executor;
     private UuidRepresentation uuidRepresentation;
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                              final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
-                             final ReadConcern readConcern, final UuidRepresentation uuidRepresentation, final OperationExecutor executor) {
+                             final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
+                             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -82,6 +87,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         this.retryReads = retryReads;
         this.readConcern = notNull("readConcern", readConcern);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+        this.autoEncryptionSettings = autoEncryptionSettings;
         this.executor = notNull("executor", executor);
     }
 
@@ -113,25 +119,25 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoDatabaseImpl(name, withUuidRepresentation(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, executor);
+                retryReads, readConcern, uuidRepresentation, null, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, executor);
+                uuidRepresentation, null, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, executor);
+                uuidRepresentation, null, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, executor);
+                uuidRepresentation, null, executor);
     }
 
     @Override
@@ -142,7 +148,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, executor);
+                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
@@ -285,6 +291,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions createCollectionOptions) {
+
         CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
                 .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
@@ -300,6 +307,15 @@ public class MongoDatabaseImpl implements MongoDatabase {
             operation.clusteredIndexKey(toBsonDocument(clusteredIndexOptions.getKey()));
             operation.clusteredIndexUnique(clusteredIndexOptions.isUnique());
             operation.clusteredIndexName(clusteredIndexOptions.getName());
+        }
+
+        Bson encryptedFields = createCollectionOptions.getEncryptedFields();
+        operation.encryptedFields(toBsonDocument(encryptedFields));
+        if (encryptedFields == null && autoEncryptionSettings != null) {
+            Map<String, BsonDocument> encryptedFieldsMap = autoEncryptionSettings.getEncryptedFieldsMap();
+            if (encryptedFieldsMap != null) {
+                operation.encryptedFields(encryptedFieldsMap.getOrDefault(name + "." + collectionName, null));
+            }
         }
 
         IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
