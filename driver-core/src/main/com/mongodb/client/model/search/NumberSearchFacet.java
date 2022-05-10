@@ -24,12 +24,12 @@ import com.mongodb.annotations.Evolving;
  */
 @Beta
 @Evolving
-public interface NumericSearchFacet extends SearchFacet {
+public interface NumberSearchFacet extends SearchFacet {
     /**
-     * Creates a new {@link NumericSearchFacet} with the default bucket specified.
+     * Creates a new {@link NumberSearchFacet} with the default bucket specified.
      *
      * @param name The name of the bucket for documents that do not fall within the specified boundaries.
-     * @return A new {@link NumericSearchFacet}.
+     * @return A new {@link NumberSearchFacet}.
      */
-    NumericSearchFacet defaultBucket(String name);
+    NumberSearchFacet defaultBucket(String name);
 }

@@ -226,7 +226,7 @@ package object search {
    */
   @Beta
   @Evolving
-  type NumericSearchFacet = com.mongodb.client.model.search.NumericSearchFacet
+  type NumberSearchFacet = com.mongodb.client.model.search.NumberSearchFacet
 
   /**
    * @see `SearchFacet.dateFacet(String, FieldSearchPath, Iterable)`

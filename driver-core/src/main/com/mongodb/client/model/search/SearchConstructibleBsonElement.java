@@ -34,7 +34,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore, GaussSearchScoreExpression,
         PathSearchScoreExpression,
         FacetSearchCollector,
-        StringSearchFacet, NumericSearchFacet, DateSearchFacet {
+        StringSearchFacet, NumberSearchFacet, DateSearchFacet {
     SearchConstructibleBsonElement(final String name) {
         super(name);
     }

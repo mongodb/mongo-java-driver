@@ -16,7 +16,7 @@
 package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.Beta
-import com.mongodb.client.model.search.{ SearchFacet => JSearchFacet }
+import com.mongodb.client.model.search.{ NumberSearchFacet, SearchFacet => JSearchFacet }
 import org.mongodb.scala.bson.conversions.Bson
 
 import java.time.Instant
@@ -53,7 +53,7 @@ object SearchFacet {
    * @return The requested `SearchFacet`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#numeric-facets Numeric facet definition]]
    */
-  def numberFacet(name: String, path: FieldSearchPath, boundaries: Iterable[Number]): NumericSearchFacet =
+  def numberFacet(name: String, path: FieldSearchPath, boundaries: Iterable[Number]): NumberSearchFacet =
     JSearchFacet.numberFacet(name, path, boundaries.asJava)
 
   /**

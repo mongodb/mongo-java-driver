@@ -71,7 +71,7 @@ public interface SearchFacet extends Bson {
      * @return The requested {@link SearchFacet}.
      * @mongodb.atlas.manual atlas-search/facet/#numeric-facets Numeric facet definition
      */
-    static NumericSearchFacet numberFacet(final String name, final FieldSearchPath path, final Iterable<? extends Number> boundaries) {
+    static NumberSearchFacet numberFacet(final String name, final FieldSearchPath path, final Iterable<? extends Number> boundaries) {
         isTrueArgument("boundaries must contain at least 2 elements", sizeAtLeast(boundaries, 2));
         return new SearchConstructibleBsonElement(notNull("name", name),
                 new Document("type", "number")
