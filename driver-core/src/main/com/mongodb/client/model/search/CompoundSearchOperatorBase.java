@@ -31,7 +31,7 @@ public interface CompoundSearchOperatorBase {
      * <p>
      * This method may be called multiple times.</p>
      *
-     * @param clauses Non-empty clauses.
+     * @param clauses The non-empty clauses to add.
      * @return A new {@link CompoundSearchOperator}.
      */
     MustCompoundSearchOperator must(Iterable<? extends SearchOperator> clauses);
@@ -41,7 +41,7 @@ public interface CompoundSearchOperatorBase {
      * <p>
      * This method may be called multiple times.</p>
      *
-     * @param clauses Non-empty clauses.
+     * @param clauses The non-empty clauses to add.
      * @return A new {@link CompoundSearchOperator}.
      */
     MustNotCompoundSearchOperator mustNot(Iterable<? extends SearchOperator> clauses);
@@ -51,7 +51,7 @@ public interface CompoundSearchOperatorBase {
      * <p>
      * This method may be called multiple times.</p>
      *
-     * @param clauses Non-empty clauses.
+     * @param clauses The non-empty clauses to add.
      * @return A new {@link CompoundSearchOperator}.
      */
     ShouldCompoundSearchOperator should(Iterable<? extends SearchOperator> clauses);
@@ -62,7 +62,7 @@ public interface CompoundSearchOperatorBase {
      * <p>
      * This method may be called multiple times.</p>
      *
-     * @param clauses Non-empty clauses.
+     * @param clauses The non-empty clauses to add.
      * @return A new {@link CompoundSearchOperator}.
      */
     FilterCompoundSearchOperator filter(Iterable<? extends SearchOperator> clauses);

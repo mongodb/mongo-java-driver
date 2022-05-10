@@ -18,7 +18,7 @@ package org.mongodb.scala.model.search
 import com.mongodb.client.model.search.{ SearchPath => JSearchPath }
 
 /**
- * A specification of document fields to be searched.
+ * A specification of fields to be searched.
  *
  * Depending on the context, one of the following methods may be used to get a representation of a `SearchPath`
  * with the correct syntax: `SearchPath.toBsonDocument`, `SearchPath.toBsonValue`, `FieldSearchPath.toValue`.
@@ -31,7 +31,7 @@ object SearchPath {
   /**
    * Returns a `SearchPath` for the given `path`.
    *
-   * @param path The name of the field to search. Must not contain [[SearchPath.wildcardPath wildcard]] characters.
+   * @param path The name of the field. Must not contain [[SearchPath.wildcardPath wildcard]] characters.
    * @return The requested `SearchPath`.
    * @see [[https://www.mongodb.com/docs/manual/core/document/#dot-notation Dot notation]]
    */
@@ -40,7 +40,7 @@ object SearchPath {
   /**
    * Returns a `SearchPath` for the given `wildcardPath`.
    *
-   * @param wildcardPath The specification of the fields to search that contains wildcard (`'*'`) characters.
+   * @param wildcardPath The specification of the fields that contains wildcard (`'*'`) characters.
    * Must not contain `'**'`.
    * @return The requested `SearchPath`.
    * @see [[https://www.mongodb.com/docs/manual/core/document/#dot-notation Dot notation]]

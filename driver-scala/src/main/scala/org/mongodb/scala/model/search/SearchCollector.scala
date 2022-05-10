@@ -36,8 +36,8 @@ object SearchCollector {
    * Returns a `SearchCollector` that groups results by values or ranges in the specified faceted fields and returns the count
    * for each of those groups.
    *
-   * @param operator A search operator to use.
-   * @param facets Non-empty facet definitions.
+   * @param operator The search operator to use.
+   * @param facets The non-empty facet definitions.
    * @return The requested `SearchCollector`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/ facet collector]]
    */

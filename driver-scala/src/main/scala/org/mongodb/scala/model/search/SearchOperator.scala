@@ -50,8 +50,8 @@ object SearchOperator {
   /**
    * Returns a `SearchOperator` that performs a full-text search.
    *
-   * @param query A string to search for.
-   * @param path A document field to be searched.
+   * @param query The string to search for.
+   * @param path The field to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
    */
@@ -60,8 +60,8 @@ object SearchOperator {
   /**
    * Returns a `SearchOperator` that performs a full-text search.
    *
-   * @param queries Non-empty terms to search for.
-   * @param paths Non-empty document fields to be searched.
+   * @param queries The non-empty strings to search for.
+   * @param paths The non-empty fields to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
    */
@@ -71,8 +71,8 @@ object SearchOperator {
   /**
    * Returns a `SearchOperator` that may be used to implement search-as-you-type functionality.
    *
-   * @param query A string to search for.
-   * @param path A document field to be searched.
+   * @param query The string to search for.
+   * @param path The field to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]
    */
@@ -82,8 +82,8 @@ object SearchOperator {
   /**
    * Returns a `SearchOperator` that may be used to implement search-as-you-type functionality.
    *
-   * @param queries Non-empty terms to search for.
-   * @param path A document field to be searched.
+   * @param queries The non-empty strings to search for.
+   * @param path The field to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]
    */
@@ -91,9 +91,9 @@ object SearchOperator {
     JSearchOperator.autocomplete(queries.asJava, path)
 
   /**
-   * Returns a base for a `SearchOperator` that tests if the values of
-   * a BSON `32-bit integer` / `64-bit integer` / `Double` field
-   * are within an interval.
+   * Returns a base for a `SearchOperator` that tests if the
+   * BSON `32-bit integer` / `64-bit integer` / `Double` values
+   * of the specified field are within an interval.
    *
    * @param path The field to be searched.
    * @return A base for a `RangeSearchOperator`.
@@ -102,11 +102,11 @@ object SearchOperator {
   def numberRange(path: FieldSearchPath): RangeSearchOperatorBase[Number] = JSearchOperator.numberRange(path)
 
   /**
-   * Returns a base for a `SearchOperator` that tests if the values of
-   * BSON `32-bit integer` / `64-bit integer` / `Double` fields
-   * are within an interval.
+   * Returns a base for a `SearchOperator` that tests if the
+   * BSON `32-bit integer` / `64-bit integer` / `Double` values
+   * of the specified fields are within an interval.
    *
-   * @param paths Non-empty fields to be searched.
+   * @param paths The non-empty fields to be searched.
    * @return A base for a `RangeSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
    */
@@ -114,9 +114,8 @@ object SearchOperator {
     JSearchOperator.numberRange(paths.asJava)
 
   /**
-   * Returns a base for a `SearchOperator` that tests if the values of
-   * a BSON `Date` field
-   * are within an interval.
+   * Returns a base for a `SearchOperator` that tests if the
+   * BSON `Date` values of the specified field are within an interval.
    *
    * @param path The field to be searched.
    * @return A base for a `RangeSearchOperator`.
@@ -125,9 +124,8 @@ object SearchOperator {
   def dateRange(path: FieldSearchPath): RangeSearchOperatorBase[Instant] = JSearchOperator.dateRange(path)
 
   /**
-   * Returns a base for a `SearchOperator` that tests if the values of
-   * BSON `Date` fields
-   * are within an interval.
+   * Returns a base for a `SearchOperator` that tests if the
+   * BSON `Date` values of the specified fields are within an interval.
    *
    * @param paths Non-empty fields to be searched.
    * @return A base for a `RangeSearchOperator`.

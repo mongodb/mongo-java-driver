@@ -33,10 +33,10 @@ object SearchFacet {
 
   /**
    * Returns a `SearchFacet` that allows narrowing down search results based on the most frequent
-   * values in the BSON `String` field specified by the `path`.
+   * BSON `String` values of the specified field.
    *
    * @param name The facet name.
-   * @param path The path to facet on.
+   * @param path The field to facet on.
    * @return The requested `SearchFacet`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#string-facets String facet definition]]
    */
@@ -94,7 +94,7 @@ object SearchFacet {
    *
    * This method may be useful when using [[SearchCollector.of]].
    *
-   * @param facets Non-empty facet definitions.
+   * @param facets The non-empty facet definitions to combine.
    * @return A `Bson` representing combined `facets`.
    */
   def combineToBson(facets: Iterable[_ <: SearchFacet]): Bson =

@@ -40,7 +40,7 @@ public interface SearchPath extends Bson {
     /**
      * Returns a {@link SearchPath} for the given {@code path}.
      *
-     * @param path The name of the field to search. Must not contain {@linkplain #wildcardPath(String) wildcard} characters.
+     * @param path The name of the field. Must not contain {@linkplain #wildcardPath(String) wildcard} characters.
      * @return The requested {@link SearchPath}.
      * @mongodb.driver.manual core/document/#dot-notation Dot notation
      */
@@ -53,7 +53,7 @@ public interface SearchPath extends Bson {
     /**
      * Returns a {@link SearchPath} for the given {@code wildcardPath}.
      *
-     * @param wildcardPath The specification of the fields to search that contains wildcard ({@code '*'}) characters.
+     * @param wildcardPath The specification of the fields that contains wildcard ({@code '*'}) characters.
      * Must not contain {@code '**'}.
      * @return The requested {@link SearchPath}.
      * @mongodb.driver.manual core/document/#dot-notation Dot notation

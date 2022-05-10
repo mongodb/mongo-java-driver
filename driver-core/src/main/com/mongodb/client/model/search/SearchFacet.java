@@ -47,10 +47,10 @@ import static org.bson.assertions.Assertions.notNull;
 public interface SearchFacet extends Bson {
     /**
      * Returns a {@link SearchFacet} that allows narrowing down search results based on the most frequent
-     * values in the BSON {@link BsonType#STRING String} field specified by the {@code path}.
+     * BSON {@link BsonType#STRING String} values of the specified field.
      *
      * @param name The facet name.
-     * @param path The path to facet on.
+     * @param path The field to facet on.
      * @return The requested {@link SearchFacet}.
      * @mongodb.atlas.manual atlas-search/facet/#string-facets String facet definition
      */
@@ -123,7 +123,7 @@ public interface SearchFacet extends Bson {
      * <p>
      * This method may be useful when using {@link SearchCollector#of(Bson)}.</p>
      *
-     * @param facets Non-empty facet definitions.
+     * @param facets The non-empty facet definitions to combine.
      * @return A {@link Bson} representing combined {@code facets}.
      */
     static Bson combineToBson(final Iterable<? extends SearchFacet> facets) {

@@ -70,8 +70,8 @@ public interface SearchOperator extends Bson {
     /**
      * Returns a {@link SearchOperator} that performs a full-text search.
      *
-     * @param query A string to search for.
-     * @param path A field to be searched.
+     * @param query The string to search for.
+     * @param path The field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/text/ text operator
      */
@@ -82,8 +82,8 @@ public interface SearchOperator extends Bson {
     /**
      * Returns a {@link SearchOperator} that performs a full-text search.
      *
-     * @param queries Non-empty strings to search for.
-     * @param paths Non-empty fields to be searched.
+     * @param queries The non-empty strings to search for.
+     * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/text/ text operator
      */
@@ -100,8 +100,8 @@ public interface SearchOperator extends Bson {
     /**
      * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
      *
-     * @param query A string to search for.
-     * @param path A field to be searched.
+     * @param query The string to search for.
+     * @param path The field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
      */
@@ -112,8 +112,8 @@ public interface SearchOperator extends Bson {
     /**
      * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
      *
-     * @param queries Non-empty strings to search for.
-     * @param path A field to be searched.
+     * @param queries The non-empty strings to search for.
+     * @param path The field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
      */
@@ -126,9 +126,9 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a base for a {@link SearchOperator} that tests if the values of
-     * a BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} field
-     * are within an interval.
+     * Returns a base for a {@link SearchOperator} that tests if the
+     * BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} values
+     * of the specified field are within an interval.
      *
      * @param path The field to be searched.
      * @return A base for a {@link RangeSearchOperator}.
@@ -139,11 +139,11 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a base for a {@link SearchOperator} that tests if the values of
-     * BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} fields
-     * are within an interval.
+     * Returns a base for a {@link SearchOperator} that tests if the
+     * BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} values
+     * of the specified fields are within an interval.
      *
-     * @param paths Non-empty fields to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return A base for a {@link RangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
@@ -154,8 +154,8 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a base for a {@link SearchOperator} that tests if the values of
-     * a BSON {@link BsonType#DATE_TIME Date} fields are within an interval.
+     * Returns a base for a {@link SearchOperator} that tests if the
+     * BSON {@link BsonType#DATE_TIME Date} values of the specified field are within an interval.
      *
      * @param path The field to be searched.
      * @return A base for a {@link RangeSearchOperator}.
@@ -166,10 +166,10 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a base for a {@link SearchOperator} that tests if the values of
-     * BSON {@link BsonType#DATE_TIME Date} fields are within an interval.
+     * Returns a base for a {@link SearchOperator} that tests if the
+     * BSON {@link BsonType#DATE_TIME Date} values of the specified fields are within an interval.
      *
-     * @param paths Non-empty fields to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return A base for a {@link RangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */

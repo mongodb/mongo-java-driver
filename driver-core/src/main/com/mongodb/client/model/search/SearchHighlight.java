@@ -68,7 +68,7 @@ public interface SearchHighlight extends Bson {
     /**
      * Returns a {@link SearchHighlight} for the given {@code paths}.
      *
-     * @param paths Non-empty fields to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchHighlight}.
      */
     static SearchHighlight paths(final Iterable<? extends SearchPath> paths) {

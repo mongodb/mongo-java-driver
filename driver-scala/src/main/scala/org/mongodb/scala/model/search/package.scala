@@ -236,7 +236,7 @@ package object search {
   type DateSearchFacet = com.mongodb.client.model.search.DateSearchFacet
 
   /**
-   * A specification of document fields to be searched.
+   * A specification of fields to be searched.
    *
    * Despite `SearchPath` being `Bson`,
    * its value conforming to the correct syntax must be obtained via either `SearchPath.toBsonValue` or `FieldSearchPath.toValue`.

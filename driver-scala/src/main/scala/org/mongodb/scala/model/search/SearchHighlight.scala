@@ -42,7 +42,7 @@ object SearchHighlight {
   /**
    * Returns a `SearchHighlight` for the given `paths`.
    *
-   * @param paths Non-empty document fields to be searched.
+   * @param paths The non-empty fields to be searched.
    * @return The requested `SearchHighlight`.
    */
   def paths(paths: Iterable[_ <: SearchPath]): SearchHighlight = JSearchHighlight.paths(paths.asJava)

@@ -39,8 +39,8 @@ public interface SearchCollector extends Bson {
      * Returns a {@link SearchCollector} that groups results by values or ranges in the specified faceted fields and returns the count
      * for each of those groups.
      *
-     * @param operator A search operator to use.
-     * @param facets Non-empty facet definitions.
+     * @param operator The search operator to use.
+     * @param facets The non-empty facet definitions.
      * @return The requested {@link SearchCollector}.
      * @mongodb.atlas.manual atlas-search/facet/ facet collector
      */
