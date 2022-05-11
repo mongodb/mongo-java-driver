@@ -178,14 +178,14 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         } else  {
             return asList(
                     this::dropCollectionCommand,
-                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection("esc")),
-                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection("ecc")),
-                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection("ecoc"))
+                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection(encryptedFields, "esc")),
+                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection(encryptedFields, "ecc")),
+                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection(encryptedFields, "ecoc"))
             );
         }
     }
 
-    private BsonValue getEncryptedFieldsCollection(final String collectionSuffix) {
+    private BsonValue getEncryptedFieldsCollection(final BsonDocument encryptedFields, final String collectionSuffix) {
         BsonString defaultCollectionName = new BsonString(ENCRYPT_PREFIX + namespace.getCollectionName() + "." + collectionSuffix);
         return encryptedFields.getOrDefault(collectionSuffix + "Collection", defaultCollectionName);
     }
@@ -202,7 +202,9 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             try (BatchCursor<BsonValue> cursor =  listCollectionOperation().execute(readWriteBinding)) {
                 List<BsonValue> bsonValues = cursor.tryNext();
                 if (bsonValues != null && bsonValues.size() > 0) {
-                    localEncryptedFields =  bsonValues.get(0).asDocument().getDocument("encryptedFields", new BsonDocument());
+                    localEncryptedFields =  bsonValues.get(0).asDocument()
+                            .getDocument("options", new BsonDocument())
+                            .getDocument("encryptedFields", new BsonDocument());
                 }
             }
         }

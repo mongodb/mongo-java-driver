@@ -32,6 +32,7 @@ import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonUndefined;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.Before;
@@ -86,11 +87,11 @@ public abstract class AbstractClientSideEncryptionTest {
         this.skipTest = skipTest;
     }
 
-    private boolean hasErrorContainsField(final BsonValue expectedResult) {
+    private boolean hasErrorContainsField(@Nullable final BsonValue expectedResult) {
         return hasErrorField(expectedResult, "errorContains");
     }
 
-    private boolean hasErrorCodeNameField(final BsonValue expectedResult) {
+    private boolean hasErrorCodeNameField(@Nullable final BsonValue expectedResult) {
         return hasErrorField(expectedResult, "errorCodeName");
     }
 
@@ -98,7 +99,7 @@ public abstract class AbstractClientSideEncryptionTest {
         return expectedResult != null && expectedResult.isDocument() && expectedResult.asDocument().containsKey(key);
     }
 
-    private String getErrorField(final BsonValue expectedResult, final String key) {
+    private String getErrorField(@Nullable final BsonValue expectedResult, final String key) {
         if (hasErrorField(expectedResult, key)) {
             return expectedResult.asDocument().getString(key).getValue();
         } else {
@@ -106,11 +107,11 @@ public abstract class AbstractClientSideEncryptionTest {
         }
     }
 
-    private String getErrorContainsField(final BsonValue expectedResult) {
+    private String getErrorContainsField(@Nullable final BsonValue expectedResult) {
         return getErrorField(expectedResult, "errorContains");
     }
 
-    private String getErrorCodeNameField(final BsonValue expectedResult) {
+    private String getErrorCodeNameField(@Nullable final BsonValue expectedResult) {
         return getErrorField(expectedResult, "errorCodeName");
     }
 
@@ -129,11 +130,15 @@ public abstract class AbstractClientSideEncryptionTest {
         database.drop();
 
         /* Create the collection for auto encryption. */
+        CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions();
         if (specDocument.containsKey("json_schema")) {
-            database.createCollection(collectionName, new CreateCollectionOptions()
-                    .validationOptions(new ValidationOptions()
-                            .validator(new BsonDocument("$jsonSchema", specDocument.getDocument("json_schema")))));
+            createCollectionOptions.validationOptions(new ValidationOptions()
+                            .validator(new BsonDocument("$jsonSchema", specDocument.getDocument("json_schema"))));
         }
+        if (specDocument.containsKey("encrypted_fields")) {
+            createCollectionOptions.encryptedFields(specDocument.getDocument("encrypted_fields"));
+        }
+        database.createCollection(collectionName, createCollectionOptions);
 
         /* Insert data into the collection */
         List<BsonDocument> documents = new ArrayList<BsonDocument>();
@@ -276,7 +281,7 @@ public abstract class AbstractClientSideEncryptionTest {
                 BsonDocument actualOutcome = helper.getOperationResults(operation);
                 if (expectedResult != null) {
                     BsonValue actualResult = actualOutcome.get("result");
-                    assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
+                    assertBsonValue("Expected operation result differs from actual", expectedResult, actualResult);
                 }
 
                 assertFalse(String.format("Expected error '%s' but none thrown for operation %s",
@@ -310,7 +315,6 @@ public abstract class AbstractClientSideEncryptionTest {
         if (definition.containsKey("expectations")) {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), "default", null);
             List<CommandEvent> events = commandListener.getCommandStartedEvents();
-
             assertEventsEquality(expectedEvents, events);
         }
 
@@ -327,7 +331,31 @@ public abstract class AbstractClientSideEncryptionTest {
                 assertEquals(expected, actual);
             }
         }
+    }
 
+    /**
+     * If the operation returns a raw command response, eg from runCommand, then compare only the fields present in the expected result
+     * document.
+     *
+     * Otherwise, compare the method's return value to result using the same logic as the CRUD Spec Tests runner.
+     */
+    private void assertBsonValue(final String message, final BsonValue expectedResult, final BsonValue actualResult) {
+        if (expectedResult.isDocument() && actualResult.isDocument()) {
+            BsonDocument expectedResultDoc = expectedResult.asDocument();
+            BsonDocument actualResultDoc = actualResult.asDocument();
+            expectedResultDoc.keySet().forEach(k ->
+                    assertEquals(message, expectedResultDoc.get(k), actualResultDoc.get(k, new BsonUndefined()))
+            );
+        } else if (expectedResult.isArray() && actualResult.isArray()) {
+            BsonArray expectedResultArray = expectedResult.asArray();
+            BsonArray actualResultArray = actualResult.asArray();
+            assertEquals(expectedResultArray.size(), actualResultArray.size());
+            for (int i = 0; i < expectedResultArray.size(); i++) {
+                assertBsonValue(message + " Index: " + i, expectedResultArray.get(i), actualResultArray.get(i));
+            }
+        } else {
+            assertEquals(message, expectedResult, actualResult);
+        }
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
@@ -335,12 +363,10 @@ public abstract class AbstractClientSideEncryptionTest {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption")) {
                 BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
-                // TODO enable fle2 tests JAVA-4597
-                boolean fle2Test = file.getName().startsWith("fle2") ;
                 for (BsonValue test : specDocument.getArray("tests")) {
                     data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
                             specDocument.getArray("data", new BsonArray()), test.asDocument(),
-                            !fle2Test || skipTest(specDocument, test.asDocument())});
+                            skipTest(specDocument, test.asDocument())});
                 }
         }
         return data;
