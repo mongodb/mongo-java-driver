@@ -198,6 +198,15 @@ class Crypt implements Closeable {
                 encryptOptionsBuilder.keyAltName(options.getKeyAltName());
             }
 
+            if (options.getContentionFactor() != null) {
+                encryptOptionsBuilder.contentionFactor(options.getContentionFactor());
+            }
+
+            EncryptOptions.QueryType queryType = options.getQueryType();
+            if (queryType != null) {
+                encryptOptionsBuilder.queryType(MongoExplicitEncryptOptions.QueryType.valueOf(queryType.name()));
+            }
+
             MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
                     new BsonDocument("v", value), encryptOptionsBuilder.build());
             try {

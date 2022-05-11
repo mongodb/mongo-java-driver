@@ -28,6 +28,17 @@ public class EncryptOptions {
     private BsonBinary keyId;
     private String keyAltName;
     private final String algorithm;
+    private Long contentionFactor;
+    private QueryType queryType;
+
+    /**
+     * The QueryType to use for "Indexed" queries
+     *
+     * @since 4.6
+     */
+    public enum QueryType {
+        EQUALITY
+    }
 
     /**
      * Construct an instance with the given algorithm.
@@ -40,8 +51,14 @@ public class EncryptOptions {
     }
 
     /**
-     * Gets the encryption algorithm, which must be either "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or
-     * "AEAD_AES_256_CBC_HMAC_SHA_512-Random".
+     * Gets the encryption algorithm, which must be either:
+     *
+     * <ul>
+     *     <li>AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic</li>
+     *     <li>AEAD_AES_256_CBC_HMAC_SHA_512-Random</li>
+     *     <li>Indexed</li>
+     *     <li>Unindexed</li>
+     * </ul>
      *
      * @return the encryption algorithm
      */
@@ -101,11 +118,65 @@ public class EncryptOptions {
         return this;
     }
 
+    /**
+     * The contention factor.
+     *
+     * <p>It is an error to set contentionFactor when algorithm is not "Indexed".
+     * @param contentionFactor the contention factor, which must be {@code >= 0} or null.
+     * @return this
+     * @since 4.6
+     */
+    public EncryptOptions contentionFactor(@Nullable final Long contentionFactor) {
+        this.contentionFactor = contentionFactor;
+        return this;
+    }
+
+    /**
+     * Gets the contention factor.
+     *
+     * @see #contentionFactor(Long)
+     * @return the contention factor
+     * @since 4.6
+     */
+    @Nullable
+    public Long getContentionFactor() {
+        return contentionFactor;
+    }
+
+    /**
+     * The QueryType.
+     *
+     * <p>It is an error to set queryType when algorithm is not "Indexed".</p>
+     *
+     * @param queryType the query type
+     * @return this
+     * @since 4.6
+     */
+    public EncryptOptions queryType(@Nullable final QueryType queryType) {
+        this.queryType = queryType;
+        return this;
+    }
+
+    /**
+     * Gets the QueryType.
+     *
+     * @see #queryType(QueryType)
+     * @return the queryType or null
+     * @since 4.6
+     */
+    @Nullable
+    public QueryType getQueryType() {
+        return queryType;
+    }
+
     @Override
     public String toString() {
         return "EncryptOptions{"
                 + "keyId=" + keyId
-                + ", keyAltName=" + keyAltName
-                + ", algorithm='" + algorithm + "'}";
+                + ", keyAltName='" + keyAltName + '\''
+                + ", algorithm='" + algorithm + '\''
+                + ", contentionFactor=" + contentionFactor
+                + ", queryType=" + queryType
+                + '}';
     }
 }
