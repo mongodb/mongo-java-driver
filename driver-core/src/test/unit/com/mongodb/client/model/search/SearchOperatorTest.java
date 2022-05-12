@@ -15,6 +15,9 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonArray;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
@@ -25,6 +28,7 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import static com.mongodb.client.model.search.SearchFuzzy.defaultSearchFuzzy;
@@ -500,6 +504,118 @@ final class SearchOperatorTest {
                                         Instant.ofEpochMilli(-1),
                                         Instant.ofEpochMilli(1))
                                 .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void near() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.near(new Point(new Position(0, 0)), emptyList(), 1)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // pivot must be positive
+                        SearchOperator.near(Instant.EPOCH, fieldPath("fieldPath"), Duration.ZERO)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // pivot must be positive
+                        SearchOperator.near(Instant.EPOCH, fieldPath("fieldPath"), Duration.ofMillis(-1))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("near",
+                                new BsonDocument("origin", new BsonInt32(0))
+                                        .append("path", new BsonString(fieldPath("fieldName1").toValue()))
+                                        .append("pivot", new BsonDouble(1.5))
+                        ),
+                        SearchOperator.near(
+                                0,
+                                fieldPath("fieldName1")
+                                        // multi must be ignored
+                                        .multi("analyzeName"),
+                                1.5)
+                                .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("near",
+                                new BsonDocument("origin", new BsonDouble(1.5))
+                                        .append("path", new BsonArray(asList(
+                                                new BsonString(fieldPath("fieldName1").toValue()),
+                                                new BsonString(fieldPath("fieldName2").toValue()))))
+                                        .append("pivot", new BsonDouble(1.5))
+                        ),
+                        SearchOperator.near(
+                                1.5,
+                                asList(
+                                        fieldPath("fieldName1"),
+                                        fieldPath("fieldName2")),
+                                1.5)
+                                .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("near",
+                                new BsonDocument("origin", new BsonDateTime(Instant.EPOCH.toEpochMilli()))
+                                        .append("path", new BsonString(fieldPath("fieldName1").toValue()))
+                                        .append("pivot", new BsonInt64(3))
+                        ),
+                        SearchOperator.near(
+                                Instant.EPOCH,
+                                fieldPath("fieldName1")
+                                        // multi must be ignored
+                                        .multi("analyzeName"),
+                                Duration.ofMillis(3))
+                                .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("near",
+                                new BsonDocument("origin", new BsonDateTime(Instant.EPOCH.toEpochMilli()))
+                                        .append("path", new BsonArray(asList(
+                                                new BsonString(fieldPath("fieldName1").toValue()),
+                                                new BsonString(fieldPath("fieldName2").toValue()))))
+                                        .append("pivot", new BsonInt64(3))
+                        ),
+                        SearchOperator.near(
+                                Instant.EPOCH,
+                                asList(
+                                        fieldPath("fieldName1"),
+                                        fieldPath("fieldName2")),
+                                Duration.ofMillis(3))
+                                .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("near",
+                                new BsonDocument("origin", new BsonDocument("type", new BsonString("Point"))
+                                        .append("coordinates", new BsonArray(asList(new BsonDouble(1), new BsonDouble(2)))))
+                                        .append("path", new BsonString(fieldPath("fieldName1").toValue()))
+                                        .append("pivot", new BsonDouble(1.5))
+                        ),
+                        SearchOperator.near(
+                                new Point(
+                                        new Position(1, 2)),
+                                fieldPath("fieldName1")
+                                    // multi must be ignored
+                                    .multi("analyzeName"),
+                                1.5)
+                                .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("near",
+                                new BsonDocument("origin", new BsonDocument("type", new BsonString("Point"))
+                                        .append("coordinates", new BsonArray(asList(new BsonDouble(1), new BsonDouble(2)))))
+                                        .append("path", new BsonArray(asList(
+                                                new BsonString(fieldPath("fieldName1").toValue()),
+                                                new BsonString(fieldPath("fieldName2").toValue()))))
+                                        .append("pivot", new BsonDouble(1.5))
+                        ),
+                        SearchOperator.near(
+                                new Point(
+                                        new Position(1, 2)),
+                                asList(
+                                        fieldPath("fieldName1"),
+                                        fieldPath("fieldName2")),
+                                1.5)
+                                .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 )
         );
     }

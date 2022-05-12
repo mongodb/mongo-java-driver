@@ -17,10 +17,12 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.geojson.Point;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 
@@ -106,7 +108,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
      */
     static AutocompleteSearchOperator autocomplete(final String query, final FieldSearchPath path) {
-        return autocomplete(singleton(notNull("query", query)), notNull("path", path));
+        return autocomplete(singleton(notNull("query", query)), path);
     }
 
     /**
@@ -135,7 +137,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
     static RangeSearchOperatorBase<Number> numberRange(final FieldSearchPath path) {
-        return numberRange(singleton(path));
+        return numberRange(singleton(notNull("path", path)));
     }
 
     /**
@@ -162,7 +164,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
     static RangeSearchOperatorBase<Instant> dateRange(final FieldSearchPath path) {
-        return dateRange(singleton(path));
+        return dateRange(singleton(notNull("path", path)));
     }
 
     /**
@@ -177,6 +179,107 @@ public interface SearchOperator extends Bson {
         Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
         isTrueArgument("paths must not be empty", pathIterator.hasNext());
         return new RangeConstructibleBsonElement<>("range", new Document("path", combineToBsonValue(pathIterator, true)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that allows finding results that are near the specified {@code origin}.
+     *
+     * @param origin The origin from which the proximity of the results is measured.
+     * The relevance score is 1 if the values of the fields are {@code origin}.
+     * @param path The field to be searched.
+     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/near/ near operator
+     */
+    static NumberNearSearchOperator near(final Number origin, final FieldSearchPath path, final Number pivot) {
+        return near(origin, singleton(notNull("path", path)), pivot);
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that allows finding results that are near the specified {@code origin}.
+     *
+     * @param origin The origin from which the proximity of the results is measured.
+     * The relevance score is 1 if the values of the fields are {@code origin}.
+     * @param paths The non-empty fields to be searched.
+     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/near/ near operator
+     */
+    static NumberNearSearchOperator near(final Number origin, final Iterable<? extends FieldSearchPath> paths, final Number pivot) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
+                .append("path", combineToBsonValue(pathIterator, true))
+                .append("pivot", notNull("pivot", pivot)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that allows finding results that are near the specified {@code origin}.
+     *
+     * @param origin The origin from which the proximity of the results is measured.
+     * The relevance score is 1 if the values of the fields are {@code origin}.
+     * @param path The field to be searched.
+     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * It is converted to {@code long} via {@link Duration#toMillis()}.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/near/ near operator
+     */
+    static DateNearSearchOperator near(final Instant origin, final FieldSearchPath path, final Duration pivot) {
+        return near(origin, singleton(notNull("path", path)), pivot);
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that allows finding results that are near the specified {@code origin}.
+     *
+     * @param origin The origin from which the proximity of the results is measured.
+     * The relevance score is 1 if the values of the fields are {@code origin}.
+     * @param paths The non-empty fields to be searched.
+     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * It is converted to {@code long} via {@link Duration#toMillis()}.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/near/ near operator
+     */
+    static DateNearSearchOperator near(final Instant origin, final Iterable<? extends FieldSearchPath> paths, final Duration pivot) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        notNull("pivot", pivot);
+        isTrueArgument("pivot must be positive", !pivot.isZero());
+        isTrueArgument("pivot must be positive", !pivot.isNegative());
+        return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
+                .append("path", combineToBsonValue(pathIterator, true))
+                .append("pivot", pivot.toMillis()));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that allows finding results that are near the specified {@code origin}.
+     *
+     * @param origin The origin from which the proximity of the results is measured.
+     * The relevance score is 1 if the values of the fields are {@code origin}.
+     * @param path The field to be searched.
+     * @param pivot The positive distance in meters from the {@code origin} at which the relevance score drops in half.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/near/ near operator
+     */
+    static GeoNearSearchOperator near(final Point origin, final FieldSearchPath path, final Number pivot) {
+        return near(origin, singleton(notNull("path", path)), pivot);
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that allows finding results that are near the specified {@code origin}.
+     *
+     * @param origin The origin from which the proximity of the results is measured.
+     * The relevance score is 1 if the values of the fields are {@code origin}.
+     * @param paths The non-empty fields to be searched.
+     * @param pivot The positive distance in meters from the {@code origin} at which the relevance score drops in half.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/near/ near operator
+     */
+    static GeoNearSearchOperator near(final Point origin, final Iterable<? extends FieldSearchPath> paths, final Number pivot) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
+                .append("path", combineToBsonValue(pathIterator, true))
+                .append("pivot", notNull("pivot", pivot)));
     }
 
     /**

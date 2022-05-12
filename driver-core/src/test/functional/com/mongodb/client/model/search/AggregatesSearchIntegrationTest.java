@@ -15,26 +15,33 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.conversions.Bson;
 import org.bson.json.JsonWriterSettings;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.Month;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -61,6 +68,7 @@ import static com.mongodb.client.model.search.SearchOperator.autocomplete;
 import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.dateRange;
 import static com.mongodb.client.model.search.SearchOperator.exists;
+import static com.mongodb.client.model.search.SearchOperator.near;
 import static com.mongodb.client.model.search.SearchOperator.numberRange;
 import static com.mongodb.client.model.search.SearchOperator.text;
 import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions;
@@ -90,53 +98,110 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * These tests require the <a href="https://www.mongodb.com/docs/atlas/sample-data/">sample data</a>
- * and the following Atlas Search index for the {@code sample_mflix.movies} namespace:
- * <pre>{@code
- *  {
- *    "mappings": {
- *      "dynamic": true,
- *      "fields": {
- *        "fullplot": {
- *          "type": "stringFacet"
- *        },
- *        "released": {
- *          "type": "dateFacet"
- *        },
- *        "title": [
- *          {
- *            "multi": {
- *              "keyword": {
- *                "analyzer": "lucene.keyword",
- *                "searchAnalyzer": "lucene.keyword",
- *                "type": "string"
+ * and the following Atlas Search indices:
+ * <table>
+ *  <thead>
+ *      <tr>
+ *          <th>Namespace</th>
+ *          <th>Index name</th>
+ *          <th>Field mappings</th>
+ *      </tr>
+ *  </thead>
+ *  <tbody>
+ *      <tr>
+ *          <td>{@code sample_mflix.movies}</td>
+ *          <td>{@code default}</td>
+ *          <td><pre>{@code
+ *            {
+ *              "mappings": {
+ *                "dynamic": true,
+ *                "fields": {
+ *                  "fullplot": {
+ *                    "type": "stringFacet"
+ *                  },
+ *                  "released": {
+ *                    "type": "dateFacet"
+ *                  },
+ *                  "title": [
+ *                    {
+ *                      "multi": {
+ *                        "keyword": {
+ *                          "analyzer": "lucene.keyword",
+ *                          "searchAnalyzer": "lucene.keyword",
+ *                          "type": "string"
+ *                        }
+ *                      },
+ *                      "type": "string"
+ *                    },
+ *                    {
+ *                      "type": "autocomplete"
+ *                    }
+ *                  ],
+ *                  "tomatoes": {
+ *                    "fields": {
+ *                      "dvd": {
+ *                        "type": "date"
+ *                      },
+ *                      "viewer": {
+ *                        "fields": {
+ *                          "meter": {
+ *                            "type": "numberFacet"
+ *                          }
+ *                        },
+ *                        "type": "document"
+ *                      }
+ *                    },
+ *                    "type": "document"
+ *                  }
+ *                }
+ *              },
+ *              "storedSource": {
+ *                "include": [
+ *                  "plot"
+ *                ]
  *              }
- *            },
- *            "type": "string"
- *          },
- *          {
- *            "type": "autocomplete"
- *          }
- *        ],
- *        "tomatoes.viewer.meter": {
- *          "type": "numberFacet"
- *        }
- *      }
- *    },
- *    "storedSource": {
- *      "include": [
- *        "plot"
- *      ]
- *    }
- *  }
- * }</pre>
+ *            }
+ *          }</pre></td>
+ *      </tr>
+ *      <tr>
+ *          <td>{@code sample_airbnb.listingsAndReviews}</td>
+ *          <td>{@code default}</td>
+ *          <td><pre>{@code
+ *            {
+ *              "mappings": {
+ *                "dynamic": true,
+ *                "fields": {
+ *                  "address": {
+ *                    "fields": {
+ *                      "location": {
+ *                        "type": "geo"
+ *                      }
+ *                    },
+ *                    "type": "document"
+ *                  }
+ *                }
+ *              }
+ *            }
+ *          }</pre></td>
+ *      </tr>
+ *  </tbody>
+ * </table>
  */
 final class AggregatesSearchIntegrationTest {
-    private CollectionHelper<BsonDocument> collectionHelper;
+    private static final MongoNamespace MFLIX_MOVIES_NS = new MongoNamespace("sample_mflix", "movies");
+    private static final MongoNamespace AIRBNB_LISTINGS_AND_REVIEWS_NS = new MongoNamespace("sample_airbnb", "listingsAndReviews");
+    private static Map<MongoNamespace, CollectionHelper<BsonDocument>> collectionHelpers;
+
+    @BeforeAll
+    static void beforeAll() {
+        collectionHelpers = new HashMap<>();
+        collectionHelpers.put(MFLIX_MOVIES_NS, new CollectionHelper<>(new BsonDocumentCodec(), MFLIX_MOVIES_NS));
+        collectionHelpers.put(AIRBNB_LISTINGS_AND_REVIEWS_NS, new CollectionHelper<>(new BsonDocumentCodec(), AIRBNB_LISTINGS_AND_REVIEWS_NS));
+    }
 
     @BeforeEach
     void beforeEach() {
         assumeTrue(isAtlasSearchTest());
-        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), new MongoNamespace("sample_mflix", "movies"));
     }
 
     /**
@@ -155,6 +220,7 @@ final class AggregatesSearchIntegrationTest {
     void test(
             @SuppressWarnings("unused") final String testDescription,
             final CustomizableSearchStageCreator stageUnderTestCreator,
+            final MongoNamespace ns,
             final List<Accessory> accessories) {
         List<BiFunction<Bson, SearchOptions, Bson>> stageUnderTestCustomizers = asList(
                 (bsonOperatorOrCollector, options) -> {
@@ -185,13 +251,13 @@ final class AggregatesSearchIntegrationTest {
             pipeline.addAll(accessory.postStages);
             Supplier<String> msgSupplier = () -> "For reference, the pipeline (" + pipeline.size() + " elements) used in the test is\n[\n"
                     + pipeline.stream()
-                    .map(Bson::toBsonDocument)
+                    .map(stage -> stage.toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry()))
                     .map(doc -> doc.toJson(JsonWriterSettings.builder().indent(true).build()))
                     .collect(Collectors.joining(",\n"))
                     + "\n]\n";
             List<BsonDocument> results;
             try {
-                results = collectionHelper.aggregate(pipeline);
+                results = collectionHelpers.get(ns).aggregate(pipeline);
             } catch (RuntimeException e) {
                 throw new RuntimeException(msgSupplier.get(), e);
             }
@@ -200,7 +266,7 @@ final class AggregatesSearchIntegrationTest {
     }
 
     /**
-     * @see #test(String, CustomizableSearchStageCreator, List)
+     * @see #test(String, CustomizableSearchStageCreator, MongoNamespace, List)
      */
     private static Stream<Arguments> args() {
         return Stream.of(
@@ -210,6 +276,7 @@ final class AggregatesSearchIntegrationTest {
                                 exists(fieldPath("tomatoes.dvd")),
                                 null
                         ),
+                        MFLIX_MOVIES_NS,
                         asList(
                                 new Accessory(
                                         asList(limit(1), project(metaSearchScore("score"))),
@@ -231,6 +298,7 @@ final class AggregatesSearchIntegrationTest {
                                         .option("index", "default")
                                         .count(lowerBound().threshold(2_000))
                         ),
+                        MFLIX_MOVIES_NS,
                         asList(
                                 new Accessory(
                                         asList(limit(1), project(computedSearchMeta("meta"))),
@@ -252,6 +320,7 @@ final class AggregatesSearchIntegrationTest {
                                                 wildcardPath("pl*t")))
                                                 .maxCharsToExamine(100_000))
                         ),
+                        MFLIX_MOVIES_NS,
                         asList(
                                 new Accessory(
                                         asList(limit(1), project(metaSearchHighlights("highlights"))),
@@ -270,6 +339,7 @@ final class AggregatesSearchIntegrationTest {
                                 defaultSearchOptions()
                                         .returnStoredSource(true)
                         ),
+                        MFLIX_MOVIES_NS,
                         asList(
                                 new Accessory(
                                         singleton(limit(1)),
@@ -292,6 +362,7 @@ final class AggregatesSearchIntegrationTest {
                                 text(singleton("The Cheat"), singleton(fieldPath("title").multi("keyword"))),
                                 defaultSearchOptions().count(total())
                         ),
+                        MFLIX_MOVIES_NS,
                         asList(
                                 new Accessory(
                                         emptyList(),
@@ -329,6 +400,7 @@ final class AggregatesSearchIntegrationTest {
                                                                 Instant.now())))),
                                 defaultSearchOptions()
                         ),
+                        MFLIX_MOVIES_NS,
                         asList(
                                 new Accessory(
                                         asList(limit(1), project(computedSearchMeta("meta")), replaceWith("$meta")),
@@ -390,6 +462,7 @@ final class AggregatesSearchIntegrationTest {
                                 )),
                                 null
                         ),
+                        MFLIX_MOVIES_NS,
                         asList(
                                 new Accessory(
                                         emptyList(),
@@ -423,13 +496,39 @@ final class AggregatesSearchIntegrationTest {
                                         numberRange(asList(fieldPath("fieldName4"), fieldPath("fieldName5")))
                                                 .gtLt(1, 1.5),
                                         dateRange(fieldPath("fieldName6"))
-                                                .lte(Instant.ofEpochMilli(1))
+                                                .lte(Instant.ofEpochMilli(1)),
+                                        near(0, asList(fieldPath("fieldName7"), fieldPath("fieldName8")), 1.5),
+                                        near(Instant.ofEpochMilli(1), fieldPath("fieldName9"), Duration.ofMillis(3))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(
                                         compound().must(singleton(exists(fieldPath("fieldName")))))),
                                 null
                         ),
+                        MFLIX_MOVIES_NS,
+                        asList(
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.nonEmpty()
+                                ),
+                                new Accessory(
+                                        emptyList(),
+                                        Asserters.countLowerBound(0)
+                                )
+                        )
+                ),
+                arguments(
+                        "geo operators in a `compound` operator",
+                        stageCreator(compound()
+                                .should(singleton(
+                                        near(
+                                                new Point(new Position(114.15, 22.28)),
+                                                fieldPath("address.location"),
+                                                1234.5)
+                                )),
+                                null
+                        ),
+                        AIRBNB_LISTINGS_AND_REVIEWS_NS,
                         asList(
                                 new Accessory(
                                         emptyList(),
@@ -527,7 +626,9 @@ final class AggregatesSearchIntegrationTest {
         private final Collection<Bson> postStages;
         private final BiConsumer<List<BsonDocument>, Supplier<String>> resultAsserter;
 
-        Accessory(final Collection<Bson> postStages, final BiConsumer<List<BsonDocument>, Supplier<String>> resultAsserter) {
+        Accessory(
+                final Collection<Bson> postStages,
+                final BiConsumer<List<BsonDocument>, Supplier<String>> resultAsserter) {
             this.postStages = postStages;
             this.resultAsserter = resultAsserter;
         }

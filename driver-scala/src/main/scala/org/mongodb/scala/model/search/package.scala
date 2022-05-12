@@ -135,6 +135,27 @@ package object search {
   @Evolving
   type RangeSearchOperator[T] = com.mongodb.client.model.search.RangeSearchOperator[T]
 
+  @Evolving
+  type NearSearchOperator = com.mongodb.client.model.search.NearSearchOperator
+
+  /**
+   * @see `SearchOperator.near`
+   */
+  @Evolving
+  type NumberNearSearchOperator = com.mongodb.client.model.search.NumberNearSearchOperator
+
+  /**
+   * @see `SearchOperator.near`
+   */
+  @Evolving
+  type DateNearSearchOperator = com.mongodb.client.model.search.DateNearSearchOperator
+
+  /**
+   * @see `SearchOperator.near`
+   */
+  @Evolving
+  type GeoNearSearchOperator = com.mongodb.client.model.search.GeoNearSearchOperator
+
   /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.
    *

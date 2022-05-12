@@ -19,13 +19,22 @@ import org.bson.BsonDocument
 import org.mongodb.scala.{ BaseSpec, MongoClient }
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.geojson.{ Point, Position }
 import org.mongodb.scala.model.search.SearchFuzzy.defaultSearchFuzzy
-import org.mongodb.scala.model.search.SearchOperator.{ autocomplete, compound, dateRange, exists, numberRange, text }
+import org.mongodb.scala.model.search.SearchOperator.{
+  autocomplete,
+  compound,
+  dateRange,
+  exists,
+  near,
+  numberRange,
+  text
+}
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 import org.mongodb.scala.model.search.SearchScore.function
 import org.mongodb.scala.model.search.SearchScoreExpression.{ constantExpression, logExpression }
 
-import java.time.Instant
+import java.time.{ Duration, Instant }
 import scala.collection.JavaConverters._
 
 class SearchOperatorSpec extends BaseSpec {
@@ -53,7 +62,10 @@ class SearchOperatorSpec extends BaseSpec {
           numberRange(Seq(fieldPath("fieldName4"), fieldPath("fieldName5")))
             .gtLt(1, 1.5),
           dateRange(fieldPath("fieldName6"))
-            .lte(Instant.ofEpochMilli(1))
+            .lte(Instant.ofEpochMilli(1)),
+          near(0, Seq(fieldPath("fieldName7"), fieldPath("fieldName8")), 1.5),
+          near(Instant.ofEpochMilli(1), fieldPath("fieldName9"), Duration.ofMillis(3)),
+          near(Point(Position(114.15, 22.28)), fieldPath("address.location"), 1234.5)
         ).asJava)
         .minimumShouldMatch(1)
         .mustNot(Seq(
@@ -72,7 +84,10 @@ class SearchOperatorSpec extends BaseSpec {
             { "autocomplete": { "query": "term4", "path": "title" } },
             { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } },
             { "range": { "path": [ "fieldName4", "fieldName5" ], "gt": 1, "lt": 1.5 } },
-            { "range": { "path": "fieldName6", "lte": {"$date": "1970-01-01T00:00:00.001Z"} } }
+            { "range": { "path": "fieldName6", "lte": { "$date": "1970-01-01T00:00:00.001Z" } } },
+            { "near": { "origin": 0, "path": [ "fieldName7", "fieldName8" ], "pivot": 1.5 } },
+            { "near": { "origin": { "$date": "1970-01-01T00:00:00.001Z" }, "path": "fieldName9", "pivot": { "$numberLong": "3" } } },
+            { "near": { "origin": { type: "Point", coordinates: [ 114.15, 22.28 ] }, "path": "address.location", "pivot": 1234.5 } }
           ],
           "minimumShouldMatch": 1,
           "mustNot": [
