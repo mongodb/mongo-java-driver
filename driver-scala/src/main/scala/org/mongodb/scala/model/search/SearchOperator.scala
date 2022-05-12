@@ -128,7 +128,7 @@ object SearchOperator {
    * Returns a base for a `SearchOperator` that tests if the
    * BSON `Date` values of the specified fields are within an interval.
    *
-   * @param paths Non-empty fields to be searched.
+   * @param paths The non-empty fields to be searched.
    * @return A base for a `RangeSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
    */
