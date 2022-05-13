@@ -19,6 +19,8 @@ package com.mongodb.client.model;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Options for cluster index on a collection.
  *
@@ -38,7 +40,7 @@ public class ClusteredIndexOptions {
      * @param unique whether the index entries must be unique, which currently must be true
      */
     public ClusteredIndexOptions(final Bson key, final boolean unique) {
-        this.key = key;
+        this.key = notNull("key", key);
         this.unique = unique;
     }
 
@@ -72,9 +74,11 @@ public class ClusteredIndexOptions {
     /**
      * Sets the index name
      * @param name the index name
+     * @return this
      */
-    public void name(final String name) {
+    public ClusteredIndexOptions name(final String name) {
         this.name = name;
+        return this;
     }
 
     @Override

@@ -369,7 +369,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
-    public CreateCollectionOperation clusteredIndexName(final String clusteredIndexName) {
+    public CreateCollectionOperation clusteredIndexName(@Nullable final String clusteredIndexName) {
         this.clusteredIndexName = clusteredIndexName;
         return this;
     }
