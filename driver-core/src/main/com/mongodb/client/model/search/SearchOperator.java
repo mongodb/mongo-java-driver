@@ -136,7 +136,7 @@ public interface SearchOperator extends Bson {
      * @return A base for a {@link RangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static RangeSearchOperatorBase<Number> numberRange(final FieldSearchPath path) {
+    static NumberRangeSearchOperatorBase numberRange(final FieldSearchPath path) {
         return numberRange(singleton(notNull("path", path)));
     }
 
@@ -149,10 +149,10 @@ public interface SearchOperator extends Bson {
      * @return A base for a {@link RangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static RangeSearchOperatorBase<Number> numberRange(final Iterable<? extends FieldSearchPath> paths) {
+    static NumberRangeSearchOperatorBase numberRange(final Iterable<? extends FieldSearchPath> paths) {
         Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
         isTrueArgument("paths must not be empty", pathIterator.hasNext());
-        return new RangeConstructibleBsonElement<>("range", new Document("path", combineToBsonValue(pathIterator, true)));
+        return new NumberRangeConstructibleBsonElement("range", new Document("path", combineToBsonValue(pathIterator, true)));
     }
 
     /**
@@ -163,7 +163,7 @@ public interface SearchOperator extends Bson {
      * @return A base for a {@link RangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static RangeSearchOperatorBase<Instant> dateRange(final FieldSearchPath path) {
+    static DateRangeSearchOperatorBase dateRange(final FieldSearchPath path) {
         return dateRange(singleton(notNull("path", path)));
     }
 
@@ -175,10 +175,10 @@ public interface SearchOperator extends Bson {
      * @return A base for a {@link RangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static RangeSearchOperatorBase<Instant> dateRange(final Iterable<? extends FieldSearchPath> paths) {
+    static DateRangeSearchOperatorBase dateRange(final Iterable<? extends FieldSearchPath> paths) {
         Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
         isTrueArgument("paths must not be empty", pathIterator.hasNext());
-        return new RangeConstructibleBsonElement<>("range", new Document("path", combineToBsonValue(pathIterator, true)));
+        return new DateRangeConstructibleBsonElement("range", new Document("path", combineToBsonValue(pathIterator, true)));
     }
 
     /**

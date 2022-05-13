@@ -19,7 +19,9 @@ import com.mongodb.annotations.Evolving;
 
 /**
  * @param <T> {@inheritDoc}
+ * @see SearchOperator#numberRange(FieldSearchPath)
  * @see SearchOperator#numberRange(Iterable)
+ * @see SearchOperator#dateRange(FieldSearchPath)
  * @see SearchOperator#dateRange(Iterable)
  * @since 4.7
  */

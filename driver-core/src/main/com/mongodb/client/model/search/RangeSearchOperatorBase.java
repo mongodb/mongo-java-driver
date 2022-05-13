@@ -18,11 +18,12 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
- * A base for a {@link RangeSearchOperator} which allows creating instances of this operator.
  * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
  *
  * @param <T> The type of the bounds.
+ * @see SearchOperator#numberRange(FieldSearchPath)
  * @see SearchOperator#numberRange(Iterable)
+ * @see SearchOperator#dateRange(FieldSearchPath)
  * @see SearchOperator#dateRange(Iterable)
  * @since 4.7
  */

@@ -117,7 +117,6 @@ package object search {
   type AutocompleteSearchOperator = com.mongodb.client.model.search.AutocompleteSearchOperator
 
   /**
-   * A base for a [[RangeSearchOperatorBase]] which allows creating instances of this operator.
    * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
    *
    * @tparam T The type of the bounds.
@@ -128,6 +127,24 @@ package object search {
   type RangeSearchOperatorBase[T] = com.mongodb.client.model.search.RangeSearchOperatorBase[T]
 
   /**
+   * A base for a [[NumberRangeSearchOperatorBase]] which allows creating instances of this operator.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
+   * @see `SearchOperator.numberRange`
+   */
+  @Evolving
+  type NumberRangeSearchOperatorBase = com.mongodb.client.model.search.NumberRangeSearchOperatorBase
+
+  /**
+   * A base for a [[DateRangeSearchOperatorBase]] which allows creating instances of this operator.
+   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
+   *
+   * @see `SearchOperator.dateRange`
+   */
+  @Evolving
+  type DateRangeSearchOperatorBase = com.mongodb.client.model.search.DateRangeSearchOperatorBase
+
+  /**
    * @tparam T The type of the bounds.
    * @see `SearchOperator.numberRange`
    * @see `SearchOperator.dateRange`
@@ -135,6 +152,21 @@ package object search {
   @Evolving
   type RangeSearchOperator[T] = com.mongodb.client.model.search.RangeSearchOperator[T]
 
+  /**
+   * @see `SearchOperator.numberRange`
+   */
+  @Evolving
+  type NumberRangeSearchOperator = com.mongodb.client.model.search.NumberRangeSearchOperator
+
+  /**
+   * @see `SearchOperator.dateRange`
+   */
+  @Evolving
+  type DateRangeSearchOperator = com.mongodb.client.model.search.DateRangeSearchOperator
+
+  /**
+   * @see `SearchOperator.near`
+   */
   @Evolving
   type NearSearchOperator = com.mongodb.client.model.search.NearSearchOperator
 

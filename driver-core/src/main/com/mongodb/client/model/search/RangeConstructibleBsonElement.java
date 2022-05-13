@@ -22,63 +22,58 @@ import org.bson.conversions.Bson;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
-final class RangeConstructibleBsonElement<T> extends AbstractConstructibleBsonElement<RangeConstructibleBsonElement<T>> implements
-        RangeSearchOperator<T> {
+abstract class RangeConstructibleBsonElement<T, S extends RangeConstructibleBsonElement<T, S>> extends AbstractConstructibleBsonElement<S>
+        implements RangeSearchOperator<T> {
     RangeConstructibleBsonElement(final String name, final Bson value) {
         super(name, value);
     }
 
     @Override
-    protected RangeConstructibleBsonElement<T> newSelf(final String name, final Bson value) {
-        return new RangeConstructibleBsonElement<>(name, value);
-    }
-
-    @Override
-    public RangeConstructibleBsonElement<T> score(final SearchScore modifier) {
+    public final S score(final SearchScore modifier) {
         return newWithAppendedValue("score", notNull("modifier", modifier));
     }
 
     @Override
-    public RangeSearchOperator<T> gt(final T l) {
+    public S gt(final T l) {
         return newWithMutatedValue(l, false, null, false);
     }
 
     @Override
-    public RangeSearchOperator<T> lt(final T u) {
+    public S lt(final T u) {
         return newWithMutatedValue(null, false, u, false);
     }
 
     @Override
-    public RangeSearchOperator<T> gte(final T l) {
+    public S gte(final T l) {
         return newWithMutatedValue(l, true, null, false);
     }
 
     @Override
-    public RangeSearchOperator<T> lte(final T u) {
+    public S lte(final T u) {
         return newWithMutatedValue(null, false, u, true);
     }
 
     @Override
-    public RangeSearchOperator<T> gtLt(final T l, final T u) {
+    public S gtLt(final T l, final T u) {
         return newWithMutatedValue(l, false, u, false);
     }
 
     @Override
-    public RangeSearchOperator<T> gteLte(final T l, final T u) {
+    public S gteLte(final T l, final T u) {
         return newWithMutatedValue(l, true, u, true);
     }
 
     @Override
-    public RangeSearchOperator<T> gtLte(final T l, final T u) {
+    public S gtLte(final T l, final T u) {
         return newWithMutatedValue(l, false, u, true);
     }
 
     @Override
-    public RangeSearchOperator<T> gteLt(final T l, final T u) {
+    public S gteLt(final T l, final T u) {
         return newWithMutatedValue(l, true, u, false);
     }
 
-    private RangeConstructibleBsonElement<T> newWithMutatedValue(
+    private S newWithMutatedValue(
             @Nullable final T l, final boolean includeL,
             @Nullable final T u, final boolean includeU) {
         if (l == null) {

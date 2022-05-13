@@ -16,22 +16,14 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
-import com.mongodb.client.model.geojson.Point;
-
-import java.time.Duration;
-import java.time.Instant;
 
 /**
- * @see SearchOperator#near(Number, FieldSearchPath, Number)
- * @see SearchOperator#near(Number, Iterable, Number)
- * @see SearchOperator#near(Instant, FieldSearchPath, Duration)
- * @see SearchOperator#near(Instant, Iterable, Duration)
- * @see SearchOperator#near(Point, FieldSearchPath, Number)
- * @see SearchOperator#near(Point, Iterable, Number)
+ * @see SearchOperator#numberRange(FieldSearchPath)
+ * @see SearchOperator#numberRange(Iterable)
  * @since 4.7
  */
 @Evolving
-public interface NearSearchOperator extends SearchOperator {
+public interface NumberRangeSearchOperator extends NumberRangeSearchOperatorBase, RangeSearchOperator<Number> {
     @Override
-    NearSearchOperator score(SearchScore modifier);
+    NumberRangeSearchOperator score(SearchScore modifier);
 }
