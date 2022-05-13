@@ -82,11 +82,11 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     @Override
     public void writeEndDocument() {
         if (isWritingId()) {
-            if (getIdBsonWriter().getCurrentLevel() >= 0) {
+            if (getIdBsonWriterCurrentLevel() >= 0) {
                 getIdBsonWriter().writeEndDocument();
             }
 
-            if (getIdBsonWriter().getCurrentLevel() == -1) {
+            if (getIdBsonWriterCurrentLevel() == -1) {
                 if (id != null && id.isJavaScriptWithScope()) {
                     id = new BsonJavaScriptWithScope(id.asJavaScriptWithScope().getCode(), new RawBsonDocument(getBytes()));
                 } else if (id == null) {
@@ -105,7 +105,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     @Override
     public void writeStartArray() {
         if (isWritingId()) {
-            if (getIdBsonWriter().getCurrentLevel() == -1) {
+            if (getIdBsonWriterCurrentLevel() == -1) {
                 idFieldIsAnArray = true;
                 getIdBsonWriter().writeStartDocument();
                 getIdBsonWriter().writeName(ID_FIELD_NAME);
@@ -119,7 +119,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     public void writeStartArray(final String name) {
         setCurrentFieldName(name);
         if (isWritingId()) {
-            if (getIdBsonWriter().getCurrentLevel() == -1) {
+            if (getIdBsonWriterCurrentLevel() == -1) {
                 getIdBsonWriter().writeStartDocument();
             }
             getIdBsonWriter().writeStartArray(name);
@@ -131,7 +131,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     public void writeEndArray() {
         if (isWritingId()) {
             getIdBsonWriter().writeEndArray();
-            if (getIdBsonWriter().getCurrentLevel() == 0 && idFieldIsAnArray) {
+            if (getIdBsonWriterCurrentLevel() == 0 && idFieldIsAnArray) {
                 getIdBsonWriter().writeEndDocument();
                 id = new RawBsonDocument(getBytes()).get(ID_FIELD_NAME);
             }
@@ -278,7 +278,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeMaxKey() {
-        addBsonValue(BsonMaxKey::new, idBsonBinaryWriter::writeMaxKey);
+        addBsonValue(BsonMaxKey::new, getIdBsonWriter()::writeMaxKey);
         super.writeMaxKey();
     }
 
@@ -291,14 +291,14 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeMinKey() {
-        addBsonValue(BsonMinKey::new, idBsonBinaryWriter::writeMinKey);
+        addBsonValue(BsonMinKey::new, getIdBsonWriter()::writeMinKey);
         super.writeMinKey();
     }
 
     @Override
     public void writeName(final String name) {
         setCurrentFieldName(name);
-        if (getIdBsonWriter().getCurrentLevel() >= 0) {
+        if (getIdBsonWriterCurrentLevel() >= 0) {
             getIdBsonWriter().writeName(name);
         }
         super.writeName(name);
@@ -313,7 +313,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeNull() {
-        addBsonValue(BsonNull::new, idBsonBinaryWriter::writeNull);
+        addBsonValue(BsonNull::new, getIdBsonWriter()::writeNull);
         super.writeNull();
     }
 
@@ -391,7 +391,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeUndefined() {
-        addBsonValue(BsonUndefined::new, idBsonBinaryWriter::writeUndefined);
+        addBsonValue(BsonUndefined::new, getIdBsonWriter()::writeUndefined);
         super.writeUndefined();
     }
 
@@ -414,13 +414,13 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     }
 
     private boolean isWritingId() {
-        return getIdBsonWriter().getCurrentLevel() >= 0 || (getCurrentLevel() == 0 && currentFieldName != null
+        return getIdBsonWriterCurrentLevel() >= 0 || (getCurrentLevel() == 0 && currentFieldName != null
                 && currentFieldName.equals(ID_FIELD_NAME));
     }
 
     private void addBsonValue(final Supplier<BsonValue> value, final Runnable writeValue) {
         if (isWritingId()) {
-            if (getIdBsonWriter().getCurrentLevel() >= 0) {
+            if (getIdBsonWriterCurrentLevel() >= 0) {
                 writeValue.run();
             } else {
                 id = value.get();
@@ -428,9 +428,13 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
         }
     }
 
+    private int getIdBsonWriterCurrentLevel() {
+        return idBsonBinaryWriter == null ? -1 : idBsonBinaryWriter.getCurrentLevel();
+    }
+
     private LevelCountingBsonWriter getIdBsonWriter() {
         if (idBsonBinaryWriter == null) {
-            outputBuffer = new BasicOutputBuffer();
+            outputBuffer = new BasicOutputBuffer(128);
             idBsonBinaryWriter = new LevelCountingBsonWriter(new BsonBinaryWriter(outputBuffer)){};
         }
         return idBsonBinaryWriter;
