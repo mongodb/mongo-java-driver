@@ -47,10 +47,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
 
     protected AbstractConstructibleBsonElement(final String name, final Bson value) {
         this.name = name;
-        this.value = value instanceof AbstractConstructibleBson
-                // prevent double wrapping
-                ? (AbstractConstructibleBson<?>) value
-                : AbstractConstructibleBson.of(value);
+        this.value = AbstractConstructibleBson.of(value);
     }
 
     protected abstract S newSelf(String name, Bson value);
