@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.TimeSeriesGranularity;
 import com.mongodb.client.model.TimeSeriesOptions;
@@ -72,6 +73,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private Collation collation = null;
     private long expireAfterSeconds;
     private TimeSeriesOptions timeSeriesOptions;
+    private ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions;
     private BsonDocument clusteredIndexKey;
     private boolean clusteredIndexUnique;
     private String clusteredIndexName;
@@ -359,6 +361,13 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
+
+    public CreateCollectionOperation changeStreamPreAndPostImagesOptions(
+            @Nullable final ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions) {
+        this.changeStreamPreAndPostImagesOptions = changeStreamPreAndPostImagesOptions;
+        return this;
+    }
+
     public CreateCollectionOperation clusteredIndexKey(final BsonDocument clusteredIndexKey) {
         this.clusteredIndexKey = clusteredIndexKey;
         return this;
@@ -452,6 +461,10 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 timeSeriesDocument.put("granularity", new BsonString(getGranularityAsString(granularity)));
             }
             document.put("timeseries", timeSeriesDocument);
+        }
+        if (changeStreamPreAndPostImagesOptions != null) {
+            document.put("changeStreamPreAndPostImages", new BsonDocument("enabled",
+                    BsonBoolean.valueOf(changeStreamPreAndPostImagesOptions.isEnabled())));
         }
         if (clusteredIndexKey != null) {
             BsonDocument clusteredIndexDocument = new BsonDocument()

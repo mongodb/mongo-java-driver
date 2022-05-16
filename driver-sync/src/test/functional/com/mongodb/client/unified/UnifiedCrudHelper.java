@@ -39,6 +39,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -998,6 +999,9 @@ final class UnifiedCrudHelper {
                     case "timeseries":
                         options.timeSeriesOptions(createTimeSeriesOptions(cur.getValue().asDocument()));
                         break;
+                    case "changeStreamPreAndPostImages":
+                        options.changeStreamPreAndPostImagesOptions(createChangeStreamPreAndPostImagesOptions(cur.getValue().asDocument()));
+                        break;
                     case "clusteredIndex":
                         options.clusteredIndexOptions(createClusteredIndexOptions(cur.getValue().asDocument()));
                         break;
@@ -1080,6 +1084,14 @@ final class UnifiedCrudHelper {
             }
         }
         return options;
+    }
+
+    private ChangeStreamPreAndPostImagesOptions createChangeStreamPreAndPostImagesOptions(
+            final BsonDocument changeStreamPreAndPostImagesDocument) {
+        ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions =
+                new ChangeStreamPreAndPostImagesOptions(changeStreamPreAndPostImagesDocument.getBoolean("enabled").getValue());
+
+        return changeStreamPreAndPostImagesOptions;
     }
 
     private TimeSeriesGranularity createTimeSeriesGranularity(final String value) {

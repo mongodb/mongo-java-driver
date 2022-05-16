@@ -196,6 +196,19 @@ package object model {
   type TimeSeriesGranularity = com.mongodb.client.model.TimeSeriesGranularity
 
   /**
+   * Options for change stream pre- and post- images
+   */
+  type ChangeStreamPreAndPostImagesOptions = com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions
+
+  /**
+   * Options for change stream pre- and post- images
+   */
+  object ChangeStreamPreAndPostImagesOptions {
+    def apply(enabled: Boolean): ChangeStreamPreAndPostImagesOptions =
+      new com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions(enabled)
+  }
+
+  /**
    * Options for creating a view
    *
    * @since 1.2

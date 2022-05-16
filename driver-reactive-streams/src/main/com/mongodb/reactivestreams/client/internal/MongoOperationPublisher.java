@@ -230,7 +230,8 @@ public final class MongoOperationPublisher<T> {
                             .storageEngineOptions(toBsonDocument(options.getStorageEngineOptions()))
                             .collation(options.getCollation())
                             .expireAfter(options.getExpireAfter(TimeUnit.SECONDS))
-                            .timeSeriesOptions(options.getTimeSeriesOptions());
+                            .timeSeriesOptions(options.getTimeSeriesOptions())
+                            .changeStreamPreAndPostImagesOptions(options.getChangeStreamPreAndPostImagesOptions());
 
             ClusteredIndexOptions clusteredIndexOptions = options.getClusteredIndexOptions();
             if (clusteredIndexOptions != null) {
