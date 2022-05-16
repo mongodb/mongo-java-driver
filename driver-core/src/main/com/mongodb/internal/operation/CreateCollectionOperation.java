@@ -72,6 +72,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private Collation collation = null;
     private long expireAfterSeconds;
     private TimeSeriesOptions timeSeriesOptions;
+    private BsonDocument clusteredIndexKey;
+    private boolean clusteredIndexUnique;
+    private String clusteredIndexName;
 
     /**
      * Construct a new instance.
@@ -356,6 +359,21 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
+    public CreateCollectionOperation clusteredIndexKey(final BsonDocument clusteredIndexKey) {
+        this.clusteredIndexKey = clusteredIndexKey;
+        return this;
+    }
+
+    public CreateCollectionOperation clusteredIndexUnique(final boolean clusteredIndexUnique) {
+        this.clusteredIndexUnique = clusteredIndexUnique;
+        return this;
+    }
+
+    public CreateCollectionOperation clusteredIndexName(@Nullable final String clusteredIndexName) {
+        this.clusteredIndexName = clusteredIndexName;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {
@@ -434,6 +452,15 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 timeSeriesDocument.put("granularity", new BsonString(getGranularityAsString(granularity)));
             }
             document.put("timeseries", timeSeriesDocument);
+        }
+        if (clusteredIndexKey != null) {
+            BsonDocument clusteredIndexDocument = new BsonDocument()
+                    .append("key", clusteredIndexKey)
+                    .append("unique", BsonBoolean.valueOf(clusteredIndexUnique));
+            if (clusteredIndexName != null) {
+                clusteredIndexDocument.put("name", new BsonString(clusteredIndexName));
+            }
+            document.put("clusteredIndex", clusteredIndexDocument);
         }
         return document;
     }
