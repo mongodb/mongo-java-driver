@@ -73,6 +73,14 @@ configure(coreProjects) {
         mavenLocal()
         google()
         mavenCentral()
+        // TODO temp remove once JAVA-4616
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+            content {
+                // Only include mongodb-crypt snapshots
+                includeGroup "org.mongodb"
+            }
+        }
     }
 }
 
