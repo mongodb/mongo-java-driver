@@ -46,7 +46,8 @@ import static org.bson.assertions.Assertions.notNull;
  *     <li>An optional {@linkplain Window window}, a.k.a. frame.
  *     Specifying {@code null} window is equivalent to specifying an unbounded window,
  *     i.e., a window with both ends specified as {@link Bound#UNBOUNDED}.
- *     Some window functions require to specify an explicit unbounded window instead of specifying {@code null}.</li>
+ *     Some window functions, e.g., {@link #derivative(String, Object, Window)},
+ *     require an explicit unbounded window instead of {@code null}.</li>
  *     <li>A path to an output field to be computed by the window function over the window.</li>
  * </ul>
  * A windowed computation is similar to an {@linkplain Accumulators accumulator} but does not result in folding documents constituting
