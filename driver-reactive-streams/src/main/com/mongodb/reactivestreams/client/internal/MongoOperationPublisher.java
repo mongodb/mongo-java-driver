@@ -29,6 +29,7 @@ import com.mongodb.WriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateIndexOptions;
@@ -230,6 +231,13 @@ public final class MongoOperationPublisher<T> {
                             .collation(options.getCollation())
                             .expireAfter(options.getExpireAfter(TimeUnit.SECONDS))
                             .timeSeriesOptions(options.getTimeSeriesOptions());
+
+            ClusteredIndexOptions clusteredIndexOptions = options.getClusteredIndexOptions();
+            if (clusteredIndexOptions != null) {
+                operation.clusteredIndexKey(toBsonDocument(clusteredIndexOptions.getKey()));
+                operation.clusteredIndexUnique(clusteredIndexOptions.isUnique());
+                operation.clusteredIndexName(clusteredIndexOptions.getName());
+            }
 
             IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
             Bson storageEngine = indexOptionDefaults.getStorageEngine();

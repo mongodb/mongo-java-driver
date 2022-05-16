@@ -29,6 +29,7 @@ import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
@@ -292,6 +293,13 @@ public class MongoDatabaseImpl implements MongoDatabase {
                 .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()))
                 .expireAfter(createCollectionOptions.getExpireAfter(TimeUnit.SECONDS))
                 .timeSeriesOptions(createCollectionOptions.getTimeSeriesOptions());
+
+        ClusteredIndexOptions clusteredIndexOptions = createCollectionOptions.getClusteredIndexOptions();
+        if (clusteredIndexOptions != null) {
+            operation.clusteredIndexKey(toBsonDocument(clusteredIndexOptions.getKey()));
+            operation.clusteredIndexUnique(clusteredIndexOptions.isUnique());
+            operation.clusteredIndexName(clusteredIndexOptions.getName());
+        }
 
         IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
         Bson storageEngine = indexOptionDefaults.getStorageEngine();

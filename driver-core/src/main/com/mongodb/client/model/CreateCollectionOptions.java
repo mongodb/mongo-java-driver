@@ -40,6 +40,7 @@ public class CreateCollectionOptions {
     private Collation collation;
     private long expireAfterSeconds;
     private TimeSeriesOptions timeSeriesOptions;
+    private ClusteredIndexOptions clusteredIndexOptions;
 
     /**
      * Gets the maximum number of documents allowed in a capped collection.
@@ -261,6 +262,29 @@ public class CreateCollectionOptions {
      */
     public CreateCollectionOptions timeSeriesOptions(final TimeSeriesOptions timeSeriesOptions) {
         this.timeSeriesOptions = timeSeriesOptions;
+        return this;
+    }
+
+    /**
+     * Gets the clustered index collection options.
+     *
+     * @return the options for a clustered index
+     * @since 4.7
+     */
+    @Nullable
+    public ClusteredIndexOptions getClusteredIndexOptions() {
+        return clusteredIndexOptions;
+    }
+
+    /**
+     * Sets the clustered index collection options.
+     *
+     * @param clusteredIndexOptions the clustered index options
+     * @return this
+     * @since 4.7
+     */
+    public CreateCollectionOptions clusteredIndexOptions(final ClusteredIndexOptions clusteredIndexOptions) {
+        this.clusteredIndexOptions = clusteredIndexOptions;
         return this;
     }
 
