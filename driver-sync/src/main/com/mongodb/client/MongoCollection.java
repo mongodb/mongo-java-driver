@@ -813,6 +813,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      * @see com.mongodb.client.MongoCollection#bulkWrite
      */
     InsertManyResult insertMany(List<? extends TDocument> documents);
@@ -827,6 +828,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      */
     InsertManyResult insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
@@ -840,6 +842,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      * @see com.mongodb.client.MongoCollection#bulkWrite
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -857,6 +860,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      * @since 3.6
      * @mongodb.server.release 3.6
      */
