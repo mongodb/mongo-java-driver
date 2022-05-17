@@ -72,10 +72,11 @@ public final class DefaultClusterFactory {
                                  final ConnectionPoolSettings connectionPoolSettings,
                                  final InternalConnectionPoolSettings internalConnectionPoolSettings,
                                  final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
-                                 final @Nullable MongoCredential credential,
-                                 final CommandListener commandListener, final String applicationName,
+                                 @Nullable final MongoCredential credential,
+                                 final CommandListener commandListener,
+                                 @Nullable final String applicationName,
                                  final MongoDriverInformation mongoDriverInformation,
-                                 final List<MongoCompressor> compressorList, final @Nullable ServerApi serverApi) {
+                                 final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
 
         ClusterId clusterId = new ClusterId();
         ClusterSettings clusterSettings;
