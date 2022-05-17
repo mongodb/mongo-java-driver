@@ -204,7 +204,7 @@ class Crypt implements Closeable {
 
             EncryptOptions.QueryType queryType = options.getQueryType();
             if (queryType != null) {
-                encryptOptionsBuilder.queryType(MongoExplicitEncryptOptions.QueryType.fromInteger(queryType.getQueryType()));
+                encryptOptionsBuilder.queryType(MongoExplicitEncryptOptions.QueryType.valueOf(queryType.name()));
             }
 
             MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(

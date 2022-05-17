@@ -37,15 +37,7 @@ public class EncryptOptions {
      * @since 4.6
      */
     public enum QueryType {
-        EQUALITY(1);
-        private final int queryType;
-        QueryType(final int queryType) {
-            this.queryType = queryType;
-        }
-
-        public int getQueryType() {
-            return queryType;
-        }
+        EQUALITY
     }
 
     /**

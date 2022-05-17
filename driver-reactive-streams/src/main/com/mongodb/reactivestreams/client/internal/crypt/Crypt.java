@@ -174,7 +174,7 @@ public class Crypt implements Closeable {
             }
 
             if (options.getQueryType() != null) {
-                encryptOptionsBuilder.queryType(MongoExplicitEncryptOptions.QueryType.fromInteger(options.getQueryType().getQueryType()));
+                encryptOptionsBuilder.queryType(MongoExplicitEncryptOptions.QueryType.valueOf(options.getQueryType().name()));
             }
 
             return mongoCrypt.createExplicitEncryptionContext(new BsonDocument("v", value), encryptOptionsBuilder.build());
