@@ -197,13 +197,12 @@ public final class AutoEncryptionSettings {
          * Maps a collection namespace to an encryptedFields.
          *
          * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
-         * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, libmongocrypt will error on
-         * initialization.
+         * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.
          * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code createCollection()} and
          * {@code collection.drop()} is altered.
          *
          * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
-         * used by libmongocrypt.
+         * used by the driver.
          *
          * @param encryptedFieldsMap the mapping of the collection namespace to the encryptedFields
          * @return this
@@ -440,13 +439,12 @@ public final class AutoEncryptionSettings {
      * Gets the mapping of a collection namespace to encryptedFields.
      *
      * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
-     * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, libmongocrypt will error on
-     * initialization.
+     * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.
      * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code createCollection()} and
      * {@code collection.drop()} is altered.
      *
      * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
-     * used by libmongocrypt.
+     * used by the driver.
      *
      * @return the mapping of the collection namespaces to encryptedFields
      * @since 4.7
