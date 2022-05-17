@@ -198,8 +198,8 @@ class Crypt implements Closeable {
                 encryptOptionsBuilder.keyAltName(options.getKeyAltName());
             }
 
-            if (options.getContentFactor() != null) {
-                encryptOptionsBuilder.contentFactor(options.getContentFactor());
+            if (options.getContentionFactor() != null) {
+                encryptOptionsBuilder.contentionFactor(options.getContentionFactor());
             }
 
             EncryptOptions.QueryType queryType = options.getQueryType();

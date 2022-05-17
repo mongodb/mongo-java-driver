@@ -28,7 +28,7 @@ public class EncryptOptions {
     private BsonBinary keyId;
     private String keyAltName;
     private final String algorithm;
-    private Long contentFactor;
+    private Long contentionFactor;
     private QueryType queryType;
 
     /**
@@ -130,25 +130,25 @@ public class EncryptOptions {
      * The contention factor.
      *
      * <p>It is an error to set contentionFactor when algorithm is not "Indexed".
-     * @param contentFactor the content factor
+     * @param contentionFactor the contention factor
      * @return this
      * @since 4.6
      */
-    public EncryptOptions contentFactor(@Nullable final Long contentFactor) {
-        this.contentFactor = contentFactor;
+    public EncryptOptions contentionFactor(@Nullable final Long contentionFactor) {
+        this.contentionFactor = contentionFactor;
         return this;
     }
 
     /**
      * Gets the contention factor.
      *
-     * @see #contentFactor(Long)
-     * @return the content factor
+     * @see #contentionFactor(Long)
+     * @return the contention factor
      * @since 4.6
      */
     @Nullable
-    public Long getContentFactor() {
-        return contentFactor;
+    public Long getContentionFactor() {
+        return contentionFactor;
     }
 
     /**
@@ -183,7 +183,7 @@ public class EncryptOptions {
                 + "keyId=" + keyId
                 + ", keyAltName='" + keyAltName + '\''
                 + ", algorithm='" + algorithm + '\''
-                + ", contentFactor=" + contentFactor
+                + ", contentionFactor=" + contentionFactor
                 + ", queryType=" + queryType
                 + '}';
     }

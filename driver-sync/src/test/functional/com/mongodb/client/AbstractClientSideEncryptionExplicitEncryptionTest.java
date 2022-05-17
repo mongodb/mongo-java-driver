@@ -144,7 +144,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
 
     @Test
     public void canInsertEncryptedIndexedAndFindWithNonZeroContention() {
-        EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentFactor(10L);
+        EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L);
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
                 .getCollection("explicit_encryption", BsonDocument.class);
 
@@ -162,7 +162,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
             assertEquals(ENCRYPTED_INDEXED_VALUE, v.get("encryptedIndexed"))
         );
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentFactor(10L).queryType(EncryptOptions.QueryType.EQUALITY);
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L).queryType(EncryptOptions.QueryType.EQUALITY);
         BsonBinary findPayload2 = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         values = coll.find(new BsonDocument("encryptedIndexed", findPayload2)).into(new ArrayList<>());
