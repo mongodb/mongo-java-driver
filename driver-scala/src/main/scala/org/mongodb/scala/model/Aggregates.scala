@@ -462,8 +462,8 @@ object Aggregates {
    * documents belonging to the same partition or window are not folded into a single document.
    *
    * @param partitionBy Optional partitioning of data specified like `id` in [[Aggregates.group]].
-   *                    If `null`, then all documents belong to the same partition.
-   * @param sortBy      Fields to sort by. May be `null`. The syntax is identical to `sort` in [[Aggregates.sort]] (see [[Sorts]]).
+   *                    If `None`, then all documents belong to the same partition.
+   * @param sortBy      Fields to sort by. The syntax is identical to `sort` in [[Aggregates.sort]] (see [[Sorts]]).
    *                    Sorting is required by certain functions and may be required by some windows (see [[Windows]] for more details).
    *                    Sorting is used only for the purpose of computing window functions and does not guarantee ordering
    *                    of the output documents.
@@ -475,6 +475,10 @@ object Aggregates {
    * @note Requires MongoDB 5.0 or greater.
    */
   @Beta
-  def setWindowFields[TExpression](partitionBy: TExpression, sortBy: Bson, output: WindowedComputation*): Bson =
-    JAggregates.setWindowFields(partitionBy, sortBy, output.asJava)
+  def setWindowFields[TExpression >: Null](
+      partitionBy: Option[TExpression],
+      sortBy: Option[Bson],
+      output: WindowedComputation*
+  ): Bson =
+    JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output.asJava)
 }

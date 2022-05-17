@@ -402,8 +402,8 @@ class AggregatesSpec extends BaseSpec {
     val window: Window = documents(1, 2)
     toBson(
       setWindowFields(
-        "$partitionByField",
-        ascending("sortByField"),
+        Some("$partitionByField"),
+        Some(ascending("sortByField")),
         WindowedComputations.of(
           BsonField.apply(
             "newField00",
@@ -413,27 +413,26 @@ class AggregatesSpec extends BaseSpec {
             )
           )
         ),
-        WindowedComputations.sum("newField01", "$field01", range(1, CURRENT)),
-        WindowedComputations.avg("newField02", "$field02", range(UNBOUNDED, 1)),
-        WindowedComputations.stdDevSamp("newField03", "$field03", window),
-        WindowedComputations.stdDevPop("newField04", "$field04", window),
-        WindowedComputations.min("newField05", "$field05", window),
-        WindowedComputations.max("newField06", "$field06", window),
-        WindowedComputations.count("newField07", window),
+        WindowedComputations.sum("newField01", "$field01", Some(range(1, CURRENT))),
+        WindowedComputations.avg("newField02", "$field02", Some(range(UNBOUNDED, 1))),
+        WindowedComputations.stdDevSamp("newField03", "$field03", Some(window)),
+        WindowedComputations.stdDevPop("newField04", "$field04", Some(window)),
+        WindowedComputations.min("newField05", "$field05", Some(window)),
+        WindowedComputations.max("newField06", "$field06", Some(window)),
+        WindowedComputations.count("newField07", Some(window)),
         WindowedComputations.derivative("newField08", "$field08", window),
         WindowedComputations.timeDerivative("newField09", "$field09", window, DAY),
         WindowedComputations.integral("newField10", "$field10", window),
         WindowedComputations.timeIntegral("newField11", "$field11", window, DAY),
-        WindowedComputations.timeIntegral("newField11", "$field11", window, DAY),
-        WindowedComputations.covarianceSamp("newField12", "$field12_1", "$field12_2", window),
-        WindowedComputations.covariancePop("newField13", "$field13_1", "$field13_2", window),
+        WindowedComputations.covarianceSamp("newField12", "$field12_1", "$field12_2", Some(window)),
+        WindowedComputations.covariancePop("newField13", "$field13_1", "$field13_2", Some(window)),
         WindowedComputations.expMovingAvg("newField14", "$field14", 3),
         WindowedComputations.expMovingAvg("newField15", "$field15", 0.5),
-        WindowedComputations.push("newField16", "$field16", window),
-        WindowedComputations.addToSet("newField17", "$field17", window),
-        WindowedComputations.first("newField18", "$field18", window),
-        WindowedComputations.last("newField19", "$field19", window),
-        WindowedComputations.shift("newField20", "$field20", "defaultConstantValue", -3),
+        WindowedComputations.push("newField16", "$field16", Some(window)),
+        WindowedComputations.addToSet("newField17", "$field17", Some(window)),
+        WindowedComputations.first("newField18", "$field18", Some(window)),
+        WindowedComputations.last("newField19", "$field19", Some(window)),
+        WindowedComputations.shift("newField20", "$field20", Some("defaultConstantValue"), -3),
         WindowedComputations.documentNumber("newField21"),
         WindowedComputations.rank("newField22"),
         WindowedComputations.denseRank("newField23")
@@ -478,7 +477,7 @@ class AggregatesSpec extends BaseSpec {
 
   it should "render $setWindowFields with no partitionBy/sortBy" in {
     toBson(
-      setWindowFields(null, null, WindowedComputations.sum("newField01", "$field01", documents(1, 2)))
+      setWindowFields(None, None, WindowedComputations.sum("newField01", "$field01", Some(documents(1, 2))))
     ) should equal(
       Document("""{
         "$setWindowFields": {
