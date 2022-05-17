@@ -119,25 +119,25 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoDatabaseImpl(name, withUuidRepresentation(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, null, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, null, executor);
+                uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, null, executor);
+                uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, null, executor);
+                uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override
