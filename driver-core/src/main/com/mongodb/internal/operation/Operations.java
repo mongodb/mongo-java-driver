@@ -510,12 +510,10 @@ public final class Operations<TDocument> {
             final DropCollectionOptions dropCollectionOptions,
             final AutoEncryptionSettings autoEncryptionSettings) {
         DropCollectionOperation operation = new DropCollectionOperation(namespace, writeConcern);
-        Bson encryptedFields = null;
-        if (dropCollectionOptions != null) {
-            encryptedFields = dropCollectionOptions.getEncryptedFields();
+        Bson encryptedFields = dropCollectionOptions.getEncryptedFields();
+        if (encryptedFields != null) {
             operation.encryptedFields(toBsonDocument(encryptedFields));
-        }
-        if (encryptedFields == null && autoEncryptionSettings != null) {
+        } else if (autoEncryptionSettings != null) {
             Map<String, BsonDocument> encryptedFieldsMap = autoEncryptionSettings.getEncryptedFieldsMap();
             if (encryptedFieldsMap != null) {
                 operation.encryptedFields(encryptedFieldsMap.getOrDefault(namespace.getFullName(), null));

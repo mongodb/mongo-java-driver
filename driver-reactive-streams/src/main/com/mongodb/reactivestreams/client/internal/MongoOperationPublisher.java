@@ -421,7 +421,7 @@ public final class MongoOperationPublisher<T> {
                                         clientSession);
     }
 
-    Publisher<Void> dropCollection(@Nullable final ClientSession clientSession, @Nullable final DropCollectionOptions dropCollectionOptions) {
+    Publisher<Void> dropCollection(@Nullable final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
         return createWriteOperationMono(() -> operations.dropCollection(dropCollectionOptions, autoEncryptionSettings), clientSession);
     }
 

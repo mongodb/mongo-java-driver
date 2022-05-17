@@ -147,7 +147,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
      * With FLE2 dropping a collection can involve more logic and commands.
      *
      * <p>
-     * A call to a driver helper Collection.Drop(dropOptions) must check if the collection namespace (<databaseName>.<collectionName>)
+     * A call to a driver helper Collection.drop(dropOptions) must check if the collection namespace (<databaseName>.<collectionName>)
      * has an associated encryptedFields. Check for an associated encryptedFields from the following:
      * <ol>
      *     <li>The encryptedFields option passed in dropOptions.</li>

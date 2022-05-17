@@ -793,13 +793,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void drop() {
-        executeDrop(null, null);
+        executeDrop(null, new DropCollectionOptions());
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
         notNull("clientSession", clientSession);
-        executeDrop(clientSession, null);
+        executeDrop(clientSession, new DropCollectionOptions());
     }
 
     @Override
@@ -812,7 +812,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         executeDrop(clientSession, dropCollectionOptions);
     }
 
-    private void executeDrop(@Nullable final ClientSession clientSession, @Nullable final DropCollectionOptions dropCollectionOptions) {
+    private void executeDrop(@Nullable final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
         executor.execute(operations.dropCollection(dropCollectionOptions, autoEncryptionSettings), readConcern, clientSession);
     }
 

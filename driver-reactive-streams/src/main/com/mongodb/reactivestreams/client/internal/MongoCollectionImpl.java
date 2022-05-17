@@ -628,12 +628,12 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public Publisher<Void> drop() {
-        return mongoOperationPublisher.dropCollection(null, null);
+        return mongoOperationPublisher.dropCollection(null, new DropCollectionOptions());
     }
 
     @Override
     public Publisher<Void> drop(final ClientSession clientSession) {
-        return mongoOperationPublisher.dropCollection(notNull("clientSession", clientSession), null);
+        return mongoOperationPublisher.dropCollection(notNull("clientSession", clientSession), new DropCollectionOptions());
     }
 
     @Override
