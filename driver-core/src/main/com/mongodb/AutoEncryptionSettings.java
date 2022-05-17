@@ -214,7 +214,7 @@ public final class AutoEncryptionSettings {
         }
 
         /**
-         * Disable automatic analysis of outgoing commands.
+         * Enable or disable automatic analysis of outgoing commands.
          *
          * <p>Set bypassQueryAnalysis to true to use explicit encryption on indexed fields
          * without the MongoDB Enterprise Advanced licensed csfle shared library.</p>
