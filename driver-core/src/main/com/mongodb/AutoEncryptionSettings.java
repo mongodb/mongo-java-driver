@@ -198,7 +198,7 @@ public final class AutoEncryptionSettings {
          *
          * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
          * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.
-         * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code createCollection()} and
+         * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code collection.createCollection()} and
          * {@code collection.drop()} is altered.
          *
          * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
@@ -440,7 +440,7 @@ public final class AutoEncryptionSettings {
      *
      * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
      * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.
-     * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code createCollection()} and
+     * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code collection.createCollection()} and
      * {@code collection.drop()} is altered.
      *
      * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
