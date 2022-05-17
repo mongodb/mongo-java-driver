@@ -418,11 +418,11 @@ public class MongoCollectionImplTest extends TestHelper {
                                   () -> assertThrows(IllegalArgumentException.class, () -> collection.drop(null, null))
                   ),
                   () -> {
-                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(null, null);
+                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(null, dropCollectionOptions);
                       assertPublisherIsTheSameAs(expected, collection.drop(), "Default");
                   },
                   () -> {
-                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(clientSession, null);
+                      Publisher<Void> expected = mongoOperationPublisher.dropCollection(clientSession, dropCollectionOptions);
                       assertPublisherIsTheSameAs(expected, collection.drop(clientSession), "With client session");
                   },
                 () -> {
