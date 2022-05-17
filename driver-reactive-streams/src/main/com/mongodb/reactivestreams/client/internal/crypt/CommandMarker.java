@@ -37,9 +37,9 @@ class CommandMarker implements Closeable {
     private final ProcessBuilder processBuilder;
     private final MongoClient client;
 
-    CommandMarker(final boolean isBypassAutoEncryption, final Map<String, Object> options) {
+    CommandMarker(final boolean isBypassAutoEncryptionOrQueryAnalysis, final Map<String, Object> options) {
 
-        if (isBypassAutoEncryption) {
+        if (isBypassAutoEncryptionOrQueryAnalysis) {
             processBuilder = null;
             client = null;
         } else {

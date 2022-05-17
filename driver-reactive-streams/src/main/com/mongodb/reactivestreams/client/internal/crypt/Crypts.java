@@ -57,8 +57,8 @@ public final class Crypts {
                 options.getKmsProviders(),
                 options.getKmsProviderPropertySuppliers(),
                 options.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(collectionInfoRetrieverClient),
-                new CommandMarker(options.isBypassAutoEncryption(), options.getExtraOptions()),
-                new KeyRetriever(keyVaultClient, new MongoNamespace(options.getKeyVaultNamespace())),
+                new CommandMarker(options.isBypassAutoEncryption() || options.isBypassQueryAnalysis(),
+                        options.getExtraOptions()), new KeyRetriever(keyVaultClient, new MongoNamespace(options.getKeyVaultNamespace())),
                 createKeyManagementService(options.getKmsProviderSslContextMap()),
                 options.isBypassAutoEncryption(),
                 internalClient);
