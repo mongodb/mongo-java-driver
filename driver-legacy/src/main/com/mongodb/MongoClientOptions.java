@@ -33,6 +33,9 @@ import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
+
+import java.util.concurrent.TimeUnit;
+
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -75,8 +78,8 @@ public class MongoClientOptions {
     private final int maxConnectionIdleTime;
     private final int maxConnectionLifeTime;
     private final int maxConnecting;
-    private final long maintenanceInitialDelayMs;
-    private final long maintenanceFrequencyMs;
+    private final long maintenanceInitialDelay;
+    private final long maintenanceFrequency;
 
     private final int connectTimeout;
     private final int socketTimeout;
@@ -115,8 +118,8 @@ public class MongoClientOptions {
         maxConnectionIdleTime = builder.maxConnectionIdleTime;
         maxConnectionLifeTime = builder.maxConnectionLifeTime;
         maxConnecting = builder.maxConnecting;
-        maintenanceInitialDelayMs = builder.maintenanceInitialDelayMs;
-        maintenanceFrequencyMs = builder.maintenanceFrequencyMs;
+        maintenanceInitialDelay = builder.maintenanceInitialDelay;
+        maintenanceFrequency = builder.maintenanceFrequency;
         connectTimeout = builder.connectTimeout;
         socketTimeout = builder.socketTimeout;
         readPreference = builder.readPreference;
@@ -399,19 +402,25 @@ public class MongoClientOptions {
     }
 
     /**
-     * Fetch the maintenance initial delay per connection pool in MS
-     * @return maintenance initial delay per connection pool in MS
+     * Fetch the maintenance initial delay per connection pool in ms.
+     * <p>Default is 0 ms.</p>
+     *
+     * @see ConnectionPoolSettings#getMaintenanceInitialDelay
+     * @return maintenance initial delay per connection pool in ms
      */
     public long getMaintenanceInitialDelay() {
-        return maintenanceInitialDelayMs;
+        return maintenanceInitialDelay;
     }
 
     /**
-     * Fetch the maintenance frequency per connection pool in MS
-     * @return maintenance frequency per connection pool in MS
+     * Fetch the maintenance frequency per connection pool in ms.
+     * <p>Default is 60,000 ms.</p>
+     *
+     * @see ConnectionPoolSettings#getMaintenanceFrequency
+     * @return maintenance frequency per connection pool in ms
      */
     public long getMaintenanceFrequency() {
-        return maintenanceFrequencyMs;
+        return maintenanceFrequency;
     }
 
     /**
@@ -854,10 +863,10 @@ public class MongoClientOptions {
         if (maxConnecting != that.maxConnecting) {
             return false;
         }
-        if (maintenanceInitialDelayMs != that.maintenanceInitialDelayMs) {
+        if (maintenanceInitialDelay != that.maintenanceInitialDelay) {
             return false;
         }
-        if (maintenanceFrequencyMs != that.maintenanceFrequencyMs) {
+        if (maintenanceFrequency != that.maintenanceFrequency) {
             return false;
         }
         if (maxConnectionsPerHost != that.maxConnectionsPerHost) {
@@ -1037,7 +1046,6 @@ public class MongoClientOptions {
         private final List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
         private final List<ServerListener> serverListeners = new ArrayList<ServerListener>();
         private final List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
-        private final ConnectionPoolSettings connectionPoolSettings = ConnectionPoolSettings.builder().build();
 
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
@@ -1055,9 +1063,9 @@ public class MongoClientOptions {
         private int maxWaitTime = 1000 * 60 * 2;
         private int maxConnectionIdleTime;
         private int maxConnectionLifeTime;
-        private int maxConnecting = connectionPoolSettings.getMaxConnecting();
-        private long maintenanceInitialDelayMs = connectionPoolSettings.getMaintenanceInitialDelay(MILLISECONDS);
-        private long maintenanceFrequencyMs = connectionPoolSettings.getMaintenanceFrequency(MILLISECONDS);
+        private int maxConnecting;
+        private long maintenanceInitialDelay;
+        private long maintenanceFrequency;
         private int connectTimeout = 1000 * 10;
         private int socketTimeout = 0;
         private boolean sslEnabled = false;
@@ -1081,6 +1089,10 @@ public class MongoClientOptions {
          * Creates a Builder for MongoClientOptions.
          */
         public Builder() {
+            final ConnectionPoolSettings connectionPoolSettings = ConnectionPoolSettings.builder().build();
+            maxConnecting = connectionPoolSettings.getMaxConnecting();
+            maintenanceInitialDelay = connectionPoolSettings.getMaintenanceInitialDelay(MILLISECONDS);
+            maintenanceFrequency = connectionPoolSettings.getMaintenanceFrequency(MILLISECONDS);
         }
 
         /**
@@ -1098,8 +1110,8 @@ public class MongoClientOptions {
             maxConnectionIdleTime = options.getMaxConnectionIdleTime();
             maxConnectionLifeTime = options.getMaxConnectionLifeTime();
             maxConnecting = options.getMaxConnecting();
-            maintenanceInitialDelayMs = options.getMaintenanceInitialDelay();
-            maintenanceFrequencyMs = options.getMaintenanceFrequency();
+            maintenanceInitialDelay = options.getMaintenanceInitialDelay();
+            maintenanceFrequency = options.getMaintenanceFrequency();
             connectTimeout = options.getConnectTimeout();
             socketTimeout = options.getSocketTimeout();
             readPreference = options.getReadPreference();
@@ -1141,8 +1153,8 @@ public class MongoClientOptions {
             maxConnectionIdleTime = (int) settings.getConnectionPoolSettings().getMaxConnectionIdleTime(MILLISECONDS);
             maxConnectionLifeTime = (int) settings.getConnectionPoolSettings().getMaxConnectionLifeTime(MILLISECONDS);
             maxConnecting = settings.getConnectionPoolSettings().getMaxConnecting();
-            maintenanceInitialDelayMs = settings.getConnectionPoolSettings().getMaintenanceInitialDelay(MILLISECONDS);
-            maintenanceFrequencyMs = settings.getConnectionPoolSettings().getMaintenanceFrequency(MILLISECONDS);
+            maintenanceInitialDelay = settings.getConnectionPoolSettings().getMaintenanceInitialDelay(MILLISECONDS);
+            maintenanceFrequency = settings.getConnectionPoolSettings().getMaintenanceFrequency(MILLISECONDS);
             connectTimeout = settings.getSocketSettings().getConnectTimeout(MILLISECONDS);
             socketTimeout = settings.getSocketSettings().getReadTimeout(MILLISECONDS);
             readPreference = settings.getReadPreference();
@@ -1310,22 +1322,26 @@ public class MongoClientOptions {
         }
 
         /**
-         * Set the maintenance initial delay per connection pool in ms
-         * @param maintenanceInitialDelayMs long value indicating delay value
+         * Set the maintenance initial delay per connection pool in ms.
+         * 
+         * @see ConnectionPoolSettings.Builder#maintenanceInitialDelay
+         * @param maintenanceInitialDelay long value indicating maintenance delay
          * @return this
          */
-        public Builder maintenanceInitialDelay(final long maintenanceInitialDelayMs) {
-            this.maintenanceInitialDelayMs = maintenanceInitialDelayMs;
+        public Builder maintenanceInitialDelay(final long maintenanceInitialDelay) {
+            this.maintenanceInitialDelay = maintenanceInitialDelay;
             return this;
         }
 
         /**
          * Set the maintenance frequency per connection pool in ms
-         * @param maintenanceFrequencyMs long value indicating frequency value
+         *
+         * @see ConnectionPoolSettings.Builder#maintenanceFrequency
+         * @param maintenanceFrequency long value indicating maintenance frequency
          * @return this
          */
-        public Builder maintenanceFrequency(final long maintenanceFrequencyMs) {
-            this.maintenanceFrequencyMs = maintenanceFrequencyMs;
+        public Builder maintenanceFrequency(final long maintenanceFrequency) {
+            this.maintenanceFrequency = maintenanceFrequency;
             return this;
         }
 
