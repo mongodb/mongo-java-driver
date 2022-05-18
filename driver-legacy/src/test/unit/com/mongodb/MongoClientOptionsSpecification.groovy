@@ -127,8 +127,8 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
                                         .maxConnecting(1)
-                                        .maintenanceInitialDelay(100, TimeUnit.MILLISECONDS)
-                                        .maintenanceFrequency(30, TimeUnit.SECONDS)
+                                        .maintenanceInitialDelay(100)
+                                        .maintenanceFrequency(100)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
                                         .sslContext(SSLContext.getDefault())
@@ -166,7 +166,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getMaxConnectionLifeTime() == 400
         options.getMaxConnecting() == 1
         options.getMaintenanceInitialDelay() == 100
-        options.getMaintenanceFrequency() == 30_000
+        options.getMaintenanceFrequency() == 100
         options.getMinConnectionsPerHost() == 30
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
@@ -230,7 +230,7 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getMaxConnecting() == settings.connectionPoolSettings.maxConnecting
         optionsFromSettings.getMaintenanceInitialDelay() == 100
         optionsFromSettings.getMaintenanceInitialDelay() == settings.connectionPoolSettings.getMaintenanceInitialDelay(TimeUnit.MILLISECONDS)
-        optionsFromSettings.getMaintenanceFrequency() == 30_000
+        optionsFromSettings.getMaintenanceFrequency() == 100
         optionsFromSettings.getMaintenanceFrequency() == settings.connectionPoolSettings.getMaintenanceFrequency(TimeUnit.MILLISECONDS)
         optionsFromSettings.getMinConnectionsPerHost() == 30
         optionsFromSettings.getConnectionsPerHost() == 500

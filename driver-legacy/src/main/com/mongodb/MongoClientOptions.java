@@ -246,7 +246,7 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns the period of time to wait before running the first maintenance job on the connection pool.
+     * Returns the period of time to wait before running the first maintenance job on each connection pool.
      * <p>
      * Default is 0.</p>
      *
@@ -259,7 +259,7 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns the time period between runs of the maintenance job.
+     * Returns the time period between runs of the maintenance job on each connection pool.
      * <p>
      * Default is 60,000.</p>
      *
@@ -876,30 +876,28 @@ public class MongoClientOptions {
         }
 
         /**
-         * The period of time to wait before running the first maintenance job on the connection pool.
+         * The period of time to wait before running the first maintenance job on each connection pool.
          *
-         * @param maintenanceInitialDelay the time period to wait
-         * @param timeUnit                the TimeUnit for this time period
+         * @param maintenanceInitialDelay the time period to wait in milliseconds
          * @return {@code this}.
          * @see ConnectionPoolSettings.Builder#maintenanceInitialDelay
          * @since 4.7
          */
-        public Builder maintenanceInitialDelay(final long maintenanceInitialDelay, final TimeUnit timeUnit) {
-            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceInitialDelay(maintenanceInitialDelay, timeUnit));
+        public Builder maintenanceInitialDelay(final long maintenanceInitialDelay) {
+            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceInitialDelay(maintenanceInitialDelay, MILLISECONDS));
             return this;
         }
 
         /**
-         * The time period between runs of the maintenance job.
+         * The time period between runs of the maintenance job on each connection pool.
          *
-         * @param maintenanceFrequency the time period between runs of the maintenance job
-         * @param timeUnit             the TimeUnit for this time period
+         * @param maintenanceFrequency the time period between runs of the maintenance job in milliseconds
          * @return {@code this}
          * @see ConnectionPoolSettings.Builder#maintenanceFrequency
          * @since 4.7
          */
-        public Builder maintenanceFrequency(final long maintenanceFrequency, final TimeUnit timeUnit) {
-            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceFrequency(maintenanceFrequency, timeUnit));
+        public Builder maintenanceFrequency(final long maintenanceFrequency) {
+            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceFrequency(maintenanceFrequency, MILLISECONDS));
             return this;
         }
 
