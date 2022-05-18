@@ -177,17 +177,17 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             return singletonList(this::dropCollectionCommand);
         } else  {
             return asList(
-                    this::dropCollectionCommand,
-                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection(encryptedFields, "esc")),
-                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection(encryptedFields, "ecc")),
-                    connectionDescription -> new BsonDocument("drop", getEncryptedFieldsCollection(encryptedFields, "ecoc"))
+                    connectionDescription -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "esc"),
+                    connectionDescription -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecc"),
+                    connectionDescription -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecoc"),
+                    this::dropCollectionCommand
             );
         }
     }
 
-    private BsonValue getEncryptedFieldsCollection(final BsonDocument encryptedFields, final String collectionSuffix) {
+    private BsonDocument getDropEncryptedFieldsCollectionCommand(final BsonDocument encryptedFields, final String collectionSuffix) {
         BsonString defaultCollectionName = new BsonString(ENCRYPT_PREFIX + namespace.getCollectionName() + "." + collectionSuffix);
-        return encryptedFields.getOrDefault(collectionSuffix + "Collection", defaultCollectionName);
+        return new BsonDocument("drop", encryptedFields.getOrDefault(collectionSuffix + "Collection", defaultCollectionName));
     }
 
     private BsonDocument dropCollectionCommand(final ConnectionDescription description) {

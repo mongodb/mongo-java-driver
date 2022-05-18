@@ -66,6 +66,7 @@ import static java.util.Collections.singletonList;
  */
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private static final String ENCRYPT_PREFIX = "enxcol_.";
+    private static final BsonDocument ENCRYPT_CLUSTERED_INDEX = BsonDocument.parse("{key: {_id: 1}, unique: true}");
     private static final BsonArray SAFE_CONTENT_ARRAY = new BsonArray(
             singletonList(BsonDocument.parse("{key: {__safeContent__: 1}, name: '__safeContent___1'}")));
     private final String databaseName;
@@ -463,18 +464,21 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             return singletonList(this::getCreateCollectionCommand);
         }
         return asList(
-                connectionDescription -> new BsonDocument("create", getEncryptedFieldsCollection("esc")),
-                connectionDescription -> new BsonDocument("create", getEncryptedFieldsCollection("ecc")),
-                connectionDescription -> new BsonDocument("create", getEncryptedFieldsCollection("ecoc")),
+                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("esc"),
+                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("ecc"),
+                connectionDescription -> getCreateEncryptedFieldsCollectionCommand("ecoc"),
                 this::getCreateCollectionCommand,
                 connectionDescription -> new BsonDocument("createIndexes", new BsonString(collectionName))
                         .append("indexes", SAFE_CONTENT_ARRAY)
         );
     }
 
-    private BsonValue getEncryptedFieldsCollection(final String collectionSuffix) {
-        return encryptedFields.getOrDefault(collectionSuffix + "Collection",
-                new BsonString(ENCRYPT_PREFIX + collectionName + "." + collectionSuffix));
+    private BsonDocument getCreateEncryptedFieldsCollectionCommand(final String collectionSuffix) {
+        return new BsonDocument()
+                .append("create", encryptedFields
+                        .getOrDefault(collectionSuffix + "Collection",
+                                new BsonString(ENCRYPT_PREFIX + collectionName + "." + collectionSuffix)))
+                .append("clusteredIndex", ENCRYPT_CLUSTERED_INDEX);
     }
 
     private BsonDocument getCreateCollectionCommand(final ConnectionDescription description) {
