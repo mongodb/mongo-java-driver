@@ -250,13 +250,25 @@ public class MongoClientOptions {
      * <p>
      * Default is 0.</p>
      *
-     * @param timeUnit unit of time to convert the value into
-     * @return The maximum number of connections a pool may be establishing concurrently.
+     * @return the time period to wait in milliseconds
      * @see ConnectionPoolSettings#getMaintenanceInitialDelay
      * @since 4.7
      */
-    public long getMaintenanceInitialDelay(final TimeUnit timeUnit) {
-        return wrapped.getConnectionPoolSettings().getMaintenanceInitialDelay(timeUnit);
+    public int getMaintenanceInitialDelay() {
+        return toIntExact(wrapped.getConnectionPoolSettings().getMaintenanceInitialDelay(MILLISECONDS));
+    }
+
+    /**
+     * Returns the time period between runs of the maintenance job.
+     * <p>
+     * Default is 60,000.</p>
+     *
+     * @return the time period between runs of the maintainance job in milliseconds
+     * @see ConnectionPoolSettings#getMaintenanceFrequency
+     * @since 4.7
+     */
+    public int getMaintenanceFrequency() {
+        return toIntExact(wrapped.getConnectionPoolSettings().getMaintenanceFrequency(MILLISECONDS));
     }
 
     /**
@@ -874,6 +886,20 @@ public class MongoClientOptions {
          */
         public Builder maintenanceInitialDelay(final long maintenanceInitialDelay, final TimeUnit timeUnit) {
             wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceInitialDelay(maintenanceInitialDelay, timeUnit));
+            return this;
+        }
+
+        /**
+         * The time period between runs of the maintenance job.
+         *
+         * @param maintenanceFrequency the time period between runs of the maintenance job
+         * @param timeUnit             the TimeUnit for this time period
+         * @return {@code this}
+         * @see ConnectionPoolSettings.Builder#maintenanceFrequency
+         * @since 4.7
+         */
+        public Builder maintenanceFrequency(final long maintenanceFrequency, final TimeUnit timeUnit) {
+            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceFrequency(maintenanceFrequency, timeUnit));
             return this;
         }
 
