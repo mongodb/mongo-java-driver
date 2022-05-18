@@ -398,10 +398,18 @@ public class MongoClientOptions {
         return maxConnecting;
     }
 
+    /**
+     * Fetch the maintenance initial delay per connection pool in MS
+     * @return maintenance initial delay per connection pool in MS
+     */
     public long getMaintenanceInitialDelay() {
         return maintenanceInitialDelayMs;
     }
 
+    /**
+     * Fetch the maintenance frequency per connection pool in MS
+     * @return maintenance frequency per connection pool in MS
+     */
     public long getMaintenanceFrequency() {
         return maintenanceFrequencyMs;
     }
@@ -1301,11 +1309,21 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Set the maintenance initial delay per connection pool in ms
+         * @param maintenanceInitialDelayMs long value indicating delay value
+         * @return this
+         */
         public Builder maintenanceInitialDelay(final long maintenanceInitialDelayMs) {
             this.maintenanceInitialDelayMs = maintenanceInitialDelayMs;
             return this;
         }
 
+        /**
+         * Set the maintenance frequency per connection pool in ms
+         * @param maintenanceFrequencyMs long value indicating frequency value
+         * @return this
+         */
         public Builder maintenanceFrequency(final long maintenanceFrequencyMs) {
             this.maintenanceFrequencyMs = maintenanceFrequencyMs;
             return this;
