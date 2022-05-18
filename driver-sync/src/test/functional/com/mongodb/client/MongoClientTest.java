@@ -22,25 +22,25 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MongoClientTest {
 
+    @SuppressWarnings("try")
     @Test
-    public void shouldIncludeApplicationNameInClusterId() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<ClusterId> clusterId = new AtomicReference<>();
+    public void shouldIncludeApplicationNameInClusterId() throws InterruptedException,
+            ExecutionException, TimeoutException {
+        CompletableFuture<ClusterId> clusterIdFuture = new CompletableFuture<>();
         ClusterListener clusterListener = new ClusterListener() {
             @Override
             public void clusterOpening(final ClusterOpeningEvent event) {
-                clusterId.set(event.getClusterId());
-                latch.countDown();
+                clusterIdFuture.complete(event.getClusterId());
             }
         };
         String applicationName = "test";
@@ -48,9 +48,8 @@ public class MongoClientTest {
                 .applicationName(applicationName)
                 .applyToClusterSettings(builder -> builder.addClusterListener(clusterListener))
                 .build())) {
-            assertTrue(latch.await(ClusterFixture.TIMEOUT, TimeUnit.SECONDS));
-            assertEquals(applicationName, clusterId.get().getDescription());
+            ClusterId clusterId = clusterIdFuture.get(ClusterFixture.TIMEOUT, TimeUnit.SECONDS);
+            assertEquals(applicationName, clusterId.getDescription());
         }
-
     }
 }
