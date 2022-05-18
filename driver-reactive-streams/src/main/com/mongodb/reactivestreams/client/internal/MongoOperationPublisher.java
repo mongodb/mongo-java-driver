@@ -80,6 +80,7 @@ import reactor.core.publisher.MonoSink;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -245,6 +246,15 @@ public final class MongoOperationPublisher<T> {
                 operation.clusteredIndexKey(toBsonDocument(clusteredIndexOptions.getKey()));
                 operation.clusteredIndexUnique(clusteredIndexOptions.isUnique());
                 operation.clusteredIndexName(clusteredIndexOptions.getName());
+            }
+
+            Bson encryptedFields = options.getEncryptedFields();
+            operation.encryptedFields(toBsonDocument(encryptedFields));
+            if (encryptedFields == null && autoEncryptionSettings != null) {
+                Map<String, BsonDocument> encryptedFieldsMap = autoEncryptionSettings.getEncryptedFieldsMap();
+                if (encryptedFieldsMap != null) {
+                    operation.encryptedFields(encryptedFieldsMap.getOrDefault(namespace.getFullName(), null));
+                }
             }
 
             IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();

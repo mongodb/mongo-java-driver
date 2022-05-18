@@ -197,25 +197,18 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     private BsonDocument getEncryptedFields(final ReadWriteBinding readWriteBinding) {
-        BsonDocument localEncryptedFields = encryptedFields;
-        if (localEncryptedFields == null && autoEncryptedFields) {
+        if (encryptedFields == null && autoEncryptedFields) {
             try (BatchCursor<BsonValue> cursor =  listCollectionOperation().execute(readWriteBinding)) {
-                List<BsonValue> bsonValues = cursor.tryNext();
-                if (bsonValues != null && bsonValues.size() > 0) {
-                    localEncryptedFields =  bsonValues.get(0).asDocument()
-                            .getDocument("options", new BsonDocument())
-                            .getDocument("encryptedFields", new BsonDocument());
-                }
+                return getCollectionEncryptedFields(encryptedFields, cursor.tryNext());
             }
         }
-        return localEncryptedFields;
+        return encryptedFields;
     }
 
     private void getEncryptedFields(
             final AsyncReadWriteBinding asyncReadWriteBinding,
             final SingleResultCallback<BsonDocument> callback) {
-        BsonDocument localEncryptedFields = encryptedFields;
-        if (localEncryptedFields == null && autoEncryptedFields) {
+        if (encryptedFields == null && autoEncryptedFields) {
             listCollectionOperation().executeAsync(asyncReadWriteBinding, (cursor, t) -> {
                 if (t != null) {
                     callback.onResult(null, t);
@@ -223,17 +216,23 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
                     cursor.next((bsonValues, t1) -> {
                         if (t1 != null) {
                             callback.onResult(null, t1);
-                        } else if (bsonValues != null && bsonValues.size() > 0) {
-                            callback.onResult(bsonValues.get(0).asDocument().getDocument("encryptedFields", new BsonDocument()), null);
                         } else {
-                            callback.onResult(null, null);
+                            callback.onResult(getCollectionEncryptedFields(encryptedFields, bsonValues), null);
                         }
                     });
                 }
             });
         } else {
-            callback.onResult(localEncryptedFields, null);
+            callback.onResult(encryptedFields, null);
         }
+    }
+    private BsonDocument getCollectionEncryptedFields(final BsonDocument defaultEncryptedFields, final List<BsonValue> bsonValues) {
+        if (bsonValues != null && bsonValues.size() > 0) {
+            return bsonValues.get(0).asDocument()
+                    .getDocument("options", new BsonDocument())
+                    .getDocument("encryptedFields", new BsonDocument());
+        }
+        return defaultEncryptedFields;
     }
 
     private ListCollectionsOperation<BsonValue> listCollectionOperation() {
