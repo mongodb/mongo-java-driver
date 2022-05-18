@@ -21,12 +21,12 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * @see SearchOperator#near(Instant, FieldSearchPath, Duration)
- * @see SearchOperator#near(Instant, Iterable, Duration)
+ * @see SearchOperator#near(Instant, Duration, FieldSearchPath)
+ * @see SearchOperator#near(Instant, Duration, Iterable)
  * @since 4.7
  */
 @Evolving
-public interface DateNearSearchOperator extends NearSearchOperator {
+public interface DateNearSearchOperator extends SearchOperator {
     @Override
     DateNearSearchOperator score(SearchScore modifier);
 }

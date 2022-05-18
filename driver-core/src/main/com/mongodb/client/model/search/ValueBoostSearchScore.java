@@ -18,7 +18,7 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see BoostSearchScore#boost(float)
+ * @see SearchScore#boost(float)
  * @since 4.7
  */
 @Evolving

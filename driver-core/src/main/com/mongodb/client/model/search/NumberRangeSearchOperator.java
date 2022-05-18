@@ -23,7 +23,7 @@ import com.mongodb.annotations.Evolving;
  * @since 4.7
  */
 @Evolving
-public interface NumberRangeSearchOperator extends NumberRangeSearchOperatorBase, RangeSearchOperator<Number> {
+public interface NumberRangeSearchOperator extends NumberRangeSearchOperatorBase, SearchOperator {
     @Override
     NumberRangeSearchOperator score(SearchScore modifier);
 }

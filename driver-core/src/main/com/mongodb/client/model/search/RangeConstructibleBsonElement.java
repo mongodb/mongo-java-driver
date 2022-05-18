@@ -22,54 +22,44 @@ import org.bson.conversions.Bson;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
-abstract class RangeConstructibleBsonElement<T, S extends RangeConstructibleBsonElement<T, S>> extends AbstractConstructibleBsonElement<S>
-        implements RangeSearchOperator<T> {
+abstract class RangeConstructibleBsonElement<T, S extends RangeConstructibleBsonElement<T, S>> extends AbstractConstructibleBsonElement<S> {
     RangeConstructibleBsonElement(final String name, final Bson value) {
         super(name, value);
     }
 
-    @Override
     public final S score(final SearchScore modifier) {
         return newWithAppendedValue("score", notNull("modifier", modifier));
     }
 
-    @Override
-    public S gt(final T l) {
+    final S internalGt(final T l) {
         return newWithMutatedValue(l, false, null, false);
     }
 
-    @Override
-    public S lt(final T u) {
+    final S internalLt(final T u) {
         return newWithMutatedValue(null, false, u, false);
     }
 
-    @Override
-    public S gte(final T l) {
+    final S internalGte(final T l) {
         return newWithMutatedValue(l, true, null, false);
     }
 
-    @Override
-    public S lte(final T u) {
+    final S internalLte(final T u) {
         return newWithMutatedValue(null, false, u, true);
     }
 
-    @Override
-    public S gtLt(final T l, final T u) {
+    final S internalGtLt(final T l, final T u) {
         return newWithMutatedValue(l, false, u, false);
     }
 
-    @Override
-    public S gteLte(final T l, final T u) {
+    final S internalGteLte(final T l, final T u) {
         return newWithMutatedValue(l, true, u, true);
     }
 
-    @Override
-    public S gtLte(final T l, final T u) {
+    final S internalGtLte(final T l, final T u) {
         return newWithMutatedValue(l, false, u, true);
     }
 
-    @Override
-    public S gteLt(final T l, final T u) {
+    final S internalGteLt(final T l, final T u) {
         return newWithMutatedValue(l, true, u, false);
     }
 

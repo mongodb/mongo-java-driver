@@ -97,10 +97,10 @@ object SearchOperator {
    * of the specified field are within an interval.
    *
    * @param path The field to be searched.
-   * @return A base for a `RangeSearchOperator`.
+   * @return A base for a `NumberRangeSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
    */
-  def numberRange(path: FieldSearchPath): RangeSearchOperatorBase[Number] = JSearchOperator.numberRange(path)
+  def numberRange(path: FieldSearchPath): NumberRangeSearchOperatorBase = JSearchOperator.numberRange(path)
 
   /**
    * Returns a base for a `SearchOperator` that tests if the
@@ -108,10 +108,10 @@ object SearchOperator {
    * of the specified fields are within an interval.
    *
    * @param paths The non-empty fields to be searched.
-   * @return A base for a `RangeSearchOperator`.
+   * @return A base for a `NumberRangeSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
    */
-  def numberRange(paths: Iterable[_ <: FieldSearchPath]): RangeSearchOperatorBase[Number] =
+  def numberRange(paths: Iterable[_ <: FieldSearchPath]): NumberRangeSearchOperatorBase =
     JSearchOperator.numberRange(paths.asJava)
 
   /**
@@ -119,20 +119,20 @@ object SearchOperator {
    * BSON `Date` values of the specified field are within an interval.
    *
    * @param path The field to be searched.
-   * @return A base for a `RangeSearchOperator`.
+   * @return A base for a `DateRangeSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
    */
-  def dateRange(path: FieldSearchPath): RangeSearchOperatorBase[Instant] = JSearchOperator.dateRange(path)
+  def dateRange(path: FieldSearchPath): DateRangeSearchOperatorBase = JSearchOperator.dateRange(path)
 
   /**
    * Returns a base for a `SearchOperator` that tests if the
    * BSON `Date` values of the specified fields are within an interval.
    *
    * @param paths The non-empty fields to be searched.
-   * @return A base for a `RangeSearchOperator`.
+   * @return A base for a `DateRangeSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
    */
-  def dateRange(paths: Iterable[_ <: FieldSearchPath]): RangeSearchOperatorBase[Instant] =
+  def dateRange(paths: Iterable[_ <: FieldSearchPath]): DateRangeSearchOperatorBase =
     JSearchOperator.dateRange(paths.asJava)
 
   /**
@@ -140,80 +140,83 @@ object SearchOperator {
    *
    * @param origin The origin from which the proximity of the results is measured.
    * The relevance score is 1 if the values of the fields are `origin`.
-   * @param path The field to be searched.
    * @param pivot The positive distance from the `origin` at which the relevance score drops in half.
+   * @param path The field to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
    */
-  def near(origin: Number, path: FieldSearchPath, pivot: Number): NumberNearSearchOperator =
-    JSearchOperator.near(origin, path, pivot)
+  def near(origin: Number, pivot: Number, path: FieldSearchPath): NumberNearSearchOperator =
+    JSearchOperator.near(origin, pivot, path)
 
   /**
    * Returns a `SearchOperator` that allows finding results that are near the specified `origin`.
    *
    * @param origin The origin from which the proximity of the results is measured.
    * The relevance score is 1 if the values of the fields are `origin`.
+   * @param pivot The positive distance from the `origin` at which the relevance score drops in half.
    * @param paths The non-empty fields to be searched.
-   * @param pivot The positive distance from the `origin` at which the relevance score drops in half.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
    */
-  def near(origin: Number, paths: Iterable[_ <: FieldSearchPath], pivot: Number): NumberNearSearchOperator =
-    JSearchOperator.near(origin, paths.asJava, pivot)
+  def near(origin: Number, pivot: Number, paths: Iterable[_ <: FieldSearchPath]): NumberNearSearchOperator =
+    JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
    * Returns a `SearchOperator` that allows finding results that are near the specified `origin`.
    *
    * @param origin The origin from which the proximity of the results is measured.
    * The relevance score is 1 if the values of the fields are `origin`.
-   * @param path The field to be searched.
    * @param pivot The positive distance from the `origin` at which the relevance score drops in half.
+   * Data is extracted via `Duration.toMillis`.
+   * @param path The field to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
+   * @see [[org.bson.codecs.jsr310.InstantCodec]]
+   */
+  def near(origin: Instant, pivot: Duration, path: FieldSearchPath): DateNearSearchOperator =
+    JSearchOperator.near(origin, pivot, path)
+
+  /**
+   * Returns a `SearchOperator` that allows finding results that are near the specified `origin`.
+   *
+   * @param origin The origin from which the proximity of the results is measured.
+   * The relevance score is 1 if the values of the fields are `origin`.
+   * @param pivot The positive distance from the `origin` at which the relevance score drops in half.
+   * Data is extracted via `Duration.toMillis`.
+   * @param paths The non-empty fields to be searched.
    * It is converted to `long` via `Duration.toMillis`.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
+   * @see [[org.bson.codecs.jsr310.InstantCodec]]
    */
-  def near(origin: Instant, path: FieldSearchPath, pivot: Duration): DateNearSearchOperator =
-    JSearchOperator.near(origin, path, pivot)
+  def near(origin: Instant, pivot: Duration, paths: Iterable[_ <: FieldSearchPath]): DateNearSearchOperator =
+    JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
    * Returns a `SearchOperator` that allows finding results that are near the specified `origin`.
    *
    * @param origin The origin from which the proximity of the results is measured.
    * The relevance score is 1 if the values of the fields are `origin`.
-   * @param paths The non-empty fields to be searched.
-   * @param pivot The positive distance from the `origin` at which the relevance score drops in half.
-   * It is converted to `long` via `Duration.toMillis`.
-   * @return The requested `SearchOperator`.
-   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
-   */
-  def near(origin: Instant, paths: Iterable[_ <: FieldSearchPath], pivot: Duration): DateNearSearchOperator =
-    JSearchOperator.near(origin, paths.asJava, pivot)
-
-  /**
-   * Returns a `SearchOperator` that allows finding results that are near the specified `origin`.
-   *
-   * @param origin The origin from which the proximity of the results is measured.
-   * The relevance score is 1 if the values of the fields are `origin`.
+   * @param pivot The positive distance in meters from the `origin` at which the relevance score drops in half.
    * @param path The field to be searched.
-   * @param pivot The positive distance in meters from the `origin` at which the relevance score drops in half.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
    */
-  def near(origin: Point, path: FieldSearchPath, pivot: Number): GeoNearSearchOperator =
-    JSearchOperator.near(origin, path, pivot)
+  def near(origin: Point, pivot: Number, path: FieldSearchPath): GeoNearSearchOperator =
+    JSearchOperator.near(origin, pivot, path)
 
   /**
    * Returns a `SearchOperator` that allows finding results that are near the specified `origin`.
    *
    * @param origin The origin from which the proximity of the results is measured.
    * The relevance score is 1 if the values of the fields are `origin`.
-   * @param paths The non-empty fields to be searched.
    * @param pivot The positive distance in meters from the `origin` at which the relevance score drops in half.
+   * @param paths The non-empty fields to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
    */
-  def near(origin: Point, paths: Iterable[_ <: FieldSearchPath], pivot: Number): GeoNearSearchOperator =
-    JSearchOperator.near(origin, paths.asJava, pivot)
+  def near(origin: Point, pivot: Number, paths: Iterable[_ <: FieldSearchPath]): GeoNearSearchOperator =
+    JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.

@@ -17,15 +17,13 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Evolving;
 
-import java.time.Instant;
-
 /**
  * @see SearchOperator#dateRange(FieldSearchPath)
  * @see SearchOperator#dateRange(Iterable)
  * @since 4.7
  */
 @Evolving
-public interface DateRangeSearchOperator extends DateRangeSearchOperatorBase, RangeSearchOperator<Instant> {
+public interface DateRangeSearchOperator extends DateRangeSearchOperatorBase, SearchOperator {
     @Override
     DateRangeSearchOperator score(SearchScore modifier);
 }

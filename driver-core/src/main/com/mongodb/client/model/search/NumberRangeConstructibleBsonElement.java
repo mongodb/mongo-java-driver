@@ -29,42 +29,42 @@ final class NumberRangeConstructibleBsonElement extends RangeConstructibleBsonEl
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement gt(final Number l) {
-        return super.gt(l);
+    public NumberRangeSearchOperator gt(final Number l) {
+        return internalGt(l);
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement lt(final Number u) {
-        return super.lt(u);
+    public NumberRangeSearchOperator lt(final Number u) {
+        return internalLt(u);
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement gte(final Number l) {
-        return super.gte(l);
+    public NumberRangeSearchOperator gte(final Number l) {
+        return internalGte(l);
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement lte(final Number u) {
-        return super.lte(u);
+    public NumberRangeSearchOperator lte(final Number u) {
+        return internalLte(u);
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement gtLt(final Number l, final Number u) {
-        return super.gtLt(l, u);
+    public NumberRangeSearchOperator gtLt(final Number l, final Number u) {
+        return internalGtLt(l, u);
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement gteLte(final Number l, final Number u) {
-        return super.gteLte(l, u);
+    public NumberRangeSearchOperator gteLte(final Number l, final Number u) {
+        return internalGteLte(l, u);
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement gtLte(final Number l, final Number u) {
-        return super.gtLte(l, u);
+    public NumberRangeSearchOperator gtLte(final Number l, final Number u) {
+        return internalGtLte(l, u);
     }
 
     @Override
-    public NumberRangeConstructibleBsonElement gteLt(final Number l, final Number u) {
-        return super.gteLt(l, u);
+    public NumberRangeSearchOperator gteLt(final Number l, final Number u) {
+        return internalGteLt(l, u);
     }
 }

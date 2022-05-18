@@ -18,7 +18,7 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see BoostSearchScore#boost(FieldSearchPath)
+ * @see SearchScore#boost(FieldSearchPath)
  * @since 4.7
  */
 @Evolving

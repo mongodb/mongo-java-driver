@@ -88,6 +88,7 @@ public interface SearchFacet extends Bson {
      * @param boundaries Bucket boundaries in ascending order. Must contain at least two boundaries.
      * @return The requested {@link SearchFacet}.
      * @mongodb.atlas.manual atlas-search/facet/#date-facets Date facet definition
+     * @see org.bson.codecs.jsr310.InstantCodec
      */
     static DateSearchFacet dateFacet(final String name, final FieldSearchPath path, final Iterable<Instant> boundaries) {
         isTrueArgument("boundaries must contain at least 2 elements", sizeAtLeast(boundaries, 2));

@@ -63,9 +63,9 @@ class SearchOperatorSpec extends BaseSpec {
             .gtLt(1, 1.5),
           dateRange(fieldPath("fieldName6"))
             .lte(Instant.ofEpochMilli(1)),
-          near(0, Seq(fieldPath("fieldName7"), fieldPath("fieldName8")), 1.5),
-          near(Instant.ofEpochMilli(1), fieldPath("fieldName9"), Duration.ofMillis(3)),
-          near(Point(Position(114.15, 22.28)), fieldPath("address.location"), 1234.5)
+          near(0, 1.5, Seq(fieldPath("fieldName7"), fieldPath("fieldName8"))),
+          near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
+          near(Point(Position(114.15, 22.28)), 1234.5, fieldPath("address.location"))
         ).asJava)
         .minimumShouldMatch(1)
         .mustNot(Seq(
@@ -85,9 +85,9 @@ class SearchOperatorSpec extends BaseSpec {
             { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } },
             { "range": { "path": [ "fieldName4", "fieldName5" ], "gt": 1, "lt": 1.5 } },
             { "range": { "path": "fieldName6", "lte": { "$date": "1970-01-01T00:00:00.001Z" } } },
-            { "near": { "origin": 0, "path": [ "fieldName7", "fieldName8" ], "pivot": 1.5 } },
-            { "near": { "origin": { "$date": "1970-01-01T00:00:00.001Z" }, "path": "fieldName9", "pivot": { "$numberLong": "3" } } },
-            { "near": { "origin": { type: "Point", coordinates: [ 114.15, 22.28 ] }, "path": "address.location", "pivot": 1234.5 } }
+            { "near": { "origin": 0, "pivot": 1.5, "path": [ "fieldName7", "fieldName8" ] } },
+            { "near": { "origin": { "$date": "1970-01-01T00:00:00.001Z" }, "pivot": { "$numberLong": "3" }, "path": "fieldName9" } },
+            { "near": { "origin": { type: "Point", coordinates: [ 114.15, 22.28 ] }, "pivot": 1234.5, "path": "address.location" } }
           ],
           "minimumShouldMatch": 1,
           "mustNot": [

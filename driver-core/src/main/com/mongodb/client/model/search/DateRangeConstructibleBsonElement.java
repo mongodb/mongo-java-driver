@@ -31,42 +31,42 @@ final class DateRangeConstructibleBsonElement extends RangeConstructibleBsonElem
     }
 
     @Override
-    public DateRangeConstructibleBsonElement gt(final Instant l) {
-        return super.gt(l);
+    public DateRangeSearchOperator gt(final Instant l) {
+        return internalGt(l);
     }
 
     @Override
-    public DateRangeConstructibleBsonElement lt(final Instant u) {
-        return super.lt(u);
+    public DateRangeSearchOperator lt(final Instant u) {
+        return internalLt(u);
     }
 
     @Override
-    public DateRangeConstructibleBsonElement gte(final Instant l) {
-        return super.gte(l);
+    public DateRangeSearchOperator gte(final Instant l) {
+        return internalGte(l);
     }
 
     @Override
-    public DateRangeConstructibleBsonElement lte(final Instant u) {
-        return super.lte(u);
+    public DateRangeSearchOperator lte(final Instant u) {
+        return internalLte(u);
     }
 
     @Override
-    public DateRangeConstructibleBsonElement gtLt(final Instant l, final Instant u) {
-        return super.gtLt(l, u);
+    public DateRangeSearchOperator gtLt(final Instant l, final Instant u) {
+        return internalGtLt(l, u);
     }
 
     @Override
-    public DateRangeConstructibleBsonElement gteLte(final Instant l, final Instant u) {
-        return super.gteLte(l, u);
+    public DateRangeSearchOperator gteLte(final Instant l, final Instant u) {
+        return internalGteLte(l, u);
     }
 
     @Override
-    public DateRangeConstructibleBsonElement gtLte(final Instant l, final Instant u) {
-        return super.gtLte(l, u);
+    public DateRangeSearchOperator gtLte(final Instant l, final Instant u) {
+        return internalGtLte(l, u);
     }
 
     @Override
-    public DateRangeConstructibleBsonElement gteLt(final Instant l, final Instant u) {
-        return super.gteLt(l, u);
+    public DateRangeSearchOperator gteLt(final Instant l, final Instant u) {
+        return internalGteLt(l, u);
     }
 }

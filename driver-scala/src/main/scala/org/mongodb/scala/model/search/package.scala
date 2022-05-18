@@ -117,16 +117,6 @@ package object search {
   type AutocompleteSearchOperator = com.mongodb.client.model.search.AutocompleteSearchOperator
 
   /**
-   * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
-   *
-   * @tparam T The type of the bounds.
-   * @see `SearchOperator.numberRange`
-   * @see `SearchOperator.dateRange`
-   */
-  @Evolving
-  type RangeSearchOperatorBase[T] = com.mongodb.client.model.search.RangeSearchOperatorBase[T]
-
-  /**
    * A base for a [[NumberRangeSearchOperatorBase]] which allows creating instances of this operator.
    * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
    *
@@ -145,14 +135,6 @@ package object search {
   type DateRangeSearchOperatorBase = com.mongodb.client.model.search.DateRangeSearchOperatorBase
 
   /**
-   * @tparam T The type of the bounds.
-   * @see `SearchOperator.numberRange`
-   * @see `SearchOperator.dateRange`
-   */
-  @Evolving
-  type RangeSearchOperator[T] = com.mongodb.client.model.search.RangeSearchOperator[T]
-
-  /**
    * @see `SearchOperator.numberRange`
    */
   @Evolving
@@ -163,12 +145,6 @@ package object search {
    */
   @Evolving
   type DateRangeSearchOperator = com.mongodb.client.model.search.DateRangeSearchOperator
-
-  /**
-   * @see `SearchOperator.near`
-   */
-  @Evolving
-  type NearSearchOperator = com.mongodb.client.model.search.NearSearchOperator
 
   /**
    * @see `SearchOperator.near`
@@ -320,12 +296,6 @@ package object search {
    */
   @Evolving
   type SearchScore = com.mongodb.client.model.search.SearchScore
-
-  /**
-   * @see `SearchScore.boost`
-   */
-  @Evolving
-  type BoostSearchScore = com.mongodb.client.model.search.BoostSearchScore
 
   /**
    * @see `SearchScore.boost(float)`

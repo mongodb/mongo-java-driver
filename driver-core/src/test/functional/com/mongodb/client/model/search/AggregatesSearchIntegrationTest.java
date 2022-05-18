@@ -497,8 +497,8 @@ final class AggregatesSearchIntegrationTest {
                                                 .gtLt(1, 1.5),
                                         dateRange(fieldPath("fieldName6"))
                                                 .lte(Instant.ofEpochMilli(1)),
-                                        near(0, asList(fieldPath("fieldName7"), fieldPath("fieldName8")), 1.5),
-                                        near(Instant.ofEpochMilli(1), fieldPath("fieldName9"), Duration.ofMillis(3))
+                                        near(0, 1.5, asList(fieldPath("fieldName7"), fieldPath("fieldName8"))),
+                                        near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9"))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(
@@ -523,8 +523,8 @@ final class AggregatesSearchIntegrationTest {
                                 .should(singleton(
                                         near(
                                                 new Point(new Position(114.15, 22.28)),
-                                                fieldPath("address.location"),
-                                                1234.5)
+                                                1234.5,
+                                                fieldPath("address.location"))
                                 )),
                                 null
                         ),

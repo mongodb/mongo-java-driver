@@ -28,28 +28,72 @@ import java.time.Instant;
  * @since 4.7
  */
 @Evolving
-public interface DateRangeSearchOperatorBase extends RangeSearchOperatorBase<Instant> {
-    @Override
+public interface DateRangeSearchOperatorBase {
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within (l; ∞).
+     *
+     * @param l The lower bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator gt(Instant l);
 
-    @Override
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within (-∞; u).
+     *
+     * @param u The upper bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator lt(Instant u);
 
-    @Override
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within [l; ∞).
+     *
+     * @param l The lower bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator gte(Instant l);
 
-    @Override
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within (-∞; u].
+     *
+     * @param u The upper bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator lte(Instant u);
 
-    @Override
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within (l; u).
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator gtLt(Instant l, Instant u);
 
-    @Override
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within [l; u].
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator gteLte(Instant l, Instant u);
 
-    @Override
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within (l; u].
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator gtLte(Instant l, Instant u);
 
-    @Override
+    /**
+     * Creates a new {@link DateRangeSearchOperator} that tests if values are within [l; u).
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link DateRangeSearchOperator}.
+     */
     DateRangeSearchOperator gteLt(Instant l, Instant u);
 }

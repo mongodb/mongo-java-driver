@@ -26,28 +26,72 @@ import com.mongodb.annotations.Evolving;
  * @since 4.7
  */
 @Evolving
-public interface NumberRangeSearchOperatorBase extends RangeSearchOperatorBase<Number> {
-    @Override
+public interface NumberRangeSearchOperatorBase {
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within (l; ∞).
+     *
+     * @param l The lower bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator gt(Number l);
 
-    @Override
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within (-∞; u).
+     *
+     * @param u The upper bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator lt(Number u);
 
-    @Override
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within [l; ∞).
+     *
+     * @param l The lower bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator gte(Number l);
 
-    @Override
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within (-∞; u].
+     *
+     * @param u The upper bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator lte(Number u);
 
-    @Override
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within (l; u).
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator gtLt(Number l, Number u);
 
-    @Override
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within [l; u].
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator gteLte(Number l, Number u);
 
-    @Override
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within (l; u].
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator gtLte(Number l, Number u);
 
-    @Override
+    /**
+     * Creates a new {@link NumberRangeSearchOperator} that tests if values are within [l; u).
+     *
+     * @param l The lower bound.
+     * @param u The upper bound.
+     * @return A new {@link NumberRangeSearchOperator}.
+     */
     NumberRangeSearchOperator gteLt(Number l, Number u);
 }

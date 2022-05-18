@@ -18,12 +18,12 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see SearchOperator#near(Number, FieldSearchPath, Number)
- * @see SearchOperator#near(Number, Iterable, Number)
+ * @see SearchOperator#near(Number, Number, FieldSearchPath)
+ * @see SearchOperator#near(Number, Number, Iterable)
  * @since 4.7
  */
 @Evolving
-public interface NumberNearSearchOperator extends NearSearchOperator {
+public interface NumberNearSearchOperator extends SearchOperator {
     @Override
     NumberNearSearchOperator score(SearchScore modifier);
 }

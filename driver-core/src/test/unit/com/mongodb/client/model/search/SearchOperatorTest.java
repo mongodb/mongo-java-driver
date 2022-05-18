@@ -513,15 +513,15 @@ final class SearchOperatorTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // paths must not be empty
-                        SearchOperator.near(new Point(new Position(0, 0)), emptyList(), 1)
+                        SearchOperator.near(new Point(new Position(0, 0)), 1, emptyList())
                 ),
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // pivot must be positive
-                        SearchOperator.near(Instant.EPOCH, fieldPath("fieldPath"), Duration.ZERO)
+                        SearchOperator.near(Instant.EPOCH, Duration.ZERO, fieldPath("fieldPath"))
                 ),
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // pivot must be positive
-                        SearchOperator.near(Instant.EPOCH, fieldPath("fieldPath"), Duration.ofMillis(-1))
+                        SearchOperator.near(Instant.EPOCH, Duration.ofMillis(-1), fieldPath("fieldPath"))
                 ),
                 () -> assertEquals(
                         new BsonDocument("near",
@@ -531,10 +531,10 @@ final class SearchOperatorTest {
                         ),
                         SearchOperator.near(
                                 0,
+                                1.5,
                                 fieldPath("fieldName1")
                                         // multi must be ignored
-                                        .multi("analyzeName"),
-                                1.5)
+                                        .multi("analyzeName"))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 ),
                 () -> assertEquals(
@@ -547,10 +547,10 @@ final class SearchOperatorTest {
                         ),
                         SearchOperator.near(
                                 1.5,
+                                1.5,
                                 asList(
                                         fieldPath("fieldName1"),
-                                        fieldPath("fieldName2")),
-                                1.5)
+                                        fieldPath("fieldName2")))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 ),
                 () -> assertEquals(
@@ -561,10 +561,10 @@ final class SearchOperatorTest {
                         ),
                         SearchOperator.near(
                                 Instant.EPOCH,
+                                Duration.ofMillis(3),
                                 fieldPath("fieldName1")
                                         // multi must be ignored
-                                        .multi("analyzeName"),
-                                Duration.ofMillis(3))
+                                        .multi("analyzeName"))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 ),
                 () -> assertEquals(
@@ -577,10 +577,10 @@ final class SearchOperatorTest {
                         ),
                         SearchOperator.near(
                                 Instant.EPOCH,
+                                Duration.ofMillis(3),
                                 asList(
                                         fieldPath("fieldName1"),
-                                        fieldPath("fieldName2")),
-                                Duration.ofMillis(3))
+                                        fieldPath("fieldName2")))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 ),
                 () -> assertEquals(
@@ -593,10 +593,10 @@ final class SearchOperatorTest {
                         SearchOperator.near(
                                 new Point(
                                         new Position(1, 2)),
+                                1.5,
                                 fieldPath("fieldName1")
                                     // multi must be ignored
-                                    .multi("analyzeName"),
-                                1.5)
+                                    .multi("analyzeName"))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 ),
                 () -> assertEquals(
@@ -611,10 +611,10 @@ final class SearchOperatorTest {
                         SearchOperator.near(
                                 new Point(
                                         new Position(1, 2)),
+                                1.5,
                                 asList(
                                         fieldPath("fieldName1"),
-                                        fieldPath("fieldName2")),
-                                1.5)
+                                        fieldPath("fieldName2")))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 )
         );
