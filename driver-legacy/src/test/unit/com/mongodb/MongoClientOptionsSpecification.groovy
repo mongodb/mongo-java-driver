@@ -229,9 +229,11 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getMaxConnectionLifeTime() == 400
         optionsFromSettings.getMaxConnecting() == settings.connectionPoolSettings.maxConnecting
         optionsFromSettings.getMaintenanceInitialDelay() == 100
-        optionsFromSettings.getMaintenanceInitialDelay() == settings.connectionPoolSettings.getMaintenanceInitialDelay(TimeUnit.MILLISECONDS)
+        optionsFromSettings.getMaintenanceInitialDelay() ==
+                settings.connectionPoolSettings.getMaintenanceInitialDelay(TimeUnit.MILLISECONDS)
         optionsFromSettings.getMaintenanceFrequency() == 100
-        optionsFromSettings.getMaintenanceFrequency() == settings.connectionPoolSettings.getMaintenanceFrequency(TimeUnit.MILLISECONDS)
+        optionsFromSettings.getMaintenanceFrequency() ==
+                settings.connectionPoolSettings.getMaintenanceFrequency(TimeUnit.MILLISECONDS)
         optionsFromSettings.getMinConnectionsPerHost() == 30
         optionsFromSettings.getConnectionsPerHost() == 500
         optionsFromSettings.getConnectTimeout() == 100
