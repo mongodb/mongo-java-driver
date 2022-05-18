@@ -249,7 +249,7 @@ public abstract class AbstractClientSideEncryptionTest {
                 .build(), commandListener);
 
         database = getDatabase(databaseName);
-        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection("default", BsonDocument.class));
+        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
     }
 
     protected abstract void createMongoClient(AutoEncryptionSettings build, CommandListener commandListener);
