@@ -78,7 +78,7 @@ public final class DefaultClusterFactory {
                                  final MongoDriverInformation mongoDriverInformation,
                                  final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
 
-        ClusterId clusterId = new ClusterId();
+        ClusterId clusterId = new ClusterId(applicationName);
         ClusterSettings clusterSettings;
         ServerSettings serverSettings;
 
