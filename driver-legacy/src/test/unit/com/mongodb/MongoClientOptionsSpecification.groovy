@@ -187,6 +187,8 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
                                         .maxConnecting(1)
+                                        .maintenanceInitialDelay(100)
+                                        .maintenanceFrequency(100)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
                                         .sslContext(SSLContext.getDefault())
@@ -223,6 +225,8 @@ class MongoClientOptionsSpecification extends Specification {
         options.getMaxConnectionIdleTime() == 300
         options.getMaxConnectionLifeTime() == 400
         options.getMaxConnecting() == 1
+        options.getMaintenanceInitialDelay() == 100
+        options.getMaintenanceFrequency() == 100
         options.getMinConnectionsPerHost() == 30
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
@@ -245,7 +249,9 @@ class MongoClientOptionsSpecification extends Specification {
         def connectionPoolSettings = ConnectionPoolSettings.builder().maxSize(500).minSize(30)
                 .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
                 .maxConnectionIdleTime(300, MILLISECONDS)
-                .maxConnecting(options.getMaxConnecting()).build()
+                .maxConnecting(options.getMaxConnecting())
+                .maintenanceInitialDelay(100, MILLISECONDS)
+                .maintenanceFrequency(100, MILLISECONDS).build()
         def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS)
                 .readTimeout(700, MILLISECONDS)
                 .build()
@@ -325,6 +331,12 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getMaxConnectionIdleTime() == 300
         optionsFromSettings.getMaxConnectionLifeTime() == 400
         optionsFromSettings.getMaxConnecting() == settings.connectionPoolSettings.maxConnecting
+        optionsFromSettings.getMaintenanceInitialDelay() == 100
+        optionsFromSettings.getMaintenanceInitialDelay() ==
+                settings.getConnectionPoolSettings().getMaintenanceInitialDelay(MILLISECONDS)
+        optionsFromSettings.getMaintenanceFrequency() == 100
+        optionsFromSettings.getMaintenanceFrequency() ==
+                settings.getConnectionPoolSettings().getMaintenanceFrequency(MILLISECONDS)
         optionsFromSettings.getMinConnectionsPerHost() == 30
         optionsFromSettings.getConnectionsPerHost() == 500
         optionsFromSettings.getConnectTimeout() == 100
