@@ -28,6 +28,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
 import javax.net.ssl.SSLContext
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
@@ -126,6 +127,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
                                         .maxConnecting(1)
+                                        .maintenanceInitialDelay(100, TimeUnit.MILLISECONDS)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
                                         .sslContext(SSLContext.getDefault())
@@ -162,6 +164,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getMaxConnectionIdleTime() == 300
         options.getMaxConnectionLifeTime() == 400
         options.getMaxConnecting() == 1
+        options.getMaintenanceInitialDelay(TimeUnit.MILLISECONDS) == 100
         options.getMinConnectionsPerHost() == 30
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
@@ -223,6 +226,9 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getMaxConnectionIdleTime() == 300
         optionsFromSettings.getMaxConnectionLifeTime() == 400
         optionsFromSettings.getMaxConnecting() == settings.connectionPoolSettings.maxConnecting
+        optionsFromSettings.getMaintenanceInitialDelay(TimeUnit.MILLISECONDS) == 100
+        optionsFromSettings.getMaintenanceInitialDelay(TimeUnit.MILLISECONDS) == settings.connectionPoolSettings
+                .getMaintenanceInitialDelay(TimeUnit.MILLISECONDS)
         optionsFromSettings.getMinConnectionsPerHost() == 30
         optionsFromSettings.getConnectionsPerHost() == 500
         optionsFromSettings.getConnectTimeout() == 100

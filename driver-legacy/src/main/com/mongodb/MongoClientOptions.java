@@ -29,6 +29,9 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
+
+import java.util.concurrent.TimeUnit;
+
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -240,6 +243,20 @@ public class MongoClientOptions {
      */
     public int getMaxConnecting() {
         return wrapped.getConnectionPoolSettings().getMaxConnecting();
+    }
+
+    /**
+     * Returns the period of time to wait before running the first maintenance job on the connection pool.
+     * <p>
+     * Default is 0.</p>
+     *
+     * @param timeUnit unit of time to convert the value into
+     * @return The maximum number of connections a pool may be establishing concurrently.
+     * @see ConnectionPoolSettings#getMaintenanceInitialDelay
+     * @since 4.7
+     */
+    public long getMaintenanceInitialDelay(final TimeUnit timeUnit) {
+        return wrapped.getConnectionPoolSettings().getMaintenanceInitialDelay(timeUnit);
     }
 
     /**
@@ -843,6 +860,20 @@ public class MongoClientOptions {
          */
         public Builder maxConnecting(final int maxConnecting) {
             wrapped.applyToConnectionPoolSettings(builder -> builder.maxConnecting(maxConnecting));
+            return this;
+        }
+
+        /**
+         * The period of time to wait before running the first maintenance job on the connection pool.
+         *
+         * @param maintenanceInitialDelay the time period to wait
+         * @param timeUnit                the TimeUnit for this time period
+         * @return {@code this}.
+         * @see ConnectionPoolSettings.Builder#maintenanceInitialDelay
+         * @since 4.7
+         */
+        public Builder maintenanceInitialDelay(final long maintenanceInitialDelay, final TimeUnit timeUnit) {
+            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceInitialDelay(maintenanceInitialDelay, timeUnit));
             return this;
         }
 
