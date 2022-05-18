@@ -33,9 +33,6 @@ import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
-
-import java.util.concurrent.TimeUnit;
-
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -1323,7 +1320,7 @@ public class MongoClientOptions {
 
         /**
          * Set the maintenance initial delay per connection pool in ms.
-         * 
+         *
          * @see ConnectionPoolSettings.Builder#maintenanceInitialDelay
          * @param maintenanceInitialDelay long value indicating maintenance delay
          * @return this
