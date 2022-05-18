@@ -122,7 +122,7 @@ public class EncryptOptions {
      * The contention factor.
      *
      * <p>It is an error to set contentionFactor when algorithm is not "Indexed".
-     * @param contentionFactor the contention factor
+     * @param contentionFactor the contention factor, which must be {@code >= 0} or null.
      * @return this
      * @since 4.6
      */
