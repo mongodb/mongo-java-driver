@@ -243,6 +243,32 @@ public class MongoClientOptions {
     }
 
     /**
+     * Returns the period of time to wait before running the first maintenance job on each connection pool.
+     * <p>
+     * Default is 0 ms.</p>
+     *
+     * @return the time period to wait in milliseconds
+     * @see ConnectionPoolSettings#getMaintenanceInitialDelay
+     * @since 4.7
+     */
+    public long getMaintenanceInitialDelay() {
+        return wrapped.getConnectionPoolSettings().getMaintenanceInitialDelay(MILLISECONDS);
+    }
+
+    /**
+     * Returns the time period between runs of the maintenance job on each connection pool.
+     * <p>
+     * Default is 60,000 ms.</p>
+     *
+     * @return the time period between runs of the maintainance job in milliseconds
+     * @see ConnectionPoolSettings#getMaintenanceFrequency
+     * @since 4.7
+     */
+    public long getMaintenanceFrequency() {
+        return wrapped.getConnectionPoolSettings().getMaintenanceFrequency(MILLISECONDS);
+    }
+
+    /**
      * <p>The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection
      * {@link java.net.Socket#connect(java.net.SocketAddress, int) }</p>
      *
@@ -843,6 +869,32 @@ public class MongoClientOptions {
          */
         public Builder maxConnecting(final int maxConnecting) {
             wrapped.applyToConnectionPoolSettings(builder -> builder.maxConnecting(maxConnecting));
+            return this;
+        }
+
+        /**
+         * The period of time to wait before running the first maintenance job on each connection pool.
+         *
+         * @param maintenanceInitialDelay the time period to wait in milliseconds
+         * @return {@code this}.
+         * @see ConnectionPoolSettings.Builder#maintenanceInitialDelay
+         * @since 4.7
+         */
+        public Builder maintenanceInitialDelay(final long maintenanceInitialDelay) {
+            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceInitialDelay(maintenanceInitialDelay, MILLISECONDS));
+            return this;
+        }
+
+        /**
+         * The time period between runs of the maintenance job on each connection pool.
+         *
+         * @param maintenanceFrequency the time period between runs of the maintenance job in milliseconds
+         * @return {@code this}
+         * @see ConnectionPoolSettings.Builder#maintenanceFrequency
+         * @since 4.7
+         */
+        public Builder maintenanceFrequency(final long maintenanceFrequency) {
+            wrapped.applyToConnectionPoolSettings(builder -> builder.maintenanceFrequency(maintenanceFrequency, MILLISECONDS));
             return this;
         }
 
