@@ -29,9 +29,6 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
-
-import java.util.concurrent.TimeUnit;
-
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -248,27 +245,27 @@ public class MongoClientOptions {
     /**
      * Returns the period of time to wait before running the first maintenance job on each connection pool.
      * <p>
-     * Default is 0.</p>
+     * Default is 0 ms.</p>
      *
      * @return the time period to wait in milliseconds
      * @see ConnectionPoolSettings#getMaintenanceInitialDelay
      * @since 4.7
      */
-    public int getMaintenanceInitialDelay() {
-        return toIntExact(wrapped.getConnectionPoolSettings().getMaintenanceInitialDelay(MILLISECONDS));
+    public long getMaintenanceInitialDelay() {
+        return wrapped.getConnectionPoolSettings().getMaintenanceInitialDelay(MILLISECONDS);
     }
 
     /**
      * Returns the time period between runs of the maintenance job on each connection pool.
      * <p>
-     * Default is 60,000.</p>
+     * Default is 60,000 ms.</p>
      *
      * @return the time period between runs of the maintainance job in milliseconds
      * @see ConnectionPoolSettings#getMaintenanceFrequency
      * @since 4.7
      */
-    public int getMaintenanceFrequency() {
-        return toIntExact(wrapped.getConnectionPoolSettings().getMaintenanceFrequency(MILLISECONDS));
+    public long getMaintenanceFrequency() {
+        return wrapped.getConnectionPoolSettings().getMaintenanceFrequency(MILLISECONDS);
     }
 
     /**
