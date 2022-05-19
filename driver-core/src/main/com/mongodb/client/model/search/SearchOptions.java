@@ -29,6 +29,7 @@ import org.bson.conversions.Bson;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface SearchOptions extends Bson {
     /**
      * Creates a new {@link SearchOptions} with the index name specified.

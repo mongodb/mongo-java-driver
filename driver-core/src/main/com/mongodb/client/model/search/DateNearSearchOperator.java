@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 import java.time.Duration;
@@ -26,6 +27,7 @@ import java.time.Instant;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface DateNearSearchOperator extends SearchOperator {
     @Override
     DateNearSearchOperator score(SearchScore modifier);

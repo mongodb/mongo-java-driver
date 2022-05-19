@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ SearchOperator => JSearchOperator }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.geojson.Point
@@ -28,6 +29,7 @@ import collection.JavaConverters._
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
  * @since 4.7
  */
+@Beta(Array(Beta.Reason.CLIENT))
 object SearchOperator {
 
   /**
@@ -171,7 +173,7 @@ object SearchOperator {
    * @param path The field to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
-   * @see [[org.bson.codecs.jsr310.InstantCodec]]
+   * @see `org.bson.codecs.jsr310.InstantCodec`
    */
   def near(origin: Instant, pivot: Duration, path: FieldSearchPath): DateNearSearchOperator =
     JSearchOperator.near(origin, pivot, path)
@@ -187,7 +189,7 @@ object SearchOperator {
    * It is converted to `long` via `Duration.toMillis`.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
-   * @see [[org.bson.codecs.jsr310.InstantCodec]]
+   * @see `org.bson.codecs.jsr310.InstantCodec`
    */
   def near(origin: Instant, pivot: Duration, paths: Iterable[_ <: FieldSearchPath]): DateNearSearchOperator =
     JSearchOperator.near(origin, pivot, paths.asJava)

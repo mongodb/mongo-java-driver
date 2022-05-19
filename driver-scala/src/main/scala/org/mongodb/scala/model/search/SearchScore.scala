@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ SearchScore => JSearchScore }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Projections
@@ -27,6 +28,7 @@ import org.mongodb.scala.model.Projections
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
  * @since 4.7
  */
+@Beta(Array(Beta.Reason.CLIENT))
 object SearchScore {
 
   /**

@@ -30,6 +30,8 @@
  * @since 4.7
  */
 @NonNullApi
+@Beta(Beta.Reason.CLIENT)
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.NonNullApi;

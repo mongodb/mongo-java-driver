@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Projections;
 import org.bson.BsonDocument;
@@ -34,6 +35,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface SearchScore extends Bson {
     /**
      * Returns a {@link SearchScore} that instructs to multiply the score by the specified {@code value}.

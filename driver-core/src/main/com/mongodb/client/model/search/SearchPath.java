@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.internal.client.model.Util;
 import org.bson.BsonDocument;
@@ -36,6 +37,7 @@ import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface SearchPath extends Bson {
     /**
      * Returns a {@link SearchPath} for the given {@code path}.

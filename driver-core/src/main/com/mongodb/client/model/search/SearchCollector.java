@@ -34,6 +34,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface SearchCollector extends Bson {
     /**
      * Returns a {@link SearchCollector} that groups results by values or ranges in the specified faceted fields and returns the count

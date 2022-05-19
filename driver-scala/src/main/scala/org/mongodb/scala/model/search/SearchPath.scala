@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ SearchPath => JSearchPath }
 
 /**
@@ -26,6 +27,7 @@ import com.mongodb.client.model.search.{ SearchPath => JSearchPath }
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/path-construction/ Path]]
  * @since 4.7
  */
+@Beta(Array(Beta.Reason.CLIENT))
 object SearchPath {
 
   /**

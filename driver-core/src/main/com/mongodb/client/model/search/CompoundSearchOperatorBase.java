@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 /**
@@ -25,6 +26,7 @@ import com.mongodb.annotations.Evolving;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface CompoundSearchOperatorBase {
     /**
      * Creates a new {@link CompoundSearchOperator} by adding to it {@code clauses} that must all be satisfied.

@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ SearchHighlight => JSearchHighlight }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Projections
@@ -29,6 +30,7 @@ import collection.JavaConverters._
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/highlighting/ Highlighting]]
  * @since 4.7
  */
+@Beta(Array(Beta.Reason.CLIENT))
 object SearchHighlight {
 
   /**

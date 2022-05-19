@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 /**
@@ -22,5 +23,6 @@ import com.mongodb.annotations.Evolving;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface RelevanceSearchScoreExpression extends SearchScoreExpression {
 }

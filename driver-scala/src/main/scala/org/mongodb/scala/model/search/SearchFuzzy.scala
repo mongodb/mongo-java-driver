@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ SearchFuzzy => JSearchFuzzy }
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -25,6 +26,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
  * @since 4.7
  */
+@Beta(Array(Beta.Reason.CLIENT))
 object SearchFuzzy {
 
   /**

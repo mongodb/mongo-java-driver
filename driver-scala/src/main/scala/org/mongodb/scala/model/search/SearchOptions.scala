@@ -15,6 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ SearchOptions => JSearchOptions }
 
 /**
@@ -23,6 +24,7 @@ import com.mongodb.client.model.search.{ SearchOptions => JSearchOptions }
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search syntax]]
  * @since 4.7
  */
+@Beta(Array(Beta.Reason.CLIENT))
 object SearchOptions {
 
   /**

@@ -30,6 +30,7 @@ import scala.collection.JavaConverters._
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
  * @since 4.7
  */
+@Beta(Array(Beta.Reason.CLIENT))
 object SearchCollector {
 
   /**

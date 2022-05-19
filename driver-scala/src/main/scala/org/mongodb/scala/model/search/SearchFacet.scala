@@ -65,7 +65,7 @@ object SearchFacet {
    * @param boundaries Bucket boundaries in ascending order. Must contain at least two boundaries.
    * @return The requested `SearchFacet`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#date-facets Date facet definition]]
-   * @see [[org.bson.codecs.jsr310.InstantCodec]]
+   * @see `org.bson.codecs.jsr310.InstantCodec`
    */
   def dateFacet(name: String, path: FieldSearchPath, boundaries: Iterable[Instant]): DateSearchFacet =
     JSearchFacet.dateFacet(name, path, boundaries.asJava)

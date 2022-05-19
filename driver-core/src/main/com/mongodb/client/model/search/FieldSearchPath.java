@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import org.bson.conversions.Bson;
 
@@ -25,6 +26,7 @@ import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
  * @since 4.7
  */
 @Evolving
+@Beta(Beta.Reason.CLIENT)
 public interface FieldSearchPath extends SearchPath {
     /**
      * Creates a new {@link FieldSearchPath} with the name of the alternate analyzer specified.
