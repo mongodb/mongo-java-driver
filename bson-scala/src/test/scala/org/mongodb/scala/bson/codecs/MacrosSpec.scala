@@ -329,8 +329,8 @@ class MacrosSpec extends BaseSpec {
 
   it should "be able to round trip nested case classes in maps" in {
     roundTrip(
-      ContainsMapOfCaseClasses("Bob", Map("mother" -> Person("Jane", "Jones"))),
-      """{name: "Bob", friends: {mother: {firstName: "Jane", lastName: "Jones"}}}""",
+      ContainsMapOfCaseClasses("Bob", Map("name" -> Person("Jane", "Jones"))),
+      """{name: "Bob", friends: {name: {firstName: "Jane", lastName: "Jones"}}}""",
       classOf[ContainsMapOfCaseClasses],
       classOf[Person]
     )
