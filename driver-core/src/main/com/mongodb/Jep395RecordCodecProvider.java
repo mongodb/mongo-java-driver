@@ -41,8 +41,9 @@ public class Jep395RecordCodecProvider implements CodecProvider {
         CodecProvider possibleCodecProvider;
         try {
             Class.forName("java.lang.Record"); // JEP-395 support canary test.
+            Class.forName("org.bson.codecs.record.RecordCodecProvider"); // Java 17 canary test
             possibleCodecProvider = new RecordCodecProvider();
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | UnsupportedClassVersionError e) {
             // No JEP-395 support
             possibleCodecProvider = null;
         }
