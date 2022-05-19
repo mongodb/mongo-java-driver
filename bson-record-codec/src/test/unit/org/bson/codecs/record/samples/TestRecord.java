@@ -23,6 +23,7 @@ import org.bson.codecs.record.annotations.BsonRepresentation;
 
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public record TestRecord(String name,
                          @BsonProperty("a") int age,
                          List<String> hobbies,

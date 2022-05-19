@@ -26,7 +26,9 @@ import java.lang.annotation.Target;
  * An annotation that configures the record component as the _id field of the document
  *
  * @since 4.6
+ * @deprecated Prefer {@link org.bson.codecs.pojo.annotations.BsonId}
  */
+@Deprecated
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.RECORD_COMPONENT})
