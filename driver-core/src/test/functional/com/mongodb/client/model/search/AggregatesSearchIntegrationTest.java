@@ -438,12 +438,12 @@ final class AggregatesSearchIntegrationTest {
                                                 .score(function(constantExpression(-1.2f))),
                                         exists(fieldPath("fieldName9"))
                                                 .score(function(
-                                                        gaussExpression(-10, pathExpression(fieldPath("gaussianFeldName")), Double.MAX_VALUE / -2))),
+                                                        gaussExpression(-10, pathExpression(fieldPath("gaussianFieldName")), Double.MAX_VALUE / -2))),
                                         exists(fieldPath("fieldName10"))
                                                 .score(function(
                                                         gaussExpression(
                                                                 -10,
-                                                                pathExpression(fieldPath("gaussianFeldName"))
+                                                                pathExpression(fieldPath("gaussianFieldName"))
                                                                         .undefined(0),
                                                                 Double.MAX_VALUE / -2)
                                                         .offset(Double.MAX_VALUE / -2)
@@ -458,7 +458,7 @@ final class AggregatesSearchIntegrationTest {
                                                                 constantExpression(2),
                                                                 constantExpression(3),
                                                                 relevanceExpression()))),
-                                                        gaussExpression(0, pathExpression(fieldPath("gaussianFeldName")), 1)))))
+                                                        gaussExpression(0, pathExpression(fieldPath("gaussianFieldName")), 1)))))
                                 )),
                                 null
                         ),
