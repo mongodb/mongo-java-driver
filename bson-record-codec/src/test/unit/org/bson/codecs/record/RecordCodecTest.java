@@ -26,6 +26,7 @@ import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.record.samples.TestRecord;
+import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
@@ -35,10 +36,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RecordCodecTest {
-    private final RecordCodec<TestRecord> codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
 
     @Test
     public void testSimpleRecord() {
+        var codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecord("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
 
@@ -65,7 +66,36 @@ public class RecordCodecTest {
     }
 
     @Test
+    public void testSimpleRecordWithPojoAnnotations() {
+        var codec = new RecordCodec<>(TestRecordWithPojoAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithPojoAnnotations("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
+
+        var document = new BsonDocument();
+        var writer = new BsonDocumentWriter(document);
+
+        // when
+        codec.encode(writer, testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonObjectId(identifier))
+                        .append("name", new BsonString("Lucas"))
+                        .append("hobbies", new BsonArray(List.of(new BsonString("soccer"), new BsonString("basketball"))))
+                        .append("a", new BsonInt32(14)),
+                document);
+        assertEquals("_id", document.getFirstKey());
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
     public void testSimpleRecordWithNulls() {
+        var codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecord(null, 14, null, identifier.toHexString());
 
@@ -90,6 +120,7 @@ public class RecordCodecTest {
 
     @Test
     public void testSimpleRecordWithExtraData() {
+        var codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecord("Felix", 13, List.of("rugby", "badminton"), identifier.toHexString());
 

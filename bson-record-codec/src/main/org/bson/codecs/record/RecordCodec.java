@@ -25,13 +25,14 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.RepresentationConfigurable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.record.annotations.BsonProperty;
 import org.bson.codecs.record.annotations.BsonId;
+import org.bson.codecs.record.annotations.BsonProperty;
 import org.bson.codecs.record.annotations.BsonRepresentation;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
 import javax.annotation.Nullable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
@@ -78,12 +79,20 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             return component.getAccessor().invoke(record);
         }
 
+        @SuppressWarnings("deprecation")
         private static Codec<?> computeCodec(final RecordComponent component, final CodecRegistry codecRegistry) {
             var codec = codecRegistry.get(toWrapper(component.getType()));
-            var bsonRepresentationAnnotation = component.getAnnotation(BsonRepresentation.class);
-            if (bsonRepresentationAnnotation != null) {
+            BsonType bsonRepresentationType = null;
+
+            if (component.isAnnotationPresent(BsonRepresentation.class)) {
+                bsonRepresentationType = component.getAnnotation(BsonRepresentation.class).value();
+            } else if (isAnnotationPresentOnField(component, org.bson.codecs.pojo.annotations.BsonRepresentation.class)) {
+                bsonRepresentationType = getAnnotationOnField(component,
+                        org.bson.codecs.pojo.annotations.BsonRepresentation.class).value();
+            }
+            if (bsonRepresentationType != null) {
                 if (codec instanceof RepresentationConfigurable<?> representationConfigurable) {
-                    codec = representationConfigurable.withRepresentation(bsonRepresentationAnnotation.value());
+                    codec = representationConfigurable.withRepresentation(bsonRepresentationType);
                 } else {
                     throw new CodecConfigurationException(
                             format("Codec for %s must implement RepresentationConfigurable to support BsonRepresentation",
@@ -92,14 +101,41 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             }
             return codec;
         }
-
+        @SuppressWarnings("deprecation")
         private static String computeFieldName(final RecordComponent component) {
             if (component.isAnnotationPresent(BsonId.class)) {
                 return "_id";
+            } else if (isAnnotationPresentOnField(component,
+                    org.bson.codecs.pojo.annotations.BsonId.class)) {
+                return "_id";
             } else if (component.isAnnotationPresent(BsonProperty.class)) {
                 return component.getAnnotation(BsonProperty.class).value();
+            } else {
+                if (isAnnotationPresentOnField(component,
+                        org.bson.codecs.pojo.annotations.BsonProperty.class)) {
+                    return getAnnotationOnField(component,
+                            org.bson.codecs.pojo.annotations.BsonProperty.class).value();
+                }
             }
             return component.getName();
+        }
+
+        private static <T extends Annotation> boolean isAnnotationPresentOnField(final RecordComponent component,
+                final Class<T> annotation) {
+            try {
+                return component.getDeclaringRecord().getDeclaredField(component.getName()).isAnnotationPresent(annotation);
+            } catch (NoSuchFieldException e) {
+                throw new CodecConfigurationException("Unexpectedly missing the declared field", e);
+            }
+        }
+
+        private static <T extends Annotation> T getAnnotationOnField(final RecordComponent component,
+                final Class<T> annotation) {
+            try {
+                return component.getDeclaringRecord().getDeclaredField(component.getName()).getAnnotation(annotation);
+            } catch (NoSuchFieldException e) {
+                throw new CodecConfigurationException("Unexpectedly missing the declared field", e);
+            }
         }
     }
 
