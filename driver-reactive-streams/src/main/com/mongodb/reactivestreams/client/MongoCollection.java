@@ -1380,6 +1380,7 @@ public interface MongoCollection<TDocument> {
      * Drops this collection from the Database.
      *
      * @param dropCollectionOptions various options for dropping the collection
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      * @since 4.7
      * @mongodb.server.release 6.0
@@ -1391,6 +1392,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param clientSession the client session with which to associate this operation
      * @param dropCollectionOptions various options for dropping the collection
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      * @since 4.7
      * @mongodb.server.release 6.0
