@@ -17,12 +17,14 @@ package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
 import java.util.AbstractMap;
@@ -34,6 +36,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.documents;
 import static com.mongodb.client.model.Windows.range;
 import static java.util.Arrays.asList;
@@ -44,9 +48,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 final class TestWindowedComputations {
     private static final String NO_EXPRESSION = "{}";
     private static final String PATH = "newField";
+    private static final Bson SORT_BY = ascending("sortByField");
     private static final Map.Entry<Integer, BsonValue> INT_EXPR = new AbstractMap.SimpleImmutableEntry<>(1, new BsonInt32(1));
     private static final Map.Entry<String, BsonValue> STR_EXPR =
             new AbstractMap.SimpleImmutableEntry<>("$fieldToRead", new BsonString("$fieldToRead"));
+    private static final Map.Entry<Document, BsonDocument> DOC_EXPR = new AbstractMap.SimpleImmutableEntry<>(
+            new Document("gid", "$partitionId"),
+            new BsonDocument("gid", new BsonString("$partitionId")));
+    private static final Map.Entry<Document, BsonDocument> DOC_INT_EXPR = new AbstractMap.SimpleImmutableEntry<>(
+            new Document("$cond", new Document("if",
+                    new Document("$eq", asList("$gid", true)))
+                    .append("then", 2).append("else", 2)),
+            new BsonDocument("$cond", new BsonDocument("if",
+                    new BsonDocument("$eq", new BsonArray(asList(new BsonString("$gid"), BsonBoolean.TRUE))))
+                    .append("then", new BsonInt32(2)).append("else", new BsonInt32(2))));
     private static final Window POSITION_BASED_WINDOW = documents(1, 2);
     private static final Window RANGE_BASED_WINDOW = range(1, 2);
 
@@ -172,6 +187,120 @@ final class TestWindowedComputations {
                         WindowedComputations.shift(PATH, null, INT_EXPR.getKey(), 0)));
     }
 
+    @Test
+    void pick() {
+        final Map<Object, BsonValue> expressions = new HashMap<>();
+        expressions.put(INT_EXPR.getKey(), INT_EXPR.getValue());
+        expressions.put(STR_EXPR.getKey(), STR_EXPR.getValue());
+        expressions.put(DOC_EXPR.getKey(), DOC_EXPR.getValue());
+        final Map<Object, BsonValue> nExpressions = new HashMap<>();
+        nExpressions.put(INT_EXPR.getKey(), INT_EXPR.getValue());
+        nExpressions.put(DOC_INT_EXPR.getKey(), DOC_INT_EXPR.getValue());
+        final Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
+        assertAll(
+                () -> assertPickNoSortWindowFunction("$minN", WindowedComputations::minN, expressions, "input", nExpressions, windows),
+                () -> assertPickNoSortWindowFunction("$maxN", WindowedComputations::maxN, expressions, "input", nExpressions, windows),
+                () -> assertPickNoSortWindowFunction("$firstN", WindowedComputations::firstN, expressions, "input", nExpressions, windows),
+                () -> assertPickNoSortWindowFunction("$lastN", WindowedComputations::lastN, expressions, "input", nExpressions, windows),
+                () -> assertPickNoNWindowFunction("$bottom", WindowedComputations::bottom, expressions, "output", windows),
+                () -> assertPickSortWindowFunction("$bottomN", WindowedComputations::bottomN, expressions, "output", nExpressions, windows),
+                () -> assertPickNoNWindowFunction("$top", WindowedComputations::top, expressions, "output", windows),
+                () -> assertPickSortWindowFunction("$topN", WindowedComputations::topN, expressions, "output", nExpressions, windows)
+        );
+    }
+
+    private static void assertPickNoSortWindowFunction(
+            final String expectedFunctionName,
+            final QuadriFunction<String, Object, Object, Window, WindowedComputation> windowedComputationBuilder,
+            final Map<Object, BsonValue> expressions,
+            final String expressionKey,
+            final Map<Object, BsonValue> nExpressions,
+            final Collection<Window> windows) {
+        assertPickWindowFunction(
+                expectedFunctionName,
+                (a1, ignoredSort, a3, a4, a5) -> windowedComputationBuilder.apply(a1, a3, a4, a5),
+                false, expressions, expressionKey, nExpressions, windows);
+    }
+
+    private static void assertPickNoNWindowFunction(
+            final String expectedFunctionName,
+            final QuadriFunction<String, Bson, Object, Window, WindowedComputation> windowedComputationBuilder,
+            final Map<Object, BsonValue> expressions,
+            final String expressionKey,
+            final Collection<Window> windows) {
+        assertPickWindowFunction(
+                expectedFunctionName,
+                (a1, a2, a3, ignoredN, a5) -> windowedComputationBuilder.apply(a1, a2, a3, a5),
+                true, expressions, expressionKey, Collections.singletonMap(NO_EXPRESSION, BsonDocument.parse(NO_EXPRESSION)), windows);
+    }
+
+    private static void assertPickSortWindowFunction(
+            final String expectedFunctionName,
+            final QuinqueFunction<String, Bson, Object, Object, Window, WindowedComputation> windowedComputationBuilder,
+            final Map<Object, BsonValue> expressions,
+            final String expressionKey,
+            final Map<Object, BsonValue> nExpressions,
+            final Collection<Window> windows) {
+        assertPickWindowFunction(
+                expectedFunctionName,
+                windowedComputationBuilder,
+                true, expressions, expressionKey, nExpressions, windows);
+    }
+
+    private static void assertPickWindowFunction(
+            final String expectedFunctionName,
+            final QuinqueFunction<String, Bson, Object, Object, Window, WindowedComputation> windowedComputationBuilder,
+            final boolean useSortBy,
+            final Map<Object, BsonValue> expressions,
+            final String expressionKey,
+            final Map<Object, BsonValue> nExpressions,
+            final Collection<Window> windows) {
+        Bson sortBySpec = useSortBy ? SORT_BY : null;
+        for (final Map.Entry<Object, BsonValue> expressionAndEncoded: expressions.entrySet()) {
+            final Object expression = expressionAndEncoded.getKey();
+            final BsonValue encodedExpression = expressionAndEncoded.getValue();
+            for (final Map.Entry<Object, BsonValue> nExpressionAndEncoded: nExpressions.entrySet()) {
+                final Object nExpression = nExpressionAndEncoded.getKey();
+                final BsonValue encodedNExpression = nExpressionAndEncoded.getValue();
+                final boolean useNExpression = !nExpression.equals(NO_EXPRESSION);
+                for (final Window window : windows) {
+                    final BsonDocument expectedFunctionDoc = new BsonDocument(expressionKey, encodedExpression);
+                    if (useSortBy) {
+                        expectedFunctionDoc.append("sortBy", assertNotNull(sortBySpec).toBsonDocument());
+                    }
+                    if (useNExpression) {
+                        expectedFunctionDoc.append("n", encodedNExpression);
+                    }
+                    final BsonDocument expectedFunctionAndWindow = new BsonDocument(expectedFunctionName, expectedFunctionDoc);
+                    if (window != null) {
+                        expectedFunctionAndWindow.append("window", window.toBsonDocument());
+                    }
+                    BsonField expectedWindowedComputation = new BsonField(PATH, expectedFunctionAndWindow);
+                    Supplier<String> msg = () -> "expectedFunctionName=" + expectedFunctionName
+                            + ", path=" + PATH
+                            + ", sortBySpec=" + sortBySpec
+                            + ", expression=" + expression
+                            + ", nExpression=" + nExpression
+                            + ", window=" + window;
+                    assertWindowedComputation(
+                            expectedWindowedComputation, windowedComputationBuilder.apply(PATH, sortBySpec, expression, nExpression, window), msg);
+                    assertThrows(IllegalArgumentException.class, () ->
+                            windowedComputationBuilder.apply(null, sortBySpec, expression, nExpression, window), msg);
+                    if (useSortBy) {
+                        assertThrows(IllegalArgumentException.class, () ->
+                                windowedComputationBuilder.apply(PATH, null, expression, nExpression, window), msg);
+                    }
+                    assertThrows(IllegalArgumentException.class, () ->
+                            windowedComputationBuilder.apply(PATH, sortBySpec, null, nExpression, window), msg);
+                    if (useNExpression) {
+                        assertThrows(IllegalArgumentException.class, () ->
+                                windowedComputationBuilder.apply(PATH, sortBySpec, expression, null, window), msg);
+                    }
+                }
+            }
+        }
+    }
+
     private static void assertSimpleParameterWindowFunction(final String expectedFunctionName,
                                                             final TriFunction<String, Object, Window, WindowedComputation>
                                                                     windowedComputationBuilder,
@@ -189,10 +318,10 @@ final class TestWindowedComputations {
                 }
                 BsonField expectedWindowedComputation = new BsonField(PATH, expectedFunctionAndWindow);
                 Supplier<String> msg = () -> "expectedFunctionName=" + expectedFunctionName
-                        + "path=" + PATH
-                        + "expression=" + expression
-                        + "window=" + window
-                        + "windowRequired=" + windowRequired;
+                        + ", path=" + PATH
+                        + ", expression=" + expression
+                        + ", window=" + window
+                        + ", windowRequired=" + windowRequired;
                 if (windowRequired && window == null) {
                     assertThrows(IllegalArgumentException.class, () -> windowedComputationBuilder.apply(PATH, expression, null), msg);
                 } else {
@@ -288,5 +417,10 @@ final class TestWindowedComputations {
     @FunctionalInterface
     interface QuadriFunction<A1, A2, A3, A4, R> {
         R apply(@Nullable A1 a1, @Nullable A2 a2, @Nullable A3 a3, @Nullable A4 a4);
+    }
+
+    @FunctionalInterface
+    interface QuinqueFunction<A1, A2, A3, A4, A5, R> {
+        R apply(@Nullable A1 a1, @Nullable A2 a2, @Nullable A3 a3, @Nullable A4 a4, @Nullable A5 a5);
     }
 }

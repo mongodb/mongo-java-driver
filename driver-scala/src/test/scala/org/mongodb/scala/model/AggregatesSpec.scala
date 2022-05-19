@@ -17,7 +17,6 @@
 package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
-
 import org.bson.BsonDocument
 import org.mongodb.scala.bson.BsonArray
 import org.mongodb.scala.bson.collection.immutable.Document
@@ -378,9 +377,17 @@ class AggregatesSpec extends BaseSpec {
         sum: { $sum: { $multiply: [ "$price", "$quantity" ] } },
         avg: { $avg: "$quantity" },
         min: { $min: "$quantity" },
+        minN: { $minN: { input: "$quantity", n: 2 } },
         max: { $max: "$quantity" },
+        maxN: { $maxN: { input: "$quantity", n: 2 } },
         first: { $first: "$quantity" },
+        firstN: { $firstN: { input: "$quantity", n: 2 } },
+        top: { $top: { sortBy: { quantity: 1 }, output: "$quantity" } },
+        topN: { $topN: { sortBy: { quantity: 1 }, output: "$quantity", n: 2 } },
         last: { $last: "$quantity" },
+        lastN: { $lastN: { input: "$quantity", n: 2 } },
+        bottom: { $bottom: { sortBy: { quantity: 1 }, output: ["$quantity", "$quality"] } },
+        bottomN: { $bottomN: { sortBy: { quantity: 1 }, output: ["$quantity", "$quality"], n: 2 } },
         all: { $push: "$quantity" },
         unique: { $addToSet: "$quantity" },
         stdDevPop: { $stdDevPop: "$quantity" },
@@ -394,9 +401,17 @@ class AggregatesSpec extends BaseSpec {
         sum("sum", Document("""{ $multiply: [ "$price", "$quantity" ] }""")),
         avg("avg", "$quantity"),
         min("min", "$quantity"),
+        minN("minN", "$quantity", 2),
         max("max", "$quantity"),
+        maxN("maxN", "$quantity", 2),
         first("first", "$quantity"),
+        firstN("firstN", "$quantity", 2),
+        top("top", ascending("quantity"), "$quantity"),
+        topN("topN", ascending("quantity"), "$quantity", 2),
         last("last", "$quantity"),
+        lastN("lastN", "$quantity", 2),
+        bottom("bottom", ascending("quantity"), List("$quantity", "$quality")),
+        bottomN("bottomN", ascending("quantity"), List("$quantity", "$quality"), 2),
         push("all", "$quantity"),
         addToSet("unique", "$quantity"),
         stdDevPop("stdDevPop", "$quantity"),
@@ -425,7 +440,9 @@ class AggregatesSpec extends BaseSpec {
         WindowedComputations.stdDevSamp("newField03", "$field03", Some(window)),
         WindowedComputations.stdDevPop("newField04", "$field04", Some(window)),
         WindowedComputations.min("newField05", "$field05", Some(window)),
+        WindowedComputations.minN("newField05N", "$field05N", 2, Some(window)),
         WindowedComputations.max("newField06", "$field06", Some(window)),
+        WindowedComputations.maxN("newField06N", "$field06N", 2, Some(window)),
         WindowedComputations.count("newField07", Some(window)),
         WindowedComputations.derivative("newField08", "$field08", window),
         WindowedComputations.timeDerivative("newField09", "$field09", window, DAY),
@@ -438,11 +455,17 @@ class AggregatesSpec extends BaseSpec {
         WindowedComputations.push("newField16", "$field16", Some(window)),
         WindowedComputations.addToSet("newField17", "$field17", Some(window)),
         WindowedComputations.first("newField18", "$field18", Some(window)),
+        WindowedComputations.firstN("newField18N", "$field18N", 2, Some(window)),
         WindowedComputations.last("newField19", "$field19", Some(window)),
+        WindowedComputations.lastN("newField19N", "$field19N", 2, Some(window)),
         WindowedComputations.shift("newField20", "$field20", Some("defaultConstantValue"), -3),
         WindowedComputations.documentNumber("newField21"),
         WindowedComputations.rank("newField22"),
-        WindowedComputations.denseRank("newField23")
+        WindowedComputations.denseRank("newField23"),
+        WindowedComputations.bottom("newField24", ascending("sortByField"), "$field24", Some(window)),
+        WindowedComputations.bottomN("newField24N", ascending("sortByField"), "$field24N", 2, Some(window)),
+        WindowedComputations.top("newField25", ascending("sortByField"), "$field25", Some(window)),
+        WindowedComputations.topN("newField25N", ascending("sortByField"), "$field25N", 2, Some(window))
       )
     ) should equal(
       Document(
@@ -457,7 +480,9 @@ class AggregatesSpec extends BaseSpec {
             "newField03": { "$stdDevSamp": "$field03", "window": { "documents": [1, 2] } },
             "newField04": { "$stdDevPop": "$field04", "window": { "documents": [1, 2] } },
             "newField05": { "$min": "$field05", "window": { "documents": [1, 2] } },
+            "newField05N": { "$minN": { "input": "$field05N", "n": 2 }, "window": { "documents": [1, 2] } },
             "newField06": { "$max": "$field06", "window": { "documents": [1, 2] } },
+            "newField06N": { "$maxN": { "input": "$field06N", "n": 2 }, "window": { "documents": [1, 2] } },
             "newField07": { "$count": {}, "window": { "documents": [1, 2] } },
             "newField08": { "$derivative": { "input": "$field08" }, "window": { "documents": [1, 2] } },
             "newField09": { "$derivative": { "input": "$field09", "unit": "day" }, "window": { "documents": [1, 2] } },
@@ -470,11 +495,17 @@ class AggregatesSpec extends BaseSpec {
             "newField16": { "$push": "$field16", "window": { "documents": [1, 2] } },
             "newField17": { "$addToSet": "$field17", "window": { "documents": [1, 2] } },
             "newField18": { "$first": "$field18", "window": { "documents": [1, 2] } },
+            "newField18N": { "$firstN": { "input": "$field18N", "n": 2 }, "window": { "documents": [1, 2] } },
             "newField19": { "$last": "$field19", "window": { "documents": [1, 2] } },
+            "newField19N": { "$lastN": { "input": "$field19N", "n": 2 }, "window": { "documents": [1, 2] } },
             "newField20": { "$shift": { "output": "$field20", "by": -3, "default": "defaultConstantValue" } },
             "newField21": { "$documentNumber": {} },
             "newField22": { "$rank": {} },
-            "newField23": { "$denseRank": {} }
+            "newField23": { "$denseRank": {} },
+            "newField24": { "$bottom": { "sortBy": { "sortByField": 1}, "output": "$field24"}, "window": { "documents": [1, 2] } },
+            "newField24N": { "$bottomN": { "sortBy": { "sortByField": 1}, "output": "$field24N", "n": 2 }, "window": { "documents": [1, 2] } },
+            "newField25": { "$top": { "sortBy": { "sortByField": 1}, "output": "$field25"}, "window": { "documents": [1, 2] } },
+            "newField25N": { "$topN": { "sortBy": { "sortByField": 1}, "output": "$field25N", "n": 2 }, "window": { "documents": [1, 2] } }
           }
         }
       }"""

@@ -149,14 +149,14 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the lowest of the evaluation results of the {@code expression} over the {@code window}.
+     * Builds a computation of the smallest of the evaluation results of the {@code expression} over the {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
      * @return The constructed windowed computation.
-     * @mongodb.driver.dochub core/window-functions-min $min
+     * @mongodb.driver.manual reference/operator/aggregation/min/ $min
      */
     public static <TExpression> WindowedComputation min(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
@@ -165,19 +165,73 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the highest of the evaluation results of the {@code expression} over the {@code window}.
+     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of {@code N} smallest evaluation results of the {@code inExpression} over the {@code window},
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param path The output field path.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param window The window.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/minN/ $minN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> WindowedComputation minN(
+            final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("inExpression", inExpression);
+        notNull("nExpression", nExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.INPUT, inExpression);
+        args.put(ParamName.N_LOWERCASE, nExpression);
+        return compoundParameterWindowFunction(path, "$minN", args, window);
+    }
+
+    /**
+     * Builds a computation of the largest of the evaluation results of the {@code expression} over the {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
      * @return The constructed windowed computation.
-     * @mongodb.driver.dochub core/window-functions-max $max
+     * @mongodb.driver.manual reference/operator/aggregation/max/ $max
      */
     public static <TExpression> WindowedComputation max(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$max", expression, window);
+    }
+
+    /**
+     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of {@code N} largest evaluation results of the {@code inExpression} over the {@code window},
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param path The output field path.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param window The window.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/maxN/ $maxN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> WindowedComputation maxN(
+            final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("inExpression", inExpression);
+        notNull("nExpression", nExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.INPUT, inExpression);
+        args.put(ParamName.N_LOWERCASE, nExpression);
+        return compoundParameterWindowFunction(path, "$maxN", args, window);
     }
 
     /**
@@ -371,7 +425,7 @@ public final class WindowedComputations {
         isTrueArgument("n > 0", n > 0);
         final Map<ParamName, Object> args = new LinkedHashMap<>(2);
         args.put(ParamName.INPUT, expression);
-        args.put(ParamName.N, n);
+        args.put(ParamName.N_UPPERCASE, n);
         return compoundParameterWindowFunction(path, "$expMovingAvg", args, null);
     }
 
@@ -447,12 +501,97 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <TExpression> The expression type.
      * @return The constructed windowed computation.
-     * @mongodb.driver.dochub core/window-functions-first $first
+     * @mongodb.driver.manual reference/operator/aggregation/first/ $first
      */
     public static <TExpression> WindowedComputation first(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$first", expression, window);
+    }
+
+    /**
+     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of evaluation results of the {@code inExpression} against the first {@code N} documents in the {@code window},
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     * <p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     *
+     * @param path The output field path.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param window The window.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/firstN/ $firstN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> WindowedComputation firstN(
+            final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("inExpression", inExpression);
+        notNull("nExpression", nExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.INPUT, inExpression);
+        args.put(ParamName.N_LOWERCASE, nExpression);
+        return compoundParameterWindowFunction(path, "$firstN", args, window);
+    }
+
+    /**
+     * Builds a computation of the evaluation result of the {@code outExpression} against the top document in the {@code window}
+     * sorted according to the provided {@code sortBy} specification.
+     *
+     * @param path The output field path.
+     * @param sortBy The {@linkplain Sorts sortBy specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The input expression.
+     * @param window The window.
+     * @param <OutExpression> The type of the output expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/top/ $top
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression> WindowedComputation top(
+            final String path, final Bson sortBy, final OutExpression outExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("sortBy", sortBy);
+        notNull("outExpression", outExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.SORT_BY, sortBy);
+        args.put(ParamName.OUTPUT, outExpression);
+        return compoundParameterWindowFunction(path, "$top", args, window);
+    }
+
+    /**
+     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of evaluation results of the {@code outExpression} against the top {@code N} documents in the {@code window}
+     * sorted according to the provided {@code sortBy} specification,
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param path The output field path.
+     * @param sortBy The {@linkplain Sorts sortBy specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param window The window.
+     * @param <OutExpression> The type of the output expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/topN/ $topN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression, NExpression> WindowedComputation topN(
+            final String path, final Bson sortBy, final OutExpression outExpression, final NExpression nExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("sortBy", sortBy);
+        notNull("outExpression", outExpression);
+        notNull("nExpression", nExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.SORT_BY, sortBy);
+        args.put(ParamName.OUTPUT, outExpression);
+        args.put(ParamName.N_LOWERCASE, nExpression);
+        return compoundParameterWindowFunction(path, "$topN", args, window);
     }
 
     /**
@@ -465,12 +604,97 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <TExpression> The expression type.
      * @return The constructed windowed computation.
-     * @mongodb.driver.dochub core/window-functions-last $last
+     * @mongodb.driver.manual reference/operator/aggregation/last/ $last
      */
     public static <TExpression> WindowedComputation last(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$last", expression, window);
+    }
+
+    /**
+     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of evaluation results of the {@code inExpression} against the last {@code N} documents in the {@code window},
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     * <p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     *
+     * @param path The output field path.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param window The window.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/lastN/ $lastN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> WindowedComputation lastN(
+            final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("inExpression", inExpression);
+        notNull("nExpression", nExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.INPUT, inExpression);
+        args.put(ParamName.N_LOWERCASE, nExpression);
+        return compoundParameterWindowFunction(path, "$lastN", args, window);
+    }
+
+    /**
+     * Builds a computation of the evaluation result of the {@code outExpression} against the bottom document in the {@code window}
+     * sorted according to the provided {@code sortBy} specification.
+     *
+     * @param path The output field path.
+     * @param sortBy The {@linkplain Sorts sortBy specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The input expression.
+     * @param window The window.
+     * @param <OutExpression> The type of the output expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/bottom/ $bottom
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression> WindowedComputation bottom(
+            final String path, final Bson sortBy, final OutExpression outExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("sortBy", sortBy);
+        notNull("outExpression", outExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.SORT_BY, sortBy);
+        args.put(ParamName.OUTPUT, outExpression);
+        return compoundParameterWindowFunction(path, "$bottom", args, window);
+    }
+
+    /**
+     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of evaluation results of the {@code outExpression} against the bottom {@code N} documents in the {@code window}
+     * sorted according to the provided {@code sortBy} specification,
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param path The output field path.
+     * @param sortBy The {@linkplain Sorts sortBy specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param window The window.
+     * @param <OutExpression> The type of the output expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/bottomN/ $bottomN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression, NExpression> WindowedComputation bottomN(
+            final String path, final Bson sortBy, final OutExpression outExpression, final NExpression nExpression, @Nullable final Window window) {
+        notNull("path", path);
+        notNull("sortBy", sortBy);
+        notNull("outExpression", outExpression);
+        notNull("nExpression", nExpression);
+        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        args.put(ParamName.SORT_BY, sortBy);
+        args.put(ParamName.OUTPUT, outExpression);
+        args.put(ParamName.N_LOWERCASE, nExpression);
+        return compoundParameterWindowFunction(path, "$bottomN", args, window);
     }
 
     /**
@@ -752,11 +976,13 @@ public final class WindowedComputations {
     private enum ParamName {
         INPUT("input"),
         UNIT("unit"),
-        N("N"),
+        N_UPPERCASE("N"),
+        N_LOWERCASE("n"),
         ALPHA("alpha"),
         OUTPUT("output"),
         BY("by"),
-        DEFAULT("default");
+        DEFAULT("default"),
+        SORT_BY("sortBy");
 
         private final String value;
 
