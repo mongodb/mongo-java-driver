@@ -37,6 +37,9 @@ public class EncryptOptions {
      * @since 4.6
      */
     public enum QueryType {
+        /**
+         * Equality query type
+         */
         EQUALITY
     }
 
