@@ -42,8 +42,8 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.atlas.manual atlas-search/facet/#facet-definition Facet definition
  * @since 4.7
  */
-@Beta
 @Evolving
+@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface SearchFacet extends Bson {
     /**
      * Returns a {@link SearchFacet} that allows narrowing down search results based on the most frequent

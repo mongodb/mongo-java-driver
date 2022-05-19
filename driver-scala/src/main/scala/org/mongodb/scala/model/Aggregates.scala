@@ -475,7 +475,7 @@ object Aggregates {
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */
-  @Beta
+  @Beta(Array(Beta.Reason.SERVER))
   def setWindowFields[TExpression](partitionBy: TExpression, sortBy: Bson, output: WindowedComputation*): Bson =
     JAggregates.setWindowFields(partitionBy, sortBy, output.asJava)
 

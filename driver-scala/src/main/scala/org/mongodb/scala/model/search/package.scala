@@ -186,8 +186,8 @@ package object search {
   /**
    * @see `SearchCollector.facet(SearchOperator, Iterable)`
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type FacetSearchCollector = com.mongodb.client.model.search.FacetSearchCollector
 
   /**
@@ -216,22 +216,22 @@ package object search {
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/counting/ Counting]]
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type SearchCount = com.mongodb.client.model.search.SearchCount
 
   /**
    * @see `SearchCount.total()`
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type TotalSearchCount = com.mongodb.client.model.search.TotalSearchCount
 
   /**
    * @see `SearchCount.lowerBound()`
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type LowerBoundSearchCount = com.mongodb.client.model.search.LowerBoundSearchCount
 
   /**
@@ -239,29 +239,29 @@ package object search {
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#facet-definition Facet definition]]
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type SearchFacet = com.mongodb.client.model.search.SearchFacet
 
   /**
    * @see `SearchFacet.stringFacet(String, FieldSearchPath)`
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type StringSearchFacet = com.mongodb.client.model.search.StringSearchFacet
 
   /**
    * @see `SearchFacet.numberFacet(String, FieldSearchPath, Iterable)`
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type NumberSearchFacet = com.mongodb.client.model.search.NumberSearchFacet
 
   /**
    * @see `SearchFacet.dateFacet(String, FieldSearchPath, Iterable)`
    */
-  @Beta
   @Evolving
+  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
   type DateSearchFacet = com.mongodb.client.model.search.DateSearchFacet
 
   /**

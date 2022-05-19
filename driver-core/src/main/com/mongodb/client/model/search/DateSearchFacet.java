@@ -22,8 +22,8 @@ import com.mongodb.annotations.Evolving;
  * @see SearchFacet#dateFacet(String, FieldSearchPath, Iterable)
  * @since 4.7
  */
-@Beta
 @Evolving
+@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface DateSearchFacet extends SearchFacet {
     /**
      * Creates a new {@link DateSearchFacet} with the default bucket specified.

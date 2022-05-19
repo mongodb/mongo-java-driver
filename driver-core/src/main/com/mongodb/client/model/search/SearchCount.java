@@ -32,8 +32,8 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.atlas.manual atlas-search/counting/ Counting
  * @since 4.7
  */
-@Beta
 @Evolving
+@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface SearchCount extends Bson {
     /**
      * Returns a {@link SearchCount} that instructs to count documents exactly.

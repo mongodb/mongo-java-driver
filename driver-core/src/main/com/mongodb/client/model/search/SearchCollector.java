@@ -44,7 +44,7 @@ public interface SearchCollector extends Bson {
      * @return The requested {@link SearchCollector}.
      * @mongodb.atlas.manual atlas-search/facet/ facet collector
      */
-    @Beta
+    @Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
     static FacetSearchCollector facet(final SearchOperator operator, final Iterable<? extends SearchFacet> facets) {
         notNull("operator", operator);
         notNull("facets", facets);

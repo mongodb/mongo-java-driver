@@ -22,7 +22,7 @@ import com.mongodb.annotations.Evolving;
  * @see SearchCollector#facet(SearchOperator, Iterable)
  * @since 4.7
  */
-@Beta
 @Evolving
+@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface FacetSearchCollector extends SearchCollector {
 }

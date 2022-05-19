@@ -28,7 +28,7 @@ import collection.JavaConverters._
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#facet-definition Facet definition]]
  * @since 4.7
  */
-@Beta
+@Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
 object SearchFacet {
 
   /**

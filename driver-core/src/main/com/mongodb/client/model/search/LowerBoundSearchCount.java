@@ -22,8 +22,8 @@ import com.mongodb.annotations.Evolving;
  * @see SearchCount#lowerBound()
  * @since 4.7
  */
-@Beta
 @Evolving
+@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface LowerBoundSearchCount extends SearchCount {
     /**
      * Creates a new {@link LowerBoundSearchCount} that instructs to count documents up to the {@code threshold} exactly,

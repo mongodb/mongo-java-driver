@@ -22,8 +22,8 @@ import com.mongodb.annotations.Evolving;
  * @see SearchFacet#stringFacet(String, FieldSearchPath)
  * @since 4.7
  */
-@Beta
 @Evolving
+@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface StringSearchFacet extends SearchFacet {
     /**
      * Creates a new {@link StringSearchFacet} that explicitly limits the number of facet categories.

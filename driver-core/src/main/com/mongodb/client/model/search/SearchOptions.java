@@ -52,7 +52,7 @@ public interface SearchOptions extends Bson {
      * @param option The counting option.
      * @return A new {@link SearchOptions}.
      */
-    @Beta
+    @Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
     SearchOptions count(SearchCount option);
 
     /**
@@ -62,7 +62,7 @@ public interface SearchOptions extends Bson {
      * @return A new {@link SearchOptions}.
      * @mongodb.atlas.manual atlas-search/return-stored-source/ Return stored source fields
      */
-    @Beta
+    @Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
     SearchOptions returnStoredSource(boolean returnStoredSource);
 
     /**

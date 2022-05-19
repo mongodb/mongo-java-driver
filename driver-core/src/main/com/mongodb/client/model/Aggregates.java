@@ -622,7 +622,7 @@ public final class Aggregates {
      * @mongodb.server.release 5.0
      * @since 4.3
      */
-    @Beta
+    @Beta(Beta.Reason.SERVER)
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
                                                      final WindowedComputation... output) {
         notNull("output", output);
@@ -649,7 +649,7 @@ public final class Aggregates {
      * @mongodb.server.release 5.0
      * @since 4.3
      */
-    @Beta
+    @Beta(Beta.Reason.SERVER)
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
                                                      final List<WindowedComputation> output) {
         notNull("output", output);

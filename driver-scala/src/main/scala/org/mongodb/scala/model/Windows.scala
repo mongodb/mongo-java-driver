@@ -56,7 +56,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 4.3
  * @note Requires MongoDB 5.0 or greater.
  */
-@Beta
+@Beta(Array(Beta.Reason.SERVER))
 object Windows {
 
   /**
@@ -248,7 +248,7 @@ object Windows {
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */
-  @Beta
+  @Beta(Array(Beta.Reason.SERVER))
   object Bound {
 
     /**

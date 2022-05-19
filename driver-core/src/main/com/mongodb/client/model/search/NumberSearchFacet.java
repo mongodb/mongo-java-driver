@@ -22,8 +22,8 @@ import com.mongodb.annotations.Evolving;
  * @see SearchFacet#numberFacet(String, FieldSearchPath, Iterable)
  * @since 4.7
  */
-@Beta
 @Evolving
+@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface NumberSearchFacet extends SearchFacet {
     /**
      * Creates a new {@link NumberSearchFacet} with the default bucket specified.

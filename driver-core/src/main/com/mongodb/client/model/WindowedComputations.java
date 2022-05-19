@@ -56,7 +56,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 4.3
  * @mongodb.server.release 5.0
  */
-@Beta
+@Beta(Beta.Reason.SERVER)
 public final class WindowedComputations {
     /**
      * Creates a windowed computation from a document field in situations when there is no builder method that better satisfies your needs.
