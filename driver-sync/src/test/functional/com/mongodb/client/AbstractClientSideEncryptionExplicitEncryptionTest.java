@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
@@ -54,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 
@@ -70,7 +72,8 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     @BeforeEach
     public void setUp() {
         assumeTrue(serverVersionAtLeast(6, 0));
-        assumeTrue(!isStandalone());
+        assumeFalse(isStandalone());
+        assumeFalse(isServerlessTest());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         BsonDocument encryptedFields = bsonDocumentFromPath("encryptedFields.json");
