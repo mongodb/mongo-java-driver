@@ -17,6 +17,7 @@
 package com.mongodb.client.model.changestream
 
 import com.mongodb.MongoNamespace
+import org.bson.BsonBoolean
 import org.bson.BsonDateTime
 import org.bson.BsonDocument
 import org.bson.BsonInt64
@@ -45,11 +46,12 @@ class ChangeStreamDocumentSpecification extends Specification {
         def txnNumber = new BsonInt64(1)
         def lsid = BsonDocument.parse('{id: 1, uid: 1}')
         def wallTime = new BsonDateTime(42)
+        def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
         when:
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
                 destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, txnNumber,
-                lsid, wallTime)
+                lsid, wallTime, extraElements)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -68,6 +70,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getTxnNumber() == txnNumber
         changeStreamDocument.getLsid() == lsid
         changeStreamDocument.getWallTime() == wallTime
+        changeStreamDocument.getExtraElements() == extraElements
 
         when:
         //noinspection GrDeprecatedAPIUsage
