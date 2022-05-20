@@ -5,8 +5,7 @@
     {
       "minServerVersion": "3.6",
       "topologies": [
-        "replicaset",
-        "sharded-replicaset"
+        "replicaset"
       ],
       "serverless": "forbid"
     }
@@ -317,10 +316,7 @@
       "description": "Test that comment is set on getMore",
       "runOnRequirements": [
         {
-          "minServerVersion": "4.4.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "4.4.0"
         }
       ],
       "operations": [
@@ -409,10 +405,7 @@
       "description": "Test that comment is not set on getMore - pre 4.4",
       "runOnRequirements": [
         {
-          "maxServerVersion": "4.3.99",
-          "topologies": [
-            "replicaset"
-          ]
+          "maxServerVersion": "4.3.99"
         }
       ],
       "operations": [
@@ -626,6 +619,15 @@
     },
     {
       "description": "Test new structure in ns document MUST NOT err",
+      "runOnRequirements": [
+        {
+          "minServerVersion": "3.6",
+          "maxServerVersion": "5.2.99"
+        },
+        {
+          "minServerVersion": "6.0"
+        }
+      ],
       "operations": [
         {
           "name": "createChangeStream",
@@ -802,10 +804,7 @@
       "description": "$changeStream must be the first stage in a change stream pipeline sent to the server",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.6.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "3.6.0"
         }
       ],
       "operations": [
@@ -878,10 +877,7 @@
       "description": "The server returns change stream responses in the specified server response format",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.6.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "3.6.0"
         }
       ],
       "operations": [
@@ -931,10 +927,7 @@
       "description": "Executing a watch helper on a Collection results in notifications for changes to the specified collection",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.6.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "3.6.0"
         }
       ],
       "operations": [
@@ -1019,10 +1012,7 @@
       "description": "Change Stream should allow valid aggregate pipeline stages",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.6.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "3.6.0"
         }
       ],
       "operations": [
@@ -1109,10 +1099,7 @@
       "description": "Executing a watch helper on a Database results in notifications for changes to all collections in the specified database.",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.8.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "3.8.0"
         }
       ],
       "operations": [
@@ -1214,10 +1201,7 @@
       "description": "Executing a watch helper on a MongoClient results in notifications for changes to all collections in all databases in the cluster.",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.8.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "3.8.0"
         }
       ],
       "operations": [
@@ -1338,10 +1322,7 @@
       "description": "Test insert, update, replace, and delete event types",
       "runOnRequirements": [
         {
-          "minServerVersion": "3.6.0",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "3.6.0"
         }
       ],
       "operations": [
@@ -1493,10 +1474,7 @@
       "description": "Test rename and invalidate event types",
       "runOnRequirements": [
         {
-          "minServerVersion": "4.0.1",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "4.0.1"
         }
       ],
       "operations": [
@@ -1573,10 +1551,7 @@
       "description": "Test drop and invalidate event types",
       "runOnRequirements": [
         {
-          "minServerVersion": "4.0.1",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "4.0.1"
         }
       ],
       "operations": [
@@ -1642,10 +1617,7 @@
       "description": "Test consecutive resume",
       "runOnRequirements": [
         {
-          "minServerVersion": "4.1.7",
-          "topologies": [
-            "replicaset"
-          ]
+          "minServerVersion": "4.1.7"
         }
       ],
       "operations": [
