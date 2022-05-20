@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2022-04-25T16:42:06.8">
+<meta name="date" content="2022-05-20T10:01:38.95">
 <link rel="shortcut icon" href="/mongo-java-driver/4.6/img/favicon.png">
 
     <title>Aggregation</title><link rel="stylesheet" href="/mongo-java-driver/4.6/lib/bootstrap.css" type="text/css" />
@@ -517,10 +517,10 @@ singleton object with factory methods for supported window operators.</p>
 <p>This example computes the accumulated rainfall and the average temperature over the past month per each locality
 from more fine-grained measurements presented via the <code>rainfall</code> and <code>temperature</code> fields:</p>
 
-<pre><code class="language-scala">val pastMonth: Window = Windows.timeRange(-1, Windows.Bound.CURRENT, MongoTimeUnit.MONTH)
-setWindowFields(&quot;$localityId&quot;, Sorts.ascending(&quot;measurementDateTime&quot;),
-  WindowedComputations.sum(&quot;monthlyRainfall&quot;, &quot;$rainfall&quot;, pastMonth),
-  WindowedComputations.avg(&quot;monthlyAvgTemp&quot;, &quot;$temperature&quot;, pastMonth))
+<pre><code class="language-scala">val pastMonth: Window = Windows.timeRange(-1, MongoTimeUnit.MONTH, Windows.Bound.CURRENT)
+setWindowFields(Some(&quot;$localityId&quot;), Some(Sorts.ascending(&quot;measurementDateTime&quot;)),
+  WindowedComputations.sum(&quot;monthlyRainfall&quot;, &quot;$rainfall&quot;, Some(pastMonth)),
+  WindowedComputations.avg(&quot;monthlyAvgTemp&quot;, &quot;$temperature&quot;, Some(pastMonth)))
 </code></pre>
 
 <h3 id="creating-a-pipeline">Creating a Pipeline</h3>
