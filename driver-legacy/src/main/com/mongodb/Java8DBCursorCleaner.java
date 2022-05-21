@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 final class Java8DBCursorCleaner extends DBCursorCleaner {
     private final MongoClient mongoClient;
     private final MongoNamespace namespace;
-    private ServerCursor serverCursor;
+    private volatile ServerCursor serverCursor;
 
     Java8DBCursorCleaner(final MongoClient mongoClient, final MongoNamespace namespace,
                          final ServerCursor serverCursor) {

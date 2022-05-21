@@ -73,7 +73,7 @@ final class Java9DBCursorCleaner extends DBCursorCleaner {
     private static class CleanerState implements Runnable {
         private final MongoClient mongoClient;
         private final MongoNamespace namespace;
-        private ServerCursor serverCursor;
+        private volatile ServerCursor serverCursor;
 
         CleanerState(final MongoClient mongoClient, final MongoNamespace namespace, final ServerCursor serverCursor) {
             this.mongoClient = assertNotNull(mongoClient);
