@@ -80,9 +80,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
     private MongoCursor<DBObject> cursor;
-    // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
-    @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
-    private OptionalFinalizer optionalFinalizer;
+    private DBCursorCleaner optionalCleaner;
 
     /**
      * Initializes a new database cursor.
@@ -166,7 +164,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         boolean hasNext = cursor.hasNext();
-        setServerCursorOnFinalizer(cursor.getServerCursor());
+        if (cursor.getServerCursor() == null) {
+            clearCursorOnCleaner();
+        }
         return hasNext;
     }
 
@@ -225,7 +225,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             initializeCursor(operation);
         }
         DBObject next = cursor.tryNext();
-        setServerCursorOnFinalizer(cursor.getServerCursor());
+        if (cursor.getServerCursor() == null) {
+            clearCursorOnCleaner();
+        }
         return currentObject(next);
     }
 
@@ -539,7 +541,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         if (cursor != null) {
             cursor.close();
             cursor = null;
-            setServerCursorOnFinalizer(null);
+            clearCursorOnCleaner();
         }
 
         currentObject = null;
@@ -806,19 +808,21 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     private void initializeCursor(final FindOperation<DBObject> operation) {
         cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreference(), getReadConcern()));
-        if (isCursorFinalizerEnabled() && cursor.getServerCursor() != null) {
-            optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongoClient(), collection.getNamespace());
+        ServerCursor serverCursor = cursor.getServerCursor();
+        if (isCursorFinalizerEnabled() && serverCursor != null) {
+            optionalCleaner = DBCursorCleaner.create(collection.getDB().getMongoClient(), collection.getNamespace(),
+                    serverCursor);
+        }
+    }
+
+    private void clearCursorOnCleaner() {
+        if (optionalCleaner != null) {
+            optionalCleaner.clearCursor();
         }
     }
 
     private boolean isCursorFinalizerEnabled() {
         return collection.getDB().getMongoClient().getMongoClientOptions().isCursorFinalizerEnabled();
-    }
-
-    private void setServerCursorOnFinalizer(@Nullable final ServerCursor serverCursor) {
-        if (optionalFinalizer != null) {
-            optionalFinalizer.setServerCursor(serverCursor);
-        }
     }
 
     private void checkIteratorOrArray(final IteratorOrArray expected) {
@@ -847,7 +851,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         DBObject next = cursor.next();
-        setServerCursorOnFinalizer(cursor.getServerCursor());
+        if (cursor.getServerCursor() == null) {
+            clearCursorOnCleaner();
+        }
         return currentObjectNonNull(next);
     }
 
@@ -879,29 +885,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private enum IteratorOrArray {
         ITERATOR,
         ARRAY
-    }
-
-    private static class OptionalFinalizer {
-        private final MongoClient mongo;
-        private final MongoNamespace namespace;
-        private volatile ServerCursor serverCursor;
-
-        private OptionalFinalizer(final MongoClient mongo, final MongoNamespace namespace) {
-            this.namespace = notNull("namespace", namespace);
-            this.mongo = notNull("mongo", mongo);
-        }
-
-        private void setServerCursor(@Nullable final ServerCursor serverCursor) {
-            this.serverCursor = serverCursor;
-        }
-
-        @Override
-        @SuppressWarnings("deprecation")
-        protected void finalize() {
-            if (serverCursor != null) {
-                mongo.addOrphanedCursor(serverCursor, namespace);
-            }
-        }
     }
 
     private DBCollectionCountOptions getDbCollectionCountOptions() {
