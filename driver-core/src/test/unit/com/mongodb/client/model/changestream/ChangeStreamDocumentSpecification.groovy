@@ -17,6 +17,7 @@
 package com.mongodb.client.model.changestream
 
 import com.mongodb.MongoNamespace
+import org.bson.BsonDateTime
 import org.bson.BsonDocument
 import org.bson.BsonInt64
 import org.bson.BsonTimestamp
@@ -43,10 +44,12 @@ class ChangeStreamDocumentSpecification extends Specification {
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), null)
         def txnNumber = new BsonInt64(1)
         def lsid = BsonDocument.parse('{id: 1, uid: 1}')
+        def wallTime = new BsonDateTime(42)
 
         when:
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
-                destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, null, null)
+                destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, txnNumber,
+                lsid, wallTime)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -62,13 +65,14 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getOperationType() == operationType
         changeStreamDocument.getUpdateDescription() == updateDesc
         changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocument.getTxnNumber() == null
-        changeStreamDocument.getLsid() == null
+        changeStreamDocument.getTxnNumber() == txnNumber
+        changeStreamDocument.getLsid() == lsid
+        changeStreamDocument.getWallTime() == wallTime
 
         when:
         //noinspection GrDeprecatedAPIUsage
         changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
-                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, null, null)
+                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, txnNumber, lsid)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -84,13 +88,14 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getOperationType() == operationType
         changeStreamDocument.getUpdateDescription() == updateDesc
         changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocument.getTxnNumber() == null
-        changeStreamDocument.getLsid() == null
+        changeStreamDocument.getTxnNumber() == txnNumber
+        changeStreamDocument.getLsid() == lsid
+        changeStreamDocument.getWallTime() == null
 
         when:
         //noinspection GrDeprecatedAPIUsage
         changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
-                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, null, null)
+                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, txnNumber, lsid)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -105,10 +110,12 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getOperationType() == operationType
         changeStreamDocument.getUpdateDescription() == updateDesc
         changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocument.getTxnNumber() == null
-        changeStreamDocument.getLsid() == null
+        changeStreamDocument.getTxnNumber() == txnNumber
+        changeStreamDocument.getLsid() == lsid
+        changeStreamDocument.getWallTime() == null
 
         when:
+        //noinspection GrDeprecatedAPIUsage
         def changeStreamDocumentWithTxnInfo = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
                 namespaceDocument, destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc,
                 txnNumber, lsid)
@@ -128,6 +135,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocumentWithTxnInfo.getDatabaseName() == namespace.getDatabaseName()
         changeStreamDocumentWithTxnInfo.getTxnNumber() == txnNumber
         changeStreamDocumentWithTxnInfo.getLsid() == lsid
+        changeStreamDocument.getWallTime() == null
     }
 
     def 'should handle null namespace correctly'() {
@@ -138,6 +146,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.DROP_DATABASE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), emptyList())
+        //noinspection GrDeprecatedAPIUsage
         def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
                 (BsonDocument) null, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
 
@@ -160,8 +169,10 @@ class ChangeStreamDocumentSpecification extends Specification {
         def operationType = OperationType.DROP_DATABASE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), singletonList(new TruncatedArray('d', 1)))
 
+        //noinspection GrDeprecatedAPIUsage
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
                 (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
+        //noinspection GrDeprecatedAPIUsage
         def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
                 namespaceDocumentEmpty, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc,
         null, null)

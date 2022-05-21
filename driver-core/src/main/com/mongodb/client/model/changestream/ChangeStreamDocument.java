@@ -18,6 +18,7 @@ package com.mongodb.client.model.changestream;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonTimestamp;
@@ -56,6 +57,7 @@ public final class ChangeStreamDocument<TDocument> {
     private final UpdateDescription updateDescription;
     private final BsonInt64 txnNumber;
     private final BsonDocument lsid;
+    private final BsonDateTime wallTime;
 
     /**
      * Creates a new instance
@@ -71,6 +73,7 @@ public final class ChangeStreamDocument<TDocument> {
      * @param updateDescription the update description
      * @param txnNumber the transaction number
      * @param lsid the identifier for the session associated with the transaction
+     * @param wallTime the wall time of the server at the moment the change occurred
      *
      * @since 4.7
      */
@@ -85,7 +88,8 @@ public final class ChangeStreamDocument<TDocument> {
             @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
             @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
             @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
-            @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
+            @Nullable @BsonProperty("lsid") final BsonDocument lsid,
+            @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime) {
         this.resumeToken = resumeToken;
         this.namespaceDocument = namespaceDocument;
         this.destinationNamespaceDocument = destinationNamespaceDocument;
@@ -98,6 +102,7 @@ public final class ChangeStreamDocument<TDocument> {
         this.updateDescription = updateDescription;
         this.txnNumber = txnNumber;
         this.lsid = lsid;
+        this.wallTime = wallTime;
     }
 
     /**
@@ -128,7 +133,7 @@ public final class ChangeStreamDocument<TDocument> {
                                 @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
                                 @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
         this(operationTypeString, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid);
+                clusterTime, updateDescription, txnNumber, lsid, null);
     }
 
     /**
@@ -159,7 +164,7 @@ public final class ChangeStreamDocument<TDocument> {
             final BsonInt64 txnNumber,
             final BsonDocument lsid) {
         this(operationType.getValue(), resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid);
+                clusterTime, updateDescription, txnNumber, lsid, null);
     }
 
     /**
@@ -408,6 +413,17 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
+     * The wall time of the server at the moment the change occurred.
+     *
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    @Nullable
+    public BsonDateTime getWallTime() {
+        return wallTime;
+    }
+
+    /**
      * Creates the codec for the specific ChangeStreamOutput type
      *
      * @param fullDocumentClass the class to use to represent the fullDocument
@@ -467,6 +483,9 @@ public final class ChangeStreamDocument<TDocument> {
         if (lsid != null ? !lsid.equals(that.lsid) : that.lsid != null) {
             return false;
         }
+        if (wallTime != null ? !wallTime.equals(that.wallTime) : that.wallTime != null) {
+            return false;
+        }
 
         return true;
     }
@@ -484,6 +503,7 @@ public final class ChangeStreamDocument<TDocument> {
         result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
         result = 31 * result + (txnNumber != null ? txnNumber.hashCode() : 0);
         result = 31 * result + (lsid != null ? lsid.hashCode() : 0);
+        result = 31 * result + (wallTime != null ? wallTime.hashCode() : 0);
         return result;
     }
 
@@ -501,6 +521,7 @@ public final class ChangeStreamDocument<TDocument> {
                 + ", updateDescription=" + updateDescription
                 + ", txnNumber=" + txnNumber
                 + ", lsid=" + lsid
+                + ", wallTime=" + wallTime
                 + "}";
     }
 }
