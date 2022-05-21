@@ -24,6 +24,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  * that this class is only used if the {@code java.lang.ref.Cleaner} class is not available
  * (i.e. the runtime is Java 8).
  */
+@SuppressWarnings("deprecation")
 final class Java8DBCursorCleaner extends DBCursorCleaner {
     private final MongoClient mongoClient;
     private final MongoNamespace namespace;
@@ -42,7 +43,6 @@ final class Java8DBCursorCleaner extends DBCursorCleaner {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     protected void finalize() {
         if (serverCursor != null) {
             mongoClient.addOrphanedCursor(serverCursor, namespace);
