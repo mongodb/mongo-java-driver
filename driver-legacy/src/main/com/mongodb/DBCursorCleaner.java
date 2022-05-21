@@ -48,6 +48,7 @@ abstract class DBCursorCleaner {
      * @param serverCursor the server cursor
      * @return the cleaner
      */
+    @SuppressWarnings("deprecation")
     static DBCursorCleaner create(final MongoClient mongoClient, final MongoNamespace namespace,
                            final ServerCursor serverCursor) {
         if (CLEANER_IS_AVAILABLE) {
