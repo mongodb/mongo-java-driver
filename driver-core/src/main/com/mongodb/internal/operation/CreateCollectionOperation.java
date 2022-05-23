@@ -437,7 +437,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     /**
-     * With FLE2 creating a collection can involve more logic and commands.
+     * With Queryable Encryption creating a collection can involve more logic and commands.
      *
      * <p>
      *   If the collection namespace has an associated encryptedFields, then do the following operations.
