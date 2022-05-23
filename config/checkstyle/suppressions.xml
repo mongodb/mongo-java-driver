@@ -80,6 +80,7 @@
     <suppress checks="ParameterNumber" files="DefaultClusterFactory"/>
     <suppress checks="ParameterNumber" files="DefaultClusterableServerFactory"/>
     <suppress checks="ParameterNumber" files="Operations"/>
+    <suppress checks="ParameterNumber" files="ChangeStreamDocument"/>
 
     <!--Legacy code that has not yet been cleaned-->
     <suppress checks="FinalClass" files="AggregationOptions"/>
