@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
@@ -25,7 +26,6 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
-import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -164,10 +164,9 @@ public abstract class AbstractClientSideEncryptionTest {
         }
 
         commandListener = new TestCommandListener();
-
-        BsonDocument clientOptions = definition.getDocument("clientOptions");
-        BsonDocument cryptOptions = clientOptions.getDocument("autoEncryptOpts");
-        BsonDocument kmsProviders = cryptOptions.getDocument("kmsProviders");
+        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        BsonDocument cryptOptions = clientOptions.getDocument("autoEncryptOpts", new BsonDocument());
+        BsonDocument kmsProviders = cryptOptions.getDocument("kmsProviders", new BsonDocument());
         boolean bypassAutoEncryption = cryptOptions.getBoolean("bypassAutoEncryption", BsonBoolean.FALSE).getValue();
         boolean bypassQueryAnalysis = cryptOptions.getBoolean("bypassQueryAnalysis", BsonBoolean.FALSE).getValue();
 
@@ -251,21 +250,26 @@ public abstract class AbstractClientSideEncryptionTest {
             keyVaultNamespace = cryptOptions.getString("keyVaultNamespace").getValue();
         }
 
-        createMongoClient(AutoEncryptionSettings.builder()
-                .keyVaultNamespace(keyVaultNamespace)
-                .kmsProviders(kmsProvidersMap)
-                .schemaMap(namespaceToSchemaMap)
-                .encryptedFieldsMap(encryptedFieldsMap)
-                .bypassQueryAnalysis(bypassQueryAnalysis)
-                .bypassAutoEncryption(bypassAutoEncryption)
-                .extraOptions(extraOptions)
-                .build(), commandListener);
-
+        MongoClientSettings.Builder mongoClientSettingsBuilder = Fixture.getMongoClientSettingsBuilder()
+                        .addCommandListener(commandListener);
+        if (!kmsProvidersMap.isEmpty()) {
+            mongoClientSettingsBuilder.autoEncryptionSettings(AutoEncryptionSettings.builder()
+                    .keyVaultNamespace(keyVaultNamespace)
+                    .kmsProviders(kmsProvidersMap)
+                    .schemaMap(namespaceToSchemaMap)
+                    .encryptedFieldsMap(encryptedFieldsMap)
+                    .bypassQueryAnalysis(bypassQueryAnalysis)
+                    .bypassAutoEncryption(bypassAutoEncryption)
+                    .extraOptions(extraOptions)
+                    .build());
+        }
+        createMongoClient(mongoClientSettingsBuilder.build());
         database = getDatabase(databaseName);
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
     }
 
-    protected abstract void createMongoClient(AutoEncryptionSettings build, CommandListener commandListener);
+
+    protected abstract void createMongoClient(MongoClientSettings settings);
 
     protected abstract MongoDatabase getDatabase(String databaseName);
 
