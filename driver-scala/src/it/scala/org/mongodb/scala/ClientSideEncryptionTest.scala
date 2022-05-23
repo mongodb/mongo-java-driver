@@ -16,8 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.{ AbstractClientSideEncryptionTest, Fixture }
-import com.mongodb.event.CommandListener
+import com.mongodb.client.AbstractClientSideEncryptionTest
 import org.bson.{ BsonArray, BsonDocument }
 import org.junit.After
 import org.mongodb.scala.syncadapter.SyncMongoClient
@@ -32,18 +31,8 @@ class ClientSideEncryptionTest(
 ) extends AbstractClientSideEncryptionTest(filename, description, specDocument, data, definition, skipTest) {
   private var mongoClient: SyncMongoClient = _
 
-  override protected def createMongoClient(
-      autoEncryptionSettings: com.mongodb.AutoEncryptionSettings,
-      commandListener: CommandListener
-  ): Unit = {
-    mongoClient = SyncMongoClient(
-      MongoClient(
-        Fixture.getMongoClientSettingsBuilder
-          .autoEncryptionSettings(autoEncryptionSettings)
-          .addCommandListener(commandListener)
-          .build
-      )
-    )
+  override protected def createMongoClient(mongoClientSettings: MongoClientSettings): Unit = {
+    mongoClient = SyncMongoClient(MongoClient(mongoClientSettings))
   }
 
   override protected def getDatabase(databaseName: String): com.mongodb.client.MongoDatabase =

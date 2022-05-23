@@ -16,12 +16,10 @@
 
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractClientSideEncryptionTest;
-import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.event.CommandListener;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -37,13 +35,8 @@ public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
     }
 
     @Override
-    protected void createMongoClient(final AutoEncryptionSettings autoEncryptionSettings,
-                                     final CommandListener commandListener) {
-        mongoClient = new SyncMongoClient(
-                MongoClients.create(Fixture.getMongoClientSettingsBuilder()
-                        .autoEncryptionSettings(autoEncryptionSettings)
-                        .addCommandListener(commandListener)
-                        .build()));
+    protected void createMongoClient(final MongoClientSettings mongoClientSettings) {
+        mongoClient = new SyncMongoClient(MongoClients.create(mongoClientSettings));
     }
 
     @Override
