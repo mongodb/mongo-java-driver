@@ -196,10 +196,11 @@ public final class AutoEncryptionSettings {
         /**
          * Maps a collection namespace to an encryptedFields.
          *
-         * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
-         * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.
+         * <p><strong>Note:</strong> only applies to queryable encryption.
+         * Automatic encryption in queryable encryption is configured with the encryptedFields.</p>
+         * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.</p>
          * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code collection.createCollection()} and
-         * {@code collection.drop()} is altered.
+         * {@code collection.drop()} is altered.</p>
          *
          * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
          * used by the driver.
@@ -438,13 +439,14 @@ public final class AutoEncryptionSettings {
     /**
      * Gets the mapping of a collection namespace to encryptedFields.
      *
-     * <p><strong>Note:</strong> only applies to FLE 2. Automatic encryption in FLE 2 is configured with the encryptedFields.
-     * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.
+     * <p><strong>Note:</strong> only applies to Queryable Encryption.
+     * Automatic encryption in Queryable Encryption is configured with the encryptedFields.</p>
+     * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.</p>
      * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code collection.createCollection()} and
-     * {@code collection.drop()} is altered.
+     * {@code collection.drop()} is altered.</p>
      *
      * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
-     * used by the driver.
+     * used by the driver.</p>
      *
      * @return the mapping of the collection namespaces to encryptedFields
      * @since 4.7

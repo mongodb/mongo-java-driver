@@ -144,7 +144,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     /**
-     * With FLE2 dropping a collection can involve more logic and commands.
+     * With Queryable Encryption dropping a collection can involve more logic and commands.
      *
      * <p>
      * A call to a driver helper Collection.drop(dropOptions) must check if the collection namespace (<databaseName>.<collectionName>)
