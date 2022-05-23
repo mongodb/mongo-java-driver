@@ -25,6 +25,7 @@ import org.bson.BsonTimestamp;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonExtraElements;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
@@ -58,6 +59,8 @@ public final class ChangeStreamDocument<TDocument> {
     private final BsonInt64 txnNumber;
     private final BsonDocument lsid;
     private final BsonDateTime wallTime;
+    @BsonExtraElements
+    private final BsonDocument extraElements;
 
     /**
      * Creates a new instance
@@ -74,6 +77,7 @@ public final class ChangeStreamDocument<TDocument> {
      * @param txnNumber the transaction number
      * @param lsid the identifier for the session associated with the transaction
      * @param wallTime the wall time of the server at the moment the change occurred
+     * @param extraElements any extra elements that are part of the change stream document but not otherwise mapped to fields
      *
      * @since 4.7
      */
@@ -89,7 +93,8 @@ public final class ChangeStreamDocument<TDocument> {
             @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
             @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
             @Nullable @BsonProperty("lsid") final BsonDocument lsid,
-            @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime) {
+            @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime,
+            @Nullable @BsonProperty final BsonDocument extraElements) {
         this.resumeToken = resumeToken;
         this.namespaceDocument = namespaceDocument;
         this.destinationNamespaceDocument = destinationNamespaceDocument;
@@ -103,6 +108,7 @@ public final class ChangeStreamDocument<TDocument> {
         this.txnNumber = txnNumber;
         this.lsid = lsid;
         this.wallTime = wallTime;
+        this.extraElements = extraElements;
     }
 
     /**
@@ -133,7 +139,7 @@ public final class ChangeStreamDocument<TDocument> {
                                 @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
                                 @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
         this(operationTypeString, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid, null);
+                clusterTime, updateDescription, txnNumber, lsid, null, null);
     }
 
     /**
@@ -164,7 +170,7 @@ public final class ChangeStreamDocument<TDocument> {
             final BsonInt64 txnNumber,
             final BsonDocument lsid) {
         this(operationType.getValue(), resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid, null);
+                clusterTime, updateDescription, txnNumber, lsid, null, null);
     }
 
     /**
@@ -421,6 +427,16 @@ public final class ChangeStreamDocument<TDocument> {
     @Nullable
     public BsonDateTime getWallTime() {
         return wallTime;
+    }
+
+    /**
+     * Any extra elements that are part of the change stream document but not otherwise mapped to fields.
+     *
+     * @since 4.7
+     */
+    @Nullable
+    public BsonDocument getExtraElements() {
+        return extraElements;
     }
 
     /**
