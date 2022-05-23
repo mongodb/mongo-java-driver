@@ -60,6 +60,9 @@ public final class JsonTestServerVersionChecker {
         if (document.containsKey("topology") && !topologyMatches(document.getArray("topology"))) {
             return false;
         }
+        if (document.containsKey("topologies") && !topologyMatches(document.getArray("topologies"))) {
+            return false;
+        }
         if (document.containsKey("authEnabled") && (isAuthenticated() != document.getBoolean("authEnabled").getValue())) {
             return false;
         }
@@ -85,14 +88,7 @@ public final class JsonTestServerVersionChecker {
     }
 
     private static boolean canRunTest(final BsonArray runOn, final ServerVersion serverVersion) {
-        boolean topologyFound = false;
-        for (BsonValue info : runOn) {
-            topologyFound = canRunTest(info.asDocument(), serverVersion);
-            if (topologyFound) {
-                break;
-            }
-        }
-        return topologyFound;
+        return runOn.stream().anyMatch(v -> canRunTest(v.asDocument(), serverVersion));
     }
 
     public static boolean topologyMatches(final BsonArray topologyTypes) {
