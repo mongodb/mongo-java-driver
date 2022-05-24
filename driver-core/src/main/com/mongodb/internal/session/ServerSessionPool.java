@@ -60,22 +60,18 @@ public class ServerSessionPool {
     private volatile boolean closing;
     private volatile boolean closed;
     private final List<BsonDocument> closedSessionIdentifiers = new ArrayList<BsonDocument>();
-    private final @Nullable ServerApi serverApi;
+    @Nullable
+    private final ServerApi serverApi;
 
     interface Clock {
         long millis();
     }
 
-    public ServerSessionPool(final Cluster cluster, final @Nullable ServerApi serverApi) {
-        this(cluster, serverApi, new Clock() {
-            @Override
-            public long millis() {
-                return System.currentTimeMillis();
-            }
-        });
+    public ServerSessionPool(final Cluster cluster, @Nullable final ServerApi serverApi) {
+        this(cluster, serverApi, System::currentTimeMillis);
     }
 
-    public ServerSessionPool(final Cluster cluster, final @Nullable ServerApi serverApi, final Clock clock) {
+    public ServerSessionPool(final Cluster cluster, @Nullable final ServerApi serverApi, final Clock clock) {
         this.cluster = cluster;
         this.serverApi = serverApi;
         this.clock = clock;
@@ -141,7 +137,7 @@ public class ServerSessionPool {
             return;
         }
 
-        final List<ServerDescription> primaryPreferred = new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())
+        List<ServerDescription> primaryPreferred = new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())
                 .select(cluster.getCurrentDescription());
         if (primaryPreferred.isEmpty()) {
             return;
@@ -184,8 +180,8 @@ public class ServerSessionPool {
             return true;
         }
         long currentTimeMillis = clock.millis();
-        final long timeSinceLastUse = currentTimeMillis - serverSession.getLastUsedAtMillis();
-        final long oneMinuteFromTimeout = MINUTES.toMillis(logicalSessionTimeoutMinutes - 1);
+        long timeSinceLastUse = currentTimeMillis - serverSession.getLastUsedAtMillis();
+        long oneMinuteFromTimeout = MINUTES.toMillis(logicalSessionTimeoutMinutes - 1);
         return timeSinceLastUse > oneMinuteFromTimeout;
     }
 
