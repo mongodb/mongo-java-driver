@@ -19,7 +19,6 @@ package com.mongodb.internal.session;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
-import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.connection.Cluster;
@@ -30,7 +29,6 @@ import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import com.mongodb.selector.ServerSelector;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -59,7 +57,7 @@ public class ServerSessionPool {
     private final ServerSessionPool.Clock clock;
     private volatile boolean closing;
     private volatile boolean closed;
-    private final List<BsonDocument> closedSessionIdentifiers = new ArrayList<BsonDocument>();
+    private final List<BsonDocument> closedSessionIdentifiers = new ArrayList<>();
     @Nullable
     private final ServerApi serverApi;
 
@@ -99,7 +97,7 @@ public class ServerSessionPool {
 
             List<BsonDocument> identifiers;
             synchronized (this) {
-                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
+                identifiers = new ArrayList<>(closedSessionIdentifiers);
                 closedSessionIdentifiers.clear();
             }
             endClosedSessions(identifiers);
@@ -123,7 +121,7 @@ public class ServerSessionPool {
         synchronized (this) {
             closedSessionIdentifiers.add(serverSession.getIdentifier());
             if (closedSessionIdentifiers.size() == END_SESSIONS_BATCH_SIZE) {
-                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
+                identifiers = new ArrayList<>(closedSessionIdentifiers);
                 closedSessionIdentifiers.clear();
             }
         }
@@ -145,16 +143,13 @@ public class ServerSessionPool {
 
         Connection connection = null;
         try {
-            connection = cluster.selectServer(new ServerSelector() {
-                @Override
-                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                    for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-                        if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
-                            return Collections.singletonList(cur);
-                        }
+            connection = cluster.selectServer(clusterDescription -> {
+                for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                    if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
+                        return Collections.singletonList(cur);
                     }
-                    return Collections.emptyList();
                 }
+                return Collections.emptyList();
             }).getServer().getConnection();
 
             connection.command("admin",
