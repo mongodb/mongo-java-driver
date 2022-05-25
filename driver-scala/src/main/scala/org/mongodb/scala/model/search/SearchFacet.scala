@@ -16,7 +16,7 @@
 package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.Beta
-import com.mongodb.client.model.search.{ NumberSearchFacet, SearchFacet => JSearchFacet }
+import com.mongodb.client.model.search.{ SearchFacet => JSearchFacet }
 import org.mongodb.scala.bson.conversions.Bson
 
 import java.time.Instant

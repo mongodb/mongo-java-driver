@@ -59,12 +59,12 @@ public @interface Beta {
      */
     enum Reason {
         /**
-         * The driver API is in preview, but the corresponding server API is finalized.
+         * The driver API is in preview.
          */
         CLIENT,
         /**
-         * We feel good about the driver API, but the corresponding server API is in preview.
-         * We still may decide to change the API even if the server API stays unchanged.
+         * The driver API relies on the server API, which is in preview.
+         * We still may decide to change the driver API even if the server API stays unchanged.
          */
         SERVER
     }
