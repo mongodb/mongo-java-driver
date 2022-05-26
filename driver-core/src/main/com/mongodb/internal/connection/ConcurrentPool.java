@@ -23,10 +23,11 @@ import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.VisibleForTesting;
-import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
 import com.mongodb.lang.Nullable;
 
+import java.util.Deque;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
@@ -55,24 +56,10 @@ public class ConcurrentPool<T> implements Pool<T> {
     private final int maxSize;
     private final ItemFactory<T> itemFactory;
 
-    private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<>();
+    private final Deque<T> available = new ConcurrentLinkedDeque<>();
     private final StateAndPermits stateAndPermits;
     private final String poolClosedMessage;
 
-    public enum Prune {
-        /**
-         * Prune this element
-         */
-        YES,
-        /**
-         * Don't prone this element
-         */
-        NO,
-        /**
-         * Don't prune this element and stop attempting to prune additional elements
-         */
-        STOP
-    }
     /**
      * Factory for creating and closing pooled items.
      *
@@ -83,7 +70,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         void close(T t);
 
-        Prune shouldPrune(T t);
+        boolean shouldPrune(T t);
     }
 
     /**
@@ -192,22 +179,20 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     public void prune() {
-        for (RemovalReportingIterator<T> iter = available.iterator(); iter.hasNext();) {
-            T cur = iter.next();
-            Prune shouldPrune = itemFactory.shouldPrune(cur);
-
-            if (shouldPrune == Prune.STOP) {
+        int currentAvailableCount = getAvailableCount();
+        for (int numAttempts = 0; numAttempts < currentAvailableCount; numAttempts++) {
+            if (!stateAndPermits.acquirePermit(10, TimeUnit.MILLISECONDS)) {
                 break;
             }
-
-            if (shouldPrune == Prune.YES) {
-                boolean removed = iter.reportingRemove();
-                if (removed) {
-                    close(cur);
-                }
+            T cur = available.pollFirst();
+            if (cur == null) {
+                stateAndPermits.releasePermit();
+                break;
             }
+            release(cur, itemFactory.shouldPrune(cur));
         }
     }
+
 
     /**
      * Try to populate this pool with items so that {@link #getCount()} is not smaller than {@code minSize}.
