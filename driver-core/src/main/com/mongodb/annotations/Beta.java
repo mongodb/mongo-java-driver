@@ -47,6 +47,25 @@ import java.lang.annotation.Target;
         ElementType.PACKAGE,
         ElementType.TYPE })
 @Documented
-@Beta
+@Beta(Beta.Reason.CLIENT)
 public @interface Beta {
+    /**
+     * @return The reason an API element is marked with {@link Beta}.
+     */
+    Reason[] value();
+
+    /**
+     * @see Beta#value()
+     */
+    enum Reason {
+        /**
+         * The driver API is in preview.
+         */
+        CLIENT,
+        /**
+         * The driver API relies on the server API, which is in preview.
+         * We still may decide to change the driver API even if the server API stays unchanged.
+         */
+        SERVER
+    }
 }

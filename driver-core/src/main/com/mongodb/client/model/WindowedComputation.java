@@ -27,7 +27,7 @@ import java.util.List;
  * @see WindowedComputations
  * @since 4.3
  */
-@Beta
+@Beta(Beta.Reason.SERVER)
 public interface WindowedComputation {
     /**
      * Render into {@link BsonField}.

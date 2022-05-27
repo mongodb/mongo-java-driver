@@ -24,7 +24,7 @@ import com.mongodb.annotations.Beta;
  * @mongodb.server.release 5.0
  * @since 4.3
  */
-@Beta
+@Beta(Beta.Reason.SERVER)
 public enum MongoTimeUnit {
     /**
      * YEAR

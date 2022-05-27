@@ -318,6 +318,10 @@ object Filters {
 
   /**
    * Creates a filter that matches all documents matching the given search term.
+   * You may use [[Projections.metaTextScore]] to extract the relevance score assigned to each matched document.
+   *
+   * `Aggregates.search(SearchOperator, SearchOptions)` / `Aggregates.search(SearchCollector, SearchOptions)`
+   * is a more powerful full-text search alternative.
    *
    * @param search the search term
    * @return the filter
@@ -327,6 +331,10 @@ object Filters {
 
   /**
    * Creates a filter that matches all documents matching the given search term using the given language.
+   * You may use [[Projections.metaTextScore]] to extract the relevance score assigned to each matched document.
+   *
+   * `Aggregates.search(SearchOperator, SearchOptions)` / `Aggregates.search(SearchCollector, SearchOptions)`
+   * is a more powerful full-text search alternative.
    *
    * @param search   the search term
    * @param textSearchOptions the text search options to use

@@ -22,6 +22,7 @@ import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions }
 
 /**
  * Builders for aggregation pipeline stages.
@@ -474,11 +475,147 @@ object Aggregates {
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */
-  @Beta
+  @Beta(Array(Beta.Reason.SERVER))
   def setWindowFields[TExpression >: Null](
       partitionBy: Option[TExpression],
       sortBy: Option[Bson],
       output: WindowedComputation*
   ): Bson =
     JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output.asJava)
+
+  /**
+   * Creates a `\$search` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "searchScore"` expression, e.g., via [[Projections.metaSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * `Filters.text(String, TextSearchOptions)` is a legacy text search alternative.
+   *
+   * @param operator A search operator.
+   * @return The `\$search` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   * @since 4.7
+   */
+  def search(operator: SearchOperator): Bson =
+    JAggregates.search(operator)
+
+  /**
+   * Creates a `\$search` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "searchScore"` expression, e.g., via [[Projections.metaSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * `Filters.text(String, TextSearchOptions)` is a legacy text search alternative.
+   *
+   * @param operator A search operator.
+   * @param options Optional `\$search` pipeline stage fields.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.search(SearchOperator)`.
+   * @return The `\$search` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   * @since 4.7
+   */
+  def search(operator: SearchOperator, options: SearchOptions): Bson =
+    JAggregates.search(operator, options)
+
+  /**
+   * Creates a `\$search` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "searchScore"` expression, e.g., via [[Projections.metaSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * `Filters.text(String, TextSearchOptions)` is a legacy text search alternative.
+   *
+   * @param collector A search collector.
+   * @return The `\$search` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   * @since 4.7
+   */
+  def search(collector: SearchCollector): Bson =
+    JAggregates.search(collector)
+
+  /**
+   * Creates a `\$search` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "searchScore"` expression, e.g., via [[Projections.metaSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * `Filters.text(String, TextSearchOptions)` is a legacy text search alternative.
+   *
+   * @param collector A search collector.
+   * @param options Optional `\$search` pipeline stage fields.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.search(SearchCollector)`.
+   * @return The `\$search` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   * @since 4.7
+   */
+  def search(collector: SearchCollector, options: SearchOptions): Bson =
+    JAggregates.search(collector, options)
+
+  /**
+   * Creates a `\$searchMeta` pipeline stage supported by MongoDB Atlas.
+   * Unlike `\$search`, it does not return found documents,
+   * instead it returns metadata, which in case of using the `\$search` stage
+   * may be extracted by using `$$SEARCH_META` variable, e.g., via [[Projections.computedSearchMeta]].
+   *
+   * @param operator A search operator.
+   * @return The `\$searchMeta` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-searchmeta \$searchMeta]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
+   * @since 4.7
+   */
+  def searchMeta(operator: SearchOperator): Bson =
+    JAggregates.searchMeta(operator)
+
+  /**
+   * Creates a `\$searchMeta` pipeline stage supported by MongoDB Atlas.
+   * Unlike `\$search`, it does not return found documents,
+   * instead it returns metadata, which in case of using the `\$search` stage
+   * may be extracted by using `$$SEARCH_META` variable, e.g., via [[Projections.computedSearchMeta]].
+   *
+   * @param operator A search operator.
+   * @param options Optional `\$search` pipeline stage fields.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.searchMeta(SearchOperator)`.
+   * @return The `\$searchMeta` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-searchmeta \$searchMeta]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
+   * @since 4.7
+   */
+  def searchMeta(operator: SearchOperator, options: SearchOptions): Bson =
+    JAggregates.searchMeta(operator, options)
+
+  /**
+   * Creates a `\$searchMeta` pipeline stage supported by MongoDB Atlas.
+   * Unlike `\$search`, it does not return found documents,
+   * instead it returns metadata, which in case of using the `\$search` stage
+   * may be extracted by using `$$SEARCH_META` variable, e.g., via [[Projections.computedSearchMeta]].
+   *
+   * @param collector A search collector.
+   * @return The `\$searchMeta` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-searchmeta \$searchMeta]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
+   * @since 4.7
+   */
+  def searchMeta(collector: SearchCollector): Bson =
+    JAggregates.searchMeta(collector)
+
+  /**
+   * Creates a `\$searchMeta` pipeline stage supported by MongoDB Atlas.
+   * Unlike `\$search`, it does not return found documents,
+   * instead it returns metadata, which in case of using the `\$search` stage
+   * may be extracted by using `$$SEARCH_META` variable, e.g., via [[Projections.computedSearchMeta]].
+   *
+   * @param collector A search collector.
+   * @param options Optional `\$search` pipeline stage fields.
+   * Specifying `SearchOptions.defaultSearchOptions` is equivalent to calling `Aggregates.searchMeta(SearchCollector)`.
+   * @return The `\$searchMeta` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-searchmeta \$searchMeta]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
+   * @since 4.7
+   */
+  def searchMeta(collector: SearchCollector, options: SearchOptions): Bson =
+    JAggregates.searchMeta(collector, options)
 }

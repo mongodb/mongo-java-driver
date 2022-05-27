@@ -138,6 +138,12 @@ configure(scalaProjects) {
 
     tasks.withType(ScalaCompile) {
         scalaCompileOptions.deprecation = false
+        if(scalaVersion.startsWith("2.11")) {
+            scalaCompileOptions.additionalParameters = [
+                    // support static methods in interfaces
+                    "-target:jvm-1.8"
+            ]
+        }
         if(scalaVersion.startsWith("2.13")) {
             scalaCompileOptions.additionalParameters = [
                     "-feature",

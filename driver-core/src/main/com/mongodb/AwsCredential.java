@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @see MongoCredential#AWS_CREDENTIAL_PROVIDER_KEY
  * @since 4.4
  */
-@Beta
+@Beta(Beta.Reason.CLIENT)
 public final class AwsCredential {
     private final String accessKeyId;
     private final String secretAccessKey;

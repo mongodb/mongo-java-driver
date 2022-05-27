@@ -67,7 +67,6 @@ import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.eq
-import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.exclude
@@ -117,7 +116,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
     def '$match'() {
         expect:
-        aggregate([match(exists('a1'))]) == [a, b]
+        aggregate([match(Filters.exists('a1'))]) == [a, b]
     }
 
     def '$project'() {

@@ -29,6 +29,13 @@ import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Windows.Bound.{ CURRENT, UNBOUNDED }
 import org.mongodb.scala.model.Windows.{ documents, range }
+import org.mongodb.scala.model.search.SearchCount.total
+import org.mongodb.scala.model.search.SearchFacet.stringFacet
+import org.mongodb.scala.model.search.SearchHighlight.paths
+import org.mongodb.scala.model.search.SearchCollector
+import org.mongodb.scala.model.search.SearchOperator.exists
+import org.mongodb.scala.model.search.SearchOptions.defaultSearchOptions
+import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
 
 class AggregatesSpec extends BaseSpec {
@@ -483,6 +490,176 @@ class AggregatesSpec extends BaseSpec {
         "$setWindowFields": {
           "output": {
             "newField01": { "$sum": "$field01", "window": { "documents": [1, 2] } }
+          }
+        }
+      }""")
+    )
+  }
+
+  it should "render $search" in {
+    toBson(
+      Aggregates.search(
+        exists(fieldPath("fieldName")),
+        defaultSearchOptions()
+      )
+    ) should equal(
+      Document("""{
+        "$search": {
+          "exists": { "path": "fieldName" }
+        }
+      }""")
+    )
+    toBson(
+      Aggregates.search(
+        SearchCollector
+          .facet(exists(fieldPath("fieldName")), List(stringFacet("stringFacetName", fieldPath("fieldName1")))),
+        defaultSearchOptions()
+          .index("indexName")
+          .count(total())
+          .highlight(
+            paths(
+              List(fieldPath("fieldName1"), fieldPath("fieldName2").multi("analyzerName"), wildcardPath("field.name*"))
+            )
+          )
+      )
+    ) should equal(
+      Document("""{
+        "$search": {
+          "facet": {
+            "operator": { "exists": { "path": "fieldName" } },
+            "facets": {
+              "stringFacetName": { "type" : "string", "path": "fieldName1" }
+            }
+          },
+          "index": "indexName",
+          "count": { "type": "total" },
+          "highlight": {
+            "path": [
+              "fieldName1",
+              { "value": "fieldName2", "multi": "analyzerName" },
+              { "wildcard": "field.name*" }
+            ]
+          }
+        }
+      }""")
+    )
+  }
+
+  it should "render $search with no options" in {
+    toBson(
+      Aggregates.search(
+        exists(fieldPath("fieldName"))
+      )
+    ) should equal(
+      Document("""{
+        "$search": {
+          "exists": { "path": "fieldName" }
+        }
+      }""")
+    )
+    toBson(
+      Aggregates.search(
+        SearchCollector.facet(
+          exists(fieldPath("fieldName")),
+          List(
+            stringFacet("facetName", fieldPath("fieldName"))
+              .numBuckets(3)
+          )
+        )
+      )
+    ) should equal(
+      Document("""{
+        "$search": {
+          "facet": {
+            "operator": { "exists": { "path": "fieldName" } },
+            "facets": {
+              "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
+            }
+          }
+        }
+      }""")
+    )
+  }
+
+  it should "render $searchMeta" in {
+    toBson(
+      Aggregates.searchMeta(
+        exists(fieldPath("fieldName")),
+        defaultSearchOptions()
+      )
+    ) should equal(
+      Document("""{
+        "$searchMeta": {
+          "exists": { "path": "fieldName" }
+        }
+      }""")
+    )
+    toBson(
+      Aggregates.searchMeta(
+        SearchCollector
+          .facet(exists(fieldPath("fieldName")), List(stringFacet("stringFacetName", fieldPath("fieldName1")))),
+        defaultSearchOptions()
+          .index("indexName")
+          .count(total())
+          .highlight(
+            paths(
+              List(fieldPath("fieldName1"), fieldPath("fieldName2").multi("analyzerName"), wildcardPath("field.name*"))
+            )
+          )
+      )
+    ) should equal(
+      Document("""{
+        "$searchMeta": {
+          "facet": {
+            "operator": { "exists": { "path": "fieldName" } },
+            "facets": {
+              "stringFacetName": { "type" : "string", "path": "fieldName1" }
+            }
+          },
+          "index": "indexName",
+          "count": { "type": "total" },
+          "highlight": {
+            "path": [
+              "fieldName1",
+              { "value": "fieldName2", "multi": "analyzerName" },
+              { "wildcard": "field.name*" }
+            ]
+          }
+        }
+      }""")
+    )
+  }
+
+  it should "render $searchMeta with no options" in {
+    toBson(
+      Aggregates.searchMeta(
+        exists(fieldPath("fieldName"))
+      )
+    ) should equal(
+      Document("""{
+        "$searchMeta": {
+          "exists": { "path": "fieldName" }
+        }
+      }""")
+    )
+    toBson(
+      Aggregates.searchMeta(
+        SearchCollector.facet(
+          exists(fieldPath("fieldName")),
+          List(
+            stringFacet("facetName", fieldPath("fieldName"))
+              .numBuckets(3)
+          )
+        )
+      )
+    ) should equal(
+      Document("""{
+        "$searchMeta": {
+          "facet": {
+            "operator": { "exists": { "path": "fieldName" } },
+            "facets": {
+              "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
+            }
           }
         }
       }""")

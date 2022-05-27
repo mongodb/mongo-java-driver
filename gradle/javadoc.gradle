@@ -52,6 +52,7 @@ subprojects { project ->
             links = ['https://docs.oracle.com/en/java/javase/11/docs/api/',
                      'https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/']
             tagletPath tagletsProject.sourceSets.main.output.classesDirs.head()
+            taglets 'AtlasManualTaglet'
             taglets 'ManualTaglet'
             taglets 'DochubTaglet'
             taglets 'ServerReleaseTaglet'

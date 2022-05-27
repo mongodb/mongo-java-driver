@@ -38,7 +38,7 @@ import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedCompu
  * @since 4.3
  * @note Requires MongoDB 5.0 or greater.
  */
-@Beta
+@Beta(Array(Beta.Reason.SERVER))
 object WindowedComputations {
 
   /**

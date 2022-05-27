@@ -1,5 +1,4 @@
 # Java configurations for evergreen
-# Defaults to Java 11
 
 export JDK8="/opt/java/jdk8"
 export JDK11="/opt/java/jdk11"

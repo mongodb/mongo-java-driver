@@ -107,6 +107,7 @@ public final class ClusterFixture {
     public static final String MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.multi.mongos.uri";
     public static final String SERVERLESS_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.serverless";
     public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
+    public static final String ATLAS_SEARCH_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.atlas.search";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
@@ -518,6 +519,10 @@ public final class ClusterFixture {
 
     public static boolean isClientSideEncryptionTest() {
         return !System.getProperty("org.mongodb.test.awsAccessKeyId", "").isEmpty();
+    }
+
+    public static boolean isAtlasSearchTest() {
+        return System.getProperty(ATLAS_SEARCH_TEST_SYSTEM_PROPERTY_NAME) != null;
     }
 
     public static void enableMaxTimeFailPoint() {

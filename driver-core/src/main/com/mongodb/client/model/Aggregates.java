@@ -18,6 +18,9 @@ package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Beta;
+import com.mongodb.client.model.search.SearchOperator;
+import com.mongodb.client.model.search.SearchCollector;
+import com.mongodb.client.model.search.SearchOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -29,8 +32,10 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -41,6 +46,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.server.release 2.2
  * @since 3.1
  */
+@SuppressWarnings("overloads")
 public final class Aggregates {
 
     /**
@@ -616,7 +622,7 @@ public final class Aggregates {
      * @mongodb.server.release 5.0
      * @since 4.3
      */
-    @Beta
+    @Beta(Beta.Reason.SERVER)
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
                                                      final WindowedComputation... output) {
         notNull("output", output);
@@ -643,11 +649,163 @@ public final class Aggregates {
      * @mongodb.server.release 5.0
      * @since 4.3
      */
-    @Beta
+    @Beta(Beta.Reason.SERVER)
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
                                                      final List<WindowedComputation> output) {
         notNull("output", output);
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "searchScore"} expression, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * <p>
+     * {@link Filters#text(String, TextSearchOptions)} is a legacy text search alternative.</p>
+     *
+     * @param operator A search operator.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchOperator operator) {
+        return search(operator, null);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "searchScore"} expression, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * <p>
+     * {@link Filters#text(String, TextSearchOptions)} is a legacy text search alternative.</p>
+     *
+     * @param operator A search operator.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * or calling {@link #search(SearchOperator)}.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchOperator operator, @Nullable final SearchOptions options) {
+        return new SearchStage("$search", notNull("operator", operator), options);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use {@code $meta: "searchScore"}, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param collector A search collector.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchCollector collector) {
+        return search(collector, null);
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use {@code $meta: "searchScore"}, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param collector A search collector.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * or calling {@link #search(SearchCollector)}.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchCollector collector, @Nullable final SearchOptions options) {
+        return new SearchStage("$search", notNull("collector", collector), options);
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchOperator) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param operator A search operator.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchOperator operator) {
+        return searchMeta(operator, null);
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchOperator, SearchOptions) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param operator A search operator.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * or calling {@link #searchMeta(SearchOperator)}.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchOperator operator, @Nullable final SearchOptions options) {
+        return new SearchStage("$searchMeta", notNull("operator", operator), options);
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchCollector) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param collector A search collector.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchCollector collector) {
+        return searchMeta(collector, null);
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchCollector, SearchOptions) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param collector A search collector.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * or calling {@link #searchMeta(SearchCollector)}.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchCollector collector, @Nullable final SearchOptions options) {
+        return new SearchStage("$searchMeta", notNull("collector", collector), options);
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,
@@ -1608,6 +1766,69 @@ public final class Aggregates {
                     + ", partitionBy=" + partitionBy
                     + ", sortBy=" + sortBy
                     + ", output=" + output
+                    + '}';
+        }
+    }
+
+    private static final class SearchStage implements Bson {
+        private final String name;
+        private final Bson operatorOrCollector;
+        @Nullable
+        private final SearchOptions options;
+
+        SearchStage(final String name, final Bson operatorOrCollector, @Nullable final SearchOptions options) {
+            this.name = name;
+            this.operatorOrCollector = operatorOrCollector;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeStartDocument(name);
+            BsonDocument operatorOrCollectorDoc = operatorOrCollector.toBsonDocument(documentClass, codecRegistry);
+            assertTrue(operatorOrCollectorDoc.size() == 1);
+            Map.Entry<String, BsonValue> operatorOrCollectorEntry = operatorOrCollectorDoc.entrySet().iterator().next();
+            writer.writeName(operatorOrCollectorEntry.getKey());
+            BuildersHelper.encodeValue(writer, operatorOrCollectorEntry.getValue(), codecRegistry);
+            if (options != null) {
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+            }
+            // end `name`
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final SearchStage that = (SearchStage) o;
+            return name.equals(that.name)
+                    && operatorOrCollector.equals(that.operatorOrCollector)
+                    && Objects.equals(options, that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, operatorOrCollector, options);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='" + name + "'"
+                    + ", operatorOrCollector=" + operatorOrCollector
+                    + ", options=" + options
                     + '}';
         }
     }
