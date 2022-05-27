@@ -103,7 +103,7 @@ public class TestCommandListener implements CommandListener {
     public List<CommandEvent> getEvents() {
         lock.lock();
         try {
-            return events;
+            return new ArrayList<>(events);
         } finally {
             lock.unlock();
         }
