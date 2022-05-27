@@ -295,12 +295,35 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
     val localObjects = new Reflections(scalaPackageName, new SubTypesScanner(false))
       .getSubTypesOf(classOf[Object])
       .asScala
+      .filter(_.getPackage.getName == scalaPackageName)
       .filter(classFilter)
       .map(_.getSimpleName)
       .toSet
-    val scalaExclusions = Set("package", "FullDocument", "FullDocumentBeforeChange")
+    val scalaExclusions = Set("package")
     val local = (localPackage ++ localObjects) -- scalaExclusions
 
+    diff(local, wrapped) shouldBe empty
+  }
+
+  it should "mirror all com.mongodb.client.model.search in org.mongdb.scala.model.search" in {
+    val packageName = "com.mongodb.client.model.search"
+    val wrapped = new Reflections(packageName, new SubTypesScanner(false))
+      .getSubTypesOf(classOf[Object])
+      .asScala
+      .filter(_.getPackage.getName == packageName)
+      .filter(classFilter)
+      .map(_.getSimpleName)
+      .toSet
+    val scalaPackageName = "org.mongodb.scala.model.search"
+    val localPackage = currentMirror.staticPackage(scalaPackageName).info.decls.map(_.name.toString).toSet
+    val localObjects = new Reflections(scalaPackageName, new SubTypesScanner(false))
+      .getSubTypesOf(classOf[Object])
+      .asScala
+      .filter(_.getPackage.getName == scalaPackageName)
+      .filter(classFilter)
+      .map(_.getSimpleName)
+      .toSet
+    val local = localPackage ++ localObjects - "package"
     diff(local, wrapped) shouldBe empty
   }
 

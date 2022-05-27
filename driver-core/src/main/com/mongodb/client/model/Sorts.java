@@ -94,7 +94,8 @@ public final class Sorts {
      *
      * @param fieldName the field name
      * @return the sort specification
-     * @mongodb.driver.manual reference/operator/projection/meta/#sort textScore
+     * @see Filters#text(String, TextSearchOptions)
+     * @mongodb.driver.manual reference/operator/aggregation/meta/#text-score-metadata--meta---textscore- textScore
      */
     public static Bson metaTextScore(final String fieldName) {
         return new BsonDocument(fieldName, new BsonDocument("$meta", new BsonString("textScore")));
