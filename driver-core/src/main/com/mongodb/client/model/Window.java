@@ -27,6 +27,6 @@ import java.util.List;
  * @see Windows
  * @since 4.3
  */
-@Beta
+@Beta(Beta.Reason.SERVER)
 public interface Window extends Bson {
 }

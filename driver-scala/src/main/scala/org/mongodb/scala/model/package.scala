@@ -873,7 +873,7 @@ package object model {
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */
-  @Beta
+  @Beta(Array(Beta.Reason.SERVER))
   object MongoTimeUnit {
 
     val YEAR = JMongoTimeUnit.YEAR
@@ -902,7 +902,7 @@ package object model {
    * @see [[Windows]]
    * @since 4.3
    */
-  @Beta
+  @Beta(Array(Beta.Reason.SERVER))
   type Window = com.mongodb.client.model.Window
 
   /**
@@ -912,7 +912,7 @@ package object model {
    * @see [[WindowedComputations]]
    * @since 4.3
    */
-  @Beta
+  @Beta(Array(Beta.Reason.SERVER))
   type WindowedComputation = com.mongodb.client.model.WindowedComputation
 }
 

@@ -175,7 +175,7 @@ public final class MongoCredential {
      * @see AwsCredential
      * @since 4.4
      */
-    @Beta
+    @Beta(Beta.Reason.CLIENT)
     public static final String AWS_CREDENTIAL_PROVIDER_KEY = "AWS_CREDENTIAL_PROVIDER";
 
     /**
@@ -544,4 +544,3 @@ public final class MongoCredential {
                 + '}';
     }
 }
-

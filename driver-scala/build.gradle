@@ -53,7 +53,10 @@ tasks.withType(Test) {
 tasks.withType(ScalaCompile) {
     if(scalaVersion.startsWith("2.11")) {
         // Better support SAM style closures in scala 2.11
-        scalaCompileOptions.additionalParameters = ["-Xexperimental"]
+        scalaCompileOptions.additionalParameters.addAll([
+                // Better support SAM style closures in scala 2.11
+                "-Xexperimental"
+        ])
     }
 }
 
