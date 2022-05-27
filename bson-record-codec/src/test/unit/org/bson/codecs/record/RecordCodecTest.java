@@ -25,7 +25,19 @@ import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.record.samples.TestRecord;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnConstructor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonDiscriminatorOnRecord;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonExtraElementsOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonExtraElementsOnComponent;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIdOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIdOnCanonicalConstructor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIgnoreOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIgnoreOnComponent;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonPropertyOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonPropertyOnCanonicalConstructor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonRepresentationOnAccessor;
 import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -34,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RecordCodecTest {
 
@@ -135,5 +148,39 @@ public class RecordCodecTest {
 
         // then
         assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testExceptionsForAnnotationsNotOnRecordComponent() {
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIdOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIdOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonPropertyOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonPropertyOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonRepresentationOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+    }
+
+    @Test
+    public void testExceptionsForUnsupportedAnnotations() {
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonDiscriminatorOnRecord.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonCreatorOnConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIgnoreOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIgnoreOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonExtraElementsOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonExtraElementsOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
     }
 }
