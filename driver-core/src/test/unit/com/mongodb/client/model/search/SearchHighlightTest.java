@@ -36,7 +36,7 @@ final class SearchHighlightTest {
         assertEquals(
                 docExamplePredefined()
                         .toBsonDocument(),
-                SearchCount.of(docExampleCustom())
+                SearchHighlight.of(docExampleCustom())
                         .toBsonDocument()
         );
     }
