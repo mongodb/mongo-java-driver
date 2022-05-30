@@ -33,7 +33,7 @@ final class SearchScoreTest {
         assertEquals(
                 docExamplePredefined()
                         .toBsonDocument(),
-                SearchCount.of(docExampleCustom())
+                SearchScore.of(docExampleCustom())
                         .toBsonDocument()
         );
     }

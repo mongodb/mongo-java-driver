@@ -30,7 +30,7 @@ final class SearchFuzzyTest {
                 () -> assertEquals(
                         docExamplePredefined()
                                 .toBsonDocument(),
-                        SearchCount.of(docExampleCustom())
+                        SearchFuzzy.of(docExampleCustom())
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(

@@ -317,10 +317,12 @@ final class SearchOperatorTest {
                         new BsonDocument("range",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("gte", new BsonDouble(Float.MIN_VALUE))
+                                        .append("score", new BsonDocument("boost", new BsonDocument("value", new BsonDouble(0.5))))
                         ),
                         SearchOperator.numberRange(
                                 fieldPath("fieldName"))
                                 .gte(Float.MIN_VALUE)
+                                .score(boost(0.5f))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
@@ -437,10 +439,12 @@ final class SearchOperatorTest {
                         new BsonDocument("range",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("gte", new BsonDateTime(0))
+                                        .append("score", new BsonDocument("boost", new BsonDocument("value", new BsonDouble(0.5))))
                         ),
                         SearchOperator.dateRange(
                                 fieldPath("fieldName"))
                                 .gte(Instant.EPOCH)
+                                .score(boost(0.5f))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(

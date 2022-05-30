@@ -35,7 +35,7 @@ final class SearchScoreExpressionTest {
         assertEquals(
                 docExamplePredefined()
                         .toBsonDocument(),
-                SearchCount.of(docExampleCustom())
+                SearchScoreExpression.of(docExampleCustom())
                         .toBsonDocument()
         );
     }
