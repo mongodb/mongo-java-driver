@@ -56,6 +56,7 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.result.InsertManyResult;
@@ -448,6 +449,9 @@ public class JsonPoweredCrudTestHelper {
         CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions();
         if (arguments.containsKey("encryptedFields")) {
             createCollectionOptions.encryptedFields(arguments.getDocument("encryptedFields"));
+        }
+        if (arguments.containsKey("validator")) {
+            createCollectionOptions.validationOptions(new ValidationOptions().validator(arguments.getDocument("validator")));
         }
 
         if (clientSession == null) {

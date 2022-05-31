@@ -16,14 +16,13 @@
 
 package com.mongodb.internal.capi;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.AwsCredential;
-import com.mongodb.Block;
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
-import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.internal.authentication.AwsCredentialHelper;
 import com.mongodb.lang.Nullable;
@@ -41,25 +40,40 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 public final class MongoCryptHelper {
 
-    public static MongoCryptOptions createMongoCryptOptions(final Map<String, Map<String, Object>> kmsProviders) {
-        return createMongoCryptOptions(kmsProviders, null, null, false);
+    public static MongoCryptOptions createMongoCryptOptions(final ClientEncryptionSettings settings) {
+        return createMongoCryptOptions(settings.getKmsProviders(), false, emptyList(), emptyMap(), null, null);
     }
 
-    public static MongoCryptOptions createMongoCryptOptions(final Map<String, Map<String, Object>> kmsProviders,
-            @Nullable final Map<String, BsonDocument> localSchemaMap,
-            @Nullable final Map<String, BsonDocument> encryptedFieldsMap,
-            final boolean bypassQueryAnalysis) {
-        MongoCryptOptions.Builder mongoCryptOptionsBuilder = MongoCryptOptions.builder();
+    public static MongoCryptOptions createMongoCryptOptions(final AutoEncryptionSettings settings) {
+        return createMongoCryptOptions(
+                settings.getKmsProviders(),
+                settings.isBypassQueryAnalysis(),
+                settings.getSearchPaths(),
+                settings.getExtraOptions(),
+                settings.getSchemaMap(),
+                settings.getEncryptedFieldsMap());
+    }
 
-        BsonDocument bsonKmsProviders = getKmsProvidersAsBsonDocument(kmsProviders);
-        mongoCryptOptionsBuilder.kmsProviderOptions(bsonKmsProviders);
-        mongoCryptOptionsBuilder.needsKmsCredentialsStateEnabled(true);
+    private static MongoCryptOptions createMongoCryptOptions(
+            final Map<String, Map<String, Object>> kmsProviders,
+            final boolean bypassQueryAnalysis,
+            final List<String> searchPaths,
+            @Nullable final Map<String, Object> extraOptions,
+            @Nullable final Map<String, BsonDocument> localSchemaMap,
+            @Nullable final Map<String, BsonDocument> encryptedFieldsMap) {
+        MongoCryptOptions.Builder mongoCryptOptionsBuilder = MongoCryptOptions.builder();
+        mongoCryptOptionsBuilder.kmsProviderOptions(getKmsProvidersAsBsonDocument(kmsProviders));
+        mongoCryptOptionsBuilder.bypassQueryAnalysis(bypassQueryAnalysis);
+        mongoCryptOptionsBuilder.searchPaths(searchPaths);
+        mongoCryptOptionsBuilder.extraOptions(toBsonDocument(extraOptions));
         mongoCryptOptionsBuilder.localSchemaMap(localSchemaMap);
         mongoCryptOptionsBuilder.encryptedFieldsMap(encryptedFieldsMap);
-        mongoCryptOptionsBuilder.bypassQueryAnalysis(bypassQueryAnalysis);
+        mongoCryptOptionsBuilder.needsKmsCredentialsStateEnabled(true);
         return mongoCryptOptionsBuilder.build();
     }
     public static BsonDocument fetchCredentials(final Map<String, Map<String, Object>> kmsProviders,
@@ -82,7 +96,7 @@ public final class MongoCryptHelper {
                                 + " The returned value is %s.",
                         kmsProviderName, kmsProviderCredential == null ? "null" : "empty"));
             }
-            addToKmsProviderDocument(kmsProvidersDocument, kmsProviderName, kmsProviderCredential);
+            kmsProvidersDocument.put(kmsProviderName, toBsonDocument(kmsProviderCredential));
         }
         if (kmsProvidersDocument.containsKey("aws") && kmsProvidersDocument.get("aws").asDocument().isEmpty()) {
             AwsCredential awsCredential = AwsCredentialHelper.obtainFromEnvironment();
@@ -101,20 +115,20 @@ public final class MongoCryptHelper {
 
     private static BsonDocument getKmsProvidersAsBsonDocument(final Map<String, Map<String, Object>> kmsProviders) {
         BsonDocument bsonKmsProviders = new BsonDocument();
-        for (Map.Entry<String, Map<String, Object>> entry : kmsProviders.entrySet()) {
-            addToKmsProviderDocument(bsonKmsProviders, entry.getKey(), entry.getValue());
-        }
+        kmsProviders.forEach((k, v) -> bsonKmsProviders.put(k, toBsonDocument(v)));
         return bsonKmsProviders;
     }
 
-    private static void addToKmsProviderDocument(final BsonDocument kmsProvidersDocument, final String kmsProvider,
-            final Map<String, Object> kmsProviderCredential) {
-        kmsProvidersDocument.put(kmsProvider, new BsonDocumentWrapper<>(new Document(kmsProviderCredential), new DocumentCodec()));
+    private static BsonDocument toBsonDocument(final Map<String, Object> optionsMap) {
+        if (optionsMap == null) {
+            return new BsonDocument();
+        }
+        return new BsonDocumentWrapper<>(new Document(optionsMap), new DocumentCodec());
     }
 
     @SuppressWarnings("unchecked")
     public static List<String> createMongocryptdSpawnArgs(final Map<String, Object> options) {
-        List<String> spawnArgs = new ArrayList<String>();
+        List<String> spawnArgs = new ArrayList<>();
 
         String path = options.containsKey("mongocryptdSpawnPath")
                 ? (String) options.get("mongocryptdSpawnPath")
@@ -135,18 +149,10 @@ public final class MongoCryptHelper {
     public static MongoClientSettings createMongocryptdClientSettings(final String connectionString) {
 
         return MongoClientSettings.builder()
-                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                    @Override
-                    public void apply(final ClusterSettings.Builder builder) {
-                        builder.serverSelectionTimeout(10, TimeUnit.SECONDS);
-                    }
-                })
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(10, TimeUnit.SECONDS);
-                        builder.connectTimeout(10, TimeUnit.SECONDS);
-                    }
+                .applyToClusterSettings(builder -> builder.serverSelectionTimeout(10, TimeUnit.SECONDS))
+                .applyToSocketSettings(builder -> {
+                    builder.readTimeout(10, TimeUnit.SECONDS);
+                    builder.connectTimeout(10, TimeUnit.SECONDS);
                 })
                 .applyConnectionString(new ConnectionString((connectionString != null)
                         ? connectionString : "mongodb://localhost:27020"))

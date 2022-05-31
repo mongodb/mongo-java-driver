@@ -16,17 +16,22 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import javax.net.ssl.SSLContext;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableMap;
 
 /**
@@ -73,6 +78,7 @@ public final class AutoEncryptionSettings {
     private final boolean bypassAutoEncryption;
     private final Map<String, BsonDocument> encryptedFieldsMap;
     private final boolean bypassQueryAnalysis;
+    private final List<String> searchPaths;
 
     /**
      * A builder for {@code AutoEncryptionSettings} so that {@code AutoEncryptionSettings} can be immutable, and to support easier
@@ -90,6 +96,7 @@ public final class AutoEncryptionSettings {
         private boolean bypassAutoEncryption;
         private Map<String, BsonDocument> encryptedFieldsMap = Collections.emptyMap();
         private boolean bypassQueryAnalysis;
+        private List<String> searchPaths = emptyList();
 
         /**
          * Sets the key vault settings.
@@ -172,6 +179,11 @@ public final class AutoEncryptionSettings {
         /**
          * Sets the extra options.
          *
+         * <p>
+         *      <strong>Note:</strong> When setting {@code cflePath}. If set, the override path must be given as a path to the csfle
+         *      dynamic library file itself, and not simply the directory that contains it.
+         * </p>
+         *
          * @param extraOptions the extra options, which may not be null
          * @return this
          * @see #getExtraOptions()
@@ -226,6 +238,15 @@ public final class AutoEncryptionSettings {
          */
         public Builder bypassQueryAnalysis(final boolean bypassQueryAnalysis) {
             this.bypassQueryAnalysis = bypassQueryAnalysis;
+            return this;
+        }
+
+        /**
+         * Internal API may be removed at any time.
+         */
+        @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+        public Builder searchPaths(final List<String> searchPaths) {
+            this.searchPaths = notNull("searchPaths", searchPaths);
             return this;
         }
 
@@ -413,6 +434,10 @@ public final class AutoEncryptionSettings {
      * the system path.</li>
      * <li>mongocryptdSpawnArgs: Used to control the behavior of mongocryptd when the driver spawns it. By default, the driver spawns
      * mongocryptd with the single command line argument {@code "--idleShutdownTimeoutSecs=60"}</li>
+     * <li>csflePath: Optional, override the path used to load the csfle library. Note: All MongoClient objects in the same process should
+     * use the same setting for csflePath, as it is an error to load more that one csfle dynamic library simultaneously in a single
+     * operating system process.</li>
+     * <li>csfleRequired: boolean, if 'true', refuse to continue encryption without a csfle library.</li>
      * </ul>
      *
      * @return the extra options map
@@ -469,6 +494,16 @@ public final class AutoEncryptionSettings {
         return bypassQueryAnalysis;
     }
 
+
+    /**
+     * Internal API may be removed at any time.
+     */
+    @Beta(Beta.Reason.CLIENT)
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public List<String> getSearchPaths() {
+        return searchPaths;
+    }
+
     private AutoEncryptionSettings(final Builder builder) {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
@@ -480,6 +515,7 @@ public final class AutoEncryptionSettings {
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
         this.encryptedFieldsMap = builder.encryptedFieldsMap;
         this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
+        this.searchPaths = !bypassAutoEncryption && builder.searchPaths.isEmpty() ? singletonList("$SYSTEM") : builder.searchPaths;
     }
 
     @Override

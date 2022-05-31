@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
 
-class Crypt implements Closeable {
+public class Crypt implements Closeable {
 
     private final MongoCrypt mongoCrypt;
     private final Map<String, Map<String, Object>> kmsProviders;
@@ -57,43 +57,55 @@ class Crypt implements Closeable {
     private final boolean bypassAutoEncryption;
     private final MongoClient internalClient;
 
+
     /**
      * Create an instance to use for explicit encryption and decryption, and data key creation.
      *
-     * @param mongoCrypt the mongoCrypt wrapper
-     * @param kmsProviders the kms providers
-     * @param keyRetriever the key retriever
-     * @param keyManagementService the key management service
+     * @param mongoCrypt                    the mongoCrypt wrapper
+     * @param keyRetriever                  the key retriever
+     * @param keyManagementService          the key management service
+     * @param kmsProviders                  the KMS provider credentials
+     * @param kmsProviderPropertySuppliers  the KMS provider property providers
      */
-    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders,
-            final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers, final KeyRetriever keyRetriever,
-            final KeyManagementService keyManagementService) {
-        this(mongoCrypt, kmsProviders, kmsProviderPropertySuppliers, null, null, keyRetriever, keyManagementService, false, null);
+    Crypt(final MongoCrypt mongoCrypt,
+            final KeyRetriever keyRetriever,
+            final KeyManagementService keyManagementService,
+            final Map<String, Map<String, Object>> kmsProviders,
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
+        this(mongoCrypt, keyRetriever, keyManagementService, kmsProviders, kmsProviderPropertySuppliers,
+                false, null, null, null);
     }
 
     /**
      * Create an instance to use for auto-encryption and auto-decryption.
-     * @param mongoCrypt the mongoCrypt wrapper
-     * @param kmsProviders the KMS provider credentials
-     * @param collectionInfoRetriever the collection info retriever
-     * @param commandMarker the command marker
-     * @param keyRetriever the key retriever
-     * @param keyManagementService the key management service
+     *
+     * @param mongoCrypt                    the mongoCrypt wrapper
+     * @param keyRetriever                  the key retriever
+     * @param keyManagementService          the key management service
+     * @param kmsProviders                  the KMS provider credentials
+     * @param kmsProviderPropertySuppliers  the KMS provider property providers
+     * @param bypassAutoEncryption          the bypass auto encryption flag
+     * @param collectionInfoRetriever       the collection info retriever
+     * @param commandMarker                 the command marker
+     * @param internalClient                the internal mongo client
      */
-    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders,
+    Crypt(final MongoCrypt mongoCrypt,
+            final KeyRetriever keyRetriever,
+            final KeyManagementService keyManagementService,
+            final Map<String, Map<String, Object>> kmsProviders,
             final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers,
+            final boolean bypassAutoEncryption,
             @Nullable final CollectionInfoRetriever collectionInfoRetriever,
-            @Nullable final CommandMarker commandMarker, final KeyRetriever keyRetriever,
-            final KeyManagementService keyManagementService, final boolean bypassAutoEncryption,
+            @Nullable final CommandMarker commandMarker,
             @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
-        this.kmsProviders = kmsProviders;
-        this.kmsProviderPropertySuppliers = kmsProviderPropertySuppliers;
-        this.collectionInfoRetriever = collectionInfoRetriever;
-        this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
         this.keyManagementService = keyManagementService;
+        this.kmsProviders = kmsProviders;
+        this.kmsProviderPropertySuppliers = kmsProviderPropertySuppliers;
         this.bypassAutoEncryption = bypassAutoEncryption;
+        this.collectionInfoRetriever = collectionInfoRetriever;
+        this.commandMarker = commandMarker;
         this.internalClient = internalClient;
     }
 
@@ -104,7 +116,7 @@ class Crypt implements Closeable {
      * @param command   the unencrypted command
      * @return the encrypted command
      */
-    public RawBsonDocument encrypt(final String databaseName, final RawBsonDocument command) {
+    RawBsonDocument encrypt(final String databaseName, final RawBsonDocument command) {
         notNull("databaseName", databaseName);
         notNull("command", command);
 
@@ -251,6 +263,10 @@ class Crypt implements Closeable {
         ) {
             // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
+    }
+
+    public String getVersion() {
+        return mongoCrypt.getVersionString();
     }
 
     private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, final String databaseName) {

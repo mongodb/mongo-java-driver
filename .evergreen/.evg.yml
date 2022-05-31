@@ -165,6 +165,14 @@ functions:
         script: |
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
 
+  "download csfle":
+    - command: shell.exec
+      params:
+        background: true
+        script: |
+          ${PREPARE_SHELL}
+          /opt/mongodbtoolchain/v3/bin/python3 ${DRIVERS_TOOLS}/.evergreen/mongodl.py --component csfle --version latest --out ${PROJECT_DIRECTORY}/csfle/
+
   "run load-balancer":
     - command: shell.exec
       params:
@@ -229,6 +237,7 @@ functions:
           AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
           GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
+          CSFLE_LIB_DIRECTORY="${PROJECT_DIRECTORY}/csfle/lib/" \
           .evergreen/run-tests.sh
 
   "run load-balancer tests":
@@ -784,6 +793,7 @@ tasks:
       commands:
         - func: "start-kms-kmip-server"
         - func: "bootstrap mongo-orchestration"
+        - func: "download csfle"
         - func: "run tests"
 
     - name: load-balancer-test

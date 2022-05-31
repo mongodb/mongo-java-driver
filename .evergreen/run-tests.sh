@@ -144,6 +144,7 @@ else
               -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
               -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
               ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
+              -Dorg.mongodb.test.csfle.path=${CSFLE_LIB_DIRECTORY} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
               --stacktrace --info --continue test
 fi
