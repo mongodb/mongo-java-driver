@@ -105,7 +105,6 @@ public class ServerSessionPool {
 
     private void endClosedSessions() {
         List<BsonDocument> identifiers = drainPool();
-        available.clear();
         if (identifiers.isEmpty()) {
             return;
         }
