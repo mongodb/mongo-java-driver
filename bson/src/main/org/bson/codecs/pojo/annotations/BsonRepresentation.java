@@ -27,7 +27,8 @@ import java.lang.annotation.Target;
 /**
  * An annotation that specifies what type the property is stored as in the database.
  *
- * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For POJOs, requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For Java records, the annotation is only supported on the record component.</p>
  *
  * @since 4.2
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION

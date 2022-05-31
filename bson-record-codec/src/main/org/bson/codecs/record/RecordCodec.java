@@ -143,6 +143,7 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         private static void validateAnnotations(final RecordComponent component, final int index) {
             validateAnnotationNotPresentOnType(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonDiscriminator.class);
             validateAnnotationNotPresentOnConstructor(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonCreator.class);
+            validateAnnotationNotPresentOnMethod(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonCreator.class);
             validateAnnotationNotPresentOnFieldOrAccessor(component, org.bson.codecs.pojo.annotations.BsonIgnore.class);
             validateAnnotationNotPresentOnFieldOrAccessor(component, org.bson.codecs.pojo.annotations.BsonExtraElements.class);
             validateAnnotationOnlyOnField(component, index, org.bson.codecs.pojo.annotations.BsonId.class);
@@ -165,6 +166,17 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                     throw new CodecConfigurationException(
                             format("Annotation '%s' not supported on record constructors, but found on constructor of '%s'",
                             annotation, clazz.getName()));
+                }
+            }
+        }
+
+        private static void validateAnnotationNotPresentOnMethod(final Class<?> clazz,
+                @SuppressWarnings("SameParameterValue") final Class<BsonCreator> annotation) {
+            for (var method : clazz.getMethods()) {
+                if (method.isAnnotationPresent(annotation)) {
+                    throw new CodecConfigurationException(
+                            format("Annotation '%s' not supported on methods, but found on method '%s' of '%s'",
+                                    annotation, method.getName(), clazz.getName()));
                 }
             }
         }

@@ -28,6 +28,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.record.samples.TestRecord;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnConstructor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnMethod;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonDiscriminatorOnRecord;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonExtraElementsOnAccessor;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonExtraElementsOnComponent;
@@ -173,6 +174,8 @@ public class RecordCodecTest {
 
         assertThrows(CodecConfigurationException.class, () ->
                 new RecordCodec<>(TestRecordWithIllegalBsonCreatorOnConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonCreatorOnMethod.class, Bson.DEFAULT_CODEC_REGISTRY));
 
         assertThrows(CodecConfigurationException.class, () ->
                 new RecordCodec<>(TestRecordWithIllegalBsonIgnoreOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
