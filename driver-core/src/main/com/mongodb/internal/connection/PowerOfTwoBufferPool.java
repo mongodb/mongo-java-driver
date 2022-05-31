@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.BufferProvider;
-import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -27,11 +26,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
 
 /**
  * Power-of-two buffer pool implementation.
@@ -63,31 +61,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         }
     }
 
-    private final class ItemFactory implements ConcurrentPool.ItemFactory<IdleTrackingByteBuffer> {
-        private final int size;
-
-        private ItemFactory(final int size) {
-            this.size = size;
-        }
-
-        @Override
-        public IdleTrackingByteBuffer create() {
-            return new IdleTrackingByteBuffer(createNew(size));
-        }
-
-        @Override
-        public void close(final IdleTrackingByteBuffer idleTrackingByteBuffer) {
-        }
-
-        @Override
-        public Prune shouldPrune(final IdleTrackingByteBuffer idleTrackingByteBuffer) {
-            return System.nanoTime() - idleTrackingByteBuffer.getLastUsedNanos() >= maxIdleTimeNanos
-                    ? Prune.YES : Prune.STOP;
-        }
-    }
-
-    private final Map<Integer, ConcurrentPool<IdleTrackingByteBuffer>> powerOfTwoToPoolMap
-            = new HashMap<Integer, ConcurrentPool<IdleTrackingByteBuffer>>();
+    private final Map<Integer, BufferPool> powerOfTwoToPoolMap = new HashMap<>();
     private final long maxIdleTimeNanos;
     private final ScheduledExecutorService pruner;
 
@@ -118,7 +92,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         int powerOfTwo = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {
             int size = powerOfTwo;
-            powerOfTwoToPoolMap.put(i, new ConcurrentPool<>(INFINITE_SIZE, new ItemFactory(size)));
+            powerOfTwoToPoolMap.put(i, new BufferPool(size));
             powerOfTwo = powerOfTwo << 1;
         }
         maxIdleTimeNanos = timeUnit.toNanos(maxIdleTime);
@@ -143,7 +117,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     public ByteBuffer getByteBuffer(final int size) {
-        ConcurrentPool<IdleTrackingByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(size)));
+        BufferPool pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(size)));
         ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get().getBuffer();
 
         ((Buffer) byteBuffer).clear();
@@ -158,7 +132,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     public void release(final ByteBuffer buffer) {
-        ConcurrentPool<IdleTrackingByteBuffer> pool =
+        BufferPool pool =
                 powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(buffer.capacity())));
         if (pool != null) {
             pool.release(new IdleTrackingByteBuffer(buffer));
@@ -166,7 +140,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     private void prune() {
-        powerOfTwoToPoolMap.values().forEach(ConcurrentPool::prune);
+        powerOfTwoToPoolMap.values().forEach(BufferPool::prune);
     }
 
     static int log2(final int powerOfTwo) {
@@ -198,6 +172,32 @@ public class PowerOfTwoBufferPool implements BufferProvider {
             if (getReferenceCount() == 0) {
                 PowerOfTwoBufferPool.this.release(wrapped);
             }
+        }
+    }
+
+    private final class BufferPool {
+        private final int bufferSize;
+        private final ConcurrentLinkedDeque<IdleTrackingByteBuffer> available = new ConcurrentLinkedDeque<>();
+
+        BufferPool(final int bufferSize) {
+            this.bufferSize = bufferSize;
+        }
+
+        IdleTrackingByteBuffer get() {
+            IdleTrackingByteBuffer buffer = available.pollLast();
+            if (buffer != null) {
+                return buffer;
+            }
+            return new IdleTrackingByteBuffer(createNew(bufferSize));
+        }
+
+        void release(final IdleTrackingByteBuffer t) {
+            available.addLast(t);
+        }
+
+        void prune() {
+            long now = System.nanoTime();
+            available.removeIf(cur -> now - cur.getLastUsedNanos() >= maxIdleTimeNanos);
         }
     }
 }
