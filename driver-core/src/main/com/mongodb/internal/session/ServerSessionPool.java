@@ -37,12 +37,12 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.UuidCodec;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -104,7 +104,7 @@ public class ServerSessionPool {
     }
 
     private void endClosedSessions() {
-        List<BsonDocument> identifiers = available.stream().map(ServerSession::getIdentifier).collect(Collectors.toList());
+        List<BsonDocument> identifiers = drainPool();
         available.clear();
         if (identifiers.isEmpty()) {
             return;
@@ -138,6 +138,19 @@ public class ServerSessionPool {
                 connection.release();
             }
         }
+    }
+
+    /**
+     * Drain the pool, returning a list of the identifiers of all drained sessions.
+     */
+    private List<BsonDocument> drainPool() {
+        List<BsonDocument> identifiers = new ArrayList<>(available.size());
+        ServerSessionImpl nextSession = available.pollFirst();
+        while (nextSession != null) {
+            identifiers.add(nextSession.getIdentifier());
+            nextSession = available.pollFirst();
+        }
+        return identifiers;
     }
 
     private boolean shouldPrune(final ServerSessionImpl serverSession) {
