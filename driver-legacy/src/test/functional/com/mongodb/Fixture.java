@@ -50,7 +50,7 @@ public final class Fixture {
         return mongoClient;
     }
 
-    public static int getServerSessionPoolInUseCount() {
+    public static long getServerSessionPoolInUseCount() {
         return getMongoClient().getServerSessionPool().getInUseCount();
     }
 

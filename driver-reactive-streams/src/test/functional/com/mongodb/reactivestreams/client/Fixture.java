@@ -131,7 +131,7 @@ public final class Fixture {
     public static synchronized void waitForLastServerSessionPoolRelease() {
         if (mongoClient != null) {
             long startTime = System.currentTimeMillis();
-            int sessionInUseCount = getSessionInUseCount();
+            long sessionInUseCount = getSessionInUseCount();
             while (sessionInUseCount > 0) {
                 try {
                     if (System.currentTimeMillis() > startTime + TIMEOUT_DURATION.toMillis()) {
@@ -147,7 +147,7 @@ public final class Fixture {
         }
     }
 
-    private static int getSessionInUseCount() {
+    private static long getSessionInUseCount() {
         return mongoClient.getServerSessionPool().getInUseCount();
     }
 
