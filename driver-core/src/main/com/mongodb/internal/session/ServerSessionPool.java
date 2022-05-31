@@ -37,12 +37,12 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.UuidCodec;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -54,7 +54,7 @@ public class ServerSessionPool {
     private volatile boolean closed;
     @Nullable
     private final ServerApi serverApi;
-    private final AtomicInteger inUseCount = new AtomicInteger();
+    private final LongAdder inUseCount = new LongAdder();
 
     interface Clock {
         long millis();
@@ -80,12 +80,12 @@ public class ServerSessionPool {
         if (serverSession == null) {
             serverSession = new ServerSessionImpl();
         }
-        inUseCount.incrementAndGet();
+        inUseCount.increment();
         return serverSession;
     }
 
     public void release(final ServerSession serverSession) {
-        inUseCount.decrementAndGet();
+        inUseCount.decrement();
         ServerSessionImpl serverSessionImpl = (ServerSessionImpl) serverSession;
         if (serverSessionImpl.isMarkedDirty()) {
             serverSessionImpl.close();
@@ -94,27 +94,18 @@ public class ServerSessionPool {
         }
     }
 
+    public long getInUseCount() {
+        return inUseCount.sum();
+    }
+
     public void close() {
-        if (!closed) {
-            closed = true;
-            List<BsonDocument> identifiers = new ArrayList<>(available.size());
-            ServerSessionImpl nextSession = available.pollFirst();
-            while (nextSession != null) {
-                nextSession.close();
-                identifiers.add(nextSession.getIdentifier());
-                nextSession = available.pollFirst();
-            }
-            if (identifiers.size() > 0) {
-                endClosedSessions(identifiers);
-            }
-        }
+        closed = true;
+        endClosedSessions();
     }
 
-    public int getInUseCount() {
-        return inUseCount.get();
-    }
-
-    private void endClosedSessions(final List<BsonDocument> identifiers) {
+    private void endClosedSessions() {
+        List<BsonDocument> identifiers = available.stream().map(ServerSession::getIdentifier).collect(Collectors.toList());
+        available.clear();
         if (identifiers.isEmpty()) {
             return;
         }
