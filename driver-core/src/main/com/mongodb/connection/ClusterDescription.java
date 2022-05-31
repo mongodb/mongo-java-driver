@@ -44,6 +44,7 @@ public class ClusterDescription {
     private final ClusterSettings clusterSettings;
     private final ServerSettings serverSettings;
     private final MongoException srvResolutionException;
+    private final Integer logicalSessionTimeoutMinutes;
 
     /**
      * Creates a new ClusterDescription.
@@ -97,6 +98,7 @@ public class ClusterDescription {
         this.serverDescriptions = new ArrayList<ServerDescription>(serverDescriptions);
         this.clusterSettings = clusterSettings;
         this.serverSettings = serverSettings;
+        this.logicalSessionTimeoutMinutes = calculateLogicalSessionTimeoutMinutes();
     }
 
     /**
@@ -237,22 +239,7 @@ public class ClusterDescription {
      */
     @Nullable
     public Integer getLogicalSessionTimeoutMinutes() {
-        Integer retVal = null;
-
-        for (ServerDescription cur : getServersByPredicate(this, serverDescription ->
-                serverDescription.isPrimary() || serverDescription.isSecondary())) {
-
-            Integer logicalSessionTimeoutMinutes = cur.getLogicalSessionTimeoutMinutes();
-            if (logicalSessionTimeoutMinutes == null) {
-                return null;
-            }
-            if (retVal == null) {
-                retVal = logicalSessionTimeoutMinutes;
-            } else {
-                retVal = Math.min(retVal, logicalSessionTimeoutMinutes);
-            }
-        }
-        return retVal;
+        return logicalSessionTimeoutMinutes;
     }
 
     @Override
@@ -332,5 +319,24 @@ public class ClusterDescription {
         }  else {
             return format("{type=%s, srvResolutionException=%s, servers=[%s]", type, srvResolutionException, serverDescriptions);
         }
+    }
+
+    private Integer calculateLogicalSessionTimeoutMinutes() {
+        Integer retVal = null;
+
+        for (ServerDescription cur : getServersByPredicate(this, serverDescription ->
+                serverDescription.isPrimary() || serverDescription.isSecondary())) {
+
+            Integer logicalSessionTimeoutMinutes = cur.getLogicalSessionTimeoutMinutes();
+            if (logicalSessionTimeoutMinutes == null) {
+                return null;
+            }
+            if (retVal == null) {
+                retVal = logicalSessionTimeoutMinutes;
+            } else {
+                retVal = Math.min(retVal, logicalSessionTimeoutMinutes);
+            }
+        }
+        return retVal;
     }
 }
