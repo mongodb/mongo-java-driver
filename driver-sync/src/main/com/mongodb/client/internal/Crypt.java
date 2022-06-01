@@ -265,8 +265,8 @@ public class Crypt implements Closeable {
         }
     }
 
-    public String getVersion() {
-        return mongoCrypt.getVersionString();
+    public String getCryptSharedLibVersionString() {
+        return mongoCrypt.getCryptSharedLibVersionString();
     }
 
     private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, final String databaseName) {

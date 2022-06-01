@@ -63,11 +63,11 @@ class CommandMarker implements Closeable {
             final MongoCrypt mongoCrypt,
             final AutoEncryptionSettings settings) {
         Map<String, Object> extraOptions = settings.getExtraOptions();
-        String versionString = mongoCrypt.getVersionString();
+        String cryptSharedLibVersionString = mongoCrypt.getCryptSharedLibVersionString();
 
         boolean bypassAutoEncryption = settings.isBypassAutoEncryption();
         boolean isBypassQueryAnalysis = settings.isBypassQueryAnalysis();
-        boolean cryptSharedIsAvailable = versionString != null && versionString.isEmpty();
+        boolean cryptSharedIsAvailable = cryptSharedLibVersionString != null && cryptSharedLibVersionString.isEmpty();
         boolean cryptSharedLibRequired = (boolean) extraOptions.getOrDefault("cryptSharedLibRequired", false);
 
         if (bypassAutoEncryption || isBypassQueryAnalysis || cryptSharedLibRequired || cryptSharedIsAvailable) {
