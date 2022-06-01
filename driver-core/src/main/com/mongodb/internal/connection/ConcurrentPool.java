@@ -179,9 +179,17 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     public void prune() {
+        // restrict number of iterations to the current size in order to avoid an infinite loop in the presence of concurrent releases
+        // back to the pool
+        int maxIterations = available.size();
+        int numIterations = 0;
         for (T cur : available) {
             if (itemFactory.shouldPrune(cur) && available.remove(cur)) {
                 close(cur);
+            }
+            numIterations++;
+            if (numIterations == maxIterations) {
+                break;
             }
         }
     }
