@@ -179,17 +179,10 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     public void prune() {
-        int currentAvailableCount = getAvailableCount();
-        for (int numAttempts = 0; numAttempts < currentAvailableCount; numAttempts++) {
-            if (!stateAndPermits.acquirePermitImmediateUnfair()) {
-                break;
+        for (T cur : available) {
+            if (itemFactory.shouldPrune(cur) && available.remove(cur)) {
+                close(cur);
             }
-            T cur = available.pollFirst();
-            if (cur == null) {
-                stateAndPermits.releasePermit();
-                break;
-            }
-            release(cur, itemFactory.shouldPrune(cur));
         }
     }
 
