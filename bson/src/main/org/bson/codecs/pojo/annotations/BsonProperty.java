@@ -41,6 +41,7 @@ public @interface BsonProperty {
      * The name of the property.
      *
      * <p>
+     *     <strong>Note:</strong> Regarding POJOs:<br />
      *     For asymmetrical property names, the context of the {@code BsonProperty} can be important.
      *     For example, when used with {@code @BsonCreator} the value will relate to the read name.
      *     When used directly on a field it will set both the read name if unset and the write name if unset.
