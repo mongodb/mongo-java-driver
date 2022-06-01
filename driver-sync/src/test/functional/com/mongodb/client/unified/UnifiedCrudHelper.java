@@ -259,11 +259,20 @@ final class UnifiedCrudHelper {
                 case "session":
                 case "filter":
                     break;
+                case "projection":
+                    iterable.projection(cur.getValue().asDocument());
+                    break;
                 case "sort":
                     iterable.sort(cur.getValue().asDocument());
                     break;
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asInt32().intValue());
+                    break;
+                case "maxTimeMS":
+                    iterable.maxTime(cur.getValue().asInt32().longValue(), TimeUnit.MILLISECONDS);
+                    break;
+                case "skip":
+                    iterable.skip(cur.getValue().asInt32().intValue());
                     break;
                 case "limit":
                     iterable.limit(cur.getValue().asInt32().intValue());
@@ -271,11 +280,30 @@ final class UnifiedCrudHelper {
                 case "allowDiskUse":
                     iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
                     break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        iterable.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        iterable.hint(cur.getValue().asDocument());
+                    }
+                    break;
                 case "comment":
                     iterable.comment(cur.getValue());
                     break;
                 case "let":
                     iterable.let(cur.getValue().asDocument());
+                    break;
+                case "min":
+                    iterable.min(cur.getValue().asDocument());
+                    break;
+                case "max":
+                    iterable.max(cur.getValue().asDocument());
+                    break;
+                case "returnKey":
+                    iterable.returnKey(cur.getValue().asBoolean().getValue());
+                    break;
+                case "showRecordId":
+                    iterable.showRecordId(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
