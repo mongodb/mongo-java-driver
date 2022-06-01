@@ -180,7 +180,7 @@ public final class AutoEncryptionSettings {
          * Sets the extra options.
          *
          * <p>
-         *      <strong>Note:</strong> When setting {@code cflePath}. If set, the override path must be given as a path to the csfle
+         *      <strong>Note:</strong> When setting {@code cflePath}, the override path must be given as a path to the csfle
          *      dynamic library file itself, and not simply the directory that contains it.
          * </p>
          *
@@ -515,7 +515,7 @@ public final class AutoEncryptionSettings {
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
         this.encryptedFieldsMap = builder.encryptedFieldsMap;
         this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
-        this.searchPaths = !bypassAutoEncryption && builder.searchPaths.isEmpty() ? singletonList("$SYSTEM") : builder.searchPaths;
+        this.searchPaths = builder.searchPaths;
     }
 
     @Override

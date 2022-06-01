@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 
 public final class MongoCryptHelper {
 
@@ -50,10 +51,12 @@ public final class MongoCryptHelper {
     }
 
     public static MongoCryptOptions createMongoCryptOptions(final AutoEncryptionSettings settings) {
+        List<String> searchPaths = !settings.isBypassAutoEncryption() && settings.getSearchPaths().isEmpty() ? singletonList("$SYSTEM") :
+                settings.getSearchPaths();
         return createMongoCryptOptions(
                 settings.getKmsProviders(),
                 settings.isBypassQueryAnalysis(),
-                settings.getSearchPaths(),
+                searchPaths,
                 settings.getExtraOptions(),
                 settings.getSchemaMap(),
                 settings.getEncryptedFieldsMap());
