@@ -26,7 +26,7 @@ import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
-import org.bson.codecs.record.samples.TestRecord;
+import org.bson.codecs.record.samples.TestRecordWithDeprecatedAnnotations;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnConstructor;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnMethod;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonDiscriminatorOnRecord;
@@ -52,10 +52,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class RecordCodecTest {
 
     @Test
-    public void testSimpleRecord() {
-        var codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
+    public void testRecordWithDeprecatedAnnotations() {
+        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecord("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
+        var testRecord = new TestRecordWithDeprecatedAnnotations("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
 
         var document = new BsonDocument();
         var writer = new BsonDocumentWriter(document);
@@ -80,7 +80,7 @@ public class RecordCodecTest {
     }
 
     @Test
-    public void testSimpleRecordWithPojoAnnotations() {
+    public void testRecordWithPojoAnnotations() {
         var codec = new RecordCodec<>(TestRecordWithPojoAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithPojoAnnotations("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
@@ -108,10 +108,10 @@ public class RecordCodecTest {
     }
 
     @Test
-    public void testSimpleRecordWithNulls() {
-        var codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
+    public void testRecordWithNulls() {
+        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecord(null, 14, null, identifier.toHexString());
+        var testRecord = new TestRecordWithDeprecatedAnnotations(null, 14, null, identifier.toHexString());
 
         var document = new BsonDocument();
         var writer = new BsonDocumentWriter(document);
@@ -133,10 +133,10 @@ public class RecordCodecTest {
     }
 
     @Test
-    public void testSimpleRecordWithExtraData() {
-        var codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
+    public void testRecordWithExtraData() {
+        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecord("Felix", 13, List.of("rugby", "badminton"), identifier.toHexString());
+        var testRecord = new TestRecordWithDeprecatedAnnotations("Felix", 13, List.of("rugby", "badminton"), identifier.toHexString());
 
         var document = new BsonDocument("_id", new BsonObjectId(identifier))
                 .append("nationality", new BsonString("British"))

@@ -25,7 +25,6 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.RepresentationConfigurable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.record.annotations.BsonId;
 import org.bson.codecs.record.annotations.BsonProperty;
 import org.bson.codecs.record.annotations.BsonRepresentation;
@@ -159,8 +158,8 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             }
         }
 
-        private static void validateAnnotationNotPresentOnConstructor(final Class<?> clazz,
-                @SuppressWarnings("SameParameterValue") final Class<BsonCreator> annotation) {
+        private static <T extends Annotation> void validateAnnotationNotPresentOnConstructor(final Class<?> clazz,
+                @SuppressWarnings("SameParameterValue") final Class<T> annotation) {
             for (var constructor : clazz.getConstructors()) {
                 if (constructor.isAnnotationPresent(annotation)) {
                     throw new CodecConfigurationException(
@@ -170,8 +169,8 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             }
         }
 
-        private static void validateAnnotationNotPresentOnMethod(final Class<?> clazz,
-                @SuppressWarnings("SameParameterValue") final Class<BsonCreator> annotation) {
+        private static <T extends Annotation> void validateAnnotationNotPresentOnMethod(final Class<?> clazz,
+                @SuppressWarnings("SameParameterValue") final Class<T> annotation) {
             for (var method : clazz.getMethods()) {
                 if (method.isAnnotationPresent(annotation)) {
                     throw new CodecConfigurationException(

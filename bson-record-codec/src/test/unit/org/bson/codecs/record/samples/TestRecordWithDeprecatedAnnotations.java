@@ -24,13 +24,13 @@ import org.bson.codecs.record.annotations.BsonRepresentation;
 import java.util.List;
 
 @SuppressWarnings("deprecation")
-public record TestRecord(String name,
-                         @BsonProperty("a") int age,
-                         List<String> hobbies,
-                         @BsonRepresentation(BsonType.OBJECT_ID) @BsonId String identifier) {
+public record TestRecordWithDeprecatedAnnotations(String name,
+                                                  @BsonProperty("a") int age,
+                                                  List<String> hobbies,
+                                                  @BsonRepresentation(BsonType.OBJECT_ID) @BsonId String identifier) {
 
     // To test that the canonical constructor is always used for decoding
-    public TestRecord(final String identifier) {
+    public TestRecordWithDeprecatedAnnotations(final String identifier) {
         this("Adrian", 17, List.of("soccer", "music"), identifier);
     }
 }
