@@ -200,28 +200,24 @@ public class ConcurrentPoolTest {
         TestCloseable t2 = pool.get();
         TestCloseable t3 = pool.get();
         TestCloseable t4 = pool.get();
-        TestCloseable t5 = pool.get();
-        t1.shouldPrune = ConcurrentPool.Prune.YES;
-        t2.shouldPrune = ConcurrentPool.Prune.NO;
-        t3.shouldPrune = ConcurrentPool.Prune.YES;
-        t4.shouldPrune = ConcurrentPool.Prune.STOP;
-        t5.shouldPrune = null;
+        t1.shouldPrune = true;
+        t2.shouldPrune = false;
+        t3.shouldPrune = true;
+        t4.shouldPrune = false;
 
         pool.release(t1);
         pool.release(t2);
         pool.release(t3);
         pool.release(t4);
-        pool.release(t5);
 
         pool.prune();
 
-        assertEquals(3, pool.getAvailableCount());
+        assertEquals(2, pool.getAvailableCount());
         assertEquals(0, pool.getInUseCount());
         assertTrue(t1.isClosed());
         assertTrue(!t2.isClosed());
         assertTrue(t3.isClosed());
         assertTrue(!t4.isClosed());
-        assertTrue(!t5.isClosed());
     }
 
     class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {
@@ -249,14 +245,14 @@ public class ConcurrentPoolTest {
         }
 
         @Override
-        public ConcurrentPool.Prune shouldPrune(final TestCloseable testCloseable) {
+        public boolean shouldPrune(final TestCloseable testCloseable) {
             return testCloseable.shouldPrune();
         }
     }
 
     static class TestCloseable implements Closeable {
         private boolean closed;
-        private ConcurrentPool.Prune shouldPrune;
+        private boolean shouldPrune;
         private boolean initialized;
 
         TestCloseable() {
@@ -275,7 +271,7 @@ public class ConcurrentPoolTest {
             return initialized;
         }
 
-        public ConcurrentPool.Prune shouldPrune() {
+        public boolean shouldPrune() {
             return shouldPrune;
         }
     }

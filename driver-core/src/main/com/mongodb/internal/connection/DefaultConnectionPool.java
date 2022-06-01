@@ -47,7 +47,6 @@ import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
 import com.mongodb.internal.inject.OptionalProvider;
 import com.mongodb.internal.session.SessionContext;
@@ -823,8 +822,8 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public Prune shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
-            return DefaultConnectionPool.this.shouldPrune(usageTrackingConnection) ? Prune.YES : Prune.NO;
+        public boolean shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
+            return DefaultConnectionPool.this.shouldPrune(usageTrackingConnection);
         }
     }
 

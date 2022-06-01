@@ -22,7 +22,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
-import com.mongodb.internal.connection.ConcurrentLinkedDeque;
 import com.mongodb.internal.connection.ExtendedAsynchronousByteChannel;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
@@ -44,6 +43,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
