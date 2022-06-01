@@ -497,7 +497,7 @@ public final class Accumulators {
         return new BsonField(fieldName, new Document(accumulatorName, new Document("input", inExpression).append("n", nExpression)));
     }
 
-    private static <OutExpression, NExpression> BsonField sortingPickAccumulator(
+    private static <OutExpression> BsonField sortingPickAccumulator(
             final String fieldName, final String accumulatorName, final Bson sort, final OutExpression outExpression) {
         return new BsonField(fieldName, new Document(accumulatorName, new Document("sortBy", sort).append("output", outExpression)));
     }
