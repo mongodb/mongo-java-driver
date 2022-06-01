@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.record.annotations;
+package org.bson.codecs.record.samples;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.bson.BsonType;
+import org.bson.codecs.pojo.annotations.BsonRepresentation;
 
-/**
- * An annotation that configures the record component as the _id field of the document
- *
- * @since 4.6
- * @deprecated Prefer {@link org.bson.codecs.pojo.annotations.BsonId}
- */
-@Deprecated
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.RECORD_COMPONENT})
-public @interface BsonId {
+public record TestRecordWithIllegalBsonRepresentationOnAccessor(String name) {
+
+    @Override
+    @BsonRepresentation(value = BsonType.INT32)
+    public String name() {
+        return name;
+    }
 }

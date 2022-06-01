@@ -25,7 +25,21 @@ import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
-import org.bson.codecs.record.samples.TestRecord;
+import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.record.samples.TestRecordWithDeprecatedAnnotations;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnConstructor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnMethod;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonDiscriminatorOnRecord;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonExtraElementsOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonExtraElementsOnComponent;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIdOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIdOnCanonicalConstructor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIgnoreOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIgnoreOnComponent;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonPropertyOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonPropertyOnCanonicalConstructor;
+import org.bson.codecs.record.samples.TestRecordWithIllegalBsonRepresentationOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
@@ -33,14 +47,15 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RecordCodecTest {
-    private final RecordCodec<TestRecord> codec = new RecordCodec<>(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
 
     @Test
-    public void testSimpleRecord() {
+    public void testRecordWithDeprecatedAnnotations() {
+        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecord("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
+        var testRecord = new TestRecordWithDeprecatedAnnotations("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
 
         var document = new BsonDocument();
         var writer = new BsonDocumentWriter(document);
@@ -65,9 +80,38 @@ public class RecordCodecTest {
     }
 
     @Test
-    public void testSimpleRecordWithNulls() {
+    public void testRecordWithPojoAnnotations() {
+        var codec = new RecordCodec<>(TestRecordWithPojoAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecord(null, 14, null, identifier.toHexString());
+        var testRecord = new TestRecordWithPojoAnnotations("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
+
+        var document = new BsonDocument();
+        var writer = new BsonDocumentWriter(document);
+
+        // when
+        codec.encode(writer, testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonObjectId(identifier))
+                        .append("name", new BsonString("Lucas"))
+                        .append("hobbies", new BsonArray(List.of(new BsonString("soccer"), new BsonString("basketball"))))
+                        .append("a", new BsonInt32(14)),
+                document);
+        assertEquals("_id", document.getFirstKey());
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testRecordWithNulls() {
+        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithDeprecatedAnnotations(null, 14, null, identifier.toHexString());
 
         var document = new BsonDocument();
         var writer = new BsonDocumentWriter(document);
@@ -89,9 +133,10 @@ public class RecordCodecTest {
     }
 
     @Test
-    public void testSimpleRecordWithExtraData() {
+    public void testRecordWithExtraData() {
+        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecord("Felix", 13, List.of("rugby", "badminton"), identifier.toHexString());
+        var testRecord = new TestRecordWithDeprecatedAnnotations("Felix", 13, List.of("rugby", "badminton"), identifier.toHexString());
 
         var document = new BsonDocument("_id", new BsonObjectId(identifier))
                 .append("nationality", new BsonString("British"))
@@ -104,5 +149,41 @@ public class RecordCodecTest {
 
         // then
         assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testExceptionsForAnnotationsNotOnRecordComponent() {
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIdOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIdOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonPropertyOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonPropertyOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonRepresentationOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+    }
+
+    @Test
+    public void testExceptionsForUnsupportedAnnotations() {
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonDiscriminatorOnRecord.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonCreatorOnConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonCreatorOnMethod.class, Bson.DEFAULT_CODEC_REGISTRY));
+
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIgnoreOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonIgnoreOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonExtraElementsOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertThrows(CodecConfigurationException.class, () ->
+                new RecordCodec<>(TestRecordWithIllegalBsonExtraElementsOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
     }
 }

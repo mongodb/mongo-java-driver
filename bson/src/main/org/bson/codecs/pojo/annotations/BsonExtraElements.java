@@ -29,7 +29,8 @@ import java.lang.annotation.Target;
  *
  * <p>Can only be used on a single field in a POJO. Field must be a {@code Map<String, ?>} instance eg. {@code Document} or
  * {@code BsonDocument}.
- * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For POJOs, requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For Java records, the annotation is not yet supported.</p>
  *
  * @since 4.7
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION

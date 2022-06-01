@@ -23,9 +23,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation that configures the property as the id property for a {@link  org.bson.codecs.pojo.ClassModel}.
+ * An annotation that configures the property as the id property for a {@link  org.bson.codecs.pojo.ClassModel} or a Java record.
  *
- * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For POJOs, requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For Java records, the annotation is only supported on the record component.</p>
  *
  * @since 3.5
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION

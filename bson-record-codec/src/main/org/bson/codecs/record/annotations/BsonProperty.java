@@ -26,7 +26,9 @@ import java.lang.annotation.Target;
  * An annotation that configures a record component.
  *
  * @since 4.6
+ * @deprecated Prefer {@link org.bson.codecs.pojo.annotations.BsonProperty}
  */
+@Deprecated
 @Documented
 @Target({ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)

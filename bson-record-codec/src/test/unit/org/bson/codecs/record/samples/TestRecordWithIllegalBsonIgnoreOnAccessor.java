@@ -16,20 +16,13 @@
 
 package org.bson.codecs.record.samples;
 
-import org.bson.BsonType;
-import org.bson.codecs.record.annotations.BsonId;
-import org.bson.codecs.record.annotations.BsonProperty;
-import org.bson.codecs.record.annotations.BsonRepresentation;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
 
-import java.util.List;
+public record TestRecordWithIllegalBsonIgnoreOnAccessor(String name) {
 
-public record TestRecord(String name,
-                         @BsonProperty("a") int age,
-                         List<String> hobbies,
-                         @BsonRepresentation(BsonType.OBJECT_ID) @BsonId String identifier) {
-
-    // To test that the canonical constructor is always used for decoding
-    public TestRecord(final String identifier) {
-        this("Adrian", 17, List.of("soccer", "music"), identifier);
+    @Override
+    @BsonIgnore
+    public String name() {
+        return name;
     }
 }

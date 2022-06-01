@@ -25,13 +25,14 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.RepresentationConfigurable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.record.annotations.BsonProperty;
 import org.bson.codecs.record.annotations.BsonId;
+import org.bson.codecs.record.annotations.BsonProperty;
 import org.bson.codecs.record.annotations.BsonRepresentation;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
 import javax.annotation.Nullable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
@@ -60,6 +61,7 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         private final String fieldName;
 
         private ComponentModel(final RecordComponent component, final CodecRegistry codecRegistry, final int index) {
+            validateAnnotations(component, index);
             this.component = component;
             this.codec = computeCodec(component, codecRegistry);
             this.index = index;
@@ -78,12 +80,20 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             return component.getAccessor().invoke(record);
         }
 
+        @SuppressWarnings("deprecation")
         private static Codec<?> computeCodec(final RecordComponent component, final CodecRegistry codecRegistry) {
             var codec = codecRegistry.get(toWrapper(component.getType()));
-            var bsonRepresentationAnnotation = component.getAnnotation(BsonRepresentation.class);
-            if (bsonRepresentationAnnotation != null) {
+            BsonType bsonRepresentationType = null;
+
+            if (component.isAnnotationPresent(BsonRepresentation.class)) {
+                bsonRepresentationType = component.getAnnotation(BsonRepresentation.class).value();
+            } else if (isAnnotationPresentOnField(component, org.bson.codecs.pojo.annotations.BsonRepresentation.class)) {
+                bsonRepresentationType = getAnnotationOnField(component,
+                        org.bson.codecs.pojo.annotations.BsonRepresentation.class).value();
+            }
+            if (bsonRepresentationType != null) {
                 if (codec instanceof RepresentationConfigurable<?> representationConfigurable) {
-                    codec = representationConfigurable.withRepresentation(bsonRepresentationAnnotation.value());
+                    codec = representationConfigurable.withRepresentation(bsonRepresentationType);
                 } else {
                     throw new CodecConfigurationException(
                             format("Codec for %s must implement RepresentationConfigurable to support BsonRepresentation",
@@ -93,13 +103,110 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             return codec;
         }
 
+        @SuppressWarnings("deprecation")
         private static String computeFieldName(final RecordComponent component) {
             if (component.isAnnotationPresent(BsonId.class)) {
                 return "_id";
+            } else if (isAnnotationPresentOnField(component, org.bson.codecs.pojo.annotations.BsonId.class)) {
+                return "_id";
             } else if (component.isAnnotationPresent(BsonProperty.class)) {
                 return component.getAnnotation(BsonProperty.class).value();
+            } else if (isAnnotationPresentOnField(component, org.bson.codecs.pojo.annotations.BsonProperty.class)) {
+                return getAnnotationOnField(component, org.bson.codecs.pojo.annotations.BsonProperty.class).value();
             }
             return component.getName();
+        }
+
+        private static <T extends Annotation> boolean isAnnotationPresentOnField(final RecordComponent component,
+                final Class<T> annotation) {
+            try {
+                return component.getDeclaringRecord().getDeclaredField(component.getName()).isAnnotationPresent(annotation);
+            } catch (NoSuchFieldException e) {
+                throw new AssertionError(format("Unexpectedly missing the declared field for record component %s", component), e);
+            }
+        }
+
+        private static <T extends Annotation> boolean isAnnotationPresentOnCanonicalConstructorParameter(final RecordComponent component,
+                final int index, final Class<T> annotation) {
+            return getCanonicalConstructor(component.getDeclaringRecord()).getParameters()[index].isAnnotationPresent(annotation);
+        }
+
+        private static <T extends Annotation> T getAnnotationOnField(final RecordComponent component, final Class<T> annotation) {
+            try {
+                return component.getDeclaringRecord().getDeclaredField(component.getName()).getAnnotation(annotation);
+            } catch (NoSuchFieldException e) {
+                throw new AssertionError(format("Unexpectedly missing the declared field for recordComponent %s", component), e);
+            }
+        }
+
+        private static void validateAnnotations(final RecordComponent component, final int index) {
+            validateAnnotationNotPresentOnType(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonDiscriminator.class);
+            validateAnnotationNotPresentOnConstructor(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonCreator.class);
+            validateAnnotationNotPresentOnMethod(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonCreator.class);
+            validateAnnotationNotPresentOnFieldOrAccessor(component, org.bson.codecs.pojo.annotations.BsonIgnore.class);
+            validateAnnotationNotPresentOnFieldOrAccessor(component, org.bson.codecs.pojo.annotations.BsonExtraElements.class);
+            validateAnnotationOnlyOnField(component, index, org.bson.codecs.pojo.annotations.BsonId.class);
+            validateAnnotationOnlyOnField(component, index, org.bson.codecs.pojo.annotations.BsonProperty.class);
+            validateAnnotationOnlyOnField(component, index, org.bson.codecs.pojo.annotations.BsonRepresentation.class);
+        }
+
+        private static <T extends Annotation> void validateAnnotationNotPresentOnType(final Class<?> clazz,
+                @SuppressWarnings("SameParameterValue") final Class<T> annotation) {
+            if (clazz.isAnnotationPresent(annotation)) {
+                throw new CodecConfigurationException(format("Annotation '%s' not supported on records, but found on '%s'",
+                        annotation, clazz.getName()));
+            }
+        }
+
+        private static <T extends Annotation> void validateAnnotationNotPresentOnConstructor(final Class<?> clazz,
+                @SuppressWarnings("SameParameterValue") final Class<T> annotation) {
+            for (var constructor : clazz.getConstructors()) {
+                if (constructor.isAnnotationPresent(annotation)) {
+                    throw new CodecConfigurationException(
+                            format("Annotation '%s' not supported on record constructors, but found on constructor of '%s'",
+                            annotation, clazz.getName()));
+                }
+            }
+        }
+
+        private static <T extends Annotation> void validateAnnotationNotPresentOnMethod(final Class<?> clazz,
+                @SuppressWarnings("SameParameterValue") final Class<T> annotation) {
+            for (var method : clazz.getMethods()) {
+                if (method.isAnnotationPresent(annotation)) {
+                    throw new CodecConfigurationException(
+                            format("Annotation '%s' not supported on methods, but found on method '%s' of '%s'",
+                                    annotation, method.getName(), clazz.getName()));
+                }
+            }
+        }
+
+        private static <T extends Annotation> void validateAnnotationNotPresentOnFieldOrAccessor(final RecordComponent component,
+                final Class<T> annotation) {
+            if (isAnnotationPresentOnField(component, annotation)) {
+                throw new CodecConfigurationException(
+                        format("Annotation '%s' is not supported on records, but found on component '%s' of record '%s'",
+                        annotation.getName(), component, component.getDeclaringRecord()));
+            }
+            if (component.getAccessor().isAnnotationPresent(annotation)) {
+                throw new CodecConfigurationException(
+                        format("Annotation '%s' is not supported on records, but found on accessor for component '%s' of record '%s'",
+                                annotation.getName(), component, component.getDeclaringRecord()));
+            }
+        }
+
+        private static <T extends Annotation> void validateAnnotationOnlyOnField(final RecordComponent component, final int index,
+                final Class<T> annotation) {
+            if (!isAnnotationPresentOnField(component, annotation)) {
+                if (component.getAccessor().isAnnotationPresent(annotation)) {
+                    throw new CodecConfigurationException(format("Annotation %s present on accessor but not component '%s' of record '%s'",
+                                    annotation.getName(), component, component.getDeclaringRecord()));
+                }
+                if (isAnnotationPresentOnCanonicalConstructorParameter(component, index, annotation)) {
+                    throw new CodecConfigurationException(
+                            format("Annotation %s present on canonical constructor parameter but not component '%s' of record '%s'",
+                                    annotation.getName(), component, component.getDeclaringRecord()));
+                }
+            }
         }
     }
 
@@ -195,13 +302,13 @@ final class RecordCodec<T extends Record> implements Codec<T> {
     }
 
     private static <T> Constructor<?> getCanonicalConstructor(final Class<T> clazz) {
-        Class<?>[] recordComponentTypes = Arrays.stream(clazz.getRecordComponents()).map(RecordComponent::getType).toArray(Class<?>[]::new);
-        for (var constructor : clazz.getConstructors()) {
-            if (Arrays.equals(constructor.getParameterTypes(), recordComponentTypes)) {
-                return constructor;
-            }
+        try {
+            return clazz.getDeclaredConstructor(Arrays.stream(clazz.getRecordComponents())
+                    .map(RecordComponent::getType)
+                    .toArray(Class<?>[]::new));
+        } catch (NoSuchMethodException e) {
+            throw new AssertionError(format("Could not find canonical constructor for record %s", clazz.getName()));
         }
-        throw new AssertionError(format("Could not find canonical constructor for record %s", clazz.getName()));
     }
 
     private static Class<?> toWrapper(final Class<?> clazz) {

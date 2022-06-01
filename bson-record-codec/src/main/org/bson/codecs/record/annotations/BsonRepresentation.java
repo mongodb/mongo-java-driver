@@ -28,7 +28,9 @@ import java.lang.annotation.Target;
  * An annotation that specifies what type the record component is stored as in the database.
  *
  * @since 4.6
+ * @deprecated Prefer {@link org.bson.codecs.pojo.annotations.BsonRepresentation}
  */
+@Deprecated
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.RECORD_COMPONENT})
