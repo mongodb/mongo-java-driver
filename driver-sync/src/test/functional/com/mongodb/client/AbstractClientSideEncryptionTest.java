@@ -258,8 +258,12 @@ public abstract class AbstractClientSideEncryptionTest {
                         .addCommandListener(commandListener);
 
         if (!kmsProvidersMap.isEmpty()) {
-            String csflePath = System.getProperty("org.mongodb.test.csfle.path", "");
-            List<String> searchPath = csflePath.isEmpty() ? emptyList() : singletonList(csflePath);
+            String cryptSharedLibPath = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
+            if (!cryptSharedLibPath.isEmpty()) {
+                extraOptions = new HashMap<>(extraOptions);
+                extraOptions.put("cryptSharedLibPath", cryptSharedLibPath);
+            }
+
             mongoClientSettingsBuilder.autoEncryptionSettings(AutoEncryptionSettings.builder()
                     .keyVaultNamespace(keyVaultNamespace)
                     .kmsProviders(kmsProvidersMap)
@@ -268,7 +272,6 @@ public abstract class AbstractClientSideEncryptionTest {
                     .bypassQueryAnalysis(bypassQueryAnalysis)
                     .bypassAutoEncryption(bypassAutoEncryption)
                     .extraOptions(extraOptions)
-                    .searchPaths(searchPath)
                     .build());
         }
         createMongoClient(mongoClientSettingsBuilder.build());

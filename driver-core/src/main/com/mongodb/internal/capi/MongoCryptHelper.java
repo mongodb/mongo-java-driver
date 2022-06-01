@@ -51,12 +51,10 @@ public final class MongoCryptHelper {
     }
 
     public static MongoCryptOptions createMongoCryptOptions(final AutoEncryptionSettings settings) {
-        List<String> searchPaths = !settings.isBypassAutoEncryption() && settings.getSearchPaths().isEmpty() ? singletonList("$SYSTEM") :
-                settings.getSearchPaths();
         return createMongoCryptOptions(
                 settings.getKmsProviders(),
                 settings.isBypassQueryAnalysis(),
-                searchPaths,
+                settings.isBypassAutoEncryption() ? emptyList() :  singletonList("$SYSTEM"),
                 settings.getExtraOptions(),
                 settings.getSchemaMap(),
                 settings.getEncryptedFieldsMap());

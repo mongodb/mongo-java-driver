@@ -47,13 +47,14 @@ class CommandMarker implements Closeable {
      * The command marker
      *
      * <p>
-     * If the extraOptions.csfleRequired option is true then the driver MUST NOT attempt to spawn or connect to mongocryptd.
+     * If the extraOptions.cryptSharedLibRequired option is true then the driver MUST NOT attempt to spawn or connect to mongocryptd.
+     *
      * If the following conditions are met:
      * <ul>
      *  <li>The user's MongoClient is configured for client-side encryption (i.e. bypassAutoEncryption is not false)</li>
      *  <li>The user has not disabled mongocryptd spawning (i.e. by setting extraOptions.mongocryptdBypassSpawn to true)</li>
-     *  <li>The csfle library is unavailable (Refer: Detecting csfle Availability)</li>
-     *  <li>The extraOptions.csfleRequired option is false.</li>
+     *  <li>The crypt shared library is unavailable.</li>
+     *  <li>The extraOptions.cryptSharedLibRequired option is false.</li>
      * </ul>
      *  Then mongocryptd MUST be spawned by the driver.
      * </p>
@@ -66,10 +67,10 @@ class CommandMarker implements Closeable {
 
         boolean bypassAutoEncryption = settings.isBypassAutoEncryption();
         boolean isBypassQueryAnalysis = settings.isBypassQueryAnalysis();
-        boolean csfleIsAvailable = versionString != null && versionString.isEmpty();
-        boolean csfleRequired = (boolean) extraOptions.getOrDefault("csfleRequired", false);
+        boolean cryptSharedIsAvailable = versionString != null && versionString.isEmpty();
+        boolean cryptSharedLibRequired = (boolean) extraOptions.getOrDefault("cryptSharedLibRequired", false);
 
-        if (bypassAutoEncryption || isBypassQueryAnalysis || csfleRequired || csfleIsAvailable) {
+        if (bypassAutoEncryption || isBypassQueryAnalysis || cryptSharedLibRequired || cryptSharedIsAvailable) {
             processBuilder = null;
             client = null;
         } else {
