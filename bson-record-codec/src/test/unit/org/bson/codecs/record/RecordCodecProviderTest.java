@@ -16,9 +16,9 @@
 
 package org.bson.codecs.record;
 
-import org.bson.codecs.record.samples.TestRecord;
-import org.bson.conversions.Bson;
 import com.mongodb.MongoClientSettings;
+import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
+import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,22 +41,22 @@ public class RecordCodecProviderTest {
         var provider = new RecordCodecProvider();
 
         // when
-        var codec = provider.get(TestRecord.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = provider.get(TestRecordWithPojoAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
 
         // then
         assertTrue(codec instanceof RecordCodec);
-        var recordCodec = (RecordCodec<TestRecord>) codec;
-        assertEquals(TestRecord.class, recordCodec.getEncoderClass());
+        var recordCodec = (RecordCodec<TestRecordWithPojoAnnotations>) codec;
+        assertEquals(TestRecordWithPojoAnnotations.class, recordCodec.getEncoderClass());
     }
 
     @Test
     public void shouldReturnRecordCodecForRecordUsingDefaultRegistry() {
         // when
-        var codec = MongoClientSettings.getDefaultCodecRegistry().get(TestRecord.class);
+        var codec = MongoClientSettings.getDefaultCodecRegistry().get(TestRecordWithPojoAnnotations.class);
 
         // then
         assertTrue(codec instanceof RecordCodec);
-        var recordCodec = (RecordCodec<TestRecord>) codec;
-        assertEquals(TestRecord.class, recordCodec.getEncoderClass());
+        var recordCodec = (RecordCodec<TestRecordWithPojoAnnotations>) codec;
+        assertEquals(TestRecordWithPojoAnnotations.class, recordCodec.getEncoderClass());
     }
 }

@@ -26,7 +26,8 @@ import java.lang.annotation.Target;
 /**
  * An annotation that configures the discriminator key and value for a class.
  *
- * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For POJOs, requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For Java records, the annotation is not supported.</p>
  *
  * @since 3.5
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION

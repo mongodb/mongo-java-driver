@@ -27,7 +27,8 @@ import java.lang.annotation.Target;
 /**
  * An annotation that configures a property.
  *
- * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For POJOs, requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For Java records, the annotation is only supported on the record component.</p>
  *
  * @since 3.5
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION
@@ -40,6 +41,7 @@ public @interface BsonProperty {
      * The name of the property.
      *
      * <p>
+     *     <strong>Note:</strong> Regarding POJOs:<br />
      *     For asymmetrical property names, the context of the {@code BsonProperty} can be important.
      *     For example, when used with {@code @BsonCreator} the value will relate to the read name.
      *     When used directly on a field it will set both the read name if unset and the write name if unset.
