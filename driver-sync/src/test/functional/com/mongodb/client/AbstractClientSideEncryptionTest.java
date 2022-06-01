@@ -121,6 +121,8 @@ public abstract class AbstractClientSideEncryptionTest {
         assumeTrue("Client side encryption tests disabled", hasEncryptionTestsEnabled());
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
+        assumeFalse("Skipping timeoutMS tests", filename.startsWith("timeoutMS."));
+
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
         String databaseName = specDocument.getString("database_name").getValue();
@@ -188,7 +190,7 @@ public abstract class AbstractClientSideEncryptionTest {
             }
         }
 
-        Map<String, Object> extraOptions = new HashMap<String, Object>();
+        Map<String, Object> extraOptions = new HashMap<>();
         if (cryptOptions.containsKey("extraOptions")) {
             BsonDocument extraOptionsDocument = cryptOptions.getDocument("extraOptions");
             if (extraOptionsDocument.containsKey("mongocryptdSpawnArgs")) {
@@ -203,6 +205,11 @@ public abstract class AbstractClientSideEncryptionTest {
             }
             if (extraOptionsDocument.containsKey("mongocryptdURI")) {
                 extraOptions.put("mongocryptdURI", extraOptionsDocument.getString("mongocryptdURI").getValue());
+            }
+
+            String cryptSharedLibPath = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
+            if (!cryptSharedLibPath.isEmpty()) {
+                extraOptions.put("cryptSharedLibPath", cryptSharedLibPath);
             }
         }
 
@@ -252,6 +259,7 @@ public abstract class AbstractClientSideEncryptionTest {
 
         MongoClientSettings.Builder mongoClientSettingsBuilder = Fixture.getMongoClientSettingsBuilder()
                         .addCommandListener(commandListener);
+
         if (!kmsProvidersMap.isEmpty()) {
             mongoClientSettingsBuilder.autoEncryptionSettings(AutoEncryptionSettings.builder()
                     .keyVaultNamespace(keyVaultNamespace)
@@ -268,7 +276,6 @@ public abstract class AbstractClientSideEncryptionTest {
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
     }
 
-
     protected abstract void createMongoClient(MongoClientSettings settings);
 
     protected abstract MongoDatabase getDatabase(String databaseName);
@@ -283,7 +290,7 @@ public abstract class AbstractClientSideEncryptionTest {
             try {
                 BsonDocument actualOutcome = helper.getOperationResults(operation);
                 if (expectedResult != null) {
-                    BsonValue actualResult = actualOutcome.get("result");
+                    BsonValue actualResult = actualOutcome.get("result", new BsonString("No result or error"));
                     assertBsonValue("Expected operation result differs from actual", expectedResult, actualResult);
                 }
 
@@ -364,13 +371,13 @@ public abstract class AbstractClientSideEncryptionTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption")) {
-                BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
-                for (BsonValue test : specDocument.getArray("tests")) {
-                    data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
-                            specDocument.getArray("data", new BsonArray()), test.asDocument(),
-                            skipTest(specDocument, test.asDocument())});
-                }
+        for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption/legacy")) {
+            BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
+            for (BsonValue test : specDocument.getArray("tests")) {
+                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
+                        specDocument.getArray("data", new BsonArray()), test.asDocument(),
+                        skipTest(specDocument, test.asDocument())});
+            }
         }
         return data;
     }
