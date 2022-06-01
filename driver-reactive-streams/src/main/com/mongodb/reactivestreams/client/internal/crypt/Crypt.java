@@ -63,44 +63,51 @@ public class Crypt implements Closeable {
     /**
      * Create an instance to use for explicit encryption and decryption, and data key creation.
      *
-     * @param mongoCrypt           the mongoCrypt wrapper
-     * @param kmsProviders         the kms providers
-     * @param keyRetriever         the key retriever
-     * @param keyManagementService the key management service
+     * @param mongoCrypt                    the mongoCrypt wrapper
+     * @param keyRetriever                  the key retriever
+     * @param keyManagementService          the key management service
+     * @param kmsProviders                  the KMS provider credentials
+     * @param kmsProviderPropertySuppliers  the KMS provider property providers
      */
-    Crypt(final MongoCrypt mongoCrypt, final Map<String, Map<String, Object>> kmsProviders,
-            final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers,
+    Crypt(final MongoCrypt mongoCrypt,
             final KeyRetriever keyRetriever,
-            final KeyManagementService keyManagementService) {
-        this(mongoCrypt, kmsProviders, kmsProviderPropertySuppliers, null, null, keyRetriever, keyManagementService, false, null);
+            final KeyManagementService keyManagementService,
+            final Map<String, Map<String, Object>> kmsProviders,
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
+        this(mongoCrypt, keyRetriever, keyManagementService, kmsProviders, kmsProviderPropertySuppliers,
+                false, null, null, null);
     }
 
     /**
      * Create an instance to use for auto-encryption and auto-decryption.
      *
-     * @param mongoCrypt              the mongoCrypt wrapper
-     * @param keyRetriever            the key retriever
-     * @param keyManagementService    the key management service
-     * @param collectionInfoRetriever the collection info retriever
-     * @param commandMarker           the command marker
+     * @param mongoCrypt                    the mongoCrypt wrapper
+     * @param keyRetriever                  the key retriever
+     * @param keyManagementService          the key management service
+     * @param kmsProviders                  the KMS provider credentials
+     * @param kmsProviderPropertySuppliers  the KMS provider property providers
+     * @param bypassAutoEncryption          the bypass auto encryption flag
+     * @param collectionInfoRetriever       the collection info retriever
+     * @param commandMarker                 the command marker
+     * @param internalClient                the internal mongo client
      */
     Crypt(final MongoCrypt mongoCrypt,
-          final Map<String, Map<String, Object>> kmsProviders,
-          final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers,
-          @Nullable final CollectionInfoRetriever collectionInfoRetriever,
-          @Nullable final CommandMarker commandMarker,
-          final KeyRetriever keyRetriever,
-          final KeyManagementService keyManagementService,
-          final boolean bypassAutoEncryption,
-          @Nullable final MongoClient internalClient) {
+            final KeyRetriever keyRetriever,
+            final KeyManagementService keyManagementService,
+            final Map<String, Map<String, Object>> kmsProviders,
+            final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers,
+            final boolean bypassAutoEncryption,
+            @Nullable final CollectionInfoRetriever collectionInfoRetriever,
+            @Nullable final CommandMarker commandMarker,
+            @Nullable final MongoClient internalClient) {
         this.mongoCrypt = mongoCrypt;
-        this.kmsProviders = kmsProviders;
-        this.kmsProviderPropertySuppliers = kmsProviderPropertySuppliers;
-        this.collectionInfoRetriever = collectionInfoRetriever;
-        this.commandMarker = commandMarker;
         this.keyRetriever = keyRetriever;
         this.keyManagementService = keyManagementService;
+        this.kmsProviders = kmsProviders;
+        this.kmsProviderPropertySuppliers = kmsProviderPropertySuppliers;
         this.bypassAutoEncryption = bypassAutoEncryption;
+        this.collectionInfoRetriever = collectionInfoRetriever;
+        this.commandMarker = commandMarker;
         this.internalClient = internalClient;
     }
 

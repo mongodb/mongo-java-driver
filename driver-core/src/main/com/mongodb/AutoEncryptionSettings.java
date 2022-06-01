@@ -172,6 +172,11 @@ public final class AutoEncryptionSettings {
         /**
          * Sets the extra options.
          *
+         * <p>
+         *      <strong>Note:</strong> When setting {@code cryptSharedLibPath}, the override path must be given as a path to the shared
+         *      crypt library file itself, and not simply the directory that contains it.
+         * </p>
+         *
          * @param extraOptions the extra options, which may not be null
          * @return this
          * @see #getExtraOptions()
@@ -218,7 +223,7 @@ public final class AutoEncryptionSettings {
          * Enable or disable automatic analysis of outgoing commands.
          *
          * <p>Set bypassQueryAnalysis to true to use explicit encryption on indexed fields
-         * without the MongoDB Enterprise Advanced licensed csfle shared library.</p>
+         * without the MongoDB Enterprise Advanced licensed crypt shared library.</p>
          *
          * @param bypassQueryAnalysis whether query analysis should be bypassed
          * @return this
@@ -413,6 +418,10 @@ public final class AutoEncryptionSettings {
      * the system path.</li>
      * <li>mongocryptdSpawnArgs: Used to control the behavior of mongocryptd when the driver spawns it. By default, the driver spawns
      * mongocryptd with the single command line argument {@code "--idleShutdownTimeoutSecs=60"}</li>
+     * <li>cryptSharedLibPath: Optional, override the path used to load the crypt shared library. Note: All MongoClient objects in the
+     * same process should use the same setting for cryptSharedLibPath, as it is an error to load more that one crypt shared library
+     * simultaneously in a single operating system process.</li>
+     * <li>cryptSharedLibRequired: boolean, if 'true', refuse to continue encryption without a crypt shared library.</li>
      * </ul>
      *
      * @return the extra options map
@@ -460,7 +469,7 @@ public final class AutoEncryptionSettings {
      * Gets whether automatic analysis of outgoing commands is set.
      *
      * <p>Set bypassQueryAnalysis to true to use explicit encryption on indexed fields
-     * without the MongoDB Enterprise Advanced licensed csfle shared library.</p>
+     * without the MongoDB Enterprise Advanced licensed crypt shared library.</p>
      *
      * @return true if query analysis should be bypassed
      * @since 4.7
