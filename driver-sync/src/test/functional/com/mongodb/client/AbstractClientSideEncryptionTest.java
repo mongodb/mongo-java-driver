@@ -56,8 +56,6 @@ import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEqualit
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.CrudTestHelper.replaceTypeAssertionWithActual;
 import static com.mongodb.client.Fixture.getMongoClient;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
