@@ -15,7 +15,6 @@
  */
 package com.mongodb.client.model;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -84,7 +83,6 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.server.release 5.0
  * @since 4.3
  */
-@Beta(Beta.Reason.SERVER)
 public final class Windows {
     /**
      * Creates a window from {@link Bson} in situations when there is no builder method that better satisfies your needs.
@@ -340,7 +338,6 @@ public final class Windows {
      * @mongodb.server.release 5.0
      * @since 4.3
      */
-    @Beta(Beta.Reason.SERVER)
     public enum Bound {
         /**
          * The {@linkplain Window window} bound is determined by the current document and is inclusive.

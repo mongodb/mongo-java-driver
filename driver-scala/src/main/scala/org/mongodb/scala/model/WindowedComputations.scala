@@ -15,7 +15,6 @@
  */
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Beta
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedComputations => JWindowedComputations }
 
 /**
@@ -38,7 +37,6 @@ import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedCompu
  * @since 4.3
  * @note Requires MongoDB 5.0 or greater.
  */
-@Beta(Array(Beta.Reason.SERVER))
 object WindowedComputations {
 
   /**

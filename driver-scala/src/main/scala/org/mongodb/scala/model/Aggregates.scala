@@ -16,8 +16,6 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Beta
-
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import org.mongodb.scala.MongoNamespace
@@ -475,7 +473,6 @@ object Aggregates {
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */
-  @Beta(Array(Beta.Reason.SERVER))
   def setWindowFields[TExpression >: Null](
       partitionBy: Option[TExpression],
       sortBy: Option[Bson],
