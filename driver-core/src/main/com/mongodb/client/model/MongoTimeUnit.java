@@ -15,8 +15,6 @@
  */
 package com.mongodb.client.model;
 
-import com.mongodb.annotations.Beta;
-
 /**
  * Units for specifying time-based bounds for {@linkplain Window windows} and output units for some time-based
  * {@linkplain WindowedComputation windowed computations}.
@@ -24,7 +22,6 @@ import com.mongodb.annotations.Beta;
  * @mongodb.server.release 5.0
  * @since 4.3
  */
-@Beta(Beta.Reason.SERVER)
 public enum MongoTimeUnit {
     /**
      * YEAR
