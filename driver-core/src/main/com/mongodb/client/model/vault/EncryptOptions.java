@@ -34,7 +34,7 @@ public class EncryptOptions {
     /**
      * The QueryType to use for "Indexed" queries
      *
-     * @since 4.6
+     * @since 4.7
      */
     public enum QueryType {
         /**
@@ -127,7 +127,7 @@ public class EncryptOptions {
      * <p>It is an error to set contentionFactor when algorithm is not "Indexed".
      * @param contentionFactor the contention factor, which must be {@code >= 0} or null.
      * @return this
-     * @since 4.6
+     * @since 4.7
      */
     public EncryptOptions contentionFactor(@Nullable final Long contentionFactor) {
         this.contentionFactor = contentionFactor;
@@ -139,7 +139,7 @@ public class EncryptOptions {
      *
      * @see #contentionFactor(Long)
      * @return the contention factor
-     * @since 4.6
+     * @since 4.7
      */
     @Nullable
     public Long getContentionFactor() {
@@ -153,7 +153,7 @@ public class EncryptOptions {
      *
      * @param queryType the query type
      * @return this
-     * @since 4.6
+     * @since 4.7
      */
     public EncryptOptions queryType(@Nullable final QueryType queryType) {
         this.queryType = queryType;
@@ -165,7 +165,7 @@ public class EncryptOptions {
      *
      * @see #queryType(QueryType)
      * @return the queryType or null
-     * @since 4.6
+     * @since 4.7
      */
     @Nullable
     public QueryType getQueryType() {
