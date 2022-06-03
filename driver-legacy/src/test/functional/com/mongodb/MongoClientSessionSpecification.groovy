@@ -16,6 +16,8 @@
 
 package com.mongodb
 
+import com.mongodb.client.MongoCollection
+import com.mongodb.client.model.Filters
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType
@@ -23,6 +25,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonTimestamp
 import org.bson.Document
+import org.bson.types.ObjectId
 import org.junit.Assert
 import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
@@ -308,17 +311,18 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                 .addCommandListener(commandListener)
         def mongoClientURI = getMongoClientURI(optionsBuilder)
         def client = new MongoClient(mongoClientURI)
+        def collection = client.getDatabase(getDatabaseName()).getCollection(getCollectionName())
+        def id = new ObjectId()
 
         when:
-        client.getDatabase(getDatabaseName()).getCollection(getCollectionName())
-                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
-                .insertOne(new Document())
+        collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).insertOne(new Document('_id', id))
 
         then:
         def insertEvent = commandListener.events.get(0) as CommandStartedEvent
         !insertEvent.command.containsKey('lsid')
 
         cleanup:
+        waitForInsertAcknowledgement(collection, id)
         client?.close()
     }
 
@@ -357,5 +361,13 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         cleanup:
         session.close()
+    }
+
+    void waitForInsertAcknowledgement(MongoCollection<Document> collection, ObjectId id) {
+        Document document = collection.find(Filters.eq(id)).first()
+        while (document == null) {
+            Thread.sleep(1)
+            document = collection.find(Filters.eq(id)).first()
+        }
     }
 }
