@@ -328,10 +328,13 @@ Using ``crypt_shared``
 ======================
 
 On platforms where crypt_shared_ is available, drivers should prefer to test
-with the ``crypt_shared`` library instead of spawning mongocryptd, although
-having some tests dedicated to mongocryptd is recommended. Note that some tests
-assert on mongocryptd-related behaviors (e.g. the ``mongocryptdBypassSpawn``
-test).
+with the ``crypt_shared`` library instead of spawning mongocryptd.
+
+Drivers MUST continue to run all tests with mongocryptd on at least one
+platform for all tested server versions.
+
+Note that some tests assert on mongocryptd-related behaviors (e.g. the
+``mongocryptdBypassSpawn`` test).
 
 Drivers under test should load the crypt_shared_ library using either the
 ``cryptSharedLibPath`` public API option (as part of the AutoEncryption

@@ -48,7 +48,7 @@ ext {
     nettyTcnativeBoringsslVersion = '2.0.48.Final'
     snappyVersion = '1.1.8.4'
     zstdVersion = '1.5.0-4'
-    mongoCryptVersion = '1.5.0-rc0'
+    mongoCryptVersion = '1.5.0-rc1'
     projectReactorVersion = 'Californium-SR23'
     junitBomVersion = '5.8.1'
     gitVersion = getGitVersion()
@@ -73,14 +73,6 @@ configure(coreProjects) {
         mavenLocal()
         google()
         mavenCentral()
-        // TODO temp remove once JAVA-4616
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-            content {
-                // Only include mongodb-crypt snapshots
-                includeGroup "org.mongodb"
-            }
-        }
     }
 }
 
