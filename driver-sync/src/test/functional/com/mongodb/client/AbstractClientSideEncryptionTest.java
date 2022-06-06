@@ -191,6 +191,10 @@ public abstract class AbstractClientSideEncryptionTest {
         }
 
         Map<String, Object> extraOptions = new HashMap<>();
+        String cryptSharedLibPath = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
+        if (!cryptSharedLibPath.isEmpty()) {
+            extraOptions.put("cryptSharedLibPath", cryptSharedLibPath);
+        }
         if (cryptOptions.containsKey("extraOptions")) {
             BsonDocument extraOptionsDocument = cryptOptions.getDocument("extraOptions");
             if (extraOptionsDocument.containsKey("mongocryptdSpawnArgs")) {
@@ -205,11 +209,6 @@ public abstract class AbstractClientSideEncryptionTest {
             }
             if (extraOptionsDocument.containsKey("mongocryptdURI")) {
                 extraOptions.put("mongocryptdURI", extraOptionsDocument.getString("mongocryptdURI").getValue());
-            }
-
-            String cryptSharedLibPath = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
-            if (!cryptSharedLibPath.isEmpty()) {
-                extraOptions.put("cryptSharedLibPath", cryptSharedLibPath);
             }
         }
 
