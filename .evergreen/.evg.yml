@@ -829,6 +829,7 @@ tasks:
         - func: "bootstrap mongo-orchestration"
           vars:
             ORCHESTRATION_FILE: "versioned-api-testing.json"
+        - func: "download crypt_shared"
         - func: "run tests"
 
     - name: "plain-auth-test"
