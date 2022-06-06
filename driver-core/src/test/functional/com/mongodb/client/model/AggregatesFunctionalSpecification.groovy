@@ -1123,7 +1123,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         coll2Helper?.drop()
     }
 
-    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    @IgnoreIf({ serverVersionLessThan(5, 2) })
     def '$setWindowFields'(Object partitionBy, Bson sortBy, WindowedComputation output, List<Object> expectedFieldValues) {
         given:
         ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId())
