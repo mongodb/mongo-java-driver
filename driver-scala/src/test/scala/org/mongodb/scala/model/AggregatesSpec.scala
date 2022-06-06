@@ -28,6 +28,7 @@ import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Windows.Bound.{ CURRENT, UNBOUNDED }
 import org.mongodb.scala.model.Windows.{ documents, range }
+import org.mongodb.scala.model.densify.DensifyRange.fullRangeWithStep
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
@@ -522,6 +523,22 @@ class AggregatesSpec extends BaseSpec {
           "output": {
             "newField01": { "$sum": "$field01", "window": { "documents": [1, 2] } }
           }
+        }
+      }""")
+    )
+  }
+
+  it should "render $densify" in {
+    toBson(
+      densify(
+        "fieldName",
+        fullRangeWithStep(1)
+      )
+    ) should equal(
+      Document("""{
+        "$densify": {
+          "field": "fieldName",
+          "range": { "bounds": "full", "step": 1 }
         }
       }""")
     )

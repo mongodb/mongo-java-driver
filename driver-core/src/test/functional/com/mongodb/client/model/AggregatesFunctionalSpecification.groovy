@@ -19,10 +19,12 @@ package com.mongodb.client.model
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import org.bson.BsonDecimal128
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.conversions.Bson
+import org.bson.types.Decimal128
 import spock.lang.IgnoreIf
 
 import java.time.Instant
@@ -55,6 +57,7 @@ import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
+import static com.mongodb.client.model.Aggregates.densify
 import static com.mongodb.client.model.Aggregates.facet
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
@@ -74,6 +77,10 @@ import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions
+import static com.mongodb.client.model.densify.DensifyRange.rangeWithStep
+import static com.mongodb.client.model.densify.DensifyRange.fullRangeWithStep
+import static com.mongodb.client.model.densify.DensifyRange.partitionRangeWithStep
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Projections.computed
@@ -1274,5 +1281,56 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         expect:
         actual.size() == 1
         actual.get(0) == original[0]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 1) })
+    def '$densify'(String field, String partitionByField, Bson densifyStage, List<Object> expectedFieldValues) {
+        given:
+        getCollectionHelper().drop()
+        Document[] docs = [
+                new Document('partitionId', 1)
+                        .append('num', 1)
+                        .append('date', Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact())),
+                new Document('partitionId', 1)
+                        .append('num', 3)
+                        .append('date', Instant.ofEpochMilli(BigInteger.TWO.pow(33).longValueExact())),
+                new Document('partitionId', 2)
+                        .append('num', new BsonDecimal128(new Decimal128(new BigDecimal('4.1'))))
+                        .append('date', Instant.ofEpochMilli(BigInteger.TWO.pow(34).longValueExact()))]
+        getCollectionHelper().insertDocuments(docs)
+        Bson sortSpec = partitionByField == null ? ascending(field) : ascending(partitionByField, field)
+        List<Object> actualFieldValues = aggregate([
+                densifyStage,
+                sort(sortSpec),
+                project(fields(include(field), exclude('_id')))])
+                .stream()
+                .map { doc -> doc.get(field) }
+                .map { e -> e instanceof Date ? ((Date) e).toInstant() : e }
+                .collect(toList())
+
+        expect:
+        actualFieldValues == expectedFieldValues
+
+        where:
+        field | partitionByField | densifyStage | expectedFieldValues
+        'num' | null | densify(field, fullRangeWithStep(new Decimal128(BigDecimal.ONE))) |
+                [1, 2, 3, 4, 4.1]
+        'num' | null | densify(field, rangeWithStep(-1.0, 5.0, 1.0)) |
+                [-1, 0, 1, 2, 3, 4, 4.1]
+        'num' | null | densify(field, rangeWithStep(BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE)) |
+                [1, 3, 4.1]
+        'num' | 'partitionId' | densify(field, fullRangeWithStep(1), densifyOptions().partitionByFields(partitionByField)) |
+                [1, 2, 3, 4, 1, 2, 3, 4, 4.1]
+        'num' | 'partitionId' | densify(field, partitionRangeWithStep(1), densifyOptions().partitionByFields([partitionByField])) |
+                [1, 2, 3, 4.1]
+        'date' | null | densify(field, rangeWithStep(Instant.EPOCH, Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact()) + 1,
+                // there is a server bug that prevents using `step` larger than 2^31 - 1 in versions before 6.1
+                BigInteger.TWO.pow(31).longValueExact() - 1, MongoTimeUnit.MILLISECOND)) |
+                [Instant.EPOCH,
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(31).longValueExact() - 1),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact() - 2),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact()),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(33).longValueExact()),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(34).longValueExact())]
     }
 }
