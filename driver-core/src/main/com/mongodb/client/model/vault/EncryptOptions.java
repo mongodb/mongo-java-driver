@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.vault;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 
@@ -36,6 +37,7 @@ public class EncryptOptions {
      *
      * @since 4.7
      */
+    @Beta(Beta.Reason.SERVER)
     public enum QueryType {
         /**
          * Equality query type
@@ -129,6 +131,7 @@ public class EncryptOptions {
      * @return this
      * @since 4.7
      */
+    @Beta(Beta.Reason.SERVER)
     public EncryptOptions contentionFactor(@Nullable final Long contentionFactor) {
         this.contentionFactor = contentionFactor;
         return this;
@@ -142,6 +145,7 @@ public class EncryptOptions {
      * @since 4.7
      */
     @Nullable
+    @Beta(Beta.Reason.SERVER)
     public Long getContentionFactor() {
         return contentionFactor;
     }
@@ -155,6 +159,7 @@ public class EncryptOptions {
      * @return this
      * @since 4.7
      */
+    @Beta(Beta.Reason.SERVER)
     public EncryptOptions queryType(@Nullable final QueryType queryType) {
         this.queryType = queryType;
         return this;
@@ -168,6 +173,7 @@ public class EncryptOptions {
      * @since 4.7
      */
     @Nullable
+    @Beta(Beta.Reason.SERVER)
     public QueryType getQueryType() {
         return queryType;
     }
