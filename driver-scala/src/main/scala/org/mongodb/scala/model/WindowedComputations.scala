@@ -16,6 +16,7 @@
 package org.mongodb.scala.model
 
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowedComputations => JWindowedComputations }
+import org.mongodb.scala.bson.conversions.Bson
 
 /**
  * Builders for [[WindowedComputation windowed computations]] used in the
@@ -117,10 +118,32 @@ object WindowedComputations {
    * @param window     The window.
    * @tparam TExpression The expression type.
    * @return The constructed windowed computation.
-   * @see [[https://dochub.mongodb.org/core/window-functions-min \$min]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/min/ \$min]]
    */
   def min[TExpression](path: String, expression: TExpression, window: Option[_ <: Window]): WindowedComputation =
     JWindowedComputations.min(path, expression, window.orNull)
+
+  /**
+   * Builds a computation of a BSON `Array`
+   * of `N` smallest evaluation results of the `inExpression` over the `window`,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param path The output field path.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/minN/ \$minN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def minN[InExpression, NExpression](
+      path: String,
+      inExpression: InExpression,
+      nExpression: NExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.minN(path, inExpression, nExpression, window.orNull)
 
   /**
    * Builds a computation of the highest of the evaluation results of the `expression` over the `window`.
@@ -130,10 +153,32 @@ object WindowedComputations {
    * @param window     The window.
    * @tparam TExpression The expression type.
    * @return The constructed windowed computation.
-   * @see [[https://dochub.mongodb.org/core/window-functions-max \$max]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/max/ \$max]]
    */
   def max[TExpression](path: String, expression: TExpression, window: Option[_ <: Window]): WindowedComputation =
     JWindowedComputations.max(path, expression, window.orNull)
+
+  /**
+   * Builds a computation of a BSON `Array`
+   * of `N` largest evaluation results of the `inExpression` over the `window`,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param path The output field path.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/maxN/ \$maxN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def maxN[InExpression, NExpression](
+      path: String,
+      inExpression: InExpression,
+      nExpression: NExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.maxN(path, inExpression, nExpression, window.orNull)
 
   /**
    * Builds a computation of the number of documents in the `window`.
@@ -349,10 +394,79 @@ object WindowedComputations {
    * @param window     The window.
    * @tparam TExpression The expression type.
    * @return The constructed windowed computation.
-   * @see [[https://dochub.mongodb.org/core/window-functions-first \$first]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/first/ \$first]]
    */
   def first[TExpression](path: String, expression: TExpression, window: Option[_ <: Window]): WindowedComputation =
     JWindowedComputations.first(path, expression, window.orNull)
+
+  /**
+   * Builds a computation of a BSON `Array`
+   * of evaluation results of the `inExpression` against the first `N`  documents in the `window`,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * [[Aggregates.setWindowFields Sorting]] is required.
+   *
+   * @param path The output field path.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/firstN/ \$firstN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def firstN[InExpression, NExpression](
+      path: String,
+      inExpression: InExpression,
+      nExpression: NExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.firstN(path, inExpression, nExpression, window.orNull)
+
+  /**
+   * Builds a computation of the evaluation result of the `outExpression` against the top document in the `window`
+   * sorted according to the provided `sortBy` specification.
+   *
+   * @param path The output field path.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @tparam OutExpression The type of the input expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/top/ \$top]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def top[OutExpression](
+      path: String,
+      sortBy: Bson,
+      outExpression: OutExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.top(path, sortBy, outExpression, window.orNull)
+
+  /**
+   * Builds a computation of a BSON `Array`
+   * of evaluation results of the `outExpression` against the top `N` documents in the `window`
+   * sorted according to the provided `sortBy` specification,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param path The output field path.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam OutExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/topN/ \$topN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def topN[OutExpression, NExpression](
+      path: String,
+      sortBy: Bson,
+      outExpression: OutExpression,
+      nExpression: NExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.topN(path, sortBy, outExpression, nExpression, window.orNull)
 
   /**
    * Builds a computation of the evaluation result of the `expression` against the last document in the `window`.
@@ -364,10 +478,79 @@ object WindowedComputations {
    * @param window     The window.
    * @tparam TExpression The expression type.
    * @return The constructed windowed computation.
-   * @see [[https://dochub.mongodb.org/core/window-functions-last \$last]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/last/ \$last]]
    */
   def last[TExpression](path: String, expression: TExpression, window: Option[_ <: Window]): WindowedComputation =
     JWindowedComputations.last(path, expression, window.orNull)
+
+  /**
+   * Builds a computation of a BSON `Array`
+   * of evaluation results of the `inExpression` against the last `N`  documents in the `window`,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * [[Aggregates.setWindowFields Sorting]] is required.
+   *
+   * @param path The output field path.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/lastN/ \$lastN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def lastN[InExpression, NExpression](
+      path: String,
+      inExpression: InExpression,
+      nExpression: NExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.lastN(path, inExpression, nExpression, window.orNull)
+
+  /**
+   * Builds a computation of the evaluation result of the `outExpression` against the bottom document in the `window`
+   * sorted according to the provided `sortBy` specification.
+   *
+   * @param path The output field path.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @tparam OutExpression The type of the input expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bottom/ \$bottom]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def bottom[OutExpression](
+      path: String,
+      sortBy: Bson,
+      outExpression: OutExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.bottom(path, sortBy, outExpression, window.orNull)
+
+  /**
+   * Builds a computation of a BSON `Array`
+   * of evaluation results of the `outExpression` against the bottom `N` documents in the `window`
+   * sorted according to the provided `sortBy` specification,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param path The output field path.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam OutExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bottomN/ \$bottomN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def bottomN[OutExpression, NExpression](
+      path: String,
+      sortBy: Bson,
+      outExpression: OutExpression,
+      nExpression: NExpression,
+      window: Option[_ <: Window]
+  ): WindowedComputation = JWindowedComputations.bottomN(path, sortBy, outExpression, nExpression, window.orNull)
 
   /**
    * Builds a computation of the evaluation result of the `expression` for the document whose position is shifted by the given

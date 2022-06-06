@@ -34,15 +34,23 @@ import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
+import static com.mongodb.client.model.Accumulators.bottom
+import static com.mongodb.client.model.Accumulators.bottomN
 import static com.mongodb.client.model.Accumulators.first
+import static com.mongodb.client.model.Accumulators.firstN
 import static com.mongodb.client.model.Accumulators.last
+import static com.mongodb.client.model.Accumulators.lastN
 import static com.mongodb.client.model.Accumulators.max
+import static com.mongodb.client.model.Accumulators.maxN
 import static com.mongodb.client.model.Accumulators.mergeObjects
 import static com.mongodb.client.model.Accumulators.min
+import static com.mongodb.client.model.Accumulators.minN
 import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Accumulators.top
+import static com.mongodb.client.model.Accumulators.topN
 import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
@@ -212,6 +220,71 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     def '$group with $mergeObjects'() {
         aggregate([group(null, mergeObjects('acc', '$o'))]).containsAll(
                 [new Document('_id', null).append('acc', new Document('a', 1).append('b', 2).append('c', 3))])
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 2) })
+    def '$group with top or bottom n'() {
+        when:
+        List<Document> results = aggregate([group(new Document('gid', '$z'),
+                minN('res', '$y',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))))])
+                .collect()
+        then:
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('res', List).toSet() == ['b', 'c'].toSet()
+
+        when:
+        results = aggregate([group(null,
+                maxN('res', '$y', 1))])
+        then:
+        results.first().get('res', List).toSet() == ['c'].toSet()
+
+        when:
+        results = aggregate([
+                sort(ascending('x')),
+                group(null,
+                        firstN('res', '$y', 2))])
+        then:
+        results.first().get('res', List) == ['a', 'b']
+
+        when:
+        results = aggregate([
+                sort(ascending('x')),
+                group(null,
+                        lastN('res', '$y', 1))])
+        then:
+        results.first().get('res', List) == ['c']
+
+        when:
+        results = aggregate([group(new Document('gid', '$z'),
+                bottom('res', descending('y'), ['$x', '$y']))])
+                .collect()
+        then:
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('res', List) == [2, 'b']
+
+        when:
+        results = aggregate([group(new Document('gid', '$z'),
+                bottomN('res', descending('y'), ['$x', '$y'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))))])
+                .collect()
+        then:
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('res', List) == [[3, 'c'], [2, 'b']]
+
+        when:
+        results = aggregate([group(null,
+                top('res', ascending('x'), '$y'))])
+        then:
+        results.first().get('res') == 'a'
+
+        when:
+        results = aggregate([group(null,
+                topN('res', descending('x'), '$y', 1))])
+        then:
+        results.first().get('res', List) == ['c']
     }
 
     def '$out'() {
@@ -1078,7 +1151,16 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 .collect(toList())
 
         expect:
-        actualFieldValues == expectedFieldValues
+        actualFieldValues.size() == expectedFieldValues.size()
+        for (int i = 0; i < actualFieldValues.size(); i++) {
+            Object actualV = actualFieldValues.get(i)
+            Object expectedV = expectedFieldValues.get(i)
+            if (actualV instanceof Collection && expectedV instanceof Set) {
+                assert ((Collection) actualV).toSet() == expectedV
+            } else {
+                assert actualV == expectedV
+            }
+        }
 
         where:
         partitionBy | sortBy | output | expectedFieldValues
@@ -1102,8 +1184,15 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 .stdDevPop('result', '$num1', documents(CURRENT, CURRENT)) | [0, 0, 0]
         null | ascending('num1') | WindowedComputations
                 .min('result', '$num1', documents(-1, 0)) | [1, 1, 2]
+        new Document('gid', '$partitionId') | ascending('num1') | WindowedComputations
+                .minN('result', '$num1',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', 1)))
+                                .append('then', 2).append('else', 2)),
+                        documents(-1, 0)) | [ [1].toSet(), [1, 2].toSet(), [3].toSet() ]
         null | null | WindowedComputations
                 .max('result', '$num1', null) | [3, 3, 3]
+        null | ascending('num1') | WindowedComputations
+                .maxN('result', '$num1', 2, documents(-1, 0)) | [ [1].toSet(), [1, 2].toSet(), [2, 3].toSet() ]
         '$partitionId' | null | WindowedComputations
                 .count('result', null) | [2, 2, 1]
         null | ascending('num1') | WindowedComputations
@@ -1123,21 +1212,36 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         null | ascending('num1') | WindowedComputations
                 .expMovingAvg('result', '$num1', 0.5) | [1.0, 1.5, 2.25]
         null | descending('num1') | WindowedComputations
-                .push('result', '$num1', documents(UNBOUNDED, CURRENT)) |[ [3, 2, 1], [3, 2], [3] ]
+                .push('result', '$num1', documents(UNBOUNDED, CURRENT)) | [ [3, 2, 1], [3, 2], [3] ]
         null | ascending('num1') | WindowedComputations
-                .addToSet('result', '$partitionId', documents(UNBOUNDED, -1)) |[ [], [1], [1] ]
+                .addToSet('result', '$partitionId', documents(UNBOUNDED, -1)) | [ [], [1], [1] ]
         null | ascending('num1') | WindowedComputations
-                .first('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) |[ 1, 1, 1 ]
+                .first('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [ 1, 1, 1 ]
+        null | descending('num1') | WindowedComputations
+                .firstN('result', '$num1', 2, documents(UNBOUNDED, UNBOUNDED)) | [ [3, 2], [3, 2], [3, 2] ]
         null | ascending('num1') | WindowedComputations
-                .last('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) |[ 3, 3, 3 ]
+                .last('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [ 3, 3, 3 ]
         null | ascending('num1') | WindowedComputations
-                .shift('result', '$num1', -3, 1) |[ 2, 3, -3 ]
+                .lastN('result', '$num1', 2, documents(UNBOUNDED, UNBOUNDED)) | [ [2, 3], [2, 3], [2, 3] ]
         null | ascending('num1') | WindowedComputations
-                .documentNumber('result') |[ 1, 2, 3 ]
+                .shift('result', '$num1', -3, 1) | [ 2, 3, -3 ]
+        null | ascending('num1') | WindowedComputations
+                .documentNumber('result') | [ 1, 2, 3 ]
         null | ascending('partitionId') | WindowedComputations
-                .rank('result') |[ 1, 1, 3 ]
+                .rank('result') | [ 1, 1, 3 ]
         null | ascending('partitionId') | WindowedComputations
-                .denseRank('result') |[ 1, 1, 2 ]
+                .denseRank('result') | [ 1, 1, 2 ]
+        null | null | WindowedComputations
+                .bottom('result', ascending('num1'), '$num1', null) | [ 3, 3, 3 ]
+        new Document('gid', '$partitionId') | descending('num1') | WindowedComputations
+                .bottomN('result', ascending('num1'), '$num1',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', 1)))
+                                .append('then', 2).append('else', 2)),
+                        null) | [ [1, 2], [1, 2], [3] ]
+        null | descending('num1') | WindowedComputations
+                .topN('result', ascending('num1'), '$num1', 2, null) | [ [1, 2], [1, 2], [1, 2] ]
+        null | null | WindowedComputations
+                .top('result', ascending('num1'), '$num1', null) | [ 1, 1, 1 ]
     }
 
     @IgnoreIf({ serverVersionLessThan(5, 0) })

@@ -69,6 +69,74 @@ object Accumulators {
     JAccumulators.first(fieldName, expression)
 
   /**
+   * Returns a combination of a computed field and an accumulator that produces a BSON `Array`
+   * of values of the given `inExpression` computed for the first `N` elements within a presorted group,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/firstN/ \$firstN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def firstN[InExpression, NExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      nExpression: NExpression
+  ): BsonField =
+    JAccumulators.firstN(fieldName, inExpression, nExpression)
+
+  /**
+   * Returns a combination of a computed field and an accumulator that produces
+   * a value of the given `outExpression` computed for the top element within a group
+   * sorted according to the provided `sort` specification.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @tparam OutExpression The type of the output expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/topN/ \$topN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def top[OutExpression](
+      fieldName: String,
+      sortBy: Bson,
+      outExpression: OutExpression
+  ): BsonField =
+    JAccumulators.top(fieldName, sortBy, outExpression)
+
+  /**
+   * Returns a combination of a computed field and an accumulator that produces a BSON `Array`
+   * of values of the given `outExpression` computed for the top `N` elements within a group
+   * sorted according to the provided `sort` specification,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam OutExpression The type of the output expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/topN/ \$topN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def topN[OutExpression, NExpression](
+      fieldName: String,
+      sortBy: Bson,
+      outExpression: OutExpression,
+      nExpression: NExpression
+  ): BsonField =
+    JAccumulators.topN(fieldName, sortBy, outExpression, nExpression)
+
+  /**
    * Gets a field name for a `\$group` operation representing the value of the given expression when applied to the last member of
    * the group.
    *
@@ -80,6 +148,74 @@ object Accumulators {
    */
   def last[TExpression](fieldName: String, expression: TExpression): BsonField =
     JAccumulators.last(fieldName, expression)
+
+  /**
+   * Returns a combination of a computed field and an accumulator that produces a BSON `Array`
+   * of values of the given `inExpression` computed for the last `N` elements within a presorted group
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/lastN/ \$lastN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def lastN[InExpression, NExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      nExpression: NExpression
+  ): BsonField =
+    JAccumulators.lastN(fieldName, inExpression, nExpression)
+
+  /**
+   * Returns a combination of a computed field and an accumulator that produces
+   * a value of the given `outExpression` computed for the bottom element within a group
+   * sorted according to the provided `sort` specification.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @tparam OutExpression The type of the output expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bottom/ \$bottom]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def bottom[OutExpression](
+      fieldName: String,
+      sortBy: Bson,
+      outExpression: OutExpression
+  ): BsonField =
+    JAccumulators.bottom(fieldName, sortBy, outExpression)
+
+  /**
+   * Returns a combination of a computed field and an accumulator that produces a BSON `Array`
+   * of values of the given `outExpression` computed for the bottom `N` elements within a group
+   * sorted according to the provided `sort` specification,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param sortBy The sort specification. The syntax is identical to the one expected by [[Aggregates.sort]].
+   * @param outExpression The output expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam OutExpression The type of the output expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/bottomN/ \$bottomN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def bottomN[OutExpression, NExpression](
+      fieldName: String,
+      sortBy: Bson,
+      outExpression: OutExpression,
+      nExpression: NExpression
+  ): BsonField =
+    JAccumulators.bottomN(fieldName, sortBy, outExpression, nExpression)
 
   /**
    * Gets a field name for a `\$group` operation representing the maximum of the values of the given expression when applied to all
@@ -94,6 +230,28 @@ object Accumulators {
   def max[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.max(fieldName, expression)
 
   /**
+   * Returns a combination of a computed field and an accumulator that produces a BSON `Array`
+   * of `N` largest values of the given `inExpression`,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/maxN/ \$maxN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def maxN[InExpression, NExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      nExpression: NExpression
+  ): BsonField =
+    JAccumulators.maxN(fieldName, inExpression, nExpression)
+
+  /**
    * Gets a field name for a `\$group` operation representing the minimum of the values of the given expression when applied to all
    * members of the group.
    *
@@ -104,6 +262,28 @@ object Accumulators {
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/min/ \$min]]
    */
   def min[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.min(fieldName, expression)
+
+  /**
+   * Returns a combination of a computed field and an accumulator that produces a BSON `Array`
+   * of `N` smallest values of the given `inExpression`,
+   * where `N` is the positive integral value of the `nExpression`.
+   *
+   * @param fieldName The field computed by the accumulator.
+   * @param inExpression The input expression.
+   * @param nExpression The expression limiting the number of produced values.
+   * @tparam InExpression The type of the input expression.
+   * @tparam NExpression The type of the limiting expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/minN/ \$minN]]
+   * @since 4.7
+   * @note Requires MongoDB 5.2 or greater
+   */
+  def minN[InExpression, NExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      nExpression: NExpression
+  ): BsonField =
+    JAccumulators.minN(fieldName, inExpression, nExpression)
 
   /**
    * Gets a field name for a `\$group` operation representing an array of all values that results from applying an expression to each

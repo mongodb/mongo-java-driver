@@ -32,15 +32,23 @@ import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
+import static com.mongodb.client.model.Accumulators.bottom
+import static com.mongodb.client.model.Accumulators.bottomN
 import static com.mongodb.client.model.Accumulators.first
+import static com.mongodb.client.model.Accumulators.firstN
 import static com.mongodb.client.model.Accumulators.last
+import static com.mongodb.client.model.Accumulators.lastN
 import static com.mongodb.client.model.Accumulators.max
+import static com.mongodb.client.model.Accumulators.maxN
 import static com.mongodb.client.model.Accumulators.mergeObjects
 import static com.mongodb.client.model.Accumulators.min
+import static com.mongodb.client.model.Accumulators.minN
 import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Accumulators.top
+import static com.mongodb.client.model.Accumulators.topN
 import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
@@ -443,13 +451,23 @@ class AggregatesSpecification extends Specification {
 
         def groupDocument = parse('''{
                             $group : {
-                                      _id : null,
+                                      _id : { gid: "$groupByField"},
                                       sum: { $sum: { $multiply: [ "$price", "$quantity" ] } },
                                       avg: { $avg: "$quantity" },
                                       min: { $min: "$quantity" },
+                                      minN: { $minN: { input: "$quantity",
+                                        n: { $cond: { if: { $eq: ["$gid", true] }, then: 2, else: 1 } } } },
                                       max: { $max: "$quantity" },
+                                      maxN: { $maxN: { input: "$quantity", n: 2 } },
                                       first: { $first: "$quantity" },
+                                      firstN: { $firstN: { input: "$quantity", n: 2 } },
+                                      top: { $top: { sortBy: { quantity: 1 }, output: "$quantity" } },
+                                      topN: { $topN: { sortBy: { quantity: 1 }, output: "$quantity", n: 2 } },
                                       last: { $last: "$quantity" },
+                                      lastN: { $lastN: { input: "$quantity", n: 2 } },
+                                      bottom: { $bottom: { sortBy: { quantity: 1 }, output: ["$quantity", "$quality"] } },
+                                      bottomN: { $bottomN: { sortBy: { quantity: 1 }, output: ["$quantity", "$quality"],
+                                        n: { $cond: { if: { $eq: ["$gid", true] }, then: 2, else: 1 } } } },
                                       all: { $push: "$quantity" },
                                       merged: { $mergeObjects: "$quantity" },
                                       unique: { $addToSet: "$quantity" },
@@ -457,13 +475,25 @@ class AggregatesSpecification extends Specification {
                                       stdDevSamp: { $stdDevSamp: "$quantity" }
                                      }
                                   }''')
-        toBson(group(null,
+        toBson(group(new Document('gid', '$groupByField'),
                      sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                      avg('avg', '$quantity'),
                      min('min', '$quantity'),
+                     minN('minN', '$quantity',
+                             new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                     .append('then', 2).append('else', 1))),
                      max('max', '$quantity'),
+                     maxN('maxN', '$quantity', 2),
                      first('first', '$quantity'),
+                     firstN('firstN', '$quantity', 2),
+                     top('top', ascending('quantity'), '$quantity'),
+                     topN('topN', ascending('quantity'), '$quantity', 2),
                      last('last', '$quantity'),
+                     lastN('lastN', '$quantity', 2),
+                     bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                     bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                             new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                     .append('then', 2).append('else', 1))),
                      push('all', '$quantity'),
                      mergeObjects('merged', '$quantity'),
                      addToSet('unique', '$quantity'),
@@ -475,7 +505,8 @@ class AggregatesSpecification extends Specification {
     def 'should render $setWindowFields'() {
         given:
         Window window = documents(1, 2)
-        BsonDocument setWindowFieldsBson = toBson(setWindowFields('$partitionByField', ascending('sortByField'), asList(
+        BsonDocument setWindowFieldsBson = toBson(setWindowFields(
+                new Document('gid', '$partitionByField'), ascending('sortByField'), asList(
                 WindowedComputations.of(new BsonField('newField00', new Document('$sum', '$field00')
                         .append('window', Windows.of(new Document('range', asList(1, 'current')))))),
                 WindowedComputations.sum('newField01', '$field01', Windows.range(1, CURRENT)),
@@ -483,7 +514,12 @@ class AggregatesSpecification extends Specification {
                 WindowedComputations.stdDevSamp('newField03', '$field03', window),
                 WindowedComputations.stdDevPop('newField04', '$field04', window),
                 WindowedComputations.min('newField05', '$field05', window),
+                WindowedComputations.minN('newField05N', '$field05N',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1)),
+                        window),
                 WindowedComputations.max('newField06', '$field06', window),
+                WindowedComputations.maxN('newField06N', '$field06N', 2, window),
                 WindowedComputations.count('newField07', window),
                 WindowedComputations.derivative('newField08', '$field08', window),
                 WindowedComputations.timeDerivative('newField09', '$field09', window, DAY),
@@ -497,17 +533,26 @@ class AggregatesSpecification extends Specification {
                 WindowedComputations.push('newField16', '$field16', window),
                 WindowedComputations.addToSet('newField17', '$field17', window),
                 WindowedComputations.first('newField18', '$field18', window),
+                WindowedComputations.firstN('newField18N', '$field18N', 2, window),
                 WindowedComputations.last('newField19', '$field19', window),
+                WindowedComputations.lastN('newField19N', '$field19N', 2, window),
                 WindowedComputations.shift('newField20', '$field20', 'defaultConstantValue', -3),
                 WindowedComputations.documentNumber('newField21'),
                 WindowedComputations.rank('newField22'),
-                WindowedComputations.denseRank('newField23'))
-        ))
+                WindowedComputations.denseRank('newField23'),
+                WindowedComputations.bottom('newField24', descending('sortByField'), '$field24', window),
+                WindowedComputations.bottomN('newField24N', descending('sortByField'), '$field24N',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1)),
+                        window),
+                WindowedComputations.top('newField25', ascending('sortByField'), '$field25', window),
+                WindowedComputations.topN('newField25N', ascending('sortByField'), '$field25N', 2, window),
+        )))
 
         expect:
         setWindowFieldsBson == parse('''{
                 "$setWindowFields": {
-                    "partitionBy": "$partitionByField",
+                    "partitionBy": { "gid": "$partitionByField" },
                     "sortBy": { "sortByField" : 1 },
                     "output": {
                         "newField00": { "$sum": "$field00", "window": { "range": [{"$numberInt": "1"}, "current"] } },
@@ -516,7 +561,11 @@ class AggregatesSpecification extends Specification {
                         "newField03": { "$stdDevSamp": "$field03", "window": { "documents": [1, 2] } },
                         "newField04": { "$stdDevPop": "$field04", "window": { "documents": [1, 2] } },
                         "newField05": { "$min": "$field05", "window": { "documents": [1, 2] } },
+                        "newField05N": {
+                            "$minN": { "input": "$field05N", "n": { "$cond": { "if": { "$eq": ["$gid", true] }, "then": 2, "else": 1 } } },
+                            "window": { "documents": [1, 2] } },
                         "newField06": { "$max": "$field06", "window": { "documents": [1, 2] } },
+                        "newField06N": { "$maxN": { "input": "$field06N", "n": 2 }, "window": { "documents": [1, 2] } },
                         "newField07": { "$count": {}, "window": { "documents": [1, 2] } },
                         "newField08": { "$derivative": { "input": "$field08" }, "window": { "documents": [1, 2] } },
                         "newField09": { "$derivative": { "input": "$field09", "unit": "day" }, "window": { "documents": [1, 2] } },
@@ -529,11 +578,26 @@ class AggregatesSpecification extends Specification {
                         "newField16": { "$push": "$field16", "window": { "documents": [1, 2] } },
                         "newField17": { "$addToSet": "$field17", "window": { "documents": [1, 2] } },
                         "newField18": { "$first": "$field18", "window": { "documents": [1, 2] } },
+                        "newField18N": { "$firstN": { "input": "$field18N", "n": 2 }, "window": { "documents": [1, 2] } },
                         "newField19": { "$last": "$field19", "window": { "documents": [1, 2] } },
+                        "newField19N": { "$lastN": { "input": "$field19N", "n": 2 }, "window": { "documents": [1, 2] } },
                         "newField20": { "$shift": { "output": "$field20", "by": -3, "default": "defaultConstantValue" } },
                         "newField21": { "$documentNumber": {} },
                         "newField22": { "$rank": {} },
-                        "newField23": { "$denseRank": {} }
+                        "newField23": { "$denseRank": {} },
+                        "newField24": {
+                            "$bottom": { "sortBy": { "sortByField": -1 }, "output": "$field24"},
+                            "window": { "documents": [1, 2] } },
+                        "newField24N": {
+                            "$bottomN": { "sortBy": { "sortByField": -1 }, "output": "$field24N",
+                                "n": { "$cond": { "if": { "$eq": ["$gid", true] }, "then": 2, "else": 1 } } },
+                            "window": { "documents": [1, 2] } },
+                        "newField25": {
+                            "$top": { "sortBy": { "sortByField": 1 }, "output": "$field25"},
+                            "window": { "documents": [1, 2] } },
+                        "newField25N": {
+                            "$topN": { "sortBy": { "sortByField": 1 }, "output": "$field25N", "n": 2 },
+                            "window": { "documents": [1, 2] } }
                     }
                 }
         }''')
@@ -922,9 +986,21 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
                 mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
@@ -934,9 +1010,21 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
                 mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
@@ -957,9 +1045,21 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
                 mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
@@ -970,9 +1070,21 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
                 mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
