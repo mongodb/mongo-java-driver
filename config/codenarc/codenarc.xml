@@ -70,6 +70,9 @@
         <rule-config name='Instanceof'>
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
+        <rule-config name='ImplementationAsType'>
+            <property name='doNotApplyToFileNames' value='AggregatesFunctionalSpecification.groovy'/>
+        </rule-config>
     </ruleset-ref>
     <ruleset-ref path='rulesets/dry.xml'>
         <rule-config name='DuplicateListLiteral'>

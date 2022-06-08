@@ -627,4 +627,33 @@ object WindowedComputations {
    */
   def denseRank(path: String): WindowedComputation =
     JWindowedComputations.denseRank(path)
+
+  /**
+   * Builds a computation of the last observed non-`null` evaluation result of the `expression`.
+   *
+   * [[Aggregates.setWindowFields Sorting]] is required.
+   *
+   * @param path The output field path.
+   * @param expression The expression.
+   * @tparam TExpression The expression type.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/locf \$locf]]
+   */
+  def locf[TExpression](path: String, expression: TExpression): WindowedComputation =
+    JWindowedComputations.locf(path, expression)
+
+  /**
+   * Builds a computation of a value that is equal to the evaluation result of the `expression` when it is non-`null`,
+   * or to the linear interpolation of surrounding evaluation results of the `expression` when the result is `null`.
+   *
+   * [[Aggregates.setWindowFields Sorting]] is required.
+   *
+   * @param path The output field path.
+   * @param expression The expression.
+   * @tparam TExpression The expression type.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/linearFill \$linearFill]]
+   */
+  def linearFill[TExpression](path: String, expression: TExpression): WindowedComputation =
+    JWindowedComputations.linearFill(path, expression)
 }

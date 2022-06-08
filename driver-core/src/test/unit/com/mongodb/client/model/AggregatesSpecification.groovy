@@ -547,6 +547,8 @@ class AggregatesSpecification extends Specification {
                         window),
                 WindowedComputations.top('newField25', ascending('sortByField'), '$field25', window),
                 WindowedComputations.topN('newField25N', ascending('sortByField'), '$field25N', 2, window),
+                WindowedComputations.locf('newField26', '$field26'),
+                WindowedComputations.linearFill('newField27', '$field27')
         )))
 
         expect:
@@ -597,7 +599,9 @@ class AggregatesSpecification extends Specification {
                             "window": { "documents": [1, 2] } },
                         "newField25N": {
                             "$topN": { "sortBy": { "sortByField": 1 }, "output": "$field25N", "n": 2 },
-                            "window": { "documents": [1, 2] } }
+                            "window": { "documents": [1, 2] } },
+                        "newField26": { "$locf": "$field26" },
+                        "newField27": { "$linearFill": "$field27" }
                     }
                 }
         }''')
