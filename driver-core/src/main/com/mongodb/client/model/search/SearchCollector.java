@@ -23,7 +23,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.client.model.search.SearchFacet.combineToBson;
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * The core part of the {@link Aggregates#search(SearchCollector, SearchOptions) $search} pipeline stage of an aggregation pipeline.

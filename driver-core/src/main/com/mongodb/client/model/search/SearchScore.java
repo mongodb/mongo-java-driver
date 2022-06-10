@@ -24,7 +24,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A modifier of the relevance score.

@@ -25,7 +25,7 @@ import java.util.stream.StreamSupport;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
         CompoundSearchOperatorBase, CompoundSearchOperator,
