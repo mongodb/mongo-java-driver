@@ -421,6 +421,7 @@ public final class ChangeStreamDocument<TDocument> {
     /**
      * The wall time of the server at the moment the change occurred.
      *
+     * @return The wall time of the server at the moment the change occurred.
      * @since 4.7
      * @mongodb.server.release 6.0
      */
@@ -432,6 +433,7 @@ public final class ChangeStreamDocument<TDocument> {
     /**
      * Any extra elements that are part of the change stream document but not otherwise mapped to fields.
      *
+     * @return Any extra elements that are part of the change stream document but not otherwise mapped to fields.
      * @since 4.7
      */
     @Nullable
