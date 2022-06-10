@@ -30,7 +30,7 @@ import java.util.Iterator;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
 import static java.util.Collections.singleton;
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * The core part of the {@link Aggregates#search(SearchOperator, SearchOptions) $search} pipeline stage of an aggregation pipeline.

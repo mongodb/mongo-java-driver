@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * @see SearchScore#function(SearchScoreExpression)

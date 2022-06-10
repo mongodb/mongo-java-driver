@@ -20,7 +20,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 abstract class RangeConstructibleBsonElement<T, S extends RangeConstructibleBsonElement<T, S>> extends AbstractConstructibleBsonElement<S> {
     RangeConstructibleBsonElement(final String name, final Bson value) {

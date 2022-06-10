@@ -22,7 +22,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.conversions.Bson;
 
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Counting options.
