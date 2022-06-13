@@ -127,12 +127,12 @@ public class QuickTour {
         // now use a range query to get a larger subset
         documentSubscriber = new PrintDocumentSubscriber();
         collection.find(gt("i", 50)).subscribe(documentSubscriber);
-        successSubscriber.await();
+        documentSubscriber.await();
 
         // range query with multiple constraints
         documentSubscriber = new PrintDocumentSubscriber();
         collection.find(and(gt("i", 50), lte("i", 100))).subscribe(documentSubscriber);
-        successSubscriber.await();
+        documentSubscriber.await();
 
         // Sorting
         documentSubscriber = new PrintDocumentSubscriber();
