@@ -20,6 +20,7 @@ import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.fill.{ FillComputation, FillOptions }
 import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions }
 
 /**
@@ -509,6 +510,33 @@ object Aggregates {
       output: Iterable[_ <: WindowedComputation]
   ): Bson =
     JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output.asJava)
+
+  /**
+   * Creates a `\$fill` pipeline stage, which sets values to fields when they are BSON `Null` or missing.
+   *
+   * @param options The fill options.
+   * @param output The `FillComputation`.
+   * @param moreOutput More `FillComputation`s.
+   * @return The requested pipeline stage.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/fill/ \$fill]]
+   * @note Requires MongoDB 5.3 or greater.
+   * @since 4.7
+   */
+  def fill(options: FillOptions, output: FillComputation, moreOutput: FillComputation*): Bson =
+    JAggregates.fill(options, output, moreOutput: _*)
+
+  /**
+   * Creates a `\$fill` pipeline stage, which sets values to fields when they are BSON `Null` or missing.
+   *
+   * @param options The fill options.
+   * @param output The non-empty `FillComputation`s.
+   * @return The requested pipeline stage.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/fill/ \$fill]]
+   * @note Requires MongoDB 5.3 or greater.
+   * @since 4.7
+   */
+  def fill(options: FillOptions, output: Iterable[_ <: FillComputation]): Bson =
+    JAggregates.fill(options, output.asJava)
 
   /**
    * Creates a `\$search` pipeline stage supported by MongoDB Atlas.

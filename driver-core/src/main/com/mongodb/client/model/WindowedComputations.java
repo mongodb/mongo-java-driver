@@ -785,7 +785,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the last observed non-{@code null} evaluation result of the {@code expression}.
+     * Builds a computation of the last observed non-{@link BsonType#NULL Null} evaluation result of the {@code expression}.
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -802,10 +802,10 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of a value that is equal to the evaluation result of the {@code expression} when it is non-{@code null},
-     * or to the linear interpolation of surrounding evaluation results of the {@code expression} when the result is {@code null}.
+     * Builds a computation of a value that is equal to the evaluation result of the {@code expression} when it is non-{@link BsonType#NULL Null},
+     * or to the linear interpolation of surrounding evaluation results of the {@code expression} when the result is {@link BsonType#NULL Null}.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.

@@ -629,7 +629,7 @@ object WindowedComputations {
     JWindowedComputations.denseRank(path)
 
   /**
-   * Builds a computation of the last observed non-`null` evaluation result of the `expression`.
+   * Builds a computation of the last observed non-`Null` evaluation result of the `expression`.
    *
    * [[Aggregates.setWindowFields Sorting]] is required.
    *
@@ -643,8 +643,8 @@ object WindowedComputations {
     JWindowedComputations.locf(path, expression)
 
   /**
-   * Builds a computation of a value that is equal to the evaluation result of the `expression` when it is non-`null`,
-   * or to the linear interpolation of surrounding evaluation results of the `expression` when the result is `null`.
+   * Builds a computation of a value that is equal to the evaluation result of the `expression` when it is non-`Null`,
+   * or to the linear interpolation of surrounding evaluation results of the `expression` when the result is BSON `Null`.
    *
    * [[Aggregates.setWindowFields Sorting]] is required.
    *

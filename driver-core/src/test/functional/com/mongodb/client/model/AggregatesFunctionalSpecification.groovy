@@ -19,6 +19,7 @@ package com.mongodb.client.model
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.client.model.fill.FillComputation
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
@@ -56,6 +57,7 @@ import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
 import static com.mongodb.client.model.Aggregates.facet
+import static com.mongodb.client.model.Aggregates.fill
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -88,6 +90,7 @@ import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
 import static com.mongodb.client.model.Windows.range
 import static com.mongodb.client.model.Windows.timeRange
+import static com.mongodb.client.model.fill.FillOptions.fillOptions
 import static java.util.Arrays.asList
 import static java.util.stream.Collectors.toList
 import static org.spockframework.util.CollectionUtil.containsAny
@@ -1284,5 +1287,60 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         expect:
         actual.size() == 1
         actual.get(0) == original[0]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 3) })
+    def '$fill'(Bson preSortBy, String field, Bson fillStage, List<Object> expectedFieldValues) {
+        given:
+        getCollectionHelper().drop()
+        Document[] docs = [
+                new Document('partition', new Document('id', 10))
+                        .append('_id', 1)
+                        .append('field1', 1)
+                        .append('doc', new Document('field2', 1)),
+                new Document('partition', new Document('id', 10))
+                        .append('_id', 2)
+                        .append('doc', null),
+                new Document('partition', new Document('id', 20))
+                        .append('_id', 3)
+                        .append('field1', 3)
+                        .append('doc', new Document('field2', 3))]
+        getCollectionHelper().insertDocuments(docs)
+        String resultField = 'result'
+        LinkedList<Bson> stages = [
+                fillStage,
+                project(fields(computed(resultField, '$' + field))),
+                sort(ascending('_id'))
+        ]
+        if (preSortBy != null) {
+            stages.addFirst(sort(preSortBy))
+        }
+        List<Object> actualFieldValues = aggregate(stages)
+                .stream()
+                .map { doc -> doc.get(resultField) }
+                .collect(toList())
+
+        expect:
+        actualFieldValues == expectedFieldValues
+
+        where:
+        preSortBy| field | fillStage | expectedFieldValues
+        null | 'doc.field2' | fill(
+                fillOptions().partitionByFields('p1', 'p2'),
+                FillComputation.value(field, '$partition.id')) |
+                [1, 10, 3]
+        null | 'doc.field2' | fill(
+                fillOptions().sortBy(ascending('_id')),
+                FillComputation.linear(field), FillComputation.locf('newField')) |
+                [1, 2, 3]
+        null | 'field1' | fill(
+                // https://jira.mongodb.org/browse/SERVER-67284 prevents specifying partitionByField('partition.id')
+                fillOptions().partitionBy(new Document('p', '$partition.id')).sortBy(descending('_id')),
+                FillComputation.locf('field1')) |
+                [1, null, 3]
+        descending('_id') | 'field1' | fill(
+                fillOptions(),
+                FillComputation.locf('field1'))|
+                [1, 3, 3]
     }
 }

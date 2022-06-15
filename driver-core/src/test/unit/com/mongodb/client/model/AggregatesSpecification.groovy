@@ -17,6 +17,7 @@
 package com.mongodb.client.model
 
 import com.mongodb.MongoNamespace
+import com.mongodb.client.model.fill.FillComputation
 import com.mongodb.client.model.search.SearchCollector
 import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
@@ -53,6 +54,7 @@ import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
+import static com.mongodb.client.model.Aggregates.fill
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -84,6 +86,7 @@ import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Windows.Bound.CURRENT
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
+import static com.mongodb.client.model.fill.FillOptions.fillOptions
 import static com.mongodb.client.model.search.SearchCollector.facet
 import static com.mongodb.client.model.search.SearchCount.total
 import static com.mongodb.client.model.search.SearchFacet.stringFacet
@@ -619,6 +622,26 @@ class AggregatesSpecification extends Specification {
                     "output": {
                         "newField01": { "$sum": "$field01", "window": { "documents": [1, 2] } }
                     }
+                }
+        }''')
+    }
+
+    def 'should render $fill'() {
+        when:
+        BsonDocument fillDoc = toBson(
+                fill(fillOptions().sortBy(ascending('fieldName3')),
+                        FillComputation.linear('fieldName1'),
+                        FillComputation.locf('fieldName2'))
+        )
+
+        then:
+        fillDoc == parse('''{
+                "$fill": {
+                    "output": {
+                        "fieldName1": { "method" : "linear" }
+                        "fieldName2": { "method" : "locf" }
+                    }
+                    "sortBy": { "fieldName3": 1 }
                 }
         }''')
     }

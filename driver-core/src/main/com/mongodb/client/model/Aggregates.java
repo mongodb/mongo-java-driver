@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.fill.FillComputation;
+import com.mongodb.client.model.fill.FillOptions;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchOptions;
@@ -26,6 +28,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -35,9 +38,11 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Iterables.concat;
+import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static java.util.Arrays.asList;
-import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Builders for aggregation pipeline stages.
@@ -653,6 +658,60 @@ public final class Aggregates {
                                                      final Iterable<? extends WindowedComputation> output) {
         notNull("output", output);
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
+    }
+
+    /**
+     * Creates a {@code $fill} pipeline stage, which sets values to fields when they are {@link BsonType#NULL Null} or missing.
+     *
+     * @param options The fill options.
+     * @param output The {@link FillComputation}.
+     * @param moreOutput More {@link FillComputation}s.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.dochub reference/operator/aggregation/fill/ $fill
+     * @mongodb.server.release 5.3
+     * @since 4.7
+     */
+    public static Bson fill(final FillOptions options, final FillComputation output, final FillComputation... moreOutput) {
+        return fill(options, concat(notNull("output", output), moreOutput));
+    }
+
+    /**
+     * Creates a {@code $fill} pipeline stage, which sets values to fields when they are {@link BsonType#NULL Null} or missing.
+     *
+     * @param options The fill options.
+     * @param output The non-empty {@link FillComputation}s.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.dochub reference/operator/aggregation/fill/ $fill
+     * @mongodb.server.release 5.3
+     * @since 4.7
+     */
+    public static Bson fill(final FillOptions options, final Iterable<? extends FillComputation> output) {
+        notNull("options", options);
+        notNull("output", output);
+        isTrueArgument("output must not be empty", sizeAtLeast(output, 1));
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocument fillSpecificationDoc = new BsonDocument();
+                fillSpecificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+                BsonDocument outputDoc = new BsonDocument();
+                for (final FillComputation computation : output) {
+                    BsonDocument computationDoc = computation.toBsonDocument(documentClass, codecRegistry);
+                    assertTrue(computationDoc.size() == 1);
+                    outputDoc.putAll(computationDoc);
+                }
+                fillSpecificationDoc.append("output", outputDoc);
+                return new BsonDocument("$fill", fillSpecificationDoc);
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$fill'"
+                        + ", options=" + options
+                        + ", output=" + output
+                        + '}';
+            }
+        };
     }
 
     /**

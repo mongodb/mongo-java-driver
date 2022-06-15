@@ -28,6 +28,8 @@ import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Windows.Bound.{ CURRENT, UNBOUNDED }
 import org.mongodb.scala.model.Windows.{ documents, range }
+import org.mongodb.scala.model.fill.FillOptions.fillOptions
+import org.mongodb.scala.model.fill.FillComputation
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
@@ -525,6 +527,27 @@ class AggregatesSpec extends BaseSpec {
         "$setWindowFields": {
           "output": {
             "newField01": { "$sum": "$field01", "window": { "documents": [1, 2] } }
+          }
+        }
+      }""")
+    )
+  }
+
+  it should "render $fill" in {
+    toBson(
+      Aggregates.fill(
+        fillOptions().partitionByFields("fieldName3").sortBy(ascending("fieldName4")),
+        FillComputation.linear("fieldName1"),
+        FillComputation.locf("fieldName2")
+      )
+    ) should equal(
+      Document("""{
+        "$fill": {
+          "partitionByFields": ["fieldName3"],
+          "sortBy": { "fieldName4": 1 },
+          "output": {
+            "fieldName1": { "method": "linear" },
+            "fieldName2": { "method": "locf" }
           }
         }
       }""")
