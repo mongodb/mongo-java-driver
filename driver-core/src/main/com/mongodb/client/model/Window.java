@@ -17,11 +17,9 @@ package com.mongodb.client.model;
 
 import org.bson.conversions.Bson;
 
-import java.util.List;
-
 /**
- * A subset of documents within a partition in the {@link Aggregates#setWindowFields(Object, Bson, List) $setWindowFields} pipeline stage
- * of an aggregation pipeline (see {@code partitionBy} in {@link Aggregates#setWindowFields(Object, Bson, List)}).
+ * A subset of documents within a partition in the {@link Aggregates#setWindowFields(Object, Bson, Iterable) $setWindowFields} pipeline stage
+ * of an aggregation pipeline (see {@code partitionBy} in {@link Aggregates#setWindowFields(Object, Bson, Iterable)}).
  *
  * @see Windows
  * @since 4.3

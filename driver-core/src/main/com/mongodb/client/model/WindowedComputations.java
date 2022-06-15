@@ -37,11 +37,11 @@ import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Builders for {@linkplain WindowedComputation windowed computations} used in the
- * {@link Aggregates#setWindowFields(Object, Bson, List) $setWindowFields} pipeline stage
+ * {@link Aggregates#setWindowFields(Object, Bson, Iterable) $setWindowFields} pipeline stage
  * of an aggregation pipeline. Each windowed computation is a triple:
  * <ul>
  *     <li>A window function. Some functions require documents in a window to be sorted
- *     (see {@code sortBy} in {@link Aggregates#setWindowFields(Object, Bson, List)}).</li>
+ *     (see {@code sortBy} in {@link Aggregates#setWindowFields(Object, Bson, Iterable)}).</li>
  *     <li>An optional {@linkplain Window window}, a.k.a. frame.
  *     Specifying {@code null} window is equivalent to specifying an unbounded window,
  *     i.e., a window with both ends specified as {@link Bound#UNBOUNDED}.
@@ -248,10 +248,10 @@ public final class WindowedComputations {
     /**
      * Builds a computation of the time derivative by subtracting the evaluation result of the {@code expression} against the last document
      * and the first document in the {@code window} and dividing it by the difference in the values of the
-     * {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field of the respective documents.
+     * {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field of the respective documents.
      * Other documents in the {@code window} have no effect on the computation.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -273,10 +273,10 @@ public final class WindowedComputations {
     /**
      * Builds a computation of the time derivative by subtracting the evaluation result of the {@code expression} against the last document
      * and the first document in the {@code window} and dividing it by the difference in the BSON {@link BsonType#DATE_TIME Date}
-     * values of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field of the respective documents.
+     * values of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field of the respective documents.
      * Other documents in the {@code window} have no effect on the computation.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -303,13 +303,13 @@ public final class WindowedComputations {
 
     /**
      * Builds a computation of the approximate integral of a function that maps values of
-     * the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field to evaluation results of the {@code expression}
+     * the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field to evaluation results of the {@code expression}
      * against the same document. The limits of integration match the {@code window} bounds.
      * The approximation is done by using the
      * <a href="https://www.khanacademy.org/math/ap-calculus-ab/ab-integration-new/ab-6-2/a/understanding-the-trapezoid-rule">
      * trapezoidal rule</a>.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -329,11 +329,11 @@ public final class WindowedComputations {
 
     /**
      * Builds a computation of the approximate integral of a function that maps BSON {@link BsonType#DATE_TIME Date} values of
-     * the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field to evaluation results of the {@code expression}
+     * the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field to evaluation results of the {@code expression}
      * against the same document. The limits of integration match the {@code window} bounds.
      * The approximation is done by using the trapezoidal rule.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -408,7 +408,7 @@ public final class WindowedComputations {
      * that includes {@code n} - 1 documents preceding the current document and the current document, with more weight on documents
      * closer to the current one.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -431,7 +431,7 @@ public final class WindowedComputations {
      * Builds a computation of the exponential moving average of the evaluation results of the {@code expression} over the half-bounded
      * window [{@link Bound#UNBOUNDED}, {@link Bound#CURRENT}], with {@code alpha} representing the degree of weighting decrease.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -455,7 +455,7 @@ public final class WindowedComputations {
     /**
      * Builds a computation that adds the evaluation results of the {@code expression} over the {@code window}
      * to a BSON {@link org.bson.BsonType#ARRAY Array}.
-     * Order within the array is guaranteed if {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} is specified.
+     * Order within the array is guaranteed if {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} is specified.
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -492,7 +492,7 @@ public final class WindowedComputations {
     /**
      * Builds a computation of the evaluation result of the {@code expression} against the first document in the {@code window}.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -512,7 +512,7 @@ public final class WindowedComputations {
      * of evaluation results of the {@code inExpression} against the first {@code N} documents in the {@code window},
      * where {@code N} is the positive integral value of the {@code nExpression}.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param inExpression The input expression.
@@ -595,7 +595,7 @@ public final class WindowedComputations {
     /**
      * Builds a computation of the evaluation result of the {@code expression} against the last document in the {@code window}.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -615,7 +615,7 @@ public final class WindowedComputations {
      * of evaluation results of the {@code inExpression} against the last {@code N} documents in the {@code window},
      * where {@code N} is the positive integral value of the {@code nExpression}.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param inExpression The input expression.
@@ -698,10 +698,10 @@ public final class WindowedComputations {
     /**
      * Builds a computation of the evaluation result of the {@code expression} for the document whose position is shifted by the given
      * amount relative to the current document. If the shifted document is outside of the
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) partition} containing the current document,
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition} containing the current document,
      * then the {@code defaultExpression} is used instead of the {@code expression}.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @param expression The expression.
@@ -733,9 +733,9 @@ public final class WindowedComputations {
 
     /**
      * Builds a computation of the order number of each document in its
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) partition}.
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition}.
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @return The constructed windowed computation.
@@ -748,13 +748,13 @@ public final class WindowedComputations {
 
     /**
      * Builds a computation of the rank of each document in its
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) partition}.
-     * Documents with the same value(s) of the {@linkplain Aggregates#setWindowFields(Object, Bson, List) sortBy} fields result in
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition}.
+     * Documents with the same value(s) of the {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} fields result in
      * the same ranking and result in gaps in the returned ranks.
      * For example, a partition with the sequence [1, 3, 3, 5] representing the values of the single {@code sortBy} field
      * produces the following sequence of rank values: [1, 2, 2, 4].
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @return The constructed windowed computation.
@@ -767,13 +767,13 @@ public final class WindowedComputations {
 
     /**
      * Builds a computation of the dense rank of each document in its
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) partition}.
-     * Documents with the same value(s) of the {@linkplain Aggregates#setWindowFields(Object, Bson, List) sortBy} fields result in
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition}.
+     * Documents with the same value(s) of the {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} fields result in
      * the same ranking but do not result in gaps in the returned ranks.
      * For example, a partition with the sequence [1, 3, 3, 5] representing the values of the single {@code sortBy} field
      * produces the following sequence of rank values: [1, 2, 2, 3].
      * <p>
-     * {@linkplain Aggregates#setWindowFields(Object, Bson, List) Sorting} is required.</p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
      * @return The constructed windowed computation.
