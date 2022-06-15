@@ -20,20 +20,32 @@ import org.bson.BsonString;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
-final class AbstractConstructibleBsonElementTest {
+final class AbstractConstructibleBsonElementWrappingBsonTest {
     @Test
     void of() {
         BsonDocument value = new BsonDocument("n", new BsonString("v"));
-        AbstractConstructibleBsonElement<?> constructible = AbstractConstructibleBsonElement.of("name", value);
+        AbstractConstructibleBsonElementWrappingBson<?> constructible = AbstractConstructibleBsonElementWrappingBson.of(
+                new BsonDocument("name", value));
         BsonDocument constructibleDoc = constructible.toBsonDocument();
         assertEquals(new BsonDocument("name", value), constructibleDoc);
     }
 
     @Test
+    void ofPreventsDoubleWrapping() {
+        BsonDocument value = new BsonDocument("n", new BsonString("v"));
+        AbstractConstructibleBsonElementWrappingBson<?> constructible = AbstractConstructibleBsonElementWrappingBson.of(
+                new BsonDocument("name", value));
+        AbstractConstructibleBsonElementWrappingBson<?> constructible2 = AbstractConstructibleBsonElementWrappingBson.of(constructible);
+        assertSame(constructible, constructible2);
+    }
+
+    @Test
     void newWithAppendedValue() {
-        AbstractConstructibleBsonElement<?> constructible = AbstractConstructibleBsonElement.of("name", new BsonDocument("n", new BsonString("v")));
-        AbstractConstructibleBsonElement<?> appendedConstructible = constructible.newWithAppendedValue("n2", "v2");
+        AbstractConstructibleBsonElementWrappingBson<?> constructible = AbstractConstructibleBsonElementWrappingBson.of(
+                new BsonDocument("name", new BsonDocument("n", new BsonString("v"))));
+        AbstractConstructibleBsonElementWrappingBson<?> appendedConstructible = constructible.newWithAppendedValue("n2", "v2");
         BsonDocument appendedConstructibleDoc = appendedConstructible.toBsonDocument();
         assertEquals(
                 new BsonDocument("name", new BsonDocument("n", new BsonString("v")).append("n2", new BsonString("v2"))),
@@ -42,18 +54,10 @@ final class AbstractConstructibleBsonElementTest {
 
     @Test
     void unmodifiable() {
-        AbstractConstructibleBsonElement<?> constructible = AbstractConstructibleBsonElement.of("name", new BsonDocument("n", new BsonString("v")));
+        AbstractConstructibleBsonElementWrappingBson<?> constructible = AbstractConstructibleBsonElementWrappingBson.of(
+                new BsonDocument("name", new BsonDocument("n", new BsonString("v"))));
         String expected = constructible.toBsonDocument().toJson();
         constructible.newWithAppendedValue("n2", "v2");
-        assertEquals(expected, constructible.toBsonDocument().toJson());
-    }
-
-    @Test
-    void emptyIsImmutable() {
-        AbstractConstructibleBsonElement<?> constructible = AbstractConstructibleBsonElement.of("name", new BsonDocument());
-        String expected = constructible.toBsonDocument().toJson();
-        // here we modify the document produced by `toBsonDocument` and check that it does not affect `constructible`
-        constructible.toBsonDocument().getDocument("name").append("n", new BsonString("v"));
         assertEquals(expected, constructible.toBsonDocument().toJson());
     }
 }

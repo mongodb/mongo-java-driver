@@ -27,17 +27,13 @@ import org.bson.conversions.Bson;
 import static com.mongodb.assertions.Assertions.notNull;
 
 final class SearchConstructibleBson extends AbstractConstructibleBson<SearchConstructibleBson> implements
-        SearchOperator,
-        SearchScore,
         RelevanceSearchScoreExpression, ConstantSearchScoreExpression, LogSearchScoreExpression, Log1pSearchScoreExpression,
         AddSearchScoreExpression, MultiplySearchScoreExpression,
-        SearchCollector,
         SearchOptions,
         SearchHighlight,
         TotalSearchCount, LowerBoundSearchCount,
         SearchFuzzy,
-        FieldSearchPath, WildcardSearchPath,
-        SearchFacet {
+        FieldSearchPath, WildcardSearchPath {
     /**
      * An {@linkplain Immutable immutable} empty instance.
      */
@@ -114,10 +110,5 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     @Override
     public FieldSearchPath multi(final String analyzerName) {
         return newAppended("multi", new BsonString(notNull("analyzerName", analyzerName)));
-    }
-
-    @Override
-    public SearchOperator score(final SearchScore modifier) {
-        return newAppended("score", notNull("modifier", modifier));
     }
 }

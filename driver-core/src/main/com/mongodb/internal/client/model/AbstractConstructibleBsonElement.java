@@ -34,6 +34,7 @@ import java.util.function.Consumer;
  *
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
+ * @see AbstractConstructibleBsonElementWrappingBson
  */
 public abstract class AbstractConstructibleBsonElement<S extends AbstractConstructibleBsonElement<S>> implements Bson {
     private static final BsonDocument EMPTY_VALUE = new BsonDocument();
@@ -69,7 +70,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
      * @see AbstractConstructibleBson#newMutated(Consumer)
      */
     protected final S newWithMutatedValue(final Consumer<Document> mutator) {
-        return newSelf(this.name, this.value.newMutated(mutator));
+        return newSelf(name, value.newMutated(mutator));
     }
 
     @Override

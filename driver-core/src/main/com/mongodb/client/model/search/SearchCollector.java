@@ -89,6 +89,6 @@ public interface SearchCollector extends Bson {
      * @return The requested {@link SearchCollector}.
      */
     static SearchCollector of(final Bson collector) {
-        return new SearchConstructibleBson(notNull("collector", collector));
+        return new SearchConstructibleBsonElementWrappingBson(notNull("collector", collector));
     }
 }

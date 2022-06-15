@@ -31,6 +31,8 @@ import java.util.function.Consumer;
  * provided that the constructor arguments are not mutated.
  *
  * @param <S> A type introduced by the concrete class that extends this abstract class.
+ * @see AbstractConstructibleBsonElement
+ * @see AbstractConstructibleBsonElementWrappingBson
  */
 public abstract class AbstractConstructibleBson<S extends AbstractConstructibleBson<S>> implements Bson {
     private static final Document EMPTY_APPENDED = new Document();
@@ -109,7 +111,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
                 + '}';
     }
 
-    private static BsonDocument newMerged(final BsonDocument base, final BsonDocument appended) {
+    static BsonDocument newMerged(final BsonDocument base, final BsonDocument appended) {
         final BsonDocument result = base.clone();
         result.putAll(appended);
         return result;
