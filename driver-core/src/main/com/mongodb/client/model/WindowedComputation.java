@@ -17,10 +17,8 @@ package com.mongodb.client.model;
 
 import org.bson.conversions.Bson;
 
-import java.util.List;
-
 /**
- * The core part of the {@link Aggregates#setWindowFields(Object, Bson, List) $setWindowFields} pipeline stage of an aggregation pipeline.
+ * The core part of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) $setWindowFields} pipeline stage of an aggregation pipeline.
  * A triple of a window function, a {@linkplain Window window} and a path to a field to be computed by the window function over the window.
  *
  * @see WindowedComputations
