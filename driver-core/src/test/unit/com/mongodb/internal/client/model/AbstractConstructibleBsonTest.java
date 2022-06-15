@@ -17,6 +17,8 @@ package com.mongodb.internal.client.model;
 
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,6 +60,30 @@ final class AbstractConstructibleBsonTest {
         BsonDocument doc = new BsonDocument();
         assertImmutable(AbstractConstructibleBson.of(doc));
         assertEquals(new BsonDocument(), doc);
+    }
+
+    @Test
+    void appendedCannotBeMutatedViaToBsonDocument() {
+        appendedCannotBeMutatedViaToBsonDocument(new Document());
+        appendedCannotBeMutatedViaToBsonDocument(new Document("appendedName", "appendedValue"));
+    }
+
+    private static void appendedCannotBeMutatedViaToBsonDocument(final Document appended) {
+        String expected = appended.toBsonDocument().toJson();
+        final class Constructible extends AbstractConstructibleBson<Constructible> {
+            private Constructible(final Bson base, final Document appended) {
+                super(base, appended);
+            }
+
+            @Override
+            protected Constructible newSelf(final Bson base, final Document appended) {
+                return new Constructible(base, appended);
+            }
+        }
+        AbstractConstructibleBson<?> constructible = new Constructible(new Document("name", "value"), appended);
+        // here we modify the document produced by `toBsonDocument` and check that it does not affect `appended`
+        constructible.toBsonDocument().append("name2", new BsonString("value2"));
+        assertEquals(expected, appended.toBsonDocument().toJson());
     }
 
     private static void assertImmutable(final AbstractConstructibleBson<?> constructible) {
