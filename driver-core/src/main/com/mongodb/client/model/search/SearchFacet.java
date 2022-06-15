@@ -141,7 +141,7 @@ public interface SearchFacet extends Bson {
                     Map.Entry<String, BsonValue> entry = doc.entrySet().iterator().next();
                     String name = entry.getKey();
                     isTrue(format("facet names must be unique. '%s' is used at least twice in %s", names, facets), names.add(name));
-                    result.append(entry.getKey(), entry.getValue());
+                    result.append(name, entry.getValue());
                 }
                 return result;
             }
