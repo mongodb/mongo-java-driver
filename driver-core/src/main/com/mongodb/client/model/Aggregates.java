@@ -648,7 +648,7 @@ public final class Aggregates {
      * @since 4.3
      */
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
-                                                     final List<WindowedComputation> output) {
+                                                     final Iterable<? extends WindowedComputation> output) {
         notNull("output", output);
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
     }
@@ -1706,9 +1706,12 @@ public final class Aggregates {
         private final TExpression partitionBy;
         @Nullable
         private final Bson sortBy;
-        private final List<WindowedComputation> output;
+        private final Iterable<? extends WindowedComputation> output;
 
-        SetWindowFieldsStage(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy, final List<WindowedComputation> output) {
+        SetWindowFieldsStage(
+                @Nullable final TExpression partitionBy,
+                @Nullable final Bson sortBy,
+                final Iterable<? extends WindowedComputation> output) {
             this.partitionBy = partitionBy;
             this.sortBy = sortBy;
             this.output = output;

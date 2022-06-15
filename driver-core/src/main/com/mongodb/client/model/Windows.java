@@ -23,7 +23,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.Decimal128;
 
-import java.util.List;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -51,7 +50,7 @@ import static org.bson.assertions.Assertions.notNull;
  *     </li>
  *     <li>range
  *         <ul>
- *             <li>{@link Aggregates#setWindowFields(Object, Bson, List) sortBy}
+ *             <li>{@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy}
  *                 <ul>
  *                     <li>must contain exactly one field;</li>
  *                     <li>must specify the ascending sort order;</li>
@@ -161,7 +160,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -174,7 +173,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -187,7 +186,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -202,7 +201,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -215,7 +214,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -228,7 +227,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -242,7 +241,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -255,7 +254,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -268,7 +267,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy} field in the current document.
+     * the value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
      * @param upper A value based on which the upper bound of the window is calculated.
@@ -282,7 +281,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the BSON {@link BsonType#DATE_TIME Date} value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy}
+     * the BSON {@link BsonType#DATE_TIME Date} value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy}
      * field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
@@ -298,7 +297,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the BSON {@link BsonType#DATE_TIME Date} value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy}
+     * the BSON {@link BsonType#DATE_TIME Date} value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy}
      * field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
@@ -314,7 +313,7 @@ public final class Windows {
 
     /**
      * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-     * the BSON {@link BsonType#DATE_TIME Date} value of the {@link Aggregates#setWindowFields(Object, Bson, List) sortBy}
+     * the BSON {@link BsonType#DATE_TIME Date} value of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy}
      * field in the current document.
      *
      * @param lower A value based on which the lower bound of the window is calculated.
