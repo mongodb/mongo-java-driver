@@ -35,9 +35,9 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
         SearchFuzzy,
         FieldSearchPath, WildcardSearchPath {
     /**
-     * An {@linkplain Immutable immutable} empty instance.
+     * An {@linkplain Immutable immutable} {@link BsonDocument#isEmpty() empty} instance.
      */
-    static final SearchConstructibleBson EMPTY = new SearchConstructibleBson(new BsonDocument());
+    static final SearchConstructibleBson EMPTY_IMMUTABLE = new SearchConstructibleBson(AbstractConstructibleBson.EMPTY_IMMUTABLE);
 
     SearchConstructibleBson(final Bson base) {
         super(base);

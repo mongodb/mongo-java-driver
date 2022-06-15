@@ -15,43 +15,50 @@
  */
 package com.mongodb.internal.client.model;
 
-import com.mongodb.annotations.Immutable;
 import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+
+import static com.mongodb.internal.client.model.AbstractConstructibleBson.EMPTY_IMMUTABLE;
+import static com.mongodb.internal.client.model.AbstractConstructibleBson.newMerged;
+import static java.lang.String.format;
 
 /**
  * A {@link Bson} that contains exactly one name/value pair
  * and allows constructing new instances via {@link #newWithAppendedValue(String, Object)} instead of mutating {@code this}.
  * The value must itself be a {@code Bson}.
- * While instances are not {@link Immutable immutable},
- * instances with {@link BsonDocument#isEmpty() empty} values are treated specially and are immutable,
- * provided that the constructor arguments are not mutated.
  *
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
- * @see AbstractConstructibleBsonElementWrappingBson
  */
 public abstract class AbstractConstructibleBsonElement<S extends AbstractConstructibleBsonElement<S>> implements Bson {
-    private static final BsonDocument EMPTY_VALUE = new BsonDocument();
-
-    private final String name;
-    private final AbstractConstructibleBson<?> value;
+    private final Bson baseElement;
+    private final AbstractConstructibleBson<?> appendedElementValue;
 
     protected AbstractConstructibleBsonElement(final String name) {
-        this(name, EMPTY_VALUE);
+        this(name, EMPTY_IMMUTABLE);
     }
 
     protected AbstractConstructibleBsonElement(final String name, final Bson value) {
-        this.name = name;
-        this.value = AbstractConstructibleBson.of(value);
+        this(new Document(name, value));
     }
 
-    protected abstract S newSelf(String name, Bson value);
+    protected AbstractConstructibleBsonElement(final Bson baseElement) {
+        this(baseElement, EMPTY_IMMUTABLE);
+    }
+
+    protected AbstractConstructibleBsonElement(final Bson baseElement, final Bson appendedElementValue) {
+        this.baseElement = baseElement;
+        this.appendedElementValue = AbstractConstructibleBson.of(appendedElementValue);
+    }
+
+    protected abstract S newSelf(Bson baseElement, Bson appendedElementValue);
 
     /**
      * {@linkplain Document#append(String, Object) Appends} the specified mapping to the value via {@link #newWithMutatedValue(Consumer)}.
@@ -70,16 +77,33 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
      * @see AbstractConstructibleBson#newMutated(Consumer)
      */
     protected final S newWithMutatedValue(final Consumer<Document> mutator) {
-        return newSelf(name, value.newMutated(mutator));
+        return newSelf(baseElement, appendedElementValue.newMutated(mutator));
     }
 
     @Override
     public final <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocument(name, value.toBsonDocument(documentClass, codecRegistry));
+        BsonDocument baseElementDoc = baseElement.toBsonDocument(documentClass, codecRegistry);
+        if (baseElementDoc.size() != 1) {
+            throw new IllegalStateException(format("baseElement must contain exactly one element, but contains %s", baseElementDoc.size()));
+        }
+        Map.Entry<String, BsonValue> baseElementEntry = baseElementDoc.entrySet().iterator().next();
+        String baseElementName = baseElementEntry.getKey();
+        BsonValue baseElementValue = baseElementEntry.getValue();
+        if (!baseElementValue.isDocument()) {
+            throw new IllegalStateException(format("baseElement value must be a document, but it is %s", baseElementValue.getBsonType()));
+        }
+        BsonDocument baseElementValueDoc = baseElementValue.asDocument();
+        BsonDocument appendedElementValueDoc = appendedElementValue.toBsonDocument(documentClass, codecRegistry);
+        return appendedElementValueDoc.isEmpty()
+                ? baseElementDoc
+                : new BsonDocument(baseElementName, newMerged(baseElementValueDoc, appendedElementValueDoc));
     }
 
-    public static AbstractConstructibleBsonElement<?> of(final String name, final Bson value) {
-        return new ConstructibleBsonElement(name, value);
+    public static AbstractConstructibleBsonElement<?> of(final Bson baseElement) {
+        return baseElement instanceof AbstractConstructibleBsonElement
+                // prevent double wrapping
+                ? (AbstractConstructibleBsonElement<?>) baseElement
+                : new ConstructibleBsonElement(baseElement, EMPTY_IMMUTABLE);
     }
 
     @Override
@@ -91,29 +115,29 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
             return false;
         }
         final AbstractConstructibleBsonElement<?> that = (AbstractConstructibleBsonElement<?>) o;
-        return name.equals(that.name) && value.equals(that.value);
+        return baseElement.equals(that.baseElement) && appendedElementValue.equals(that.appendedElementValue);
     }
 
     @Override
     public final int hashCode() {
-        return Objects.hash(name, value);
+        return Objects.hash(baseElement, appendedElementValue);
     }
 
     @Override
     public String toString() {
-        return "{\""
-                + name + "\": " + value
+        return "{baseElement=" + baseElement
+                + ", appendedValue=" + appendedElementValue
                 + '}';
     }
 
     private static final class ConstructibleBsonElement extends AbstractConstructibleBsonElement<ConstructibleBsonElement> {
-        private ConstructibleBsonElement(final String name, final Bson value) {
-            super(name, value);
+        private ConstructibleBsonElement(final Bson baseElement, final Bson appendedElementValue) {
+            super(baseElement, appendedElementValue);
         }
 
         @Override
-        protected ConstructibleBsonElement newSelf(final String name, final Bson value) {
-            return new ConstructibleBsonElement(name, value);
+        protected ConstructibleBsonElement newSelf(final Bson baseElement, final Bson appendedElementValue) {
+            return new ConstructibleBsonElement(baseElement, appendedElementValue);
         }
     }
 }

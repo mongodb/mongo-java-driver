@@ -26,24 +26,35 @@ import java.util.function.Consumer;
 
 /**
  * A {@link Bson} that allows constructing new instances via {@link #newAppended(String, Object)} instead of mutating {@code this}.
- * While instances are not {@link Immutable immutable},
- * {@link BsonDocument#isEmpty() empty} instances are treated specially and are immutable,
- * provided that the constructor arguments are not mutated.
+ * See {@link #AbstractConstructibleBson(Bson, Document)} for the note on mutability.
  *
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBsonElement
- * @see AbstractConstructibleBsonElementWrappingBson
  */
 public abstract class AbstractConstructibleBson<S extends AbstractConstructibleBson<S>> implements Bson {
-    private static final Document EMPTY_APPENDED = new Document();
+    private static final Document EMPTY_DOC = new Document();
+    /**
+     * An {@linkplain Immutable immutable} {@link BsonDocument#isEmpty() empty} instance.
+     */
+    public static final AbstractConstructibleBson<?> EMPTY_IMMUTABLE = AbstractConstructibleBson.of(EMPTY_DOC);
 
     private final Bson base;
     private final Document appended;
 
+    /**
+     * This constructor is equivalent to {@link #AbstractConstructibleBson(Bson, Document)} with
+     * {@link #EMPTY_IMMUTABLE} being the second argument.
+     */
     protected AbstractConstructibleBson(final Bson base) {
-        this(base, EMPTY_APPENDED);
+        this(base, EMPTY_DOC);
     }
 
+    /**
+     * If both {@code base} and {@code appended} are {@link BsonDocument#isEmpty() empty},
+     * then the created instance is {@linkplain Immutable immutable} provided that these constructor arguments are not mutated.
+     * Otherwise, the created instance while being unmodifiable,
+     * may be mutated by mutating the result of {@link #toBsonDocument(Class, CodecRegistry)}.
+     */
     protected AbstractConstructibleBson(final Bson base, final Document appended) {
         this.base = base;
         this.appended = appended;
