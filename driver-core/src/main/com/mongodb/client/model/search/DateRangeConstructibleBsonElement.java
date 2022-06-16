@@ -25,9 +25,13 @@ final class DateRangeConstructibleBsonElement extends RangeConstructibleBsonElem
         super(name, value);
     }
 
+    private DateRangeConstructibleBsonElement(final Bson baseElement, final Bson appendedElementValue) {
+        super(baseElement, appendedElementValue);
+    }
+
     @Override
-    protected DateRangeConstructibleBsonElement newSelf(final String name, final Bson value) {
-        return new DateRangeConstructibleBsonElement(name, value);
+    protected DateRangeConstructibleBsonElement newSelf(final Bson baseElement, final Bson appendedElementValue) {
+        return new DateRangeConstructibleBsonElement(baseElement, appendedElementValue);
     }
 
     @Override

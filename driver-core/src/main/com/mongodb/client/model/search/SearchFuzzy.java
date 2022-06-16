@@ -82,6 +82,6 @@ public interface SearchFuzzy extends Bson {
      * @return {@link SearchFuzzy} that represents server defaults.
      */
     static SearchFuzzy defaultSearchFuzzy() {
-        return SearchConstructibleBson.EMPTY;
+        return SearchConstructibleBson.EMPTY_IMMUTABLE;
     }
 }

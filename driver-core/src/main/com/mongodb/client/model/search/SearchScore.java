@@ -103,6 +103,6 @@ public interface SearchScore extends Bson {
      * @return The requested {@link SearchScore}.
      */
     static SearchScore of(final Bson score) {
-        return new SearchConstructibleBson(notNull("score", score));
+        return new SearchConstructibleBsonElement(notNull("score", score));
     }
 }

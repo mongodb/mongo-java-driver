@@ -23,9 +23,13 @@ final class NumberRangeConstructibleBsonElement extends RangeConstructibleBsonEl
         super(name, value);
     }
 
+    private NumberRangeConstructibleBsonElement(final Bson baseElement, final Bson appendedElementValue) {
+        super(baseElement, appendedElementValue);
+    }
+
     @Override
-    protected NumberRangeConstructibleBsonElement newSelf(final String name, final Bson value) {
-        return new NumberRangeConstructibleBsonElement(name, value);
+    protected NumberRangeConstructibleBsonElement newSelf(final Bson baseElement, final Bson appendedElementValue) {
+        return new NumberRangeConstructibleBsonElement(baseElement, appendedElementValue);
     }
 
     @Override
