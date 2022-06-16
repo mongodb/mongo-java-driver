@@ -46,11 +46,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 final class SearchOperatorTest {
     @Test
     void of() {
-        assertEquals(
-                docExamplePredefined()
-                        .toBsonDocument(),
-                SearchOperator.of(docExampleCustom())
-                        .toBsonDocument()
+        assertAll(
+                () -> assertEquals(
+                        docExamplePredefined()
+                                .toBsonDocument(),
+                        SearchOperator.of(docExampleCustom())
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        docExamplePredefined()
+                                .score(boost(2))
+                                .toBsonDocument(),
+                        SearchOperator.of(docExampleCustom())
+                                .score(boost(2))
+                                .toBsonDocument()
+                )
         );
     }
 

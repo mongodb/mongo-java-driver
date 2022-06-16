@@ -116,7 +116,7 @@ public interface SearchFacet extends Bson {
      * @return The requested {@link SearchFacet}.
      */
     static SearchFacet of(final Bson facet) {
-        return new SearchConstructibleBson(notNull("facet", facet));
+        return new SearchConstructibleBsonElement(notNull("facet", facet));
     }
 
     /**

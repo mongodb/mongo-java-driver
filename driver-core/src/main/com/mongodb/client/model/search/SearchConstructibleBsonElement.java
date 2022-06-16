@@ -24,16 +24,16 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
         CompoundSearchOperatorBase, CompoundSearchOperator,
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
         ExistsSearchOperator, TextSearchOperator, AutocompleteSearchOperator,
         NumberNearSearchOperator, DateNearSearchOperator, GeoNearSearchOperator,
-        ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore, GaussSearchScoreExpression,
-        PathSearchScoreExpression,
+        ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore,
+        GaussSearchScoreExpression, PathSearchScoreExpression,
         FacetSearchCollector,
         StringSearchFacet, NumberSearchFacet, DateSearchFacet {
     SearchConstructibleBsonElement(final String name) {
@@ -44,9 +44,17 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         super(name, value);
     }
 
+    SearchConstructibleBsonElement(final Bson baseElement) {
+        super(baseElement);
+    }
+
+    private SearchConstructibleBsonElement(final Bson baseElement, final Bson appendedElementValue) {
+        super(baseElement, appendedElementValue);
+    }
+
     @Override
-    protected SearchConstructibleBsonElement newSelf(final String name, final Bson value) {
-        return new SearchConstructibleBsonElement(name, value);
+    protected SearchConstructibleBsonElement newSelf(final Bson baseElement, final Bson appendedElementValue) {
+        return new SearchConstructibleBsonElement(baseElement, appendedElementValue);
     }
 
     @Override

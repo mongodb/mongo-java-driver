@@ -17,24 +17,88 @@ package com.mongodb.internal.client.model;
 
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 final class AbstractConstructibleBsonTest {
     @Test
-    void unmodifiable() {
+    void of() {
+        BsonDocument doc = new BsonDocument("name", new BsonString("value"));
+        AbstractConstructibleBson<?> constructible = AbstractConstructibleBson.of(doc);
+        assertUnmodifiable(constructible);
+        assertEquals(doc, constructible.toBsonDocument());
+    }
+
+    @Test
+    void ofPreventsDoubleWrapping() {
+        BsonDocument doc = new BsonDocument("name", new BsonString("value"));
+        AbstractConstructibleBson<?> constructible = AbstractConstructibleBson.of(doc);
+        assertUnmodifiable(constructible);
+        AbstractConstructibleBson<?> constructible2 = AbstractConstructibleBson.of(constructible);
+        assertUnmodifiable(constructible2);
+        assertSame(constructible, constructible2);
+    }
+
+    @Test
+    void newAppended() {
         AbstractConstructibleBson<?> constructible = AbstractConstructibleBson.of(new BsonDocument("name", new BsonString("value")));
-        String expected = constructible.toBsonDocument().toJson();
-        constructible.newAppended("name2", "value2");
-        assertEquals(expected, constructible.toBsonDocument().toJson());
+        assertUnmodifiable(constructible);
+        AbstractConstructibleBson<?> appendedConstructible = constructible.newAppended("name2", "value2");
+        assertUnmodifiable(appendedConstructible);
+        assertEquals(
+                new BsonDocument("name", new BsonString("value")).append("name2", new BsonString("value2")),
+                appendedConstructible.toBsonDocument());
     }
 
     @Test
     void emptyIsImmutable() {
-        AbstractConstructibleBson<?> constructible = AbstractConstructibleBson.of(new BsonDocument());
-        String expected = constructible.toBsonDocument().toJson();
+        assertImmutable(AbstractConstructibleBson.EMPTY_IMMUTABLE);
+        BsonDocument doc = new BsonDocument();
+        assertImmutable(AbstractConstructibleBson.of(doc));
+        assertEquals(new BsonDocument(), doc);
+    }
+
+    @Test
+    void appendedCannotBeMutatedViaToBsonDocument() {
+        appendedCannotBeMutatedViaToBsonDocument(new Document());
+        appendedCannotBeMutatedViaToBsonDocument(new Document("appendedName", "appendedValue"));
+    }
+
+    private static void appendedCannotBeMutatedViaToBsonDocument(final Document appended) {
+        String expected = appended.toBsonDocument().toJson();
+        final class Constructible extends AbstractConstructibleBson<Constructible> {
+            private Constructible(final Bson base, final Document appended) {
+                super(base, appended);
+            }
+
+            @Override
+            protected Constructible newSelf(final Bson base, final Document appended) {
+                return new Constructible(base, appended);
+            }
+        }
+        AbstractConstructibleBson<?> constructible = new Constructible(new Document("name", "value"), appended);
+        // here we modify the document produced by `toBsonDocument` and check that it does not affect `appended`
         constructible.toBsonDocument().append("name2", new BsonString("value2"));
+        assertEquals(expected, appended.toBsonDocument().toJson());
+    }
+
+    private static void assertImmutable(final AbstractConstructibleBson<?> constructible) {
+        String expected = constructible.toBsonDocument().toJson();
+        assertUnmodifiable(constructible);
+        // here we modify the document produced by `toBsonDocument` and check that it does not affect `constructible`
+        constructible.toBsonDocument().append("assertImmutableName", new BsonString("assertImmutableValue"));
+        assertEquals(expected, constructible.toBsonDocument().toJson());
+    }
+
+    private static void assertUnmodifiable(final AbstractConstructibleBson<?> constructible) {
+        String expected = constructible.toBsonDocument().toJson();
+        constructible.newAppended("assertUnmodifiableName", "assertUnmodifiableValue");
+        assertEquals(expected, constructible.toBsonDocument().toJson());
+        constructible.newMutated(doc -> doc.append("assertUnmodifiableName", "assertUnmodifiableValue"));
         assertEquals(expected, constructible.toBsonDocument().toJson());
     }
 }

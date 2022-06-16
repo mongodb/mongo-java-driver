@@ -27,6 +27,10 @@ abstract class RangeConstructibleBsonElement<T, S extends RangeConstructibleBson
         super(name, value);
     }
 
+    RangeConstructibleBsonElement(final Bson baseElement, final Bson appendedElementValue) {
+        super(baseElement, appendedElementValue);
+    }
+
     public final S score(final SearchScore modifier) {
         return newWithAppendedValue("score", notNull("modifier", modifier));
     }

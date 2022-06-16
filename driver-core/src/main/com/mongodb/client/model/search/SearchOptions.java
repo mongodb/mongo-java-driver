@@ -91,6 +91,6 @@ public interface SearchOptions extends Bson {
      * @return {@link SearchOptions} that represents server defaults.
      */
     static SearchOptions defaultSearchOptions() {
-        return SearchConstructibleBson.EMPTY;
+        return SearchConstructibleBson.EMPTY_IMMUTABLE;
     }
 }

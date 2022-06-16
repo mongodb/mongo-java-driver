@@ -304,6 +304,6 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      */
     static SearchOperator of(final Bson operator) {
-        return new SearchConstructibleBson(notNull("operator", operator));
+        return new SearchConstructibleBsonElement(notNull("operator", operator));
     }
 }
