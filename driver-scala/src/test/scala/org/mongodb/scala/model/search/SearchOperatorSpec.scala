@@ -51,12 +51,12 @@ class SearchOperatorSpec extends BaseSpec {
               .prefixLength(2)
               .maxExpansions(3)),
           autocomplete(
-            "term4",
             fieldPath("title")
               // multi must be ignored
-              .multi("keyword")
+              .multi("keyword"),
+            "term4"
           ),
-          autocomplete(Seq("Traffic in", "term5"), fieldPath("title"))
+          autocomplete(fieldPath("title"), Seq("Traffic in", "term5"))
             .fuzzy(defaultSearchFuzzy())
             .sequentialTokenOrder(),
           numberRange(Seq(fieldPath("fieldName4"), fieldPath("fieldName5")))
@@ -81,8 +81,8 @@ class SearchOperatorSpec extends BaseSpec {
               "path": [ { "wildcard": "wildc*rd" }, "fieldName3" ],
               "query": [ "term2", "term3" ],
               "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
-            { "autocomplete": { "query": "term4", "path": "title" } },
-            { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } },
+            { "autocomplete": { "path": "title", "query": "term4" } },
+            { "autocomplete": { "path": "title", "query": ["Traffic in", "term5"], "fuzzy": {}, "tokenOrder": "sequential" } },
             { "range": { "path": [ "fieldName4", "fieldName5" ], "gt": 1, "lt": 1.5 } },
             { "range": { "path": "fieldName6", "lte": { "$date": "1970-01-01T00:00:00.001Z" } } },
             { "near": { "origin": 0, "pivot": 1.5, "path": [ "fieldName7", "fieldName8" ] } },

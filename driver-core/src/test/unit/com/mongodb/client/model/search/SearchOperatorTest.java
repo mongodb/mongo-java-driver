@@ -217,46 +217,46 @@ final class SearchOperatorTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // queries must not be empty
-                        SearchOperator.autocomplete(emptyList(), fieldPath("fieldName"))
+                        SearchOperator.autocomplete(fieldPath("fieldName"), emptyList())
                 ),
                 () -> assertEquals(
                         new BsonDocument("autocomplete",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                         ),
                         SearchOperator.autocomplete(
-                                "term",
-                                fieldPath("fieldName"))
+                                fieldPath("fieldName"),
+                                "term")
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("autocomplete",
-                                new BsonDocument("query", new BsonArray(asList(
-                                        new BsonString("term1"),
-                                        new BsonString("term2"))))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
                         ),
                         SearchOperator.autocomplete(
-                                asList(
-                                        "term1",
-                                        "term2"),
                                 fieldPath("fieldName")
                                         // multi must be ignored
-                                        .multi("analyzerName"))
+                                        .multi("analyzerName"),
+                                asList(
+                                        "term1",
+                                        "term2"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("autocomplete",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                                         .append("fuzzy", new BsonDocument())
                                         .append("tokenOrder", new BsonString("any"))
                         ),
                         SearchOperator.autocomplete(
-                                singleton("term"),
                                 fieldPath("fieldName")
                                         // multi must be ignored
-                                        .multi("analyzerName"))
+                                        .multi("analyzerName"),
+                                        singleton("term"))
                                 .fuzzy(defaultSearchFuzzy())
                                 .sequentialTokenOrder()
                                 // anyTokenOrder overrides sequentialTokenOrder
