@@ -43,9 +43,9 @@ class SearchOperatorSpec extends BaseSpec {
       compound()
         .should(Seq(
           exists(fieldPath("fieldName1")),
-          text("term1", fieldPath("fieldName2"))
+          text(fieldPath("fieldName2"), "term1")
             .score(function(logExpression(constantExpression(3)))),
-          text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd"), fieldPath("fieldName3")))
+          text(Seq(wildcardPath("wildc*rd"), fieldPath("fieldName3")), Seq("term2", "term3"))
             .fuzzy(defaultSearchFuzzy()
               .maxEdits(1)
               .prefixLength(2)
@@ -76,10 +76,10 @@ class SearchOperatorSpec extends BaseSpec {
         "compound": {
           "should": [
             { "exists": { "path": "fieldName1" } },
-            { "text": { "query": "term1", "path": "fieldName2", "score": { "function": { "log": { "constant": 3.0 } } } } },
+            { "text": { "path": "fieldName2", "query": "term1", "score": { "function": { "log": { "constant": 3.0 } } } } },
             { "text": {
-              "query": [ "term2", "term3" ],
               "path": [ { "wildcard": "wildc*rd" }, "fieldName3" ],
+              "query": [ "term2", "term3" ],
               "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
             { "autocomplete": { "query": "term4", "path": "title" } },
             { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } },

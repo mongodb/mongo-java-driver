@@ -147,49 +147,49 @@ final class SearchOperatorTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // queries must not be empty
-                        SearchOperator.text(emptyList(), singleton(fieldPath("fieldName")))
+                        SearchOperator.text(singleton(fieldPath("fieldName")), emptyList())
                 ),
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // paths must not be empty
-                        SearchOperator.text(singleton("term"), emptyList())
+                        SearchOperator.text(emptyList(), singleton("term"))
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                         ),
                         SearchOperator.text(
-                                "term",
-                                fieldPath("fieldName"))
+                                fieldPath("fieldName"),
+                                "term")
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonArray(asList(
-                                        new BsonString("term1"),
-                                        new BsonString("term2"))))
-                                        .append("path", new BsonArray(asList(
-                                                fieldPath("fieldName").toBsonValue(),
-                                                wildcardPath("wildc*rd").toBsonValue())))
+                                new BsonDocument("path", new BsonArray(asList(
+                                        fieldPath("fieldName").toBsonValue(),
+                                        wildcardPath("wildc*rd").toBsonValue())))
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
                         ),
                         SearchOperator.text(
-                                asList(
-                                        "term1",
-                                        "term2"),
                                 asList(
                                         fieldPath("fieldName"),
-                                        wildcardPath("wildc*rd")))
+                                        wildcardPath("wildc*rd")),
+                                asList(
+                                        "term1",
+                                        "term2"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                                         .append("synonyms", new BsonString("synonymMappingName"))
                         ),
                         SearchOperator.text(
-                                        singleton("term"),
-                                        singleton(fieldPath("fieldName")))
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
                                 .fuzzy(defaultSearchFuzzy())
                                 // synonyms overrides fuzzy
                                 .synonyms("synonymMappingName")
@@ -197,13 +197,13 @@ final class SearchOperatorTest {
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                                         .append("fuzzy", new BsonDocument())
                         ),
                         SearchOperator.text(
-                                        singleton("term"),
-                                        singleton(fieldPath("fieldName")))
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
                                 .synonyms("synonymMappingName")
                                 // fuzzy overrides synonyms
                                 .fuzzy(defaultSearchFuzzy())

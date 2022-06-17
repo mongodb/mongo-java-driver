@@ -53,23 +53,23 @@ object SearchOperator {
   /**
    * Returns a `SearchOperator` that performs a full-text search.
    *
-   * @param query The string to search for.
    * @param path The field to be searched.
+   * @param query The string to search for.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
    */
-  def text(query: String, path: SearchPath): TextSearchOperator = JSearchOperator.text(query, path)
+  def text(path: SearchPath, query: String): TextSearchOperator = JSearchOperator.text(path, query)
 
   /**
    * Returns a `SearchOperator` that performs a full-text search.
    *
-   * @param queries The non-empty strings to search for.
    * @param paths The non-empty fields to be searched.
+   * @param queries The non-empty strings to search for.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
    */
-  def text(queries: Iterable[String], paths: Iterable[_ <: SearchPath]): TextSearchOperator =
-    JSearchOperator.text(queries.asJava, paths.asJava)
+  def text(paths: Iterable[_ <: SearchPath], queries: Iterable[String]): TextSearchOperator =
+    JSearchOperator.text(paths.asJava, queries.asJava)
 
   /**
    * Returns a `SearchOperator` that may be used to implement search-as-you-type functionality.

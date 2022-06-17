@@ -74,24 +74,24 @@ public interface SearchOperator extends Bson {
     /**
      * Returns a {@link SearchOperator} that performs a full-text search.
      *
-     * @param query The string to search for.
      * @param path The field to be searched.
+     * @param query The string to search for.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/text/ text operator
      */
-    static TextSearchOperator text(final String query, final SearchPath path) {
-        return text(singleton(notNull("query", query)), singleton(notNull("path", path)));
+    static TextSearchOperator text(final SearchPath path, final String query) {
+        return text(singleton(notNull("path", path)), singleton(notNull("query", query)));
     }
 
     /**
      * Returns a {@link SearchOperator} that performs a full-text search.
      *
-     * @param queries The non-empty strings to search for.
      * @param paths The non-empty fields to be searched.
+     * @param queries The non-empty strings to search for.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/text/ text operator
      */
-    static TextSearchOperator text(final Iterable<String> queries, final Iterable<? extends SearchPath> paths) {
+    static TextSearchOperator text(final Iterable<? extends SearchPath> paths, final Iterable<String> queries) {
         Iterator<String> queryIterator = notNull("queries", queries).iterator();
         isTrueArgument("queries must not be empty", queryIterator.hasNext());
         String firstQuery = queryIterator.next();

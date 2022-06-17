@@ -19,7 +19,7 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see SearchOperator#text(String, SearchPath)
+ * @see SearchOperator#text(SearchPath, String)
  * @see SearchOperator#text(Iterable, Iterable)
  * @since 4.7
  */

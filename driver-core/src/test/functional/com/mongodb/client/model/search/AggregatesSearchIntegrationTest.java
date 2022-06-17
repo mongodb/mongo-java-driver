@@ -313,7 +313,7 @@ final class AggregatesSearchIntegrationTest {
                 arguments(
                         "`highlight` option",
                         stageCreator(
-                                text(asList("factory", "century"), singleton(fieldPath("plot"))),
+                                text(singleton(fieldPath("plot")), asList("factory", "century")),
                                 defaultSearchOptions()
                                         .highlight(paths(
                                                 fieldPath("title").multi("keyword"),
@@ -359,7 +359,7 @@ final class AggregatesSearchIntegrationTest {
                 arguments(
                         "alternate analyzer (`multi` field path)",
                         stageCreator(
-                                text(singleton("The Cheat"), singleton(fieldPath("title").multi("keyword"))),
+                                text(singleton(fieldPath("title").multi("keyword")), singleton("The Cheat")),
                                 defaultSearchOptions().count(total())
                         ),
                         MFLIX_MOVIES_NS,
@@ -479,9 +479,9 @@ final class AggregatesSearchIntegrationTest {
                         stageCreator(compound()
                                 .should(asList(
                                         exists(fieldPath("fieldName1")),
-                                        text("term1", fieldPath("fieldName2"))
+                                        text(fieldPath("fieldName2"), "term1")
                                                 .score(function(logExpression(constantExpression(3)))),
-                                        text(asList("term2", "term3"), asList(wildcardPath("wildc*rd"), fieldPath("fieldName3")))
+                                        text(asList(wildcardPath("wildc*rd"), fieldPath("fieldName3")), asList("term2", "term3"))
                                                 .fuzzy(defaultSearchFuzzy()
                                                         .maxEdits(1)
                                                         .prefixLength(2)
