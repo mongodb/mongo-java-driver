@@ -315,9 +315,9 @@ final class AggregatesSearchIntegrationTest {
                         stageCreator(
                                 text(asList("factory", "century"), singleton(fieldPath("plot"))),
                                 defaultSearchOptions()
-                                        .highlight(paths(asList(
+                                        .highlight(paths(
                                                 fieldPath("title").multi("keyword"),
-                                                wildcardPath("pl*t")))
+                                                wildcardPath("pl*t"))
                                                 .maxCharsToExamine(100_000))
                         ),
                         MFLIX_MOVIES_NS,

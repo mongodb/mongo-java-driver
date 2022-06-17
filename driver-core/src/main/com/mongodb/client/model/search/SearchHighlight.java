@@ -26,7 +26,7 @@ import java.util.Iterator;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
-import static java.util.Collections.singleton;
+import static java.util.Arrays.asList;
 
 /**
  * Highlighting options.
@@ -58,13 +58,13 @@ public interface SearchHighlight extends Bson {
     SearchHighlight maxNumPassages(int maxNumPassages);
 
     /**
-     * Returns a {@link SearchHighlight} for the given {@code path}.
+     * Returns a {@link SearchHighlight} for the given {@code paths}.
      *
-     * @param path The field to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchHighlight}.
      */
-    static SearchHighlight path(final SearchPath path) {
-        return paths(singleton(path));
+    static SearchHighlight paths(final SearchPath... paths) {
+        return paths(asList(notNull("paths", paths)));
     }
 
     /**
@@ -87,9 +87,9 @@ public interface SearchHighlight extends Bson {
      * The following code creates two functionally equivalent {@link SearchHighlight}s,
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
-     *  SearchHighlight highlight1 = SearchHighlight.paths(Arrays.asList(
+     *  SearchHighlight highlight1 = SearchHighlight.paths(
      *          SearchPath.fieldPath("fieldName"),
-     *          SearchPath.wildcardPath("wildc*rd")));
+     *          SearchPath.wildcardPath("wildc*rd"));
      *  SearchHighlight highlight2 = SearchHighlight.of(new Document("path", Arrays.asList(
      *          SearchPath.fieldPath("fieldName").toBsonValue(),
      *          SearchPath.wildcardPath("wildc*rd").toBsonValue())));
