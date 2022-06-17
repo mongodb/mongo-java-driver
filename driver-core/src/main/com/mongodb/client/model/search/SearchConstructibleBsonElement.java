@@ -152,8 +152,6 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
 
     @Override
     public GaussSearchScoreExpression decay(final double decay) {
-        isTrueArgument("decay must be greater than 0", decay > 0);
-        isTrueArgument("decay must be less than 1", decay < 1);
         return newWithAppendedValue("decay", decay);
     }
 }

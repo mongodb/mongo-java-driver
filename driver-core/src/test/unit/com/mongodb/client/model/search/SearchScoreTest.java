@@ -25,7 +25,6 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchScoreExpression.constantExpression;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class SearchScoreTest {
     @Test
@@ -40,21 +39,11 @@ final class SearchScoreTest {
 
     @Test
     void valueBoost() {
-        assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // value must be positive
-                        SearchScore.boost(0f)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // value must be positive
-                        SearchScore.boost(-1f)
-                ),
-                () -> assertEquals(
-                        new BsonDocument("boost",
-                                new BsonDocument("value", new BsonDouble(0.5))),
-                        SearchScore.boost(0.5f)
-                                .toBsonDocument()
-                )
+        assertEquals(
+                new BsonDocument("boost",
+                        new BsonDocument("value", new BsonDouble(0.5))),
+                SearchScore.boost(0.5f)
+                        .toBsonDocument()
         );
     }
 
@@ -84,21 +73,11 @@ final class SearchScoreTest {
 
     @Test
     void constant() {
-        assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // value must be positive
-                        SearchScore.constant(0f)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // value must be positive
-                        SearchScore.constant(-1f)
-                ),
-                () -> assertEquals(
-                        new BsonDocument("constant",
-                                new BsonDocument("value", new BsonDouble(0.5))),
-                        SearchScore.constant(0.5f)
-                                .toBsonDocument()
-                )
+        assertEquals(
+                new BsonDocument("constant",
+                        new BsonDocument("value", new BsonDouble(0.5))),
+                SearchScore.constant(0.5f)
+                        .toBsonDocument()
         );
     }
 
