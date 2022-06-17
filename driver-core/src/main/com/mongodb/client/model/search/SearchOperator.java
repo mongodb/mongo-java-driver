@@ -160,14 +160,14 @@ public interface SearchOperator extends Bson {
 
     /**
      * Returns a base for a {@link SearchOperator} that tests if the
-     * BSON {@link BsonType#DATE_TIME Date} values of the specified field are within an interval.
+     * BSON {@link BsonType#DATE_TIME Date} values of the specified fields are within an interval.
      *
-     * @param path The field to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return A base for a {@link DateRangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static DateRangeSearchOperatorBase dateRange(final FieldSearchPath path) {
-        return dateRange(singleton(notNull("path", path)));
+    static DateRangeSearchOperatorBase dateRange(final FieldSearchPath... paths) {
+        return dateRange(asList(notNull("paths", paths)));
     }
 
     /**
