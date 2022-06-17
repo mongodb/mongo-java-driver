@@ -63,7 +63,7 @@ class SearchOperatorSpec extends BaseSpec {
             .gtLt(1, 1.5),
           dateRange(fieldPath("fieldName6"))
             .lte(Instant.ofEpochMilli(1)),
-          near(0, 1.5, Seq(fieldPath("fieldName7"), fieldPath("fieldName8"))),
+          near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
           near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
           near(Point(Position(114.15, 22.28)), 1234.5, fieldPath("address.location"))
         ).asJava)
