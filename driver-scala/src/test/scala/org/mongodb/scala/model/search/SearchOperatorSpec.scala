@@ -56,7 +56,7 @@ class SearchOperatorSpec extends BaseSpec {
               .multi("keyword"),
             "term4"
           ),
-          autocomplete(fieldPath("title"), Seq("Traffic in", "term5"))
+          autocomplete(fieldPath("title"), "Traffic in", "term5")
             .fuzzy(defaultSearchFuzzy())
             .sequentialTokenOrder(),
           numberRange(Seq(fieldPath("fieldName4"), fieldPath("fieldName5")))

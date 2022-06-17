@@ -75,12 +75,12 @@ object SearchOperator {
    * Returns a `SearchOperator` that may be used to implement search-as-you-type functionality.
    *
    * @param path The field to be searched.
-   * @param query The string to search for.
+   * @param queries The non-empty strings to search for.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]
    */
-  def autocomplete(path: FieldSearchPath, query: String): AutocompleteSearchOperator =
-    JSearchOperator.autocomplete(path, query)
+  def autocomplete(path: FieldSearchPath, queries: String*): AutocompleteSearchOperator =
+    JSearchOperator.autocomplete(path, queries.asJava)
 
   /**
    * Returns a `SearchOperator` that may be used to implement search-as-you-type functionality.

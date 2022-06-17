@@ -29,6 +29,7 @@ import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -105,12 +106,12 @@ public interface SearchOperator extends Bson {
      * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
      *
      * @param path The field to be searched.
-     * @param query The string to search for.
+     * @param queries The non-empty strings to search for.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
      */
-    static AutocompleteSearchOperator autocomplete(final FieldSearchPath path, final String query) {
-        return autocomplete(path, singleton(notNull("query", query)));
+    static AutocompleteSearchOperator autocomplete(final FieldSearchPath path, final String... queries) {
+        return autocomplete(path, asList(notNull("queries", queries)));
     }
 
     /**

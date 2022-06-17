@@ -490,7 +490,7 @@ final class AggregatesSearchIntegrationTest {
                                                 // `multi` is used here only to verify that it is tolerated
                                                 .multi("keyword"), "term4"),
                                         // this operator produces non-empty search results
-                                        autocomplete(fieldPath("title"), asList("Traffic in", "term5"))
+                                        autocomplete(fieldPath("title"), "Traffic in", "term5")
                                                 .fuzzy(defaultSearchFuzzy())
                                                 .sequentialTokenOrder(),
                                         numberRange(asList(fieldPath("fieldName4"), fieldPath("fieldName5")))
