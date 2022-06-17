@@ -493,7 +493,7 @@ final class AggregatesSearchIntegrationTest {
                                         autocomplete(fieldPath("title"), "Traffic in", "term5")
                                                 .fuzzy(defaultSearchFuzzy())
                                                 .sequentialTokenOrder(),
-                                        numberRange(asList(fieldPath("fieldName4"), fieldPath("fieldName5")))
+                                        numberRange(fieldPath("fieldName4"), fieldPath("fieldName5"))
                                                 .gtLt(1, 1.5),
                                         dateRange(fieldPath("fieldName6"))
                                                 .lte(Instant.ofEpochMilli(1)),

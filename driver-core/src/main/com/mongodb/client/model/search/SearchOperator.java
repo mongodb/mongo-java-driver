@@ -133,14 +133,14 @@ public interface SearchOperator extends Bson {
     /**
      * Returns a base for a {@link SearchOperator} that tests if the
      * BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} values
-     * of the specified field are within an interval.
+     * of the specified fields are within an interval.
      *
-     * @param path The field to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return A base for a {@link NumberRangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static NumberRangeSearchOperatorBase numberRange(final FieldSearchPath path) {
-        return numberRange(singleton(notNull("path", path)));
+    static NumberRangeSearchOperatorBase numberRange(final FieldSearchPath... paths) {
+        return numberRange(asList(notNull("paths", paths)));
     }
 
     /**

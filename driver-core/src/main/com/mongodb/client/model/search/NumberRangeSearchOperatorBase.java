@@ -22,7 +22,7 @@ import com.mongodb.annotations.Evolving;
  * A base for a {@link NumberRangeSearchOperator} which allows creating instances of this operator.
  * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
  *
- * @see SearchOperator#numberRange(FieldSearchPath)
+ * @see SearchOperator#numberRange(FieldSearchPath...)
  * @see SearchOperator#numberRange(Iterable)
  * @since 4.7
  */

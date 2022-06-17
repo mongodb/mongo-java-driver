@@ -96,13 +96,13 @@ object SearchOperator {
   /**
    * Returns a base for a `SearchOperator` that tests if the
    * BSON `32-bit integer` / `64-bit integer` / `Double` values
-   * of the specified field are within an interval.
+   * of the specified fields are within an interval.
    *
-   * @param path The field to be searched.
+   * @param paths The non-empty fields to be searched.
    * @return A base for a `NumberRangeSearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/range/ range operator]]
    */
-  def numberRange(path: FieldSearchPath): NumberRangeSearchOperatorBase = JSearchOperator.numberRange(path)
+  def numberRange(paths: FieldSearchPath*): NumberRangeSearchOperatorBase = JSearchOperator.numberRange(paths.asJava)
 
   /**
    * Returns a base for a `SearchOperator` that tests if the
