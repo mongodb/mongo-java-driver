@@ -261,12 +261,12 @@ public interface SearchOperator extends Bson {
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
      * @param pivot The positive distance in meters from the {@code origin} at which the relevance score drops in half.
-     * @param path The field to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
      */
-    static GeoNearSearchOperator near(final Point origin, final Number pivot, final FieldSearchPath path) {
-        return near(origin, pivot, singleton(notNull("path", path)));
+    static GeoNearSearchOperator near(final Point origin, final Number pivot, final FieldSearchPath... paths) {
+        return near(origin, pivot, asList(notNull("paths", paths)));
     }
 
     /**

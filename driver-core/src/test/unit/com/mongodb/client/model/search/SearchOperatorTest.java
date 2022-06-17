@@ -592,9 +592,8 @@ final class SearchOperatorTest {
                         SearchOperator.near(
                                 Instant.EPOCH,
                                 Duration.ofMillis(3),
-                                asList(
-                                        fieldPath("fieldName1"),
-                                        fieldPath("fieldName2")))
+                                fieldPath("fieldName1"),
+                                fieldPath("fieldName2"))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 ),
                 () -> assertEquals(
