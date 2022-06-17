@@ -195,7 +195,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/near/ near operator
      */
     static NumberNearSearchOperator near(final Number origin, final Number pivot, final FieldSearchPath... paths) {
-        return near(origin, pivot, asList(notNull("path", paths)));
+        return near(origin, pivot, asList(notNull("paths", paths)));
     }
 
     /**
@@ -223,13 +223,13 @@ public interface SearchOperator extends Bson {
      * The relevance score is 1 if the values of the fields are {@code origin}.
      * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
      * Data is extracted via {@link Duration#toMillis()}.
-     * @param path The field to be searched.
+     * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
      * @see org.bson.codecs.jsr310.InstantCodec
      */
-    static DateNearSearchOperator near(final Instant origin, final Duration pivot, final FieldSearchPath path) {
-        return near(origin, pivot, singleton(notNull("path", path)));
+    static DateNearSearchOperator near(final Instant origin, final Duration pivot, final FieldSearchPath... paths) {
+        return near(origin, pivot, asList(notNull("paths", paths)));
     }
 
     /**

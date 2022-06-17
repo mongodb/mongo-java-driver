@@ -22,7 +22,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * @see SearchOperator#near(Instant, Duration, FieldSearchPath)
+ * @see SearchOperator#near(Instant, Duration, FieldSearchPath...)
  * @see SearchOperator#near(Instant, Duration, Iterable)
  * @since 4.7
  */

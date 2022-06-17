@@ -170,13 +170,13 @@ object SearchOperator {
    * The relevance score is 1 if the values of the fields are `origin`.
    * @param pivot The positive distance from the `origin` at which the relevance score drops in half.
    * Data is extracted via `Duration.toMillis`.
-   * @param path The field to be searched.
+   * @param paths The non-empty fields to be searched.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/near/ near operator]]
    * @see `org.bson.codecs.jsr310.InstantCodec`
    */
-  def near(origin: Instant, pivot: Duration, path: FieldSearchPath): DateNearSearchOperator =
-    JSearchOperator.near(origin, pivot, path)
+  def near(origin: Instant, pivot: Duration, paths: FieldSearchPath*): DateNearSearchOperator =
+    JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
    * Returns a `SearchOperator` that allows finding results that are near the specified `origin`.
