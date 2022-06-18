@@ -26,7 +26,7 @@ import static java.util.Collections.singleton;
 public final class Iterables {
     @SafeVarargs
     @SuppressWarnings("varargs")
-    public static <T> Iterable<T> concat(@Nullable final T first, final T... more) {
+    public static <T> Iterable<T> concat(@Nullable final T first, @Nullable final T... more) {
         if (more == null) {
             return singleton(first);
         } else {

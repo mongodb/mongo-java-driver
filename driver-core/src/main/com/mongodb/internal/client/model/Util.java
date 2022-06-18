@@ -19,8 +19,11 @@ import com.mongodb.Function;
 import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchPath;
 import org.bson.BsonArray;
+import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.Iterator;
 
@@ -59,6 +62,17 @@ public final class Util {
         } else {
             return firstPath;
         }
+    }
+
+    public static Bson combine(final Iterable<? extends Bson> objects) {
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+                BsonDocument result = new BsonDocument();
+                objects.forEach(bson -> result.putAll(bson.toBsonDocument(tDocumentClass, codecRegistry)));
+                return result;
+            }
+        };
     }
 
     public static boolean sizeAtLeast(final Iterable<?> iterable, final int minInclusive) {

@@ -32,10 +32,10 @@ public interface AutocompleteSearchOperator extends SearchOperator {
     /**
      * Creates a new {@link AutocompleteSearchOperator} that uses fuzzy search.
      *
-     * @param option Fuzzy search option.
+     * @param options The fuzzy search options.
      * @return A new {@link AutocompleteSearchOperator}.
      */
-    AutocompleteSearchOperator fuzzy(SearchFuzzy option);
+    AutocompleteSearchOperator fuzzy(SearchFuzzy... options);
 
     /**
      * Creates a new {@link AutocompleteSearchOperator} that does not require tokens to appear in the same order as they are specified.

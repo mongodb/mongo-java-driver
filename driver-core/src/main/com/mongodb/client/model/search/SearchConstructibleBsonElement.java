@@ -15,7 +15,9 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.internal.client.model.AbstractConstructibleBson;
 import com.mongodb.internal.client.model.AbstractConstructibleBsonElement;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonInt32;
 import org.bson.conversions.Bson;
 
@@ -25,7 +27,9 @@ import java.util.stream.StreamSupport;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.client.model.Util.combine;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
+import static java.util.Arrays.asList;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
         CompoundSearchOperatorBase, CompoundSearchOperator,
@@ -68,10 +72,16 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public SearchConstructibleBsonElement fuzzy(final SearchFuzzy option) {
+    public SearchConstructibleBsonElement fuzzy(@Nullable final SearchFuzzy... options) {
         return newWithMutatedValue(doc -> {
             doc.remove("synonyms");
-            doc.append("fuzzy", notNull("option", option));
+            Bson fuzzy;
+            if (options == null || options.length == 0) {
+                fuzzy = AbstractConstructibleBson.EMPTY_IMMUTABLE;
+            } else {
+                fuzzy = combine(asList(options));
+            }
+            doc.append("fuzzy", fuzzy);
         });
     }
 

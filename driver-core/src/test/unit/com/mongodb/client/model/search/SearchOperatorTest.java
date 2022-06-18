@@ -206,7 +206,7 @@ final class SearchOperatorTest {
                                 singleton("term"))
                                 .synonyms("synonymMappingName")
                                 // fuzzy overrides synonyms
-                                .fuzzy(defaultSearchFuzzy())
+                                .fuzzy()
                                 .toBsonDocument()
                 )
         );
@@ -249,7 +249,9 @@ final class SearchOperatorTest {
                         new BsonDocument("autocomplete",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("query", new BsonString("term"))
-                                        .append("fuzzy", new BsonDocument())
+                                        .append("fuzzy", new BsonDocument()
+                                                .append("maxExpansions", new BsonInt32(10))
+                                                .append("maxEdits", new BsonInt32(1)))
                                         .append("tokenOrder", new BsonString("any"))
                         ),
                         SearchOperator.autocomplete(
@@ -257,7 +259,10 @@ final class SearchOperatorTest {
                                         // multi must be ignored
                                         .multi("analyzerName"),
                                         singleton("term"))
-                                .fuzzy(defaultSearchFuzzy())
+                                .fuzzy(defaultSearchFuzzy()
+                                        .maxEdits(2)
+                                        .maxExpansions(10),
+                                        defaultSearchFuzzy().maxEdits(1))
                                 .sequentialTokenOrder()
                                 // anyTokenOrder overrides sequentialTokenOrder
                                 .anyTokenOrder()

@@ -491,7 +491,7 @@ final class AggregatesSearchIntegrationTest {
                                                 .multi("keyword"), "term4"),
                                         // this operator produces non-empty search results
                                         autocomplete(fieldPath("title"), "Traffic in", "term5")
-                                                .fuzzy(defaultSearchFuzzy())
+                                                .fuzzy()
                                                 .sequentialTokenOrder(),
                                         numberRange(fieldPath("fieldName4"), fieldPath("fieldName5"))
                                                 .gtLt(1, 1.5),
