@@ -19,7 +19,7 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see SearchOperator#autocomplete(FieldSearchPath, String...)
+ * @see SearchOperator#autocomplete(FieldSearchPath, String, String...)
  * @see SearchOperator#autocomplete(FieldSearchPath, Iterable)
  * @since 4.7
  */

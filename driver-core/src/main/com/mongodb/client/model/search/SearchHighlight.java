@@ -25,8 +25,8 @@ import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
-import static java.util.Arrays.asList;
 
 /**
  * Highlighting options.
@@ -60,11 +60,12 @@ public interface SearchHighlight extends Bson {
     /**
      * Returns a {@link SearchHighlight} for the given {@code paths}.
      *
-     * @param paths The non-empty fields to be searched.
+     * @param path The field to be searched.
+     * @param paths More fields to be searched.
      * @return The requested {@link SearchHighlight}.
      */
-    static SearchHighlight paths(final SearchPath... paths) {
-        return paths(asList(notNull("paths", paths)));
+    static SearchHighlight paths(final SearchPath path, final SearchPath... paths) {
+        return paths(concat(notNull("path", path), paths));
     }
 
     /**

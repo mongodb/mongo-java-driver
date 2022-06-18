@@ -19,7 +19,7 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see SearchOperator#near(Number, Number, FieldSearchPath...)
+ * @see SearchOperator#near(Number, Number, FieldSearchPath, FieldSearchPath...)
  * @see SearchOperator#near(Number, Number, Iterable)
  * @since 4.7
  */

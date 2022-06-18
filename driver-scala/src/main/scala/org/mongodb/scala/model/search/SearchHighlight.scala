@@ -36,10 +36,11 @@ object SearchHighlight {
   /**
    * Returns a `SearchHighlight` for the given `paths`.
    *
-   * @param paths The non-empty fields to be searched.
+   * @param path The field to be searched.
+   * @param paths More fields to be searched.
    * @return The requested `SearchHighlight`.
    */
-  def paths(paths: SearchPath*): SearchHighlight = JSearchHighlight.paths(paths.asJava)
+  def paths(path: SearchPath, paths: SearchPath*): SearchHighlight = JSearchHighlight.paths(path, paths: _*)
 
   /**
    * Returns a `SearchHighlight` for the given `paths`.

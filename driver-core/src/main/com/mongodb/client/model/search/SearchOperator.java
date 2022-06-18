@@ -28,8 +28,8 @@ import java.time.Instant;
 import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -106,12 +106,13 @@ public interface SearchOperator extends Bson {
      * Returns a {@link SearchOperator} that may be used to implement search-as-you-type functionality.
      *
      * @param path The field to be searched.
-     * @param queries The non-empty strings to search for.
+     * @param query The string to search for.
+     * @param queries More strings to search for.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/autocomplete/ autocomplete operator
      */
-    static AutocompleteSearchOperator autocomplete(final FieldSearchPath path, final String... queries) {
-        return autocomplete(path, asList(notNull("queries", queries)));
+    static AutocompleteSearchOperator autocomplete(final FieldSearchPath path, final String query, final String... queries) {
+        return autocomplete(path, concat(notNull("query", query), queries));
     }
 
     /**
@@ -135,12 +136,13 @@ public interface SearchOperator extends Bson {
      * BSON {@link BsonType#INT32 32-bit integer} / {@link BsonType#INT64 64-bit integer} / {@link BsonType#DOUBLE Double} values
      * of the specified fields are within an interval.
      *
-     * @param paths The non-empty fields to be searched.
+     * @param path The field to be searched.
+     * @param paths More fields to be searched.
      * @return A base for a {@link NumberRangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static NumberRangeSearchOperatorBase numberRange(final FieldSearchPath... paths) {
-        return numberRange(asList(notNull("paths", paths)));
+    static NumberRangeSearchOperatorBase numberRange(final FieldSearchPath path, final FieldSearchPath... paths) {
+        return numberRange(concat(notNull("path", path), paths));
     }
 
     /**
@@ -162,12 +164,13 @@ public interface SearchOperator extends Bson {
      * Returns a base for a {@link SearchOperator} that tests if the
      * BSON {@link BsonType#DATE_TIME Date} values of the specified fields are within an interval.
      *
-     * @param paths The non-empty fields to be searched.
+     * @param path The field to be searched.
+     * @param paths More fields to be searched.
      * @return A base for a {@link DateRangeSearchOperator}.
      * @mongodb.atlas.manual atlas-search/range/ range operator
      */
-    static DateRangeSearchOperatorBase dateRange(final FieldSearchPath... paths) {
-        return dateRange(asList(notNull("paths", paths)));
+    static DateRangeSearchOperatorBase dateRange(final FieldSearchPath path, final FieldSearchPath... paths) {
+        return dateRange(concat(notNull("path", path), paths));
     }
 
     /**
@@ -190,12 +193,13 @@ public interface SearchOperator extends Bson {
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
      * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
-     * @param paths The non-empty fields to be searched.
+     * @param path The field to be searched.
+     * @param paths More fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
      */
-    static NumberNearSearchOperator near(final Number origin, final Number pivot, final FieldSearchPath... paths) {
-        return near(origin, pivot, asList(notNull("paths", paths)));
+    static NumberNearSearchOperator near(final Number origin, final Number pivot, final FieldSearchPath path, final FieldSearchPath... paths) {
+        return near(origin, pivot, concat(notNull("path", path), paths));
     }
 
     /**
@@ -223,13 +227,14 @@ public interface SearchOperator extends Bson {
      * The relevance score is 1 if the values of the fields are {@code origin}.
      * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
      * Data is extracted via {@link Duration#toMillis()}.
-     * @param paths The non-empty fields to be searched.
+     * @param path The field to be searched.
+     * @param paths More fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
      * @see org.bson.codecs.jsr310.InstantCodec
      */
-    static DateNearSearchOperator near(final Instant origin, final Duration pivot, final FieldSearchPath... paths) {
-        return near(origin, pivot, asList(notNull("paths", paths)));
+    static DateNearSearchOperator near(final Instant origin, final Duration pivot, final FieldSearchPath path, final FieldSearchPath... paths) {
+        return near(origin, pivot, concat(notNull("path", path), paths));
     }
 
     /**
@@ -261,12 +266,13 @@ public interface SearchOperator extends Bson {
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
      * @param pivot The positive distance in meters from the {@code origin} at which the relevance score drops in half.
-     * @param paths The non-empty fields to be searched.
+     * @param path The field to be searched.
+     * @param paths More fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
      */
-    static GeoNearSearchOperator near(final Point origin, final Number pivot, final FieldSearchPath... paths) {
-        return near(origin, pivot, asList(notNull("paths", paths)));
+    static GeoNearSearchOperator near(final Point origin, final Number pivot, final FieldSearchPath path, final FieldSearchPath... paths) {
+        return near(origin, pivot, concat(notNull("path", path), paths));
     }
 
     /**
