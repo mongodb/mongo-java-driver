@@ -23,14 +23,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-final class SearchFuzzyTest {
+final class FuzzySearchOptionsTest {
     @Test
     void of() {
         assertAll(
                 () -> assertEquals(
                         docExamplePredefined()
                                 .toBsonDocument(),
-                        SearchFuzzy.of(docExampleCustom())
+                        FuzzySearchOptions.of(docExampleCustom())
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
@@ -38,7 +38,7 @@ final class SearchFuzzyTest {
                                 .append("maxEdits", new BsonInt32(1))
                                 .append("prefixLength", new BsonInt32(5))
                                 .append("maxExpansions", new BsonInt32(10)),
-                        SearchFuzzy.defaultSearchFuzzy()
+                        FuzzySearchOptions.fuzzySearchOptions()
                                 .maxEdits(1)
                                 .prefixLength(5)
                                 .maxExpansions(10)
@@ -59,7 +59,7 @@ final class SearchFuzzyTest {
                 () -> assertEquals(
                         new BsonDocument()
                                 .append("maxEdits", new BsonInt32(1)),
-                        SearchFuzzy.defaultSearchFuzzy()
+                        FuzzySearchOptions.fuzzySearchOptions()
                                 .maxEdits(1)
                                 .toBsonDocument()
                 )
@@ -71,7 +71,7 @@ final class SearchFuzzyTest {
         assertEquals(
                 new BsonDocument()
                         .append("prefixLength", new BsonInt32(5)),
-                SearchFuzzy.defaultSearchFuzzy()
+                FuzzySearchOptions.fuzzySearchOptions()
                         .prefixLength(5)
                         .toBsonDocument()
         );
@@ -82,37 +82,37 @@ final class SearchFuzzyTest {
         assertEquals(
                 new BsonDocument()
                         .append("maxExpansions", new BsonInt32(10)),
-                SearchFuzzy.defaultSearchFuzzy()
+                FuzzySearchOptions.fuzzySearchOptions()
                         .maxExpansions(10)
                         .toBsonDocument()
         );
     }
 
     @Test
-    void defaultSearchFuzzy() {
+    void fuzzySearchOptions() {
         assertEquals(
                 new BsonDocument(),
-                SearchFuzzy.defaultSearchFuzzy()
+                FuzzySearchOptions.fuzzySearchOptions()
                         .toBsonDocument()
         );
     }
 
     @Test
-    void defaultSearchFuzzyIsUnmodifiable() {
-        String expected = SearchFuzzy.defaultSearchFuzzy().toBsonDocument().toJson();
-        SearchFuzzy.defaultSearchFuzzy().maxEdits(1);
-        assertEquals(expected, SearchFuzzy.defaultSearchFuzzy().toBsonDocument().toJson());
+    void fuzzySearchOptionsIsUnmodifiable() {
+        String expected = FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().toJson();
+        FuzzySearchOptions.fuzzySearchOptions().maxEdits(1);
+        assertEquals(expected, FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().toJson());
     }
 
     @Test
-    void defaultSearchFuzzyIsImmutable() {
-        String expected = SearchFuzzy.defaultSearchFuzzy().toBsonDocument().toJson();
-        SearchFuzzy.defaultSearchFuzzy().toBsonDocument().append("maxEdits", new BsonInt32(1));
-        assertEquals(expected, SearchFuzzy.defaultSearchFuzzy().toBsonDocument().toJson());
+    void fuzzySearchOptionsIsImmutable() {
+        String expected = FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().toJson();
+        FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().append("maxEdits", new BsonInt32(1));
+        assertEquals(expected, FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().toJson());
     }
 
-    private static SearchFuzzy docExamplePredefined() {
-        return SearchFuzzy.defaultSearchFuzzy().maxEdits(1);
+    private static FuzzySearchOptions docExamplePredefined() {
+        return FuzzySearchOptions.fuzzySearchOptions().maxEdits(1);
     }
 
     private static Document docExampleCustom() {

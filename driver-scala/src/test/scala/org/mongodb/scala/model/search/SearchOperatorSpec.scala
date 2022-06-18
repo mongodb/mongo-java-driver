@@ -20,7 +20,7 @@ import org.mongodb.scala.{ BaseSpec, MongoClient }
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.geojson.{ Point, Position }
-import org.mongodb.scala.model.search.SearchFuzzy.defaultSearchFuzzy
+import org.mongodb.scala.model.search.FuzzySearchOptions.fuzzySearchOptions
 import org.mongodb.scala.model.search.SearchOperator.{
   autocomplete,
   compound,
@@ -46,7 +46,7 @@ class SearchOperatorSpec extends BaseSpec {
           text(fieldPath("fieldName2"), "term1")
             .score(function(logExpression(constantExpression(3)))),
           text(Seq(wildcardPath("wildc*rd"), fieldPath("fieldName3")), Seq("term2", "term3"))
-            .fuzzy(defaultSearchFuzzy()
+            .fuzzy(fuzzySearchOptions()
               .maxEdits(1)
               .prefixLength(2)
               .maxExpansions(3)),

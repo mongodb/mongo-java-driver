@@ -16,7 +16,7 @@
 package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.Beta
-import com.mongodb.client.model.search.{ SearchFuzzy => JSearchFuzzy }
+import com.mongodb.client.model.search.{ FuzzySearchOptions => JFuzzySearchOptions }
 import org.mongodb.scala.bson.conversions.Bson
 
 /**
@@ -27,30 +27,30 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 4.7
  */
 @Beta(Array(Beta.Reason.CLIENT))
-object SearchFuzzy {
+object FuzzySearchOptions {
 
   /**
-   * Creates a `SearchFuzzy` from a `Bson` in situations when there is no builder method that better satisfies your needs.
+   * Creates a `FuzzySearchOptions` from a `Bson` in situations when there is no builder method that better satisfies your needs.
    * This method cannot be used to validate the syntax.
    *
    * <i>Example</i><br>
-   * The following code creates two functionally equivalent `SearchFuzzy`s,
+   * The following code creates two functionally equivalent `FuzzySearchOptions`s,
    * though they may not be equal.
    * {{{
-   *  val fuzzy1: SearchFuzzy = SearchFuzzy.defaultSearchFuzzy().maxEdits(1)
-   *  val fuzzy2: SearchFuzzy = SearchFuzzy.of(Document("maxEdits" -> 1))
+   *  val fuzzy1: FuzzySearchOptions = FuzzySearchOptions.fuzzySearchOptions().maxEdits(1)
+   *  val fuzzy2: FuzzySearchOptions = FuzzySearchOptions.of(Document("maxEdits" -> 1))
    * }}}
    *
-   * @param fuzzy A `Bson` representing the required `SearchFuzzy`.
+   * @param fuzzy A `Bson` representing the required `FuzzySearchOptions`.
    *
-   * @return The requested `SearchFuzzy`.
+   * @return The requested `FuzzySearchOptions`.
    */
-  def of(fuzzy: Bson): SearchFuzzy = JSearchFuzzy.of(fuzzy)
+  def of(fuzzy: Bson): FuzzySearchOptions = JFuzzySearchOptions.of(fuzzy)
 
   /**
-   * Returns `SearchFuzzy` that represents server defaults.
+   * Returns `FuzzySearchOptions` that represents server defaults.
    *
-   * @return `SearchFuzzy` that represents server defaults.
+   * @return `FuzzySearchOptions` that represents server defaults.
    */
-  def defaultSearchFuzzy(): SearchFuzzy = JSearchFuzzy.defaultSearchFuzzy()
+  def fuzzySearchOptions(): FuzzySearchOptions = JFuzzySearchOptions.fuzzySearchOptions()
 }

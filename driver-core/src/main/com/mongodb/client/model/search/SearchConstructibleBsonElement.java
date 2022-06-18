@@ -72,7 +72,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public SearchConstructibleBsonElement fuzzy(@Nullable final SearchFuzzy... options) {
+    public SearchConstructibleBsonElement fuzzy(@Nullable final FuzzySearchOptions... options) {
         return newWithMutatedValue(doc -> {
             doc.remove("synonyms");
             Bson fuzzy;

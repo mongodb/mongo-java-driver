@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 
-import static com.mongodb.client.model.search.SearchFuzzy.defaultSearchFuzzy;
+import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static com.mongodb.client.model.search.SearchScore.boost;
@@ -190,7 +190,7 @@ final class SearchOperatorTest {
                         SearchOperator.text(
                                 singleton(fieldPath("fieldName")),
                                 singleton("term"))
-                                .fuzzy(defaultSearchFuzzy())
+                                .fuzzy(fuzzySearchOptions())
                                 // synonyms overrides fuzzy
                                 .synonyms("synonymMappingName")
                                 .toBsonDocument()
@@ -259,10 +259,10 @@ final class SearchOperatorTest {
                                         // multi must be ignored
                                         .multi("analyzerName"),
                                         singleton("term"))
-                                .fuzzy(defaultSearchFuzzy()
+                                .fuzzy(fuzzySearchOptions()
                                         .maxEdits(2)
                                         .maxExpansions(10),
-                                        defaultSearchFuzzy().maxEdits(1))
+                                        fuzzySearchOptions().maxEdits(1))
                                 .sequentialTokenOrder()
                                 // anyTokenOrder overrides sequentialTokenOrder
                                 .anyTokenOrder()
