@@ -73,7 +73,7 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     }
 
     @Override
-    public SearchOptions option(final String name, final Object value) {
+    public SearchConstructibleBson option(final String name, final Object value) {
         return newAppended(notNull("name", name), notNull("value", value));
     }
 

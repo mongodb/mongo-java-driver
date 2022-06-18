@@ -19,8 +19,6 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import org.bson.conversions.Bson;
 
-import static com.mongodb.assertions.Assertions.notNull;
-
 /**
  * Fuzzy search options that may be used with some {@link SearchOperator}s.
  *
@@ -58,23 +56,23 @@ public interface FuzzySearchOptions extends Bson {
     FuzzySearchOptions maxExpansions(int maxExpansions);
 
     /**
-     * Creates a new {@link FuzzySearchOptions} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
+     * Creates a new {@link FuzzySearchOptions} with the specified option in situations when there is no builder method
+     * that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
      * <i>Example</i><br>
      * The following code creates two functionally equivalent {@link FuzzySearchOptions} objects,
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
-     *  FuzzySearchOptions fuzzy1 = FuzzySearchOptions.fuzzySearchOptions().maxEdits(1);
-     *  FuzzySearchOptions fuzzy2 = FuzzySearchOptions.of(new Document("maxEdits", 1));
+     *  FuzzySearchOptions options1 = FuzzySearchOptions.fuzzySearchOptions().maxEdits(1)
+     *  FuzzySearchOptions options2 = FuzzySearchOptions.fuzzySearchOptions().option("maxEdits", 1)
      * }</pre>
      *
-     * @param fuzzy A {@link Bson} representing the required {@link FuzzySearchOptions}.
+     * @param name The option name.
+     * @param value The option value.
      * @return A new {@link FuzzySearchOptions}.
      */
-    static FuzzySearchOptions of(final Bson fuzzy) {
-        return new SearchConstructibleBson(notNull("fuzzy", fuzzy));
-    }
+    FuzzySearchOptions option(String name, Object value);
 
     /**
      * Returns {@link FuzzySearchOptions} that represents server defaults.

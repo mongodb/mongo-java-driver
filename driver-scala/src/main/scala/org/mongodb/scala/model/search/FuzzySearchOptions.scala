@@ -17,7 +17,6 @@ package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.Beta
 import com.mongodb.client.model.search.{ FuzzySearchOptions => JFuzzySearchOptions }
-import org.mongodb.scala.bson.conversions.Bson
 
 /**
  * Fuzzy search options that may be used with some `SearchOperator`s.
@@ -28,24 +27,6 @@ import org.mongodb.scala.bson.conversions.Bson
  */
 @Beta(Array(Beta.Reason.CLIENT))
 object FuzzySearchOptions {
-
-  /**
-   * Creates a `FuzzySearchOptions` from a `Bson` in situations when there is no builder method that better satisfies your needs.
-   * This method cannot be used to validate the syntax.
-   *
-   * <i>Example</i><br>
-   * The following code creates two functionally equivalent `FuzzySearchOptions`s,
-   * though they may not be equal.
-   * {{{
-   *  val fuzzy1: FuzzySearchOptions = FuzzySearchOptions.fuzzySearchOptions().maxEdits(1)
-   *  val fuzzy2: FuzzySearchOptions = FuzzySearchOptions.of(Document("maxEdits" -> 1))
-   * }}}
-   *
-   * @param fuzzy A `Bson` representing the required `FuzzySearchOptions`.
-   *
-   * @return The requested `FuzzySearchOptions`.
-   */
-  def of(fuzzy: Bson): FuzzySearchOptions = JFuzzySearchOptions.of(fuzzy)
 
   /**
    * Returns `FuzzySearchOptions` that represents server defaults.

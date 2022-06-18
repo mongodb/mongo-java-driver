@@ -17,52 +17,28 @@ package com.mongodb.client.model.search;
 
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 final class FuzzySearchOptionsTest {
     @Test
-    void of() {
-        assertAll(
-                () -> assertEquals(
-                        docExamplePredefined()
-                                .toBsonDocument(),
-                        FuzzySearchOptions.of(docExampleCustom())
-                                .toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument()
-                                .append("maxEdits", new BsonInt32(1))
-                                .append("prefixLength", new BsonInt32(5))
-                                .append("maxExpansions", new BsonInt32(10)),
-                        FuzzySearchOptions.fuzzySearchOptions()
-                                .maxEdits(1)
-                                .prefixLength(5)
-                                .maxExpansions(10)
-                                .toBsonDocument()
-                )
+    void fuzzySearchOptions() {
+        assertEquals(
+                new BsonDocument(),
+                FuzzySearchOptions.fuzzySearchOptions()
+                        .toBsonDocument()
         );
     }
 
     @Test
     void maxEdits() {
-        assertAll(
-                () -> assertEquals(
-                        docExampleCustom()
-                                .toBsonDocument(),
-                        docExamplePredefined()
-                                .toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument()
-                                .append("maxEdits", new BsonInt32(1)),
-                        FuzzySearchOptions.fuzzySearchOptions()
-                                .maxEdits(1)
-                                .toBsonDocument()
-                )
+        assertEquals(
+                new BsonDocument()
+                        .append("maxEdits", new BsonInt32(1)),
+                FuzzySearchOptions.fuzzySearchOptions()
+                        .maxEdits(1)
+                        .toBsonDocument()
         );
     }
 
@@ -89,10 +65,16 @@ final class FuzzySearchOptionsTest {
     }
 
     @Test
-    void fuzzySearchOptions() {
+    void options() {
         assertEquals(
-                new BsonDocument(),
+                new BsonDocument()
+                        .append("maxEdits", new BsonInt32(1))
+                        .append("prefixLength", new BsonInt32(5))
+                        .append("maxExpansions", new BsonInt32(10)),
                 FuzzySearchOptions.fuzzySearchOptions()
+                        .maxEdits(1)
+                        .prefixLength(5)
+                        .maxExpansions(10)
                         .toBsonDocument()
         );
     }
@@ -109,13 +91,5 @@ final class FuzzySearchOptionsTest {
         String expected = FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().toJson();
         FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().append("maxEdits", new BsonInt32(1));
         assertEquals(expected, FuzzySearchOptions.fuzzySearchOptions().toBsonDocument().toJson());
-    }
-
-    private static FuzzySearchOptions docExamplePredefined() {
-        return FuzzySearchOptions.fuzzySearchOptions().maxEdits(1);
-    }
-
-    private static Document docExampleCustom() {
-        return new Document("maxEdits", new BsonInt32(1));
     }
 }
