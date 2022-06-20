@@ -83,13 +83,12 @@ public interface SearchScoreExpression extends Bson {
      * @param origin The point of origin, see {@link GaussSearchScoreExpression#offset(double)}.
      * The value of the Gaussian function is 1 if the value of the {@code path} expression is {@code origin}.
      * @param path The expression whose value is used to calculate the input of the Gaussian function.
-     * @param scale The non-zero distance from the points {@code origin} ± {@link GaussSearchScoreExpression#offset(double) offset}
+     * @param scale The distance from the points {@code origin} ± {@link GaussSearchScoreExpression#offset(double) offset}
      * at which the output of the Gaussian function must decay by the factor of {@link GaussSearchScoreExpression#decay(double) decay}.
      * @return The requested {@link SearchScoreExpression}.
      */
     static GaussSearchScoreExpression gaussExpression(final double origin, final PathSearchScoreExpression path, final double scale) {
         notNull("path", path);
-        isTrueArgument("scale must not be 0", scale != 0);
         Bson value = new Bson() {
             @Override
             public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {

@@ -19,7 +19,6 @@ import com.mongodb.internal.client.model.AbstractConstructibleBsonElement;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 abstract class RangeConstructibleBsonElement<T, S extends RangeConstructibleBsonElement<T, S>> extends AbstractConstructibleBsonElement<S> {
@@ -74,15 +73,6 @@ abstract class RangeConstructibleBsonElement<T, S extends RangeConstructibleBson
             notNull("u", u);
         } else if (u == null) {
             notNull("l", l);
-        }
-        if (l instanceof Comparable && u != null && l.getClass().isAssignableFrom(u.getClass())) {
-            @SuppressWarnings("unchecked")
-            Comparable<T> comparableL = (Comparable<T>) l;
-            if (includeL && includeU) {
-                isTrueArgument("l must be smaller than or equal to u", comparableL.compareTo(u) <= 0);
-            } else {
-                isTrueArgument("l must be smaller than u", comparableL.compareTo(u) < 0);
-            }
         }
         return newWithMutatedValue(doc -> {
             doc.remove("gte");

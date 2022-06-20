@@ -188,7 +188,7 @@ public interface SearchOperator extends Bson {
      *
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
-     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * @param pivot The distance from the {@code origin} at which the relevance score drops in half.
      * @param path The field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
@@ -202,7 +202,7 @@ public interface SearchOperator extends Bson {
      *
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
-     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * @param pivot The distance from the {@code origin} at which the relevance score drops in half.
      * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
@@ -220,7 +220,7 @@ public interface SearchOperator extends Bson {
      *
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
-     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * @param pivot The distance from the {@code origin} at which the relevance score drops in half.
      * Data is extracted via {@link Duration#toMillis()}.
      * @param path The field to be searched.
      * @return The requested {@link SearchOperator}.
@@ -236,7 +236,7 @@ public interface SearchOperator extends Bson {
      *
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
-     * @param pivot The positive distance from the {@code origin} at which the relevance score drops in half.
+     * @param pivot The distance from the {@code origin} at which the relevance score drops in half.
      * Data is extracted via {@link Duration#toMillis()}.
      * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchOperator}.
@@ -247,8 +247,6 @@ public interface SearchOperator extends Bson {
         Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
         isTrueArgument("paths must not be empty", pathIterator.hasNext());
         notNull("pivot", pivot);
-        isTrueArgument("pivot must be positive", !pivot.isZero());
-        isTrueArgument("pivot must be positive", !pivot.isNegative());
         return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
                 .append("path", combineToBsonValue(pathIterator, true))
                 .append("pivot", pivot.toMillis()));
@@ -259,7 +257,7 @@ public interface SearchOperator extends Bson {
      *
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
-     * @param pivot The positive distance in meters from the {@code origin} at which the relevance score drops in half.
+     * @param pivot The distance in meters from the {@code origin} at which the relevance score drops in half.
      * @param path The field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator
@@ -273,7 +271,7 @@ public interface SearchOperator extends Bson {
      *
      * @param origin The origin from which the proximity of the results is measured.
      * The relevance score is 1 if the values of the fields are {@code origin}.
-     * @param pivot The positive distance in meters from the {@code origin} at which the relevance score drops in half.
+     * @param pivot The distance in meters from the {@code origin} at which the relevance score drops in half.
      * @param paths The non-empty fields to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/near/ near operator

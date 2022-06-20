@@ -23,7 +23,6 @@ import org.bson.BsonDouble;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -40,12 +39,11 @@ public interface SearchScore extends Bson {
     /**
      * Returns a {@link SearchScore} that instructs to multiply the score by the specified {@code value}.
      *
-     * @param value The positive value to multiply the score by.
+     * @param value The value to multiply the score by.
      * @return The requested {@link SearchScore}.
      * @mongodb.atlas.manual atlas-search/scoring/#boost boost score modifier
      */
     static ValueBoostSearchScore boost(final float value) {
-        isTrueArgument("value must be positive", value > 0);
         return new SearchConstructibleBsonElement("boost", new BsonDocument("value", new BsonDouble(value)));
     }
 
@@ -64,13 +62,12 @@ public interface SearchScore extends Bson {
     /**
      * Returns a {@link SearchScore} that instructs to replace the score with the specified {@code value}.
      *
-     * @param value The positive value to replace the score with.
+     * @param value The value to replace the score with.
      * @return The requested {@link SearchScore}.
      * @mongodb.atlas.manual atlas-search/scoring/#constant constant score modifier
      * @see SearchScoreExpression#constantExpression(float)
      */
     static ConstantSearchScore constant(final float value) {
-        isTrueArgument("value must be positive", value > 0);
         return new SearchConstructibleBsonElement("constant", new BsonDocument("value", new BsonDouble(value)));
     }
 
