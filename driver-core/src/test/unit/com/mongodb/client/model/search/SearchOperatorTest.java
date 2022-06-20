@@ -273,30 +273,6 @@ final class SearchOperatorTest {
                         // queries must not be empty
                         SearchOperator.numberRange(emptyList())
                 ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in an open interval
-                        SearchOperator.numberRange(fieldPath("fieldName")).gtLt(0, 0)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in an open interval
-                        SearchOperator.numberRange(fieldPath("fieldName")).gtLt(1, 0)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.numberRange(fieldPath("fieldName")).gtLte(0, 0)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.numberRange(fieldPath("fieldName")).gtLte(1, 0)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.numberRange(fieldPath("fieldName")).gteLt(0, 0)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.numberRange(fieldPath("fieldName")).gteLt(1, 0)
-                ),
                 () -> assertEquals(
                         new BsonDocument("range",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
@@ -394,30 +370,6 @@ final class SearchOperatorTest {
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // queries must not be empty
                         SearchOperator.dateRange(emptyList())
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in an open interval
-                        SearchOperator.dateRange(fieldPath("fieldName")).gtLt(Instant.EPOCH, Instant.EPOCH)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in an open interval
-                        SearchOperator.dateRange(fieldPath("fieldName")).gtLt(Instant.now(), Instant.EPOCH)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.dateRange(fieldPath("fieldName")).gtLte(Instant.EPOCH, Instant.EPOCH)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.dateRange(fieldPath("fieldName")).gtLte(Instant.now(), Instant.EPOCH)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.dateRange(fieldPath("fieldName")).gteLt(Instant.EPOCH, Instant.EPOCH)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // l must be smaller than u in a half-open interval
-                        SearchOperator.dateRange(fieldPath("fieldName")).gteLt(Instant.now(), Instant.EPOCH)
                 ),
                 () -> assertEquals(
                         new BsonDocument("range",
@@ -528,14 +480,6 @@ final class SearchOperatorTest {
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // paths must not be empty
                         SearchOperator.near(new Point(new Position(0, 0)), 1, emptyList())
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // pivot must be positive
-                        SearchOperator.near(Instant.EPOCH, Duration.ZERO, fieldPath("fieldPath"))
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // pivot must be positive
-                        SearchOperator.near(Instant.EPOCH, Duration.ofMillis(-1), fieldPath("fieldPath"))
                 ),
                 () -> assertEquals(
                         new BsonDocument("near",
