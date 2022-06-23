@@ -23,8 +23,10 @@ import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionClosedEvent;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolReadyEvent;
+import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
@@ -183,6 +185,12 @@ final class EventMatcher {
             case "poolReadyEvent":
                 eventClass = ConnectionPoolReadyEvent.class;
                 break;
+            case "connectionCreatedEvent":
+                eventClass = ConnectionCreatedEvent.class;
+                break;
+            case "connectionReadyEvent":
+                eventClass = ConnectionReadyEvent.class;
+                break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + event.getFirstKey());
         }
@@ -252,6 +260,9 @@ final class EventMatcher {
         }
         @SuppressWarnings("OptionalGetWithoutIsPresent")
         BsonDocument expectedEventContents = expectedEvent.values().stream().findFirst().get().asDocument();
+        if (expectedEventContents.isEmpty()) {
+            return expectedEventContents;
+        }
         if (expectedEventContents.size() != 1 || !expectedEventContents.getFirstKey().equals("newDescription")
                 || expectedEventContents.getDocument("newDescription").size() != 1) {
             throw new UnsupportedOperationException("Unsupported event contents " + expectedEvent);
@@ -261,6 +272,9 @@ final class EventMatcher {
 
     private static boolean serverDescriptionChangedEventMatches(final BsonDocument expectedEventContents,
             final ServerDescriptionChangedEvent event) {
+        if (expectedEventContents.isEmpty()) {
+            return true;
+        }
         String newType = expectedEventContents.getDocument("newDescription").getString("type").getValue();
         //noinspection SwitchStatementWithTooFewBranches
         switch (newType) {

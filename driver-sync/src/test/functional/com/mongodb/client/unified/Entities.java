@@ -100,7 +100,7 @@ public final class Entities {
     private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
             asList(
                     "id", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
-                    "observeEvents", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
+                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, ExecutorService> threads = new HashMap<>();
     private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
@@ -113,6 +113,7 @@ public final class Entities {
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
     private final Map<String, ClientEncryption> clientEncryptions = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
+    private final Map<String, TestLoggingInterceptor> clientLoggingInterceptors = new HashMap<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
@@ -263,6 +264,10 @@ public final class Entities {
         return getEntity(id + "-command-listener", clientCommandListeners, "command listener");
     }
 
+    public TestLoggingInterceptor getClientLoggingInterceptor(final String id) {
+        return getEntity(id + "-logging-interceptor", clientLoggingInterceptors, "logging interceptor");
+    }
+
     public TestConnectionPoolListener getConnectionPoolListener(final String id) {
         return getEntity(id + "-connection-pool-listener", clientConnectionPoolListeners, "connection pool listener");
     }
@@ -350,6 +355,8 @@ public final class Entities {
         } else {
             clientSettingsBuilder = getMongoClientSettingsBuilder();
         }
+
+        clientSettingsBuilder.applicationName(id);
 
         TestServerListener testClusterListener = new TestServerListener();
         clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerListener(testClusterListener));
@@ -486,7 +493,13 @@ public final class Entities {
             }
             clientSettingsBuilder.serverApi(serverApiBuilder.build());
         }
-        putEntity(id, mongoClientSupplier.apply(clientSettingsBuilder.build()), clients);
+        MongoClientSettings clientSettings = clientSettingsBuilder.build();
+
+        if (entity.containsKey("observeLogMessages")) {
+            putEntity(id + "-logging-interceptor", new TestLoggingInterceptor(clientSettings.getApplicationName()), clientLoggingInterceptors);
+        }
+
+        putEntity(id, mongoClientSupplier.apply(clientSettings), clients);
         if (waitForPoolAsyncWorkManagerStart) {
             waitForPoolAsyncWorkManagerStart();
         }
@@ -619,18 +632,11 @@ public final class Entities {
     }
 
     public void close() {
-        for (MongoCursor<BsonDocument> cursor : cursors.values()) {
-            cursor.close();
-        }
-        for (ClientSession session : sessions.values()) {
-            session.close();
-        }
-        for (MongoClient client : clients.values()) {
-            client.close();
-        }
-        for (ExecutorService executorService : threads.values()) {
-            executorService.shutdownNow();
-        }
+        cursors.values().forEach(MongoCursor::close);
+        sessions.values().forEach(ClientSession::close);
+        clients.values().forEach(MongoClient::close);
+        clientLoggingInterceptors.values().forEach(TestLoggingInterceptor::close);
+        threads.values().forEach(ExecutorService::shutdownNow);
     }
 
     private static class EntityCommandListener implements CommandListener {

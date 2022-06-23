@@ -143,6 +143,7 @@
         <exclude name="UnnecessaryObjectReferences"/>
         <exclude name="UnnecessaryBigDecimalInstantiation"/>
         <exclude name="UnnecessarySetter"/>
+        <exclude name="UnnecessaryGString"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/unused.xml'>
         <rule-config name='UnusedObject'>

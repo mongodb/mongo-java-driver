@@ -107,6 +107,7 @@ public abstract class UnifiedTest {
         private final ValueMatcher valueMatcher = new ValueMatcher(entities, context);
         private final ErrorMatcher errorMatcher = new ErrorMatcher(context, valueMatcher);
         private final EventMatcher eventMatcher = new EventMatcher(valueMatcher, context);
+        private final LogMatcher logMatcher = new LogMatcher(valueMatcher, context);
 
         AssertionContext getAssertionContext() {
             return context;
@@ -122,6 +123,10 @@ public abstract class UnifiedTest {
 
         EventMatcher getEventMatcher() {
             return eventMatcher;
+        }
+
+        LogMatcher getLogMatcher() {
+            return logMatcher;
         }
     }
 
@@ -229,6 +234,10 @@ public abstract class UnifiedTest {
         if (definition.containsKey("expectEvents")) {
             compareEvents(rootContext, definition);
         }
+
+        if (definition.containsKey("expectLogMessages")) {
+            compareLogMessages(rootContext, definition);
+        }
     }
 
     private void compareEvents(final UnifiedTestContext context, final BsonDocument definition) {
@@ -248,6 +257,17 @@ public abstract class UnifiedTest {
             } else {
                 throw new UnsupportedOperationException("Unexpected event type: " + eventType);
             }
+        }
+    }
+
+    private void compareLogMessages(final UnifiedTestContext rootContext, final BsonDocument definition) {
+        for (BsonValue cur : definition.getArray("expectLogMessages")) {
+            BsonDocument curLogMessagesForClient = cur.asDocument();
+            String clientId = curLogMessagesForClient.getString("client").getValue();
+            TestLoggingInterceptor loggingInterceptor =
+                    entities.getClientLoggingInterceptor(clientId);
+            rootContext.getLogMatcher().assertLogMessageEquality(clientId, curLogMessagesForClient.getArray("messages"),
+                    loggingInterceptor.getMessages());
         }
     }
 
@@ -544,6 +564,8 @@ public abstract class UnifiedTest {
                 break;
             case "poolClearedEvent":
             case "poolReadyEvent":
+            case "connectionCreatedEvent":
+            case "connectionReadyEvent":
                 context.getEventMatcher().waitForConnectionPoolEvents(clientId, event, count, entities.getConnectionPoolListener(clientId));
                 break;
             default:
