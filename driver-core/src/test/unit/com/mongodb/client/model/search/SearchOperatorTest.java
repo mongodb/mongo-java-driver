@@ -260,9 +260,8 @@ final class SearchOperatorTest {
                                         .multi("analyzerName"),
                                         singleton("term"))
                                 .fuzzy(fuzzySearchOptions()
-                                        .maxEdits(2)
-                                        .maxExpansions(10),
-                                        fuzzySearchOptions().maxEdits(1))
+                                        .maxExpansions(10)
+                                        .maxEdits(1))
                                 .sequentialTokenOrder()
                                 // anyTokenOrder overrides sequentialTokenOrder
                                 .anyTokenOrder()
