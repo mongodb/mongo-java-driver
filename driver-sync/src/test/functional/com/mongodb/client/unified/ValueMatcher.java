@@ -74,6 +74,9 @@ final class ValueMatcher {
                     case "$$matchesHexBytes":
                         expected = expectedDocument.getString("$$matchesHexBytes");
                         break;
+                    case "$$matchAsRoot":
+                        expected = expectedDocument.getDocument("$$matchAsRoot");
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
                 }
@@ -86,6 +89,7 @@ final class ValueMatcher {
                 assertTrue(context.getMessage("Actual value must be a document but is " + actual.getBsonType()), actual.isDocument());
                 BsonDocument actualDocument = actual.asDocument();
                 expectedDocument.forEach((key, value) -> {
+                    BsonValue actualValue = actualDocument.get(key);
                     if (value.isDocument() && value.asDocument().size() == 1 && value.asDocument().getFirstKey().startsWith("$$")) {
                         switch (value.asDocument().getFirstKey()) {
                             case "$$exists":
@@ -98,10 +102,11 @@ final class ValueMatcher {
                                 }
                                 return;
                             case "$$type":
+                                assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
                                 assertExpectedType(actualDocument.get(key), value.asDocument().get("$$type"));
                                 return;
                             case "$$unsetOrMatches":
-                                if (!actualDocument.containsKey(key)) {
+                                if (actualValue == null) {
                                     return;
                                 }
                                 value = value.asDocument().get("$$unsetOrMatches");
@@ -115,13 +120,17 @@ final class ValueMatcher {
                             case "$$sessionLsid":
                                 value = entities.getSessionIdentifier(value.asDocument().getString("$$sessionLsid").getValue());
                                 break;
+                            case "$$matchAsDocument":
+                                actualValue = BsonDocument.parse(actualValue.asString().getValue());
+                                value = value.asDocument().getDocument("$$matchAsDocument");
+                                break;
                             default:
                                 throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
                         }
                     }
 
-                    assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
-                    assertValuesMatch(value, actualDocument.get(key), key, -1);
+                    assertNotNull(context.getMessage("Actual document must contain key " + key), actualValue);
+                    assertValuesMatch(value, actualValue, key, -1);
                 });
             } else if (expected.isArray()) {
                 assertTrue(context.getMessage("Actual value must be an array but is " + actual.getBsonType()), actual.isArray());
