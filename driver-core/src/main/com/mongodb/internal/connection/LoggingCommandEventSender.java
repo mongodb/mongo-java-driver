@@ -18,9 +18,10 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.RequestContext;
+import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -37,15 +38,15 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandSucceededEvent;
-import static java.lang.String.format;
 
 class LoggingCommandEventSender implements CommandEventSender {
     private static final int MAX_COMMAND_DOCUMENT_LENGTH_TO_LOG = 1000;
+    private static final double NANOS_PER_MILLI = 1_000_000.0d;
 
     private final ConnectionDescription description;
     @Nullable private final CommandListener commandListener;
     private final RequestContext requestContext;
-    private final Logger logger;
+    private final StructuredLogger logger;
     private final long startTimeNanos;
     private final CommandMessage message;
     private final String commandName;
@@ -55,7 +56,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
             final ConnectionDescription description,
             @Nullable final CommandListener commandListener, final RequestContext requestContext, final CommandMessage message,
-            final ByteBufferBsonOutput bsonOutput, final Logger logger) {
+            final ByteBufferBsonOutput bsonOutput, final StructuredLogger logger) {
         this.description = description;
         this.commandListener = commandListener;
         this.requestContext = requestContext;
@@ -71,12 +72,33 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendStartedEvent() {
         if (loggingRequired()) {
-            String commandString = redactionRequired ? format("{\"%s\": ...", commandName) : getTruncatedJsonCommand();
-            // TODO: log RequestContext?
-            logger.debug(
-                    format("Sending command '%s' with request id %d to database %s on connection [%s] to server %s",
-                            commandString, message.getId(),
-                            message.getNamespace().getDatabaseName(), description.getConnectionId(), description.getServerAddress()));
+            String commandString = redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument);
+            if (description.getServiceId() == null) {
+                logger.debug("Command started", getClusterId(),
+                        "Command \"%s\" started on database %s using a connection with driver-generated ID %d and server-generated ID %d "
+                                + "to %s:%s. The request ID is %s. Command: %s",
+                        "commandName", commandName,
+                        "databaseName", message.getNamespace().getDatabaseName(),
+                        "driverConnectionId", description.getConnectionId().getLocalValue(),
+                        "serverConnectionId", description.getConnectionId().getServerValue(),
+                        "serverHost", description.getServerAddress().getHost(),
+                        "serverPort", description.getServerAddress().getPort(),
+                        "requestId", message.getId(),
+                        "command", commandString);
+            } else {
+                logger.debug("Command started", getClusterId(),
+                        "Command \"%s\" started on database %s using a connection with driver-generated ID %d and server-generated ID %d "
+                                + "to %s:%s with service ID %s. The request ID is %s. Command: %s",
+                        "commandName", commandName,
+                        "databaseName", message.getNamespace().getDatabaseName(),
+                        "driverConnectionId", description.getConnectionId().getLocalValue(),
+                        "serverConnectionId", description.getConnectionId().getServerValue(),
+                        "serverHost", description.getServerAddress().getHost(),
+                        "serverPort", description.getServerAddress().getPort(),
+                        "serviceId", description.getServiceId(),
+                        "requestId", message.getId(),
+                        "command", commandString);
+            }
         }
 
         if (eventRequired()) {
@@ -91,7 +113,114 @@ class LoggingCommandEventSender implements CommandEventSender {
         commandDocument = null;
     }
 
-    private String getTruncatedJsonCommand() {
+    @Override
+    public void sendFailedEvent(final Throwable t) {
+        Throwable commandEventException = t;
+        if (t instanceof MongoCommandException && redactionRequired) {
+            MongoCommandException originalCommandException = (MongoCommandException) t;
+            commandEventException = new MongoCommandException(new BsonDocument(), originalCommandException.getServerAddress());
+            commandEventException.setStackTrace(t.getStackTrace());
+        }
+        long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
+
+        if (loggingRequired()) {
+            if (description.getServiceId() == null) {
+                logger.debug("Command failed", getClusterId(), commandEventException,
+                        "Command \"%s\" failed in %.2f ms using a connection with driver-generated ID %d and server-generated ID "
+                                + "%d to %s:%s. The request ID is %d.",
+                        "commandName", commandName,
+                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
+                        "driverConnectionId", description.getConnectionId().getLocalValue(),
+                        "serverConnectionId", description.getConnectionId().getServerValue(),
+                        "serverHost", description.getServerAddress().getHost(),
+                        "serverPort", description.getServerAddress().getPort(),
+                        "requestId", message.getId());
+            } else {
+                logger.debug("Command failed", getClusterId(), commandEventException,
+                        "Command \"%s\" failed in %.2f ms using a connection with driver-generated ID %d and server-generated ID "
+                                + "%d to %s:%s with service ID %s. The request ID is %d.",
+                        "commandName", commandName,
+                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
+                        "driverConnectionId", description.getConnectionId().getLocalValue(),
+                        "serverConnectionId", description.getConnectionId().getServerValue(),
+                        "serverHost", description.getServerAddress().getHost(),
+                        "serverPort", description.getServerAddress().getPort(),
+                        "serviceId", description.getServiceId(),
+                        "requestId", message.getId());
+            }
+        }
+
+        if (eventRequired()) {
+            sendCommandFailedEvent(message, commandName, description, elapsedTimeNanos, commandEventException, commandListener,
+                    requestContext);
+        }
+    }
+
+    @Override
+    public void sendSucceededEvent(final ResponseBuffers responseBuffers) {
+        sendSucceededEvent(responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec()));
+    }
+
+    @Override
+    public void sendSucceededEventForOneWayCommand() {
+        sendSucceededEvent(new BsonDocument("ok", new BsonInt32(1)));
+    }
+
+    private void sendSucceededEvent(final BsonDocument reply) {
+        long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
+
+        if (loggingRequired()) {
+            BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
+            String replyString = redactionRequired ? "{}" : getTruncatedJsonCommand(responseDocumentForEvent);
+            if (description.getServiceId() == null) {
+                logger.debug("Command succeeded", getClusterId(),
+                        "Command \"%s\" succeeded in %.2f ms using a connection with driver-generated ID %d and server-generated ID %d to "
+                                + "%s:%s. The request ID is %d. Command reply: %s",
+                        "commandName", commandName,
+                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
+                        "driverConnectionId", description.getConnectionId().getLocalValue(),
+                        "serverConnectionId", description.getConnectionId().getServerValue(),
+                        "serverHost", description.getServerAddress().getHost(),
+                        "serverPort", description.getServerAddress().getPort(),
+                        "requestId", message.getId(),
+                        "reply", replyString);
+            } else {
+                logger.debug("Command succeeded", getClusterId(),
+                        "Command \"%s\" succeeded in %.2f ms using a connection with driver-generated ID %d and server-generated ID %d to "
+                                + " %s:%s with service ID %s. The request ID is %d. Command reply: %s",
+                        "commandName", commandName,
+                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
+                        "driverConnectionId", description.getConnectionId().getLocalValue(),
+                        "serverConnectionId", description.getConnectionId().getServerValue(),
+                        "serverHost", description.getServerAddress().getHost(),
+                        "serverPort", description.getServerAddress().getPort(),
+                        "serviceId", description.getServiceId(),
+                        "requestId", message.getId(),
+                        "reply", replyString);
+            }
+        }
+
+        if (eventRequired()) {
+            BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
+            sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
+                    elapsedTimeNanos, commandListener, requestContext);
+        }
+    }
+
+    private boolean loggingRequired() {
+        return logger.isDebugEnabled(getClusterId());
+    }
+
+
+    private ClusterId getClusterId() {
+        return description.getConnectionId().getServerId().getClusterId();
+    }
+
+    private boolean eventRequired() {
+        return commandListener != null;
+    }
+
+    private static String getTruncatedJsonCommand(final BsonDocument commandDocument) {
         StringWriter writer = new StringWriter();
 
         try (BsonReader bsonReader = commandDocument.asBsonReader()) {
@@ -107,79 +236,4 @@ class LoggingCommandEventSender implements CommandEventSender {
             return writer.toString();
         }
     }
-
-    @Override
-    public void sendFailedEvent(final Throwable t) {
-        Throwable commandEventException = t;
-        if (t instanceof MongoCommandException && redactionRequired) {
-            commandEventException = new MongoCommandException(new BsonDocument(), description.getServerAddress());
-        }
-        long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
-
-        if (loggingRequired()) {
-            logger.debug(
-                    format("Execution of command with request id %d failed to complete successfully in %s ms on connection [%s] "
-                                    + "to server %s",
-                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
-                            description.getServerAddress()),
-                    commandEventException);
-        }
-
-        if (eventRequired()) {
-            sendCommandFailedEvent(message, commandName, description, elapsedTimeNanos, commandEventException, commandListener,
-                    requestContext);
-        }
-    }
-
-    @Override
-    public void sendSucceededEvent(final ResponseBuffers responseBuffers) {
-        long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
-
-        if (loggingRequired()) {
-            logger.debug(
-                    format("Execution of command with request id %d completed successfully in %s ms on connection [%s] to server %s",
-                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
-                            description.getServerAddress()));
-        }
-
-        if (eventRequired()) {
-            BsonDocument responseDocumentForEvent = redactionRequired
-                    ? new BsonDocument()
-                    : responseBuffers.getResponseDocument(message.getId(), new RawBsonDocumentCodec());
-            sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                    elapsedTimeNanos, commandListener, requestContext);
-        }
-    }
-
-    @Override
-    public void sendSucceededEventForOneWayCommand() {
-        long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
-
-        if (loggingRequired()) {
-            logger.debug(
-                    format("Execution of one-way command with request id %d completed successfully in %s ms on connection [%s] "
-                                    + "to server %s",
-                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
-                            description.getServerAddress()));
-        }
-
-        if (eventRequired()) {
-            BsonDocument responseDocumentForEvent = new BsonDocument("ok", new BsonInt32(1));
-            sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                    elapsedTimeNanos, commandListener, requestContext);
-        }
-    }
-
-    private boolean loggingRequired() {
-        return logger.isDebugEnabled();
-    }
-
-    private boolean eventRequired() {
-        return commandListener != null;
-    }
-
-    private String getElapsedTimeFormattedInMilliseconds(final long elapsedTimeNanos) {
-        return DecimalFormatHelper.format("#0.00", elapsedTimeNanos / 1000000.0);
-    }
-
 }

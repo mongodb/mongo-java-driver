@@ -21,6 +21,7 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.internal.logging.StructuredLogMessage;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -141,6 +142,11 @@ abstract class ContextElement {
                     + "   Count: " + count + "\n";
         }
     }
+    public static ContextElement ofLogMessages(final String client, final BsonArray expectedMessages,
+            final List<StructuredLogMessage> actualMessages) {
+        return new LogMessageMatchingContextElement(client, expectedMessages, actualMessages);
+    }
+
 
     private static class TestContextContextElement extends ContextElement {
         private final BsonDocument definition;
@@ -370,6 +376,30 @@ abstract class ContextElement {
                     + "   event position: " + eventPosition + "\n"
                     + "   expected event: " + expectedEvent + "\n"
                     + "   actual event:   " + connectionPoolEventToDocument(actualEvent) + "\n";
+        }
+    }
+
+
+    private static class LogMessageMatchingContextElement extends ContextElement {
+        private final String client;
+        private final BsonArray expectedMessages;
+        private final List<StructuredLogMessage> actualMessages;
+
+        LogMessageMatchingContextElement(final String client, final BsonArray expectedMessages,
+                final List<StructuredLogMessage> actualMessages) {
+            super();
+            this.client = client;
+            this.expectedMessages = expectedMessages;
+            this.actualMessages = actualMessages;
+        }
+
+        @Override
+        public String toString() {
+            // TODO: fix this up to be like the others
+            return "Log Message Matching Context\n"
+                    + "client='" + client + '\''
+                    + ", expectedMessages=" + expectedMessages
+                    + ", actualMessages=" + actualMessages;
         }
     }
 
