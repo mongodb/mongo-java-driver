@@ -19,7 +19,11 @@
 
 package com.mongodb.internal.connection.tlschannel.util;
 
+import com.mongodb.internal.VisibleForTesting;
+
 import javax.net.ssl.SSLEngineResult;
+
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 public class Util {
 
@@ -44,15 +48,24 @@ public class Util {
   }
 
   public static int getJavaMajorVersion() {
-    String version = System.getProperty("java.version");
-    if (version.startsWith("1.")) {
-      version = version.substring(2, 3);
-    } else {
-      int dot = version.indexOf(".");
-      if (dot != -1) {
-        version = version.substring(0, dot);
+      return getJavaMajorVersion(System.getProperty("java.version"));
+  }
+
+  @VisibleForTesting(otherwise = PRIVATE)
+  static int getJavaMajorVersion(final String javaVersion) {
+      String version = javaVersion;
+      if (version.startsWith("1.")) {
+          version = version.substring(2);
       }
-    }
-    return Integer.parseInt(version);
+      // Allow these formats:
+      // 1.8.0_72-ea
+      // 9-ea
+      // 9
+      // 9.0.1
+      // 17
+      int dotPos = version.indexOf('.');
+      int dashPos = version.indexOf('-');
+      return Integer.parseInt(
+              version.substring(0, dotPos > -1 ? dotPos : dashPos > -1 ? dashPos : version.length()));
   }
 }
