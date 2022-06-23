@@ -52,7 +52,7 @@ public class Util {
   }
 
   @VisibleForTesting(otherwise = PRIVATE)
-  public static int getJavaMajorVersion(final String javaVersion) {
+  static int getJavaMajorVersion(final String javaVersion) {
       String version = javaVersion;
       if (version.startsWith("1.")) {
           version = version.substring(2);

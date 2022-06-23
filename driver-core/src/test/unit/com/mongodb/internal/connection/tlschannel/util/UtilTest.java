@@ -29,6 +29,7 @@ final class UtilTest {
                 () -> assertEquals(9, Util.getJavaMajorVersion("9")),
                 () -> assertEquals(9, Util.getJavaMajorVersion("9.0.1")),
                 () -> assertEquals(17, Util.getJavaMajorVersion("17")),
+                () -> assertEquals(19, Util.getJavaMajorVersion("19-ea")),
                 () -> assertEquals(42, Util.getJavaMajorVersion("42.1.0-ea"))
         );
     }
