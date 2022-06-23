@@ -466,7 +466,8 @@ object Aggregates {
    *                    Sorting is required by certain functions and may be required by some windows (see [[Windows]] for more details).
    *                    Sorting is used only for the purpose of computing window functions and does not guarantee ordering
    *                    of the output documents.
-   * @param output      A nonempty list of [[WindowedComputation windowed computations]].
+   * @param output      A [[WindowedComputation windowed computation]].
+   * @param moreOutput  More [[WindowedComputation windowed computations]].
    * @tparam TExpression The `partitionBy` expression type.
    * @return The `\$setWindowFields` pipeline stage.
    * @see [[https://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
@@ -476,7 +477,36 @@ object Aggregates {
   def setWindowFields[TExpression >: Null](
       partitionBy: Option[TExpression],
       sortBy: Option[Bson],
-      output: WindowedComputation*
+      output: WindowedComputation,
+      moreOutput: WindowedComputation*
+  ): Bson =
+    JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output, moreOutput: _*)
+
+  /**
+   * Creates a `\$setWindowFields` pipeline stage, which allows using window operators.
+   * This stage partitions the input documents similarly to the [[Aggregates.group \$group]] pipeline stage,
+   * optionally sorts them, computes fields in the documents by computing window functions over [[Window windows]] specified per
+   * function, and outputs the documents. The important difference from the `\$group` pipeline stage is that
+   * documents belonging to the same partition or window are not folded into a single document.
+   *
+   * @param partitionBy Optional partitioning of data specified like `id` in [[Aggregates.group]].
+   *                    If `None`, then all documents belong to the same partition.
+   * @param sortBy      Fields to sort by. The syntax is identical to `sort` in [[Aggregates.sort]] (see [[Sorts]]).
+   *                    Sorting is required by certain functions and may be required by some windows (see [[Windows]] for more details).
+   *                    Sorting is used only for the purpose of computing window functions and does not guarantee ordering
+   *                    of the output documents.
+   * @param output      A nonempty list of [[WindowedComputation windowed computations]].
+   *                    Specifying an empty list is not an error, but the resulting stage does not do anything useful.
+   * @tparam TExpression The `partitionBy` expression type.
+   * @return The `\$setWindowFields` pipeline stage.
+   * @see [[https://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater.
+   */
+  def setWindowFields[TExpression >: Null](
+      partitionBy: Option[TExpression],
+      sortBy: Option[Bson],
+      output: Iterable[_ <: WindowedComputation]
   ): Bson =
     JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output.asJava)
 
