@@ -34,6 +34,7 @@ import static com.mongodb.internal.connection.ClientMetadataHelper.createClientM
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
+    private final boolean isMonitoringConnection;
     private final StreamFactory streamFactory;
     private final BsonDocument clientMetadataDocument;
     private final List<MongoCompressor> compressorList;
@@ -42,12 +43,23 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ServerApi serverApi;
     private final MongoCredentialWithCache credential;
 
-    InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode, final StreamFactory streamFactory,
+    InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode,
+            final StreamFactory streamFactory,
+            @Nullable final MongoCredentialWithCache credential,
+            @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
+            final List<MongoCompressor> compressorList,
+            @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
+        this(clusterConnectionMode, false, streamFactory, credential, applicationName, mongoDriverInformation, compressorList,
+                commandListener, serverApi);
+    }
+    InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
+                                    final StreamFactory streamFactory,
                                     @Nullable final MongoCredentialWithCache credential,
                                     @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
                                     final List<MongoCompressor> compressorList,
                                     @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
         this.clusterConnectionMode = clusterConnectionMode;
+        this.isMonitoringConnection = isMonitoringConnection;
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.compressorList = notNull("compressorList", compressorList);
         this.commandListener = commandListener;
@@ -59,9 +71,9 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     @Override
     public InternalConnection create(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
         Authenticator authenticator = credential == null ? null : createAuthenticator(credential);
-        return new InternalStreamConnection(clusterConnectionMode, serverId, connectionGenerationSupplier, streamFactory, compressorList,
-                commandListener, new InternalStreamConnectionInitializer(clusterConnectionMode, authenticator, clientMetadataDocument,
-                compressorList, serverApi));
+        return new InternalStreamConnection(clusterConnectionMode, isMonitoringConnection, serverId, connectionGenerationSupplier,
+                streamFactory, compressorList, commandListener, new InternalStreamConnectionInitializer(clusterConnectionMode,
+                authenticator, clientMetadataDocument, compressorList, serverApi));
     }
 
     private Authenticator createAuthenticator(final MongoCredentialWithCache credential) {
