@@ -108,6 +108,7 @@ public class InternalStreamConnection implements InternalConnection {
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
     private final ClusterConnectionMode clusterConnectionMode;
+    private final boolean isMonitoringConnection;
     private final ServerId serverId;
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private final StreamFactory streamFactory;
@@ -139,10 +140,20 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
+            final ConnectionGenerationSupplier connectionGenerationSupplier,
+            final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
+            final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
+        this(clusterConnectionMode, false, serverId, connectionGenerationSupplier, streamFactory, compressorList, commandListener,
+                connectionInitializer);
+    }
+
+    public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
+                                    final ServerId serverId,
                                     final ConnectionGenerationSupplier connectionGenerationSupplier,
                                     final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
                                     final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this.clusterConnectionMode = clusterConnectionMode;
+        this.isMonitoringConnection = isMonitoringConnection;
         this.serverId = notNull("serverId", serverId);
         this.connectionGenerationSupplier = notNull("connectionGeneration", connectionGenerationSupplier);
         this.streamFactory = notNull("streamFactory", streamFactory);
