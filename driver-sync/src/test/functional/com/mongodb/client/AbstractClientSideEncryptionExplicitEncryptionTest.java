@@ -137,7 +137,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
                 .getCollection("explicit_encryption", BsonDocument.class);
         coll.insertOne(new BsonDocument("encryptedIndexed", insertPayload));
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType(EncryptOptions.QueryType.EQUALITY);
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality");
         BsonBinary findPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         BsonDocument actual = coll.find(new BsonDocument("encryptedIndexed", findPayload)).first();
@@ -156,7 +156,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
             coll.insertOne(new BsonDocument("encryptedIndexed", insertPayload));
         }
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType(EncryptOptions.QueryType.EQUALITY);
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality");
         BsonBinary findPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         List<BsonDocument> values = coll.find(new BsonDocument("encryptedIndexed", findPayload)).into(new ArrayList<>());
@@ -165,7 +165,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
             assertEquals(ENCRYPTED_INDEXED_VALUE, v.get("encryptedIndexed"))
         );
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L).queryType(EncryptOptions.QueryType.EQUALITY);
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L).queryType("equality");
         BsonBinary findPayload2 = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         values = coll.find(new BsonDocument("encryptedIndexed", findPayload2)).into(new ArrayList<>());
