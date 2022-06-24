@@ -30,20 +30,7 @@ public class EncryptOptions {
     private String keyAltName;
     private final String algorithm;
     private Long contentionFactor;
-    private QueryType queryType;
-
-    /**
-     * The QueryType to use for "Indexed" queries
-     *
-     * @since 4.7
-     */
-    @Beta(Beta.Reason.SERVER)
-    public enum QueryType {
-        /**
-         * Equality query type
-         */
-        EQUALITY
-    }
+    private String queryType;
 
     /**
      * Construct an instance with the given algorithm.
@@ -153,14 +140,14 @@ public class EncryptOptions {
     /**
      * The QueryType.
      *
-     * <p>It is an error to set queryType when algorithm is not "Indexed".</p>
+     * <p>It is an error to set queryType when the algorithm is not "Indexed".</p>
      *
      * @param queryType the query type
      * @return this
      * @since 4.7
      */
     @Beta(Beta.Reason.SERVER)
-    public EncryptOptions queryType(@Nullable final QueryType queryType) {
+    public EncryptOptions queryType(@Nullable final String queryType) {
         this.queryType = queryType;
         return this;
     }
@@ -168,13 +155,13 @@ public class EncryptOptions {
     /**
      * Gets the QueryType.
      *
-     * @see #queryType(QueryType)
+     * @see #queryType(String)
      * @return the queryType or null
      * @since 4.7
      */
     @Nullable
     @Beta(Beta.Reason.SERVER)
-    public QueryType getQueryType() {
+    public String getQueryType() {
         return queryType;
     }
 
