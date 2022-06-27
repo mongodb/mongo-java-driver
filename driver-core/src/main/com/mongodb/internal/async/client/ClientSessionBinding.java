@@ -149,7 +149,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     private void isConnectionSourcePinningRequired(final SingleResultCallback<Boolean> callback) {
         try {
             callback.onResult(isConnectionSourcePinningRequired(), null);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             callback.onResult(null, e);
         }
     }

@@ -169,7 +169,7 @@ final class AsynchronousClusterEventListener implements ClusterListener, ServerL
                 if (isLastEvent) {
                     break;
                 }
-            } catch (RuntimeException | InterruptedException e) {
+            } catch (Exception e) {
                 // ignore exceptions thrown from listeners, also ignore interrupts that user code may cause
             }
         }

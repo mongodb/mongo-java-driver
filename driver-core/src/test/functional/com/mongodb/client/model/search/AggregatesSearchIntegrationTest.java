@@ -257,7 +257,7 @@ final class AggregatesSearchIntegrationTest {
             List<BsonDocument> results;
             try {
                 results = collectionHelpers.get(ns).aggregate(pipeline);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(msgSupplier.get(), e);
             }
             accessory.resultAsserter.accept(results, msgSupplier);

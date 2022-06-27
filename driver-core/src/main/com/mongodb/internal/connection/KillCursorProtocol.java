@@ -80,7 +80,7 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
                                           System.nanoTime() - startTimeNanos, commandListener, requestContext);
             }
             return null;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if (commandListener != null && namespace != null) {
                 sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
                         commandListener, requestContext);

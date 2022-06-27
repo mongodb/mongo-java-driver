@@ -252,7 +252,7 @@ class TestInternalConnection implements InternalConnection {
         try {
             sendMessage(byteBuffers, lastRequestId);
             callback.onResult(null, null);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             callback.onResult(null, e);
         }
     }

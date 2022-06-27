@@ -92,7 +92,7 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
         for (ConnectionPoolListener cur : connectionPoolListeners) {
             try {
                 cur.connectionPoolReady(event);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 if (LOGGER.isWarnEnabled()) {
                     LOGGER.warn(format("Exception thrown raising connection pool ready event to listener %s", cur), e);
                 }
