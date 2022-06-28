@@ -124,14 +124,8 @@ public class Crypt implements Closeable {
             return command;
         }
 
-        try {
-            MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command);
-
-            try {
-                return executeStateMachine(encryptionContext, databaseName);
-            } finally {
-                encryptionContext.close();
-            }
+        try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command)) {
+            return executeStateMachine(encryptionContext, databaseName);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -146,14 +140,8 @@ public class Crypt implements Closeable {
     RawBsonDocument decrypt(final RawBsonDocument commandResponse) {
         notNull("commandResponse", commandResponse);
 
-        try {
-            MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse);
-
-            try {
-                return executeStateMachine(decryptionContext, null);
-            } finally {
-                decryptionContext.close();
-            }
+        try (MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse)) {
+            return executeStateMachine(decryptionContext, null);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -170,18 +158,12 @@ public class Crypt implements Closeable {
         notNull("kmsProvider", kmsProvider);
         notNull("options", options);
 
-        try {
-            MongoCryptContext dataKeyCreationContext = mongoCrypt.createDataKeyContext(kmsProvider,
-                    MongoDataKeyOptions.builder()
-                            .keyAltNames(options.getKeyAltNames())
-                            .masterKey(options.getMasterKey())
-                            .build());
-
-            try {
-                return executeStateMachine(dataKeyCreationContext, null);
-            } finally {
-                dataKeyCreationContext.close();
-            }
+        try (MongoCryptContext dataKeyCreationContext = mongoCrypt.createDataKeyContext(kmsProvider,
+                MongoDataKeyOptions.builder()
+                        .keyAltNames(options.getKeyAltNames())
+                        .masterKey(options.getMasterKey())
+                        .build())) {
+            return executeStateMachine(dataKeyCreationContext, null);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -219,12 +201,9 @@ public class Crypt implements Closeable {
                 encryptOptionsBuilder.queryType(MongoExplicitEncryptOptions.QueryType.valueOf(queryType.name()));
             }
 
-            MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
-                    new BsonDocument("v", value), encryptOptionsBuilder.build());
-            try {
+            try (MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
+                    new BsonDocument("v", value), encryptOptionsBuilder.build())) {
                 return executeStateMachine(encryptionContext, null).getBinary("v");
-            } finally {
-                encryptionContext.close();
             }
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
@@ -240,14 +219,8 @@ public class Crypt implements Closeable {
     BsonValue decryptExplicitly(final BsonBinary value) {
         notNull("value", value);
 
-        try {
-            MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value));
-
-            try {
-                return executeStateMachine(decryptionContext, null).get("v");
-            } finally {
-                decryptionContext.close();
-            }
+        try (MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value))) {
+            return executeStateMachine(decryptionContext, null).get("v");
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -269,15 +242,15 @@ public class Crypt implements Closeable {
         return mongoCrypt.getCryptSharedLibVersionString();
     }
 
-    private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, final String databaseName) {
+    private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, @Nullable final String databaseName) {
         while (true) {
             State state = cryptContext.getState();
             switch (state) {
                 case NEED_MONGO_COLLINFO:
-                    collInfo(cryptContext, databaseName);
+                    collInfo(cryptContext, notNull("databaseName", databaseName));
                     break;
                 case NEED_MONGO_MARKINGS:
-                    mark(cryptContext, databaseName);
+                    mark(cryptContext, notNull("databaseName", databaseName));
                     break;
                 case NEED_KMS_CREDENTIALS:
                     fetchCredentials(cryptContext);
@@ -347,9 +320,8 @@ public class Crypt implements Closeable {
     }
 
     private void decryptKey(final MongoKeyDecryptor keyDecryptor) throws IOException {
-        InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
-                keyDecryptor.getMessage());
-        try {
+        try (InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
+                keyDecryptor.getMessage())) {
             int bytesNeeded = keyDecryptor.bytesNeeded();
 
             while (bytesNeeded > 0) {
@@ -358,12 +330,8 @@ public class Crypt implements Closeable {
                 keyDecryptor.feed(ByteBuffer.wrap(bytes, 0, bytesRead));
                 bytesNeeded = keyDecryptor.bytesNeeded();
             }
-        } finally {
-            try {
-                inputStream.close();
-            } catch (IOException e) {
-                // ignore
-            }
+        } catch (IOException e) {
+            // ignore
         }
     }
 
