@@ -683,8 +683,7 @@ public final class Aggregates {
      *
      * @param operator A search operator.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
-     * or calling {@link #search(SearchOperator)}.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #search(SearchOperator)}.
      * @return The {@code $search} pipeline stage.
      *
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
@@ -692,8 +691,8 @@ public final class Aggregates {
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
      * @since 4.7
      */
-    public static Bson search(final SearchOperator operator, @Nullable final SearchOptions options) {
-        return new SearchStage("$search", notNull("operator", operator), options);
+    public static Bson search(final SearchOperator operator, final SearchOptions options) {
+        return new SearchStage("$search", notNull("operator", operator), notNull("options", options));
     }
 
     /**
@@ -720,8 +719,7 @@ public final class Aggregates {
      *
      * @param collector A search collector.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
-     * or calling {@link #search(SearchCollector)}.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #search(SearchCollector)}.
      * @return The {@code $search} pipeline stage.
      *
      * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
@@ -729,8 +727,8 @@ public final class Aggregates {
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
      * @since 4.7
      */
-    public static Bson search(final SearchCollector collector, @Nullable final SearchOptions options) {
-        return new SearchStage("$search", notNull("collector", collector), options);
+    public static Bson search(final SearchCollector collector, final SearchOptions options) {
+        return new SearchStage("$search", notNull("collector", collector), notNull("options", options));
     }
 
     /**
@@ -758,16 +756,15 @@ public final class Aggregates {
      *
      * @param operator A search operator.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
-     * or calling {@link #searchMeta(SearchOperator)}.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #searchMeta(SearchOperator)}.
      * @return The {@code $searchMeta} pipeline stage.
      *
      * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
      * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
      * @since 4.7
      */
-    public static Bson searchMeta(final SearchOperator operator, @Nullable final SearchOptions options) {
-        return new SearchStage("$searchMeta", notNull("operator", operator), options);
+    public static Bson searchMeta(final SearchOperator operator, final SearchOptions options) {
+        return new SearchStage("$searchMeta", notNull("operator", operator), notNull("options", options));
     }
 
     /**
@@ -795,16 +792,15 @@ public final class Aggregates {
      *
      * @param collector A search collector.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
-     * or calling {@link #searchMeta(SearchCollector)}.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #searchMeta(SearchCollector)}.
      * @return The {@code $searchMeta} pipeline stage.
      *
      * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
      * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
      * @since 4.7
      */
-    public static Bson searchMeta(final SearchCollector collector, @Nullable final SearchOptions options) {
-        return new SearchStage("$searchMeta", notNull("collector", collector), options);
+    public static Bson searchMeta(final SearchCollector collector, final SearchOptions options) {
+        return new SearchStage("$searchMeta", notNull("collector", collector), notNull("options", options));
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,
