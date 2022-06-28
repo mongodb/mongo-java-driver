@@ -19,7 +19,6 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
@@ -232,9 +231,9 @@ public class Crypt implements Closeable {
     @SuppressWarnings("try")
     public void close() {
         //noinspection EmptyTryBlock
-        try (MongoCrypt mongoCrypt = this.mongoCrypt;
-             CommandMarker commandMarker = this.commandMarker;
-             MongoClient internalClient = this.internalClient
+        try (MongoCrypt ignored = this.mongoCrypt;
+             CommandMarker ignored1 = this.commandMarker;
+             MongoClient ignored2 = this.internalClient
         ) {
             // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
