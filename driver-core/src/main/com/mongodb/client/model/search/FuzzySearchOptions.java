@@ -64,8 +64,8 @@ public interface FuzzySearchOptions extends Bson {
      * The following code creates two functionally equivalent {@link FuzzySearchOptions} objects,
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
-     *  FuzzySearchOptions options1 = FuzzySearchOptions.fuzzySearchOptions().maxEdits(1)
-     *  FuzzySearchOptions options2 = FuzzySearchOptions.fuzzySearchOptions().option("maxEdits", 1)
+     *  FuzzySearchOptions options1 = FuzzySearchOptions.fuzzySearchOptions().maxEdits(1);
+     *  FuzzySearchOptions options2 = FuzzySearchOptions.fuzzySearchOptions().option("maxEdits", 1);
      * }</pre>
      *
      * @param name The option name.
