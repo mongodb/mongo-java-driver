@@ -683,7 +683,7 @@ public final class Aggregates {
      *
      * @param operator A search operator.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
      * or calling {@link #search(SearchOperator)}.
      * @return The {@code $search} pipeline stage.
      *
@@ -720,7 +720,7 @@ public final class Aggregates {
      *
      * @param collector A search collector.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
      * or calling {@link #search(SearchCollector)}.
      * @return The {@code $search} pipeline stage.
      *
@@ -758,7 +758,7 @@ public final class Aggregates {
      *
      * @param operator A search operator.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
      * or calling {@link #searchMeta(SearchOperator)}.
      * @return The {@code $searchMeta} pipeline stage.
      *
@@ -795,7 +795,7 @@ public final class Aggregates {
      *
      * @param collector A search collector.
      * @param options Optional {@code $search} pipeline stage fields.
-     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#defaultSearchOptions()}
+     * Specifying {@code null} is equivalent to either specifying {@link SearchOptions#searchOptions()}
      * or calling {@link #searchMeta(SearchCollector)}.
      * @return The {@code $searchMeta} pipeline stage.
      *

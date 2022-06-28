@@ -33,7 +33,7 @@ import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
 import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchOperator.exists
-import org.mongodb.scala.model.search.SearchOptions.defaultSearchOptions
+import org.mongodb.scala.model.search.SearchOptions.searchOptions
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
 
@@ -531,7 +531,7 @@ class AggregatesSpec extends BaseSpec {
     toBson(
       Aggregates.search(
         exists(fieldPath("fieldName")),
-        defaultSearchOptions()
+        searchOptions()
       )
     ) should equal(
       Document("""{
@@ -544,7 +544,7 @@ class AggregatesSpec extends BaseSpec {
       Aggregates.search(
         SearchCollector
           .facet(exists(fieldPath("fieldName")), List(stringFacet("stringFacetName", fieldPath("fieldName1")))),
-        defaultSearchOptions()
+        searchOptions()
           .index("indexName")
           .count(total())
           .highlight(
@@ -618,7 +618,7 @@ class AggregatesSpec extends BaseSpec {
     toBson(
       Aggregates.searchMeta(
         exists(fieldPath("fieldName")),
-        defaultSearchOptions()
+        searchOptions()
       )
     ) should equal(
       Document("""{
@@ -631,7 +631,7 @@ class AggregatesSpec extends BaseSpec {
       Aggregates.searchMeta(
         SearchCollector
           .facet(exists(fieldPath("fieldName")), List(stringFacet("stringFacetName", fieldPath("fieldName1")))),
-        defaultSearchOptions()
+        searchOptions()
           .index("indexName")
           .count(total())
           .highlight(
