@@ -33,7 +33,7 @@ import org.mongodb.scala.bson.conversions.Bson
  *      - a negative value refers to documents preceding the current one;
  *      - a positive value refers to documents following the current one;
  *  - range
- *    - [[Aggregates.setWindowFields sortBy]]
+ *    - `sortBy` (see `Aggregates.setWindowFields`)
  *      - must contain exactly one field;
  *      - must specify the ascending sort order;
  *      - the `sortBy` field must be of either a numeric BSON type
@@ -116,7 +116,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -126,7 +126,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -136,7 +136,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -146,7 +146,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -156,7 +156,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -166,7 +166,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -176,7 +176,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -186,7 +186,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -196,7 +196,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the value of the [[Aggregates.setWindowFields sortBy]] field in the current document.
+   * the value of the `sortBy` field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
    * @param upper A value based on which the upper bound of the window is calculated.
@@ -206,7 +206,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the BSON `Date` value of the [[Aggregates.setWindowFields sortBy]]
+   * the BSON `Date` value of the `sortBy`
    * field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
@@ -218,7 +218,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the BSON `Date` value of the [[Aggregates.setWindowFields sortBy]]
+   * the BSON `Date` value of the `sortBy`
    * field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.
@@ -231,7 +231,7 @@ object Windows {
 
   /**
    * Creates a dynamically-sized range window whose bounds are determined by a range of possible values around
-   * the BSON `Date` value of the [[Aggregates.setWindowFields sortBy]]
+   * the BSON `Date` value of the `sortBy`
    * field in the current document.
    *
    * @param lower A value based on which the lower bound of the window is calculated.

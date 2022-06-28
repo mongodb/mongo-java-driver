@@ -24,7 +24,7 @@ import java.time.Instant;
  * A base for a {@link DateRangeSearchOperator} which allows creating instances of this operator.
  * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
  *
- * @see SearchOperator#dateRange(FieldSearchPath)
+ * @see SearchOperator#dateRange(FieldSearchPath, FieldSearchPath...)
  * @see SearchOperator#dateRange(Iterable)
  * @since 4.7
  */

@@ -19,8 +19,8 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see SearchOperator#autocomplete(String, FieldSearchPath)
- * @see SearchOperator#autocomplete(Iterable, FieldSearchPath)
+ * @see SearchOperator#autocomplete(FieldSearchPath, String, String...)
+ * @see SearchOperator#autocomplete(FieldSearchPath, Iterable)
  * @since 4.7
  */
 @Evolving
@@ -32,10 +32,18 @@ public interface AutocompleteSearchOperator extends SearchOperator {
     /**
      * Creates a new {@link AutocompleteSearchOperator} that uses fuzzy search.
      *
-     * @param option Fuzzy search option.
      * @return A new {@link AutocompleteSearchOperator}.
      */
-    AutocompleteSearchOperator fuzzy(SearchFuzzy option);
+    AutocompleteSearchOperator fuzzy();
+
+    /**
+     * Creates a new {@link AutocompleteSearchOperator} that uses fuzzy search.
+     *
+     * @param options The fuzzy search options.
+     * Specifying {@link FuzzySearchOptions#fuzzySearchOptions()} is equivalent to calling {@link #fuzzy()}.
+     * @return A new {@link AutocompleteSearchOperator}.
+     */
+    AutocompleteSearchOperator fuzzy(FuzzySearchOptions options);
 
     /**
      * Creates a new {@link AutocompleteSearchOperator} that does not require tokens to appear in the same order as they are specified.

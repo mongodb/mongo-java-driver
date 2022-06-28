@@ -549,7 +549,9 @@ class AggregatesSpec extends BaseSpec {
           .count(total())
           .highlight(
             paths(
-              List(fieldPath("fieldName1"), fieldPath("fieldName2").multi("analyzerName"), wildcardPath("field.name*"))
+              fieldPath("fieldName1"),
+              fieldPath("fieldName2").multi("analyzerName"),
+              wildcardPath("field.name*")
             )
           )
       )
@@ -634,7 +636,9 @@ class AggregatesSpec extends BaseSpec {
           .count(total())
           .highlight(
             paths(
-              List(fieldPath("fieldName1"), fieldPath("fieldName2").multi("analyzerName"), wildcardPath("field.name*"))
+              fieldPath("fieldName1"),
+              fieldPath("fieldName2").multi("analyzerName"),
+              wildcardPath("field.name*")
             )
           )
       )

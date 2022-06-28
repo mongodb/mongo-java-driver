@@ -56,7 +56,7 @@ import static com.mongodb.client.model.Aggregates.replaceWith;
 import static com.mongodb.client.model.Projections.computedSearchMeta;
 import static com.mongodb.client.model.Projections.metaSearchHighlights;
 import static com.mongodb.client.model.Projections.metaSearchScore;
-import static com.mongodb.client.model.search.SearchFuzzy.defaultSearchFuzzy;
+import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchCollector.facet;
 import static com.mongodb.client.model.search.SearchCount.lowerBound;
 import static com.mongodb.client.model.search.SearchCount.total;
@@ -313,11 +313,11 @@ final class AggregatesSearchIntegrationTest {
                 arguments(
                         "`highlight` option",
                         stageCreator(
-                                text(asList("factory", "century"), singleton(fieldPath("plot"))),
+                                text(singleton(fieldPath("plot")), asList("factory", "century")),
                                 defaultSearchOptions()
-                                        .highlight(paths(asList(
+                                        .highlight(paths(
                                                 fieldPath("title").multi("keyword"),
-                                                wildcardPath("pl*t")))
+                                                wildcardPath("pl*t"))
                                                 .maxCharsToExamine(100_000))
                         ),
                         MFLIX_MOVIES_NS,
@@ -359,7 +359,7 @@ final class AggregatesSearchIntegrationTest {
                 arguments(
                         "alternate analyzer (`multi` field path)",
                         stageCreator(
-                                text(singleton("The Cheat"), singleton(fieldPath("title").multi("keyword"))),
+                                text(singleton(fieldPath("title").multi("keyword")), singleton("The Cheat")),
                                 defaultSearchOptions().count(total())
                         ),
                         MFLIX_MOVIES_NS,
@@ -479,25 +479,25 @@ final class AggregatesSearchIntegrationTest {
                         stageCreator(compound()
                                 .should(asList(
                                         exists(fieldPath("fieldName1")),
-                                        text("term1", fieldPath("fieldName2"))
+                                        text(fieldPath("fieldName2"), "term1")
                                                 .score(function(logExpression(constantExpression(3)))),
-                                        text(asList("term2", "term3"), asList(wildcardPath("wildc*rd"), fieldPath("fieldName3")))
-                                                .fuzzy(defaultSearchFuzzy()
+                                        text(asList(wildcardPath("wildc*rd"), fieldPath("fieldName3")), asList("term2", "term3"))
+                                                .fuzzy(fuzzySearchOptions()
                                                         .maxEdits(1)
                                                         .prefixLength(2)
                                                         .maxExpansions(3)),
-                                        autocomplete("term4", fieldPath("title")
+                                        autocomplete(fieldPath("title")
                                                 // `multi` is used here only to verify that it is tolerated
-                                                .multi("keyword")),
+                                                .multi("keyword"), "term4"),
                                         // this operator produces non-empty search results
-                                        autocomplete(asList("Traffic in", "term5"), fieldPath("title"))
-                                                .fuzzy(defaultSearchFuzzy())
+                                        autocomplete(fieldPath("title"), "Traffic in", "term5")
+                                                .fuzzy()
                                                 .sequentialTokenOrder(),
-                                        numberRange(asList(fieldPath("fieldName4"), fieldPath("fieldName5")))
+                                        numberRange(fieldPath("fieldName4"), fieldPath("fieldName5"))
                                                 .gtLt(1, 1.5),
                                         dateRange(fieldPath("fieldName6"))
                                                 .lte(Instant.ofEpochMilli(1)),
-                                        near(0, 1.5, asList(fieldPath("fieldName7"), fieldPath("fieldName8"))),
+                                        near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
                                         near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9"))
                                 ))
                                 .minimumShouldMatch(1)

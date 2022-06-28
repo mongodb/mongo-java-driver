@@ -893,8 +893,8 @@ package object model {
   }
 
   /**
-   * A subset of documents within a partition in the [[Aggregates.setWindowFields \$setWindowFields]] pipeline stage
-   * of an aggregation pipeline (see `partitionBy` in [[Aggregates.setWindowFields]]).
+   * A subset of documents within a partition in the `Aggregates.setWindowFields` pipeline stage
+   * of an aggregation pipeline (see `partitionBy` in `Aggregates.setWindowFields`).
    *
    * @see [[Windows]]
    * @since 4.3
@@ -902,7 +902,7 @@ package object model {
   type Window = com.mongodb.client.model.Window
 
   /**
-   * The core part of the [[Aggregates.setWindowFields \$setWindowFields]] pipeline stage of an aggregation pipeline.
+   * The core part of the `Aggregates.setWindowFields` pipeline stage of an aggregation pipeline.
    * A triple of a window function, a [[Window window]] and a path to a field to be computed by the window function over the window.
    *
    * @see [[WindowedComputations]]

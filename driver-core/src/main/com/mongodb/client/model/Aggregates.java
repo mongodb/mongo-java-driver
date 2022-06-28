@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.Iterables.concat;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -614,7 +615,8 @@ public final class Aggregates {
      *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
      *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
      *               of the output documents.
-     * @param output A nonempty array of {@linkplain WindowedComputation windowed computations}.
+     * @param output A {@linkplain WindowedComputation windowed computation}.
+     * @param moreOutput More {@linkplain WindowedComputation windowed computations}.
      * @param <TExpression> The {@code partitionBy} expression type.
      * @return The {@code $setWindowFields} pipeline stage.
      * @mongodb.driver.dochub core/window-functions-set-window-fields $setWindowFields
@@ -622,9 +624,8 @@ public final class Aggregates {
      * @since 4.3
      */
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
-                                                     final WindowedComputation... output) {
-        notNull("output", output);
-        return setWindowFields(partitionBy, sortBy, asList(output));
+            final WindowedComputation output, final WindowedComputation... moreOutput) {
+        return setWindowFields(partitionBy, sortBy, concat(notNull("output", output), moreOutput));
     }
 
     /**
@@ -640,7 +641,8 @@ public final class Aggregates {
      *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
      *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
      *               of the output documents.
-     * @param output A nonempty list of {@linkplain WindowedComputation windowed computations}.
+     * @param output A list of {@linkplain WindowedComputation windowed computations}.
+     * Specifying an empty list is not an error, but the resulting stage does not do anything useful.
      * @param <TExpression> The {@code partitionBy} expression type.
      * @return The {@code $setWindowFields} pipeline stage.
      * @mongodb.driver.dochub core/window-functions-set-window-fields $setWindowFields

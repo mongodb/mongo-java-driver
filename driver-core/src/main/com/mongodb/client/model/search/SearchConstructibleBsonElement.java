@@ -25,6 +25,7 @@ import java.util.stream.StreamSupport;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOptions;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
@@ -68,10 +69,15 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public SearchConstructibleBsonElement fuzzy(final SearchFuzzy option) {
+    public SearchConstructibleBsonElement fuzzy() {
+        return fuzzy(fuzzySearchOptions());
+    }
+
+    @Override
+    public SearchConstructibleBsonElement fuzzy(final FuzzySearchOptions options) {
         return newWithMutatedValue(doc -> {
             doc.remove("synonyms");
-            doc.append("fuzzy", notNull("option", option));
+            doc.append("fuzzy", notNull("options", options));
         });
     }
 

@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 
-import static com.mongodb.client.model.search.SearchFuzzy.defaultSearchFuzzy;
+import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static com.mongodb.client.model.search.SearchScore.boost;
@@ -147,66 +147,66 @@ final class SearchOperatorTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // queries must not be empty
-                        SearchOperator.text(emptyList(), singleton(fieldPath("fieldName")))
+                        SearchOperator.text(singleton(fieldPath("fieldName")), emptyList())
                 ),
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // paths must not be empty
-                        SearchOperator.text(singleton("term"), emptyList())
+                        SearchOperator.text(emptyList(), singleton("term"))
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                         ),
                         SearchOperator.text(
-                                "term",
-                                fieldPath("fieldName"))
+                                fieldPath("fieldName"),
+                                "term")
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonArray(asList(
-                                        new BsonString("term1"),
-                                        new BsonString("term2"))))
-                                        .append("path", new BsonArray(asList(
-                                                fieldPath("fieldName").toBsonValue(),
-                                                wildcardPath("wildc*rd").toBsonValue())))
+                                new BsonDocument("path", new BsonArray(asList(
+                                        fieldPath("fieldName").toBsonValue(),
+                                        wildcardPath("wildc*rd").toBsonValue())))
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
                         ),
                         SearchOperator.text(
-                                asList(
-                                        "term1",
-                                        "term2"),
                                 asList(
                                         fieldPath("fieldName"),
-                                        wildcardPath("wildc*rd")))
+                                        wildcardPath("wildc*rd")),
+                                asList(
+                                        "term1",
+                                        "term2"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                                         .append("synonyms", new BsonString("synonymMappingName"))
                         ),
                         SearchOperator.text(
-                                        singleton("term"),
-                                        singleton(fieldPath("fieldName")))
-                                .fuzzy(defaultSearchFuzzy())
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
+                                .fuzzy(fuzzySearchOptions())
                                 // synonyms overrides fuzzy
                                 .synonyms("synonymMappingName")
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("text",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                                         .append("fuzzy", new BsonDocument())
                         ),
                         SearchOperator.text(
-                                        singleton("term"),
-                                        singleton(fieldPath("fieldName")))
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
                                 .synonyms("synonymMappingName")
                                 // fuzzy overrides synonyms
-                                .fuzzy(defaultSearchFuzzy())
+                                .fuzzy()
                                 .toBsonDocument()
                 )
         );
@@ -217,47 +217,51 @@ final class SearchOperatorTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // queries must not be empty
-                        SearchOperator.autocomplete(emptyList(), fieldPath("fieldName"))
+                        SearchOperator.autocomplete(fieldPath("fieldName"), emptyList())
                 ),
                 () -> assertEquals(
                         new BsonDocument("autocomplete",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
                         ),
                         SearchOperator.autocomplete(
-                                "term",
-                                fieldPath("fieldName"))
+                                fieldPath("fieldName"),
+                                "term")
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("autocomplete",
-                                new BsonDocument("query", new BsonArray(asList(
-                                        new BsonString("term1"),
-                                        new BsonString("term2"))))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
                         ),
                         SearchOperator.autocomplete(
-                                asList(
-                                        "term1",
-                                        "term2"),
                                 fieldPath("fieldName")
                                         // multi must be ignored
-                                        .multi("analyzerName"))
+                                        .multi("analyzerName"),
+                                asList(
+                                        "term1",
+                                        "term2"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("autocomplete",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
-                                        .append("fuzzy", new BsonDocument())
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                                        .append("fuzzy", new BsonDocument()
+                                                .append("maxExpansions", new BsonInt32(10))
+                                                .append("maxEdits", new BsonInt32(1)))
                                         .append("tokenOrder", new BsonString("any"))
                         ),
                         SearchOperator.autocomplete(
-                                singleton("term"),
                                 fieldPath("fieldName")
                                         // multi must be ignored
-                                        .multi("analyzerName"))
-                                .fuzzy(defaultSearchFuzzy())
+                                        .multi("analyzerName"),
+                                        singleton("term"))
+                                .fuzzy(fuzzySearchOptions()
+                                        .maxExpansions(10)
+                                        .maxEdits(1))
                                 .sequentialTokenOrder()
                                 // anyTokenOrder overrides sequentialTokenOrder
                                 .anyTokenOrder()
@@ -536,9 +540,8 @@ final class SearchOperatorTest {
                         SearchOperator.near(
                                 Instant.EPOCH,
                                 Duration.ofMillis(3),
-                                asList(
-                                        fieldPath("fieldName1"),
-                                        fieldPath("fieldName2")))
+                                fieldPath("fieldName1"),
+                                fieldPath("fieldName2"))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 ),
                 () -> assertEquals(

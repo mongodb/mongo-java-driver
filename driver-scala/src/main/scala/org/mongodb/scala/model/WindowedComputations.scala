@@ -20,10 +20,10 @@ import org.mongodb.scala.bson.conversions.Bson
 
 /**
  * Builders for [[WindowedComputation windowed computations]] used in the
- * [[Aggregates.setWindowFields \$setWindowFields]] pipeline stage
+ * `Aggregates.setWindowFields` pipeline stage
  * of an aggregation pipeline. Each windowed computation is a triple:
  *  - A window function. Some functions require documents in a window to be sorted
- *  (see `sortBy` in [[Aggregates.setWindowFields]]).
+ *  (see `sortBy` in `Aggregates.setWindowFields`).
  *  - An optional [[Window window]], a.k.a. frame.
  *  Specifying `None` window is equivalent to specifying an unbounded window,
  *  i.e., a window with both ends specified as [[Windows.Bound UNBOUNDED]].
@@ -194,10 +194,10 @@ object WindowedComputations {
   /**
    * Builds a computation of the time derivative by subtracting the evaluation result of the `expression` against the last document
    * and the first document in the `window` and dividing it by the difference in the values of the
-   * [[Aggregates.setWindowFields sortBy]] field of the respective documents.
+   * `sortBy` field of the respective documents.
    * Other documents in the `window` have no effect on the computation.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -212,10 +212,10 @@ object WindowedComputations {
   /**
    * Builds a computation of the time derivative by subtracting the evaluation result of the `expression` against the last document
    * and the first document in the `window` and dividing it by the difference in the BSON `Date`
-   * values of the [[Aggregates.setWindowFields sortBy]] field of the respective documents.
+   * values of the `sortBy` field of the respective documents.
    * Other documents in the `window` have no effect on the computation.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -237,13 +237,13 @@ object WindowedComputations {
 
   /**
    * Builds a computation of the approximate integral of a function that maps values of
-   * the [[Aggregates.setWindowFields sortBy]] field to evaluation results of the `expression`
+   * the `sortBy` field to evaluation results of the `expression`
    * against the same document. The limits of integration match the `window` bounds.
    * The approximation is done by using the
    * <a href="https://www.khanacademy.org/math/ap-calculus-ab/ab-integration-new/ab-6-2/a/understanding-the-trapezoid-rule">
    * trapezoidal rule</a>.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -257,11 +257,11 @@ object WindowedComputations {
 
   /**
    * Builds a computation of the approximate integral of a function that maps BSON `Date` values of
-   * the [[Aggregates.setWindowFields sortBy]] field to evaluation results of the `expression`
+   * the `sortBy` field to evaluation results of the `expression`
    * against the same document. The limits of integration match the `window` bounds.
    * The approximation is done by using the trapezoidal rule.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -324,7 +324,7 @@ object WindowedComputations {
    * that includes `n` - 1 documents preceding the current document and the current document, with more weight on documents
    * closer to the current one.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -341,7 +341,7 @@ object WindowedComputations {
    * window `[`[[Windows.Bound UNBOUNDED]], [[Windows.Bound CURRENT]]`]`,
    * with `alpha` representing the degree of weighting decrease.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -357,7 +357,7 @@ object WindowedComputations {
   /**
    * Builds a computation that adds the evaluation results of the `expression` over the `window`
    * to a BSON `Array`.
-   * Order within the array is guaranteed if [[Aggregates.setWindowFields sortBy]] is specified.
+   * Order within the array is guaranteed if `sortBy` is specified.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -387,7 +387,7 @@ object WindowedComputations {
   /**
    * Builds a computation of the evaluation result of the `expression` against the first document in the `window`.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -404,7 +404,7 @@ object WindowedComputations {
    * of evaluation results of the `inExpression` against the first `N`  documents in the `window`,
    * where `N` is the positive integral value of the `nExpression`.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path The output field path.
    * @param inExpression The input expression.
@@ -471,7 +471,7 @@ object WindowedComputations {
   /**
    * Builds a computation of the evaluation result of the `expression` against the last document in the `window`.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path       The output field path.
    * @param expression The expression.
@@ -488,7 +488,7 @@ object WindowedComputations {
    * of evaluation results of the `inExpression` against the last `N`  documents in the `window`,
    * where `N` is the positive integral value of the `nExpression`.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path The output field path.
    * @param inExpression The input expression.
@@ -555,10 +555,10 @@ object WindowedComputations {
   /**
    * Builds a computation of the evaluation result of the `expression` for the document whose position is shifted by the given
    * amount relative to the current document. If the shifted document is outside of the
-   * [[Aggregates.setWindowFields partition]] containing the current document,
+   * partition containing the current document,
    * then the `defaultExpression` is used instead of the `expression`.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path              The output field path.
    * @param expression        The expression.
@@ -583,9 +583,9 @@ object WindowedComputations {
 
   /**
    * Builds a computation of the order number of each document in its
-   * [[Aggregates.setWindowFields partition]].
+   * partition.
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path The output field path.
    * @return The constructed windowed computation.
@@ -596,13 +596,13 @@ object WindowedComputations {
 
   /**
    * Builds a computation of the rank of each document in its
-   * [[Aggregates.setWindowFields partition]].
-   * Documents with the same value(s) of the [[Aggregates.setWindowFields sortBy]] fields result in
+   * partition.
+   * Documents with the same value(s) of the `sortBy` fields result in
    * the same ranking and result in gaps in the returned ranks.
    * For example, a partition with the sequence [1, 3, 3, 5] representing the values of the single `sortBy` field
    * produces the following sequence of rank values: [1, 2, 2, 4].
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path The output field path.
    * @return The constructed windowed computation.
@@ -613,13 +613,13 @@ object WindowedComputations {
 
   /**
    * Builds a computation of the dense rank of each document in its
-   * [[Aggregates.setWindowFields partition]].
-   * Documents with the same value(s) of the [[Aggregates.setWindowFields sortBy]] fields result in
+   * partition.
+   * Documents with the same value(s) of the `sortBy` fields result in
    * the same ranking but do not result in gaps in the returned ranks.
    * For example, a partition with the sequence [1, 3, 3, 5] representing the values of the single `sortBy` field
    * produces the following sequence of rank values: [1, 2, 2, 3].
    *
-   * [[Aggregates.setWindowFields Sorting]] is required.
+   * Sorting is required.
    *
    * @param path The output field path.
    * @return The constructed windowed computation.
