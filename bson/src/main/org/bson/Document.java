@@ -95,7 +95,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      *
      * @param map initial map
      */
-    public Document(final Map<String, Object> map) {
+    public Document(final Map<String, ?> map) {
         documentAsMap = new LinkedHashMap<String, Object>(map);
     }
 

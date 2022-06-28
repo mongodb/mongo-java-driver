@@ -101,10 +101,10 @@ public interface SearchScoreExpression extends Bson {
 
             @Override
             public String toString() {
-                return "{\"origin\": " + origin
-                        + ", \"path\": " + path
-                        + ", \"scale\": " + scale
-                        + '}';
+                return new Document("origin", origin)
+                        .append("path", path)
+                        .append("scale", scale)
+                        .toString();
             }
         };
         return new SearchConstructibleBsonElement("gauss", value);

@@ -18,6 +18,10 @@ package com.mongodb.internal;
 import com.mongodb.lang.Nullable;
 
 import java.util.Iterator;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.mongodb.assertions.Assertions.fail;
 import static java.util.Arrays.asList;
@@ -27,16 +31,25 @@ public final class Iterables {
     @SafeVarargs
     @SuppressWarnings("varargs")
     public static <T> Iterable<T> concat(@Nullable final T first, @Nullable final T... more) {
-        if (more == null) {
-            return singleton(first);
-        } else {
-            Iterable<? extends T> moreIterable = asList(more);
-            return () -> new ConcatIterator<>(first, moreIterable);
-        }
+        return more == null ? singleton(first) : concat(first, asList(more));
     }
 
     public static <T> Iterable<T> concat(@Nullable final T first, final Iterable<? extends T> more) {
-        return () -> new ConcatIterator<>(first, more);
+        return new Iterable<T>() {
+            @Override
+            public Iterator<T> iterator() {
+                return new ConcatIterator<>(first, more);
+            }
+
+            @Override
+            public String toString() {
+                return '['
+                        + Stream.concat(Stream.of(first), StreamSupport.stream(more.spliterator(), false))
+                        .map(Objects::toString)
+                        .collect(Collectors.joining(", "))
+                        + ']';
+            }
+        };
     }
 
     private Iterables() {
