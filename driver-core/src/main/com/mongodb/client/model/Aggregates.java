@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.internal.Iterables.concat;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
@@ -671,7 +672,7 @@ public final class Aggregates {
      * @since 4.7
      */
     public static Bson search(final SearchOperator operator) {
-        return search(operator, null);
+        return search(operator, searchOptions());
     }
 
     /**
@@ -709,7 +710,7 @@ public final class Aggregates {
      * @since 4.7
      */
     public static Bson search(final SearchCollector collector) {
-        return search(collector, null);
+        return search(collector, searchOptions());
     }
 
     /**
@@ -745,7 +746,7 @@ public final class Aggregates {
      * @since 4.7
      */
     public static Bson searchMeta(final SearchOperator operator) {
-        return searchMeta(operator, null);
+        return searchMeta(operator, searchOptions());
     }
 
     /**
@@ -781,7 +782,7 @@ public final class Aggregates {
      * @since 4.7
      */
     public static Bson searchMeta(final SearchCollector collector) {
-        return searchMeta(collector, null);
+        return searchMeta(collector, searchOptions());
     }
 
     /**
