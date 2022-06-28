@@ -75,8 +75,8 @@ public interface SearchOptions extends Bson {
      * The following code creates two functionally equivalent {@link SearchOptions} objects,
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
-     *  SearchOptions options1 = SearchOptions.defaultSearchOptions().index("indexName")
-     *  SearchOptions options2 = SearchOptions.defaultSearchOptions().option("index", "indexName")
+     *  SearchOptions options1 = SearchOptions.defaultSearchOptions().index("indexName");
+     *  SearchOptions options2 = SearchOptions.defaultSearchOptions().option("index", "indexName");
      * }</pre>
      *
      * @param name The option name.
