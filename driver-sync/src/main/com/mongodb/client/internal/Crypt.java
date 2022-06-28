@@ -316,9 +316,10 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void decryptKey(final MongoKeyDecryptor keyDecryptor) {
-        try (InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
-                keyDecryptor.getMessage())) {
+    private void decryptKey(final MongoKeyDecryptor keyDecryptor) throws IOException {
+        InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
+                keyDecryptor.getMessage());
+        try {
             int bytesNeeded = keyDecryptor.bytesNeeded();
 
             while (bytesNeeded > 0) {
@@ -327,8 +328,12 @@ public class Crypt implements Closeable {
                 keyDecryptor.feed(ByteBuffer.wrap(bytes, 0, bytesRead));
                 bytesNeeded = keyDecryptor.bytesNeeded();
             }
-        } catch (IOException e) {
-            // ignore
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
     }
 
