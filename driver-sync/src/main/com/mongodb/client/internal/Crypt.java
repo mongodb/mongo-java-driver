@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
@@ -42,6 +43,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
 
@@ -220,7 +222,7 @@ public class Crypt implements Closeable {
         notNull("value", value);
 
         try (MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value))) {
-            return executeStateMachine(decryptionContext, null).get("v");
+            return assertNotNull(executeStateMachine(decryptionContext, null).get("v"));
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -236,10 +238,6 @@ public class Crypt implements Closeable {
         ) {
             // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
-    }
-
-    public String getCryptSharedLibVersionString() {
-        return mongoCrypt.getCryptSharedLibVersionString();
     }
 
     private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, @Nullable final String databaseName) {
@@ -275,7 +273,7 @@ public class Crypt implements Closeable {
 
     private void collInfo(final MongoCryptContext cryptContext, final String databaseName) {
         try {
-            BsonDocument collectionInfo = collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation());
+            BsonDocument collectionInfo = assertNotNull(collectionInfoRetriever).filter(databaseName, cryptContext.getMongoOperation());
             if (collectionInfo != null) {
                 cryptContext.addMongoOperationResult(collectionInfo);
             }
@@ -287,7 +285,7 @@ public class Crypt implements Closeable {
 
     private void mark(final MongoCryptContext cryptContext, final String databaseName) {
         try {
-            RawBsonDocument markedCommand = commandMarker.mark(databaseName, cryptContext.getMongoOperation());
+            RawBsonDocument markedCommand = assertNotNull(commandMarker).mark(databaseName, cryptContext.getMongoOperation());
             cryptContext.addMongoOperationResult(markedCommand);
             cryptContext.completeMongoOperation();
         } catch (Throwable t) {
@@ -319,7 +317,7 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void decryptKey(final MongoKeyDecryptor keyDecryptor) throws IOException {
+    private void decryptKey(final MongoKeyDecryptor keyDecryptor) {
         try (InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
                 keyDecryptor.getMessage())) {
             int bytesNeeded = keyDecryptor.bytesNeeded();
