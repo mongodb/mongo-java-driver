@@ -203,10 +203,10 @@ public class Crypt implements Closeable {
     @SuppressWarnings("try")
     public void close() {
         //noinspection EmptyTryBlock
-        try (MongoCrypt mongoCrypt = this.mongoCrypt;
-             CommandMarker commandMarker = this.commandMarker;
-             MongoClient internalClient = this.internalClient;
-             KeyManagementService keyManagementService = this.keyManagementService
+        try (MongoCrypt ignored = this.mongoCrypt;
+             CommandMarker ignored1 = this.commandMarker;
+             MongoClient ignored2 = this.internalClient;
+             KeyManagementService ignored3 = this.keyManagementService
         ) {
             // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
