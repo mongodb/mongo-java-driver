@@ -50,5 +50,6 @@ final class IterablesTest {
 
     private static <T> void assertIterable(final List<? extends T> expected, final Iterable<? extends T> actual) {
         assertEquals(expected, stream(actual).collect(toList()));
+        assertEquals(expected.toString(), actual.toString());
     }
 }

@@ -21,8 +21,10 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.mongodb.internal.client.model.AbstractConstructibleBson.EMPTY_IMMUTABLE;
@@ -37,7 +39,7 @@ import static java.lang.String.format;
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
  */
-public abstract class AbstractConstructibleBsonElement<S extends AbstractConstructibleBsonElement<S>> implements Bson {
+public abstract class AbstractConstructibleBsonElement<S extends AbstractConstructibleBsonElement<S>> implements Bson, ToMap {
     private final Bson baseElement;
     private final AbstractConstructibleBson<?> appendedElementValue;
 
@@ -99,6 +101,32 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
                 : new BsonDocument(baseElementName, newMerged(baseElementValueDoc, appendedElementValueDoc));
     }
 
+    @Override
+    public Optional<Map<String, ?>> tryToMap() {
+        Map<String, ?> baseElementMap = ToMap.tryToMap(baseElement).orElse(null);
+        Map<String, ?> appendedElementValueMap = baseElementMap == null ? null : appendedElementValue.tryToMap().orElse(null);
+        if (baseElementMap != null && appendedElementValueMap != null) {
+            if (baseElementMap.size() != 1) {
+                throw new IllegalStateException(format("baseElement must contain exactly one element, but contains %s", baseElementMap.size()));
+            }
+            Map.Entry<String, ?> baseEntry = baseElementMap.entrySet().iterator().next();
+            String elementName = baseEntry.getKey();
+            return ToMap.tryToMap(baseEntry.getValue())
+                    .map(elementValueMap -> {
+                        Map<String, Object> result = new LinkedHashMap<>(elementValueMap);
+                        result.putAll(appendedElementValueMap);
+                        return result;
+                    })
+                    .map(mergedElementValueMap -> {
+                        Map<String, Object> result = new LinkedHashMap<>();
+                        result.put(elementName, new Document(mergedElementValueMap));
+                        return result;
+                    });
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public static AbstractConstructibleBsonElement<?> of(final Bson baseElement) {
         return baseElement instanceof AbstractConstructibleBsonElement
                 // prevent double wrapping
@@ -125,9 +153,12 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
 
     @Override
     public String toString() {
-        return "{baseElement=" + baseElement
-                + ", appendedValue=" + appendedElementValue
-                + '}';
+        return tryToMap()
+                .map(Document::new)
+                .map(Document::toString)
+                .orElseGet(() -> "ConstructibleBsonElement{baseElement=" + baseElement
+                        + ", appendedElementValue=" + appendedElementValue
+                        + '}');
     }
 
     private static final class ConstructibleBsonElement extends AbstractConstructibleBsonElement<ConstructibleBsonElement> {
