@@ -20,7 +20,7 @@ import org.mongodb.scala.{ BaseSpec, MongoClient }
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.geojson.{ Point, Position }
-import org.mongodb.scala.model.search.SearchFuzzy.defaultSearchFuzzy
+import org.mongodb.scala.model.search.FuzzySearchOptions.fuzzySearchOptions
 import org.mongodb.scala.model.search.SearchOperator.{
   autocomplete,
   compound,
@@ -43,27 +43,27 @@ class SearchOperatorSpec extends BaseSpec {
       compound()
         .should(Seq(
           exists(fieldPath("fieldName1")),
-          text("term1", fieldPath("fieldName2"))
+          text(fieldPath("fieldName2"), "term1")
             .score(function(logExpression(constantExpression(3)))),
-          text(Seq("term2", "term3"), Seq(wildcardPath("wildc*rd"), fieldPath("fieldName3")))
-            .fuzzy(defaultSearchFuzzy()
+          text(Seq(wildcardPath("wildc*rd"), fieldPath("fieldName3")), Seq("term2", "term3"))
+            .fuzzy(fuzzySearchOptions()
               .maxEdits(1)
               .prefixLength(2)
               .maxExpansions(3)),
           autocomplete(
-            "term4",
             fieldPath("title")
               // multi must be ignored
-              .multi("keyword")
+              .multi("keyword"),
+            "term4"
           ),
-          autocomplete(Seq("Traffic in", "term5"), fieldPath("title"))
-            .fuzzy(defaultSearchFuzzy())
+          autocomplete(fieldPath("title"), "Traffic in", "term5")
+            .fuzzy()
             .sequentialTokenOrder(),
-          numberRange(Seq(fieldPath("fieldName4"), fieldPath("fieldName5")))
+          numberRange(fieldPath("fieldName4"), fieldPath("fieldName5"))
             .gtLt(1, 1.5),
           dateRange(fieldPath("fieldName6"))
             .lte(Instant.ofEpochMilli(1)),
-          near(0, 1.5, Seq(fieldPath("fieldName7"), fieldPath("fieldName8"))),
+          near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
           near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
           near(Point(Position(114.15, 22.28)), 1234.5, fieldPath("address.location"))
         ).asJava)
@@ -76,13 +76,13 @@ class SearchOperatorSpec extends BaseSpec {
         "compound": {
           "should": [
             { "exists": { "path": "fieldName1" } },
-            { "text": { "query": "term1", "path": "fieldName2", "score": { "function": { "log": { "constant": 3.0 } } } } },
+            { "text": { "path": "fieldName2", "query": "term1", "score": { "function": { "log": { "constant": 3.0 } } } } },
             { "text": {
-              "query": [ "term2", "term3" ],
               "path": [ { "wildcard": "wildc*rd" }, "fieldName3" ],
+              "query": [ "term2", "term3" ],
               "fuzzy": { "maxEdits": 1, "prefixLength": 2, "maxExpansions": 3 } } },
-            { "autocomplete": { "query": "term4", "path": "title" } },
-            { "autocomplete": { "query": ["Traffic in", "term5"], "path": "title", "fuzzy": {}, "tokenOrder": "sequential" } },
+            { "autocomplete": { "path": "title", "query": "term4" } },
+            { "autocomplete": { "path": "title", "query": ["Traffic in", "term5"], "fuzzy": {}, "tokenOrder": "sequential" } },
             { "range": { "path": [ "fieldName4", "fieldName5" ], "gt": 1, "lt": 1.5 } },
             { "range": { "path": "fieldName6", "lte": { "$date": "1970-01-01T00:00:00.001Z" } } },
             { "near": { "origin": 0, "pivot": 1.5, "path": [ "fieldName7", "fieldName8" ] } },

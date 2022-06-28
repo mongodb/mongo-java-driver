@@ -34,12 +34,13 @@ import collection.JavaConverters._
 object SearchHighlight {
 
   /**
-   * Returns a `SearchHighlight` for the given `path`.
+   * Returns a `SearchHighlight` for the given `paths`.
    *
    * @param path The field to be searched.
+   * @param paths More fields to be searched.
    * @return The requested `SearchHighlight`.
    */
-  def path(path: SearchPath): SearchHighlight = JSearchHighlight.path(path)
+  def paths(path: SearchPath, paths: SearchPath*): SearchHighlight = JSearchHighlight.paths(path, paths: _*)
 
   /**
    * Returns a `SearchHighlight` for the given `paths`.
@@ -57,9 +58,9 @@ object SearchHighlight {
    * The following code creates two functionally equivalent `SearchHighlight`s,
    * though they may not be equal.
    * {{{
-   *  val highlight1: SearchHighlight = SearchHighlight.paths(Seq(
+   *  val highlight1: SearchHighlight = SearchHighlight.paths(
    *    SearchPath.fieldPath("fieldName"),
-   *    SearchPath.wildcardPath("wildc*rd")))
+   *    SearchPath.wildcardPath("wildc*rd"))
    *  val highlight2: SearchHighlight = SearchHighlight.of(Document("path" -> Seq(
    *    SearchPath.fieldPath("fieldName").toBsonValue,
    *    SearchPath.wildcardPath("wildc*rd").toBsonValue)))

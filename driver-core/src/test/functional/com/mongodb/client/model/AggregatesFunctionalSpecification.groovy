@@ -1268,7 +1268,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         Document[] original = [new Document('num', 1)]
         getCollectionHelper().insertDocuments(original)
         List<Document> actual = aggregate([
-                setWindowFields(null, null),
+                setWindowFields(null, null, []),
                 project(fields(excludeId()))])
 
         expect:

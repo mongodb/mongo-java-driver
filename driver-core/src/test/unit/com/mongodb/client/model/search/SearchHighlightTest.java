@@ -46,7 +46,7 @@ final class SearchHighlightTest {
         assertEquals(
                 new BsonDocument("path",
                         fieldPath("fieldName").toBsonValue()),
-                SearchHighlight.path(
+                SearchHighlight.paths(
                         fieldPath("fieldName"))
                         .toBsonDocument()
         );
@@ -69,9 +69,9 @@ final class SearchHighlightTest {
                         new BsonDocument("path", new BsonArray(asList(
                                 fieldPath("fieldName").toBsonValue(),
                                 wildcardPath("wildc*rd").toBsonValue()))),
-                        SearchHighlight.paths(asList(
+                        SearchHighlight.paths(
                                 fieldPath("fieldName"),
-                                wildcardPath("wildc*rd")))
+                                wildcardPath("wildc*rd"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
@@ -79,7 +79,7 @@ final class SearchHighlightTest {
                                 fieldPath("fieldName").toBsonValue())
                                 .append("maxCharsToExamine", new BsonInt32(10)),
                         SearchHighlight.paths(
-                                singleton(fieldPath("fieldName")))
+                                fieldPath("fieldName"))
                                 .maxCharsToExamine(10)
                                 .toBsonDocument()
                 ),
@@ -107,9 +107,9 @@ final class SearchHighlightTest {
     }
 
     private static SearchHighlight docExamplePredefined() {
-        return SearchHighlight.paths(asList(
+        return SearchHighlight.paths(
                 fieldPath("fieldName"),
-                wildcardPath("wildc*rd")));
+                wildcardPath("wildc*rd"));
     }
 
     private static Document docExampleCustom() {

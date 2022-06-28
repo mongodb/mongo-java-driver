@@ -19,7 +19,7 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see SearchOperator#text(String, SearchPath)
+ * @see SearchOperator#text(SearchPath, String)
  * @see SearchOperator#text(Iterable, Iterable)
  * @since 4.7
  */
@@ -33,14 +33,23 @@ public interface TextSearchOperator extends SearchOperator {
      * Creates a new {@link TextSearchOperator} that uses fuzzy search
      * and does not use {@linkplain #synonyms(String) synonyms}.
      *
-     * @param option Fuzzy search option.
      * @return A new {@link TextSearchOperator}.
      */
-    TextSearchOperator fuzzy(SearchFuzzy option);
+    TextSearchOperator fuzzy();
+
+    /**
+     * Creates a new {@link TextSearchOperator} that uses fuzzy search
+     * and does not use {@linkplain #synonyms(String) synonyms}.
+     *
+     * @param options The fuzzy search options.
+     * Specifying {@link FuzzySearchOptions#fuzzySearchOptions()} is equivalent to calling {@link #fuzzy()}.
+     * @return A new {@link TextSearchOperator}.
+     */
+    TextSearchOperator fuzzy(FuzzySearchOptions options);
 
     /**
      * Creates a new {@link TextSearchOperator} that uses synonyms
-     * and does not use {@linkplain #fuzzy(SearchFuzzy) fuzzy search}.
+     * and does not use {@linkplain #fuzzy(FuzzySearchOptions) fuzzy search}.
      *
      * @param name The name of the synonym mapping.
      * @return A new {@link TextSearchOperator}.

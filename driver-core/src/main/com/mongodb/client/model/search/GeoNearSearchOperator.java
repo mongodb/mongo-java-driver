@@ -20,7 +20,7 @@ import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.geojson.Point;
 
 /**
- * @see SearchOperator#near(Point, Number, FieldSearchPath)
+ * @see SearchOperator#near(Point, Number, FieldSearchPath, FieldSearchPath...)
  * @see SearchOperator#near(Point, Number, Iterable)
  * @since 4.7
  */

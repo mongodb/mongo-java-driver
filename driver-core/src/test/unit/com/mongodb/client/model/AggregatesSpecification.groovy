@@ -644,10 +644,10 @@ class AggregatesSpecification extends Specification {
                         defaultSearchOptions()
                                 .index('indexName')
                                 .count(total())
-                                .highlight(paths([
+                                .highlight(paths(
                                         fieldPath('fieldName1'),
                                         fieldPath('fieldName2').multi('analyzerName'),
-                                        wildcardPath('field.name*')]))
+                                        wildcardPath('field.name*')))
                 )
         )
 
@@ -735,10 +735,10 @@ class AggregatesSpecification extends Specification {
                         defaultSearchOptions()
                                 .index('indexName')
                                 .count(total())
-                                .highlight(paths([
+                                .highlight(paths(
                                         fieldPath('fieldName1'),
                                         fieldPath('fieldName2').multi('analyzerName'),
-                                        wildcardPath('field.name*')]))
+                                        wildcardPath('field.name*')))
                 )
         )
 

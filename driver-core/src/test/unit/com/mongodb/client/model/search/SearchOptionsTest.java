@@ -22,7 +22,6 @@ import org.bson.BsonString;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.search.SearchCount.total;
-import static com.mongodb.client.model.search.SearchHighlight.path;
 import static com.mongodb.client.model.search.SearchHighlight.paths;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
@@ -83,7 +82,7 @@ final class SearchOptionsTest {
                                         .append("path", wildcardPath("wildc*rd").toBsonValue())),
                         SearchOptions.defaultSearchOptions()
                                 .highlight(
-                                        path(wildcardPath("wildc*rd")))
+                                        paths(wildcardPath("wildc*rd")))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
@@ -94,9 +93,9 @@ final class SearchOptionsTest {
                                                 fieldPath("fieldName").toBsonValue())))),
                         SearchOptions.defaultSearchOptions()
                                 .highlight(
-                                        paths(asList(
+                                        paths(
                                                 wildcardPath("wildc*rd"),
-                                                fieldPath("fieldName"))))
+                                                fieldPath("fieldName")))
                                 .toBsonDocument()
                 )
         );
@@ -138,7 +137,7 @@ final class SearchOptionsTest {
                         .index("indexName")
                         .option("name", new BsonArray(singletonList(new BsonString("value"))))
                         .highlight(
-                                path(fieldPath("fieldName")))
+                                paths(fieldPath("fieldName")))
                         .count(total())
                         .returnStoredSource(true)
                         .toBsonDocument()

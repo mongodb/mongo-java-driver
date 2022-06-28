@@ -189,7 +189,7 @@ package object search {
    */
   @Evolving
   @Beta(Array(Beta.Reason.CLIENT))
-  type SearchFuzzy = com.mongodb.client.model.search.SearchFuzzy
+  type FuzzySearchOptions = com.mongodb.client.model.search.FuzzySearchOptions
 
   /**
    * The core part of the `\$search` pipeline stage of an aggregation pipeline.

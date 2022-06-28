@@ -32,7 +32,7 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
         SearchOptions,
         SearchHighlight,
         TotalSearchCount, LowerBoundSearchCount,
-        SearchFuzzy,
+        FuzzySearchOptions,
         FieldSearchPath, WildcardSearchPath {
     /**
      * An {@linkplain Immutable immutable} {@link BsonDocument#isEmpty() empty} instance.
@@ -73,7 +73,7 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     }
 
     @Override
-    public SearchOptions option(final String name, final Object value) {
+    public SearchConstructibleBson option(final String name, final Object value) {
         return newAppended(notNull("name", name), notNull("value", value));
     }
 
@@ -93,17 +93,17 @@ final class SearchConstructibleBson extends AbstractConstructibleBson<SearchCons
     }
 
     @Override
-    public SearchFuzzy maxEdits(final int maxEdits) {
+    public FuzzySearchOptions maxEdits(final int maxEdits) {
         return newAppended("maxEdits", maxEdits);
     }
 
     @Override
-    public SearchFuzzy prefixLength(final int prefixLength) {
+    public FuzzySearchOptions prefixLength(final int prefixLength) {
         return newAppended("prefixLength", prefixLength);
     }
 
     @Override
-    public SearchFuzzy maxExpansions(final int maxExpansions) {
+    public FuzzySearchOptions maxExpansions(final int maxExpansions) {
         return newAppended("maxExpansions", maxExpansions);
     }
 
