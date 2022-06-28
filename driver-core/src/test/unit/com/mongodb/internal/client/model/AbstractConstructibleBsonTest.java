@@ -15,12 +15,14 @@
  */
 package com.mongodb.internal.client.model;
 
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -66,6 +68,23 @@ final class AbstractConstructibleBsonTest {
     void appendedCannotBeMutatedViaToBsonDocument() {
         appendedCannotBeMutatedViaToBsonDocument(new Document());
         appendedCannotBeMutatedViaToBsonDocument(new Document("appendedName", "appendedValue"));
+    }
+
+    @Test
+    void tostring() {
+        assertEquals(
+                new Document(
+                        "array", new BsonArray(asList(new BsonString("e1"), new BsonString("e2"))))
+                        .append("double", 0.5)
+                        .append("doc", new Document("i", 42))
+                        .append("constructible", new Document("s", ""))
+                        .toString(),
+                AbstractConstructibleBson.of(
+                        new BsonDocument("array", new BsonArray(asList(new BsonString("e1"), new BsonString("e2")))))
+                        .newAppended("double", 0.5)
+                        .newAppended("doc", new Document("i", 42))
+                        .newAppended("constructible", AbstractConstructibleBson.of(AbstractConstructibleBson.of(new Document("s", ""))))
+                        .toString());
     }
 
     private static void appendedCannotBeMutatedViaToBsonDocument(final Document appended) {

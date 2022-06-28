@@ -17,6 +17,7 @@ package com.mongodb.internal.client.model;
 
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
@@ -97,6 +98,21 @@ final class AbstractConstructibleBsonElementTest {
         assertEquals(
                 new BsonDocument("name", new BsonDocument("n", new BsonString("v")).append("n2", new BsonString("v2"))),
                 appendedConstructible.toBsonDocument());
+    }
+
+    @Test
+    void tostring() {
+        assertEquals(
+                new Document("name",
+                        new Document("double", 0.5)
+                        .append("doc", new Document("i", 42))
+                        .append("constructible", new Document("s", "")))
+                        .toString(),
+                AbstractConstructibleBsonElement.of(new Document("name",
+                        AbstractConstructibleBson.of(new Document("double", 0.5))
+                                .newAppended("doc", new Document("i", 42))))
+                        .newWithAppendedValue("constructible", AbstractConstructibleBson.of(AbstractConstructibleBson.of(new Document("s", ""))))
+                        .toString());
     }
 
     private static void assertUnmodifiable(final AbstractConstructibleBsonElement<?> constructible) {

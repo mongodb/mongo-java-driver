@@ -21,7 +21,10 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -31,7 +34,7 @@ import java.util.function.Consumer;
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBsonElement
  */
-public abstract class AbstractConstructibleBson<S extends AbstractConstructibleBson<S>> implements Bson {
+public abstract class AbstractConstructibleBson<S extends AbstractConstructibleBson<S>> implements Bson, ToMap {
     private static final Document EMPTY_DOC = new Document();
     /**
      * An {@linkplain Immutable immutable} {@link BsonDocument#isEmpty() empty} instance.
@@ -91,6 +94,16 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
         return newSelf(base, newAppended);
     }
 
+    @Override
+    public Optional<Map<String, ?>> tryToMap() {
+        return ToMap.tryToMap(base)
+                .map(baseMap -> {
+                    Map<String, Object> result = new LinkedHashMap<>(baseMap);
+                    result.putAll(appended);
+                    return result;
+                });
+    }
+
     public static AbstractConstructibleBson<?> of(final Bson doc) {
         return doc instanceof AbstractConstructibleBson
                 // prevent double wrapping
@@ -117,9 +130,12 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
 
     @Override
     public String toString() {
-        return "{base=" + base
-                + ", appended=" + appended
-                + '}';
+        return tryToMap()
+                .map(Document::new)
+                .map(Document::toString)
+                .orElseGet(() -> "ConstructibleBson{base=" + base
+                        + ", appended=" + appended
+                        + '}');
     }
 
     static BsonDocument newMerged(final BsonDocument base, final BsonDocument appended) {
