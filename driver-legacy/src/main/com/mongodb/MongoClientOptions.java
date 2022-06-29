@@ -281,7 +281,7 @@ public class MongoClientOptions {
     }
 
     /**
-     * <p>The socket timeout in milliseconds. It is used for I/O socket read and write operations {@link
+     * <p>The socket timeout in milliseconds. It is used for I/O socket read operations {@link
      * java.net.Socket#setSoTimeout(int)}</p>
      *
      * <p>Default is 0 and means no timeout.</p>
