@@ -32,10 +32,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 final class SearchOptionsTest {
     @Test
-    void defaultSearchOptions() {
+    void searchOptions() {
         assertEquals(
                 new BsonDocument(),
-                SearchOptions.defaultSearchOptions()
+                SearchOptions.searchOptions()
                         .toBsonDocument()
         );
     }
@@ -44,18 +44,18 @@ final class SearchOptionsTest {
     void option() {
         assertAll(
                 () -> assertEquals(
-                        SearchOptions.defaultSearchOptions()
+                        SearchOptions.searchOptions()
                                 .index("indexName")
                                 .toBsonDocument(),
-                        SearchOptions.defaultSearchOptions()
+                        SearchOptions.searchOptions()
                                 .option("index", new BsonString("indexName"))
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
-                        SearchOptions.defaultSearchOptions()
+                        SearchOptions.searchOptions()
                                 .option("index", "indexName")
                                 .toBsonDocument(),
-                        SearchOptions.defaultSearchOptions()
+                        SearchOptions.searchOptions()
                                 .option("index", new BsonString("indexName"))
                                 .toBsonDocument()
                 )
@@ -67,7 +67,7 @@ final class SearchOptionsTest {
         assertEquals(
                 new BsonDocument()
                         .append("index", new BsonString("indexName")),
-                SearchOptions.defaultSearchOptions()
+                SearchOptions.searchOptions()
                         .index("indexName")
                         .toBsonDocument()
         );
@@ -80,7 +80,7 @@ final class SearchOptionsTest {
                         new BsonDocument()
                                 .append("highlight", new BsonDocument()
                                         .append("path", wildcardPath("wildc*rd").toBsonValue())),
-                        SearchOptions.defaultSearchOptions()
+                        SearchOptions.searchOptions()
                                 .highlight(
                                         paths(wildcardPath("wildc*rd")))
                                 .toBsonDocument()
@@ -91,7 +91,7 @@ final class SearchOptionsTest {
                                         .append("path", new BsonArray(asList(
                                                 wildcardPath("wildc*rd").toBsonValue(),
                                                 fieldPath("fieldName").toBsonValue())))),
-                        SearchOptions.defaultSearchOptions()
+                        SearchOptions.searchOptions()
                                 .highlight(
                                         paths(
                                                 wildcardPath("wildc*rd"),
@@ -106,7 +106,7 @@ final class SearchOptionsTest {
         assertEquals(
                 new BsonDocument()
                         .append("count", total().toBsonDocument()),
-                SearchOptions.defaultSearchOptions()
+                SearchOptions.searchOptions()
                         .count(total())
                         .toBsonDocument()
         );
@@ -117,7 +117,7 @@ final class SearchOptionsTest {
         assertEquals(
                 new BsonDocument()
                         .append("returnStoredSource", new BsonBoolean(true)),
-                SearchOptions.defaultSearchOptions()
+                SearchOptions.searchOptions()
                         .returnStoredSource(true)
                         .toBsonDocument()
         );
@@ -133,7 +133,7 @@ final class SearchOptionsTest {
                                 .append("path", fieldPath("fieldName").toBsonValue()))
                         .append("count", total().toBsonDocument())
                         .append("returnStoredSource", new BsonBoolean(true)),
-                SearchOptions.defaultSearchOptions()
+                SearchOptions.searchOptions()
                         .index("indexName")
                         .option("name", new BsonArray(singletonList(new BsonString("value"))))
                         .highlight(
@@ -145,16 +145,16 @@ final class SearchOptionsTest {
     }
 
     @Test
-    void defaultSearchOptionsIsUnmodifiable() {
-        String expected = SearchOptions.defaultSearchOptions().toBsonDocument().toJson();
-        SearchOptions.defaultSearchOptions().option("name", "value");
-        assertEquals(expected, SearchOptions.defaultSearchOptions().toBsonDocument().toJson());
+    void searchOptionsIsUnmodifiable() {
+        String expected = SearchOptions.searchOptions().toBsonDocument().toJson();
+        SearchOptions.searchOptions().option("name", "value");
+        assertEquals(expected, SearchOptions.searchOptions().toBsonDocument().toJson());
     }
 
     @Test
-    void defaultSearchOptionsIsImmutable() {
-        String expected = SearchOptions.defaultSearchOptions().toBsonDocument().toJson();
-        SearchOptions.defaultSearchOptions().toBsonDocument().append("name", new BsonString("value"));
-        assertEquals(expected, SearchOptions.defaultSearchOptions().toBsonDocument().toJson());
+    void searchOptionsIsImmutable() {
+        String expected = SearchOptions.searchOptions().toBsonDocument().toJson();
+        SearchOptions.searchOptions().toBsonDocument().append("name", new BsonString("value"));
+        assertEquals(expected, SearchOptions.searchOptions().toBsonDocument().toJson());
     }
 }

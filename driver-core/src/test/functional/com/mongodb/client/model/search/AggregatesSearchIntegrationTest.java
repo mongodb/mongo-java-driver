@@ -71,7 +71,7 @@ import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchOperator.near;
 import static com.mongodb.client.model.search.SearchOperator.numberRange;
 import static com.mongodb.client.model.search.SearchOperator.text;
-import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions;
+import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
 import static com.mongodb.client.model.search.SearchScore.boost;
@@ -294,7 +294,7 @@ final class AggregatesSearchIntegrationTest {
                         stageCreator(
                                 // `multi` is used here only to verify that it is tolerated
                                 exists(fieldPath("title").multi("keyword")),
-                                defaultSearchOptions()
+                                searchOptions()
                                         .option("index", "default")
                                         .count(lowerBound().threshold(2_000))
                         ),
@@ -314,7 +314,7 @@ final class AggregatesSearchIntegrationTest {
                         "`highlight` option",
                         stageCreator(
                                 text(singleton(fieldPath("plot")), asList("factory", "century")),
-                                defaultSearchOptions()
+                                searchOptions()
                                         .highlight(paths(
                                                 fieldPath("title").multi("keyword"),
                                                 wildcardPath("pl*t"))
@@ -336,7 +336,7 @@ final class AggregatesSearchIntegrationTest {
                         "`returnStoredSource` option",
                         stageCreator(
                                 exists(fieldPath("plot")),
-                                defaultSearchOptions()
+                                searchOptions()
                                         .returnStoredSource(true)
                         ),
                         MFLIX_MOVIES_NS,
@@ -360,7 +360,7 @@ final class AggregatesSearchIntegrationTest {
                         "alternate analyzer (`multi` field path)",
                         stageCreator(
                                 text(singleton(fieldPath("title").multi("keyword")), singleton("The Cheat")),
-                                defaultSearchOptions().count(total())
+                                searchOptions().count(total())
                         ),
                         MFLIX_MOVIES_NS,
                         asList(
@@ -398,7 +398,7 @@ final class AggregatesSearchIntegrationTest {
                                                                 Instant.from(Year.of(1985)
                                                                         .atMonth(Month.JANUARY).atDay(1).atStartOfDay().atOffset(UTC)),
                                                                 Instant.now())))),
-                                defaultSearchOptions()
+                                searchOptions()
                         ),
                         MFLIX_MOVIES_NS,
                         asList(
