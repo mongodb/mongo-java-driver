@@ -42,6 +42,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
 
@@ -124,14 +125,8 @@ public class Crypt implements Closeable {
             return command;
         }
 
-        try {
-            MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command);
-
-            try {
-                return executeStateMachine(encryptionContext, databaseName);
-            } finally {
-                encryptionContext.close();
-            }
+        try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command)) {
+            return executeStateMachine(encryptionContext, databaseName);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -146,14 +141,8 @@ public class Crypt implements Closeable {
     RawBsonDocument decrypt(final RawBsonDocument commandResponse) {
         notNull("commandResponse", commandResponse);
 
-        try {
-            MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse);
-
-            try {
-                return executeStateMachine(decryptionContext, null);
-            } finally {
-                decryptionContext.close();
-            }
+        try (MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse)) {
+            return executeStateMachine(decryptionContext, null);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -170,18 +159,12 @@ public class Crypt implements Closeable {
         notNull("kmsProvider", kmsProvider);
         notNull("options", options);
 
-        try {
-            MongoCryptContext dataKeyCreationContext = mongoCrypt.createDataKeyContext(kmsProvider,
-                    MongoDataKeyOptions.builder()
-                            .keyAltNames(options.getKeyAltNames())
-                            .masterKey(options.getMasterKey())
-                            .build());
-
-            try {
-                return executeStateMachine(dataKeyCreationContext, null);
-            } finally {
-                dataKeyCreationContext.close();
-            }
+        try (MongoCryptContext dataKeyCreationContext = mongoCrypt.createDataKeyContext(kmsProvider,
+                MongoDataKeyOptions.builder()
+                        .keyAltNames(options.getKeyAltNames())
+                        .masterKey(options.getMasterKey())
+                        .build())) {
+            return executeStateMachine(dataKeyCreationContext, null);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -214,17 +197,13 @@ public class Crypt implements Closeable {
                 encryptOptionsBuilder.contentionFactor(options.getContentionFactor());
             }
 
-            EncryptOptions.QueryType queryType = options.getQueryType();
-            if (queryType != null) {
-                encryptOptionsBuilder.queryType(MongoExplicitEncryptOptions.QueryType.valueOf(queryType.name()));
+            if (options.getQueryType() != null) {
+                encryptOptionsBuilder.queryType(options.getQueryType());
             }
 
-            MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
-                    new BsonDocument("v", value), encryptOptionsBuilder.build());
-            try {
+            try (MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
+                    new BsonDocument("v", value), encryptOptionsBuilder.build())) {
                 return executeStateMachine(encryptionContext, null).getBinary("v");
-            } finally {
-                encryptionContext.close();
             }
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
@@ -240,14 +219,8 @@ public class Crypt implements Closeable {
     BsonValue decryptExplicitly(final BsonBinary value) {
         notNull("value", value);
 
-        try {
-            MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value));
-
-            try {
-                return executeStateMachine(decryptionContext, null).get("v");
-            } finally {
-                decryptionContext.close();
-            }
+        try (MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value))) {
+            return assertNotNull(executeStateMachine(decryptionContext, null).get("v"));
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -257,27 +230,23 @@ public class Crypt implements Closeable {
     @SuppressWarnings("try")
     public void close() {
         //noinspection EmptyTryBlock
-        try (MongoCrypt mongoCrypt = this.mongoCrypt;
-             CommandMarker commandMarker = this.commandMarker;
-             MongoClient internalClient = this.internalClient
+        try (MongoCrypt ignored = this.mongoCrypt;
+             CommandMarker ignored1 = this.commandMarker;
+             MongoClient ignored2 = this.internalClient
         ) {
             // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
     }
 
-    public String getCryptSharedLibVersionString() {
-        return mongoCrypt.getCryptSharedLibVersionString();
-    }
-
-    private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, final String databaseName) {
+    private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, @Nullable final String databaseName) {
         while (true) {
             State state = cryptContext.getState();
             switch (state) {
                 case NEED_MONGO_COLLINFO:
-                    collInfo(cryptContext, databaseName);
+                    collInfo(cryptContext, notNull("databaseName", databaseName));
                     break;
                 case NEED_MONGO_MARKINGS:
-                    mark(cryptContext, databaseName);
+                    mark(cryptContext, notNull("databaseName", databaseName));
                     break;
                 case NEED_KMS_CREDENTIALS:
                     fetchCredentials(cryptContext);
@@ -302,7 +271,7 @@ public class Crypt implements Closeable {
 
     private void collInfo(final MongoCryptContext cryptContext, final String databaseName) {
         try {
-            BsonDocument collectionInfo = collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation());
+            BsonDocument collectionInfo = assertNotNull(collectionInfoRetriever).filter(databaseName, cryptContext.getMongoOperation());
             if (collectionInfo != null) {
                 cryptContext.addMongoOperationResult(collectionInfo);
             }
@@ -314,7 +283,7 @@ public class Crypt implements Closeable {
 
     private void mark(final MongoCryptContext cryptContext, final String databaseName) {
         try {
-            RawBsonDocument markedCommand = commandMarker.mark(databaseName, cryptContext.getMongoOperation());
+            RawBsonDocument markedCommand = assertNotNull(commandMarker).mark(databaseName, cryptContext.getMongoOperation());
             cryptContext.addMongoOperationResult(markedCommand);
             cryptContext.completeMongoOperation();
         } catch (Throwable t) {
