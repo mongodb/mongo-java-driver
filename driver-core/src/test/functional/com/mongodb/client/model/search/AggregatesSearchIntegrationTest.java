@@ -22,7 +22,6 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.conversions.Bson;
@@ -274,7 +273,7 @@ final class AggregatesSearchIntegrationTest {
                         "default options",
                         stageCreator(
                                 exists(fieldPath("tomatoes.dvd")),
-                                null
+                                searchOptions()
                         ),
                         MFLIX_MOVIES_NS,
                         asList(
@@ -460,7 +459,7 @@ final class AggregatesSearchIntegrationTest {
                                                                 relevanceExpression()))),
                                                         gaussExpression(0, pathExpression(fieldPath("gaussianFieldName")), 1)))))
                                 )),
-                                null
+                                searchOptions()
                         ),
                         MFLIX_MOVIES_NS,
                         asList(
@@ -503,7 +502,7 @@ final class AggregatesSearchIntegrationTest {
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(
                                         compound().must(singleton(exists(fieldPath("fieldName")))))),
-                                null
+                                searchOptions()
                         ),
                         MFLIX_MOVIES_NS,
                         asList(
@@ -526,7 +525,7 @@ final class AggregatesSearchIntegrationTest {
                                                 1234.5,
                                                 fieldPath("address.location"))
                                 )),
-                                null
+                                searchOptions()
                         ),
                         AIRBNB_LISTINGS_AND_REVIEWS_NS,
                         asList(
@@ -610,7 +609,7 @@ final class AggregatesSearchIntegrationTest {
         }
     }
 
-    private static CustomizableSearchStageCreator stageCreator(final Bson operatorOrCollector, @Nullable final SearchOptions options) {
+    private static CustomizableSearchStageCreator stageCreator(final Bson operatorOrCollector, final SearchOptions options) {
         return customizer -> customizer.apply(operatorOrCollector, options);
     }
 
