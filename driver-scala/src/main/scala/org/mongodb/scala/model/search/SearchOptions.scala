@@ -32,5 +32,5 @@ object SearchOptions {
    *
    * @return `SearchOptions` that represents server defaults.
    */
-  def defaultSearchOptions(): SearchOptions = JSearchOptions.defaultSearchOptions()
+  def searchOptions(): SearchOptions = JSearchOptions.searchOptions()
 }

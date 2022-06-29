@@ -89,7 +89,7 @@ import static com.mongodb.client.model.search.SearchCount.total
 import static com.mongodb.client.model.search.SearchFacet.stringFacet
 import static com.mongodb.client.model.search.SearchHighlight.paths
 import static com.mongodb.client.model.search.SearchOperator.exists
-import static com.mongodb.client.model.search.SearchOptions.defaultSearchOptions
+import static com.mongodb.client.model.search.SearchOptions.searchOptions
 import static com.mongodb.client.model.search.SearchPath.fieldPath
 import static com.mongodb.client.model.search.SearchPath.wildcardPath
 import static java.util.Arrays.asList
@@ -624,7 +624,7 @@ class AggregatesSpecification extends Specification {
         BsonDocument searchDoc = toBson(
                 search(
                         (SearchOperator) exists(fieldPath('fieldName')),
-                        defaultSearchOptions()
+                        searchOptions()
                 )
         )
 
@@ -641,7 +641,7 @@ class AggregatesSpecification extends Specification {
                         (SearchCollector) facet(
                                 exists(fieldPath('fieldName')),
                                 [stringFacet('stringFacetName', fieldPath('fieldName1'))]),
-                        defaultSearchOptions()
+                        searchOptions()
                                 .index('indexName')
                                 .count(total())
                                 .highlight(paths(
@@ -715,7 +715,7 @@ class AggregatesSpecification extends Specification {
         BsonDocument searchDoc = toBson(
                 searchMeta(
                         (SearchOperator) exists(fieldPath('fieldName')),
-                        defaultSearchOptions()
+                        searchOptions()
                 )
         )
 
@@ -732,7 +732,7 @@ class AggregatesSpecification extends Specification {
                         (SearchCollector) facet(
                                 exists(fieldPath('fieldName')),
                                 [stringFacet('stringFacetName', fieldPath('fieldName1'))]),
-                        defaultSearchOptions()
+                        searchOptions()
                                 .index('indexName')
                                 .count(total())
                                 .highlight(paths(
