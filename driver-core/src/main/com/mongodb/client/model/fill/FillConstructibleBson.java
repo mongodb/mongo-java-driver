@@ -39,19 +39,21 @@ final class FillConstructibleBson extends AbstractConstructibleBson<FillConstruc
     }
 
     @Override
-    public <TExpression> FillOptions partitionBy(final TExpression partitionBy) {
+    public <TExpression> FillOptions partitionBy(final TExpression expression) {
+        notNull("expression", expression);
         return newMutated(doc -> {
             doc.remove("partitionByFields");
-            doc.append("partitionBy", notNull("partitionBy", partitionBy));
+            doc.append("partitionBy", expression);
         });
     }
 
     @Override
-    public FillOptions partitionByFields(final Iterable<String> partitionByFields) {
+    public FillOptions partitionByFields(final Iterable<String> fields) {
+        notNull("fields", fields);
         return newMutated(doc -> {
             doc.remove("partitionBy");
-            if (sizeAtLeast(partitionByFields, 1)) {
-                doc.append("partitionByFields", notNull("partitionByFields", partitionByFields));
+            if (sizeAtLeast(fields, 1)) {
+                doc.append("partitionByFields", fields);
             } else {
                 doc.remove("partitionByFields");
             }

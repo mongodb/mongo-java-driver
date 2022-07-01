@@ -668,7 +668,7 @@ public final class Aggregates {
      * @param output The {@link FillComputation}.
      * @param moreOutput More {@link FillComputation}s.
      * @return The requested pipeline stage.
-     * @mongodb.driver.dochub reference/operator/aggregation/fill/ $fill
+     * @mongodb.driver.manual reference/operator/aggregation/fill/ $fill
      * @mongodb.server.release 5.3
      * @since 4.7
      */
@@ -682,7 +682,7 @@ public final class Aggregates {
      * @param options The fill options.
      * @param output The non-empty {@link FillComputation}s.
      * @return The requested pipeline stage.
-     * @mongodb.driver.dochub reference/operator/aggregation/fill/ $fill
+     * @mongodb.driver.manual reference/operator/aggregation/fill/ $fill
      * @mongodb.server.release 5.3
      * @since 4.7
      */

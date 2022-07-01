@@ -1147,12 +1147,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                         .append('numMissing', 3)
                         .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))]
         getCollectionHelper().insertDocuments(original)
-        LinkedList<Bson> stages = [
+        List<Bson> stages = [
                 setWindowFields(partitionBy, sortBy, output),
                 sort(ascending('num1'))
         ]
         if (preSortBy != null) {
-            stages.addFirst(sort(preSortBy))
+            stages.add(0, sort(preSortBy))
         }
         List<Document> actual = aggregate(stages)
         List<Object> actualFieldValues = actual.stream()
@@ -1307,13 +1307,13 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                         .append('doc', new Document('field2', 3))]
         getCollectionHelper().insertDocuments(docs)
         String resultField = 'result'
-        LinkedList<Bson> stages = [
+        List<Bson> stages = [
                 fillStage,
                 project(fields(computed(resultField, '$' + field))),
                 sort(ascending('_id'))
         ]
         if (preSortBy != null) {
-            stages.addFirst(sort(preSortBy))
+            stages.add(0, sort(preSortBy))
         }
         List<Object> actualFieldValues = aggregate(stages)
                 .stream()

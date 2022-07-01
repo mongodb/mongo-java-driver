@@ -40,34 +40,34 @@ public interface FillOptions extends Bson {
      * Creates a new {@link FillOptions} with the specified partitioning.
      * Overrides {@link #partitionByFields(Iterable)}.
      *
-     * @param partitionBy The expression specifying how to partition the data.
+     * @param expression The expression specifying how to partition the data.
      * The syntax is the same as the syntax for {@code id} in {@link Aggregates#group(Object, List)}.
-     * @param <TExpression> The type of the {@code partitionBy} expression.
+     * @param <TExpression> The type of the {@code expression} expression.
      * @return A new {@link FillOptions}.
      */
-    <TExpression> FillOptions partitionBy(TExpression partitionBy);
+    <TExpression> FillOptions partitionBy(TExpression expression);
 
     /**
      * Creates a new {@link FillOptions} with the specified partitioning.
      * Overrides {@link #partitionBy(Object)}.
      *
-     * @param partitionByFields The fields to partition by.
+     * @param fields The fields to partition by.
      * @return A new {@link FillOptions}.
      * @mongodb.driver.manual core/document/#dot-notation
      */
-    default FillOptions partitionByFields(@Nullable final String... partitionByFields) {
-        return partitionByFields(partitionByFields == null ? emptyList() : asList(partitionByFields));
+    default FillOptions partitionByFields(@Nullable final String... fields) {
+        return partitionByFields(fields == null ? emptyList() : asList(fields));
     }
 
     /**
      * Creates a new {@link FillOptions} with the specified partitioning.
      * Overrides {@link #partitionBy(Object)}.
      *
-     * @param partitionByFields The fields to partition by.
+     * @param fields The fields to partition by.
      * @return A new {@link FillOptions}.
      * @mongodb.driver.manual core/document/#dot-notation
      */
-    FillOptions partitionByFields(Iterable<String> partitionByFields);
+    FillOptions partitionByFields(Iterable<String> fields);
 
     /**
      * Creates a new {@link FillOptions} with the specified sorting.
