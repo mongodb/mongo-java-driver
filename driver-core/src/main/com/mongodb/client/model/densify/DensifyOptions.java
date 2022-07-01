@@ -15,7 +15,6 @@
  */
 package com.mongodb.client.model.densify;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.lang.Nullable;
