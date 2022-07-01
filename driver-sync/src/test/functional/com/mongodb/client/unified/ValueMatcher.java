@@ -47,6 +47,10 @@ final class ValueMatcher {
     private void assertValuesMatch(final BsonValue initialExpected, final @Nullable BsonValue actual,
             final @Nullable String keyContext, final int arrayPositionContext) {
         BsonValue expected = initialExpected;
+        if (expected.isNull() && actual == null) {
+            return;
+        }
+
         context.push(ContextElement.ofValueMatcher(expected, actual, keyContext, arrayPositionContext));
 
         try {
@@ -119,7 +123,6 @@ final class ValueMatcher {
                                 throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
                         }
                     }
-
                     assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
                     assertValuesMatch(value, actualDocument.get(key), key, -1);
                 });

@@ -16,10 +16,15 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.vault.ClientEncryption;
 import org.bson.BsonBinary;
+import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import reactor.core.publisher.Mono;
 
@@ -52,6 +57,46 @@ public class SyncClientEncryption implements ClientEncryption {
     @Override
     public BsonValue decrypt(final BsonBinary value) {
         return requireNonNull(Mono.from(wrapped.decrypt(value)).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public DeleteResult deleteKey(final BsonBinary id) {
+        return requireNonNull(Mono.from(wrapped.deleteKey(id)).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public BsonDocument getKey(final BsonBinary id) {
+        return Mono.from(wrapped.getKey(id)).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public FindIterable<BsonDocument> getKeys() {
+        return new SyncFindIterable<>(wrapped.getKeys());
+    }
+
+    @Override
+    public BsonDocument addKeyAltName(final BsonBinary id, final String keyAltName) {
+        return Mono.from(wrapped.addKeyAltName(id, keyAltName)).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public BsonDocument removeKeyAltName(final BsonBinary id, final String keyAltName) {
+        return Mono.from(wrapped.removeKeyAltName(id, keyAltName)).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public BsonDocument getKeyByAltName(final String keyAltName) {
+        return Mono.from(wrapped.getKeyByAltName(keyAltName)).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public RewrapManyDataKeyResult rewrapManyDataKey(final BsonDocument filter) {
+        return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter)).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public RewrapManyDataKeyResult rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
+        return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter, options)).block(TIMEOUT_DURATION));
     }
 
     @Override

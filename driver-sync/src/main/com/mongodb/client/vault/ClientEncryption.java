@@ -16,9 +16,15 @@
 
 package com.mongodb.client.vault;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
+import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.io.Closeable;
@@ -77,6 +83,82 @@ public interface ClientEncryption extends Closeable {
      * @return the decrypted value
      */
     BsonValue decrypt(BsonBinary value);
+
+    /**
+     * Removes the key document with the given data key from the key vault collection.
+     * @param id the data key UUID (BSON binary subtype 0x04)
+     * @return the result
+     * @since 4.7
+     */
+    DeleteResult deleteKey(BsonBinary id);
+
+    /**
+     * Finds a single key document with the given UUID (BSON binary subtype 0x04).
+     *
+     * @param id the data key UUID (BSON binary subtype 0x04)
+     * @return the single key document or null if there is no match
+     * @since 4.7
+     */
+    @Nullable
+    BsonDocument getKey(BsonBinary id);
+
+    /**
+     * Finds all documents in the key vault collection.
+     * @return a find iterable for the documents in the key vault collection
+     * @since 4.7
+     */
+    FindIterable<BsonDocument> getKeys();
+
+    /**
+     * Adds a keyAltName to the keyAltNames array of the key document in the key vault collection with the given UUID.
+     *
+     * @param id the data key UUID (BSON binary subtype 0x04)
+     * @param keyAltName the alternative key name to add to the keyAltNames array
+     * @return the previous version of the key document or null if no match
+     * @since 4.7
+     */
+    @Nullable
+    BsonDocument addKeyAltName(BsonBinary id, String keyAltName);
+
+    /**
+     * Removes a keyAltName from the keyAltNames array of the key document in the key vault collection with the given id.
+     *
+     * @param id the data key UUID (BSON binary subtype 0x04)
+     * @param keyAltName the alternative key name
+     * @return the previous version of the key document or null if no match
+     * @since 4.7
+     */
+    @Nullable
+    BsonDocument removeKeyAltName(BsonBinary id, String keyAltName);
+
+    /**
+     * Returns a key document in the key vault collection with the given keyAltName.
+     *
+     * @param keyAltName the alternative key name
+     * @return a matching key document or null
+     * @since 4.7
+     */
+    @Nullable
+    BsonDocument getKeyByAltName(String keyAltName);
+
+    /**
+     * Decrypts multiple data keys and (re-)encrypts them with the current masterKey.
+     *
+     * @param filter the filter
+     * @return the result
+     * @since 4.7
+     */
+    RewrapManyDataKeyResult rewrapManyDataKey(BsonDocument filter);
+
+    /**
+     * Decrypts multiple data keys and (re-)encrypts them with a new masterKey, or with their current masterKey if a new one is not given.
+     *
+     * @param filter the filter
+     * @param options the options
+     * @return the result
+     * @since 4.7
+     */
+    RewrapManyDataKeyResult rewrapManyDataKey(BsonDocument filter, RewrapManyDataKeyOptions options);
 
     @Override
     void close();

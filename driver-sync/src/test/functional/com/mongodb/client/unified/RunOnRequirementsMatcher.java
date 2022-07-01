@@ -81,6 +81,8 @@ final class RunOnRequirementsMatcher {
                             }
                         }
                         break;
+                    case "csfle":
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported runOnRequirement: " + curRequirement.getKey());
                 }

@@ -22,12 +22,14 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCrypt;
 import com.mongodb.crypt.capi.MongoCryptContext;
 import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.crypt.capi.MongoDataKeyOptions;
 import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.crypt.capi.MongoRewrapManyDataKeyOptions;
 import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
@@ -39,6 +41,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -48,6 +51,7 @@ import static com.mongodb.crypt.capi.MongoCryptContext.State;
 
 public class Crypt implements Closeable {
 
+    private static final RawBsonDocument EMPTY_RAW_BSON_DOCUMENT = RawBsonDocument.parse("{}");
     private final MongoCrypt mongoCrypt;
     private final Map<String, Map<String, Object>> kmsProviders;
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
@@ -125,8 +129,8 @@ public class Crypt implements Closeable {
             return command;
         }
 
-        try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command)) {
-            return executeStateMachine(encryptionContext, databaseName);
+       try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command)) {
+           return executeStateMachine(encryptionContext, databaseName);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -140,6 +144,7 @@ public class Crypt implements Closeable {
      */
     RawBsonDocument decrypt(final RawBsonDocument commandResponse) {
         notNull("commandResponse", commandResponse);
+
 
         try (MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse)) {
             return executeStateMachine(decryptionContext, null);
@@ -163,6 +168,7 @@ public class Crypt implements Closeable {
                 MongoDataKeyOptions.builder()
                         .keyAltNames(options.getKeyAltNames())
                         .masterKey(options.getMasterKey())
+                        .keyMaterial(options.getKeyMaterial())
                         .build())) {
             return executeStateMachine(dataKeyCreationContext, null);
         } catch (MongoCryptException e) {
@@ -218,9 +224,31 @@ public class Crypt implements Closeable {
      */
     BsonValue decryptExplicitly(final BsonBinary value) {
         notNull("value", value);
-
         try (MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value))) {
             return assertNotNull(executeStateMachine(decryptionContext, null).get("v"));
+        } catch (MongoCryptException e) {
+            throw wrapInClientException(e);
+        }
+    }
+
+    /**
+     * Rewrap data key
+     * @param filter the filter
+     * @param options the rewrap many data key options
+     * @return the decrypted value
+     * @since 4.7
+     */
+    BsonDocument rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
+        notNull("filter", filter);
+        try {
+            try (MongoCryptContext rewrapManyDatakeyContext = mongoCrypt.createRewrapManyDatakeyContext(filter,
+                    MongoRewrapManyDataKeyOptions
+                            .builder()
+                            .provider(options.getProvider())
+                            .masterKey(options.getMasterKey())
+                            .build())) {
+                return executeStateMachine(rewrapManyDatakeyContext, null);
+            }
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -259,6 +287,8 @@ public class Crypt implements Closeable {
                     break;
                 case READY:
                     return cryptContext.finish();
+                case DONE:
+                    return EMPTY_RAW_BSON_DOCUMENT;
                 default:
                     throw new MongoInternalException("Unsupported encryptor state + " + state);
             }

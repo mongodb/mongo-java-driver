@@ -86,6 +86,7 @@ public abstract class UnifiedTest {
     private final Entities entities = new Entities();
     private final UnifiedCrudHelper crudHelper;
     private final UnifiedGridFSHelper gridFSHelper = new UnifiedGridFSHelper(entities);
+    private final UnifiedClientEncryptionHelper clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
     private final ValueMatcher valueMatcher = new ValueMatcher(entities, context);
     private final ErrorMatcher errorMatcher = new ErrorMatcher(context);
     private final EventMatcher eventMatcher = new EventMatcher(valueMatcher, context);
@@ -146,7 +147,8 @@ public abstract class UnifiedTest {
                 || schemaVersion.startsWith("1.4")
                 || schemaVersion.startsWith("1.5")
                 || schemaVersion.startsWith("1.6")
-                || schemaVersion.startsWith("1.7"));
+                || schemaVersion.startsWith("1.7")
+                || schemaVersion.startsWith("1.8"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
@@ -228,7 +230,8 @@ public abstract class UnifiedTest {
         context.push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
-                assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
+                assertNull(context.getMessage("The operation expects a result but an exception occurred"),
+                        result.getException());
                 valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
             } else if (operation.containsKey("expectError")) {
                 assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
@@ -349,6 +352,22 @@ public abstract class UnifiedTest {
                     return crudHelper.executeRunCommand(operation);
                 case "loop":
                     return loop(operation);
+                case "createDataKey":
+                    return clientEncryptionHelper.executeCreateDataKey(operation);
+                case "addKeyAltName":
+                    return clientEncryptionHelper.executeAddKeyAltName(operation);
+                case "deleteKey":
+                    return clientEncryptionHelper.executeDeleteKey(operation);
+                case "removeKeyAltName":
+                    return clientEncryptionHelper.executeRemoveKeyAltName(operation);
+                case "getKey":
+                    return clientEncryptionHelper.executeGetKey(operation);
+                case "getKeys":
+                    return clientEncryptionHelper.executeGetKeys(operation);
+                case "getKeyByAltName":
+                    return clientEncryptionHelper.executeGetKeyByAltName(operation);
+                case "rewrapManyDataKey":
+                    return clientEncryptionHelper.executeRewrapManyDataKey(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }

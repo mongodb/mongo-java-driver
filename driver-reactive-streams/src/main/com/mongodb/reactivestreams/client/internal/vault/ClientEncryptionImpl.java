@@ -18,30 +18,53 @@ package com.mongodb.reactivestreams.client.internal.vault;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.Updates;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypts;
 import com.mongodb.reactivestreams.client.vault.ClientEncryption;
+import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
-public class ClientEncryptionImpl implements ClientEncryption {
+import java.util.List;
+import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+import static java.util.Collections.singletonList;
+
+public class ClientEncryptionImpl implements ClientEncryption {
+    private static final String UPDATE_TEMPLATE = "{'$set': {'keyAltNames': { '$cond': [{'$eq': [ '$keyAltNames', ['%s']]}, '$$REMOVE',"
+            + "{'$filter': { 'input': '$keyAltNames', 'cond': {'$ne': ['$$this', '%s']}}}]}}}";
     private final Crypt crypt;
     private final ClientEncryptionSettings options;
     private final MongoClient keyVaultClient;
+    private final MongoCollection<BsonDocument> collection;
 
     public ClientEncryptionImpl(final ClientEncryptionSettings options) {
         this.keyVaultClient = MongoClients.create(options.getKeyVaultMongoClientSettings());
         this.crypt = Crypts.create(keyVaultClient, options);
         this.options = options;
+        MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
+        this.collection = keyVaultClient.getDatabase(namespace.getDatabaseName())
+                .getCollection(namespace.getCollectionName(), BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY)
+                .withReadConcern(ReadConcern.MAJORITY);
     }
 
     @Override
@@ -70,6 +93,61 @@ public class ClientEncryptionImpl implements ClientEncryption {
     @Override
     public Publisher<BsonValue> decrypt(final BsonBinary value) {
         return crypt.decryptExplicitly(value);
+    }
+
+    @Override
+    public Publisher<DeleteResult> deleteKey(final BsonBinary id) {
+        return collection.deleteOne(Filters.eq("_id", id));
+    }
+
+    @Override
+    public Publisher<BsonDocument> getKey(final BsonBinary id) {
+        return collection.find(Filters.eq("_id", id)).first();
+    }
+
+    @Override
+    public FindPublisher<BsonDocument> getKeys() {
+        return collection.find();
+    }
+
+    @Override
+    public Publisher<BsonDocument> addKeyAltName(final BsonBinary id, final String keyAltName) {
+        return collection.findOneAndUpdate(Filters.eq("_id", id), Updates.addToSet("keyAltNames", keyAltName));
+    }
+
+    @Override
+    public Publisher<BsonDocument> removeKeyAltName(final BsonBinary id, final String keyAltName) {
+        return collection.findOneAndUpdate(Filters.eq("_id", id),
+                singletonList(BsonDocument.parse(format(UPDATE_TEMPLATE, keyAltName, keyAltName))));
+    }
+
+    @Override
+    public Publisher<BsonDocument> getKeyByAltName(final String keyAltName) {
+        return collection.find(Filters.eq("keyAltNames", keyAltName)).first();
+    }
+
+    @Override
+    public Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(final BsonDocument filter) {
+        return rewrapManyDataKey(filter, new RewrapManyDataKeyOptions());
+    }
+
+    @Override
+    public Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
+        return crypt.rewrapManyDataKey(filter, options).flatMap(results -> {
+            if (results.isEmpty()) {
+                return Mono.fromCallable(RewrapManyDataKeyResult::new);
+            }
+            List<UpdateOneModel<BsonDocument>> updateModels = results.getArray("v", new BsonArray()).stream().map(v -> {
+                BsonDocument updateDocument = v.asDocument();
+                return new UpdateOneModel<BsonDocument>(Filters.eq(updateDocument.get("_id")),
+                        Updates.combine(
+                                Updates.set("masterKey", updateDocument.get("masterKey")),
+                                Updates.set("keyMaterial", updateDocument.get("keyMaterial")),
+                                Updates.currentDate("updateDate"))
+                );
+            }).collect(Collectors.toList());
+            return Mono.from(collection.bulkWrite(updateModels)).map(RewrapManyDataKeyResult::new);
+        });
     }
 
     @Override

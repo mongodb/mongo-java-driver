@@ -18,72 +18,50 @@ package com.mongodb.client.model.vault;
 
 import org.bson.BsonDocument;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
- * The options for creating a data key.
+ * The rewrap many data key options
  *
- * @since 3.11
+ * <p>
+ *     The masterKey document MUST have the fields corresponding to the given provider as specified in masterKey.
+ * </p>
+ *
+ * @since 4.7
  */
-public class DataKeyOptions {
-    private List<String> keyAltNames;
+public class RewrapManyDataKeyOptions {
+
+    private String provider;
     private BsonDocument masterKey;
-    private byte[] keyMaterial;
+
 
     /**
-     * Set the alternate key names.
+     * Sets the provider name
      *
-     * @param keyAltNames a list of alternate key names
+     * @param provider the provider name
      * @return this
-     * @see #getKeyAltNames()
+     * @see #getProvider()
      */
-    public DataKeyOptions keyAltNames(final List<String> keyAltNames) {
-        this.keyAltNames = keyAltNames;
+    public RewrapManyDataKeyOptions provider(final String provider) {
+        this.provider = provider;
         return this;
     }
 
     /**
-     * Sets the master key document.
+      * @return the provider name
+     */
+    public String getProvider() {
+        return provider;
+    }
+
+    /**
+     * Sets the optional master key document.
      *
      * @param masterKey the master key document
      * @return this
      * @see #getMasterKey()
      */
-    public DataKeyOptions masterKey(final BsonDocument masterKey) {
+    public RewrapManyDataKeyOptions masterKey(final BsonDocument masterKey) {
         this.masterKey = masterKey;
         return this;
-    }
-
-    /**
-     * Sets the key material
-     *
-     * <p>An optional BinData of 96 bytes to use as custom key material for the data key being created.
-     * If set the custom key material is used for encrypting and decrypting data. Otherwise, the key material for the new data key is
-     * generated from a cryptographically secure random device.</p>
-     *
-     * @param keyMaterial the optional custom key material for the data key
-     * @return this
-     * @since 4.7
-     * @see #getKeyMaterial()
-     */
-    public DataKeyOptions keyMaterial(final byte[] keyMaterial) {
-        this.keyMaterial = keyMaterial;
-        return this;
-    }
-
-    /**
-     * Gets the alternate key names.
-     *
-     * <p>
-     * An optional list of alternate names used to reference a key. If a key is created with alternate names, then encryption may refer
-     * to the key by the unique alternate name instead of by _id.
-     * </p>
-     *
-     * @return the list of alternate key names
-     */
-    public List<String> getKeyAltNames() {
-        return keyAltNames;
     }
 
     /**
@@ -136,26 +114,4 @@ public class DataKeyOptions {
         return masterKey;
     }
 
-    /**
-     * Gets the custom key material if set.
-     *
-     * <p>The optional BinData of 96 bytes to use as custom key material for the data key being created.
-     * If set the custom key material is used for encrypting and decrypting data. Otherwise, the key material for the new data key is
-     * generated from a cryptographically secure random device.</p>
-
-     * @return the custom key material for the data key or null
-     * @since 4.7
-     */
-    public byte[] getKeyMaterial() {
-        return keyMaterial;
-    }
-
-    @Override
-    public String toString() {
-        return "DataKeyOptions{"
-                + "keyAltNames=" + keyAltNames
-                + ", masterKey=" + masterKey
-                + ", keyMaterial=" + Arrays.toString(keyMaterial)
-                + '}';
-    }
 }
