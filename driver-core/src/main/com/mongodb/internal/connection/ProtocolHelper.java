@@ -227,7 +227,7 @@ public final class ProtocolHelper {
     static void encodeMessage(final RequestMessage message, final BsonOutput bsonOutput) {
         try {
             message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
-        } catch (RuntimeException | Error e) {
+        } catch (Exception | Error e) {
             bsonOutput.close();
             throw e;
         }
@@ -237,7 +237,7 @@ public final class ProtocolHelper {
         try {
             message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
             return message.getEncodingMetadata();
-        } catch (RuntimeException | Error e) {
+        } catch (Exception | Error e) {
             bsonOutput.close();
             throw e;
         }
