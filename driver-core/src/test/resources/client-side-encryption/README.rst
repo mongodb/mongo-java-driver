@@ -1656,6 +1656,7 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
+      contentionFactor: 0
    }
 
 Store the result in ``insertPayload``.
@@ -1669,7 +1670,8 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
-      queryType: "equality"
+      queryType: "equality",
+      contentionFactor: 0
    }
 
 Store the result in ``findPayload``.
@@ -1704,7 +1706,8 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
-      queryType: "equality"
+      queryType: "equality",
+      contentionFactor: 0
    }
 
 Store the result in ``findPayload``.
@@ -1760,6 +1763,7 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
+      contentionFactor: 0
    }
 
 Store the result in ``payload``.
