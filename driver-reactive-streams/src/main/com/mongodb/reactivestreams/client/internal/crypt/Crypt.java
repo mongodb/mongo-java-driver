@@ -343,7 +343,7 @@ public class Crypt implements Closeable {
                     cryptContext.completeMongoOperation();
                     executeStateMachineWithSink(cryptContext, databaseName, sink);
                 })
-                .doOnError(t -> sink.error(MongoException.fromThrowableNonNull(t)))
+                .doOnError(e -> sink.error(wrapInClientException(e)))
                 .subscribe();
     }
 

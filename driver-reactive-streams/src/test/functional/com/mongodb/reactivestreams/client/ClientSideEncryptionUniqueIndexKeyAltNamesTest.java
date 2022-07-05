@@ -18,14 +18,14 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.AbstractClientSideEncryptionUniqueIndexKeyAltNames;
+import com.mongodb.client.AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 
-public class ClientSideEncryptionUniqueIndexKeyAltNamesTest extends AbstractClientSideEncryptionUniqueIndexKeyAltNames {
+public class ClientSideEncryptionUniqueIndexKeyAltNamesTest extends AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(MongoClients.create(settings));

@@ -50,7 +50,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // See: https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#unique-index-on-keyaltnames
-public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNames {
+public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
     private MongoClient encryptedClient;
     private ClientEncryption clientEncryption;
     private Map<String, Map<String, Object>> kmsProviders;

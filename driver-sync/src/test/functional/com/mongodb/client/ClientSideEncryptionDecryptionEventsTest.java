@@ -21,7 +21,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
 
-public class ClientSideEncryptionUniqueIndexKeyAltNamesTest extends AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
+public class ClientSideEncryptionDecryptionEventsTest extends AbstractClientSideEncryptionDecryptionEventsTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return MongoClients.create(settings);
