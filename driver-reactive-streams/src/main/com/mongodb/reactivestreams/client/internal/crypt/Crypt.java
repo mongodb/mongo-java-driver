@@ -243,9 +243,8 @@ public class Crypt implements Closeable {
         try {
             MongoCryptContext cryptContext = cryptContextSupplier.get();
             return Mono.<RawBsonDocument>create(sink -> executeStateMachineWithSink(cryptContext, databaseName, sink))
-                    .doFinally(s -> cryptContext.close())
-                    .doOnError(t -> LOGGER.error(format("Crypt error: %s", t.getMessage())))
-                    .doOnError(MongoCryptException.class, this::wrapInClientException);
+                    .doOnError(this::wrapInClientException)
+                    .doFinally(s -> cryptContext.close());
         } catch (MongoCryptException e) {
             return Mono.error(wrapInClientException(e));
         }
@@ -343,7 +342,7 @@ public class Crypt implements Closeable {
                     cryptContext.completeMongoOperation();
                     executeStateMachineWithSink(cryptContext, databaseName, sink);
                 })
-                .doOnError(e -> sink.error(wrapInClientException(e)))
+                .doOnError(t -> sink.error(MongoException.fromThrowableNonNull(t)))
                 .subscribe();
     }
 

@@ -123,7 +123,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
     }
 
     @Test
-    public void testExternal() throws Throwable {
+    public void testExternal() {
         boolean authExceptionThrown = false;
         MongoCollection<BsonDocument> coll = clientEncrypted
                 .getDatabase("db")

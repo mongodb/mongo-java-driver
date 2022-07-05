@@ -143,8 +143,6 @@ public class Crypt implements Closeable {
      */
     RawBsonDocument decrypt(final RawBsonDocument commandResponse) {
         notNull("commandResponse", commandResponse);
-
-
         try (MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse)) {
             return executeStateMachine(decryptionContext, null);
         } catch (MongoCryptException e) {
