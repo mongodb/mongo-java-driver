@@ -166,4 +166,16 @@ public interface ChangeStreamPublisher<TResult> extends Publisher<ChangeStreamDo
      * @mongodb.server.release 3.6
      */
     ChangeStreamPublisher<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets whether to include expanded change stream events, which are:
+     * createIndexes, dropIndexes, modify, create, shardCollection,
+     * reshardCollection, refineCollectionShardKey. False by default.
+     *
+     * @param showExpandedEvents true to include expanded events
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    ChangeStreamPublisher<TResult> showExpandedEvents(boolean showExpandedEvents);
 }

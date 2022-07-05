@@ -174,6 +174,21 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
   }
 
   /**
+   * Sets whether to include expanded change stream events, which are:
+   * createIndexes, dropIndexes, modify, create, shardCollection,
+   * reshardCollection, refineCollectionShardKey. False by default.
+   *
+   * @param showExpandedEvents true to include expanded events
+   * @return this
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  def showExpandedEvents(showExpandedEvents: Boolean): ChangeStreamObservable[TResult] = {
+    wrapped.showExpandedEvents(showExpandedEvents)
+    this
+  }
+
+  /**
    * Returns an `Observable` containing the results of the change stream based on the document class provided.
    *
    * @param clazz the class to use for the raw result.
