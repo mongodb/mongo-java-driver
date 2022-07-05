@@ -47,7 +47,6 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
-import static java.lang.String.format;
 
 public class Crypt implements Closeable {
     private static final RawBsonDocument EMPTY_RAW_BSON_DOCUMENT = RawBsonDocument.parse("{}");
