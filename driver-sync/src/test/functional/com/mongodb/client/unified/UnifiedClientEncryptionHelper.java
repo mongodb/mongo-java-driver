@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static java.lang.Math.toIntExact;
+
 final class UnifiedClientEncryptionHelper {
     private static final BsonDocument PLACEHOLDER = BsonDocument.parse("{'$$placeholder': 1}");
     private final Entities entities;
@@ -201,7 +203,7 @@ final class UnifiedClientEncryptionHelper {
 
     private BsonDocument toExpected(final DeleteResult result) {
         if (result.wasAcknowledged()) {
-            return new BsonDocument("deletedCount", new BsonInt32((int) result.getDeletedCount()));
+            return new BsonDocument("deletedCount", new BsonInt32(toIntExact(result.getDeletedCount())));
         } else {
             return new BsonDocument();
         }
