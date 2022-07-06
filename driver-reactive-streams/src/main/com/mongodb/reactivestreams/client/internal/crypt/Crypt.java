@@ -136,7 +136,7 @@ public class Crypt implements Closeable {
      */
     public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse) {
         notNull("commandResponse", commandResponse);
-        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse));
+        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse)).onErrorMap(this::wrapInClientException);
     }
 
     /**

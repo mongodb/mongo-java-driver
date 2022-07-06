@@ -20,6 +20,7 @@ package com.mongodb.client;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
@@ -184,8 +185,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
                 .getCollection("decryption_events");
 
         decryptionEvents.insertOne(new Document("encrypted", malformedCiphertext));
-
-        assertThrows(MongoException.class, () -> decryptionEvents
+        assertThrows(MongoClientException.class, () -> decryptionEvents
                 .aggregate(AGGREGATION_PIPELINE)
                 .first());
 
