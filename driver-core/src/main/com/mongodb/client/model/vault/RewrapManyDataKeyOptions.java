@@ -22,12 +22,12 @@ import org.bson.BsonDocument;
  * The rewrap many data key options
  *
  * <p>
- *     The masterKey document MUST have the fields corresponding to the given provider as specified in masterKey.
+ *     The {@link #getMasterKey()} document MUST have the fields corresponding to the given provider as specified in masterKey.
  * </p>
  *
  * @since 4.7
  */
-public class RewrapManyDataKeyOptions {
+public final class RewrapManyDataKeyOptions {
 
     private String provider;
     private BsonDocument masterKey;

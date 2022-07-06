@@ -105,11 +105,11 @@ public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
 
     @AfterEach
     public void cleanUp() {
-        if (clientEncryption != null) {
-            clientEncryption.close();
-        }
-        if (encryptedClient != null) {
-            encryptedClient.close();
+        //noinspection EmptyTryBlock
+        try (ClientEncryption ignored = this.clientEncryption;
+             MongoClient ignored1 = this.encryptedClient
+        ) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
     }
 

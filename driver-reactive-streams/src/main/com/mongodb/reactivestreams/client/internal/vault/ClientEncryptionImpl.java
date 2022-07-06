@@ -38,6 +38,7 @@ import com.mongodb.reactivestreams.client.vault.ClientEncryption;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -45,12 +46,11 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 public class ClientEncryptionImpl implements ClientEncryption {
-    private static final String UPDATE_TEMPLATE = "{'$set': {'keyAltNames': { '$cond': [{'$eq': [ '$keyAltNames', ['%s']]}, '$$REMOVE',"
-            + "{'$filter': { 'input': '$keyAltNames', 'cond': {'$ne': ['$$this', '%s']}}}]}}}";
+    private static final String UPDATE_TEMPLATE = "{'$set': {'keyAltNames': { '$cond': [{'$eq': [ '$keyAltNames', []]}, '$$REMOVE',"
+            + "{'$filter': { 'input': '$keyAltNames', 'cond': {'$ne': ['$$this']}}}]}}}";
     private final Crypt crypt;
     private final ClientEncryptionSettings options;
     private final MongoClient keyVaultClient;
@@ -117,8 +117,12 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public Publisher<BsonDocument> removeKeyAltName(final BsonBinary id, final String keyAltName) {
-        return collection.findOneAndUpdate(Filters.eq("_id", id),
-                singletonList(BsonDocument.parse(format(UPDATE_TEMPLATE, keyAltName, keyAltName))));
+        BsonString bsonKeyAltName = new BsonString(keyAltName);
+        BsonDocument updateDocument = BsonDocument.parse(UPDATE_TEMPLATE);
+        BsonArray condArray = updateDocument.getDocument("$set").getDocument("keyAltNames").getArray("$cond");
+        condArray.get(0).asDocument().getArray("$eq").get(1).asArray().add(bsonKeyAltName);
+        condArray.get(2).asDocument().getDocument("$filter").getDocument("cond").getArray("$ne").add(bsonKeyAltName);
+        return collection.findOneAndUpdate(Filters.eq("_id", id), singletonList(updateDocument));
     }
 
     @Override

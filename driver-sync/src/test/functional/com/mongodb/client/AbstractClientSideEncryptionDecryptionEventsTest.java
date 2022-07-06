@@ -63,7 +63,6 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
     private static final List<Bson> AGGREGATION_PIPELINE = singletonList(Aggregates.match(new BsonDocument()));
     private MongoClient encryptedClient;
     private ClientEncryption clientEncryption;
-    private Map<String, Map<String, Object>> kmsProviders;
     private TestCommandListener commandListener;
     private BsonBinary ciphertext;
     private BsonBinary malformedCiphertext;
@@ -81,7 +80,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
         getDefaultDatabase().getCollection("decryption_events").drop();
         getDefaultDatabase().createCollection("decryption_events");
 
-        kmsProviders = new HashMap<>();
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
         Map<String, Object> localProviderMap = new HashMap<>();
         localProviderMap.put("key",
                 Base64.getDecoder().decode(
@@ -119,11 +118,11 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
 
     @AfterEach
     public void cleanUp() {
-        if (clientEncryption != null) {
-            clientEncryption.close();
-        }
-        if (encryptedClient != null) {
-            encryptedClient.close();
+        //noinspection EmptyTryBlock
+        try (ClientEncryption ignored = this.clientEncryption;
+             MongoClient ignored1 = this.encryptedClient
+        ) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
     }
 

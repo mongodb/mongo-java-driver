@@ -24,7 +24,7 @@ import com.mongodb.lang.Nullable;
  *
  * @since 4.7
  */
-public class RewrapManyDataKeyResult {
+public final class RewrapManyDataKeyResult {
     private final BulkWriteResult bulkWriteResult;
 
     /**

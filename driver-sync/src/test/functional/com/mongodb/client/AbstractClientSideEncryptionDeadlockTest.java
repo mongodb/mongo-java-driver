@@ -113,8 +113,9 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
 
     @AfterEach
     public void cleanUp() {
-        if (encryptingClient != null) {
-            encryptingClient.close();
+        //noinspection EmptyTryBlock
+        try (MongoClient ignored = this.encryptingClient) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
     }
 
