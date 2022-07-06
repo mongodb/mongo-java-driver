@@ -37,6 +37,7 @@ public interface DensifyOptions extends Bson {
      * Creates a new {@link DensifyOptions} with the specified {@code fields} to partition by.
      *
      * @param fields The fields to partition by.
+     * If no fields are specified, then the whole sequence is considered to be a single partition.
      * @return A new {@link DensifyOptions}.
      * @mongodb.driver.manual core/document/#dot-notation Dot notation
      */
@@ -48,6 +49,7 @@ public interface DensifyOptions extends Bson {
      * Creates a new {@link DensifyOptions} with the specified {@code fields} to partition by.
      *
      * @param fields The fields to partition by.
+     * If no fields are specified, then the whole sequence is considered to be a single partition.
      * @return A new {@link DensifyOptions}.
      * @mongodb.driver.manual core/document/#dot-notation Dot notation
      */
