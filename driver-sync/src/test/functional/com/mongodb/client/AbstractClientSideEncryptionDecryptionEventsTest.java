@@ -23,7 +23,6 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.vault.EncryptOptions;
