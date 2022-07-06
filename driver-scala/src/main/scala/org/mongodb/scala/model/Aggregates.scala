@@ -512,7 +512,7 @@ object Aggregates {
     JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output.asJava)
 
   /**
-   * Creates a `\$fill` pipeline stage, which sets values to fields when they are BSON `Null` or missing.
+   * Creates a `\$fill` pipeline stage, which assigns values to fields when they are BSON `Null` or missing.
    *
    * @param options The fill options.
    * @param output The `FillComputation`.
@@ -526,7 +526,7 @@ object Aggregates {
     JAggregates.fill(options, output, moreOutput: _*)
 
   /**
-   * Creates a `\$fill` pipeline stage, which sets values to fields when they are BSON `Null` or missing.
+   * Creates a `\$fill` pipeline stage, which assigns values to fields when they are BSON `Null` or missing.
    *
    * @param options The fill options.
    * @param output The non-empty `FillComputation`s.

@@ -662,7 +662,7 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a {@code $fill} pipeline stage, which sets values to fields when they are {@link BsonType#NULL Null} or missing.
+     * Creates a {@code $fill} pipeline stage, which assigns values to fields when they are {@link BsonType#NULL Null} or missing.
      *
      * @param options The fill options.
      * @param output The {@link FillComputation}.
@@ -677,7 +677,7 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a {@code $fill} pipeline stage, which sets values to fields when they are {@link BsonType#NULL Null} or missing.
+     * Creates a {@code $fill} pipeline stage, which assigns values to fields when they are {@link BsonType#NULL Null} or missing.
      *
      * @param options The fill options.
      * @param output The non-empty {@link FillComputation}s.
