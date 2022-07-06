@@ -36,7 +36,7 @@ public class ClientSideEncryptionTest extends UnifiedSyncTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return getTestData("client-side-encryption/unified");
+        return getTestData("unified-test-format/client-side-encryption");
     }
 }
 
