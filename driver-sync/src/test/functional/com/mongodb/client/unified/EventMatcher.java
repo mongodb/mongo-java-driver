@@ -24,9 +24,7 @@ import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import org.bson.BsonArray;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.bson.types.ObjectId;
 
 import java.util.List;
@@ -96,8 +94,7 @@ final class EventMatcher {
                             expected.getString("databaseName").getValue(), actualCommandStartedEvent.getDatabaseName());
                 }
                 if (expected.containsKey("command")) {
-                    valueMatcher.assertValuesMatch(expected.getDocument("command"),
-                            massageCommand(actualCommandStartedEvent.getCommand()));
+                    valueMatcher.assertValuesMatch(expected.getDocument("command"), actualCommandStartedEvent.getCommand());
                 }
             } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
                 assertEquals(context.getMessage("Expected CommandSucceededEvent"), eventType, "commandSucceededEvent");
@@ -205,18 +202,4 @@ final class EventMatcher {
         }
     }
 
-    private static BsonDocument massageCommand(final BsonDocument command) {
-        if (command.containsKey("update") && command.isArray("updates")) {
-            for (BsonValue bsonValue : command.getArray("updates")) {
-                BsonDocument curUpdate = bsonValue.asDocument();
-                if (!curUpdate.containsKey("multi")) {
-                    curUpdate.put("multi", BsonBoolean.FALSE);
-                }
-                if (!curUpdate.containsKey("upsert")) {
-                    curUpdate.put("upsert", BsonBoolean.FALSE);
-                }
-            }
-        }
-        return command;
-    }
 }
