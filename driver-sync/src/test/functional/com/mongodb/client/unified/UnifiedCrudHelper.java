@@ -328,6 +328,9 @@ final class UnifiedCrudHelper {
                 case "fieldName":
                 case "session":
                     break;
+                case "comment":
+                    iterable.comment(cur.getValue());
+                    break;
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
                     break;
