@@ -47,10 +47,6 @@ final class ValueMatcher {
     private void assertValuesMatch(final BsonValue initialExpected, final @Nullable BsonValue actual,
             final @Nullable String keyContext, final int arrayPositionContext) {
         BsonValue expected = initialExpected;
-        if (expected.isNull() && actual == null) {
-            return;
-        }
-
         context.push(ContextElement.ofValueMatcher(expected, actual, keyContext, arrayPositionContext));
 
         try {
