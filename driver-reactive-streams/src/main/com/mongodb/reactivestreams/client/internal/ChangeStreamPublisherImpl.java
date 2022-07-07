@@ -58,6 +58,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     private Collation collation;
     private BsonValue comment;
     private BsonTimestamp startAtOperationTime;
+    private boolean showExpandedEvents;
 
     ChangeStreamPublisherImpl(
             @Nullable final ClientSession clientSession,
@@ -145,6 +146,12 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     @Override
+    public ChangeStreamPublisher<T> showExpandedEvents(final boolean showExpandedEvents) {
+        this.showExpandedEvents = showExpandedEvents;
+        return this;
+    }
+
+    @Override
     public ChangeStreamPublisher<T> startAtOperationTime(final BsonTimestamp startAtOperationTime) {
         this.startAtOperationTime = notNull("startAtOperationTime", startAtOperationTime);
         return this;
@@ -171,6 +178,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
                 .resumeAfter(resumeToken)
                 .startAtOperationTime(startAtOperationTime)
                 .startAfter(startAfter)
+                .showExpandedEvents(showExpandedEvents)
                 .retryReads(getRetryReads());
     }
 
