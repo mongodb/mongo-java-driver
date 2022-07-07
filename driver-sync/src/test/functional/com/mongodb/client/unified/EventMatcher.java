@@ -201,5 +201,4 @@ final class EventMatcher {
                 throw new UnsupportedOperationException("Unsupported reason: " + reason);
         }
     }
-
 }
