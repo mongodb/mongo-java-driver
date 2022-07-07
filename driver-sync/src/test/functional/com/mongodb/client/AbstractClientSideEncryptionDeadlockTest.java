@@ -112,6 +112,7 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
     }
 
     @AfterEach
+    @SuppressWarnings("try")
     public void cleanUp() {
         //noinspection EmptyTryBlock
         try (MongoClient ignored = this.encryptingClient) {

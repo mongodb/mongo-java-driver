@@ -119,6 +119,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @AfterEach
+    @SuppressWarnings("try")
     public void cleanUp() {
         //noinspection EmptyTryBlock
         try (ClientEncryption ignored = this.clientEncryption;

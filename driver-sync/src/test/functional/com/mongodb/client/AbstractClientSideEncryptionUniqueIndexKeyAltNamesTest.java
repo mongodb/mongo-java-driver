@@ -53,7 +53,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
     private MongoClient encryptedClient;
     private ClientEncryption clientEncryption;
-    private Map<String, Map<String, Object>> kmsProviders;
     private BsonBinary existingKeyId;
 
 
@@ -84,7 +83,7 @@ public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
                        + "}")
         );
 
-        kmsProviders = new HashMap<>();
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
         Map<String, Object> localProviderMap = new HashMap<>();
         localProviderMap.put("key",
                 Base64.getDecoder().decode(
@@ -104,6 +103,7 @@ public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
     }
 
     @AfterEach
+    @SuppressWarnings("try")
     public void cleanUp() {
         //noinspection EmptyTryBlock
         try (ClientEncryption ignored = this.clientEncryption;
