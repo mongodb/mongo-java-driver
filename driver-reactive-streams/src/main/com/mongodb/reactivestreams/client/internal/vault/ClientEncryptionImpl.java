@@ -46,11 +46,10 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class ClientEncryptionImpl implements ClientEncryption {
-    private static final String UPDATE_TEMPLATE = "{'$set': {'keyAltNames': { '$cond': [{'$eq': [ '$keyAltNames', []]}, '$$REMOVE',"
-            + "{'$filter': { 'input': '$keyAltNames', 'cond': {'$ne': ['$$this']}}}]}}}";
     private final Crypt crypt;
     private final ClientEncryptionSettings options;
     private final MongoClient keyVaultClient;
@@ -117,11 +116,25 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public Publisher<BsonDocument> removeKeyAltName(final BsonBinary id, final String keyAltName) {
-        BsonString bsonKeyAltName = new BsonString(keyAltName);
-        BsonDocument updateDocument = BsonDocument.parse(UPDATE_TEMPLATE);
-        BsonArray condArray = updateDocument.getDocument("$set").getDocument("keyAltNames").getArray("$cond");
-        condArray.get(0).asDocument().getArray("$eq").get(1).asArray().add(bsonKeyAltName);
-        condArray.get(2).asDocument().getDocument("$filter").getDocument("cond").getArray("$ne").add(bsonKeyAltName);
+        BsonDocument updateDocument = new BsonDocument()
+                .append("$set", new BsonDocument()
+                        .append("keyAltNames", new BsonDocument()
+                                .append("$cond", new BsonArray(asList(
+                                        new BsonDocument()
+                                                .append("$eq", new BsonArray(asList(
+                                                        new BsonString("$keyAltNames"),
+                                                        new BsonArray(singletonList(new BsonString(keyAltName)))))),
+                                        new BsonString("$$REMOVE"),
+                                        new BsonDocument()
+                                                .append("$filter", new BsonDocument()
+                                                        .append("input", new BsonString("$keyAltNames"))
+                                                        .append("cond", new BsonDocument()
+                                                                .append("$ne", new BsonArray(asList(
+                                                                        new BsonString("$$this"),
+                                                                        new BsonString(keyAltName))))))
+                                )))
+                        )
+                );
         return collection.findOneAndUpdate(Filters.eq("_id", id), singletonList(updateDocument));
     }
 
