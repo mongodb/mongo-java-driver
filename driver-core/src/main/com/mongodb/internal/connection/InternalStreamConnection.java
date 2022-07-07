@@ -327,7 +327,7 @@ public class InternalStreamConnection implements InternalConnection {
             commandEventSender.sendStartedEvent();
             try {
                 sendCommandMessage(message, bsonOutput, sessionContext);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 commandEventSender.sendFailedEvent(e);
                 throw e;
             }
@@ -426,7 +426,7 @@ public class InternalStreamConnection implements InternalConnection {
             }
 
             return commandResult;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if (!commandSuccessful) {
                 commandEventSender.sendFailedEvent(e);
             }

@@ -304,7 +304,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                 responseBuffers.close();
             }
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if (commandListener != null) {
                 sendCommandFailedEvent(message, FIND_COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
                         commandListener, requestContext);

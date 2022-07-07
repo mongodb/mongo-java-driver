@@ -219,7 +219,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
             return newMember;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             stateAndPermits.releasePermit();
             throw e;
         }
@@ -277,7 +277,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     private void close(final T t) {
         try {
             itemFactory.close(t);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             // ItemFactory.close() really should not throw
         }
     }

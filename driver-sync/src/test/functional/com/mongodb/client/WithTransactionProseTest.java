@@ -115,7 +115,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }
             });
             fail("Test should have thrown an exception.");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             assertEquals(errorMessage, e.getMessage());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {
@@ -146,7 +146,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }
             });
             fail("Test should have thrown an exception.");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             assertEquals(91, ((MongoException) e).getCode());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
         } finally {
@@ -181,7 +181,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }
             });
             fail("Test should have thrown an exception.");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             assertEquals(251, ((MongoException) e).getCode());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {

@@ -65,6 +65,9 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
                 return syncFunction.get();
             } catch (RuntimeException attemptException) {
                 state.advanceOrThrow(attemptException, failedResultTransformer, retryPredicate);
+            } catch (Exception attemptException) {
+                // wrap potential sneaky / Kotlin exceptions
+                state.advanceOrThrow(new RuntimeException(attemptException), failedResultTransformer, retryPredicate);
             }
         }
     }

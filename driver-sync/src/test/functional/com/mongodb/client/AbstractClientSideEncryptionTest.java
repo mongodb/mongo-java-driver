@@ -297,7 +297,7 @@ public abstract class AbstractClientSideEncryptionTest {
                         getErrorContainsField(expectedResult), operationName), hasErrorContainsField(expectedResult));
                 assertFalse(String.format("Expected error code '%s' but none thrown for operation %s",
                         getErrorCodeNameField(expectedResult), operationName), hasErrorCodeNameField(expectedResult));
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 boolean passedAssertion = false;
                 if (hasErrorContainsField(expectedResult)) {
                     String expectedError = getErrorContainsField(expectedResult);

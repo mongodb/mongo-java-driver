@@ -73,7 +73,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
 
             messageId = requestMessage.getId();
             connection.sendMessage(bsonOutput.getByteBuffers(), messageId);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             sendFailedEvent(connection, requestMessage, sentCommandStartedEvent, e, startTimeNanos);
             throw e;
         } finally {

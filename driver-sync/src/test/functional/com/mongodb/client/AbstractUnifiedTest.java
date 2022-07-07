@@ -686,7 +686,7 @@ public abstract class AbstractUnifiedTest {
         return indexes.stream().anyMatch(document -> document.get("name").equals(indexName));
     }
 
-    private boolean assertExceptionState(final RuntimeException e, final BsonValue expectedResult, final String operationName) {
+    private boolean assertExceptionState(final Exception e, final BsonValue expectedResult, final String operationName) {
         boolean passedAssertion = false;
         if (hasErrorLabelsContainField(expectedResult)) {
             if (e instanceof MongoException) {

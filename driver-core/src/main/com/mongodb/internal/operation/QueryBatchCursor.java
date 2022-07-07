@@ -533,7 +533,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             } catch (MongoSocketException e) {
                 try {
                     onCorruptedConnection(connection);
-                } catch (RuntimeException suppressed) {
+                } catch (Exception suppressed) {
                     e.addSuppressed(suppressed);
                 }
                 throw e;

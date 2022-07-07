@@ -204,7 +204,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                             cachePostBatchResumeToken(wrappedCursor);
                         }
                         errHandlingCallback.onResult(convertedResults, null);
-                    } catch (RuntimeException e) {
+                    } catch (Exception e) {
                         errHandlingCallback.onResult(null, e);
                     }
                 } else {

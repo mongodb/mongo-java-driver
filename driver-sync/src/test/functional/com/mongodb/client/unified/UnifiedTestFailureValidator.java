@@ -43,7 +43,7 @@ public class UnifiedTestFailureValidator extends UnifiedSyncTest {
     public void setUp() {
         try {
             super.setUp();
-        } catch (AssertionError | RuntimeException e) {
+        } catch (AssertionError | Exception e) {
             exception = e;
         }
     }
@@ -53,7 +53,7 @@ public class UnifiedTestFailureValidator extends UnifiedSyncTest {
         if (exception == null) {
             try {
                 super.shouldPassAllOutcomes();
-            } catch (AssertionError | RuntimeException e) {
+            } catch (AssertionError | Exception e) {
                 exception = e;
             }
         }
