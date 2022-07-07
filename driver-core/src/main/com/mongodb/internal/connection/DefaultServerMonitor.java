@@ -230,7 +230,7 @@ class DefaultServerMonitor implements ServerMonitor {
                                     elapsedTimeNanos, currentServerDescription.getTopologyVersion() != null));
 
                     return createServerDescription(serverId.getAddress(), helloResult, averageRoundTripTime.getAverage());
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     serverMonitorListener.serverHeartbeatFailed(
                             new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
                                     currentServerDescription.getTopologyVersion() != null, e));

@@ -293,7 +293,7 @@ public class DefaultConnectionPoolTest {
             connections.forEach(connection -> {
                 try {
                     connection.close();
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     // ignore
                 }
             });

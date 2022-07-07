@@ -385,7 +385,7 @@ public abstract class UnifiedTest {
                         throw e;
                     }
                     break;
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     if (storeErrors) {
                         errorDescriptionDocuments.add(createDocumentFromException(e));
                     } else if (storeFailures) {

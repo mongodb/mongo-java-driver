@@ -1308,7 +1308,7 @@ public class JsonReaderTest {
                                      final Class<? extends RuntimeException> exClass) {
         try {
             testFunc.apply(new JsonReader(json));
-        } catch (final RuntimeException e) {
+        } catch (final Exception e) {
             if (exClass == null) {
                 throw e;
             }
@@ -1317,7 +1317,7 @@ public class JsonReaderTest {
         try {
             testFunc.apply(new JsonReader(new InputStreamReader(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)),
                     StandardCharsets.UTF_8)));
-        } catch (final RuntimeException e) {
+        } catch (final Exception e) {
             if (exClass == null) {
                 throw e;
             }

@@ -248,7 +248,7 @@ public final class RetryState {
                 if (predicate.get()) {
                     loopState.markAsLastIteration();
                 }
-            } catch (RuntimeException predicateException) {
+            } catch (Exception predicateException) {
                 predicateException.addSuppressed(localException);
                 throw predicateException;
             }
