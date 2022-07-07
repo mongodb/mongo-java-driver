@@ -31,7 +31,7 @@ import scala.util.Success
 
 class ChangeStreamObservableSpec extends BaseSpec with MockitoSugar {
 
-  "ChangeStreamObservable" should "have the same methods as the wrapped ChangeStreamObservable" in {
+  "ChangeStreamObservable" should "have the same methods as the wrapped ChangeStreamPublisher" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
     val wrapped: Set[String] = classOf[ChangeStreamPublisher[Document]].getMethods
       .map(_.getName)

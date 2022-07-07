@@ -69,6 +69,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     private Collation collation;
     private BsonTimestamp startAtOperationTime;
     private BsonValue comment;
+    private boolean showExpandedEvents;
 
     public ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
                                     final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
@@ -173,6 +174,12 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     @Override
+    public ChangeStreamIterable<TResult> showExpandedEvents(final boolean showExpandedEvents) {
+        this.showExpandedEvents = showExpandedEvents;
+        return this;
+    }
+
+    @Override
     public MongoCursor<ChangeStreamDocument<TResult>> iterator() {
         return cursor();
     }
@@ -211,6 +218,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
                         .resumeAfter(resumeToken)
                         .startAtOperationTime(startAtOperationTime)
                         .startAfter(startAfter)
+                        .showExpandedEvents(showExpandedEvents)
                         .retryReads(getRetryReads());
     }
 

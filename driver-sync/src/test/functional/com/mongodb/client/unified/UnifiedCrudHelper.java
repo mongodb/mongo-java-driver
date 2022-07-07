@@ -54,6 +54,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
@@ -986,9 +987,9 @@ final class UnifiedCrudHelper {
         ClientSession session = getSession(arguments);
 
         // In Java driver there is a separate method for creating a view, but in the unified test CRUD format
-        // views and collections are both created with the createCollection operation. We branch off the "viewOn" key's
-        // existence to determine which path to follow here
-        if (arguments.containsKey("viewOn")) {
+        // views and collections are both created with the createCollection operation. We use the createView
+        // method if the requisite arguments are present.
+        if (arguments.containsKey("viewOn") && arguments.containsKey("pipeline")) {
             String viewOn = arguments.getString("viewOn").getValue();
             List<BsonDocument> pipeline =
                     arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
@@ -1020,6 +1021,7 @@ final class UnifiedCrudHelper {
                 switch (cur.getKey()) {
                     case "collection":
                     case "session":
+                    case "viewOn":
                         break;
                     case "expireAfterSeconds":
                         options.expireAfter(cur.getValue().asNumber().longValue(), TimeUnit.SECONDS);
@@ -1053,11 +1055,15 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments");
         String newCollectionName = arguments.getString("to").getValue();
         ClientSession session = getSession(arguments);
+        RenameCollectionOptions options = new RenameCollectionOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "to":
                 case "session":
+                    break;
+                case "dropTarget":
+                    options.dropTarget(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1067,9 +1073,9 @@ final class UnifiedCrudHelper {
         return resultOf(() -> {
             MongoNamespace newCollectionNamespace = new MongoNamespace(collection.getNamespace().getDatabaseName(), newCollectionName);
             if (session == null) {
-                collection.renameCollection(newCollectionNamespace);
+                collection.renameCollection(newCollectionNamespace, options);
             } else {
-                collection.renameCollection(session, newCollectionNamespace);
+                collection.renameCollection(session, newCollectionNamespace, options);
             }
             return null;
         });
@@ -1165,6 +1171,30 @@ final class UnifiedCrudHelper {
         });
     }
 
+    public OperationResult executeDropIndex(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
+        String indexName = arguments.get("name").asString().getValue();
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "session":
+                case "name":
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        return resultOf(() -> {
+            if (session == null) {
+                collection.dropIndex(indexName);
+            } else {
+                collection.dropIndex(session, indexName);
+            }
+            return null;
+        });
+    }
+
     public OperationResult createChangeStreamCursor(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
@@ -1195,6 +1225,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "fullDocumentBeforeChange":
                     iterable.fullDocumentBeforeChange(FullDocumentBeforeChange.fromString(cur.getValue().asString().getValue()));
+                    break;
+                case "showExpandedEvents":
+                    iterable.showExpandedEvents(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
