@@ -57,7 +57,7 @@ object DensifyRange {
     JDensifyRange.partitionRangeWithStep(step)
 
   /**
-   * Returns a `DensifyRange` that represents a single interval [l; u).
+   * Returns a `DensifyRange` that represents a single interval [l, u).
    *
    * @param l The lower bound.
    * @param u The upper bound.
@@ -90,7 +90,7 @@ object DensifyRange {
     JDensifyRange.partitionRangeWithStep(step, unit)
 
   /**
-   * Returns a `DensifyRange` that represents a single interval [l; u).
+   * Returns a `DensifyRange` that represents a single interval [l, u).
    *
    * @param l The lower bound.
    * @param u The upper bound.

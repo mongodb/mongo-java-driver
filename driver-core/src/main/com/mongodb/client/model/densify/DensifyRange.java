@@ -75,7 +75,7 @@ public interface DensifyRange extends Bson {
     }
 
     /**
-     * Returns a {@link DensifyRange} that represents a single interval [l; u).
+     * Returns a {@link DensifyRange} that represents a single interval [l, u).
      *
      * @param l The lower bound.
      * @param u The upper bound.
@@ -124,7 +124,7 @@ public interface DensifyRange extends Bson {
     }
 
     /**
-     * Returns a {@link DensifyRange} that represents a single interval [l; u).
+     * Returns a {@link DensifyRange} that represents a single interval [l, u).
      *
      * @param l The lower bound.
      * @param u The upper bound.
