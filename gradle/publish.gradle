@@ -89,11 +89,11 @@ configure(javaMainProjects) { project ->
         repositories configureMavenRepositories(project)
     }
 
-    afterEvaluate {
-        signing {
-            sign publishing.publications.mavenJava
-        }
-    }
+//    afterEvaluate {
+//        signing {
+//            sign publishing.publications.mavenJava
+//        }
+//    }
 }
 
 /*
