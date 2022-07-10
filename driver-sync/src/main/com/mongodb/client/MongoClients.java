@@ -31,6 +31,8 @@ import com.mongodb.lang.Nullable;
  */
 public final class MongoClients {
 
+//    private static final Logger LOGGER = Loggers.getLogger("connection");
+
     /**
      * Creates a new client with the default connection string "mongodb://localhost".
      *
@@ -109,6 +111,8 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
+//        LOGGER.info("Mongoclients driver-sync : 114");
+        System.out.println("Mongoclients driver-sync : 114");
         MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
                 : MongoDriverInformation.builder(mongoDriverInformation);
         return new MongoClientImpl(settings, builder.driverName("sync").build());

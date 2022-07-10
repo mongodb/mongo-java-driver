@@ -74,9 +74,12 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ConnectionPoolListener connectionPoolListener;
     private final ServerId serverId;
     private volatile boolean closed;
+    private UsageTrackingInternalConnection internalConnection;
+
 
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
                           final ConnectionPoolSettings settings) {
+        LOGGER.info("DefaultConnectionPool ||| 81");
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
@@ -103,17 +106,23 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
+//        LOGGER.info("DefaultConnectionPool : 106");
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw createWaitQueueFullException();
             }
             try {
+//                LOGGER.info("DefaultConnectionPool : 113");
                 connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId));
                 PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
+
                 if (!pooledConnection.opened()) {
+
                     try {
+                        LOGGER.info("DefaultConnectionPool || 122");
                         pooledConnection.open();
                     } catch (Throwable t) {
+                        LOGGER.info("DefaultConnectionPool catch || 125");
                         pool.release(pooledConnection.wrapped, true);
                         if (t instanceof MongoException) {
                             throw (MongoException) t;
@@ -134,6 +143,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void getAsync(final SingleResultCallback<InternalConnection> callback) {
+//        LOGGER.info("DefaultConnectionPool : 139");
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
@@ -153,14 +163,14 @@ class DefaultConnectionPool implements ConnectionPool {
         if (connection != null) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Asynchronously opening pooled connection %s to server %s",
-                                           connection.getDescription().getConnectionId(), serverId));
+                        connection.getDescription().getConnectionId(), serverId));
             }
             openAsync(connection, errHandlingCallback);
         } else if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
             waitQueueSize.decrementAndGet();
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Asynchronously failing to get a pooled connection to %s because the wait queue is full",
-                                           serverId));
+                        serverId));
             }
             callback.onResult(null, createWaitQueueFullException());
         } else {
@@ -193,16 +203,17 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private void openAsync(final PooledConnection pooledConnection,
                            final SingleResultCallback<InternalConnection> callback) {
+//        LOGGER.info("DefaultConnectionPool : 200");
         if (pooledConnection.opened()) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Pooled connection %s to server %s is already open",
-                                           pooledConnection.getDescription().getConnectionId(), serverId));
+                        pooledConnection.getDescription().getConnectionId(), serverId));
             }
             callback.onResult(pooledConnection, null);
         } else {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Pooled connection %s to server %s is not yet open",
-                                           pooledConnection.getDescription().getConnectionId(), serverId));
+                        pooledConnection.getDescription().getConnectionId(), serverId));
             }
             pooledConnection.openAsync(new SingleResultCallback<Void>() {
                 @Override
@@ -210,14 +221,14 @@ class DefaultConnectionPool implements ConnectionPool {
                     if (t != null) {
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace(format("Pooled connection %s to server %s failed to open",
-                                                       pooledConnection.getDescription().getConnectionId(), serverId));
+                                    pooledConnection.getDescription().getConnectionId(), serverId));
                         }
                         callback.onResult(null, t);
                         pool.release(pooledConnection.wrapped, true);
                     } else {
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace(format("Pooled connection %s to server %s is now open",
-                                                       pooledConnection.getDescription().getConnectionId(), serverId));
+                                    pooledConnection.getDescription().getConnectionId(), serverId));
                         }
                         callback.onResult(pooledConnection, null);
                     }
@@ -274,6 +285,7 @@ class DefaultConnectionPool implements ConnectionPool {
             internalConnection = pool.get(timeout, timeUnit);
         }
         connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(internalConnection.getDescription().getConnectionId()));
+//        LOGGER.info(format("DefaultConnectionPool 278 : Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
         }
@@ -282,13 +294,13 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private MongoTimeoutException createTimeoutException() {
         return new MongoTimeoutException(format("Timed out after %d ms while waiting for a connection to server %s.",
-                                                settings.getMaxWaitTime(MILLISECONDS), serverId.getAddress()));
+                settings.getMaxWaitTime(MILLISECONDS), serverId.getAddress()));
     }
 
     private MongoWaitQueueFullException createWaitQueueFullException() {
         return new MongoWaitQueueFullException(format("Too many operations are already waiting for a connection. "
-                                                      + "Max number of operations (maxWaitQueueSize) of %d has been exceeded.",
-                                                      settings.getMaxWaitQueueSize()));
+                        + "Max number of operations (maxWaitQueueSize) of %d has been exceeded.",
+                settings.getMaxWaitQueueSize()));
     }
 
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
@@ -374,7 +386,7 @@ class DefaultConnectionPool implements ConnectionPool {
         if (t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException)) {
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
-                                   getId(connection), serverId.getAddress(), serverId.getAddress()));
+                        getId(connection), serverId.getAddress(), serverId.getAddress()));
             }
             invalidate();
         }
@@ -395,6 +407,7 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void open() {
             isTrue("open", !isClosed.get());
+            LOGGER.info("DefaultConnectionPool || 398");
             wrapped.open();
         }
 
@@ -523,8 +536,9 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public UsageTrackingInternalConnection create(final boolean initialize) {
+            LOGGER.info("DefaultConnectionPool || 536");
             UsageTrackingInternalConnection internalConnection =
-            new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
+                    new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
             if (initialize) {
                 internalConnection.open();
             }
@@ -537,7 +551,7 @@ class DefaultConnectionPool implements ConnectionPool {
             connectionPoolListener.connectionRemoved(new ConnectionRemovedEvent(getId(connection), getReasonForClosing(connection)));
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),
-                                  getReasonStringForClosing(connection)));
+                        getReasonStringForClosing(connection)));
             }
             connection.close();
         }

@@ -129,7 +129,7 @@ public class InternalStreamConnection implements InternalConnection {
             description = connectionInitializer.initialize(this);
             opened.set(true);
             sendCompressor = findSendCompressor(description);
-            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+            LOGGER.info(format("132 || : Opened connection [%s] to %s", getId(), serverId.getAddress()));
         } catch (Throwable t) {
             close();
             if (t instanceof MongoException) {
@@ -159,7 +159,7 @@ public class InternalStreamConnection implements InternalConnection {
                                 opened.set(true);
                                 sendCompressor = findSendCompressor(description);
                                 if (LOGGER.isInfoEnabled()) {
-                                    LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+                                    LOGGER.info(format("162 Opened connection [%s] to %s", getId(), serverId.getAddress()));
                                 }
                                 callback.onResult(null, null);
                             }

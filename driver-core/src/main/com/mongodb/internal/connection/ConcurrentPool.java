@@ -19,6 +19,8 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
 
 import java.util.Iterator;
@@ -33,11 +35,15 @@ import java.util.concurrent.TimeUnit;
 public class ConcurrentPool<T> implements Pool<T> {
 
     private final int maxSize;
+
     private final ItemFactory<T> itemFactory;
 
     private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
     private final Semaphore permits;
     private volatile boolean closed;
+
+
+    private static final Logger LOGGER = Loggers.getLogger("connection");
 
     public enum Prune {
         /**
@@ -53,6 +59,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         STOP
     }
+
     /**
      * Factory for creating and closing pooled items.
      *
@@ -133,6 +140,9 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     @Override
     public T get(final long timeout, final TimeUnit timeUnit) {
+//        if (maxSize < 500) {
+//            LOGGER.info("ConcurrentPool : 141");
+//        }
         if (closed) {
             throw new IllegalStateException("The pool is closed");
         }
@@ -143,6 +153,17 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         T t = available.pollLast();
         if (t == null) {
+            if (maxSize < 500) {
+                LOGGER.info("ConcurrentPool : 155");
+            }
+            for (int i = 0; i < 20; i++) {
+                if (maxSize < 500) {
+                    LOGGER.info("ConcurrentPool : 159");
+                    available.addLast(itemFactory.create(true));
+                }
+
+            }
+
             t = createNewAndReleasePermitIfFailure(false);
         }
 
@@ -150,7 +171,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     public void prune() {
-        for (RemovalReportingIterator<T> iter = available.iterator(); iter.hasNext();) {
+        for (RemovalReportingIterator<T> iter = available.iterator(); iter.hasNext(); ) {
             T cur = iter.next();
             Prune shouldPrune = itemFactory.shouldPrune(cur);
 
@@ -177,13 +198,23 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     private T createNewAndReleasePermitIfFailure(final boolean initialize) {
+
+
         try {
+            if (maxSize <= 500) {
+                LOGGER.info("Concurrentpool > Try > createNewAndReleasePermitIfFailure  : 187");
+                LOGGER.info(this.toString());
+            }
             T newMember = itemFactory.create(initialize);
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
             return newMember;
         } catch (RuntimeException e) {
+            if (maxSize <= 500) {
+                LOGGER.info(" Concurrentpool > Catch > createNewAndReleasePermitIfFailure  : 187");
+                LOGGER.info(this.toString());
+            }
             permits.release();
             throw e;
         }
@@ -241,9 +272,9 @@ public class ConcurrentPool<T> implements Pool<T> {
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("pool: ")
-           .append(" maxSize: ").append(maxSize)
-           .append(" availableCount ").append(getAvailableCount())
-           .append(" inUseCount ").append(getInUseCount());
+                .append(" maxSize: ").append(maxSize)
+                .append(" availableCount ").append(getAvailableCount())
+                .append(" inUseCount ").append(getInUseCount());
         return buf.toString();
     }
 
