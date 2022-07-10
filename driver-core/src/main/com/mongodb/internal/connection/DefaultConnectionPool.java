@@ -39,7 +39,7 @@ import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
 import com.mongodb.event.ConnectionRemovedEvent;
-import com.mongodb.internal.connection.ConcurrentPool.Prune;
+import com.mongodb.internal.connection.ConcurrentConnectionPool.Prune;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
@@ -63,7 +63,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
-    private final ConcurrentPool<UsageTrackingInternalConnection> pool;
+    private final ConcurrentConnectionPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
@@ -84,7 +84,7 @@ class DefaultConnectionPool implements ConnectionPool {
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
-        pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
+        pool = new ConcurrentConnectionPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory, settings.getIncrementSize(), settings.getIncrementType());
         this.connectionPoolListener = getConnectionPoolListener(settings);
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();
@@ -303,7 +303,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 settings.getMaxWaitQueueSize()));
     }
 
-    ConcurrentPool<UsageTrackingInternalConnection> getPool() {
+    ConcurrentConnectionPool<UsageTrackingInternalConnection> getPool() {
         return pool;
     }
 
@@ -527,7 +527,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private class UsageTrackingInternalConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingInternalConnection> {
+    private class UsageTrackingInternalConnectionItemFactory implements ConcurrentConnectionPool.ItemFactory<UsageTrackingInternalConnection> {
         private final InternalConnectionFactory internalConnectionFactory;
 
         UsageTrackingInternalConnectionItemFactory(final InternalConnectionFactory internalConnectionFactory) {

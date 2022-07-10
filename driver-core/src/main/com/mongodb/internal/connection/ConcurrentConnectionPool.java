@@ -32,11 +32,17 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>This class should not be considered a part of the public API.</p>
  */
-public class ConcurrentPool<T> implements Pool<T> {
+public class ConcurrentConnectionPool<T> implements Pool<T> {
 
     private final int maxSize;
 
+    private final int incrementSize;
+
+    private final String incrementType;
+
+
     private final ItemFactory<T> itemFactory;
+
 
     private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
     private final Semaphore permits;
@@ -44,6 +50,8 @@ public class ConcurrentPool<T> implements Pool<T> {
 
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
+
+    private int powerCount = 1;
 
     public enum Prune {
         /**
@@ -79,9 +87,11 @@ public class ConcurrentPool<T> implements Pool<T> {
      * @param maxSize     max to hold to at any given time. if < 0 then no limit
      * @param itemFactory factory used to create and close items in the pool
      */
-    public ConcurrentPool(final int maxSize, final ItemFactory<T> itemFactory) {
+    public ConcurrentConnectionPool(final int maxSize, final ItemFactory<T> itemFactory, final int incrementSize, final String incrementType) {
         this.maxSize = maxSize;
         this.itemFactory = itemFactory;
+        this.incrementSize = incrementSize;
+        this.incrementType = incrementType;
         permits = new Semaphore(maxSize, true);
     }
 
@@ -152,8 +162,34 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         T t = available.pollLast();
+
+
         if (t == null) {
             t = createNewAndReleasePermitIfFailure(false);
+
+            int incrementBy;
+            if (this.incrementType.equals("exponential")) {
+                System.out.println("ConcurrentPool : 171 got exponential increment");
+                incrementBy = (int) Math.round(Math.pow(Math.max(this.incrementSize, 2), this.powerCount));
+            } else {
+                incrementBy = this.incrementSize;
+            }
+
+            LOGGER.info("ConcurrentConnectionPool : 155");
+
+            T t2 = null;
+            for (int i = 0; i < incrementBy - 1; i++) {
+                LOGGER.info("ConcurrentConnectionPool : 159, incrementing " + i + " out of " + incrementBy);
+                t2 = createNewAndReleasePermitIfFailure(false);
+                if (t2 != null) {
+                    available.addLast(t2);
+                } else {
+                    break;
+                }
+            }
+            this.powerCount++;
+            System.out.println("ConcurrentConnectionPool : 190, powerCount = " + this.powerCount);
+
         }
 
         return t;
@@ -263,7 +299,9 @@ public class ConcurrentPool<T> implements Pool<T> {
         buf.append("pool: ")
                 .append(" maxSize: ").append(maxSize)
                 .append(" availableCount ").append(getAvailableCount())
-                .append(" inUseCount ").append(getInUseCount());
+                .append(" inUseCount ").append(getInUseCount())
+                .append(" incrementType ").append(incrementType)
+                .append(" incrementSize ").append(incrementSize);
         return buf.toString();
     }
 
