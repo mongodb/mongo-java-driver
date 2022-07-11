@@ -94,4 +94,9 @@ case class SyncChangeStreamIterable[T](wrapped: ChangeStreamObservable[T])
     wrapped.comment(comment)
     this
   }
+
+  override def showExpandedEvents(showExpandedEvents: Boolean): ChangeStreamIterable[T] = {
+    wrapped.showExpandedEvents(showExpandedEvents)
+    this
+  }
 }
