@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDecimal128
+import com.mongodb.client.model.fill.FillComputation
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
@@ -59,6 +60,7 @@ import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
 import static com.mongodb.client.model.Aggregates.densify
 import static com.mongodb.client.model.Aggregates.facet
+import static com.mongodb.client.model.Aggregates.fill
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -95,6 +97,7 @@ import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
 import static com.mongodb.client.model.Windows.range
 import static com.mongodb.client.model.Windows.timeRange
+import static com.mongodb.client.model.fill.FillOptions.fillOptions
 import static java.util.Arrays.asList
 import static java.util.stream.Collectors.toList
 import static org.spockframework.util.CollectionUtil.containsAny
@@ -1131,7 +1134,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     }
 
     @IgnoreIf({ serverVersionLessThan(5, 2) })
-    def '$setWindowFields'(Object partitionBy, Bson sortBy, WindowedComputation output, List<Object> expectedFieldValues) {
+    def '$setWindowFields'(Bson preSortBy, Object partitionBy, Bson sortBy, WindowedComputation output, List<Object> expectedFieldValues) {
         given:
         ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId())
         getCollectionHelper().drop()
@@ -1139,6 +1142,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 new Document('partitionId', 1)
                         .append('num1', 1)
                         .append('num2', -1)
+                        .append('numMissing', 1)
                         .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc)),
                 new Document('partitionId', 1)
                         .append('num1', 2)
@@ -1147,12 +1151,17 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 new Document('partitionId', 2)
                         .append('num1', 3)
                         .append('num2', -3)
+                        .append('numMissing', 3)
                         .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))]
         getCollectionHelper().insertDocuments(original)
-        List<Document> actual = aggregate([
+        List<Bson> stages = [
                 setWindowFields(partitionBy, sortBy, output),
-                // guarantee ordering of the output documents
-                sort(ascending('num1'))])
+                sort(ascending('num1'))
+        ]
+        if (preSortBy != null) {
+            stages.add(0, sort(preSortBy))
+        }
+        List<Document> actual = aggregate(stages)
         List<Object> actualFieldValues = actual.stream()
                 .map { doc -> doc.get('result') }
                 .collect(toList())
@@ -1170,85 +1179,89 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         }
 
         where:
-        partitionBy | sortBy | output | expectedFieldValues
-        null | null | WindowedComputations
+        preSortBy | partitionBy | sortBy | output | expectedFieldValues
+        null | null | null | WindowedComputations
                 .sum('result', '$num1', null) | [6, 6, 6]
-        null | null | WindowedComputations
+        null | null | null | WindowedComputations
                 .sum('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [6, 6, 6]
-        '$partitionId' | ascending('num1') | WindowedComputations
+        null | '$partitionId' | ascending('num1') | WindowedComputations
                 .sum('result', '$num1', range(0, UNBOUNDED)) | [3, 2, 3]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .sum('result', '$num1', range(CURRENT, Integer.MAX_VALUE)) | [6, 5, 3]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .of(new BsonField('result', new Document('$sum', '$num1')
                         .append('window', Windows.of(
                                 new Document('range', asList('current', Integer.MAX_VALUE))).toBsonDocument()))) | [6, 5, 3]
-        null | ascending('date') | WindowedComputations
+        null | null | ascending('date') | WindowedComputations
                 .avg('result', '$num1', timeRange(-1, 0, MongoTimeUnit.QUARTER)) | [1, 1.5, 2]
-        null | null | WindowedComputations
+        null | null | null | WindowedComputations
                 .stdDevSamp('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [1.0, 1.0, 1.0]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .stdDevPop('result', '$num1', documents(CURRENT, CURRENT)) | [0, 0, 0]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .min('result', '$num1', documents(-1, 0)) | [1, 1, 2]
-        new Document('gid', '$partitionId') | ascending('num1') | WindowedComputations
+        null | new Document('gid', '$partitionId') | ascending('num1') | WindowedComputations
                 .minN('result', '$num1',
                         new Document('$cond', new Document('if', new Document('$eq', asList('$gid', 1)))
                                 .append('then', 2).append('else', 2)),
                         documents(-1, 0)) | [ [1].toSet(), [1, 2].toSet(), [3].toSet() ]
-        null | null | WindowedComputations
+        null | null | null | WindowedComputations
                 .max('result', '$num1', null) | [3, 3, 3]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .maxN('result', '$num1', 2, documents(-1, 0)) | [ [1].toSet(), [1, 2].toSet(), [2, 3].toSet() ]
-        '$partitionId' | null | WindowedComputations
+        null | '$partitionId' | null | WindowedComputations
                 .count('result', null) | [2, 2, 1]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .derivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1, -1, -1]
-        null | ascending('date') | WindowedComputations
+        null | null | ascending('date') | WindowedComputations
                 .timeDerivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.MILLISECOND) | [-0.001, -0.001, -0.001]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .integral('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-4, -4, -4]
-        null | ascending('date') | WindowedComputations
+        null | null | ascending('date') | WindowedComputations
                 .timeIntegral('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.SECOND) | [-4, -4, -4]
-        null | null | WindowedComputations
+        null | null | null | WindowedComputations
                 .covarianceSamp('result', '$num1', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1.0, -1.0, -1.0]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .covariancePop('result', '$num1', '$num2', documents(CURRENT, CURRENT)) | [0, 0, 0]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .expMovingAvg('result', '$num1', 1) | [1, 2, 3]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .expMovingAvg('result', '$num1', 0.5) | [1.0, 1.5, 2.25]
-        null | descending('num1') | WindowedComputations
+        null | null | descending('num1') | WindowedComputations
                 .push('result', '$num1', documents(UNBOUNDED, CURRENT)) | [ [3, 2, 1], [3, 2], [3] ]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .addToSet('result', '$partitionId', documents(UNBOUNDED, -1)) | [ [], [1], [1] ]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .first('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [ 1, 1, 1 ]
-        null | descending('num1') | WindowedComputations
+        null | null | descending('num1') | WindowedComputations
                 .firstN('result', '$num1', 2, documents(UNBOUNDED, UNBOUNDED)) | [ [3, 2], [3, 2], [3, 2] ]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .last('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [ 3, 3, 3 ]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .lastN('result', '$num1', 2, documents(UNBOUNDED, UNBOUNDED)) | [ [2, 3], [2, 3], [2, 3] ]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .shift('result', '$num1', -3, 1) | [ 2, 3, -3 ]
-        null | ascending('num1') | WindowedComputations
+        null | null | ascending('num1') | WindowedComputations
                 .documentNumber('result') | [ 1, 2, 3 ]
-        null | ascending('partitionId') | WindowedComputations
+        null | null | ascending('partitionId') | WindowedComputations
                 .rank('result') | [ 1, 1, 3 ]
-        null | ascending('partitionId') | WindowedComputations
+        null | null | ascending('partitionId') | WindowedComputations
                 .denseRank('result') | [ 1, 1, 2 ]
-        null | null | WindowedComputations
+        null | null | null | WindowedComputations
                 .bottom('result', ascending('num1'), '$num1', null) | [ 3, 3, 3 ]
-        new Document('gid', '$partitionId') | descending('num1') | WindowedComputations
+        null | new Document('gid', '$partitionId') | descending('num1') | WindowedComputations
                 .bottomN('result', ascending('num1'), '$num1',
                         new Document('$cond', new Document('if', new Document('$eq', asList('$gid', 1)))
                                 .append('then', 2).append('else', 2)),
                         null) | [ [1, 2], [1, 2], [3] ]
-        null | descending('num1') | WindowedComputations
+        null | null | descending('num1') | WindowedComputations
                 .topN('result', ascending('num1'), '$num1', 2, null) | [ [1, 2], [1, 2], [1, 2] ]
-        null | null | WindowedComputations
+        null | null | null | WindowedComputations
                 .top('result', ascending('num1'), '$num1', null) | [ 1, 1, 1 ]
+        ascending('num1') | null | null | WindowedComputations
+                .locf('result', '$numMissing') | [ 1, 1, 3 ]
+        null | null | ascending('num1') | WindowedComputations
+                .linearFill('result', '$numMissing') | [ 1, 2, 3 ]
     }
 
     @IgnoreIf({ serverVersionLessThan(5, 0) })
@@ -1332,5 +1345,60 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                  Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact()),
                  Instant.ofEpochMilli(BigInteger.TWO.pow(33).longValueExact()),
                  Instant.ofEpochMilli(BigInteger.TWO.pow(34).longValueExact())]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 3) })
+    def '$fill'(Bson preSortBy, String field, Bson fillStage, List<Object> expectedFieldValues) {
+        given:
+        getCollectionHelper().drop()
+        Document[] docs = [
+                new Document('partition', new Document('id', 10))
+                        .append('_id', 1)
+                        .append('field1', 1)
+                        .append('doc', new Document('field2', 1)),
+                new Document('partition', new Document('id', 10))
+                        .append('_id', 2)
+                        .append('doc', null),
+                new Document('partition', new Document('id', 20))
+                        .append('_id', 3)
+                        .append('field1', 3)
+                        .append('doc', new Document('field2', 3))]
+        getCollectionHelper().insertDocuments(docs)
+        String resultField = 'result'
+        List<Bson> stages = [
+                fillStage,
+                project(fields(computed(resultField, '$' + field))),
+                sort(ascending('_id'))
+        ]
+        if (preSortBy != null) {
+            stages.add(0, sort(preSortBy))
+        }
+        List<Object> actualFieldValues = aggregate(stages)
+                .stream()
+                .map { doc -> doc.get(resultField) }
+                .collect(toList())
+
+        expect:
+        actualFieldValues == expectedFieldValues
+
+        where:
+        preSortBy| field | fillStage | expectedFieldValues
+        null | 'doc.field2' | fill(
+                fillOptions().partitionByFields('p1', 'p2'),
+                FillComputation.value(field, '$partition.id')) |
+                [1, 10, 3]
+        null | 'doc.field2' | fill(
+                fillOptions().sortBy(ascending('_id')),
+                FillComputation.linear(field), FillComputation.locf('newField')) |
+                [1, 2, 3]
+        null | 'field1' | fill(
+                // https://jira.mongodb.org/browse/SERVER-67284 prevents specifying partitionByField('partition.id')
+                fillOptions().partitionBy(new Document('p', '$partition.id')).sortBy(descending('_id')),
+                FillComputation.locf('field1')) |
+                [1, null, 3]
+        descending('_id') | 'field1' | fill(
+                fillOptions(),
+                FillComputation.locf('field1'))|
+                [1, 3, 3]
     }
 }

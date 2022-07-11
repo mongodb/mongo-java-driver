@@ -29,6 +29,8 @@ import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Windows.Bound.{ CURRENT, UNBOUNDED }
 import org.mongodb.scala.model.Windows.{ documents, range }
 import org.mongodb.scala.model.densify.DensifyRange.fullRangeWithStep
+import org.mongodb.scala.model.fill.FillOptions.fillOptions
+import org.mongodb.scala.model.fill.FillComputation
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
@@ -466,7 +468,9 @@ class AggregatesSpec extends BaseSpec {
         WindowedComputations.bottom("newField24", ascending("sortByField"), "$field24", Some(window)),
         WindowedComputations.bottomN("newField24N", ascending("sortByField"), "$field24N", 2, Some(window)),
         WindowedComputations.top("newField25", ascending("sortByField"), "$field25", Some(window)),
-        WindowedComputations.topN("newField25N", ascending("sortByField"), "$field25N", 2, Some(window))
+        WindowedComputations.topN("newField25N", ascending("sortByField"), "$field25N", 2, Some(window)),
+        WindowedComputations.locf("newField26", "$field26"),
+        WindowedComputations.linearFill("newField27", "$field27")
       )
     ) should equal(
       Document(
@@ -506,7 +510,9 @@ class AggregatesSpec extends BaseSpec {
             "newField24": { "$bottom": { "sortBy": { "sortByField": 1}, "output": "$field24"}, "window": { "documents": [1, 2] } },
             "newField24N": { "$bottomN": { "sortBy": { "sortByField": 1}, "output": "$field24N", "n": 2 }, "window": { "documents": [1, 2] } },
             "newField25": { "$top": { "sortBy": { "sortByField": 1}, "output": "$field25"}, "window": { "documents": [1, 2] } },
-            "newField25N": { "$topN": { "sortBy": { "sortByField": 1}, "output": "$field25N", "n": 2 }, "window": { "documents": [1, 2] } }
+            "newField25N": { "$topN": { "sortBy": { "sortByField": 1}, "output": "$field25N", "n": 2 }, "window": { "documents": [1, 2] } },
+            "newField26": { "$locf": "$field26" },
+            "newField27": { "$linearFill": "$field27" }
           }
         }
       }"""
@@ -539,6 +545,27 @@ class AggregatesSpec extends BaseSpec {
         "$densify": {
           "field": "fieldName",
           "range": { "bounds": "full", "step": 1 }
+        }
+      }""")
+    )
+  }
+
+  it should "render $fill" in {
+    toBson(
+      Aggregates.fill(
+        fillOptions().partitionByFields("fieldName3").sortBy(ascending("fieldName4")),
+        FillComputation.linear("fieldName1"),
+        FillComputation.locf("fieldName2")
+      )
+    ) should equal(
+      Document("""{
+        "$fill": {
+          "partitionByFields": ["fieldName3"],
+          "sortBy": { "fieldName4": 1 },
+          "output": {
+            "fieldName1": { "method": "linear" },
+            "fieldName2": { "method": "locf" }
+          }
         }
       }""")
     )

@@ -144,7 +144,7 @@ public abstract class AbstractRetryableWritesTest {
             BsonDocument result = helper.getOperationResults(operation);
             assertFalse("Expected error but instead got result: " + result.toJson(), isErrorExpected);
             assertEquals(outcome.getDocument("result", new BsonDocument()), result.getDocument("result", new BsonDocument()));
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if (!isErrorExpected) {
                 throw e;
             }
@@ -157,7 +157,7 @@ public abstract class AbstractRetryableWritesTest {
         }
     }
 
-    private void assertExceptionState(final RuntimeException e, final BsonValue expectedResult, final String operationName) {
+    private void assertExceptionState(final Exception e, final BsonValue expectedResult, final String operationName) {
         if (hasErrorLabelsContainField(expectedResult)) {
             if (e instanceof MongoException) {
                 MongoException mongoException = (MongoException) e;

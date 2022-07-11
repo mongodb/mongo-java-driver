@@ -41,6 +41,7 @@ import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.documents;
 import static com.mongodb.client.model.Windows.range;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -95,7 +96,9 @@ final class TestWindowedComputations {
                 () -> assertSimpleParameterWindowFunction("$last", WindowedComputations::last, expressions, windows, false),
                 () -> assertNoParameterNoWindowFunction("$documentNumber", WindowedComputations::documentNumber),
                 () -> assertNoParameterNoWindowFunction("$rank", WindowedComputations::rank),
-                () -> assertNoParameterNoWindowFunction("$denseRank", WindowedComputations::denseRank)
+                () -> assertNoParameterNoWindowFunction("$denseRank", WindowedComputations::denseRank),
+                () -> assertSimpleParameterNoWindowFunction("$locf", WindowedComputations::locf, expressions),
+                () -> assertSimpleParameterNoWindowFunction("$linearFill", WindowedComputations::linearFill, expressions)
         );
     }
 
@@ -343,10 +346,20 @@ final class TestWindowedComputations {
                 Collections.singletonMap(NO_EXPRESSION, BsonDocument.parse(NO_EXPRESSION)), windows, windowRequired);
     }
 
+    private static void assertSimpleParameterNoWindowFunction(
+            final String expectedFunctionName,
+            final BiFunction<String, Object, WindowedComputation> windowedComputationBuilder,
+            final Map<Object, BsonValue> expressions) {
+        assertSimpleParameterWindowFunction(
+                expectedFunctionName,
+                (fName, expr, window) -> windowedComputationBuilder.apply(fName, expr),
+                expressions, singleton(null), false);
+    }
+
     private static void assertNoParameterNoWindowFunction(final String expectedFunctionName,
                                                           final Function<String, WindowedComputation> windowedComputationBuilder) {
         assertNoParameterWindowFunction(expectedFunctionName, (fName, window) -> windowedComputationBuilder.apply(fName),
-                Collections.singleton(null), false);
+                singleton(null), false);
     }
 
     private static void assertWindowedComputation(final BsonField expected, final WindowedComputation actual,

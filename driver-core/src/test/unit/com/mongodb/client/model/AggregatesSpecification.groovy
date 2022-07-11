@@ -17,6 +17,7 @@
 package com.mongodb.client.model
 
 import com.mongodb.MongoNamespace
+import com.mongodb.client.model.fill.FillComputation
 import com.mongodb.client.model.search.SearchCollector
 import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
@@ -54,6 +55,7 @@ import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
 import static com.mongodb.client.model.Aggregates.densify
+import static com.mongodb.client.model.Aggregates.fill
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -86,6 +88,7 @@ import static com.mongodb.client.model.Windows.Bound.CURRENT
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
 import static com.mongodb.client.model.densify.DensifyRange.fullRangeWithStep
+import static com.mongodb.client.model.fill.FillOptions.fillOptions
 import static com.mongodb.client.model.search.SearchCollector.facet
 import static com.mongodb.client.model.search.SearchCount.total
 import static com.mongodb.client.model.search.SearchFacet.stringFacet
@@ -549,6 +552,8 @@ class AggregatesSpecification extends Specification {
                         window),
                 WindowedComputations.top('newField25', ascending('sortByField'), '$field25', window),
                 WindowedComputations.topN('newField25N', ascending('sortByField'), '$field25N', 2, window),
+                WindowedComputations.locf('newField26', '$field26'),
+                WindowedComputations.linearFill('newField27', '$field27')
         )))
 
         expect:
@@ -599,7 +604,9 @@ class AggregatesSpecification extends Specification {
                             "window": { "documents": [1, 2] } },
                         "newField25N": {
                             "$topN": { "sortBy": { "sortByField": 1 }, "output": "$field25N", "n": 2 },
-                            "window": { "documents": [1, 2] } }
+                            "window": { "documents": [1, 2] } },
+                        "newField26": { "$locf": "$field26" },
+                        "newField27": { "$linearFill": "$field27" }
                     }
                 }
         }''')
@@ -634,6 +641,26 @@ class AggregatesSpecification extends Specification {
                 "$densify": {
                     "field": "fieldName",
                     "range": { "bounds": "full", "step": 1 }
+                }
+        }''')
+    }
+
+    def 'should render $fill'() {
+        when:
+        BsonDocument fillDoc = toBson(
+                fill(fillOptions().sortBy(ascending('fieldName3')),
+                        FillComputation.linear('fieldName1'),
+                        FillComputation.locf('fieldName2'))
+        )
+
+        then:
+        fillDoc == parse('''{
+                "$fill": {
+                    "output": {
+                        "fieldName1": { "method" : "linear" }
+                        "fieldName2": { "method" : "locf" }
+                    }
+                    "sortBy": { "fieldName3": 1 }
                 }
         }''')
     }

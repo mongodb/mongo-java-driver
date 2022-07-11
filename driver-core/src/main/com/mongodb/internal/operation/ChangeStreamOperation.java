@@ -67,6 +67,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     private BsonDocument resumeAfter;
     private BsonDocument startAfter;
     private BsonTimestamp startAtOperationTime;
+    private boolean showExpandedEvents;
 
     /**
      * Construct a new instance.
@@ -342,6 +343,33 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return this;
     }
 
+    /**
+     * Gets whether to include expanded change stream events. Default false.
+     *
+     * @return true if expanded change stream events should be included.
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    public boolean getShowExpandedEvents() {
+        return this.showExpandedEvents;
+    }
+
+    /**
+     * Sets whether to include expanded change stream events, which are:
+     * createIndexes, dropIndexes, modify, create, shardCollection,
+     * reshardCollection, refineCollectionShardKey. False by default.
+     *
+     * @param showExpandedEvents true to include expanded events
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    public ChangeStreamOperation<T> showExpandedEvents(final boolean showExpandedEvents) {
+        this.showExpandedEvents = showExpandedEvents;
+        return this;
+    }
+
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
@@ -442,6 +470,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
                 if (changeStreamLevel == ChangeStreamLevel.CLIENT) {
                     changeStream.append("allChangesForCluster", BsonBoolean.TRUE);
+                }
+
+                if (showExpandedEvents) {
+                    changeStream.append("showExpandedEvents", BsonBoolean.TRUE);
                 }
 
                 if (resumeAfter != null) {

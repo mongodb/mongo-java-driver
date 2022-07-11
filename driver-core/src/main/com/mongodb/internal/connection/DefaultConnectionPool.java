@@ -178,7 +178,7 @@ class DefaultConnectionPool implements ConnectionPool {
             }
             connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection)));
             return connection;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw (RuntimeException) checkOutFailed(e);
         }
     }
@@ -201,7 +201,7 @@ class DefaultConnectionPool implements ConnectionPool {
         };
         try {
             stateAndGeneration.throwIfClosedOrPaused();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             eventSendingCallback.onResult(null, e);
             return;
         }
@@ -212,7 +212,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 PooledConnection connection;
                 try {
                     connection = getPooledConnection(timeout);
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     eventSendingCallback.onResult(null, e);
                     return;
                 }
@@ -375,7 +375,7 @@ class DefaultConnectionPool implements ConnectionPool {
      */
     @VisibleForTesting(otherwise = PRIVATE)
     void doMaintenance() {
-        Predicate<RuntimeException> silentlyComplete = e ->
+        Predicate<Exception> silentlyComplete = e ->
                 e instanceof MongoInterruptedException || e instanceof MongoTimeoutException
                         || e instanceof MongoConnectionPoolClearedException || ConcurrentPool.isPoolClosedException(e);
         try {
@@ -403,7 +403,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     }
                 });
             }
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if (!silentlyComplete.test(e)) {
                 LOGGER.warn("Exception thrown during connection pool background maintenance task", e);
                 throw e;
@@ -532,7 +532,7 @@ class DefaultConnectionPool implements ConnectionPool {
             try {
                 connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
                 wrapped.open();
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 closeAndHandleOpenFailure();
                 throw new MongoOpenConnectionInternalException(e);
             }
@@ -898,7 +898,7 @@ class DefaultConnectionPool implements ConnectionPool {
             try {//phase one
                 availableConnection = acquirePermitOrGetAvailableOpenedConnection(
                         mode == OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, timeout);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 connection.closeSilently();
                 throw e;
             }
@@ -938,7 +938,7 @@ class DefaultConnectionPool implements ConnectionPool {
             PooledConnection availableConnection;
             try {//phase one
                 availableConnection = acquirePermitOrGetAvailableOpenedConnection(true, timeout);
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 connection.closeSilently();
                 callback.onResult(null, e);
                 return;
@@ -1300,21 +1300,19 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void workerRun() {
-            try {
-                while (state != State.CLOSED) {
-                    try {
-                        Task task = tasks.take();
-                        if (task.timeout().expired()) {
-                            task.failAsTimedOut();
-                        } else {
-                            task.execute();
-                        }
-                    } catch (RuntimeException e) {
-                        LOGGER.error(null, e);
+            while (state != State.CLOSED) {
+                try {
+                    Task task = tasks.take();
+                    if (task.timeout().expired()) {
+                        task.failAsTimedOut();
+                    } else {
+                        task.execute();
                     }
+                } catch (InterruptedException closed) {
+                    // fail the rest of the tasks and stop
+                } catch (Exception e) {
+                    LOGGER.error(null, e);
                 }
-            } catch (InterruptedException closed) {
-                // fail the rest of the tasks and stop
             }
             failAllTasksAfterClosing();
         }

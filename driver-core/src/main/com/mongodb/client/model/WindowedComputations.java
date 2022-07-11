@@ -784,6 +784,43 @@ public final class WindowedComputations {
         return simpleParameterWindowFunction(path, "$denseRank", null, null);
     }
 
+    /**
+     * Builds a computation of the last observed non-{@link BsonType#NULL Null} evaluation result of the {@code expression}.
+     *
+     * @param path The output field path.
+     * @param expression The expression.
+     * @param <TExpression> The expression type.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/locf/ $locf
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <TExpression> WindowedComputation locf(final String path, final TExpression expression) {
+        notNull("path", path);
+        notNull("expression", expression);
+        return simpleParameterWindowFunction(path, "$locf", expression, null);
+    }
+
+    /**
+     * Builds a computation of a value that is equal to the evaluation result of the {@code expression} when it is non-{@link BsonType#NULL Null},
+     * or to the linear interpolation of surrounding evaluation results of the {@code expression} when the result is {@link BsonType#NULL Null}.
+     * <p>
+     * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
+     *
+     * @param path The output field path.
+     * @param expression The expression.
+     * @param <TExpression> The expression type.
+     * @return The constructed windowed computation.
+     * @mongodb.driver.manual reference/operator/aggregation/linearFill/ $linearFill
+     * @since 4.7
+     * @mongodb.server.release 5.3
+     */
+    public static <TExpression> WindowedComputation linearFill(final String path, final TExpression expression) {
+        notNull("path", path);
+        notNull("expression", expression);
+        return simpleParameterWindowFunction(path, "$linearFill", expression, null);
+    }
+
     private static WindowedComputation simpleParameterWindowFunction(final String path, final String functionName,
                                                                      @Nullable final Object expression,
                                                                      @Nullable final Window window) {

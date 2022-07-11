@@ -590,7 +590,7 @@ final class OperationHelper {
         try {
             try {
                 resource = resourceSupplier.get();
-            } catch (RuntimeException supplierException) {
+            } catch (Exception supplierException) {
                 if (wrapSupplierException) {
                     throw new ResourceSupplierInternalException(supplierException);
                 } else {

@@ -88,7 +88,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
                         try {
                             dnsSrvRecordInitializer.initialize(unmodifiableSet(hosts));
                             currentHosts = hosts;
-                        } catch (RuntimeException e) {
+                        } catch (Exception e) {
                             LOGGER.warn("Exception in monitor thread during notification of DNS resolution state change", e);
                         }
                     }
@@ -97,7 +97,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
                         dnsSrvRecordInitializer.initialize(e);
                     }
                     LOGGER.info("Exception while resolving SRV records", e);
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     if (currentHosts.isEmpty()) {
                         dnsSrvRecordInitializer.initialize(new MongoInternalException("Unexpected runtime exception", e));
                     }

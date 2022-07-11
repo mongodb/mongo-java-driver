@@ -147,7 +147,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
                                         pendingRegistration.attachment);
                                 iter.remove();
                             }
-                        } catch (IOException | RuntimeException e) {
+                        } catch (Exception e) {
                             LOGGER.warn("Exception in selector loop", e);
                         }
                     }

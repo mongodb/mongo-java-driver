@@ -321,6 +321,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeRenameCollection(operation);
                 case "createIndex":
                     return crudHelper.executeCreateIndex(operation);
+                case "dropIndex":
+                    return crudHelper.executeDropIndex(operation);
                 case "startTransaction":
                     return crudHelper.executeStartTransaction(operation);
                 case "commitTransaction":
@@ -383,7 +385,7 @@ public abstract class UnifiedTest {
                         throw e;
                     }
                     break;
-                } catch (RuntimeException e) {
+                } catch (Exception e) {
                     if (storeErrors) {
                         errorDescriptionDocuments.add(createDocumentFromException(e));
                     } else if (storeFailures) {
