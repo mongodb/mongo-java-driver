@@ -150,9 +150,7 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
      */
     @Override
     public T get(final long timeout, final TimeUnit timeUnit) {
-//        if (maxSize < 500) {
-//            LOGGER.info("ConcurrentPool : 141");
-//        }
+
         if (closed) {
             throw new IllegalStateException("The pool is closed");
         }
@@ -165,21 +163,22 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
 
 
         if (t == null) {
+//            when pool is empty, create a new item and add it to the pool
+//            also create additional items restricted by the maxSize
+//            additional items are created by incrementing the powerCount
             t = createNewAndReleasePermitIfFailure(false);
 
             int incrementBy;
             if (this.incrementType.equals("exponential")) {
-                System.out.println("ConcurrentPool : 171 got exponential increment");
+                LOGGER.trace("connection pool got exponential increment");
                 incrementBy = (int) Math.round(Math.pow(Math.max(this.incrementSize, 2), this.powerCount));
             } else {
                 incrementBy = this.incrementSize;
             }
 
-            LOGGER.info("ConcurrentConnectionPool : 155");
-
             T t2 = null;
             for (int i = 0; i < incrementBy - 1; i++) {
-                LOGGER.info("ConcurrentConnectionPool : 159, incrementing " + i + " out of " + incrementBy);
+                LOGGER.trace("Incrementing pool size " + i + " out of " + incrementBy);
                 t2 = createNewAndReleasePermitIfFailure(false);
                 if (t2 != null) {
                     available.addLast(t2);
@@ -188,8 +187,6 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
                 }
             }
             this.powerCount++;
-            System.out.println("ConcurrentConnectionPool : 190, powerCount = " + this.powerCount);
-
         }
 
         return t;
