@@ -170,23 +170,39 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
 
             int incrementBy;
             if (this.incrementType.equals("exponential")) {
-                LOGGER.trace("connection pool got exponential increment");
-                incrementBy = (int) Math.round(Math.pow(Math.max(this.incrementSize, 2), this.powerCount));
+                LOGGER.info("connection pool got exponential increment");
+                incrementBy = (int) Math.floor(Math.pow(Math.max(this.incrementSize, 2), this.powerCount));
             } else {
                 incrementBy = this.incrementSize;
             }
 
-            T t2 = null;
+            LOGGER.info("ConConPool 178: incrementBy =" + incrementBy + " count = " + this.getCount() +
+                    " powerCount = " + this.powerCount);
+//            incrementBy = Math.min(incrementBy, this.maxSize - this.getCount());
+
+            this.powerCount++;
             for (int i = 0; i < incrementBy - 1; i++) {
-                LOGGER.trace("Incrementing pool size " + i + " out of " + incrementBy);
-                t2 = createNewAndReleasePermitIfFailure(false);
-                if (t2 != null) {
+//                LOGGER.info("ConConPool 186 potentialCOunt " + this.getPotentialCount());
+//                if (this.getPotentialCount() <= 0) {
+//                    this.powerCount--;
+//                    break;
+//                }
+//                LOGGER.info("Incrementing pool size " + i + " out of " + incrementBy);
+//                T t2 = itemFactory.create(true);
+//                available.addLast(t2);
+//                try to aquire permit
+                if (acquirePermit(timeout, timeUnit)) {
+                    T t2 = createNewAndReleasePermitIfFailure(false);
                     available.addLast(t2);
                 } else {
+                    this.powerCount--;
                     break;
                 }
+
             }
-            this.powerCount++;
+            LOGGER.info("ConConPool 197: increase power count from :" + this.powerCount);
+
+
         }
 
         return t;
@@ -289,6 +305,10 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
 
     public int getCount() {
         return getInUseCount() + getAvailableCount();
+    }
+
+    public int getPotentialCount() {
+        return maxSize - getCount();
     }
 
     public String toString() {
