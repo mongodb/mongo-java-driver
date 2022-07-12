@@ -45,6 +45,7 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 @Deprecated
 public final class MongoClients {
     private static final Logger LOGGER = Loggers.getLogger("connection");
+
     /**
      * Creates a new client with the default connection string "mongodb://localhost".
      *
@@ -63,7 +64,6 @@ public final class MongoClients {
      */
     @Deprecated
     public static MongoClient create(final MongoClientSettings settings) {
-        LOGGER.info("MongoClients : 66");
 
         return create(settings, null);
     }
@@ -94,7 +94,6 @@ public final class MongoClients {
      * @param connectionString the settings
      * @return the client
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
-     *
      * @see ConnectionString#getStreamType()
      * @see com.mongodb.MongoClientSettings.Builder
      * @see com.mongodb.connection.ClusterSettings.Builder#applyConnectionString(ConnectionString)
@@ -120,7 +119,6 @@ public final class MongoClients {
      */
     @Deprecated
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        LOGGER.info("MongoClients :123");
         return create(settings, mongoDriverInformation, null);
     }
 
@@ -150,7 +148,6 @@ public final class MongoClients {
      * @since 3.7
      */
     public static MongoClient create(final com.mongodb.MongoClientSettings settings) {
-        LOGGER.info("MongoClients : 153");
         return create(settings, null);
     }
 
@@ -166,27 +163,25 @@ public final class MongoClients {
      */
     public static MongoClient create(final com.mongodb.MongoClientSettings settings,
                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
-        LOGGER.info("MongoClients : 169");
         return create(MongoClientSettings.createFromClientSettings(settings), mongoDriverInformation, null);
     }
 
     private static MongoClient create(final MongoClientSettings settings,
                                       @Nullable final MongoDriverInformation mongoDriverInformation,
                                       @Nullable final String requestedStreamType) {
-        LOGGER.info("MongoClients : 176");
         String streamType = getStreamType(requestedStreamType);
         if (settings.getStreamFactoryFactory() == null) {
-           if (isNetty(streamType)) {
-               return NettyMongoClients.create(settings, mongoDriverInformation);
-           } else if (isNio(streamType)) {
-               if (settings.getSslSettings().isEnabled()) {
-                   return createWithTlsChannel(settings, mongoDriverInformation);
-               } else {
-                   return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
-               }
-           } else {
-               throw new IllegalArgumentException("Unsupported stream type: " + streamType);
-           }
+            if (isNetty(streamType)) {
+                return NettyMongoClients.create(settings, mongoDriverInformation);
+            } else if (isNio(streamType)) {
+                if (settings.getSslSettings().isEnabled()) {
+                    return createWithTlsChannel(settings, mongoDriverInformation);
+                } else {
+                    return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
+                }
+            } else {
+                throw new IllegalArgumentException("Unsupported stream type: " + streamType);
+            }
         } else {
             return createMongoClient(settings, mongoDriverInformation, getStreamFactory(settings, false),
                     getStreamFactory(settings, true), null);
@@ -196,14 +191,12 @@ public final class MongoClients {
     static MongoClient createMongoClient(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                          @Nullable final Closeable externalResourceCloser) {
-        LOGGER.info("MongoClients :199");
         return new MongoClientImpl(settings, createCluster(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory),
                 externalResourceCloser);
     }
 
     private static Cluster createCluster(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
-        LOGGER.info("MongoClients :206");
         notNull("settings", settings);
         MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
                 : MongoDriverInformation.builder(mongoDriverInformation);

@@ -127,7 +127,6 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
     public void connectionAdded(final ConnectionAddedEvent event) {
         for (ConnectionPoolListener cur : connectionPoolListeners) {
             try {
-                LOGGER.info("Connection Pool Listener : 130 ");
                 cur.connectionAdded(event);
             } catch (Exception e) {
                 if (LOGGER.isWarnEnabled()) {

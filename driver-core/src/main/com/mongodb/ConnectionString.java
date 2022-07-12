@@ -510,7 +510,6 @@ public class ConnectionString {
             } else if (key.equals("incrementsize")) {
                 incrementSize = parseInteger(value, "incrementsize");
             } else if (key.equals("incrementtype")) {
-                LOGGER.info("ConnectionString : 512 >" + value);
                 incrementType = value;
             } else if (key.equals("maxidletimems")) {
                 maxConnectionIdleTime = parseInteger(value, "maxidletimems");

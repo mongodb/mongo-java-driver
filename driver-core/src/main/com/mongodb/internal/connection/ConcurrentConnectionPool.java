@@ -40,7 +40,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
-    private AtomicInteger powerCount = new AtomicInteger(1);
+    private final AtomicInteger powerCount = new AtomicInteger(1);
 
     /**
      * Initializes a new pool of objects.
@@ -56,7 +56,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
         this.incrementType = incrementType;
     }
 
-    
+
     private class addConnectionInPool implements Callable<Boolean> {
         private final long timeout;
         private final TimeUnit timeUnit;
@@ -70,34 +70,28 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
         // The call() method is called in order to execute the asynchronous task.
         @Override
         public Boolean call() throws Exception {
-            int incrementAmount = incrementSize;
+            int incrementAmount = incrementSize - 1;
             if (incrementType.equals("exponential")) {
-                incrementAmount = (int) Math.pow(Math.max(2, incrementSize), powerCount.get());
+                incrementAmount = (int) Math.pow(Math.max(2, incrementSize), powerCount.get()) - 1;
             }
             try {
                 int i = 0;
                 while (i < incrementAmount && getCount() < maxSize) {
-                    LOGGER.info("ConConPool 186 potentialCount " + getPotentialCount());
-                    LOGGER.info("Incrementing pool size " + i + " out of " + incrementAmount);
+
+                    LOGGER.info("Incrementing pool size " + i + 1 + " out of " + incrementAmount);
+
                     if (!acquirePermit(timeout, timeUnit)) {
                         throw new InterruptedException();
                     } else {
-                        LOGGER.info("Concurrent Connection pool: 97");
-                        try {
-                            UsageTrackingInternalConnection t2 = createNewAndReleasePermitIfFailure(false);
-                            available.addLast(t2);
-                        } catch (RuntimeException e) {
-                            LOGGER.info("Concurrent Connection pool: 100");
-                            throw e;
-                        }
+                        UsageTrackingInternalConnection t2 = createNewAndReleasePermitIfFailure(false);
+                        available.addLast(t2);
                     }
                     ++i;
                 }
-                LOGGER.info("103 : Increasing Powercount from " + powerCount.get());
+                LOGGER.info("Increasing PowerCount from " + powerCount.get());
                 powerCount.incrementAndGet();
 
             } catch (InterruptedException e) {
-                LOGGER.info("Concurrent Connection pool: 102");
                 Thread.currentThread().interrupt();
             }
             return true;
@@ -130,10 +124,9 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
 
         if (t == null) {
             t = createNewAndReleasePermitIfFailure(false);
+
             ExecutorService executorService = Executors.newFixedThreadPool(1);
             Future<Boolean> future = executorService.submit(new addConnectionInPool(timeout, timeUnit));
-            LOGGER.info("ConConPool 197: increase power count from :" + powerCount.get());
-
         }
         return t;
     }
@@ -143,6 +136,19 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
      */
     public int getPotentialCount() {
         return maxSize - getCount();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("pool: ")
+                .append(" maxSize: ").append(maxSize)
+                .append(" availableCount ").append(getAvailableCount())
+                .append(" inUseCount ").append(getInUseCount())
+                .append(" incrementSize ").append(incrementSize)
+                .append(" incrementType ").append(incrementType)
+                .append(" powerCount ").append(powerCount.get());
+        return buf.toString();
     }
 
 

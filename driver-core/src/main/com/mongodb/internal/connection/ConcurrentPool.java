@@ -19,8 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
 
 import java.util.Iterator;
@@ -40,10 +38,8 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     protected final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
     final Semaphore permits;
+
     protected volatile boolean closed;
-
-
-    private static final Logger LOGGER = Loggers.getLogger("connection");
 
     public enum Prune {
         /**
@@ -140,9 +136,6 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     @Override
     public T get(final long timeout, final TimeUnit timeUnit) {
-//        if (maxSize < 500) {
-//            LOGGER.info("ConcurrentPool : 141");
-//        }
         if (closed) {
             throw new IllegalStateException("The pool is closed");
         }
@@ -190,20 +183,12 @@ public class ConcurrentPool<T> implements Pool<T> {
 
 
         try {
-            if (maxSize <= 500) {
-                LOGGER.info("Concurrentpool > Try > createNewAndReleasePermitIfFailure  : 187");
-                LOGGER.info(this.toString());
-            }
             T newMember = itemFactory.create(initialize);
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }
             return newMember;
         } catch (RuntimeException e) {
-            if (maxSize <= 500) {
-                LOGGER.info(" Concurrentpool > Catch > createNewAndReleasePermitIfFailure  : 187");
-                LOGGER.info(this.toString());
-            }
             permits.release();
             throw e;
         }

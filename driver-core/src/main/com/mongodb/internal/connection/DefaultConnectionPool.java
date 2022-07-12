@@ -79,7 +79,6 @@ class DefaultConnectionPool implements ConnectionPool {
 
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
                           final ConnectionPoolSettings settings) {
-        LOGGER.info("DefaultConnectionPool ||| 81");
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
@@ -119,10 +118,8 @@ class DefaultConnectionPool implements ConnectionPool {
                 if (!pooledConnection.opened()) {
 
                     try {
-                        LOGGER.info("DefaultConnectionPool || 122");
                         pooledConnection.open();
                     } catch (Throwable t) {
-                        LOGGER.info("DefaultConnectionPool catch || 125");
                         pool.release(pooledConnection.wrapped, true);
                         if (t instanceof MongoException) {
                             throw (MongoException) t;
@@ -407,7 +404,6 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void open() {
             isTrue("open", !isClosed.get());
-            LOGGER.info("DefaultConnectionPool || 398");
             wrapped.open();
         }
 
@@ -536,7 +532,6 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public UsageTrackingInternalConnection create(final boolean initialize) {
-            LOGGER.info("DefaultConnectionPool || 536");
             UsageTrackingInternalConnection internalConnection =
                     new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
             if (initialize) {
