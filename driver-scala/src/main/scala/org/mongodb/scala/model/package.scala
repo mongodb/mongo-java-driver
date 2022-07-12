@@ -865,9 +865,11 @@ package object model {
   }
 
   /**
-   * Units for specifying time-based bounds for [[Window windows]] and output units for some time-based
-   * [[WindowedComputation windowed computations]].
+   * Units for specifying time-based values.
    *
+   * @see [[Windows]]
+   * @see [[WindowedComputations]]
+   * @see `org.mongodb.scala.model.densify.DensifyRange`
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */

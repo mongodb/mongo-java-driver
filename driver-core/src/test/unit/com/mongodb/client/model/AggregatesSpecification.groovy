@@ -54,6 +54,7 @@ import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
+import static com.mongodb.client.model.Aggregates.densify
 import static com.mongodb.client.model.Aggregates.fill
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
@@ -86,6 +87,7 @@ import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Windows.Bound.CURRENT
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
+import static com.mongodb.client.model.densify.DensifyRange.fullRangeWithStep
 import static com.mongodb.client.model.fill.FillOptions.fillOptions
 import static com.mongodb.client.model.search.SearchCollector.facet
 import static com.mongodb.client.model.search.SearchCount.total
@@ -622,6 +624,23 @@ class AggregatesSpecification extends Specification {
                     "output": {
                         "newField01": { "$sum": "$field01", "window": { "documents": [1, 2] } }
                     }
+                }
+        }''')
+    }
+
+    def 'should render $densify'() {
+        when:
+        BsonDocument densifyDoc = toBson(
+                densify(
+                        'fieldName',
+                        fullRangeWithStep(1))
+        )
+
+        then:
+        densifyDoc == parse('''{
+                "$densify": {
+                    "field": "fieldName",
+                    "range": { "bounds": "full", "step": 1 }
                 }
         }''')
     }

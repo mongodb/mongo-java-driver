@@ -20,6 +20,7 @@ import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.model.densify.{ DensifyOptions, DensifyRange }
 import org.mongodb.scala.model.fill.{ FillComputation, FillOptions }
 import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions }
 
@@ -510,6 +511,38 @@ object Aggregates {
       output: Iterable[_ <: WindowedComputation]
   ): Bson =
     JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output.asJava)
+
+  /**
+   * Creates a `\$densify` pipeline stage, which adds documents to a sequence of documents
+   * where certain values in the `field` are missing.
+   *
+   * @param field The field to densify.
+   * @param range The range.
+   * @return The requested pipeline stage.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/densify/ \$densify]]
+   * @see [[https://www.mongodb.com/docs/manual/core/document/#dot-notation Dot notation]]
+   * @note Requires MongoDB 5.1 or greater.
+   * @since 4.7
+   */
+  def densify(field: String, range: DensifyRange): Bson =
+    JAggregates.densify(field, range)
+
+  /**
+   * Creates a `\$densify` pipeline stage, which adds documents to a sequence of documents
+   * where certain values in the `field` are missing.
+   *
+   * @param field The field to densify.
+   * @param range The range.
+   * @param options The densify options.
+   * Specifying `DensifyOptions.densifyOptions` is equivalent to calling `Aggregates.densify(String, DensifyRange)`.
+   * @return The requested pipeline stage.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/densify/ \$densify]]
+   * @see [[https://www.mongodb.com/docs/manual/core/document/#dot-notation Dot notation]]
+   * @note Requires MongoDB 5.1 or greater.
+   * @since 4.7
+   */
+  def densify(field: String, range: DensifyRange, options: DensifyOptions): Bson =
+    JAggregates.densify(field, range, options)
 
   /**
    * Creates a `\$fill` pipeline stage, which assigns values to fields when they are BSON `Null` or missing.

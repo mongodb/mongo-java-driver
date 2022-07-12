@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.densify.DensifyOptions;
+import com.mongodb.client.model.densify.DensifyRange;
 import com.mongodb.client.model.fill.FillComputation;
 import com.mongodb.client.model.fill.FillOptions;
 import com.mongodb.client.model.search.SearchOperator;
@@ -38,6 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
@@ -659,6 +662,60 @@ public final class Aggregates {
                                                      final Iterable<? extends WindowedComputation> output) {
         notNull("output", output);
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
+    }
+
+    /**
+     * Creates a {@code $densify} pipeline stage, which adds documents to a sequence of documents
+     * where certain values in the {@code field} are missing.
+     *
+     * @param field The field to densify.
+     * @param range The range.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/densify/ $densify
+     * @mongodb.driver.manual core/document/#dot-notation Dot notation
+     * @mongodb.server.release 5.1
+     * @since 4.7
+     */
+    public static Bson densify(final String field, final DensifyRange range) {
+        return densify(notNull("field", field), notNull("range", range), densifyOptions());
+    }
+
+    /**
+     * Creates a {@code $densify} pipeline stage, which adds documents to a sequence of documents
+     * where certain values in the {@code field} are missing.
+     *
+     * @param field The field to densify.
+     * @param range The range.
+     * @param options The densify options.
+     * Specifying {@link DensifyOptions#densifyOptions()} is equivalent to calling {@link #densify(String, DensifyRange)}.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/densify/ $densify
+     * @mongodb.driver.manual core/document/#dot-notation Dot notation
+     * @mongodb.server.release 5.1
+     * @since 4.7
+     */
+    public static Bson densify(final String field, final DensifyRange range, final DensifyOptions options) {
+        notNull("field", field);
+        notNull("range", range);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocument densifySpecificationDoc = new BsonDocument("field", new BsonString(field));
+                densifySpecificationDoc.append("range", range.toBsonDocument(documentClass, codecRegistry));
+                densifySpecificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+                return new BsonDocument("$densify", densifySpecificationDoc);
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$densify'"
+                        + ", field=" + field
+                        + ", range=" + range
+                        + ", options=" + options
+                        + '}';
+            }
+        };
     }
 
     /**
