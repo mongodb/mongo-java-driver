@@ -26,8 +26,6 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 
@@ -46,7 +44,6 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final String applicationName;
     private final MongoDriverInformation mongoDriverInformation;
     private final List<MongoCompressor> compressorList;
-    private static final Logger LOGGER = Loggers.getLogger("connection");
 
     public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings,
                                            final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
@@ -70,7 +67,6 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     @Override
     public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener,
                                     final ClusterClock clusterClock) {
-        LOGGER.info("DefaultClusterableServerFactory ||| 70");
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
                 new InternalStreamConnectionFactory(streamFactory, credentialList, applicationName,
                         mongoDriverInformation, compressorList, commandListener), connectionPoolSettings);
@@ -79,9 +75,9 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
 
         // no credentials, compressor list, or command listener for the server monitor factory
         ServerMonitorFactory serverMonitorFactory =
-                new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), serverSettings, clusterClock,
-                        new InternalStreamConnectionFactory(heartbeatStreamFactory, Collections.<MongoCredentialWithCache>emptyList(),
-                                applicationName, mongoDriverInformation, Collections.<MongoCompressor>emptyList(), null), connectionPool);
+            new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), serverSettings, clusterClock,
+                    new InternalStreamConnectionFactory(heartbeatStreamFactory, Collections.<MongoCredentialWithCache>emptyList(),
+                            applicationName, mongoDriverInformation, Collections.<MongoCompressor>emptyList(), null), connectionPool);
 
         return new DefaultServer(new ServerId(clusterId, serverAddress), clusterSettings.getMode(), connectionPool,
                 new DefaultConnectionFactory(), serverMonitorFactory, serverListener, commandListener, clusterClock);
