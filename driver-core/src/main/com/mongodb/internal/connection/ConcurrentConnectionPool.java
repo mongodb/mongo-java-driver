@@ -42,20 +42,21 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
 
     private AtomicInteger powerCount = new AtomicInteger(1);
 
-
     /**
-     * Factory for creating and closing pooled items.
+     * Initializes a new pool of objects.
      *
-     * @param <T>
+     * @param maxSize       max to hold to at any given time. if < 0 then no limit
+     * @param itemFactory   factory used to create and close items in the pool
+     * @param incrementSize the size to increment the pool by
+     * @param incrementType the type of increment to use
      */
-    public interface ItemFactory<T> {
-        T create(boolean initialize);
-
-        void close(T t);
-
-        Prune shouldPrune(T t);
+    public ConcurrentConnectionPool(final int maxSize, final ItemFactory<UsageTrackingInternalConnection> itemFactory, final int incrementSize, final String incrementType) {
+        super(maxSize, itemFactory);
+        this.incrementSize = incrementSize;
+        this.incrementType = incrementType;
     }
 
+    
     private class addConnectionInPool implements Callable<Boolean> {
         private final long timeout;
         private final TimeUnit timeUnit;
@@ -77,21 +78,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                 int i = 0;
                 while (i < incrementAmount && getCount() < maxSize) {
                     LOGGER.info("ConConPool 186 potentialCount " + getPotentialCount());
-//                if (this.getPotentialCount() <= 0) {
-//                    this.powerCount--;
-//                    break;
-//                }
                     LOGGER.info("Incrementing pool size " + i + " out of " + incrementAmount);
-//                T t2 = itemFactory.create(true);
-//                available.addLast(t2);
-//                try to aquire permit
-//                if (!acquirePermit(timeout, timeUnit)) {
-//                    ConcurrentConnectionPool.powerCount--;
-//                    break;
-//                } else {
-//                    T t2 = createNewAndReleasePermitIfFailure(false);
-//                    available.addLast(t2);
-//                }
                     if (!acquirePermit(timeout, timeUnit)) {
                         throw new InterruptedException();
                     } else {
@@ -99,7 +86,6 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                         try {
                             UsageTrackingInternalConnection t2 = createNewAndReleasePermitIfFailure(false);
                             available.addLast(t2);
-                            powerCount.incrementAndGet();
                         } catch (RuntimeException e) {
                             LOGGER.info("Concurrent Connection pool: 100");
                             throw e;
@@ -107,6 +93,8 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                     }
                     ++i;
                 }
+                LOGGER.info("103 : Increasing Powercount from " + powerCount.get());
+                powerCount.incrementAndGet();
 
             } catch (InterruptedException e) {
                 LOGGER.info("Concurrent Connection pool: 102");
@@ -116,27 +104,10 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
         }
     }
 
-    /**
-     * Initializes a new pool of objects.
-     *
-     * @param maxSize     max to hold to at any given time. if < 0 then no limit
-     * @param itemFactory factory used to create and close items in the pool
-     */
-    public ConcurrentConnectionPool(final int maxSize, final ItemFactory<UsageTrackingInternalConnection> itemFactory, final int incrementSize, final String incrementType) {
-        super(maxSize, (ConcurrentPool.ItemFactory<UsageTrackingInternalConnection>) itemFactory);
-        this.incrementSize = incrementSize;
-        this.incrementType = incrementType;
-    }
 
     /**
-     * Return an instance of T to the pool.  This method simply calls {@code release(t, false)}
-     *
-     * @param t item to return to the pool
-     */
-
-
-    /**
-     * Gets an object from the pool - will block if none are available
+     * Gets an object from the pool - will block if none are available - also starts a non blocking thread to add more
+     * objects to the pool if the pool is not full.
      *
      * @param timeout  negative - forever 0        - return immediately no matter what positive ms to wait
      * @param timeUnit the time unit of the timeout
@@ -158,32 +129,21 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
 
 
         if (t == null) {
-
-//            when pool is empty, create a new item and add it to the pool
-//            also create additional items restricted by the maxSize
-//            additional items are created by incrementing the powerCount
-
             t = createNewAndReleasePermitIfFailure(false);
             ExecutorService executorService = Executors.newFixedThreadPool(1);
             Future<Boolean> future = executorService.submit(new addConnectionInPool(timeout, timeUnit));
             LOGGER.info("ConConPool 197: increase power count from :" + powerCount.get());
 
-
         }
         return t;
     }
 
-
     /**
-     * Clears the pool of all objects.
+     * Gives number of more objects that can be generated.
      */
-
-
     public int getPotentialCount() {
         return maxSize - getCount();
     }
 
-
-    // swallow exceptions from ItemFactory.close()
 
 }
