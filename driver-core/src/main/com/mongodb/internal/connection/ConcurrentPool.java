@@ -34,13 +34,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConcurrentPool<T> implements Pool<T> {
 
-    private final int maxSize;
+    protected final int maxSize;
 
-    private final ItemFactory<T> itemFactory;
+    protected final ItemFactory<T> itemFactory;
 
-    private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
-    private final Semaphore permits;
-    private volatile boolean closed;
+    protected final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
+    final Semaphore permits;
+    protected volatile boolean closed;
 
 
     private static final Logger LOGGER = Loggers.getLogger("connection");
@@ -186,7 +186,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
     }
 
-    private T createNewAndReleasePermitIfFailure(final boolean initialize) {
+    protected T createNewAndReleasePermitIfFailure(final boolean initialize) {
 
 
         try {

@@ -46,7 +46,7 @@ public final class ServerHelper {
     public static void waitForLastRelease(final ServerAddress address, final Cluster cluster) {
         DefaultServer server = (DefaultServer) cluster.selectServer(new ServerAddressSelector(address));
         DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();
-        ConcurrentConnectionPool<UsageTrackingInternalConnection> pool = connectionProvider.getPool();
+        ConcurrentConnectionPool pool = connectionProvider.getPool();
         long startTime = System.currentTimeMillis();
         while (pool.getInUseCount() > 0) {
             try {
@@ -64,7 +64,7 @@ public final class ServerHelper {
     private static void checkPool(final ServerAddress address, final Cluster cluster) {
         DefaultServer server = (DefaultServer) cluster.selectServer(new ServerAddressSelector(address));
         DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();
-        ConcurrentConnectionPool<UsageTrackingInternalConnection> pool = connectionProvider.getPool();
+        ConcurrentConnectionPool pool = connectionProvider.getPool();
         if (pool.getInUseCount() > 0) {
             throw new IllegalStateException("Connection pool in use count is " + pool.getInUseCount());
         }
