@@ -26,10 +26,13 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.ClusterFixture.getServerParameters;
+import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
 import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
 import static com.mongodb.JsonTestServerVersionChecker.serverlessMatches;
 import static com.mongodb.JsonTestServerVersionChecker.topologyMatches;
+import static org.junit.Assume.assumeTrue;
 
 final class RunOnRequirementsMatcher {
     public static boolean runOnRequirementsMet(final BsonArray runOnRequirements, final MongoClientSettings clientSettings,
@@ -82,6 +85,10 @@ final class RunOnRequirementsMatcher {
                         }
                         break;
                     case "csfle":
+                        if (!hasEncryptionTestsEnabled() || !serverVersionAtLeast(4, 2)) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported runOnRequirement: " + curRequirement.getKey());

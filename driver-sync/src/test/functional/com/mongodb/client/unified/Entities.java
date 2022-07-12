@@ -73,14 +73,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
-import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
 import static com.mongodb.client.unified.EventMatcher.getReasonString;
@@ -251,9 +250,11 @@ public final class Entities {
         entities.put(id, entity);
     }
 
-    public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+    public void init(final BsonArray entitiesArray,
                      final boolean waitForPoolAsyncWorkManagerStart,
-                     final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
+                     final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                     final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
+                     final BiFunction<MongoClient, ClientEncryptionSettings, ClientEncryption> clientEncryptionSupplier) {
         for (BsonValue cur : entitiesArray.getValues()) {
             String entityType = cur.asDocument().getFirstKey();
             BsonDocument entity = cur.asDocument().getDocument(entityType);
@@ -279,7 +280,7 @@ public final class Entities {
                     break;
                 }
                 case "clientEncryption": {
-                    initClientEncryption(entity, id);
+                    initClientEncryption(entity, id, clientEncryptionSupplier);
                     break;
                 }
                 default:
@@ -496,10 +497,8 @@ public final class Entities {
         putEntity(id, gridFSBucketSupplier.apply(database), buckets);
     }
 
-    private void initClientEncryption(final BsonDocument entity, final String id) {
-        assumeTrue(hasEncryptionTestsEnabled());
-        assumeTrue(serverVersionAtLeast(4, 2));
-
+    private void initClientEncryption(final BsonDocument entity, final String id,
+            final BiFunction<MongoClient, ClientEncryptionSettings, ClientEncryption> clientEncryptionSupplier) {
         if (!entity.containsKey("clientEncryptionOpts")) {
             throw new UnsupportedOperationException("Unsupported client encryption specification missing: clientEncryptionOpts");
         }
@@ -527,8 +526,7 @@ public final class Entities {
             }
         }
 
-        ClientEncryption clientEncryption = new ClientEncryptionImpl(Assertions.notNull("mongoClient", mongoClient), builder.build());
-        putEntity(id, clientEncryption, clientEncryptions);
+        putEntity(id, clientEncryptionSupplier.apply(Assertions.notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
     }
 
     private TransactionOptions getTransactionOptions(final BsonDocument options) {

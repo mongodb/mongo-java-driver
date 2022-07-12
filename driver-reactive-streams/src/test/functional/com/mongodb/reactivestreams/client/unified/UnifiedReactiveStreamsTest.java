@@ -16,14 +16,18 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.unified.UnifiedTest;
+import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
+import com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl;
+import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoDatabase;
@@ -49,5 +53,10 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
     @Override
     protected GridFSBucket createGridFSBucket(final MongoDatabase database) {
         return new SyncGridFSBucket(GridFSBuckets.create(((SyncMongoDatabase) database).getWrapped()));
+    }
+
+    @Override
+    protected ClientEncryption createClientEncryption(final MongoClient mongoClient, final ClientEncryptionSettings clientEncryptionSettings) {
+        return new SyncClientEncryption(new ClientEncryptionImpl(((SyncMongoClient) mongoClient).getWrapped(), clientEncryptionSettings));
     }
 }

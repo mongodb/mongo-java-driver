@@ -56,7 +56,11 @@ public class ClientEncryptionImpl implements ClientEncryption {
     private final MongoCollection<BsonDocument> collection;
 
     public ClientEncryptionImpl(final ClientEncryptionSettings options) {
-        this.keyVaultClient = MongoClients.create(options.getKeyVaultMongoClientSettings());
+        this(MongoClients.create(options.getKeyVaultMongoClientSettings()), options);
+    }
+
+    public ClientEncryptionImpl(final MongoClient keyVaultClient, final ClientEncryptionSettings options) {
+        this.keyVaultClient = keyVaultClient;
         this.crypt = Crypts.create(keyVaultClient, options);
         this.options = options;
         MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());

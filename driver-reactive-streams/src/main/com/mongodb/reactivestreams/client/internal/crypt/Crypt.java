@@ -206,7 +206,6 @@ public class Crypt implements Closeable {
      * @param filter the filter
      * @param options the rewrap many data key options
      * @return the decrypted value
-     * @since 4.7
      */
     public Mono<RawBsonDocument> rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
         return executeStateMachine(() ->

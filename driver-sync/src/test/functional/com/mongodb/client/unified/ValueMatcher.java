@@ -119,6 +119,7 @@ final class ValueMatcher {
                                 throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
                         }
                     }
+
                     assertTrue(context.getMessage("Actual document must contain key " + key), actualDocument.containsKey(key));
                     assertValuesMatch(value, actualDocument.get(key), key, -1);
                 });

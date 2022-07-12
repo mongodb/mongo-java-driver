@@ -16,12 +16,15 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.client.internal.ClientEncryptionImpl;
+import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -45,5 +48,10 @@ public abstract class UnifiedSyncTest extends UnifiedTest {
     @Override
     protected GridFSBucket createGridFSBucket(final MongoDatabase database) {
         return GridFSBuckets.create(database);
+    }
+
+    @Override
+    protected ClientEncryption createClientEncryption(final MongoClient mongoClient, final ClientEncryptionSettings clientEncryptionSettings) {
+        return new ClientEncryptionImpl(mongoClient, clientEncryptionSettings);
     }
 }

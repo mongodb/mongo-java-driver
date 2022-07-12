@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.vault;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.Arrays;
@@ -82,6 +83,7 @@ public class DataKeyOptions {
      *
      * @return the list of alternate key names
      */
+    @Nullable
     public List<String> getKeyAltNames() {
         return keyAltNames;
     }
@@ -132,6 +134,7 @@ public class DataKeyOptions {
      * </p>
      * @return the master key document
      */
+    @Nullable
     public BsonDocument getMasterKey() {
         return masterKey;
     }
@@ -146,6 +149,7 @@ public class DataKeyOptions {
      * @return the custom key material for the data key or null
      * @since 4.7
      */
+    @Nullable
     public byte[] getKeyMaterial() {
         return keyMaterial;
     }

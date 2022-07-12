@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -25,6 +26,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
@@ -137,6 +139,8 @@ public abstract class UnifiedTest {
 
     protected abstract GridFSBucket createGridFSBucket(MongoDatabase database);
 
+    protected abstract ClientEncryption createClientEncryption(MongoClient mongoClient, ClientEncryptionSettings clientEncryptionSettings);
+
     @Before
     public void setUp() {
         assertTrue(String.format("Unsupported schema version %s", schemaVersion),
@@ -161,9 +165,11 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
-        entities.init(entitiesArray, this::createMongoClient,
+        entities.init(entitiesArray,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
-                this::createGridFSBucket);
+                this::createMongoClient,
+                this::createGridFSBucket,
+                this::createClientEncryption);
         addInitialData();
     }
 
