@@ -45,7 +45,7 @@ final class TestWindows {
     @Test
     void of() {
         Window expected = Windows.timeRange(-1, SECOND, CURRENT);
-        Document windowDocument = new Document("range", asList(-1L, "current")).append("unit", "second");
+        Document windowDocument = new Document("range", asList(-1L, "current")).append("unit", SECOND.value());
         Window actualFromDocument = Windows.of(windowDocument);
         Window actualFromBsonDocument = Windows.of(windowDocument.toBsonDocument());
         assertAll(

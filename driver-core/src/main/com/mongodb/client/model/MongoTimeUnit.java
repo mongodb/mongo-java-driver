@@ -15,48 +15,53 @@
  */
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+import com.mongodb.client.model.densify.DensifyRange;
+
 /**
- * Units for specifying time-based bounds for {@linkplain Window windows} and output units for some time-based
- * {@linkplain WindowedComputation windowed computations}.
+ * Units for specifying time-based values.
  *
+ * @see Windows
+ * @see WindowedComputations
+ * @see DensifyRange
  * @mongodb.server.release 5.0
  * @since 4.3
  */
 public enum MongoTimeUnit {
     /**
-     * YEAR
+     * {@linkplain #value() "year"}
      */
     YEAR("year", false),
     /**
-     * QUARTER
+     * {@linkplain #value() "quarter"}
      */
     QUARTER("quarter", false),
     /**
-     * MONTH
+     * {@linkplain #value() "month"}
      */
     MONTH("month", false),
     /**
-     * WEEK
+     * {@linkplain #value() "week"}
      */
     WEEK("week", true),
     /**
-     * DAY
+     * {@linkplain #value() "day"}
      */
     DAY("day", true),
     /**
-     * HOUR
+     * {@linkplain #value() "hour"}
      */
     HOUR("hour", true),
     /**
-     * MINUTE
+     * {@linkplain #value() "minute"}
      */
     MINUTE("minute", true),
     /**
-     * SECOND
+     * {@linkplain #value() "second"}
      */
     SECOND("second", true),
     /**
-     * MILLISECOND
+     * {@linkplain #value() "millisecond"}
      */
     MILLISECOND("millisecond", true);
 
@@ -68,7 +73,13 @@ public enum MongoTimeUnit {
         this.fixed = fixed;
     }
 
-    String value() {
+    /**
+     * Returns a {@link String} representation of the unit, which may be useful when using methods like
+     * {@link Windows#of(Bson)}, {@link DensifyRange#of(Bson)}.
+     *
+     * @return A {@link String} representation of the unit.
+     */
+    public String value() {
         return value;
     }
 

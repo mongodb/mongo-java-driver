@@ -93,7 +93,7 @@ public final class Windows {
      *  Window pastWeek1 = Windows.timeRange(-1, MongoTimeUnit.WEEK, Windows.Bound.CURRENT);
      *  Window pastWeek2 = Windows.of(
      *          new Document("range", Arrays.asList(-1, "current"))
-     *                  .append("unit", "week"));
+     *                  .append("unit", MongoTimeUnit.WEEK.value()));
      * }</pre>
      *
      * @param window A {@link Bson} representing the required window.
