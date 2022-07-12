@@ -23,9 +23,14 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.ConcurrentLinkedDeque.RemovalReportingIterator;
 
+
 import java.util.Iterator;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A concurrent pool implementation.
@@ -40,18 +45,16 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
 
     private final String incrementType;
 
-
     private final ItemFactory<T> itemFactory;
 
-
     private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
+
     private final Semaphore permits;
+
     private volatile boolean closed;
-
-
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
-    private int powerCount = 1;
+    private AtomicInteger powerCount = new AtomicInteger(1);
 
     public enum Prune {
         /**
@@ -79,6 +82,66 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
         void close(T t);
 
         Prune shouldPrune(T t);
+    }
+
+    private class addConnectionInPool implements Callable<Boolean> {
+        private final long timeout;
+        private final TimeUnit timeUnit;
+
+
+        addConnectionInPool(final long timeout, final TimeUnit timeUnit) {
+            this.timeout = timeout;
+            this.timeUnit = timeUnit;
+        }
+
+        // The call() method is called in order to execute the asynchronous task.
+        @Override
+        public Boolean call() throws Exception {
+            int incrementAmount = incrementSize;
+            if (incrementType.equals("exponential")) {
+                incrementAmount = (int) Math.pow(Math.max(2, incrementSize), powerCount.get());
+            }
+            try {
+                int i = 0;
+                while (i < incrementAmount && getCount() < maxSize) {
+                    LOGGER.info("ConConPool 186 potentialCount " + getPotentialCount());
+//                if (this.getPotentialCount() <= 0) {
+//                    this.powerCount--;
+//                    break;
+//                }
+                    LOGGER.info("Incrementing pool size " + i + " out of " + incrementAmount);
+//                T t2 = itemFactory.create(true);
+//                available.addLast(t2);
+//                try to aquire permit
+//                if (!acquirePermit(timeout, timeUnit)) {
+//                    ConcurrentConnectionPool.powerCount--;
+//                    break;
+//                } else {
+//                    T t2 = createNewAndReleasePermitIfFailure(false);
+//                    available.addLast(t2);
+//                }
+                    if (!acquirePermit(timeout, timeUnit)) {
+                        throw new InterruptedException();
+                    } else {
+                        LOGGER.info("Concurrent Connection pool: 97");
+                        try {
+                            T t2 = createNewAndReleasePermitIfFailure(false);
+                            available.addLast(t2);
+                            powerCount.incrementAndGet();
+                        } catch (RuntimeException e) {
+                            LOGGER.info("Concurrent Connection pool: 100");
+                            throw e;
+                        }
+                    }
+                    ++i;
+                }
+
+            } catch (InterruptedException e) {
+                LOGGER.info("Concurrent Connection pool: 102");
+                Thread.currentThread().interrupt();
+            }
+            return true;
+        }
     }
 
     /**
@@ -163,50 +226,21 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
 
 
         if (t == null) {
+
 //            when pool is empty, create a new item and add it to the pool
 //            also create additional items restricted by the maxSize
 //            additional items are created by incrementing the powerCount
+
             t = createNewAndReleasePermitIfFailure(false);
-
-            int incrementBy;
-            if (this.incrementType.equals("exponential")) {
-                LOGGER.info("connection pool got exponential increment");
-                incrementBy = (int) Math.floor(Math.pow(Math.max(this.incrementSize, 2), this.powerCount));
-            } else {
-                incrementBy = this.incrementSize;
-            }
-
-            LOGGER.info("ConConPool 178: incrementBy =" + incrementBy + " count = " + this.getCount() +
-                    " powerCount = " + this.powerCount);
-//            incrementBy = Math.min(incrementBy, this.maxSize - this.getCount());
-
-            this.powerCount++;
-            for (int i = 0; i < incrementBy - 1; i++) {
-//                LOGGER.info("ConConPool 186 potentialCOunt " + this.getPotentialCount());
-//                if (this.getPotentialCount() <= 0) {
-//                    this.powerCount--;
-//                    break;
-//                }
-//                LOGGER.info("Incrementing pool size " + i + " out of " + incrementBy);
-//                T t2 = itemFactory.create(true);
-//                available.addLast(t2);
-//                try to aquire permit
-                if (acquirePermit(timeout, timeUnit)) {
-                    T t2 = createNewAndReleasePermitIfFailure(false);
-                    available.addLast(t2);
-                } else {
-                    this.powerCount--;
-                    break;
-                }
-
-            }
-            LOGGER.info("ConConPool 197: increase power count from :" + this.powerCount);
+            ExecutorService executorService = Executors.newFixedThreadPool(1);
+            Future<Boolean> future = executorService.submit(new addConnectionInPool(timeout, timeUnit));
+            LOGGER.info("ConConPool 197: increase power count from :" + powerCount.get());
 
 
         }
-
         return t;
     }
+
 
     public void prune() {
         for (RemovalReportingIterator<T> iter = available.iterator(); iter.hasNext(); ) {
@@ -239,10 +273,7 @@ public class ConcurrentConnectionPool<T> implements Pool<T> {
 
 
         try {
-            if (maxSize <= 500) {
-                LOGGER.info("Concurrentpool > Try > createNewAndReleasePermitIfFailure  : 187");
-                LOGGER.info(this.toString());
-            }
+
             T newMember = itemFactory.create(initialize);
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
