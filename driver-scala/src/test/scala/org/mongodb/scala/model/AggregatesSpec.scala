@@ -536,7 +536,7 @@ class AggregatesSpec extends BaseSpec {
 
   it should "render $densify" in {
     toBson(
-      densify(
+      Aggregates.densify(
         "fieldName",
         fullRangeWithStep(1)
       )
