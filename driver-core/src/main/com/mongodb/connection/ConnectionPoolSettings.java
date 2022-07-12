@@ -41,6 +41,8 @@ public class ConnectionPoolSettings {
     private final List<ConnectionPoolListener> connectionPoolListeners;
     private final int maxSize;
     private final int minSize;
+    private final String incrementType;
+    private final int incrementSize;
     private final int maxWaitQueueSize;
     private final long maxWaitTimeMS;
     private final long maxConnectionLifeTimeMS;
@@ -76,6 +78,8 @@ public class ConnectionPoolSettings {
         private List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
         private int maxSize = 100;
         private int minSize;
+        private int incrementSize = 1;
+        private String incrementType = "linear";
         private int maxWaitQueueSize = 500;
         private long maxWaitTimeMS = 1000 * 60 * 2;
         private long maxConnectionLifeTimeMS;
@@ -100,6 +104,8 @@ public class ConnectionPoolSettings {
             connectionPoolListeners = new ArrayList<ConnectionPoolListener>(connectionPoolSettings.connectionPoolListeners);
             maxSize = connectionPoolSettings.maxSize;
             minSize = connectionPoolSettings.minSize;
+            incrementSize = connectionPoolSettings.incrementSize;
+            incrementType = connectionPoolSettings.incrementType;
             maxWaitQueueSize = connectionPoolSettings.maxWaitQueueSize;
             maxWaitTimeMS = connectionPoolSettings.maxWaitTimeMS;
             maxConnectionLifeTimeMS = connectionPoolSettings.maxConnectionLifeTimeMS;
@@ -134,6 +140,16 @@ public class ConnectionPoolSettings {
          */
         public Builder minSize(final int minSize) {
             this.minSize = minSize;
+            return this;
+        }
+
+        public Builder incrementSize(final int incrementSize) {
+            this.incrementSize = incrementSize;
+            return this;
+        }
+
+        public Builder incrementType(final String incrementType) {
+            this.incrementType = incrementType;
             return this;
         }
 
@@ -255,6 +271,16 @@ public class ConnectionPoolSettings {
                 minSize(minConnectionPoolSize);
             }
 
+            Integer incrementConnectionPoolSize = connectionString.getIncrementSize();
+            if (incrementConnectionPoolSize != null) {
+                incrementSize(incrementConnectionPoolSize);
+            }
+
+            String poolIncrementType = connectionString.getIncrementType();
+            if (poolIncrementType != null) {
+                incrementType(poolIncrementType);
+            }
+
             Integer maxWaitTime = connectionString.getMaxWaitTime();
             if (maxWaitTime != null) {
                 maxWaitTime(maxWaitTime, MILLISECONDS);
@@ -301,6 +327,30 @@ public class ConnectionPoolSettings {
      */
     public int getMinSize() {
         return minSize;
+    }
+
+    /**
+     * <p>Increment size of the connection pool. When needed to generate extra conentions these many connections
+     * will be generated, in case of exponential increment this will be the base of exponentiation</p>
+     *
+     * <p>Default is 1.</p>
+     *
+     * @return the size by which connection pool will be incremented.
+     */
+    public int getIncrementSize() {
+        return incrementSize;
+    }
+
+    /**
+     * <p>Increment type of the connection pool. The order by which connection pool will grow wach time
+     * linear or exponential</p>
+     *
+     * <p>Default is linear.</p>
+     *
+     * @return the type of increment policy.
+     */
+    public String getIncrementType() {
+        return incrementType;
     }
 
     /**
@@ -404,6 +454,9 @@ public class ConnectionPoolSettings {
         if (minSize != that.minSize) {
             return false;
         }
+        if (incrementSize != that.incrementSize) {
+            return false;
+        }
         if (maintenanceInitialDelayMS != that.maintenanceInitialDelayMS) {
             return false;
         }
@@ -427,6 +480,7 @@ public class ConnectionPoolSettings {
     public int hashCode() {
         int result = maxSize;
         result = 31 * result + minSize;
+        result = 31 * result + incrementSize;
         result = 31 * result + maxWaitQueueSize;
         result = 31 * result + (int) (maxWaitTimeMS ^ (maxWaitTimeMS >>> 32));
         result = 31 * result + (int) (maxConnectionLifeTimeMS ^ (maxConnectionLifeTimeMS >>> 32));
@@ -440,21 +494,25 @@ public class ConnectionPoolSettings {
     @Override
     public String toString() {
         return "ConnectionPoolSettings{"
-               + "maxSize=" + maxSize
-               + ", minSize=" + minSize
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
-               + ", maxWaitTimeMS=" + maxWaitTimeMS
-               + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
-               + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
-               + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
-               + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
-               + ", connectionPoolListeners=" + connectionPoolListeners
-               + '}';
+                + "maxSize=" + maxSize
+                + ", minSize=" + minSize
+                + ", incrementSize=" + incrementSize
+                + ", incrementType='" + incrementType
+                + ", maxWaitQueueSize=" + maxWaitQueueSize
+                + ", maxWaitTimeMS=" + maxWaitTimeMS
+                + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
+                + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
+                + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
+                + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
+                + ", connectionPoolListeners=" + connectionPoolListeners
+                + '}';
     }
 
     ConnectionPoolSettings(final Builder builder) {
         isTrue("maxSize > 0", builder.maxSize > 0);
         isTrue("minSize >= 0", builder.minSize >= 0);
+        isTrue("incrementSize >= 0", builder.incrementSize >= 0);
+        isTrue("incrementType != null", builder.incrementType != null);
         isTrue("maxWaitQueueSize >= 0", builder.maxWaitQueueSize >= 0);
         isTrue("maintenanceInitialDelayMS >= 0", builder.maintenanceInitialDelayMS >= 0);
         isTrue("maxConnectionLifeTime >= 0", builder.maxConnectionLifeTimeMS >= 0);
@@ -464,6 +522,8 @@ public class ConnectionPoolSettings {
 
         maxSize = builder.maxSize;
         minSize = builder.minSize;
+        incrementSize = builder.incrementSize;
+        incrementType = builder.incrementType;
         maxWaitQueueSize = builder.maxWaitQueueSize;
         maxWaitTimeMS = builder.maxWaitTimeMS;
         maxConnectionLifeTimeMS = builder.maxConnectionLifeTimeMS;

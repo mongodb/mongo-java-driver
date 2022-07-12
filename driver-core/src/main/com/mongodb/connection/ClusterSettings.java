@@ -314,8 +314,8 @@ public final class ClusterSettings {
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
 
             Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
+            Integer incrementPoolSize = connectionString.getIncrementSize();
             int maxSize = maxConnectionPoolSize != null ? maxConnectionPoolSize : 100;
-
             Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
             int waitQueueMultiple = threadsAllowedToBlockForConnectionMultiplier != null
                                     ? threadsAllowedToBlockForConnectionMultiplier : 5;

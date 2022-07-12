@@ -262,6 +262,8 @@ public class ConnectionString {
 
     private Integer minConnectionPoolSize;
     private Integer maxConnectionPoolSize;
+    private String incrementType;
+    private Integer incrementSize;
     private Integer threadsAllowedToBlockForConnectionMultiplier;
     private Integer maxWaitTime;
     private Integer maxConnectionIdleTime;
@@ -386,7 +388,7 @@ public class ConnectionString {
         Map<String, List<String>> txtRecordsOptionsMap = parseOptions(txtRecordsQueryParameters);
         if (!ALLOWED_OPTIONS_IN_TXT_RECORD.containsAll(txtRecordsOptionsMap.keySet())) {
             throw new MongoConfigurationException(format("A TXT record is only permitted to contain the keys %s, but the TXT record for "
-            + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
+                    + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
         }
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
         if (isSrvProtocol && !combinedOptionsMaps.containsKey("ssl")) {
@@ -413,6 +415,9 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
+
+        GENERAL_OPTIONS_KEYS.add("incrementsize");
+        GENERAL_OPTIONS_KEYS.add("incrementtype");
 
         // Order matters here: Having tls after ssl means than the tls option will supersede the ssl option when both are set
         GENERAL_OPTIONS_KEYS.add("ssl");
@@ -501,6 +506,10 @@ public class ConnectionString {
                 maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
             } else if (key.equals("minpoolsize")) {
                 minConnectionPoolSize = parseInteger(value, "minpoolsize");
+            } else if (key.equals("incrementsize")) {
+                incrementSize = parseInteger(value, "incrementsize");
+            } else if (key.equals("incrementtype")) {
+                incrementType = value;
             } else if (key.equals("maxidletimems")) {
                 maxConnectionIdleTime = parseInteger(value, "maxidletimems");
             } else if (key.equals("maxlifetimems")) {
@@ -1150,6 +1159,7 @@ public class ConnectionString {
 
     /**
      * Gets the read preference specified in the connection string.
+     *
      * @return the read preference
      */
     @Nullable
@@ -1210,7 +1220,6 @@ public class ConnectionString {
      *
      * @return the retryWrites value
      * @since 3.11
-     * @mongodb.server.release 3.6
      */
     public Boolean getRetryReads() {
         return retryReads;
@@ -1223,6 +1232,26 @@ public class ConnectionString {
     @Nullable
     public Integer getMinConnectionPoolSize() {
         return minConnectionPoolSize;
+    }
+
+    /**
+     * Gets the increment size for connection pool size specified in the connection string.
+     *
+     * @return the increment size for connection pool
+     */
+    @Nullable
+    public Integer getIncrementSize() {
+        return incrementSize;
+    }
+
+    /**
+     * Gets the increment type for the  connection pool size specified in the connection string.
+     *
+     * @return the increment type for connectin pool
+     */
+    @Nullable
+    public String getIncrementType() {
+        return incrementType;
     }
 
     /**
@@ -1265,6 +1294,7 @@ public class ConnectionString {
 
     /**
      * Gets the maximum connection life time specified in the connection string.
+     *
      * @return the maximum connection life time
      */
     @Nullable
@@ -1491,6 +1521,8 @@ public class ConnectionString {
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
         result = 31 * result + (minConnectionPoolSize != null ? minConnectionPoolSize.hashCode() : 0);
         result = 31 * result + (maxConnectionPoolSize != null ? maxConnectionPoolSize.hashCode() : 0);
+        result = 31 * result + (incrementSize != null ? incrementSize.hashCode() : 1);
+        result = 31 * result + (incrementType != null ? incrementType.hashCode() : 0);
         result = 31 * result + (threadsAllowedToBlockForConnectionMultiplier != null
                                 ? threadsAllowedToBlockForConnectionMultiplier.hashCode()
                                 : 0);

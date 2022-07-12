@@ -16,6 +16,7 @@
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
+apply plugin: 'maven-publish'
 
 buildscript {
     repositories {
@@ -267,3 +268,4 @@ if (!JavaVersion.current().isJava9Compatible()) {
         |""".stripMargin()
     )
 }
+
