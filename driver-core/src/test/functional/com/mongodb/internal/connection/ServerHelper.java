@@ -53,7 +53,7 @@ public final class ServerHelper {
                 sleep(10);
                 if (System.currentTimeMillis() > startTime + ClusterFixture.TIMEOUT * 1000) {
                     throw new MongoTimeoutException("Timed out waiting for pool in use count to drop to 0.  Now at: "
-                            + pool.getInUseCount());
+                                                            + pool.getInUseCount());
                 }
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted", e);

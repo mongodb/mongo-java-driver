@@ -43,8 +43,6 @@ public class ConnectionPoolSettings {
     private final int minSize;
     private final String incrementType;
     private final int incrementSize;
-
-
     private final int maxWaitQueueSize;
     private final long maxWaitTimeMS;
     private final long maxConnectionLifeTimeMS;
@@ -80,9 +78,7 @@ public class ConnectionPoolSettings {
         private List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
         private int maxSize = 100;
         private int minSize;
-
         private int incrementSize = 1;
-
         private String incrementType = "linear";
         private int maxWaitQueueSize = 500;
         private long maxWaitTimeMS = 1000 * 60 * 2;
@@ -333,11 +329,26 @@ public class ConnectionPoolSettings {
         return minSize;
     }
 
-    //    left to write comments
+    /**
+     * <p>Increment size of the connection pool. When needed to generate extra conentions these many connections
+     * will be generated, in case of exponential increment this will be the base of exponentiation</p>
+     *
+     * <p>Default is 1.</p>
+     *
+     * @return the size by which connection pool will be incremented.
+     */
     public int getIncrementSize() {
         return incrementSize;
     }
 
+    /**
+     * <p>Increment type of the connection pool. The order by which connection pool will grow wach time
+     * linear or exponential</p>
+     *
+     * <p>Default is linear.</p>
+     *
+     * @return the type of increment policy.
+     */
     public String getIncrementType() {
         return incrementType;
     }

@@ -18,7 +18,6 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
 
-
 buildscript {
     repositories {
         mavenLocal()
@@ -30,10 +29,8 @@ buildscript {
         classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.5'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
         classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.4'
-        classpath 'com.ea.async:ea-async:1.2.3';
     }
 }
-
 
 //////////////////////////////////////////
 // Common behavior                      //
@@ -271,4 +268,3 @@ if (!JavaVersion.current().isJava9Compatible()) {
         |""".stripMargin()
     )
 }
-

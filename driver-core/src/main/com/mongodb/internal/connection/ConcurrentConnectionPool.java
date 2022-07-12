@@ -20,7 +20,6 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Future;
 import java.util.concurrent.*;
@@ -35,11 +34,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingInternalConnection> {
 
     private final int incrementSize;
-
     private final String incrementType;
-
     private static final Logger LOGGER = Loggers.getLogger("connection");
-
     private final AtomicInteger powerCount = new AtomicInteger(1);
 
     /**
@@ -55,7 +51,6 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
         this.incrementSize = incrementSize;
         this.incrementType = incrementType;
     }
-
 
     private class addConnectionInPool implements Callable<Boolean> {
         private final long timeout;

@@ -222,9 +222,9 @@ public final class ClusterSettings {
          * Sets the local threshold.
          *
          * @param localThreshold the acceptable latency difference, in milliseconds, which must be &gt;= 0
-         * @param timeUnit       the time unit
-         * @return this
+         * @param timeUnit the time unit
          * @throws IllegalArgumentException if {@code localThreshold < 0}
+         * @return this
          * @since 3.7
          */
         public Builder localThreshold(final long localThreshold, final TimeUnit timeUnit) {
@@ -253,7 +253,7 @@ public final class ClusterSettings {
          * indefinitely.</p>
          *
          * @param serverSelectionTimeout the timeout
-         * @param timeUnit               the time unit
+         * @param timeUnit the time unit
          * @return this
          */
         public Builder serverSelectionTimeout(final long serverSelectionTimeout, final TimeUnit timeUnit) {
@@ -300,9 +300,10 @@ public final class ClusterSettings {
             if (connectionString.isSrvProtocol()) {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
-            } else if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
+            }
+            else if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
                 mode(ClusterConnectionMode.SINGLE)
-                        .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
+                .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
             } else {
                 List<ServerAddress> seedList = new ArrayList<ServerAddress>();
                 for (final String cur : connectionString.getHosts()) {
@@ -313,15 +314,13 @@ public final class ClusterSettings {
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
 
             Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
-
             Integer incrementPoolSize = connectionString.getIncrementSize();
-
-
             int maxSize = maxConnectionPoolSize != null ? maxConnectionPoolSize : 100;
+
             int incrementSize = incrementPoolSize != null ? incrementPoolSize : 1;
             Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
             int waitQueueMultiple = threadsAllowedToBlockForConnectionMultiplier != null
-                    ? threadsAllowedToBlockForConnectionMultiplier : 5;
+                                    ? threadsAllowedToBlockForConnectionMultiplier : 5;
             maxWaitQueueSize(waitQueueMultiple * maxSize);
 
             Integer serverSelectionTimeout = connectionString.getServerSelectionTimeout();
@@ -374,7 +373,6 @@ public final class ClusterSettings {
 
     /**
      * Gets the host name from which to lookup SRV record for the seed list
-     *
      * @return the SRV host, or null if none specified
      * @since 3.10
      */
@@ -476,8 +474,8 @@ public final class ClusterSettings {
      *
      * @param timeUnit the time unit
      * @return the local threshold in the given timeunit.
-     * @mongodb.driver.manual reference/program/mongos/#cmdoption--localThreshold Local Threshold
      * @since 3.7
+     * @mongodb.driver.manual reference/program/mongos/#cmdoption--localThreshold Local Threshold
      */
     public long getLocalThreshold(final TimeUnit timeUnit) {
         return timeUnit.convert(localThresholdMS, MILLISECONDS);
@@ -543,7 +541,7 @@ public final class ClusterSettings {
             return false;
         }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
-                : that.requiredReplicaSetName != null) {
+                    : that.requiredReplicaSetName != null) {
             return false;
         }
         if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
@@ -575,18 +573,18 @@ public final class ClusterSettings {
     @Override
     public String toString() {
         return "{"
-                + (hosts.isEmpty() ? "" : "hosts=" + hosts)
-                + (srvHost == null ? "" : ", srvHost=" + srvHost)
-                + ", mode=" + mode
-                + ", requiredClusterType=" + requiredClusterType
-                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
-                + ", serverSelector='" + serverSelector + '\''
-                + ", clusterListeners='" + clusterListeners + '\''
-                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
-                + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
-                + ", maxWaitQueueSize=" + maxWaitQueueSize
-                + ", description='" + description + '\''
-                + '}';
+               + (hosts.isEmpty() ? "" : "hosts=" + hosts)
+               + (srvHost == null ? "" : ", srvHost=" + srvHost)
+               + ", mode=" + mode
+               + ", requiredClusterType=" + requiredClusterType
+               + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
+               + ", serverSelector='" + serverSelector + '\''
+               + ", clusterListeners='" + clusterListeners + '\''
+               + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
+               + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
+               + ", maxWaitQueueSize=" + maxWaitQueueSize
+               + ", description='" + description + '\''
+               + '}';
     }
 
     /**
@@ -598,13 +596,13 @@ public final class ClusterSettings {
         return "{"
                 + (hosts.isEmpty() ? "" : "hosts=" + hosts)
                 + (srvHost == null ? "" : ", srvHost=" + srvHost)
-                + ", mode=" + mode
-                + ", requiredClusterType=" + requiredClusterType
-                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
-                + ", maxWaitQueueSize=" + maxWaitQueueSize
-                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
-                + (description == null ? "" : ", description='" + description + '\'')
-                + '}';
+               + ", mode=" + mode
+               + ", requiredClusterType=" + requiredClusterType
+               + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
+               + ", maxWaitQueueSize=" + maxWaitQueueSize
+               + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
+               + (description == null ? "" : ", description='" + description + '\'')
+               + '}';
     }
 
     private ClusterSettings(final Builder builder) {
@@ -628,7 +626,7 @@ public final class ClusterSettings {
                 builder.requiredClusterType = ClusterType.REPLICA_SET;
             } else if (builder.requiredClusterType != ClusterType.REPLICA_SET) {
                 throw new IllegalArgumentException("When specifying a replica set name, only ClusterType.UNKNOWN and "
-                        + "ClusterType.REPLICA_SET are valid.");
+                                                   + "ClusterType.REPLICA_SET are valid.");
             }
         }
 

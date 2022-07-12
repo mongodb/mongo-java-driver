@@ -262,7 +262,6 @@ public class ConnectionString {
 
     private Integer minConnectionPoolSize;
     private Integer maxConnectionPoolSize;
-
     private String incrementType;
     private Integer incrementSize;
     private Integer threadsAllowedToBlockForConnectionMultiplier;
@@ -285,7 +284,7 @@ public class ConnectionString {
     /**
      * Creates a ConnectionString from the given string.
      *
-     * @param connectionString the connection string
+     * @param connectionString     the connection string
      * @since 3.0
      */
     public ConnectionString(final String connectionString) {
@@ -389,7 +388,7 @@ public class ConnectionString {
         Map<String, List<String>> txtRecordsOptionsMap = parseOptions(txtRecordsQueryParameters);
         if (!ALLOWED_OPTIONS_IN_TXT_RECORD.containsAll(txtRecordsOptionsMap.keySet())) {
             throw new MongoConfigurationException(format("A TXT record is only permitted to contain the keys %s, but the TXT record for "
-                    + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
+            + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
         }
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
         if (isSrvProtocol && !combinedOptionsMaps.containsKey("ssl")) {
@@ -416,7 +415,6 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
-
         GENERAL_OPTIONS_KEYS.add("incrementsize");
         GENERAL_OPTIONS_KEYS.add("incrementtype");
 
@@ -516,7 +514,7 @@ public class ConnectionString {
             } else if (key.equals("maxlifetimems")) {
                 maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
             } else if (key.equals("waitqueuemultiple")) {
-                threadsAllowedToBlockForConnectionMultiplier = parseInteger(value, "waitqueuemultiple");
+                threadsAllowedToBlockForConnectionMultiplier  = parseInteger(value, "waitqueuemultiple");
             } else if (key.equals("waitqueuetimeoutms")) {
                 maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
             } else if (key.equals("connecttimeoutms")) {
@@ -664,7 +662,7 @@ public class ConnectionString {
             if (key.equals("readpreference")) {
                 readPreferenceType = value;
             } else if (key.equals("maxstalenessseconds")) {
-                maxStalenessSeconds = parseInteger(value, "maxstalenessseconds");
+                 maxStalenessSeconds = parseInteger(value, "maxstalenessseconds");
             } else if (key.equals("readpreferencetags")) {
                 for (final String cur : optionsMap.get(key)) {
                     TagSet tagSet = getTags(cur.trim());
@@ -800,7 +798,7 @@ public class ConnectionString {
                 break;
             default:
                 throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
-                                + "'%s' is not a supported authentication mechanism",
+                                                                       + "'%s' is not a supported authentication mechanism",
                         mechanism));
         }
         return credential;
@@ -860,7 +858,7 @@ public class ConnectionString {
         String slaveok = getLastValue(optionsMap, "slaveok");
         if (slaveok != null && !optionsMap.containsKey("readpreference")) {
             String readPreference = Boolean.TRUE.equals(parseBoolean(slaveok, "slaveok"))
-                    ? "secondaryPreferred" : "primary";
+                                    ? "secondaryPreferred" : "primary";
             optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn("Uri option 'slaveok' has been deprecated, use 'readpreference' instead.");
@@ -884,13 +882,13 @@ public class ConnectionString {
             if (tagSetList.isEmpty() && maxStalenessSeconds == -1) {
                 return ReadPreference.valueOf(readPreferenceType);
             } else if (maxStalenessSeconds == -1) {
-                return ReadPreference.valueOf(readPreferenceType, tagSetList);
+               return ReadPreference.valueOf(readPreferenceType, tagSetList);
             } else {
                 return ReadPreference.valueOf(readPreferenceType, tagSetList, maxStalenessSeconds, TimeUnit.SECONDS);
             }
         } else if (!(tagSetList.isEmpty() && maxStalenessSeconds == -1)) {
             throw new IllegalArgumentException("Read preference mode must be specified if "
-                    + "either read preference tags or max staleness is specified");
+                                                       + "either read preference tags or max staleness is specified");
         }
         return null;
     }
@@ -982,7 +980,7 @@ public class ConnectionString {
     }
 
     private List<String> parseHosts(final List<String> rawHosts) {
-        if (rawHosts.size() == 0) {
+        if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
         }
         List<String> hosts = new ArrayList<String>();
@@ -1160,7 +1158,6 @@ public class ConnectionString {
 
     /**
      * Gets the read preference specified in the connection string.
-     *
      * @return the read preference
      */
     @Nullable
@@ -1170,7 +1167,6 @@ public class ConnectionString {
 
     /**
      * Gets the read concern specified in the connection string.
-     *
      * @return the read concern
      */
     @Nullable
@@ -1180,7 +1176,6 @@ public class ConnectionString {
 
     /**
      * Gets the write concern specified in the connection string.
-     *
      * @return the write concern
      */
     @Nullable
@@ -1194,8 +1189,8 @@ public class ConnectionString {
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
      * @return the retryWrites value, or true if unset
-     * @mongodb.server.release 3.6
      * @since 3.6
+     * @mongodb.server.release 3.6
      * @deprecated Prefer {@link #getRetryWritesValue()}
      */
     @Deprecated
@@ -1205,14 +1200,14 @@ public class ConnectionString {
 
     /**
      * <p>Gets whether writes should be retried if they fail due to a network error</p>
-     * <p>
+     *
      * The name of this method differs from others in this class so as not to conflict with the deprecated (and soon to be removed)
      * {@link #getRetryWrites()} method, which returns a primitive {@code boolean} value, which doesn't allow callers to differentiate
      * between a false value and an unset value.
      *
      * @return the retryWrites value, or null if unset
-     * @mongodb.server.release 3.6
      * @since 3.9
+     * @mongodb.server.release 3.6
      */
     public Boolean getRetryWritesValue() {
         return retryWrites;
@@ -1222,8 +1217,8 @@ public class ConnectionString {
      * <p>Gets whether reads should be retried if they fail due to a network error</p>
      *
      * @return the retryWrites value
-     * @mongodb.server.release 3.6
      * @since 3.11
+     * @mongodb.server.release 3.6
      */
     public Boolean getRetryReads() {
         return retryReads;
@@ -1239,11 +1234,21 @@ public class ConnectionString {
         return minConnectionPoolSize;
     }
 
+    /**
+     * Gets the increment size for connection pool size specified in the connection string.
+     *
+     * @return the increment size for connection pool
+     */
     @Nullable
     public Integer getIncrementSize() {
         return incrementSize;
     }
 
+    /**
+     * Gets the increment type for the  connection pool size specified in the connection string.
+     *
+     * @return the increment type for connectin pool
+     */
     @Nullable
     public String getIncrementType() {
         return incrementType;
@@ -1251,7 +1256,6 @@ public class ConnectionString {
 
     /**
      * Gets the maximum connection pool size specified in the connection string.
-     *
      * @return the maximum connection pool size
      */
     @Nullable
@@ -1261,7 +1265,6 @@ public class ConnectionString {
 
     /**
      * Gets the multiplier for the number of threads allowed to block waiting for a connection specified in the connection string.
-     *
      * @return the multiplier for the number of threads allowed to block waiting for a connection
      * @deprecated in the next major release, wait queue size limitations will be removed
      */
@@ -1273,7 +1276,6 @@ public class ConnectionString {
 
     /**
      * Gets the maximum wait time of a thread waiting for a connection specified in the connection string.
-     *
      * @return the maximum wait time of a thread waiting for a connection
      */
     @Nullable
@@ -1283,7 +1285,6 @@ public class ConnectionString {
 
     /**
      * Gets the maximum connection idle time specified in the connection string.
-     *
      * @return the maximum connection idle time
      */
     @Nullable
@@ -1293,7 +1294,6 @@ public class ConnectionString {
 
     /**
      * Gets the maximum connection life time specified in the connection string.
-     *
      * @return the maximum connection life time
      */
     @Nullable
@@ -1303,7 +1303,6 @@ public class ConnectionString {
 
     /**
      * Gets the socket connect timeout specified in the connection string.
-     *
      * @return the socket connect timeout
      */
     @Nullable
@@ -1313,7 +1312,6 @@ public class ConnectionString {
 
     /**
      * Gets the socket timeout specified in the connection string.
-     *
      * @return the socket timeout
      */
     @Nullable
@@ -1323,7 +1321,6 @@ public class ConnectionString {
 
     /**
      * Gets the SSL enabled value specified in the connection string.
-     *
      * @return the SSL enabled value
      */
     @Nullable
@@ -1333,7 +1330,6 @@ public class ConnectionString {
 
     /**
      * Gets the stream type value specified in the connection string.
-     *
      * @return the stream type value
      * @since 3.3
      * @deprecated Use {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} to configure the stream type
@@ -1358,7 +1354,6 @@ public class ConnectionString {
 
     /**
      * Gets the required replica set name specified in the connection string.
-     *
      * @return the required replica set name
      */
     @Nullable
@@ -1367,6 +1362,7 @@ public class ConnectionString {
     }
 
     /**
+     *
      * @return the server selection timeout (in milliseconds), or null if unset
      * @since 3.3
      */
@@ -1376,6 +1372,7 @@ public class ConnectionString {
     }
 
     /**
+     *
      * @return the local threshold (in milliseconds), or null if unset
      * since 3.3
      */
@@ -1385,6 +1382,7 @@ public class ConnectionString {
     }
 
     /**
+     *
      * @return the heartbeat frequency (in milliseconds), or null if unset
      * since 3.3
      */
@@ -1400,8 +1398,8 @@ public class ConnectionString {
      * <p>Default is null.</p>
      *
      * @return the application name, which may be null
-     * @mongodb.server.release 3.4
      * @since 3.4
+     * @mongodb.server.release 3.4
      */
     @Nullable
     public String getApplicationName() {
@@ -1463,29 +1461,29 @@ public class ConnectionString {
             return false;
         }
         if (maxConnectionIdleTime != null ? !maxConnectionIdleTime.equals(that.maxConnectionIdleTime)
-                : that.maxConnectionIdleTime != null) {
+                                          : that.maxConnectionIdleTime != null) {
             return false;
         }
         if (maxConnectionLifeTime != null ? !maxConnectionLifeTime.equals(that.maxConnectionLifeTime)
-                : that.maxConnectionLifeTime != null) {
+                                          : that.maxConnectionLifeTime != null) {
             return false;
         }
         if (maxConnectionPoolSize != null ? !maxConnectionPoolSize.equals(that.maxConnectionPoolSize)
-                : that.maxConnectionPoolSize != null) {
+                                          : that.maxConnectionPoolSize != null) {
             return false;
         }
         if (maxWaitTime != null ? !maxWaitTime.equals(that.maxWaitTime) : that.maxWaitTime != null) {
             return false;
         }
         if (minConnectionPoolSize != null ? !minConnectionPoolSize.equals(that.minConnectionPoolSize)
-                : that.minConnectionPoolSize != null) {
+                                          : that.minConnectionPoolSize != null) {
             return false;
         }
         if (readPreference != null ? !readPreference.equals(that.readPreference) : that.readPreference != null) {
             return false;
         }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
-                : that.requiredReplicaSetName != null) {
+                                           : that.requiredReplicaSetName != null) {
             return false;
         }
         if (socketTimeout != null ? !socketTimeout.equals(that.socketTimeout) : that.socketTimeout != null) {
@@ -1495,8 +1493,8 @@ public class ConnectionString {
             return false;
         }
         if (threadsAllowedToBlockForConnectionMultiplier != null
-                ? !threadsAllowedToBlockForConnectionMultiplier.equals(that.threadsAllowedToBlockForConnectionMultiplier)
-                : that.threadsAllowedToBlockForConnectionMultiplier != null) {
+            ? !threadsAllowedToBlockForConnectionMultiplier.equals(that.threadsAllowedToBlockForConnectionMultiplier)
+            : that.threadsAllowedToBlockForConnectionMultiplier != null) {
             return false;
         }
         if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
@@ -1525,8 +1523,8 @@ public class ConnectionString {
         result = 31 * result + (incrementSize != null ? incrementSize.hashCode() : 1);
         result = 31 * result + (incrementType != null ? incrementType.hashCode() : 0);
         result = 31 * result + (threadsAllowedToBlockForConnectionMultiplier != null
-                ? threadsAllowedToBlockForConnectionMultiplier.hashCode()
-                : 0);
+                                ? threadsAllowedToBlockForConnectionMultiplier.hashCode()
+                                : 0);
         result = 31 * result + (maxWaitTime != null ? maxWaitTime.hashCode() : 0);
         result = 31 * result + (maxConnectionIdleTime != null ? maxConnectionIdleTime.hashCode() : 0);
         result = 31 * result + (maxConnectionLifeTime != null ? maxConnectionLifeTime.hashCode() : 0);
