@@ -26,6 +26,8 @@ import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -42,6 +44,7 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
  */
 @Deprecated
 public final class MongoClients {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
 
     /**
      * Creates a new client with the default connection string "mongodb://localhost".
@@ -61,6 +64,7 @@ public final class MongoClients {
      */
     @Deprecated
     public static MongoClient create(final MongoClientSettings settings) {
+
         return create(settings, null);
     }
 
@@ -90,7 +94,6 @@ public final class MongoClients {
      * @param connectionString the settings
      * @return the client
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
-     *
      * @see ConnectionString#getStreamType()
      * @see com.mongodb.MongoClientSettings.Builder
      * @see com.mongodb.connection.ClusterSettings.Builder#applyConnectionString(ConnectionString)
@@ -168,17 +171,17 @@ public final class MongoClients {
                                       @Nullable final String requestedStreamType) {
         String streamType = getStreamType(requestedStreamType);
         if (settings.getStreamFactoryFactory() == null) {
-           if (isNetty(streamType)) {
-               return NettyMongoClients.create(settings, mongoDriverInformation);
-           } else if (isNio(streamType)) {
-               if (settings.getSslSettings().isEnabled()) {
-                   return createWithTlsChannel(settings, mongoDriverInformation);
-               } else {
-                   return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
-               }
-           } else {
-               throw new IllegalArgumentException("Unsupported stream type: " + streamType);
-           }
+            if (isNetty(streamType)) {
+                return NettyMongoClients.create(settings, mongoDriverInformation);
+            } else if (isNio(streamType)) {
+                if (settings.getSslSettings().isEnabled()) {
+                    return createWithTlsChannel(settings, mongoDriverInformation);
+                } else {
+                    return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
+                }
+            } else {
+                throw new IllegalArgumentException("Unsupported stream type: " + streamType);
+            }
         } else {
             return createMongoClient(settings, mongoDriverInformation, getStreamFactory(settings, false),
                     getStreamFactory(settings, true), null);

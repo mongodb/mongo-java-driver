@@ -16,6 +16,8 @@
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
+apply plugin: 'maven-publish'
+
 
 buildscript {
     repositories {
@@ -28,8 +30,10 @@ buildscript {
         classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.5'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
         classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.4'
+        classpath 'com.ea.async:ea-async:1.2.3';
     }
 }
+
 
 //////////////////////////////////////////
 // Common behavior                      //
@@ -166,7 +170,7 @@ configure(javaCodeCheckedProjects) {
                     'java.security.krb5.kdc': project.getProperty('krb5.kdc'),
                     'java.security.krb5.realm': project.getProperty('krb5.realm'),
                     'java.security.auth.login.config': project.getProperty('auth.login.config'),
-                    )
+            )
         }
 
         useJUnit {
@@ -230,7 +234,7 @@ configure(javaCodeCheckedProjects) {
             def javaExecutablesPath = new File(jdkHome, 'bin')
             def javaExecutables = [:].withDefault { execName ->
                 def executable = new File(javaExecutablesPath, execName)
-                assert executable.exists() : "There is no ${execName} executable in ${javaExecutablesPath}"
+                assert executable.exists(): "There is no ${execName} executable in ${javaExecutablesPath}"
                 executable
             }
             executable = javaExecutables.java
@@ -267,3 +271,4 @@ if (!JavaVersion.current().isJava9Compatible()) {
         |""".stripMargin()
     )
 }
+
