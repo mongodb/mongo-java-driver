@@ -89,7 +89,6 @@ class DefaultServer implements ClusterableServer {
     public Connection getConnection() {
         isTrue("open", !isClosed());
         try {
-//            LOGGER.info("DefaultServer : 92 ");
             return connectionFactory.create(connectionPool.get(), new DefaultServerProtocolExecutor(), clusterConnectionMode);
         } catch (MongoSecurityException e) {
             connectionPool.invalidate();
@@ -115,7 +114,7 @@ class DefaultServer implements ClusterableServer {
                     callback.onResult(null, t);
                 } else {
                     callback.onResult(connectionFactory.createAsync(result, new DefaultServerProtocolExecutor(), clusterConnectionMode),
-                            null);
+                                      null);
                 }
             }
         });

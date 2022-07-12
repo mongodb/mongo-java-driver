@@ -47,7 +47,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void open() {
-        LOGGER.info("UsageTrackingInternalConnection: 50");
         wrapped.open();
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;

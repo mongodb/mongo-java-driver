@@ -32,14 +32,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConcurrentPool<T> implements Pool<T> {
 
-    protected final int maxSize;
+    private final int maxSize;
+    private final ItemFactory<T> itemFactory;
 
-    protected final ItemFactory<T> itemFactory;
-
-    protected final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
-    final Semaphore permits;
-
-    protected volatile boolean closed;
+    private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
+    private final Semaphore permits;
+    private volatile boolean closed;
 
     public enum Prune {
         /**
@@ -55,7 +53,6 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         STOP
     }
-
     /**
      * Factory for creating and closing pooled items.
      *
@@ -153,7 +150,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     public void prune() {
-        for (RemovalReportingIterator<T> iter = available.iterator(); iter.hasNext(); ) {
+        for (RemovalReportingIterator<T> iter = available.iterator(); iter.hasNext();) {
             T cur = iter.next();
             Prune shouldPrune = itemFactory.shouldPrune(cur);
 
@@ -179,9 +176,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
     }
 
-    protected T createNewAndReleasePermitIfFailure(final boolean initialize) {
-
-
+    private T createNewAndReleasePermitIfFailure(final boolean initialize) {
         try {
             T newMember = itemFactory.create(initialize);
             if (newMember == null) {
@@ -246,9 +241,9 @@ public class ConcurrentPool<T> implements Pool<T> {
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("pool: ")
-                .append(" maxSize: ").append(maxSize)
-                .append(" availableCount ").append(getAvailableCount())
-                .append(" inUseCount ").append(getInUseCount());
+           .append(" maxSize: ").append(maxSize)
+           .append(" availableCount ").append(getAvailableCount())
+           .append(" inUseCount ").append(getInUseCount());
         return buf.toString();
     }
 
