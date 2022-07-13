@@ -81,7 +81,7 @@ class DefaultConnectionPool implements ConnectionPool {
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
-        pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
+        pool = new ConcurrentConnectionPool(settings.getMaxSize(), connectionItemFactory, settings.getIncrementSize(), settings.getIncrementType());
         this.connectionPoolListener = getConnectionPoolListener(settings);
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();

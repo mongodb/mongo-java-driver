@@ -73,7 +73,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                 int i = 0;
                 while (i < incrementAmount && getCount() < maxSize) {
 
-                    LOGGER.trace("Incrementing pool size " + (i + 1) + " out of " + incrementAmount);
+                    LOGGER.info("Incrementing pool size " + (i + 1) + " out of " + incrementAmount);
 
                     if (!acquirePermit(timeout, timeUnit)) {
                         throw new InterruptedException();
@@ -86,7 +86,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
 
 
                 if (getCount() < maxSize) {
-                    LOGGER.trace("Increasing PowerCount from " + powerCount.get());
+                    LOGGER.info("Increasing PowerCount from " + powerCount.get());
                     powerCount.incrementAndGet();
                 }
 
