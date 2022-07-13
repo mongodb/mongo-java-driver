@@ -32,7 +32,6 @@ import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForFie
 import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
 import static com.mongodb.JsonTestServerVersionChecker.serverlessMatches;
 import static com.mongodb.JsonTestServerVersionChecker.topologyMatches;
-import static org.junit.Assume.assumeTrue;
 
 final class RunOnRequirementsMatcher {
     public static boolean runOnRequirementsMet(final BsonArray runOnRequirements, final MongoClientSettings clientSettings,

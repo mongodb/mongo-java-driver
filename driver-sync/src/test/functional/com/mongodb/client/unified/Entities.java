@@ -32,7 +32,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
-import com.mongodb.client.internal.ClientEncryptionImpl;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionId;
