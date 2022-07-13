@@ -153,6 +153,7 @@ public class Crypt implements Closeable {
                                             MongoDataKeyOptions.builder()
                                                     .keyAltNames(options.getKeyAltNames())
                                                     .masterKey(options.getMasterKey())
+                                                    .keyMaterial(options.getKeyMaterial())
                                                     .build()));
     }
 
