@@ -56,7 +56,7 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
     }
 
     @Override
-    protected ClientEncryption createClientEncryption(final MongoClient mongoClient, final ClientEncryptionSettings clientEncryptionSettings) {
-        return new SyncClientEncryption(new ClientEncryptionImpl(((SyncMongoClient) mongoClient).getWrapped(), clientEncryptionSettings));
+    protected ClientEncryption createClientEncryption(final MongoClient keyVaultClient, final ClientEncryptionSettings clientEncryptionSettings) {
+        return new SyncClientEncryption(new ClientEncryptionImpl(((SyncMongoClient) keyVaultClient).getWrapped(), clientEncryptionSettings));
     }
 }

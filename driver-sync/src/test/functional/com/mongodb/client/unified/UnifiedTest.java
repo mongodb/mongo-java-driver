@@ -139,7 +139,7 @@ public abstract class UnifiedTest {
 
     protected abstract GridFSBucket createGridFSBucket(MongoDatabase database);
 
-    protected abstract ClientEncryption createClientEncryption(MongoClient mongoClient, ClientEncryptionSettings clientEncryptionSettings);
+    protected abstract ClientEncryption createClientEncryption(MongoClient keyVaultClient, ClientEncryptionSettings clientEncryptionSettings);
 
     @Before
     public void setUp() {

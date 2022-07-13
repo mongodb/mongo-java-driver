@@ -51,7 +51,7 @@ public abstract class UnifiedSyncTest extends UnifiedTest {
     }
 
     @Override
-    protected ClientEncryption createClientEncryption(final MongoClient mongoClient, final ClientEncryptionSettings clientEncryptionSettings) {
-        return new ClientEncryptionImpl(mongoClient, clientEncryptionSettings);
+    protected ClientEncryption createClientEncryption(final MongoClient keyVaultClient, final ClientEncryptionSettings clientEncryptionSettings) {
+        return new ClientEncryptionImpl(keyVaultClient, clientEncryptionSettings);
     }
 }
