@@ -64,25 +64,36 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
             this.timeUnit = timeUnit;
         }
 
+        int getActualIncSize(int incrementSize, String incrementType) {
+            if (incrementType.equals("exponential")) {
+                return (int) Math.pow(2, powerCount.getAndIncrement());
+            } else if (incrementType.equals("linear")) {
+                return incrementSize - 1;
+            } else if(incrementType.equals("1.5x")) {
+                return getCount() / 2;
+            }else if(incrementType.equals("2x")) {
+                return getCount();
+            }else {
+                return 0;
+            }
+        }
         // The call() method is called in order to execute the asynchronous task.
         @Override
         public Boolean call() throws Exception {
             try {
-                LOGGER.info("Acquiring grow permit when powercount = " + powerCount.get());
+                LOGGER.trace("Acquiring grow permit when powercount = " + powerCount.get());
                 if(!growPermits.tryAcquire(timeout, timeUnit)){
                     throw new MongoTimeoutException("Timeout waiting for grow permit");
                 }
-                int incrementAmount = incrementSize - 1;
-                if (incrementType.equals("exponential")) {
-                    LOGGER.info("Executing exponential increment when powercount = " + powerCount.get());
-                    incrementAmount = (int) Math.pow(Math.max(2, incrementSize), powerCount.get()) - 1;
-                }
+                LOGGER.trace("Acquired grow permit");
+                int incrementAmount = getActualIncSize(incrementSize, incrementType);
+
                 try {
                     int i = 0;
-                    LOGGER.info("Incrementing pool by " + incrementAmount + " when current count = " + getCount()+ "where available count = " + getAvailableCount() + " and in use count = " + getInUseCount());
+                    LOGGER.trace("Incrementing pool by " + incrementAmount + " when current count = " + getCount()+ " and where available count = " + getAvailableCount() + " and in use count = " + getInUseCount());
                     while (i < incrementAmount && getCount() < maxSize) {
 
-                        LOGGER.info("Incrementing pool size " + (i + 1) + " out of " + incrementAmount);
+                        LOGGER.trace("Incrementing pool size " + (i + 1) + " out of " + incrementAmount);
 
                         if (!acquirePermit(timeout, timeUnit)) {
                             throw new MongoTimeoutException("Timeout waiting for permit");
@@ -94,21 +105,20 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                         }
                         ++i;
                     }
-
                     if (getCount() < maxSize) {
-                        LOGGER.info("Increasing PowerCount from " + powerCount.get());
+                        LOGGER.trace("Increasing PowerCount from " + powerCount.get());
                         powerCount.incrementAndGet();
                     }
 
                 } catch (MongoTimeoutException e) {
-                    LOGGER.info("Timeout waiting for permit");
+                    LOGGER.trace("Timeout waiting for permit");
                 }
                 finally {
-                    LOGGER.info("Releasing grow permit");
+                    LOGGER.trace("Releasing grow permit");
                     growPermits.release();
                 }
             } catch (final MongoTimeoutException e) {
-                LOGGER.info("Failure to acquire grow permits");
+                LOGGER.trace("Failure to acquire grow permits");
                 Thread.currentThread().interrupt();
                 return false;
 
