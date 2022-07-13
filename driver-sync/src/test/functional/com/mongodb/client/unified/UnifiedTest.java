@@ -236,7 +236,8 @@ public abstract class UnifiedTest {
         context.push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
-                assertNotNull(context.getMessage("The operation expects a result but there was no result"), result.getResult());
+                assertNull(context.getMessage("The operation expects a result but an exception occurred"),
+                        result.getException());
                 valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
             } else if (operation.containsKey("expectError")) {
                 assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
