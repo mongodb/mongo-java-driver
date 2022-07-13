@@ -17,7 +17,7 @@
 package org.mongodb.scala
 
 import scala.collection.JavaConverters._
-import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
+import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowOutputField }
 import org.mongodb.scala.bson.conversions.Bson
 
 // scalastyle:off number.of.methods number.of.types
@@ -868,7 +868,7 @@ package object model {
    * Units for specifying time-based values.
    *
    * @see [[Windows]]
-   * @see [[WindowedComputations]]
+   * @see [[WindowOutputFields]]
    * @see `org.mongodb.scala.model.densify.DensifyRange`
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
@@ -907,10 +907,10 @@ package object model {
    * The core part of the `Aggregates.setWindowFields` pipeline stage of an aggregation pipeline.
    * A triple of a window function, a [[Window window]] and a path to a field to be computed by the window function over the window.
    *
-   * @see [[WindowedComputations]]
+   * @see [[WindowOutputFields]]
    * @since 4.3
    */
-  type WindowedComputation = com.mongodb.client.model.WindowedComputation
+  type WindowOutputField = com.mongodb.client.model.WindowOutputField
 }
 
 // scalastyle:on number.of.methods number.of.types

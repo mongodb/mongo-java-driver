@@ -39,23 +39,23 @@ package object fill {
    * @see `Aggregates.fill`
    */
   @Evolving
-  type FillComputation = com.mongodb.client.model.fill.FillComputation
+  type FillOutputField = com.mongodb.client.model.fill.FillOutputField
 
   /**
-   * @see `FillComputation.value`
+   * @see `FillOutputField.value`
    */
   @Evolving
-  type ValueFillComputation = com.mongodb.client.model.fill.ValueFillComputation
+  type ValueFillOutputField = com.mongodb.client.model.fill.ValueFillOutputField
 
   /**
-   * @see `FillComputation.locf`
+   * @see `FillOutputField.locf`
    */
   @Evolving
-  type LocfFillComputation = com.mongodb.client.model.fill.LocfFillComputation
+  type LocfFillOutputField = com.mongodb.client.model.fill.LocfFillOutputField
 
   /**
-   * @see `FillComputation.linear`
+   * @see `FillOutputField.linear`
    */
   @Evolving
-  type LinearFillComputation = com.mongodb.client.model.fill.LinearFillComputation
+  type LinearFillOutputField = com.mongodb.client.model.fill.LinearFillOutputField
 }

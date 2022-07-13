@@ -30,7 +30,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * Builders for {@linkplain Window windows} used when expressing {@linkplain WindowedComputation windowed computations}.
+ * Builders for {@linkplain Window windows} used when expressing {@linkplain WindowOutputField windowed computations}.
  * There are two types of windows: {@linkplain #documents(int, int) documents} and {@linkplain #range(long, long) range}.
  * <p>
  * Bounded and half-bounded windows require sorting.
@@ -74,7 +74,7 @@ import static org.bson.assertions.Assertions.notNull;
  *     </li>
  * </ul>
  *
- * @see WindowedComputation
+ * @see WindowOutputField
  * @mongodb.driver.manual reference/operator/aggregation/isNumber/ $isNumber aggregation pipeline stage
  * @mongodb.driver.manual reference/bson-types/#date BSON Date type
  * @mongodb.driver.manual reference/operator/aggregation/dateAdd/ $dateAdd aggregation pipeline stage
