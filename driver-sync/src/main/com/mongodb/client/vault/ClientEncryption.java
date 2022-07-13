@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 
 import java.io.Closeable;
 
@@ -148,7 +149,7 @@ public interface ClientEncryption extends Closeable {
      * @return the result
      * @since 4.7
      */
-    RewrapManyDataKeyResult rewrapManyDataKey(BsonDocument filter);
+    RewrapManyDataKeyResult rewrapManyDataKey(Bson filter);
 
     /**
      * Decrypts multiple data keys and (re-)encrypts them with a new masterKey, or with their current masterKey if a new one is not given.
@@ -158,7 +159,7 @@ public interface ClientEncryption extends Closeable {
      * @return the result
      * @since 4.7
      */
-    RewrapManyDataKeyResult rewrapManyDataKey(BsonDocument filter, RewrapManyDataKeyOptions options);
+    RewrapManyDataKeyResult rewrapManyDataKey(Bson filter, RewrapManyDataKeyOptions options);
 
     @Override
     void close();

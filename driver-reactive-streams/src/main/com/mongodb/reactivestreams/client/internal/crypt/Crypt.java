@@ -242,7 +242,7 @@ public class Crypt implements Closeable {
         try {
             MongoCryptContext cryptContext = cryptContextSupplier.get();
             return Mono.<RawBsonDocument>create(sink -> executeStateMachineWithSink(cryptContext, databaseName, sink))
-                    .doOnError(this::wrapInClientException)
+                    .doOnError(MongoCryptException.class, this::wrapInClientException)
                     .doFinally(s -> cryptContext.close());
         } catch (MongoCryptException e) {
             return Mono.error(wrapInClientException(e));

@@ -20,7 +20,6 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
@@ -60,7 +59,7 @@ final class ErrorMatcher {
                             + " or IllegalStateException or MongoSocketException or MongoInternalException"),
                     expectedError.getBoolean("isClientError").getValue(),
                     e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
-                            || e instanceof MongoSocketException || e instanceof MongoInternalException);
+                            || e instanceof MongoSocketException);
         }
         if (expectedError.containsKey("errorContains")) {
             String errorContains = expectedError.getString("errorContains").getValue();

@@ -38,6 +38,7 @@ import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 
 import java.io.Closeable;
 import java.util.List;
@@ -139,13 +140,13 @@ public class ClientEncryptionImpl implements ClientEncryption, Closeable {
     }
 
     @Override
-    public RewrapManyDataKeyResult rewrapManyDataKey(final BsonDocument filter) {
+    public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter) {
         return rewrapManyDataKey(filter, new RewrapManyDataKeyOptions());
     }
 
     @Override
-    public RewrapManyDataKeyResult rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
-        BsonDocument results = crypt.rewrapManyDataKey(filter, options);
+    public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
+        BsonDocument results = crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options);
         if (results.isEmpty()) {
             return new RewrapManyDataKeyResult();
         }

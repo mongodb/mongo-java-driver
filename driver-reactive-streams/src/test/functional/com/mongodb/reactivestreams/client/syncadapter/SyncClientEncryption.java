@@ -26,6 +26,7 @@ import com.mongodb.client.vault.ClientEncryption;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
@@ -90,12 +91,12 @@ public class SyncClientEncryption implements ClientEncryption {
     }
 
     @Override
-    public RewrapManyDataKeyResult rewrapManyDataKey(final BsonDocument filter) {
+    public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter) {
         return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter)).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public RewrapManyDataKeyResult rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
+    public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
         return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter, options)).block(TIMEOUT_DURATION));
     }
 

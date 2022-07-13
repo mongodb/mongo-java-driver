@@ -26,6 +26,7 @@ import com.mongodb.reactivestreams.client.FindPublisher;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
 import java.io.Closeable;
@@ -145,7 +146,7 @@ public interface ClientEncryption extends Closeable {
      * @return a Publisher containing the result
      * @since 4.7
      */
-    Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(BsonDocument filter);
+    Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(Bson filter);
 
     /**
      * Decrypts multiple data keys and (re-)encrypts them with a new masterKey, or with their current masterKey if a new one is not given.
@@ -155,7 +156,7 @@ public interface ClientEncryption extends Closeable {
      * @return a Publisher containing the result
      * @since 4.7
      */
-    Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(BsonDocument filter, RewrapManyDataKeyOptions options);
+    Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(Bson filter, RewrapManyDataKeyOptions options);
 
     @Override
     void close();
