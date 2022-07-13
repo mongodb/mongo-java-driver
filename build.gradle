@@ -48,7 +48,7 @@ ext {
     nettyTcnativeBoringsslVersion = '2.0.48.Final'
     snappyVersion = '1.1.8.4'
     zstdVersion = '1.5.0-4'
-    mongoCryptVersion = '1.5.0-rc2'
+    mongoCryptVersion = '1.5.1.1'
     projectReactorVersion = 'Californium-SR23'
     junitBomVersion = '5.8.1'
     gitVersion = getGitVersion()

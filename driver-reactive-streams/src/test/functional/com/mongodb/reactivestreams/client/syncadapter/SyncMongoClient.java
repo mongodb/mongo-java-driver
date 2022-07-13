@@ -110,6 +110,10 @@ public class SyncMongoClient implements MongoClient {
         this.wrapped = wrapped;
     }
 
+    public com.mongodb.reactivestreams.client.MongoClient getWrapped() {
+        return wrapped;
+    }
+
     @Override
     public MongoDatabase getDatabase(final String databaseName) {
         return new SyncMongoDatabase(wrapped.getDatabase(databaseName));

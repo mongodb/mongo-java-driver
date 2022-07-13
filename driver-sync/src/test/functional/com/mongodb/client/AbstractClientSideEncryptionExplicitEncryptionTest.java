@@ -119,25 +119,26 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @AfterEach
+    @SuppressWarnings("try")
     public void cleanUp() {
-        if (clientEncryption != null) {
-            clientEncryption.close();
-        }
-        if (encryptedClient != null) {
-            encryptedClient.close();
+        //noinspection EmptyTryBlock
+        try (ClientEncryption ignored = this.clientEncryption;
+             MongoClient ignored1 = this.encryptedClient
+        ) {
+            // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }
     }
 
     @Test
     public void canInsertEncryptedIndexedAndFind() {
-        EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id);
+        EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(0L);
         BsonBinary insertPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
                 .getCollection("explicit_encryption", BsonDocument.class);
         coll.insertOne(new BsonDocument("encryptedIndexed", insertPayload));
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality");
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality").contentionFactor(0L);
         BsonBinary findPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         BsonDocument actual = coll.find(new BsonDocument("encryptedIndexed", findPayload)).first();
@@ -156,7 +157,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
             coll.insertOne(new BsonDocument("encryptedIndexed", insertPayload));
         }
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality");
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality").contentionFactor(0L);
         BsonBinary findPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         List<BsonDocument> values = coll.find(new BsonDocument("encryptedIndexed", findPayload)).into(new ArrayList<>());
@@ -193,7 +194,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
 
     @Test
     public void canRoundtripEncryptedIndexed() {
-        EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id);
+        EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(0L);
 
         BsonBinary payload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
         BsonValue decrypted = clientEncryption.decrypt(payload);

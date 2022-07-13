@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
@@ -24,12 +25,14 @@ import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
@@ -69,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,6 +82,7 @@ import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
 import static com.mongodb.client.unified.EventMatcher.getReasonString;
+import static com.mongodb.client.unified.UnifiedClientEncryptionHelper.createKmsProvidersMap;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
@@ -99,6 +104,7 @@ public final class Entities {
     private final Map<String, ClientSession> sessions = new HashMap<>();
     private final Map<String, BsonDocument> sessionIdentifiers = new HashMap<>();
     private final Map<String, GridFSBucket> buckets = new HashMap<>();
+    private final Map<String, ClientEncryption> clientEncryptions = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
@@ -188,6 +194,10 @@ public final class Entities {
         return getEntity(id, clients, "client");
     }
 
+    public ClientEncryption getClientEncryption(final String id) {
+        return getEntity(id, clientEncryptions, "clientEncryption");
+    }
+
     public boolean hasDatabase(final String id) {
         return databases.containsKey(id);
     }
@@ -239,9 +249,11 @@ public final class Entities {
         entities.put(id, entity);
     }
 
-    public void init(final BsonArray entitiesArray, final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+    public void init(final BsonArray entitiesArray,
                      final boolean waitForPoolAsyncWorkManagerStart,
-                     final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
+                     final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                     final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
+                     final BiFunction<MongoClient, ClientEncryptionSettings, ClientEncryption> clientEncryptionSupplier) {
         for (BsonValue cur : entitiesArray.getValues()) {
             String entityType = cur.asDocument().getFirstKey();
             BsonDocument entity = cur.asDocument().getDocument(entityType);
@@ -266,8 +278,12 @@ public final class Entities {
                     initBucket(entity, id, gridFSBucketSupplier);
                     break;
                 }
+                case "clientEncryption": {
+                    initClientEncryption(entity, id, clientEncryptionSupplier);
+                    break;
+                }
                 default:
-                    throw new UnsupportedOperationException("Unsupported entity type: " + entity.getFirstKey());
+                    throw new UnsupportedOperationException("Unsupported entity type: " + entityType);
             }
         }
     }
@@ -478,6 +494,38 @@ public final class Entities {
             throw new UnsupportedOperationException("Unsupported session specification: bucketOptions");
         }
         putEntity(id, gridFSBucketSupplier.apply(database), buckets);
+    }
+
+    private void initClientEncryption(final BsonDocument entity, final String id,
+            final BiFunction<MongoClient, ClientEncryptionSettings, ClientEncryption> clientEncryptionSupplier) {
+        if (!entity.containsKey("clientEncryptionOpts")) {
+            throw new UnsupportedOperationException("Unsupported client encryption specification missing: clientEncryptionOpts");
+        }
+        BsonDocument clientEncryptionOpts = entity.getDocument("clientEncryptionOpts");
+        if (!clientEncryptionOpts.containsKey("keyVaultClient")) {
+            throw new UnsupportedOperationException("Unsupported client encryption specification missing: "
+                    + "clientEncryptionOpts.keyVaultClient");
+        }
+
+        MongoClient mongoClient = null;
+        ClientEncryptionSettings.Builder builder = ClientEncryptionSettings.builder();
+        for (Map.Entry<String, BsonValue> entry : clientEncryptionOpts.entrySet()) {
+            switch (entry.getKey()) {
+                case "keyVaultClient":
+                    mongoClient = clients.get(entry.getValue().asString().getValue());
+                    break;
+                case "keyVaultNamespace":
+                    builder.keyVaultNamespace(entry.getValue().asString().getValue());
+                    break;
+                case "kmsProviders":
+                    builder.kmsProviders(createKmsProvidersMap(entry.getValue().asDocument()));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported client encryption option: " + entry.getKey());
+            }
+        }
+
+        putEntity(id, clientEncryptionSupplier.apply(Assertions.notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
     }
 
     private TransactionOptions getTransactionOptions(final BsonDocument options) {

@@ -182,7 +182,7 @@ Then for each element in ``tests``:
 
       {"create": <collection>, "validator": {"$jsonSchema": <json_schema>}}
 
-   If ``encrypted_fields`` is defined in the test, the required collections and index described in `FLE 2 Create and Drop Collection Helpers <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#fle-2-create-and-drop-collection-helpers>`_  must be created:
+   If ``encrypted_fields`` is defined in the test, the required collections and index described in `Create and Drop Collection Helpers <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#queryable-encryption-create-and-drop-collection-helpers>`_  must be created:
 
    - Use the ``dropCollection`` helper with ``encrypted_fields`` as an option and writeConcern "majority".
    - Use the ``createCollection`` helper with ``encrypted_fields`` as an option.
@@ -1656,6 +1656,7 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
+      contentionFactor: 0
    }
 
 Store the result in ``insertPayload``.
@@ -1669,7 +1670,8 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
-      queryType: Equality
+      queryType: "equality",
+      contentionFactor: 0
    }
 
 Store the result in ``findPayload``.
@@ -1704,7 +1706,8 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
-      queryType: Equality
+      queryType: "equality",
+      contentionFactor: 0
    }
 
 Store the result in ``findPayload``.
@@ -1720,7 +1723,7 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
-      queryType: Equality,
+      queryType: "equality",
       contentionFactor: 10
    }
 
@@ -1760,6 +1763,7 @@ Use ``clientEncryption`` to encrypt the value "encrypted indexed value" with the
    class EncryptOpts {
       keyId : <key1ID>
       algorithm: "Indexed",
+      contentionFactor: 0
    }
 
 Store the result in ``payload``.
@@ -1784,6 +1788,8 @@ Use ``clientEncryption`` to decrypt ``payload``. Assert the returned value equal
 
 13. Unique Index on keyAltNames
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following setup must occur before running each of the following test cases.
 
 Setup
 `````
@@ -1817,8 +1823,8 @@ The command should be equivalent to:
 
 5. Using ``client_encryption``, create a data key with a ``local`` KMS provider and the keyAltName "def".
 
-Case 1: createKey()
-```````````````````
+Case 1: createDataKey()
+```````````````````````
 
 1. Use ``client_encryption`` to create a new local data key with a keyAltName "abc" and assert the operation does not fail.
 
@@ -1833,8 +1839,129 @@ Case 2: addKeyAltName()
 
 2. Use ``client_encryption`` to add a keyAltName "abc" to the key created in Step 1 and assert the operation does not fail.
 
-3. Repeat Step 2 and assert the operation does not fail.
+3. Repeat Step 2, assert the operation does not fail, and assert the returned key document contains the keyAltName "abc" added in Step 2.
 
 4. Use ``client_encryption`` to add a keyAltName "def" to the key created in Step 1 and assert the operation fails due to a duplicate key server error (error code 11000).
 
-5. Use ``client_encryption`` to add a keyAltName "def" to the existing key and assert the operation does not fail.
+5. Use ``client_encryption`` to add a keyAltName "def" to the existing key, assert the operation does not fail, and assert the returned key document contains the keyAltName "def" added during Setup.
+
+14. Decryption Events
+~~~~~~~~~~~~~~~~~~~~~
+
+Before running each of the following test cases, perform the following Test Setup.
+
+Test Setup
+``````````
+
+Create a MongoClient named ``setupClient``.
+
+Drop and create the collection ``db.decryption_events``.
+
+Create a ClientEncryption object named ``clientEncryption`` with these options:
+
+.. code:: typescript
+
+   ClientEncryptionOpts {
+      keyVaultClient: <setupClient>,
+      keyVaultNamespace: "keyvault.datakeys",
+      kmsProviders: { "local": { "key": <base64 decoding of LOCAL_MASTERKEY> } }
+   }
+
+Create a data key with the "local" KMS provider. Storing the result in a variable named ``keyID``.
+
+Use ``clientEncryption`` to encrypt the string "hello" with the following ``EncryptOpts``:
+
+.. code:: typescript
+
+   EncryptOpts {
+      keyId: <keyID>,
+      algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+   }
+
+Store the result in a variable named ``ciphertext``.
+
+Copy ``ciphertext`` into a variable named ``malformedCiphertext``. Change the
+last byte to a different value. This will produce an invalid HMAC tag.
+
+Create a MongoClient named ``encryptedClient`` with these ``AutoEncryptionOpts``:
+
+.. code:: typescript
+
+   AutoEncryptionOpts {
+      keyVaultNamespace: "keyvault.datakeys";
+      kmsProviders: { "local": { "key": <base64 decoding of LOCAL_MASTERKEY> } }
+   }
+
+Configure ``encryptedClient`` with "retryReads=false".
+Register a listener for CommandSucceeded events on ``encryptedClient``.
+The listener must store the most recent ``CommandSucceededEvent`` reply for the "aggregate" command.
+The listener must store the most recent ``CommandFailedEvent`` error for the "aggregate" command.
+
+Case 1: Command Error
+`````````````````````
+
+Use ``setupClient`` to configure the following failpoint:
+
+.. code:: typescript
+
+   {
+       "configureFailPoint": "failCommand",
+       "mode": {
+           "times": 1
+       },
+       "data": {
+           "errorCode": 123,
+           "failCommands": [
+               "aggregate"
+           ]
+       }
+   }
+
+Use ``encryptedClient`` to run an aggregate on ``db.decryption_events``.
+
+Expect an exception to be thrown from the command error. Expect a ``CommandFailedEvent``.
+
+Case 2: Network Error
+`````````````````````
+
+Use ``setupClient`` to configure the following failpoint:
+
+.. code:: typescript
+
+   {
+       "configureFailPoint": "failCommand",
+       "mode": {
+           "times": 1
+       },
+       "data": {
+           "errorCode": 123,
+           "closeConnection": true,
+           "failCommands": [
+               "aggregate"
+           ]
+       }
+   }
+
+Use ``encryptedClient`` to run an aggregate on ``db.decryption_events``.
+
+Expect an exception to be thrown from the network error. Expect a ``CommandFailedEvent``.
+
+Case 3: Decrypt Error
+`````````````````````
+
+Use ``encryptedClient`` to insert the document ``{ "encrypted": <malformedCiphertext> }`` into ``db.decryption_events``.
+
+Use ``encryptedClient`` to run an aggregate on ``db.decryption_events`` with an empty pipeline.
+
+Expect an exception to be thrown from the decryption error.
+Expect a ``CommandSucceededEvent``. Expect the ``CommandSucceededEvent.reply`` to contain BSON binary for the field ``cursor.firstBatch.encrypted``.
+
+Case 4: Decrypt Success
+```````````````````````
+
+Use ``encryptedClient`` to insert the document ``{ "encrypted": <ciphertext> }`` into ``db.decryption_events``.
+
+Use ``encryptedClient`` to run an aggregate on ``db.decryption_events`` with an empty pipeline.
+
+Expect no exception.
+Expect a ``CommandSucceededEvent``. Expect the ``CommandSucceededEvent.reply`` to contain BSON binary for the field ``cursor.firstBatch.encrypted``.
