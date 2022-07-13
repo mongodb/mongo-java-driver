@@ -37,6 +37,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
     private final String incrementType;
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private final AtomicInteger powerCount = new AtomicInteger(1);
+    final Semaphore growPermits;
 
     /**
      * Initializes a new pool of objects.
@@ -50,6 +51,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
         super(maxSize, itemFactory);
         this.incrementSize = incrementSize;
         this.incrementType = incrementType;
+        this.growPermits = new Semaphore(1);
     }
 
     private class addConnectionInPool implements Callable<Boolean> {
@@ -65,34 +67,54 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
         // The call() method is called in order to execute the asynchronous task.
         @Override
         public Boolean call() throws Exception {
-            int incrementAmount = incrementSize - 1;
-            if (incrementType.equals("exponential")) {
-                incrementAmount = (int) Math.pow(Math.max(2, incrementSize), powerCount.get()) - 1;
-            }
             try {
-                int i = 0;
-                while (i < incrementAmount && getCount() < maxSize) {
+                LOGGER.info("Acquiring grow permit when powercount = " + powerCount.get());
+                if(!growPermits.tryAcquire(timeout, timeUnit)){
+                    throw new MongoTimeoutException("Timeout waiting for grow permit");
+                }
+                int incrementAmount = incrementSize - 1;
+                if (incrementType.equals("exponential")) {
+                    LOGGER.info("Executing exponential increment when powercount = " + powerCount.get());
+                    incrementAmount = (int) Math.pow(Math.max(2, incrementSize), powerCount.get()) - 1;
+                }
+                try {
+                    int i = 0;
+                    LOGGER.info("Incrementing pool by " + incrementAmount + " when current count = " + getCount()+ "where available count = " + getAvailableCount() + " and in use count = " + getInUseCount());
+                    while (i < incrementAmount && getCount() < maxSize) {
 
-                    LOGGER.info("Incrementing pool size " + (i + 1) + " out of " + incrementAmount);
+                        LOGGER.info("Incrementing pool size " + (i + 1) + " out of " + incrementAmount);
 
-                    if (!acquirePermit(timeout, timeUnit)) {
-                        throw new InterruptedException();
-                    } else {
-                        UsageTrackingInternalConnection t2 = createNewAndReleasePermitIfFailure(false);
-                        available.addLast(t2);
+                        if (!acquirePermit(timeout, timeUnit)) {
+                            throw new MongoTimeoutException("Timeout waiting for permit");
+                        } else {
+                            UsageTrackingInternalConnection t2 = itemFactory.create(true);
+                            available.addLast(t2);
+                            permits.release();
+
+                        }
+                        ++i;
                     }
-                    ++i;
+
+                    if (getCount() < maxSize) {
+                        LOGGER.info("Increasing PowerCount from " + powerCount.get());
+                        powerCount.incrementAndGet();
+                    }
+
+                } catch (MongoTimeoutException e) {
+                    LOGGER.info("Timeout waiting for permit");
                 }
-
-
-                if (getCount() < maxSize) {
-                    LOGGER.info("Increasing PowerCount from " + powerCount.get());
-                    powerCount.incrementAndGet();
+                finally {
+                    LOGGER.info("Releasing grow permit");
+                    growPermits.release();
                 }
-
-            } catch (InterruptedException e) {
+            } catch (final MongoTimeoutException e) {
+                LOGGER.info("Failure to acquire grow permits");
                 Thread.currentThread().interrupt();
+                return false;
+
             }
+
+            Thread.currentThread().interrupt();
             return true;
         }
     }
