@@ -149,6 +149,17 @@ public final class SubscriberHelpers {
             return await(timeout, unit).getReceived();
         }
 
+
+        /**
+         * Get the first received element.
+         *
+         * @return the first received element
+         */
+        public T first() {
+            List<T> received = await().getReceived();
+            return received.size() > 0 ? received.get(0) : null;
+        }
+
         /**
          * Await completion or error
          *

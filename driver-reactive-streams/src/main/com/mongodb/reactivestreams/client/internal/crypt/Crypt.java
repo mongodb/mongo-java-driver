@@ -21,12 +21,14 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCrypt;
 import com.mongodb.crypt.capi.MongoCryptContext;
 import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.crypt.capi.MongoDataKeyOptions;
 import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.crypt.capi.MongoRewrapManyDataKeyOptions;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.capi.MongoCryptHelper;
@@ -45,9 +47,9 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
-import static java.lang.String.format;
 
 public class Crypt implements Closeable {
+    private static final RawBsonDocument EMPTY_RAW_BSON_DOCUMENT = RawBsonDocument.parse("{}");
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final MongoCrypt mongoCrypt;
     private final Map<String, Map<String, Object>> kmsProviders;
@@ -134,7 +136,7 @@ public class Crypt implements Closeable {
      */
     public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse) {
         notNull("commandResponse", commandResponse);
-        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse));
+        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse)).onErrorMap(this::wrapInClientException);
     }
 
     /**
@@ -151,6 +153,7 @@ public class Crypt implements Closeable {
                                             MongoDataKeyOptions.builder()
                                                     .keyAltNames(options.getKeyAltNames())
                                                     .masterKey(options.getMasterKey())
+                                                    .keyMaterial(options.getKeyMaterial())
                                                     .build()));
     }
 
@@ -199,6 +202,24 @@ public class Crypt implements Closeable {
                 .map(result -> result.get("v"));
     }
 
+    /**
+     * Rewrap data key
+     * @param filter the filter
+     * @param options the rewrap many data key options
+     * @return the decrypted value
+     */
+    public Mono<RawBsonDocument> rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
+        return executeStateMachine(() ->
+                mongoCrypt.createRewrapManyDatakeyContext(filter,
+                        MongoRewrapManyDataKeyOptions
+                                .builder()
+                                .provider(options.getProvider())
+                                .masterKey(options.getMasterKey())
+                                .build())
+        );
+    }
+
+
     @Override
     @SuppressWarnings("try")
     public void close() {
@@ -221,9 +242,8 @@ public class Crypt implements Closeable {
         try {
             MongoCryptContext cryptContext = cryptContextSupplier.get();
             return Mono.<RawBsonDocument>create(sink -> executeStateMachineWithSink(cryptContext, databaseName, sink))
-                    .doFinally(s -> cryptContext.close())
-                    .doOnError(t -> LOGGER.error(format("Crypt error: %s", t.getMessage())))
-                    .doOnError(MongoCryptException.class, this::wrapInClientException);
+                    .doOnError(MongoCryptException.class, this::wrapInClientException)
+                    .doFinally(s -> cryptContext.close());
         } catch (MongoCryptException e) {
             return Mono.error(wrapInClientException(e));
         }
@@ -251,6 +271,9 @@ public class Crypt implements Closeable {
                 break;
             case READY:
                 sink.success(cryptContext.finish());
+                break;
+            case DONE:
+                sink.success(EMPTY_RAW_BSON_DOCUMENT);
                 break;
             default:
                 sink.error(new MongoInternalException("Unsupported encryptor state + " + state));

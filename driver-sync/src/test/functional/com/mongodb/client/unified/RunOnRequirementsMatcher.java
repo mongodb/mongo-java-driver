@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.ClusterFixture.getServerParameters;
+import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
 import static com.mongodb.JsonTestServerVersionChecker.getMinServerVersion;
 import static com.mongodb.JsonTestServerVersionChecker.serverlessMatches;
@@ -79,6 +81,12 @@ final class RunOnRequirementsMatcher {
                                 requirementMet = false;
                                 break requirementLoop;
                             }
+                        }
+                        break;
+                    case "csfle":
+                        if (!hasEncryptionTestsEnabled() || !serverVersionAtLeast(4, 2)) {
+                            requirementMet = false;
+                            break requirementLoop;
                         }
                         break;
                     default:

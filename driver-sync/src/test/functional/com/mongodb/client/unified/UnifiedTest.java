@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -25,6 +26,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
@@ -86,6 +88,7 @@ public abstract class UnifiedTest {
     private final Entities entities = new Entities();
     private final UnifiedCrudHelper crudHelper;
     private final UnifiedGridFSHelper gridFSHelper = new UnifiedGridFSHelper(entities);
+    private final UnifiedClientEncryptionHelper clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
     private final ValueMatcher valueMatcher = new ValueMatcher(entities, context);
     private final ErrorMatcher errorMatcher = new ErrorMatcher(context);
     private final EventMatcher eventMatcher = new EventMatcher(valueMatcher, context);
@@ -136,6 +139,8 @@ public abstract class UnifiedTest {
 
     protected abstract GridFSBucket createGridFSBucket(MongoDatabase database);
 
+    protected abstract ClientEncryption createClientEncryption(MongoClient keyVaultClient, ClientEncryptionSettings clientEncryptionSettings);
+
     @Before
     public void setUp() {
         assertTrue(String.format("Unsupported schema version %s", schemaVersion),
@@ -146,7 +151,8 @@ public abstract class UnifiedTest {
                 || schemaVersion.startsWith("1.4")
                 || schemaVersion.startsWith("1.5")
                 || schemaVersion.startsWith("1.6")
-                || schemaVersion.startsWith("1.7"));
+                || schemaVersion.startsWith("1.7")
+                || schemaVersion.startsWith("1.8"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
@@ -159,9 +165,11 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
-        entities.init(entitiesArray, this::createMongoClient,
+        entities.init(entitiesArray,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
-                this::createGridFSBucket);
+                this::createMongoClient,
+                this::createGridFSBucket,
+                this::createClientEncryption);
         addInitialData();
     }
 
@@ -228,7 +236,8 @@ public abstract class UnifiedTest {
         context.push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
-                assertNotNull(context.getMessage("The operation expects a result but an exception occurred"), result.getResult());
+                assertNull(context.getMessage("The operation expects a result but an exception occurred"),
+                        result.getException());
                 valueMatcher.assertValuesMatch(operation.get("expectResult"), result.getResult());
             } else if (operation.containsKey("expectError")) {
                 assertNotNull(context.getMessage("The operation expects an error but no exception was thrown"), result.getException());
@@ -351,6 +360,22 @@ public abstract class UnifiedTest {
                     return crudHelper.executeRunCommand(operation);
                 case "loop":
                     return loop(operation);
+                case "createDataKey":
+                    return clientEncryptionHelper.executeCreateDataKey(operation);
+                case "addKeyAltName":
+                    return clientEncryptionHelper.executeAddKeyAltName(operation);
+                case "deleteKey":
+                    return clientEncryptionHelper.executeDeleteKey(operation);
+                case "removeKeyAltName":
+                    return clientEncryptionHelper.executeRemoveKeyAltName(operation);
+                case "getKey":
+                    return clientEncryptionHelper.executeGetKey(operation);
+                case "getKeys":
+                    return clientEncryptionHelper.executeGetKeys(operation);
+                case "getKeyByAltName":
+                    return clientEncryptionHelper.executeGetKeyByAltName(operation);
+                case "rewrapManyDataKey":
+                    return clientEncryptionHelper.executeRewrapManyDataKey(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }

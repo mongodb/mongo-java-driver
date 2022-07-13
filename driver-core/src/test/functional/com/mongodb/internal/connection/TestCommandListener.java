@@ -133,6 +133,16 @@ public class TestCommandListener implements CommandListener {
         throw new IllegalArgumentException(commandName + " not found in command succeeded event list");
     }
 
+    public CommandFailedEvent getCommandFailedEvent(final String commandName) {
+        return getEvents()
+                .stream()
+                .filter(e -> e instanceof CommandFailedEvent)
+                .filter(e -> e.getCommandName().equals(commandName))
+                .map(e -> (CommandFailedEvent) e)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(commandName + " not found in command failed event list"));
+    }
+
     public List<CommandEvent> getCommandStartedEvents() {
         return getCommandStartedEvents(Integer.MAX_VALUE);
     }
