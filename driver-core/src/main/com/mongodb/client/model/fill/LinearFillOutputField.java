@@ -18,10 +18,10 @@ package com.mongodb.client.model.fill;
 import com.mongodb.annotations.Evolving;
 
 /**
- * @see FillComputation#value(String, Object)
+ * @see FillOutputField#linear(String)
  * @mongodb.server.release 5.3
  * @since 4.7
  */
 @Evolving
-public interface ValueFillComputation extends FillComputation {
+public interface LinearFillOutputField extends FillOutputField {
 }

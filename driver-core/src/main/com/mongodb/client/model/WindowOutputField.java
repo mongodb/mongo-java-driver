@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.model.fill;
+package com.mongodb.client.model;
 
-import com.mongodb.annotations.Evolving;
+import org.bson.conversions.Bson;
 
 /**
- * @see FillComputation#locf(String)
- * @mongodb.server.release 5.3
- * @since 4.7
+ * The core part of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) $setWindowFields} pipeline stage of an aggregation pipeline.
+ * A triple of a window function, a {@linkplain Window window} and a path to a field to be computed by the window function over the window.
+ *
+ * @see WindowOutputFields
+ * @since 4.3
  */
-@Evolving
-public interface LocfFillComputation extends FillComputation {
+public interface WindowOutputField {
+    /**
+     * Render into {@link BsonField}.
+     *
+     * @return A {@link BsonField} representation.
+     */
+    BsonField toBsonField();
 }

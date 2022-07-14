@@ -16,12 +16,13 @@
 
 package org.mongodb.scala.model
 
+import com.mongodb.client.model.fill.FillOutputField
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.densify.{ DensifyOptions, DensifyRange }
-import org.mongodb.scala.model.fill.{ FillComputation, FillOptions }
+import org.mongodb.scala.model.fill.FillOptions
 import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions }
 
 /**
@@ -468,8 +469,8 @@ object Aggregates {
    *                    Sorting is required by certain functions and may be required by some windows (see [[Windows]] for more details).
    *                    Sorting is used only for the purpose of computing window functions and does not guarantee ordering
    *                    of the output documents.
-   * @param output      A [[WindowedComputation windowed computation]].
-   * @param moreOutput  More [[WindowedComputation windowed computations]].
+   * @param output      A [[WindowOutputField window output field]].
+   * @param moreOutput  More [[WindowOutputField window output fields]].
    * @tparam TExpression The `partitionBy` expression type.
    * @return The `\$setWindowFields` pipeline stage.
    * @see [[https://dochub.mongodb.org/core/window-functions-set-window-fields \$setWindowFields]]
@@ -479,8 +480,8 @@ object Aggregates {
   def setWindowFields[TExpression >: Null](
       partitionBy: Option[TExpression],
       sortBy: Option[Bson],
-      output: WindowedComputation,
-      moreOutput: WindowedComputation*
+      output: WindowOutputField,
+      moreOutput: WindowOutputField*
   ): Bson =
     JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output, moreOutput: _*)
 
@@ -497,7 +498,7 @@ object Aggregates {
    *                    Sorting is required by certain functions and may be required by some windows (see [[Windows]] for more details).
    *                    Sorting is used only for the purpose of computing window functions and does not guarantee ordering
    *                    of the output documents.
-   * @param output      A nonempty list of [[WindowedComputation windowed computations]].
+   * @param output      A nonempty list of [[WindowOutputField window output fields]].
    *                    Specifying an empty list is not an error, but the resulting stage does not do anything useful.
    * @tparam TExpression The `partitionBy` expression type.
    * @return The `\$setWindowFields` pipeline stage.
@@ -508,7 +509,7 @@ object Aggregates {
   def setWindowFields[TExpression >: Null](
       partitionBy: Option[TExpression],
       sortBy: Option[Bson],
-      output: Iterable[_ <: WindowedComputation]
+      output: Iterable[_ <: WindowOutputField]
   ): Bson =
     JAggregates.setWindowFields(partitionBy.orNull, sortBy.orNull, output.asJava)
 
@@ -548,27 +549,27 @@ object Aggregates {
    * Creates a `\$fill` pipeline stage, which assigns values to fields when they are BSON `Null` or missing.
    *
    * @param options The fill options.
-   * @param output The `FillComputation`.
-   * @param moreOutput More `FillComputation`s.
+   * @param output The `FillOutputField`.
+   * @param moreOutput More `FillOutputField`s.
    * @return The requested pipeline stage.
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/fill/ \$fill]]
    * @note Requires MongoDB 5.3 or greater.
    * @since 4.7
    */
-  def fill(options: FillOptions, output: FillComputation, moreOutput: FillComputation*): Bson =
+  def fill(options: FillOptions, output: FillOutputField, moreOutput: FillOutputField*): Bson =
     JAggregates.fill(options, output, moreOutput: _*)
 
   /**
    * Creates a `\$fill` pipeline stage, which assigns values to fields when they are BSON `Null` or missing.
    *
    * @param options The fill options.
-   * @param output The non-empty `FillComputation`s.
+   * @param output The non-empty `FillOutputField`s.
    * @return The requested pipeline stage.
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/fill/ \$fill]]
    * @note Requires MongoDB 5.3 or greater.
    * @since 4.7
    */
-  def fill(options: FillOptions, output: Iterable[_ <: FillComputation]): Bson =
+  def fill(options: FillOptions, output: Iterable[_ <: FillOutputField]): Bson =
     JAggregates.fill(options, output.asJava)
 
   /**

@@ -17,7 +17,7 @@ package com.mongodb.client.model.fill;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.WindowedComputations;
+import com.mongodb.client.model.WindowOutputFields;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -28,69 +28,69 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A pair of an expression/method and a path to a field to be filled with evaluation results of the expression/method.
  *
  * @see Aggregates#fill(FillOptions, Iterable)
- * @see Aggregates#fill(FillOptions, FillComputation, FillComputation...)
+ * @see Aggregates#fill(FillOptions, FillOutputField, FillOutputField...)
  * @mongodb.server.release 5.3
  * @since 4.7
  */
 @Evolving
-public interface FillComputation extends Bson {
+public interface FillOutputField extends Bson {
     /**
-     * Returns a {@link FillComputation} that uses the specified {@code expression}.
+     * Returns a {@link FillOutputField} that uses the specified {@code expression}.
      *
      * @param field The field to fill.
      * @param expression The expression.
      * @param <TExpression> The {@code expression} type.
-     * @return The requested {@link FillComputation}.
+     * @return The requested {@link FillOutputField}.
      * @mongodb.driver.manual core/document/#dot-notation Dot notation
      */
-    static <TExpression> ValueFillComputation value(final String field, TExpression expression) {
+    static <TExpression> ValueFillOutputField value(final String field, TExpression expression) {
         return new FillConstructibleBsonElement(notNull("field", field),
                 new Document("value", (notNull("expression", expression))));
     }
 
     /**
-     * Returns a {@link FillComputation} that uses the {@link WindowedComputations#locf(String, Object) locf} method.
+     * Returns a {@link FillOutputField} that uses the {@link WindowOutputFields#locf(String, Object) locf} method.
      *
      * @param field The field to fill.
-     * @return The requested {@link FillComputation}.
+     * @return The requested {@link FillOutputField}.
      * @mongodb.driver.manual core/document/#dot-notation Dot notation
      */
-    static LocfFillComputation locf(final String field) {
+    static LocfFillOutputField locf(final String field) {
         return new FillConstructibleBsonElement(notNull("field", field),
                 new Document("method", "locf"));
     }
 
     /**
-     * Returns a {@link FillComputation} that uses the {@link WindowedComputations#linearFill(String, Object) linear} method.
+     * Returns a {@link FillOutputField} that uses the {@link WindowOutputFields#linearFill(String, Object) linear} method.
      * <p>
      * {@linkplain FillOptions#sortBy(Bson) Sorting} is required.</p>
      *
      * @param field The field to fill.
-     * @return The requested {@link FillComputation}.
+     * @return The requested {@link FillOutputField}.
      * @mongodb.driver.manual core/document/#dot-notation Dot notation
      */
-    static LinearFillComputation linear(final String field) {
+    static LinearFillOutputField linear(final String field) {
         return new FillConstructibleBsonElement(notNull("field", field),
                 new Document("method", "linear"));
     }
 
     /**
-     * Creates a {@link FillComputation} from a {@link Bson} in situations when there is no builder method
+     * Creates a {@link FillOutputField} from a {@link Bson} in situations when there is no builder method
      * that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
      * <i>Example</i><br>
-     * The following code creates two functionally equivalent {@link FillComputation}s,
+     * The following code creates two functionally equivalent {@link FillOutputField}s,
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
-     *  FillComputation field1 = FillComputation.locf("fieldName");
-     *  FillComputation field2 = FillComputation.of(new Document("fieldName", new Document("method", "locf")));
+     *  FillOutputField field1 = FillOutputField.locf("fieldName");
+     *  FillOutputField field2 = FillOutputField.of(new Document("fieldName", new Document("method", "locf")));
      * }</pre>
      *
-     * @param fill A {@link Bson} representing the required {@link FillComputation}.
-     * @return The requested {@link FillComputation}.
+     * @param fill A {@link Bson} representing the required {@link FillOutputField}.
+     * @return The requested {@link FillOutputField}.
      */
-    static FillComputation of(final Bson fill) {
+    static FillOutputField of(final Bson fill) {
         return new FillConstructibleBsonElement(notNull("fill", fill));
     }
 }

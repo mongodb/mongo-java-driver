@@ -19,7 +19,7 @@ import com.mongodb.internal.client.model.AbstractConstructibleBsonElement;
 import org.bson.conversions.Bson;
 
 final class FillConstructibleBsonElement extends AbstractConstructibleBsonElement<FillConstructibleBsonElement> implements
-        ValueFillComputation, LocfFillComputation, LinearFillComputation {
+        ValueFillOutputField, LocfFillOutputField, LinearFillOutputField {
     FillConstructibleBsonElement(final String name, final Bson value) {
         super(name, value);
     }

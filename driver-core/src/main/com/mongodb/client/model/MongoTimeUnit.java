@@ -22,7 +22,7 @@ import com.mongodb.client.model.densify.DensifyRange;
  * Units for specifying time-based values.
  *
  * @see Windows
- * @see WindowedComputations
+ * @see WindowOutputFields
  * @see DensifyRange
  * @mongodb.server.release 5.0
  * @since 4.3

@@ -36,7 +36,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * Builders for {@linkplain WindowedComputation windowed computations} used in the
+ * Builders for {@linkplain WindowOutputField window output fields} used in the
  * {@link Aggregates#setWindowFields(Object, Bson, Iterable) $setWindowFields} pipeline stage
  * of an aggregation pipeline. Each windowed computation is a triple:
  * <ul>
@@ -49,79 +49,80 @@ import static org.bson.assertions.Assertions.notNull;
  *     require an explicit unbounded window instead of {@code null}.</li>
  *     <li>A path to an output field to be computed by the window function over the window.</li>
  * </ul>
- * A windowed computation is similar to an {@linkplain Accumulators accumulator} but does not result in folding documents constituting
+ * A window output field is similar to an {@linkplain Accumulators accumulator} but does not result in folding documents constituting
  * the window into a single document.
  *
  * @mongodb.driver.manual meta/aggregation-quick-reference/#field-paths Field paths
  * @since 4.3
  * @mongodb.server.release 5.0
  */
-public final class WindowedComputations {
+public final class WindowOutputFields {
     /**
-     * Creates a windowed computation from a document field in situations when there is no builder method that better satisfies your needs.
+     * Creates a windowed output field from a document field in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the document field syntax.
      * <p>
      * <i>Example</i><br>
-     * The following code creates two functionally equivalent windowed computations,
+     * The following code creates two functionally equivalent window output fields,
      * though they may not be {@linkplain #equals(Object) equal}.
      * <pre>{@code
      *  Window pastWeek = Windows.timeRange(-1, MongoTimeUnit.WEEK, Windows.Bound.CURRENT);
-     *  WindowedComputation pastWeekExpenses1 = WindowedComputations.sum("pastWeekExpenses", "$expenses", pastWeek);
-     *  WindowedComputation pastWeekExpenses2 = WindowedComputations.of(
+     *  WindowOutputField pastWeekExpenses1 = WindowOutputFields.sum("pastWeekExpenses", "$expenses", pastWeek);
+     *  WindowOutputField pastWeekExpenses2 = WindowOutputFields.of(
      *          new BsonField("pastWeekExpenses", new Document("$sum", "$expenses")
      *                  .append("window", pastWeek.toBsonDocument())));
      * }</pre>
      *
-     * @param windowedComputation A document field representing the required windowed computation.
-     * @return The constructed windowed computation.
+     * @param windowOutputField A document field representing the required windowed output field.
+     * @return The constructed windowed output field.
      */
-    public static WindowedComputation of(final BsonField windowedComputation) {
-        return new BsonFieldWindowedComputation(notNull("windowedComputation", windowedComputation));
+    public static WindowOutputField of(final BsonField windowOutputField) {
+        return new BsonFieldWindowOutputField(notNull("windowOutputField", windowOutputField));
     }
 
     /**
-     * Builds a computation of the sum of the evaluation results of the {@code expression} over the {@code window}.
+     * Builds a window output field of the sum of the evaluation results of the {@code expression} over the {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-sum $sum
      */
-    public static <TExpression> WindowedComputation sum(final String path, final TExpression expression, @Nullable final Window window) {
+    public static <TExpression> WindowOutputField sum(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$sum", expression, window);
     }
 
     /**
-     * Builds a computation of the average of the evaluation results of the {@code expression} over the {@code window}.
+     * Builds a window output field of the average of the evaluation results of the {@code expression} over the {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-avg $avg
      */
-    public static <TExpression> WindowedComputation avg(final String path, final TExpression expression, @Nullable final Window window) {
+    public static <TExpression> WindowOutputField avg(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$avg", expression, window);
     }
 
     /**
-     * Builds a computation of the sample standard deviation of the evaluation results of the {@code expression} over the {@code window}.
+     * Builds a window output field of the sample standard deviation of the evaluation results of the {@code expression} over the
+     * {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-std-dev-samp $stdDevSamp
      */
-    public static <TExpression> WindowedComputation stdDevSamp(final String path, final TExpression expression,
+    public static <TExpression> WindowOutputField stdDevSamp(final String path, final TExpression expression,
                                                                @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
@@ -129,17 +130,17 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the population standard deviation of the evaluation results of the {@code expression}
+     * Builds a window output field of the population standard deviation of the evaluation results of the {@code expression}
      * over the {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-std-dev-pop $stdDevPop
      */
-    public static <TExpression> WindowedComputation stdDevPop(final String path, final TExpression expression,
+    public static <TExpression> WindowOutputField stdDevPop(final String path, final TExpression expression,
                                                               @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
@@ -147,23 +148,23 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the smallest of the evaluation results of the {@code expression} over the {@code window}.
+     * Builds a window output field of the smallest of the evaluation results of the {@code expression} over the {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/min/ $min
      */
-    public static <TExpression> WindowedComputation min(final String path, final TExpression expression, @Nullable final Window window) {
+    public static <TExpression> WindowOutputField min(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$min", expression, window);
     }
 
     /**
-     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * Builds a window output field of a BSON {@link org.bson.BsonType#ARRAY Array}
      * of {@code N} smallest evaluation results of the {@code inExpression} over the {@code window},
      * where {@code N} is the positive integral value of the {@code nExpression}.
      *
@@ -173,12 +174,12 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <InExpression> The type of the input expression.
      * @param <NExpression> The type of the limiting expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/minN/ $minN
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <InExpression, NExpression> WindowedComputation minN(
+    public static <InExpression, NExpression> WindowOutputField minN(
             final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("inExpression", inExpression);
@@ -190,23 +191,23 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the largest of the evaluation results of the {@code expression} over the {@code window}.
+     * Builds a window output field of the largest of the evaluation results of the {@code expression} over the {@code window}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/max/ $max
      */
-    public static <TExpression> WindowedComputation max(final String path, final TExpression expression, @Nullable final Window window) {
+    public static <TExpression> WindowOutputField max(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$max", expression, window);
     }
 
     /**
-     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * Builds a window output field of a BSON {@link org.bson.BsonType#ARRAY Array}
      * of {@code N} largest evaluation results of the {@code inExpression} over the {@code window},
      * where {@code N} is the positive integral value of the {@code nExpression}.
      *
@@ -216,12 +217,12 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <InExpression> The type of the input expression.
      * @param <NExpression> The type of the limiting expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/maxN/ $maxN
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <InExpression, NExpression> WindowedComputation maxN(
+    public static <InExpression, NExpression> WindowOutputField maxN(
             final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("inExpression", inExpression);
@@ -233,20 +234,20 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the number of documents in the {@code window}.
+     * Builds a window output field of the number of documents in the {@code window}.
      *
      * @param path The output field path.
      * @param window The window.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-count $count
      */
-    public static WindowedComputation count(final String path, @Nullable final Window window) {
+    public static WindowOutputField count(final String path, @Nullable final Window window) {
         notNull("path", path);
         return simpleParameterWindowFunction(path, "$count", null, window);
     }
 
     /**
-     * Builds a computation of the time derivative by subtracting the evaluation result of the {@code expression} against the last document
+     * Builds a window output field of the time derivative by subtracting the evaluation result of the {@code expression} against the last document
      * and the first document in the {@code window} and dividing it by the difference in the values of the
      * {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field of the respective documents.
      * Other documents in the {@code window} have no effect on the computation.
@@ -257,10 +258,10 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-derivative $derivative
      */
-    public static <TExpression> WindowedComputation derivative(final String path, final TExpression expression,
+    public static <TExpression> WindowOutputField derivative(final String path, final TExpression expression,
                                                                final Window window) {
         notNull("path", path);
         notNull("expression", expression);
@@ -271,8 +272,8 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the time derivative by subtracting the evaluation result of the {@code expression} against the last document
-     * and the first document in the {@code window} and dividing it by the difference in the BSON {@link BsonType#DATE_TIME Date}
+     * Builds a window output field of the time derivative by subtracting the evaluation result of the {@code expression} against the last
+     * document and the first document in the {@code window} and dividing it by the difference in the BSON {@link BsonType#DATE_TIME Date}
      * values of the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field of the respective documents.
      * Other documents in the {@code window} have no effect on the computation.
      * <p>
@@ -285,10 +286,10 @@ public final class WindowedComputations {
      * {@link MongoTimeUnit#WEEK}, {@link MongoTimeUnit#DAY}, {@link MongoTimeUnit#HOUR}, {@link MongoTimeUnit#MINUTE},
      * {@link MongoTimeUnit#SECOND}, {@link MongoTimeUnit#MILLISECOND}.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-derivative $derivative
      */
-    public static <TExpression> WindowedComputation timeDerivative(final String path, final TExpression expression, final Window window,
+    public static <TExpression> WindowOutputField timeDerivative(final String path, final TExpression expression, final Window window,
                                                                    final MongoTimeUnit unit) {
         notNull("path", path);
         notNull("expression", expression);
@@ -302,7 +303,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the approximate integral of a function that maps values of
+     * Builds a window output field of the approximate integral of a function that maps values of
      * the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field to evaluation results of the {@code expression}
      * against the same document. The limits of integration match the {@code window} bounds.
      * The approximation is done by using the
@@ -315,10 +316,10 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-integral $integral
      */
-    public static <TExpression> WindowedComputation integral(final String path, final TExpression expression, final Window window) {
+    public static <TExpression> WindowOutputField integral(final String path, final TExpression expression, final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         notNull("window", window);
@@ -328,7 +329,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the approximate integral of a function that maps BSON {@link BsonType#DATE_TIME Date} values of
+     * Builds a window output field of the approximate integral of a function that maps BSON {@link BsonType#DATE_TIME Date} values of
      * the {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} field to evaluation results of the {@code expression}
      * against the same document. The limits of integration match the {@code window} bounds.
      * The approximation is done by using the trapezoidal rule.
@@ -342,10 +343,10 @@ public final class WindowedComputations {
      * {@link MongoTimeUnit#WEEK}, {@link MongoTimeUnit#DAY}, {@link MongoTimeUnit#HOUR}, {@link MongoTimeUnit#MINUTE},
      * {@link MongoTimeUnit#SECOND}, {@link MongoTimeUnit#MILLISECOND}.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-integral $integral
      */
-    public static <TExpression> WindowedComputation timeIntegral(final String path, final TExpression expression, final Window window,
+    public static <TExpression> WindowOutputField timeIntegral(final String path, final TExpression expression, final Window window,
                                                                  final MongoTimeUnit unit) {
         notNull("path", path);
         notNull("expression", expression);
@@ -359,7 +360,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the sample covariance between the evaluation results of the two expressions over the {@code window}.
+     * Builds a window output field of the sample covariance between the evaluation results of the two expressions over the {@code window}.
      *
      *
      * @param path The output field path.
@@ -367,10 +368,10 @@ public final class WindowedComputations {
      * @param expression2 The second expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-covariance-samp $covarianceSamp
      */
-    public static <TExpression> WindowedComputation covarianceSamp(final String path, final TExpression expression1,
+    public static <TExpression> WindowOutputField covarianceSamp(final String path, final TExpression expression1,
                                                                    final TExpression expression2, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression1", expression1);
@@ -382,17 +383,17 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the population covariance between the evaluation results of the two expressions over the {@code window}.
+     * Builds a window output field of the population covariance between the evaluation results of the two expressions over the {@code window}.
      *
      * @param path The output field path.
      * @param expression1 The first expression.
      * @param expression2 The second expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-covariance-pop $covariancePop
      */
-    public static <TExpression> WindowedComputation covariancePop(final String path, final TExpression expression1,
+    public static <TExpression> WindowOutputField covariancePop(final String path, final TExpression expression1,
                                                                    final TExpression expression2, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression1", expression1);
@@ -404,7 +405,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the exponential moving average of the evaluation results of the {@code expression} over a window
+     * Builds a window output field of the exponential moving average of the evaluation results of the {@code expression} over a window
      * that includes {@code n} - 1 documents preceding the current document and the current document, with more weight on documents
      * closer to the current one.
      * <p>
@@ -414,10 +415,10 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param n Must be positive.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-exp-moving-avg $expMovingAvg
      */
-    public static <TExpression> WindowedComputation expMovingAvg(final String path, final TExpression expression, final int n) {
+    public static <TExpression> WindowOutputField expMovingAvg(final String path, final TExpression expression, final int n) {
         notNull("path", path);
         notNull("expression", expression);
         isTrueArgument("n > 0", n > 0);
@@ -428,7 +429,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the exponential moving average of the evaluation results of the {@code expression} over the half-bounded
+     * Builds a window output field of the exponential moving average of the evaluation results of the {@code expression} over the half-bounded
      * window [{@link Bound#UNBOUNDED}, {@link Bound#CURRENT}], with {@code alpha} representing the degree of weighting decrease.
      * <p>
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
@@ -438,10 +439,10 @@ public final class WindowedComputations {
      * @param alpha A parameter specifying how fast weighting decrease happens. A higher {@code alpha} discounts older observations faster.
      *              Must belong to the interval (0, 1).
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-exp-moving-avg $expMovingAvg
      */
-    public static <TExpression> WindowedComputation expMovingAvg(final String path, final TExpression expression, final double alpha) {
+    public static <TExpression> WindowOutputField expMovingAvg(final String path, final TExpression expression, final double alpha) {
         notNull("path", path);
         notNull("expression", expression);
         isTrueArgument("alpha > 0", alpha > 0);
@@ -453,7 +454,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation that adds the evaluation results of the {@code expression} over the {@code window}
+     * Builds a window output field that adds the evaluation results of the {@code expression} over the {@code window}
      * to a BSON {@link org.bson.BsonType#ARRAY Array}.
      * Order within the array is guaranteed if {@link Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} is specified.
      *
@@ -461,17 +462,17 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-push $push
      */
-    public static <TExpression> WindowedComputation push(final String path, final TExpression expression, @Nullable final Window window) {
+    public static <TExpression> WindowOutputField push(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$push", expression, window);
     }
 
     /**
-     * Builds a computation that adds the evaluation results of the {@code expression} over the {@code window}
+     * Builds a window output field that adds the evaluation results of the {@code expression} over the {@code window}
      * to a BSON {@link org.bson.BsonType#ARRAY Array} and excludes duplicates.
      * Order within the array is not specified.
      *
@@ -479,10 +480,10 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-add-to-set $addToSet
      */
-    public static <TExpression> WindowedComputation addToSet(final String path, final TExpression expression,
+    public static <TExpression> WindowOutputField addToSet(final String path, final TExpression expression,
                                                              @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
@@ -490,7 +491,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the evaluation result of the {@code expression} against the first document in the {@code window}.
+     * Builds a window output field of the evaluation result of the {@code expression} against the first document in the {@code window}.
      * <p>
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
@@ -498,17 +499,17 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/first/ $first
      */
-    public static <TExpression> WindowedComputation first(final String path, final TExpression expression, @Nullable final Window window) {
+    public static <TExpression> WindowOutputField first(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$first", expression, window);
     }
 
     /**
-     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * Builds a window output field of a BSON {@link org.bson.BsonType#ARRAY Array}
      * of evaluation results of the {@code inExpression} against the first {@code N} documents in the {@code window},
      * where {@code N} is the positive integral value of the {@code nExpression}.
      * <p>
@@ -520,12 +521,12 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <InExpression> The type of the input expression.
      * @param <NExpression> The type of the limiting expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/firstN/ $firstN
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <InExpression, NExpression> WindowedComputation firstN(
+    public static <InExpression, NExpression> WindowOutputField firstN(
             final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("inExpression", inExpression);
@@ -537,7 +538,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the evaluation result of the {@code outExpression} against the top document in the {@code window}
+     * Builds a window output field of the evaluation result of the {@code outExpression} against the top document in the {@code window}
      * sorted according to the provided {@code sortBy} specification.
      *
      * @param path The output field path.
@@ -545,12 +546,12 @@ public final class WindowedComputations {
      * @param outExpression The input expression.
      * @param window The window.
      * @param <OutExpression> The type of the output expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/top/ $top
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <OutExpression> WindowedComputation top(
+    public static <OutExpression> WindowOutputField top(
             final String path, final Bson sortBy, final OutExpression outExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("sortBy", sortBy);
@@ -562,7 +563,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * Builds a window output field of a BSON {@link org.bson.BsonType#ARRAY Array}
      * of evaluation results of the {@code outExpression} against the top {@code N} documents in the {@code window}
      * sorted according to the provided {@code sortBy} specification,
      * where {@code N} is the positive integral value of the {@code nExpression}.
@@ -574,12 +575,12 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <OutExpression> The type of the output expression.
      * @param <NExpression> The type of the limiting expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/topN/ $topN
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <OutExpression, NExpression> WindowedComputation topN(
+    public static <OutExpression, NExpression> WindowOutputField topN(
             final String path, final Bson sortBy, final OutExpression outExpression, final NExpression nExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("sortBy", sortBy);
@@ -593,7 +594,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the evaluation result of the {@code expression} against the last document in the {@code window}.
+     * Builds a window output field of the evaluation result of the {@code expression} against the last document in the {@code window}.
      * <p>
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
@@ -601,17 +602,17 @@ public final class WindowedComputations {
      * @param expression The expression.
      * @param window The window.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/last/ $last
      */
-    public static <TExpression> WindowedComputation last(final String path, final TExpression expression, @Nullable final Window window) {
+    public static <TExpression> WindowOutputField last(final String path, final TExpression expression, @Nullable final Window window) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$last", expression, window);
     }
 
     /**
-     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * Builds a window output field of a BSON {@link org.bson.BsonType#ARRAY Array}
      * of evaluation results of the {@code inExpression} against the last {@code N} documents in the {@code window},
      * where {@code N} is the positive integral value of the {@code nExpression}.
      * <p>
@@ -623,12 +624,12 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <InExpression> The type of the input expression.
      * @param <NExpression> The type of the limiting expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/lastN/ $lastN
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <InExpression, NExpression> WindowedComputation lastN(
+    public static <InExpression, NExpression> WindowOutputField lastN(
             final String path, final InExpression inExpression, final NExpression nExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("inExpression", inExpression);
@@ -640,7 +641,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the evaluation result of the {@code outExpression} against the bottom document in the {@code window}
+     * Builds a window output field of the evaluation result of the {@code outExpression} against the bottom document in the {@code window}
      * sorted according to the provided {@code sortBy} specification.
      *
      * @param path The output field path.
@@ -648,12 +649,12 @@ public final class WindowedComputations {
      * @param outExpression The input expression.
      * @param window The window.
      * @param <OutExpression> The type of the output expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/bottom/ $bottom
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <OutExpression> WindowedComputation bottom(
+    public static <OutExpression> WindowOutputField bottom(
             final String path, final Bson sortBy, final OutExpression outExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("sortBy", sortBy);
@@ -665,7 +666,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of a BSON {@link org.bson.BsonType#ARRAY Array}
+     * Builds a window output field of a BSON {@link org.bson.BsonType#ARRAY Array}
      * of evaluation results of the {@code outExpression} against the bottom {@code N} documents in the {@code window}
      * sorted according to the provided {@code sortBy} specification,
      * where {@code N} is the positive integral value of the {@code nExpression}.
@@ -677,12 +678,12 @@ public final class WindowedComputations {
      * @param window The window.
      * @param <OutExpression> The type of the output expression.
      * @param <NExpression> The type of the limiting expression.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/bottomN/ $bottomN
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <OutExpression, NExpression> WindowedComputation bottomN(
+    public static <OutExpression, NExpression> WindowOutputField bottomN(
             final String path, final Bson sortBy, final OutExpression outExpression, final NExpression nExpression, @Nullable final Window window) {
         notNull("path", path);
         notNull("sortBy", sortBy);
@@ -696,7 +697,7 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the evaluation result of the {@code expression} for the document whose position is shifted by the given
+     * Builds a window output field of the evaluation result of the {@code expression} for the document whose position is shifted by the given
      * amount relative to the current document. If the shifted document is outside of the
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition} containing the current document,
      * then the {@code defaultExpression} is used instead of the {@code expression}.
@@ -715,10 +716,10 @@ public final class WindowedComputations {
      *              <li>a positive value refers to the document following the current one.</li>
      *           </ul>
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-shift $shift
      */
-    public static <TExpression> WindowedComputation shift(final String path, final TExpression expression,
+    public static <TExpression> WindowOutputField shift(final String path, final TExpression expression,
                                                           @Nullable final TExpression defaultExpression, final int by) {
         notNull("path", path);
         notNull("expression", expression);
@@ -732,22 +733,22 @@ public final class WindowedComputations {
     }
 
     /**
-     * Builds a computation of the order number of each document in its
+     * Builds a window output field of the order number of each document in its
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition}.
      * <p>
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-document-number $documentNumber
      */
-    public static WindowedComputation documentNumber(final String path) {
+    public static WindowOutputField documentNumber(final String path) {
         notNull("path", path);
         return simpleParameterWindowFunction(path, "$documentNumber", null, null);
     }
 
     /**
-     * Builds a computation of the rank of each document in its
+     * Builds a window output field of the rank of each document in its
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition}.
      * Documents with the same value(s) of the {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} fields result in
      * the same ranking and result in gaps in the returned ranks.
@@ -757,16 +758,16 @@ public final class WindowedComputations {
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-rank $rank
      */
-    public static WindowedComputation rank(final String path) {
+    public static WindowOutputField rank(final String path) {
         notNull("path", path);
         return simpleParameterWindowFunction(path, "$rank", null, null);
     }
 
     /**
-     * Builds a computation of the dense rank of each document in its
+     * Builds a window output field of the dense rank of each document in its
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) partition}.
      * Documents with the same value(s) of the {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) sortBy} fields result in
      * the same ranking but do not result in gaps in the returned ranks.
@@ -776,33 +777,33 @@ public final class WindowedComputations {
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
      *
      * @param path The output field path.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.dochub core/window-functions-dense-rank $denseRank
      */
-    public static WindowedComputation denseRank(final String path) {
+    public static WindowOutputField denseRank(final String path) {
         notNull("path", path);
         return simpleParameterWindowFunction(path, "$denseRank", null, null);
     }
 
     /**
-     * Builds a computation of the last observed non-{@link BsonType#NULL Null} evaluation result of the {@code expression}.
+     * Builds a window output field of the last observed non-{@link BsonType#NULL Null} evaluation result of the {@code expression}.
      *
      * @param path The output field path.
      * @param expression The expression.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/locf/ $locf
      * @since 4.7
      * @mongodb.server.release 5.2
      */
-    public static <TExpression> WindowedComputation locf(final String path, final TExpression expression) {
+    public static <TExpression> WindowOutputField locf(final String path, final TExpression expression) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$locf", expression, null);
     }
 
     /**
-     * Builds a computation of a value that is equal to the evaluation result of the {@code expression} when it is non-{@link BsonType#NULL Null},
+     * Builds a window output field of a value that is equal to the evaluation result of the {@code expression} when it is non-{@link BsonType#NULL Null},
      * or to the linear interpolation of surrounding evaluation results of the {@code expression} when the result is {@link BsonType#NULL Null}.
      * <p>
      * {@linkplain Aggregates#setWindowFields(Object, Bson, Iterable) Sorting} is required.</p>
@@ -810,39 +811,39 @@ public final class WindowedComputations {
      * @param path The output field path.
      * @param expression The expression.
      * @param <TExpression> The expression type.
-     * @return The constructed windowed computation.
+     * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/linearFill/ $linearFill
      * @since 4.7
      * @mongodb.server.release 5.3
      */
-    public static <TExpression> WindowedComputation linearFill(final String path, final TExpression expression) {
+    public static <TExpression> WindowOutputField linearFill(final String path, final TExpression expression) {
         notNull("path", path);
         notNull("expression", expression);
         return simpleParameterWindowFunction(path, "$linearFill", expression, null);
     }
 
-    private static WindowedComputation simpleParameterWindowFunction(final String path, final String functionName,
+    private static WindowOutputField simpleParameterWindowFunction(final String path, final String functionName,
                                                                      @Nullable final Object expression,
                                                                      @Nullable final Window window) {
-        return new BsonFieldWindowedComputation(new BsonField(path,
+        return new BsonFieldWindowOutputField(new BsonField(path,
                 new SimpleParameterFunctionAndWindow(functionName, expression, window)));
     }
 
-    private static WindowedComputation compoundParameterWindowFunction(final String path, final String functionName,
+    private static WindowOutputField compoundParameterWindowFunction(final String path, final String functionName,
                                                                        final Map<ParamName, Object> args,
                                                                        @Nullable final Window window) {
-        return new BsonFieldWindowedComputation(new BsonField(path,
+        return new BsonFieldWindowOutputField(new BsonField(path,
                 new CompoundParameterFunctionAndWindow(functionName, args, window)));
     }
 
-    private WindowedComputations() {
+    private WindowOutputFields() {
         throw new UnsupportedOperationException();
     }
 
-    private static final class BsonFieldWindowedComputation implements WindowedComputation {
+    private static final class BsonFieldWindowOutputField implements WindowOutputField {
         private final BsonField wrapped;
 
-        BsonFieldWindowedComputation(final BsonField field) {
+        BsonFieldWindowOutputField(final BsonField field) {
             wrapped = assertNotNull(field);
         }
 
@@ -859,7 +860,7 @@ public final class WindowedComputations {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final BsonFieldWindowedComputation that = (BsonFieldWindowedComputation) o;
+            final BsonFieldWindowOutputField that = (BsonFieldWindowOutputField) o;
             return wrapped.equals(that.wrapped);
         }
 
@@ -957,9 +958,9 @@ public final class WindowedComputations {
     }
 
     private static final class CompoundParameterFunctionAndWindow extends AbstractFunctionAndWindow {
-        private final Map<WindowedComputations.ParamName, Object> args;
+        private final Map<WindowOutputFields.ParamName, Object> args;
 
-        CompoundParameterFunctionAndWindow(final String functionName, final Map<WindowedComputations.ParamName, Object> args,
+        CompoundParameterFunctionAndWindow(final String functionName, final Map<WindowOutputFields.ParamName, Object> args,
                                            @Nullable final Window window) {
             super(functionName, window);
             this.args = args;

@@ -22,13 +22,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-final class FillComputationTest {
+final class FillOutputFieldTest {
     @Test
     void of() {
         assertEquals(
                 docExamplePredefined()
                         .toBsonDocument(),
-                FillComputation.of(docExampleCustom())
+                FillOutputField.of(docExampleCustom())
                         .toBsonDocument()
         );
     }
@@ -37,7 +37,7 @@ final class FillComputationTest {
     void value() {
         assertEquals(
                 new BsonDocument("fieldName1", new BsonDocument("value", new BsonString("$fieldName2"))),
-                FillComputation.value("fieldName1", "$fieldName2")
+                FillOutputField.value("fieldName1", "$fieldName2")
                         .toBsonDocument()
         );
     }
@@ -56,13 +56,13 @@ final class FillComputationTest {
     void linear() {
         assertEquals(
                 new BsonDocument("fieldName", new BsonDocument("method", new BsonString("linear"))),
-                FillComputation.linear("fieldName")
+                FillOutputField.linear("fieldName")
                         .toBsonDocument()
         );
     }
 
-    private static FillComputation docExamplePredefined() {
-        return FillComputation.locf("fieldName");
+    private static FillOutputField docExamplePredefined() {
+        return FillOutputField.locf("fieldName");
     }
 
     private static Document docExampleCustom() {
