@@ -143,27 +143,11 @@ public class ConnectionPoolSettings {
             return this;
         }
 
-        /**
-         * <p>The increment step size when growing connection pool. Only used in case of linear growth</p>
-         *
-         * <p>Default is 1.</p>
-         *
-         * @param incrementSize the increment step size when linear growth.
-         * @return this
-         */
         public Builder incrementSize(final int incrementSize) {
             this.incrementSize = incrementSize;
             return this;
         }
 
-        /**
-         * <p>The increment policy type for growing the connection pool</p>
-         *
-         * <p>Default is linear.</p>
-         *
-         * @param incrementType the increment step size when linear growth.
-         * @return this
-         */
         public Builder incrementType(final String incrementType) {
             this.incrementType = incrementType;
             return this;

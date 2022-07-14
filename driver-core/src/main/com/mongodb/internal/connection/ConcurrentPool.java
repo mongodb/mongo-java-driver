@@ -32,12 +32,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConcurrentPool<T> implements Pool<T> {
 
-    private final int maxSize;
-    private final ItemFactory<T> itemFactory;
+    protected final int maxSize;
+    protected final ItemFactory<T> itemFactory;
 
-    private final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
-    private final Semaphore permits;
-    private volatile boolean closed;
+    protected final ConcurrentLinkedDeque<T> available = new ConcurrentLinkedDeque<T>();
+    final Semaphore permits;
+    protected volatile boolean closed;
 
     public enum Prune {
         /**
@@ -227,28 +227,6 @@ public class ConcurrentPool<T> implements Pool<T> {
         return maxSize;
     }
 
-    public boolean getIsClosed() {
-        return closed;
-    }
-
-    public boolean addToAvailable(final T t) {
-        available.addLast(t);
-        return true;
-    }
-
-    public T getFromAvailable(){
-        return available.pollLast();
-    }
-
-    public boolean appendToAvailable(final T t) {
-        available.addLast(t);
-        return true;
-    }
-
-    public T createInFactory(final boolean initialize) {
-        return itemFactory.create(initialize);
-
-    }
     public int getInUseCount() {
         return maxSize - permits.availablePermits();
     }
