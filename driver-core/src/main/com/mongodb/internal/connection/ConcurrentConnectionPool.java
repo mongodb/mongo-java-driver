@@ -69,10 +69,12 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                 return (int) Math.pow(2, powerCount.getAndIncrement());
             } else if (incrementType.equals("linear")) {
                 return incrementSize - 1;
-            } else if(incrementType.equals("1.5x")) {
+            } else if (incrementType.equals("1.5x")) {
                 return getCount() / 2;
             }else if(incrementType.equals("2x")) {
                 return getCount();
+            }else if (incrementType.equals("2x-1.5x")) {
+                return getCount() < 100 ? getCount() : getCount() / 2;
             }else {
                 return 0;
             }
@@ -82,7 +84,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
         public Boolean call() throws Exception {
             try {
                 LOGGER.trace("Acquiring grow permit when powercount = " + powerCount.get());
-                if(!growPermits.tryAcquire(timeout, timeUnit)){
+                if(!growPermits.tryAcquire(0, timeUnit)){
                     throw new MongoTimeoutException("Timeout waiting for grow permit");
                 }
                 LOGGER.trace("Acquired grow permit");
@@ -98,7 +100,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                         if (!acquirePermit(timeout, timeUnit)) {
                             throw new MongoTimeoutException("Timeout waiting for permit");
                         } else {
-                            UsageTrackingInternalConnection t2 = itemFactory.create(true);
+                            UsageTrackingInternalConnection t2 = itemFactory.create(false);
                             available.addLast(t2);
                             permits.release();
 
