@@ -388,7 +388,7 @@ public class ConnectionString {
         Map<String, List<String>> txtRecordsOptionsMap = parseOptions(txtRecordsQueryParameters);
         if (!ALLOWED_OPTIONS_IN_TXT_RECORD.containsAll(txtRecordsOptionsMap.keySet())) {
             throw new MongoConfigurationException(format("A TXT record is only permitted to contain the keys %s, but the TXT record for "
-                    + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
+            + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
         }
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
         if (isSrvProtocol && !combinedOptionsMaps.containsKey("ssl")) {
@@ -1159,7 +1159,6 @@ public class ConnectionString {
 
     /**
      * Gets the read preference specified in the connection string.
-     *
      * @return the read preference
      */
     @Nullable
@@ -1220,6 +1219,7 @@ public class ConnectionString {
      *
      * @return the retryWrites value
      * @since 3.11
+     * @mongodb.server.release 3.6
      */
     public Boolean getRetryReads() {
         return retryReads;
@@ -1294,7 +1294,6 @@ public class ConnectionString {
 
     /**
      * Gets the maximum connection life time specified in the connection string.
-     *
      * @return the maximum connection life time
      */
     @Nullable
