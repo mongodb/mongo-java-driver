@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p>This class should not be considered a part of the public API.</p>
  */
-public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingInternalConnection> {
+public class CustomGrowableConcurrentPool<T> extends ConcurrentPool<T> {
 
     private final int incrementSize;
     private final String incrementType;
@@ -49,7 +49,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
      * @param incrementSize the size to increment the pool by
      * @param incrementType the type of increment to use
      */
-    public ConcurrentConnectionPool(final int maxSize, final ItemFactory<UsageTrackingInternalConnection> itemFactory,
+    public CustomGrowableConcurrentPool(final int maxSize, final ItemFactory<T> itemFactory,
                                     final int incrementSize, final String incrementType) {
         super(maxSize, itemFactory);
         this.incrementSize = incrementSize;
@@ -108,7 +108,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
                         if (!acquirePermit(timeout, timeUnit)) {
                             throw new MongoTimeoutException("Timeout waiting for permit");
                         } else {
-                            UsageTrackingInternalConnection t2 = createInFactory(false);
+                            T t2 = createInFactory(false);
                             addToAvailable(t2);
                             releasePermit();
 
@@ -150,8 +150,7 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
      * @throws MongoTimeoutException if the timeout has been exceeded
      */
     @Override
-    @SuppressWarnings("unchecked")
-    public UsageTrackingInternalConnection get(final long timeout, final TimeUnit timeUnit) {
+    public T get(final long timeout, final TimeUnit timeUnit) {
 
         if (getIsClosed()) {
             throw new IllegalStateException("The pool is closed");
@@ -161,11 +160,11 @@ public class ConcurrentConnectionPool extends ConcurrentPool<UsageTrackingIntern
             throw new MongoTimeoutException(String.format("Timeout waiting for a pooled item after %d %s", timeout, timeUnit));
         }
 
-        UsageTrackingInternalConnection t = getFromAvailable();
+        T t = getFromAvailable();
 
         if (t == null) {
             t = createNewAndReleasePermitIfFailure(false);
-            if (incrementSize > 1){
+            if (incrementSize > 1 || !incrementType.equals("linear")) {
                 ExecutorService executorService = Executors.newFixedThreadPool(1);
                 Future<Boolean> future = executorService.submit(new AddConnectionInPool(timeout, timeUnit));
                 if (!future.isDone()){
