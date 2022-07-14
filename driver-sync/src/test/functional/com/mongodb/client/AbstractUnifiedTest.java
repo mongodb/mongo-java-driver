@@ -548,7 +548,13 @@ public abstract class AbstractUnifiedTest {
                             newPrimary = getCurrentPrimary();
                         }
                     } else if (operationName.equals("runAdminCommand")) {
-                         collectionHelper.runAdminCommand(operation.getDocument("arguments").getDocument("command"));
+                        BsonDocument arguments = operation.getDocument("arguments");
+                        BsonDocument command = arguments.getDocument("command");
+                        if (arguments.containsKey("readPreference")) {
+                            collectionHelper.runAdminCommand(command, helper.getReadPreference(arguments));
+                        } else {
+                            collectionHelper.runAdminCommand(command);
+                        }
                     } else if (operationName.equals("assertSessionPinned")) {
                         final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         assertNotNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
