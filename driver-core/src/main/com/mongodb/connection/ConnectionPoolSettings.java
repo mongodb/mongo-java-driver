@@ -494,18 +494,18 @@ public class ConnectionPoolSettings {
     @Override
     public String toString() {
         return "ConnectionPoolSettings{"
-                + "maxSize=" + maxSize
-                + ", minSize=" + minSize
-                + ", incrementSize=" + incrementSize
-                + ", incrementType='" + incrementType
-                + ", maxWaitQueueSize=" + maxWaitQueueSize
-                + ", maxWaitTimeMS=" + maxWaitTimeMS
-                + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
-                + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
-                + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
-                + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
-                + ", connectionPoolListeners=" + connectionPoolListeners
-                + '}';
+               + "maxSize=" + maxSize
+               + ", minSize=" + minSize
+               + ", incrementSize=" + incrementSize
+               + ", incrementType='" + incrementType
+               + ", maxWaitQueueSize=" + maxWaitQueueSize
+               + ", maxWaitTimeMS=" + maxWaitTimeMS
+               + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
+               + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
+               + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
+               + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
+               + ", connectionPoolListeners=" + connectionPoolListeners
+               + '}';
     }
 
     ConnectionPoolSettings(final Builder builder) {
