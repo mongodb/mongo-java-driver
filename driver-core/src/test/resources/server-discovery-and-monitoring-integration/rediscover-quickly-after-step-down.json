@@ -48,24 +48,11 @@
         {
           "name": "runAdminCommand",
           "object": "testRunner",
-          "command_name": "replSetFreeze",
-          "arguments": {
-            "command": {
-              "replSetFreeze": 0
-            },
-            "readPreference": {
-              "mode": "Secondary"
-            }
-          }
-        },
-        {
-          "name": "runAdminCommand",
-          "object": "testRunner",
           "command_name": "replSetStepDown",
           "arguments": {
             "command": {
-              "replSetStepDown": 30,
-              "secondaryCatchUpPeriodSecs": 30,
+              "replSetStepDown": 1,
+              "secondaryCatchUpPeriodSecs": 1,
               "force": false
             }
           }
@@ -74,7 +61,7 @@
           "name": "waitForPrimaryChange",
           "object": "testRunner",
           "arguments": {
-            "timeoutMS": 15000
+            "timeoutMS": 5000
           }
         },
         {
