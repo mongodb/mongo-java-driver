@@ -21,7 +21,7 @@ import org.bson.types.Decimal128
 import org.mongodb.scala.bson.conversions.Bson
 
 /**
- * Builders for [[Window windows]] used when expressing [[WindowedComputation windowed computations]].
+ * Builders for [[Window windows]] used when expressing [[WindowOutputField window output fields]].
  * There are two types of windows: documents and range.
  *
  * Bounded and half-bounded windows require sorting.
@@ -48,7 +48,7 @@ import org.mongodb.scala.bson.conversions.Bson
  *      - time bounds require specifying a [[MongoTimeUnit time unit]] and are added as per the
  *      `\$dateAdd`/`\$dateSubtract` aggregation pipeline stage specification.
  *
- * @see WindowedComputation
+ * @see [[WindowOutputField]]
  * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/isNumber/ \$isNumber aggregation pipeline stage]]
  * @see [[https://www.mongodb.com/docs/manual/reference/bson-types/#date BSON Date type]]
  * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateAdd/ \$dateAdd aggregation pipeline stage]]

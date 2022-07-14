@@ -16,6 +16,7 @@
 
 package org.mongodb.scala.model
 
+import com.mongodb.client.model.fill.FillOutputField
 import java.lang.reflect.Modifier._
 import org.bson.BsonDocument
 import org.mongodb.scala.bson.BsonArray
@@ -30,7 +31,6 @@ import org.mongodb.scala.model.Windows.Bound.{ CURRENT, UNBOUNDED }
 import org.mongodb.scala.model.Windows.{ documents, range }
 import org.mongodb.scala.model.densify.DensifyRange.fullRangeWithStep
 import org.mongodb.scala.model.fill.FillOptions.fillOptions
-import org.mongodb.scala.model.fill.FillComputation
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
@@ -429,7 +429,7 @@ class AggregatesSpec extends BaseSpec {
       setWindowFields(
         Some("$partitionByField"),
         Some(ascending("sortByField")),
-        WindowedComputations.of(
+        WindowOutputFields.of(
           BsonField.apply(
             "newField00",
             Document(
@@ -438,39 +438,39 @@ class AggregatesSpec extends BaseSpec {
             )
           )
         ),
-        WindowedComputations.sum("newField01", "$field01", Some(range(1, CURRENT))),
-        WindowedComputations.avg("newField02", "$field02", Some(range(UNBOUNDED, 1))),
-        WindowedComputations.stdDevSamp("newField03", "$field03", Some(window)),
-        WindowedComputations.stdDevPop("newField04", "$field04", Some(window)),
-        WindowedComputations.min("newField05", "$field05", Some(window)),
-        WindowedComputations.minN("newField05N", "$field05N", 2, Some(window)),
-        WindowedComputations.max("newField06", "$field06", Some(window)),
-        WindowedComputations.maxN("newField06N", "$field06N", 2, Some(window)),
-        WindowedComputations.count("newField07", Some(window)),
-        WindowedComputations.derivative("newField08", "$field08", window),
-        WindowedComputations.timeDerivative("newField09", "$field09", window, DAY),
-        WindowedComputations.integral("newField10", "$field10", window),
-        WindowedComputations.timeIntegral("newField11", "$field11", window, DAY),
-        WindowedComputations.covarianceSamp("newField12", "$field12_1", "$field12_2", Some(window)),
-        WindowedComputations.covariancePop("newField13", "$field13_1", "$field13_2", Some(window)),
-        WindowedComputations.expMovingAvg("newField14", "$field14", 3),
-        WindowedComputations.expMovingAvg("newField15", "$field15", 0.5),
-        WindowedComputations.push("newField16", "$field16", Some(window)),
-        WindowedComputations.addToSet("newField17", "$field17", Some(window)),
-        WindowedComputations.first("newField18", "$field18", Some(window)),
-        WindowedComputations.firstN("newField18N", "$field18N", 2, Some(window)),
-        WindowedComputations.last("newField19", "$field19", Some(window)),
-        WindowedComputations.lastN("newField19N", "$field19N", 2, Some(window)),
-        WindowedComputations.shift("newField20", "$field20", Some("defaultConstantValue"), -3),
-        WindowedComputations.documentNumber("newField21"),
-        WindowedComputations.rank("newField22"),
-        WindowedComputations.denseRank("newField23"),
-        WindowedComputations.bottom("newField24", ascending("sortByField"), "$field24", Some(window)),
-        WindowedComputations.bottomN("newField24N", ascending("sortByField"), "$field24N", 2, Some(window)),
-        WindowedComputations.top("newField25", ascending("sortByField"), "$field25", Some(window)),
-        WindowedComputations.topN("newField25N", ascending("sortByField"), "$field25N", 2, Some(window)),
-        WindowedComputations.locf("newField26", "$field26"),
-        WindowedComputations.linearFill("newField27", "$field27")
+        WindowOutputFields.sum("newField01", "$field01", Some(range(1, CURRENT))),
+        WindowOutputFields.avg("newField02", "$field02", Some(range(UNBOUNDED, 1))),
+        WindowOutputFields.stdDevSamp("newField03", "$field03", Some(window)),
+        WindowOutputFields.stdDevPop("newField04", "$field04", Some(window)),
+        WindowOutputFields.min("newField05", "$field05", Some(window)),
+        WindowOutputFields.minN("newField05N", "$field05N", 2, Some(window)),
+        WindowOutputFields.max("newField06", "$field06", Some(window)),
+        WindowOutputFields.maxN("newField06N", "$field06N", 2, Some(window)),
+        WindowOutputFields.count("newField07", Some(window)),
+        WindowOutputFields.derivative("newField08", "$field08", window),
+        WindowOutputFields.timeDerivative("newField09", "$field09", window, DAY),
+        WindowOutputFields.integral("newField10", "$field10", window),
+        WindowOutputFields.timeIntegral("newField11", "$field11", window, DAY),
+        WindowOutputFields.covarianceSamp("newField12", "$field12_1", "$field12_2", Some(window)),
+        WindowOutputFields.covariancePop("newField13", "$field13_1", "$field13_2", Some(window)),
+        WindowOutputFields.expMovingAvg("newField14", "$field14", 3),
+        WindowOutputFields.expMovingAvg("newField15", "$field15", 0.5),
+        WindowOutputFields.push("newField16", "$field16", Some(window)),
+        WindowOutputFields.addToSet("newField17", "$field17", Some(window)),
+        WindowOutputFields.first("newField18", "$field18", Some(window)),
+        WindowOutputFields.firstN("newField18N", "$field18N", 2, Some(window)),
+        WindowOutputFields.last("newField19", "$field19", Some(window)),
+        WindowOutputFields.lastN("newField19N", "$field19N", 2, Some(window)),
+        WindowOutputFields.shift("newField20", "$field20", Some("defaultConstantValue"), -3),
+        WindowOutputFields.documentNumber("newField21"),
+        WindowOutputFields.rank("newField22"),
+        WindowOutputFields.denseRank("newField23"),
+        WindowOutputFields.bottom("newField24", ascending("sortByField"), "$field24", Some(window)),
+        WindowOutputFields.bottomN("newField24N", ascending("sortByField"), "$field24N", 2, Some(window)),
+        WindowOutputFields.top("newField25", ascending("sortByField"), "$field25", Some(window)),
+        WindowOutputFields.topN("newField25N", ascending("sortByField"), "$field25N", 2, Some(window)),
+        WindowOutputFields.locf("newField26", "$field26"),
+        WindowOutputFields.linearFill("newField27", "$field27")
       )
     ) should equal(
       Document(
@@ -522,7 +522,7 @@ class AggregatesSpec extends BaseSpec {
 
   it should "render $setWindowFields with no partitionBy/sortBy" in {
     toBson(
-      setWindowFields(None, None, WindowedComputations.sum("newField01", "$field01", Some(documents(1, 2))))
+      setWindowFields(None, None, WindowOutputFields.sum("newField01", "$field01", Some(documents(1, 2))))
     ) should equal(
       Document("""{
         "$setWindowFields": {
@@ -554,8 +554,8 @@ class AggregatesSpec extends BaseSpec {
     toBson(
       Aggregates.fill(
         fillOptions().partitionByFields("fieldName3").sortBy(ascending("fieldName4")),
-        FillComputation.linear("fieldName1"),
-        FillComputation.locf("fieldName2")
+        FillOutputField.linear("fieldName1"),
+        FillOutputField.locf("fieldName2")
       )
     ) should equal(
       Document("""{

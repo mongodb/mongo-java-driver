@@ -19,7 +19,7 @@ package com.mongodb.client.model;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.densify.DensifyOptions;
 import com.mongodb.client.model.densify.DensifyRange;
-import com.mongodb.client.model.fill.FillComputation;
+import com.mongodb.client.model.fill.FillOutputField;
 import com.mongodb.client.model.fill.FillOptions;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchCollector;
@@ -624,8 +624,8 @@ public final class Aggregates {
      *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
      *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
      *               of the output documents.
-     * @param output A {@linkplain WindowedComputation windowed computation}.
-     * @param moreOutput More {@linkplain WindowedComputation windowed computations}.
+     * @param output A {@linkplain WindowOutputField windowed computation}.
+     * @param moreOutput More {@linkplain WindowOutputField windowed computations}.
      * @param <TExpression> The {@code partitionBy} expression type.
      * @return The {@code $setWindowFields} pipeline stage.
      * @mongodb.driver.dochub core/window-functions-set-window-fields $setWindowFields
@@ -633,7 +633,7 @@ public final class Aggregates {
      * @since 4.3
      */
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
-            final WindowedComputation output, final WindowedComputation... moreOutput) {
+            final WindowOutputField output, final WindowOutputField... moreOutput) {
         return setWindowFields(partitionBy, sortBy, concat(notNull("output", output), moreOutput));
     }
 
@@ -650,7 +650,7 @@ public final class Aggregates {
      *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
      *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
      *               of the output documents.
-     * @param output A list of {@linkplain WindowedComputation windowed computations}.
+     * @param output A list of {@linkplain WindowOutputField windowed computations}.
      * Specifying an empty list is not an error, but the resulting stage does not do anything useful.
      * @param <TExpression> The {@code partitionBy} expression type.
      * @return The {@code $setWindowFields} pipeline stage.
@@ -659,7 +659,7 @@ public final class Aggregates {
      * @since 4.3
      */
     public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
-                                                     final Iterable<? extends WindowedComputation> output) {
+                                                     final Iterable<? extends WindowOutputField> output) {
         notNull("output", output);
         return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
     }
@@ -722,14 +722,14 @@ public final class Aggregates {
      * Creates a {@code $fill} pipeline stage, which assigns values to fields when they are {@link BsonType#NULL Null} or missing.
      *
      * @param options The fill options.
-     * @param output The {@link FillComputation}.
-     * @param moreOutput More {@link FillComputation}s.
+     * @param output The {@link FillOutputField}.
+     * @param moreOutput More {@link FillOutputField}s.
      * @return The requested pipeline stage.
      * @mongodb.driver.manual reference/operator/aggregation/fill/ $fill
      * @mongodb.server.release 5.3
      * @since 4.7
      */
-    public static Bson fill(final FillOptions options, final FillComputation output, final FillComputation... moreOutput) {
+    public static Bson fill(final FillOptions options, final FillOutputField output, final FillOutputField... moreOutput) {
         return fill(options, concat(notNull("output", output), moreOutput));
     }
 
@@ -737,13 +737,13 @@ public final class Aggregates {
      * Creates a {@code $fill} pipeline stage, which assigns values to fields when they are {@link BsonType#NULL Null} or missing.
      *
      * @param options The fill options.
-     * @param output The non-empty {@link FillComputation}s.
+     * @param output The non-empty {@link FillOutputField}s.
      * @return The requested pipeline stage.
      * @mongodb.driver.manual reference/operator/aggregation/fill/ $fill
      * @mongodb.server.release 5.3
      * @since 4.7
      */
-    public static Bson fill(final FillOptions options, final Iterable<? extends FillComputation> output) {
+    public static Bson fill(final FillOptions options, final Iterable<? extends FillOutputField> output) {
         notNull("options", options);
         notNull("output", output);
         isTrueArgument("output must not be empty", sizeAtLeast(output, 1));
@@ -753,7 +753,7 @@ public final class Aggregates {
                 BsonDocument fillSpecificationDoc = new BsonDocument();
                 fillSpecificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
                 BsonDocument outputDoc = new BsonDocument();
-                for (final FillComputation computation : output) {
+                for (final FillOutputField computation : output) {
                     BsonDocument computationDoc = computation.toBsonDocument(documentClass, codecRegistry);
                     assertTrue(computationDoc.size() == 1);
                     outputDoc.putAll(computationDoc);
@@ -1821,12 +1821,12 @@ public final class Aggregates {
         private final TExpression partitionBy;
         @Nullable
         private final Bson sortBy;
-        private final Iterable<? extends WindowedComputation> output;
+        private final Iterable<? extends WindowOutputField> output;
 
         SetWindowFieldsStage(
                 @Nullable final TExpression partitionBy,
                 @Nullable final Bson sortBy,
-                final Iterable<? extends WindowedComputation> output) {
+                final Iterable<? extends WindowOutputField> output) {
             this.partitionBy = partitionBy;
             this.sortBy = sortBy;
             this.output = output;
@@ -1846,8 +1846,8 @@ public final class Aggregates {
                 BuildersHelper.encodeValue(writer, sortBy, codecRegistry);
             }
             writer.writeStartDocument("output");
-            for (WindowedComputation windowedComputation : output) {
-                BsonField field = windowedComputation.toBsonField();
+            for (WindowOutputField windowOutputField : output) {
+                BsonField field = windowOutputField.toBsonField();
                 writer.writeName(field.getName());
                 BuildersHelper.encodeValue(writer, field.getValue(), codecRegistry);
             }

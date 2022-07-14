@@ -30,7 +30,7 @@ import static java.util.Collections.emptyList;
  * Represents optional fields of the {@code $fill} pipeline stage of an aggregation pipeline.
  *
  * @see Aggregates#fill(FillOptions, Iterable)
- * @see Aggregates#fill(FillOptions, FillComputation, FillComputation...)
+ * @see Aggregates#fill(FillOptions, FillOutputField, FillOutputField...)
  * @mongodb.server.release 5.3
  * @since 4.7
  */
