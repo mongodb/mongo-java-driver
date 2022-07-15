@@ -19,6 +19,7 @@ package com.mongodb.client.test;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -410,5 +411,9 @@ public final class CollectionHelper<T> {
 
     public void runAdminCommand(final BsonDocument command) {
         new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding());
+    }
+
+    public void runAdminCommand(final BsonDocument command, final ReadPreference readPreference) {
+        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding(readPreference));
     }
 }
