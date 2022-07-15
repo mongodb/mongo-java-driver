@@ -69,15 +69,15 @@ public class CustomGrowableConcurrentPool<T> extends ConcurrentPool<T> {
 
         private int getActualIncSize(final int incrementSize, final String incrementType) {
             if (incrementType.equals("exponential")) {
-                return (int) Math.pow(2, powerCount.getAndIncrement());
+                return (int) Math.pow(2, powerCount.get()) - 1;
             } else if (incrementType.equals("linear")) {
                 return incrementSize - 1;
             } else if (incrementType.equals("1.5x")) {
-                return getCount() / 2;
+                return (getCount() - 1) / 2 - 1;
             } else if (incrementType.equals("2x")) {
-                return getCount();
+                return getCount() - 2;
             } else if (incrementType.equals("2x-1.5x")) {
-                return getCount() < 100 ? getCount() : getCount() / 2;
+                return getCount() < 100 ? getCount() - 2 : (getCount() - 1) / 2 - 1;
             } else {
                 return 0;
             }
@@ -90,7 +90,7 @@ public class CustomGrowableConcurrentPool<T> extends ConcurrentPool<T> {
         public Boolean call() throws Exception {
             try {
                 LOGGER.trace("Acquiring grow permit when powercount = " + powerCount.get());
-                if (!growPermits.tryAcquire(0, timeUnit)){
+                if (!acquireGrowPermit()){
                     throw new MongoTimeoutException("Timeout waiting for grow permit");
                 }
                 LOGGER.trace("Acquired grow permit");
@@ -125,7 +125,7 @@ public class CustomGrowableConcurrentPool<T> extends ConcurrentPool<T> {
                 }
                 finally {
                     LOGGER.trace("Releasing grow permit");
-                    growPermits.release();
+                    releaseGrowPermit();
                 }
             } catch (final MongoTimeoutException e) {
                 LOGGER.trace("Failure to acquire grow permits");
@@ -137,6 +137,16 @@ public class CustomGrowableConcurrentPool<T> extends ConcurrentPool<T> {
             Thread.currentThread().interrupt();
             return true;
         }
+    }
+
+    /**
+     * Gets an object from the pool.  This method will block until a permit is available.
+     *
+     * @return An object from the pool.
+     */
+    @Override
+    public T get() {
+        return get(-1, TimeUnit.MILLISECONDS);
     }
 
 
@@ -164,7 +174,7 @@ public class CustomGrowableConcurrentPool<T> extends ConcurrentPool<T> {
 
         if (t == null) {
             t = createNewAndReleasePermitIfFailure(false);
-            if (incrementSize > 1 || !incrementType.equals("linear")) {
+            if (growPermitStatus() != 0 && (incrementSize > 1 || !incrementType.equals("linear"))) {
                 ExecutorService executorService = Executors.newFixedThreadPool(1);
                 Future<Boolean> future = executorService.submit(new AddConnectionInPool(timeout, timeUnit));
                 if (!future.isDone()){
@@ -180,6 +190,22 @@ public class CustomGrowableConcurrentPool<T> extends ConcurrentPool<T> {
      */
     public int getPotentialCount() {
         return getMaxSize() - getCount();
+    }
+
+    public int growPermitStatus() {
+        return growPermits.availablePermits();
+    }
+
+    public boolean acquireGrowPermit() {
+        try {
+            return growPermits.tryAcquire(0, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            return false;
+        }
+    }
+
+    public void releaseGrowPermit() {
+        growPermits.release();
     }
 
     @Override

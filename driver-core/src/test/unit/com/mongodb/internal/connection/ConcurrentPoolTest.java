@@ -220,7 +220,7 @@ public class ConcurrentPoolTest {
         assertTrue(!t5.isClosed());
     }
 
-    class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {
+    static class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {
         private final boolean shouldThrowOnCreate;
 
         TestItemFactory() {

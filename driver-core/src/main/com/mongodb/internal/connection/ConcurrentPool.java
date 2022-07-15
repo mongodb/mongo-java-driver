@@ -240,11 +240,6 @@ public class ConcurrentPool<T> implements Pool<T> {
         return available.pollLast();
     }
 
-    public boolean appendToAvailable(final T t) {
-        available.addLast(t);
-        return true;
-    }
-
     public T createInFactory(final boolean initialize) {
         return itemFactory.create(initialize);
 
