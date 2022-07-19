@@ -21,6 +21,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.SplittablePayload;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -42,6 +44,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final ClusterConnectionMode clusterConnectionMode;
     private SessionContext sessionContext;
 
+    private static final Logger LOGGER = Loggers.getLogger("commandprotocolimpl");
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder) {
         this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
@@ -69,6 +72,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
 
     @Override
     public T execute(final InternalConnection connection) {
+        LOGGER.info("Command Protocol Imp : 72");
         return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext);
     }
 

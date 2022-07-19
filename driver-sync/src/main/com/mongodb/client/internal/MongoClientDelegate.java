@@ -45,6 +45,8 @@ import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +71,7 @@ public class MongoClientDelegate {
     private final CodecRegistry codecRegistry;
     private final AtomicBoolean closed;
 
+    private static final Logger LOGGER = Loggers.getLogger("MongoClientDelegate");
     public MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry, final List<MongoCredential> credentialList,
                                final Object originator, @Nullable final Crypt crypt) {
         this(cluster, codecRegistry, credentialList, originator, null, crypt);
@@ -188,6 +191,8 @@ public class MongoClientDelegate {
         @Override
         public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                              @Nullable final ClientSession session) {
+            LOGGER.info("215 : Executing Read operation");
+
             ClientSession actualClientSession = getClientSession(session);
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
                     session == null && actualClientSession != null);
@@ -208,6 +213,7 @@ public class MongoClientDelegate {
 
         @Override
         public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
+            LOGGER.info("215 : Executing write operation");
             ClientSession actualClientSession = getClientSession(session);
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession,
                     session == null && actualClientSession != null);

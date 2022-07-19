@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -48,6 +49,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final CommandMessage message;
     private final String commandName;
     private volatile BsonDocument commandDocument;
+    private static final Logger LOGGER = Loggers.getLogger("loggingCommandEventSender");
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final ConnectionDescription description,
                               final CommandListener commandListener, final CommandMessage message,
@@ -96,8 +98,9 @@ class LoggingCommandEventSender implements CommandEventSender {
             if (jsonWriter.isTruncated()) {
                 writer.append(" ...");
             }
-
+            LOGGER.info("LOggingComandEventSender : " + writer.toString());
             return writer.toString();
+
         } finally {
             bsonReader.close();
         }
