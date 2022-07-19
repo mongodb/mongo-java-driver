@@ -6,8 +6,11 @@ com.mongodb.client.gridfs.codecs
 com.mongodb.client.gridfs.model
 com.mongodb.client.model
 com.mongodb.client.model.changestream
+com.mongodb.client.model.densify
+com.mongodb.client.model.fill
 com.mongodb.client.model.geojson
 com.mongodb.client.model.geojson.codecs
+com.mongodb.client.model.search
 com.mongodb.client.model.vault
 com.mongodb.client.result
 com.mongodb.connection
