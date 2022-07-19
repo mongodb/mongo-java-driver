@@ -7,6 +7,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.diagnostics.Logger;
@@ -16,30 +17,33 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Filter;
 
 public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     private final String filter;
-    private final  String dbname;
+    private final String dbname;
     private final String collectionName;
     private static final Logger LOGGER = Loggers.getLogger("MongoClient");
-    FindIterator(String collectionName, String dbname, @Nullable Bson filter) {
+
+    private final String hostURL;
+    FindIterator(String collectionName, String dbname, @Nullable Bson filter, String hostURL) {
         this.collectionName = collectionName;
 
         if (filter != null) {
             this.filter = filter.toString();
-        }
-        else {
+        } else {
             this.filter = "Filter{}";
         }
         this.dbname = dbname;
+        this.hostURL = hostURL;
     }
+
     @Override
     public FindIterable<TResult> filter(Bson filter) {
         return null;
@@ -124,7 +128,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         query.appendQueryKeyValue("sortDirection", "ASC");
         query.appendQueryKeyValue("sortField", "");
         query.appendQueryKeyValue("includeFields", "");
-        query.appendQueryKeyValue("query", filter);
+        query.appendQueryKeyValue("query", queryToJson(filter));
         String queryString = query.toString();
         String response = "";
 //        wait for http response
@@ -233,4 +237,55 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         System.out.println(response);
         return response;
     }
+
+    private String queryToJson(String query) {
+//        parse the BSON format query to JSON format query
+//        if query starts with And Filter
+
+        if (query.startsWith("And Filter")) {
+            query = query.substring(11);
+            query = queryToJson(query);
+//            trim the brackets from beginning and end
+            query = query.substring(1, query.length() - 1);
+//        get all the fields inside curly brackets {...}
+            query = mapToJson(getMap(query));
+        } else if (query.startsWith("filters=")) {
+            query = query.substring(8);
+            return query;
+        }
+        else if (query.startsWith("Filter")) {
+            return mapToJson(getMap(query));
+        }
+        else {
+            return "";
+        }
+        return query;
+    }
+
+    private Map<String, String> getMap(String query) {
+        Map<String, String> map = new HashMap<String, String>();
+        String[] fields = query.split("Filter\\{");
+        for (String field : fields) {
+            if (field.length() > 0) {
+                String[] fieldParts = field.split("\\}");
+                String fieldAct = fieldParts[0];
+                String[] keyValue = fieldAct.split(", ");
+                String key = keyValue[0].split("=")[1];
+                key = key.substring(1, key.length() - 1);
+                String value = keyValue[1].split("=")[1];
+                map.put(key.toString(), value.toString());
+            }
+        }
+        return map;
+    }
+    private String mapToJson(Map<String, String> map) {
+        String json = "{";
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            json += "\"" + entry.getKey() + "\":\"" + entry.getValue() + "\",";
+        }
+        json = json.substring(0, json.length() - 1);
+        json += "}";
+        return json;
+    }
+
 }

@@ -12,20 +12,22 @@ public class MongoCollection<TDoc> {
     private String dbname;
     private static final Logger LOGGER = Loggers.getLogger("MongoClient");
 
-    public MongoCollection(String collectionName, String dbname) {
+    private String hostURL;
+    public MongoCollection(String collectionName, String dbname, String hostURL) {
         LOGGER.info("http MongoCollection 17");
         this.collectionName = collectionName;
         this.dbname = dbname;
+        this.hostURL = hostURL;
     }
 
 
     public FindIterable<TDoc> find(@Nullable Bson filter ) {
         LOGGER.info("http MongoCollection 22");
-        return new FindIterator<TDoc, TDoc>(collectionName, dbname, filter);
+        return new FindIterator<TDoc, TDoc>(collectionName, dbname, filter, hostURL);
     }
 
     public FindIterable<TDoc> find( ) {
         LOGGER.info("http MongoCollection 22");
-        return new FindIterator<TDoc, TDoc>(collectionName, dbname, null);
+        return new FindIterator<TDoc, TDoc>(collectionName, dbname, null, hostURL);
     }
 }

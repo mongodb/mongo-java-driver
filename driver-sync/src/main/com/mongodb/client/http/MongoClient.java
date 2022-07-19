@@ -10,8 +10,11 @@ public class MongoClient {
 
     private Map<String, MongoDatabase> databases;
     private static final Logger LOGGER = Loggers.getLogger("MongoClient");
-    public MongoClient () {
+
+    private String hostURL;
+    public MongoClient (String hostURL) {
         this.databases = new HashMap<String, MongoDatabase>();
+        this.hostURL = hostURL;
     }
 
     public MongoDatabase getDatabase(String databaseName) {
@@ -19,7 +22,7 @@ public class MongoClient {
         if (databases.containsKey(databaseName)) {
             return databases.get(databaseName);
         } else {
-            databases.put(databaseName, new MongoDatabase(databaseName));
+            databases.put(databaseName, new MongoDatabase(databaseName, hostURL));
             return databases.get(databaseName);
         }
     }
