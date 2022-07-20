@@ -9,8 +9,6 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.diagnostics.Logger;
-import org.bson.diagnostics.Loggers;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +26,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     private final String dbname;
     private final String collectionName;
-    private int maxLimit;
+    private final int maxLimit;
     private int limit;
     private  String filter;
     private final String hostURL;
@@ -137,7 +135,6 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     @Override
     public <A extends Collection<? super TResult>> A into(A target) {
         String res = getResponse(this.filter, this.limit, "ASC", "");
-//        parse the stirng to jsonobj
         JsonParser parser = new JsonParser();
         JsonArray jsonArray = (JsonArray) parser.parse(res);;
         for (int i = 0; i < jsonArray.size(); i++) {

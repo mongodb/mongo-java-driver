@@ -1,8 +1,5 @@
 package com.mongodb.client.http;
 
-import org.bson.diagnostics.Logger;
-import org.bson.diagnostics.Loggers;
-
 import java.util.HashMap;
 import java.util.Map;
 

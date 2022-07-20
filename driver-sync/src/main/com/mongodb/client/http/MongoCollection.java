@@ -1,7 +1,6 @@
 package com.mongodb.client.http;
 import com.mongodb.client.FindIterable;
 import com.mongodb.lang.Nullable;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
