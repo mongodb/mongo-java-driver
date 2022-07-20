@@ -7,7 +7,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.diagnostics.Logger;
@@ -16,27 +15,22 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Filter;
 import org.jasonjson.core.JsonArray;
 import org.jasonjson.core.JsonObject;
 import org.jasonjson.core.JsonParser;
 
 public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
-    private  String filter;
+
     private final String dbname;
     private final String collectionName;
-    private static final Logger LOGGER = Loggers.getLogger("MongoClient");
-
-    private int maxLimit = 1000;
-
-    private int limit = 1000;
-
+    private int maxLimit;
+    private int limit;
+    private  String filter;
     private final String hostURL;
     FindIterator(String collectionName, String dbname, @Nullable Bson filter, String hostURL) {
         this.collectionName = collectionName;
@@ -48,16 +42,20 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         }
         this.dbname = dbname;
         this.hostURL = hostURL;
+        this.limit = 1000;
+        this.maxLimit = 1000;
     }
 
     @Override
     public FindIterable<TResult> filter(Bson filter) {
-        return null;
+        this.filter = filter.toString();
+        return this;
     }
 
     @Override
     public FindIterable<TResult> limit(int limit) {
-        return null;
+        this.limit = limit;
+        return this;
     }
 
     @Override
@@ -122,8 +120,6 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     @Override
     public TResult first() {
-        LOGGER.info("first http 102");
-//        String query = "Service=MONGO&partnerId=0&serverType=GLOBAL&collectionName=account&queryType=general&limit=1&sortDirection=ASC&sortField=&includeFields=&query=%7B%7D";
         Document doc = Document.parse(getResponse(this.filter, 1, "ASC", ""));
         return (TResult) doc;
     }
@@ -208,7 +204,6 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     public static String getResult(String mainQuery, String hostURL) throws IOException {
-        LOGGER.info("getResult http 189");
         URL url = new URL(hostURL);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
         httpConn.setRequestMethod("POST");
@@ -228,20 +223,14 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
                 : httpConn.getErrorStream();
         Scanner s = new Scanner(responseStream).useDelimiter("\\A");
         String response = s.hasNext() ? s.next() : "";
-        System.out.println(response);
         return response;
     }
 
     private String queryToJson(String query) {
-//        parse the BSON format query to JSON format query
-//        if query starts with And Filter
-
         if (query.startsWith("And Filter")) {
             query = query.substring(11);
             query = queryToJson(query);
-//            trim the brackets from beginning and end
             query = query.substring(1, query.length() - 1);
-//        get all the fields inside curly brackets {...}
             query = mapToJson(getMap(query));
         } else if (query.startsWith("filters=")) {
             query = query.substring(8);
@@ -298,17 +287,14 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     private String getResponse(String filter, int limit, String sortField, String sortDirection){
-        Query query = getQuery(filter, limit, sortDirection, sortField );
+        Query query = getQuery(filter, limit, sortDirection, sortField);
         String queryString = query.toString();
         String response = "";
-//        wait for http response
         try {
             response = getResult(queryString, hostURL);
         } catch (IOException e) {
-            e.printStackTrace();
+            return "";
         }
-        LOGGER.info("109 : first");
-        LOGGER.info(response);
         return response;
     }
 

@@ -132,19 +132,6 @@ public class CustomGrowableConcurrentPoolTest {
 
     }
 
-    @Test
-    public void testNoSimultaneousGrow() {
-        pool = new CustomGrowableConcurrentPool<ConcurrentPoolTest.TestCloseable>(30,
-                new ConcurrentPoolTest.TestItemFactory(), 20, "linear");
-        pool.ensureMinSize(2, false);
-        pool.get();
-        pool.get();
-        pool.get();
-        pool.get();
-        sleepAndWait(10);
-        assertEquals(23, pool.getCount());
-    }
-
     public void sleepAndWait(final long millis) {
         try {
             Thread.sleep(millis);

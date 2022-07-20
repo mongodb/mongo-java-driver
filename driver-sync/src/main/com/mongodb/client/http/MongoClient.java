@@ -9,16 +9,14 @@ import java.util.Map;
 public class MongoClient {
 
     private Map<String, MongoDatabase> databases;
-    private static final Logger LOGGER = Loggers.getLogger("MongoClient");
+    private final String hostURL;
 
-    private String hostURL;
-    public MongoClient (String hostURL) {
+    public MongoClient(final String hostURL) {
         this.databases = new HashMap<String, MongoDatabase>();
         this.hostURL = hostURL;
     }
 
-    public MongoDatabase getDatabase(String databaseName) {
-        LOGGER.info("http Mongoclient 17");
+    public MongoDatabase getDatabase(final String databaseName) {
         if (databases.containsKey(databaseName)) {
             return databases.get(databaseName);
         } else {

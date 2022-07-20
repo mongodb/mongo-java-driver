@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Query {
-    private Map<String,String> queryKeyValues;
+    private Map<String, String> queryKeyValues;
 
-    Query (Map<String,String> queryKeyValues) {
+    Query(Map<String, String> queryKeyValues) {
         this.queryKeyValues = queryKeyValues;
     }
 
@@ -51,11 +51,11 @@ public class Query {
         return this.queryKeyValues.get(key);
     }
 
-    public Map<String,String> getQueryKeyValues() {
+    public Map<String, String> getQueryKeyValues() {
         return this.queryKeyValues;
     }
 
-    public void setQueryKeyValues(Map<String,String> queryKeyValues) {
+    public void setQueryKeyValues(Map<String, String> queryKeyValues) {
         this.queryKeyValues = queryKeyValues;
     }
 
