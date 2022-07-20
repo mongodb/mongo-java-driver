@@ -12,7 +12,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,13 +22,20 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Filter;
+import org.jasonjson.core.JsonArray;
+import org.jasonjson.core.JsonObject;
+import org.jasonjson.core.JsonParser;
 
 public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
-    private final String filter;
+    private  String filter;
     private final String dbname;
     private final String collectionName;
     private static final Logger LOGGER = Loggers.getLogger("MongoClient");
+
+    private int maxLimit = 1000;
+
+    private int limit = 1000;
 
     private final String hostURL;
     FindIterator(String collectionName, String dbname, @Nullable Bson filter, String hostURL) {
@@ -118,28 +124,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     public TResult first() {
         LOGGER.info("first http 102");
 //        String query = "Service=MONGO&partnerId=0&serverType=GLOBAL&collectionName=account&queryType=general&limit=1&sortDirection=ASC&sortField=&includeFields=&query=%7B%7D";
-        Query query = new Query();
-        query.appendQueryKeyValue("Service", "MONGO");
-        query.appendQueryKeyValue("partnerId", "0");
-        query.appendQueryKeyValue("serverType", "GLOBAL");
-        query.appendQueryKeyValue("collectionName", collectionName);
-        query.appendQueryKeyValue("queryType", "general");
-        query.appendQueryKeyValue("limit", "1");
-        query.appendQueryKeyValue("sortDirection", "ASC");
-        query.appendQueryKeyValue("sortField", "");
-        query.appendQueryKeyValue("includeFields", "");
-        query.appendQueryKeyValue("query", queryToJson(filter));
-        String queryString = query.toString();
-        String response = "";
-//        wait for http response
-        try {
-            response = getResult(queryString);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        LOGGER.info("109 : first");
-        LOGGER.info(response);
-        Document doc = Document.parse(response);
+        Document doc = Document.parse(getResponse(this.filter, 1, "ASC", ""));
         return (TResult) doc;
     }
 
@@ -155,7 +140,16 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     @Override
     public <A extends Collection<? super TResult>> A into(A target) {
-        return null;
+        String res = getResponse(this.filter, this.limit, "ASC", "");
+//        parse the stirng to jsonobj
+        JsonParser parser = new JsonParser();
+        JsonArray jsonArray = (JsonArray) parser.parse(res);;
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JsonObject jsonObject1 = jsonArray.get(i).getAsJsonObject();
+            Document doc = Document.parse(jsonObject1.toString());
+            target.add((TResult) doc);
+        }
+        return target;
     }
 
     @Override
@@ -213,9 +207,9 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         return null;
     }
 
-    public static String getResult(String mainQuery) throws IOException {
+    public static String getResult(String mainQuery, String hostURL) throws IOException {
         LOGGER.info("getResult http 189");
-        URL url = new URL("http://localhost:5003/api/mongo");
+        URL url = new URL(hostURL);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
         httpConn.setRequestMethod("POST");
 
@@ -286,6 +280,36 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         json = json.substring(0, json.length() - 1);
         json += "}";
         return json;
+    }
+
+    private Query getQuery(String filter, int limit, String sortField, String sortDirection) {
+        Query query = new Query();
+        query.appendQueryKeyValue("Service", "MONGO");
+        query.appendQueryKeyValue("partnerId", "0");
+        query.appendQueryKeyValue("serverType", "GLOBAL");
+        query.appendQueryKeyValue("collectionName", collectionName);
+        query.appendQueryKeyValue("queryType", "general");
+        query.appendQueryKeyValue("limit", String.valueOf(limit));
+        query.appendQueryKeyValue("sortDirection", sortDirection);
+        query.appendQueryKeyValue("sortField", sortField);
+        query.appendQueryKeyValue("includeFields", "");
+        query.appendQueryKeyValue("query", queryToJson(filter));
+        return query;
+    }
+
+    private String getResponse(String filter, int limit, String sortField, String sortDirection){
+        Query query = getQuery(filter, limit, sortDirection, sortField );
+        String queryString = query.toString();
+        String response = "";
+//        wait for http response
+        try {
+            response = getResult(queryString, hostURL);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        LOGGER.info("109 : first");
+        LOGGER.info(response);
+        return response;
     }
 
 }

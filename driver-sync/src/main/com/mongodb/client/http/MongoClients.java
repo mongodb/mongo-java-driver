@@ -1,6 +1,6 @@
 package com.mongodb.client.http;
 
-public class MongoClients {
+public final class MongoClients {
 
 /*
     * This class is a wrapper around the MongoClient class. It is used to

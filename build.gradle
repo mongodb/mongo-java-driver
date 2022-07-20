@@ -87,6 +87,7 @@ configure(javaMainProjects) {
         compileOnly 'com.google.code.findbugs:jsr305:1.3.9'
         compile 'org.slf4j:slf4j-api:1.7.6', optional
         testCompile 'com.google.code.findbugs:jsr305:1.3.9'
+        implementation group: 'org.jasonjson', name: 'jason', version: '0.1.1'
     }
 
     /* Compiling */
