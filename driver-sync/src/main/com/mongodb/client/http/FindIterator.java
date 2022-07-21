@@ -1,5 +1,6 @@
 package com.mongodb.client.http;
-
+import org.bson.BsonDocument;
+import org.bson.codecs.configuration.CodecRegistries;
 import com.mongodb.Block;
 import com.mongodb.CursorType;
 import com.mongodb.Function;
@@ -20,7 +21,9 @@ import java.util.concurrent.TimeUnit;
 import org.jasonjson.core.JsonArray;
 import org.jasonjson.core.JsonObject;
 import org.jasonjson.core.JsonParser;
-
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.BsonValueCodec;
 public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
 
@@ -31,8 +34,11 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     private  String filter;
     private final String hostURL;
     FindIterator(String collectionName, String dbname, @Nullable Bson filter, String hostURL) {
+        BsonDocument doc = filter.toBsonDocument(filter.getClass(), CodecRegistries.fromCodecs(new BsonDocumentCodec()));
+        doc.toJson();
+        System.out.println("hiiiiiiiii");
+        System.out.println("Hehwhehehe: "+ doc);
         this.collectionName = collectionName;
-
         if (filter != null) {
             this.filter = filter.toString();
         } else {
@@ -224,6 +230,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     private String queryToJson(String query) {
+        System.out.println(query);
         if (query.startsWith("And Filter")) {
             query = query.substring(11);
             query = queryToJson(query);
@@ -243,17 +250,30 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     private Map<String, String> getMap(String query) {
+        System.out.println("query 1: " + query);
         Map<String, String> map = new HashMap<String, String>();
         String[] fields = query.split("Filter\\{");
         for (String field : fields) {
             if (field.length() > 0) {
                 String[] fieldParts = field.split("\\}");
                 String fieldAct = fieldParts[0];
-                String[] keyValue = fieldAct.split(", ");
-                String key = keyValue[0].split("=")[1];
-                key = key.substring(1, key.length() - 1);
-                String value = keyValue[1].split("=")[1];
-                map.put(key.toString(), value.toString());
+//                replace = with :
+
+                fieldAct = fieldAct.replace("=", ":");
+//                parse as json
+
+//                add {} to fieldAct
+                fieldAct = "{" + fieldAct + "}";
+                System.out.println("fieldAct 2: " + fieldAct);
+                JsonParser parser = new JsonParser();
+                JsonObject jsonObject = (JsonObject) parser.parse(fieldAct);
+                System.out.println("jsonObject: " + jsonObject);
+                String fieldName = jsonObject.get("fieldName").toString();
+//                remove if there are two paor of double quotes
+                String fieldValue = jsonObject.get("value").toString();
+                System.out.println("fieldName: " + fieldName);
+                System.out.println("fieldValue: " + fieldValue);
+                map.put(fieldName, fieldValue);
             }
         }
         return map;
@@ -261,7 +281,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     private String mapToJson(Map<String, String> map) {
         String json = "{";
         for (Map.Entry<String, String> entry : map.entrySet()) {
-            json += "\"" + entry.getKey() + "\":\"" + entry.getValue() + "\",";
+            json +=  entry.getKey() + ":" + entry.getValue() + ",";
         }
         json = json.substring(0, json.length() - 1);
         json += "}";

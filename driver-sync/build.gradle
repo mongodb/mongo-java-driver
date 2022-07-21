@@ -23,7 +23,6 @@ ext {
 dependencies {
     compile project(':bson')
     compile project(':driver-core')
-
     testCompile project(':bson').sourceSets.test.output
     testCompile project(':driver-core').sourceSets.test.output
 }
