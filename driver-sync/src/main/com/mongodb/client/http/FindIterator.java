@@ -1,5 +1,7 @@
 package com.mongodb.client.http;
+import com.mongodb.MongoClientSettings;
 import org.bson.BsonDocument;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistries;
 import com.mongodb.Block;
 import com.mongodb.CursorType;
@@ -9,6 +11,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -24,6 +27,9 @@ import org.jasonjson.core.JsonParser;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.BsonValueCodec;
+
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
+
 public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
 
@@ -33,16 +39,19 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     private int limit;
     private  String filter;
     private final String hostURL;
+
+    private CodecRegistry codecRegistry = com.mongodb.MongoClientSettings.getDefaultCodecRegistry();
+
+    private UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+
     FindIterator(String collectionName, String dbname, @Nullable Bson filter, String hostURL) {
-        BsonDocument doc = filter.toBsonDocument(filter.getClass(), CodecRegistries.fromCodecs(new BsonDocumentCodec()));
-        doc.toJson();
-        System.out.println("hiiiiiiiii");
-        System.out.println("Hehwhehehe: "+ doc);
+        BsonDocument FilterDoc = filter.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation));
+        String jsonFilter = FilterDoc.toJson();
         this.collectionName = collectionName;
         if (filter != null) {
-            this.filter = filter.toString();
+            this.filter = jsonFilter;
         } else {
-            this.filter = "Filter{}";
+            this.filter = "{}";
         }
         this.dbname = dbname;
         this.hostURL = hostURL;
@@ -52,7 +61,8 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     @Override
     public FindIterable<TResult> filter(Bson filter) {
-        this.filter = filter.toString();
+        BsonDocument filterDoc = filter.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation));
+        this.filter = filterDoc.toJson();
         return this;
     }
 
