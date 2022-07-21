@@ -1,5 +1,6 @@
 package com.mongodb.client.http;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.model.FindOptions;
 import org.bson.BsonDocument;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -24,9 +25,6 @@ import java.util.concurrent.TimeUnit;
 import org.jasonjson.core.JsonArray;
 import org.jasonjson.core.JsonObject;
 import org.jasonjson.core.JsonParser;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.BsonValueCodec;
 
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
@@ -35,16 +33,24 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     private final String dbname;
     private final String collectionName;
-    private final int maxLimit;
-    private int limit;
     private  String filter;
     private final String hostURL;
+
+    private int limit;
+
+    private String  projection;
+
+    private String sortField;
+
+    private int skip;
+
 
     private CodecRegistry codecRegistry = com.mongodb.MongoClientSettings.getDefaultCodecRegistry();
 
     private UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
     FindIterator(String collectionName, String dbname, @Nullable Bson filter, String hostURL) {
+
         BsonDocument FilterDoc = filter.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation));
         String jsonFilter = FilterDoc.toJson();
         this.collectionName = collectionName;
@@ -56,7 +62,10 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         this.dbname = dbname;
         this.hostURL = hostURL;
         this.limit = 1000;
-        this.maxLimit = 1000;
+        this.projection = null;
+        this.sortField = null;
+        this.skip = 0;
+
     }
 
     @Override
@@ -68,58 +77,62 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     @Override
     public FindIterable<TResult> limit(int limit) {
-        this.limit = limit;
-        return this;
+       this.limit = limit;
+       return this;
     }
 
     @Override
     public FindIterable<TResult> skip(int skip) {
-        return null;
+        this.skip = skip;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit) {
-        return null;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit) {
-        return null;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> modifiers(Bson modifiers) {
-        return null;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> projection(Bson projection) {
-        return null;
+        this.projection = projection.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation)).toJson();
+        return this;
     }
 
     @Override
     public FindIterable<TResult> sort(Bson sort) {
-        return null;
+        String sortStr = sort.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation)).toJson();
+        this.sortField = sortStr;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> noCursorTimeout(boolean noCursorTimeout) {
-        return null;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> oplogReplay(boolean oplogReplay) {
-        return null;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> partial(boolean partial) {
-        return null;
+        return this;
     }
 
     @Override
     public FindIterable<TResult> cursorType(CursorType cursorType) {
-        return null;
+        return this;
     }
 
     @Override
@@ -134,8 +147,16 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     @Override
     public TResult first() {
-        Document doc = Document.parse(getResponse(this.filter, 1, "ASC", ""));
-        return (TResult) doc;
+        this.limit = 1;
+        TResult result;
+        try{
+            System.out.println("first");
+            result =(TResult) Document.parse(getResponse(this.filter,  "ASC", ""));
+        }
+        catch (Exception e){
+            result = (TResult) new Document();
+        }
+        return result;
     }
 
     @Override
@@ -150,7 +171,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     @Override
     public <A extends Collection<? super TResult>> A into(A target) {
-        String res = getResponse(this.filter, this.limit, "ASC", "");
+        String res = getResponse(this.filter, "ASC", "");
         JsonParser parser = new JsonParser();
         JsonArray jsonArray = (JsonArray) parser.parse(res);;
         for (int i = 0; i < jsonArray.size(); i++) {
@@ -239,82 +260,23 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         return response;
     }
 
-    private String queryToJson(String query) {
-        System.out.println(query);
-        if (query.startsWith("And Filter")) {
-            query = query.substring(11);
-            query = queryToJson(query);
-            query = query.substring(1, query.length() - 1);
-            query = mapToJson(getMap(query));
-        } else if (query.startsWith("filters=")) {
-            query = query.substring(8);
-            return query;
-        }
-        else if (query.startsWith("Filter")) {
-            return mapToJson(getMap(query));
-        }
-        else {
-            return "";
-        }
-        return query;
-    }
 
-    private Map<String, String> getMap(String query) {
-        System.out.println("query 1: " + query);
-        Map<String, String> map = new HashMap<String, String>();
-        String[] fields = query.split("Filter\\{");
-        for (String field : fields) {
-            if (field.length() > 0) {
-                String[] fieldParts = field.split("\\}");
-                String fieldAct = fieldParts[0];
-//                replace = with :
-
-                fieldAct = fieldAct.replace("=", ":");
-//                parse as json
-
-//                add {} to fieldAct
-                fieldAct = "{" + fieldAct + "}";
-                System.out.println("fieldAct 2: " + fieldAct);
-                JsonParser parser = new JsonParser();
-                JsonObject jsonObject = (JsonObject) parser.parse(fieldAct);
-                System.out.println("jsonObject: " + jsonObject);
-                String fieldName = jsonObject.get("fieldName").toString();
-//                remove if there are two paor of double quotes
-                String fieldValue = jsonObject.get("value").toString();
-                System.out.println("fieldName: " + fieldName);
-                System.out.println("fieldValue: " + fieldValue);
-                map.put(fieldName, fieldValue);
-            }
-        }
-        return map;
-    }
-    private String mapToJson(Map<String, String> map) {
-        String json = "{";
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            json +=  entry.getKey() + ":" + entry.getValue() + ",";
-        }
-        json = json.substring(0, json.length() - 1);
-        json += "}";
-        return json;
-    }
-
-    private Query getQuery(String filter, int limit, String sortField, String sortDirection) {
+    private Query getQuery(String filter, String sortDirection) {
         Query query = new Query();
         query.appendQueryKeyValue("Service", "MONGO");
         query.appendQueryKeyValue("partnerId", "0");
         query.appendQueryKeyValue("serverType", "GLOBAL");
         query.appendQueryKeyValue("collectionName", collectionName);
         query.appendQueryKeyValue("queryType", "general");
-        query.appendQueryKeyValue("limit", String.valueOf(limit));
-        query.appendQueryKeyValue("sortDirection", sortDirection);
-        query.appendQueryKeyValue("sortField", sortField);
-        query.appendQueryKeyValue("includeFields", "");
-        query.appendQueryKeyValue("query", queryToJson(filter));
+        query.appendQueryKeyValue("limit", String.valueOf(this.limit));
+        query.appendQueryKeyValue("sortField", this.sortField);
+        query.appendQueryKeyValue("includeFields", this.projection);
+        query.appendQueryKeyValue("query", filter);
         return query;
     }
 
-    private String getResponse(String filter, int limit, String sortField, String sortDirection){
-        Query query = getQuery(filter, limit, sortDirection, sortField);
+    private String getResponse(String filter ,String sortField, String sortDirection){
+        Query query = getQuery(filter, sortField);
         String queryString = query.toString();
         String response = "";
         try {
