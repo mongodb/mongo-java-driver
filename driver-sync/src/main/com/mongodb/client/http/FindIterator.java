@@ -1,9 +1,23 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb.client.http;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.model.FindOptions;
+
 import org.bson.BsonDocument;
 import org.bson.UuidRepresentation;
-import org.bson.codecs.configuration.CodecRegistries;
 import com.mongodb.Block;
 import com.mongodb.CursorType;
 import com.mongodb.Function;
@@ -20,7 +34,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import org.jasonjson.core.JsonArray;
 import org.jasonjson.core.JsonObject;
@@ -28,8 +43,10 @@ import org.jasonjson.core.JsonParser;
 
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
+/*
+ * An implementation of FindIterable for the HTTP driver.
+ */
 public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
-
 
     private final String dbname;
     private final String collectionName;
@@ -49,10 +66,10 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
 
     private UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
-    FindIterator(String collectionName, String dbname, @Nullable Bson filter, String hostURL) {
+    FindIterator(final String collectionName, final String dbname, final @Nullable Bson filter, final String hostURL) {
 
-        BsonDocument FilterDoc = filter.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation));
-        String jsonFilter = FilterDoc.toJson();
+        BsonDocument filterDoc = filter.toBsonDocument(BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation));
+        String jsonFilter = filterDoc.toJson();
         this.collectionName = collectionName;
         if (filter != null) {
             this.filter = jsonFilter;
@@ -69,69 +86,69 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     @Override
-    public FindIterable<TResult> filter(Bson filter) {
-        BsonDocument filterDoc = filter.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation));
+    public FindIterable<TResult> filter(final Bson filter) {
+        BsonDocument filterDoc = filter.toBsonDocument(BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation));
         this.filter = filterDoc.toJson();
         return this;
     }
 
     @Override
-    public FindIterable<TResult> limit(int limit) {
+    public FindIterable<TResult> limit(final int limit) {
        this.limit = limit;
        return this;
     }
 
     @Override
-    public FindIterable<TResult> skip(int skip) {
+    public FindIterable<TResult> skip(final int skip) {
         this.skip = skip;
         return this;
     }
 
     @Override
-    public FindIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit) {
+    public FindIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         return this;
     }
 
     @Override
-    public FindIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit) {
+    public FindIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         return this;
     }
 
     @Override
-    public FindIterable<TResult> modifiers(Bson modifiers) {
+    public FindIterable<TResult> modifiers(final Bson modifiers) {
         return this;
     }
 
     @Override
-    public FindIterable<TResult> projection(Bson projection) {
-        this.projection = projection.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation)).toJson();
+    public FindIterable<TResult> projection(final Bson projection) {
+        this.projection = projection.toBsonDocument(BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation)).toJson();
         return this;
     }
 
     @Override
-    public FindIterable<TResult> sort(Bson sort) {
-        String sortStr = sort.toBsonDocument( BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation)).toJson();
+    public FindIterable<TResult> sort(final Bson sort) {
+        String sortStr = sort.toBsonDocument(BsonDocument.class, createRegistry(codecRegistry, uuidRepresentation)).toJson();
         this.sortField = sortStr;
         return this;
     }
 
     @Override
-    public FindIterable<TResult> noCursorTimeout(boolean noCursorTimeout) {
+    public FindIterable<TResult> noCursorTimeout(final boolean noCursorTimeout) {
         return this;
     }
 
     @Override
-    public FindIterable<TResult> oplogReplay(boolean oplogReplay) {
+    public FindIterable<TResult> oplogReplay(final boolean oplogReplay) {
         return this;
     }
 
     @Override
-    public FindIterable<TResult> partial(boolean partial) {
+    public FindIterable<TResult> partial(final boolean partial) {
         return this;
     }
 
     @Override
-    public FindIterable<TResult> cursorType(CursorType cursorType) {
+    public FindIterable<TResult> cursorType(final CursorType cursorType) {
         return this;
     }
 
@@ -149,9 +166,8 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     public TResult first() {
         this.limit = 1;
         TResult result;
-        try{
-            System.out.println("first");
-            result =(TResult) Document.parse(getResponse(this.filter,  "ASC", ""));
+        try {
+            result = (TResult) Document.parse(getResponse(this.filter,  "ASC", ""));
         }
         catch (Exception e){
             result = (TResult) new Document();
@@ -160,20 +176,20 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     @Override
-    public <U> MongoIterable<U> map(Function<TResult, U> mapper) {
+    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
         return null;
     }
 
     @Override
-    public void forEach(Block<? super TResult> block) {
+    public void forEach(final Block<? super TResult> block) {
 
     }
 
     @Override
-    public <A extends Collection<? super TResult>> A into(A target) {
+    public <A extends Collection<? super TResult>> A into(final A target) {
         String res = getResponse(this.filter, "ASC", "");
         JsonParser parser = new JsonParser();
-        JsonArray jsonArray = (JsonArray) parser.parse(res);;
+        JsonArray jsonArray = (JsonArray) parser.parse(res);
         for (int i = 0; i < jsonArray.size(); i++) {
             JsonObject jsonObject1 = jsonArray.get(i).getAsJsonObject();
             Document doc = Document.parse(jsonObject1.toString());
@@ -183,61 +199,63 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     @Override
-    public FindIterable<TResult> batchSize(int batchSize) {
+    public FindIterable<TResult> batchSize(final int batchSize) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> collation(Collation collation) {
+    public FindIterable<TResult> collation(final Collation collation) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> comment(String comment) {
+    public FindIterable<TResult> comment(final String comment) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> hint(Bson hint) {
+    public FindIterable<TResult> hint(final Bson hint) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> hintString(String hint) {
+    public FindIterable<TResult> hintString(final String hint) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> max(Bson max) {
+    public FindIterable<TResult> max(final Bson max) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> min(Bson min) {
+    public FindIterable<TResult> min(final Bson min) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> maxScan(long maxScan) {
+    public FindIterable<TResult> maxScan(final long maxScan) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> returnKey(boolean returnKey) {
+    public FindIterable<TResult> returnKey(final boolean returnKey) {
         return null;
     }
 
     @Override
-    public FindIterable<TResult> showRecordId(boolean showRecordId) {
+    public FindIterable<TResult> showRecordId(final boolean showRecordId) {
         return null;
     }
-
+    /*
+     *  snapshot
+     */
     @Override
-    public FindIterable<TResult> snapshot(boolean snapshot) {
+    public FindIterable<TResult> snapshot(final boolean snapshot) {
         return null;
     }
 
-    public static String getResult(String mainQuery, String hostURL) throws IOException {
+    public static String getResult(final String mainQuery, final String hostURL) throws IOException {
         URL url = new URL(hostURL);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
         httpConn.setRequestMethod("POST");
@@ -261,7 +279,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
     }
 
 
-    private Query getQuery(String filter, String sortDirection) {
+    private Query getQuery(final String filter, final String sortDirection) {
         Query query = new Query();
         query.appendQueryKeyValue("Service", "MONGO");
         query.appendQueryKeyValue("partnerId", "0");
@@ -275,7 +293,7 @@ public class FindIterator<TDocument, TResult> implements FindIterable<TResult> {
         return query;
     }
 
-    private String getResponse(String filter ,String sortField, String sortDirection){
+    private String getResponse(final String filter, final String sortField, final String sortDirection){
         Query query = getQuery(filter, sortField);
         String queryString = query.toString();
         String response = "";

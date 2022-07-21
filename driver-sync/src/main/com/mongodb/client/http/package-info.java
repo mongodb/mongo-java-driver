@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
+/**
+ * This package contains the synchronous CRUD API.
+ */
+
+
 package com.mongodb.client.http;
-
-public final class MongoClients {
-
-    private MongoClients() {
-    }
-
-    public static MongoClient create(final String httpId) {
-        return new MongoClient(httpId);
-    }
-}
