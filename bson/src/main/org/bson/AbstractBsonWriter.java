@@ -530,8 +530,9 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
         }
-        if (!fieldNameValidatorStack.peek().validate(name)) {
-            throw new IllegalArgumentException(format("Invalid BSON field name %s", name));
+        FieldNameValidator fieldNameValidator = fieldNameValidatorStack.peek();
+        if (!fieldNameValidator.validate(name)) {
+            throw new IllegalArgumentException(fieldNameValidator.getValidationErrorMessage(name));
         }
         doWriteName(name);
         context.name = name;

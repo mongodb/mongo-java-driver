@@ -18,6 +18,8 @@ package com.mongodb.internal.validator;
 
 import org.bson.FieldNameValidator;
 
+import static java.lang.String.format;
+
 /**
  * A field name validator for update documents.  It ensures that all top-level fields start with a '$'.
  *
@@ -30,6 +32,14 @@ public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
     public boolean validate(final String fieldName) {
         numFields++;
         return fieldName.startsWith("$");
+    }
+
+    @Override
+    public String getValidationErrorMessage(final String fieldName) {
+        if (validate(fieldName)) {
+            throw new IllegalArgumentException(format("%s is valid", fieldName));
+        }
+        return format("All update operators must start with '$', but '%s' does not", fieldName);
     }
 
     @Override

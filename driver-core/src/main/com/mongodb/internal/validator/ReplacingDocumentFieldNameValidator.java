@@ -21,6 +21,8 @@ import org.bson.FieldNameValidator;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.lang.String.format;
+
 /**
  * A field name validator for documents that are meant for storage in MongoDB collections via replace operations. It ensures that no
  * top-level fields start with '$' (with the exception of "$db", "$ref", and "$id", so that DBRefs are not rejected).
@@ -39,6 +41,14 @@ public class ReplacingDocumentFieldNameValidator implements FieldNameValidator {
         }
 
         return !fieldName.startsWith("$") || EXCEPTIONS.contains(fieldName);
+    }
+
+    @Override
+    public String getValidationErrorMessage(final String fieldName) {
+        if (validate(fieldName)) {
+            throw new IllegalArgumentException(format("%s is valid", fieldName));
+        }
+        return format("Field names in a replacement document can not start with '$' but '%s' does", fieldName);
     }
 
     @Override

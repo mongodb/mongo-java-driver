@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import static java.lang.String.format;
+
 /**
  * A field name validator, for use by BSON writers to validate field names as documents are encoded.
  *
@@ -29,6 +31,20 @@ public interface FieldNameValidator {
      * @return true if the field name is valid, false otherwise
      */
     boolean validate(String fieldName);
+
+    /**
+     * Return the validation error message for an invalid field
+     *
+     * @param fieldName the field name
+     * @return the validation error message
+     * @throws IllegalArgumentException if fieldName is actually valid
+     */
+    default String getValidationErrorMessage(final String fieldName) {
+        if (validate(fieldName)) {
+            throw new IllegalArgumentException(format("%s is valid", fieldName));
+        }
+        return format("Invalid BSON field name %s", fieldName);
+    }
 
     /**
      * Gets a new validator to use for the value of the field with the given name.
