@@ -43,7 +43,7 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection
 import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnectionAndSource
-import static com.mongodb.internal.operation.OperationHelper.isRetryableRead
+import static com.mongodb.internal.operation.OperationHelper.canRetryRead
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite
 import static com.mongodb.internal.operation.OperationHelper.validateCollation
 import static com.mongodb.internal.operation.OperationHelper.validateCollationAndWriteConcern
@@ -434,17 +434,16 @@ class OperationHelperSpecification extends Specification {
         }
 
         expect:
-        isRetryableRead(retryReads, serverDescription, connectionDescription, noTransactionSessionContext) == expected
-        !isRetryableRead(retryReads, serverDescription, connectionDescription, activeTransactionSessionContext)
-        !isRetryableRead(retryReads, serverDescription, connectionDescription, noOpSessionContext)
+        canRetryRead(serverDescription, connectionDescription, noTransactionSessionContext) == expected
+        !canRetryRead(serverDescription, connectionDescription, activeTransactionSessionContext)
+        !canRetryRead(serverDescription, connectionDescription, noOpSessionContext)
 
         where:
-        retryReads  | serverDescription             | connectionDescription                 | expected
-        false       | retryableServerDescription    | threeSixConnectionDescription         | false
-        true        | retryableServerDescription    | threeSixConnectionDescription         | true
-        true        | nonRetryableServerDescription | threeSixConnectionDescription         | false
-        true        | retryableServerDescription    | threeFourConnectionDescription        | false
-        true        | retryableServerDescription    | threeSixPrimaryConnectionDescription  | true
+        serverDescription             | connectionDescription                 | expected
+        retryableServerDescription    | threeSixConnectionDescription         | true
+        nonRetryableServerDescription | threeSixConnectionDescription         | false
+        retryableServerDescription    | threeFourConnectionDescription        | false
+        retryableServerDescription    | threeSixPrimaryConnectionDescription  | true
     }
 
 

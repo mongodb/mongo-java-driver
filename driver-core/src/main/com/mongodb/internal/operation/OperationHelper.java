@@ -29,7 +29,9 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -44,8 +46,6 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
-import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
@@ -437,21 +437,12 @@ final class OperationHelper {
         return true;
     }
 
-    static boolean isRetryableRead(final boolean retryReads, final ServerDescription serverDescription,
-                                   final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
-        if (!retryReads) {
-            return false;
-        } else if (sessionContext.hasActiveTransaction()) {
-            LOGGER.debug("retryReads set to true but in an active transaction.");
-            return false;
-        } else {
-            return canRetryRead(serverDescription, connectionDescription, sessionContext);
-        }
-    }
-
     static boolean canRetryRead(final ServerDescription serverDescription, final ConnectionDescription connectionDescription,
                                 final SessionContext sessionContext) {
-        if (serverIsLessThanVersionThreeDotSix(connectionDescription)) {
+        if (sessionContext.hasActiveTransaction()) {
+            LOGGER.debug("retryReads set to true but in an active transaction.");
+            return false;
+        } else if (serverIsLessThanVersionThreeDotSix(connectionDescription)) {
             LOGGER.debug("retryReads set to true but the server does not support retryable reads.");
             return false;
         } else if (serverDescription.getLogicalSessionTimeoutMinutes() == null && serverDescription.getType() != ServerType.LOAD_BALANCER) {
