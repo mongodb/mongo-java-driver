@@ -19,6 +19,12 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static com.mongodb.internal.Locks.runWithLock;
+import static com.mongodb.internal.Locks.supplyWithLock;
+
 public class MongoCredentialWithCache {
     private final MongoCredential credential;
     private final Cache cache;
@@ -53,21 +59,29 @@ public class MongoCredentialWithCache {
         cache.set(key, value);
     }
 
+    public Lock getLock() {
+        return cache.lock;
+    }
 
     static class Cache {
+        private final ReentrantLock lock = new ReentrantLock();
         private Object cacheKey;
         private Object cacheValue;
 
-        synchronized Object get(final Object key) {
-            if (cacheKey != null && cacheKey.equals(key)) {
-                return cacheValue;
-            }
-            return null;
+        Object get(final Object key) {
+            return supplyWithLock(lock, () -> {
+                if (cacheKey != null && cacheKey.equals(key)) {
+                    return cacheValue;
+                }
+                return null;
+            });
         }
 
-        synchronized void set(final Object key, final Object value) {
-            cacheKey = key;
-            cacheValue = value;
+        void set(final Object key, final Object value) {
+            runWithLock(lock, () -> {
+                cacheKey = key;
+                cacheValue = value;
+            });
         }
     }
 }

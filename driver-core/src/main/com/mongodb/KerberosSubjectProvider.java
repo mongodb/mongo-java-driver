@@ -26,8 +26,10 @@ import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosTicket;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.checkedSupplyWithLock;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -54,6 +56,7 @@ public class KerberosSubjectProvider implements SubjectProvider {
     private static final Logger LOGGER = Loggers.getLogger("authenticator");
     private static final String TGT_PREFIX = "krbtgt/";
 
+    private final ReentrantLock lock = new ReentrantLock();
     private String loginContextName;
     private String fallbackLoginContextName;
     private Subject subject;
@@ -87,11 +90,13 @@ public class KerberosSubjectProvider implements SubjectProvider {
      * @throws LoginException any exception resulting from a call to {@link LoginContext#login()}
      */
     @NonNull
-    public synchronized Subject getSubject() throws LoginException {
-        if (subject == null || needNewSubject(subject)) {
-            subject = createNewSubject();
-        }
-        return subject;
+    public Subject getSubject() throws LoginException {
+        return checkedSupplyWithLock(lock, () -> {
+            if (subject == null || needNewSubject(subject)) {
+                subject = createNewSubject();
+            }
+            return subject;
+        });
     }
 
     private Subject createNewSubject() throws LoginException {

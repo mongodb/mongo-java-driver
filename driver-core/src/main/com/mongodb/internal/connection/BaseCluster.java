@@ -48,6 +48,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -55,6 +56,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
+import static com.mongodb.internal.Locks.runWithLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
@@ -68,6 +70,7 @@ abstract class BaseCluster implements Cluster {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
+    private final ReentrantLock lock = new ReentrantLock();
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
     private final ClusterId clusterId;
@@ -268,8 +271,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public synchronized void withLock(final Runnable action) {
-        action.run();
+    public void withLock(final Runnable action) {
+        runWithLock(lock, action);
     }
 
     private void updatePhase() {

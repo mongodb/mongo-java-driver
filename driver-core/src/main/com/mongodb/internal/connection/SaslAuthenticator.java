@@ -42,6 +42,7 @@ import java.security.PrivilegedAction;
 
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_KEY;
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY;
+import static com.mongodb.internal.Locks.supplyWithLock;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
@@ -49,7 +50,6 @@ import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 abstract class SaslAuthenticator extends Authenticator implements SpeculativeAuthenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
     private static final String SUBJECT_PROVIDER_CACHE_KEY = "SUBJECT_PROVIDER";
-
     SaslAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
             final @Nullable ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
@@ -205,7 +205,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     @NonNull
     private SubjectProvider getSubjectProvider() {
-        synchronized (getMongoCredentialWithCache()) {
+        return supplyWithLock(getMongoCredentialWithCache().getLock(), () -> {
             SubjectProvider subjectProvider =
                     getMongoCredentialWithCache().getFromCache(SUBJECT_PROVIDER_CACHE_KEY, SubjectProvider.class);
             if (subjectProvider == null) {
@@ -216,7 +216,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 getMongoCredentialWithCache().putInCache(SUBJECT_PROVIDER_CACHE_KEY, subjectProvider);
             }
             return subjectProvider;
-        }
+        });
     }
 
     @NonNull
