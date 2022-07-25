@@ -378,7 +378,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    def 'when inserting a document with a field starting with a dollar sign, insert should not throw IllegalArgumentException'() {
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def 'when inserting a document with a field starting with a dollar sign, insert should not throw'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
                 [new InsertRequest(new BsonDocument('$inc', new BsonDocument('x', new BsonInt32(1))))],
