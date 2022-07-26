@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
@@ -72,6 +73,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     public void setUp() {
         assumeTrue(serverVersionAtLeast(6, 0));
         assumeFalse(isStandalone());
+        assumeFalse(isServerlessTest());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         BsonDocument encryptedFields = bsonDocumentFromPath("encryptedFields.json");
