@@ -352,7 +352,44 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         execute(operation, async)
 
         then:
-        thrown(IllegalArgumentException)
+        def e = thrown(IllegalArgumentException)
+        e.getMessage() == 'All update operators must start with \'$\', but \'a\' does not'
+
+        where:
+        [async, ordered] << [[true, false], [true, false]].combinations()
+    }
+
+    def 'when replacing an invalid document, replace should throw IllegalArgumentException'() {
+        given:
+        def id = new ObjectId()
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
+                        new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), REPLACE)],
+                true, ACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.getMessage() == 'Field names in a replacement document can not start with \'$\' but \'$set\' does'
+
+        where:
+        [async, ordered] << [[true, false], [true, false]].combinations()
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def 'when inserting a document with a field starting with a dollar sign, insert should not throw'() {
+        given:
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new InsertRequest(new BsonDocument('$inc', new BsonDocument('x', new BsonInt32(1))))],
+                true, ACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        notThrown(IllegalArgumentException)
 
         where:
         [async, ordered] << [[true, false], [true, false]].combinations()

@@ -189,7 +189,8 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         execute(operation, async)
 
         then:
-        thrown(IllegalArgumentException)
+        def e = thrown(IllegalArgumentException)
+        e.getMessage() == 'Field names in a replacement document can not start with \'$\' but \'$inc\' does'
 
         where:
         async << [true, false]

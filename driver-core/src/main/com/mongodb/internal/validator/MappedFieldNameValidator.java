@@ -49,6 +49,11 @@ public class MappedFieldNameValidator implements FieldNameValidator {
     }
 
     @Override
+    public String getValidationErrorMessage(final String fieldName) {
+        return defaultValidator.getValidationErrorMessage(fieldName);
+    }
+
+    @Override
     public FieldNameValidator getValidatorForField(final String fieldName) {
         if (fieldNameToValidatorMap.containsKey(fieldName)) {
             return fieldNameToValidatorMap.get(fieldName);

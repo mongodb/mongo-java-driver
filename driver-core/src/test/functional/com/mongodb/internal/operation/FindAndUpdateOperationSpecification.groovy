@@ -293,7 +293,8 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         execute(operation, async)
 
         then:
-        thrown(IllegalArgumentException)
+        def e = thrown(IllegalArgumentException)
+        e.getMessage() == 'All update operators must start with \'$\', but \'x\' does not'
 
         where:
         async << [true, false]

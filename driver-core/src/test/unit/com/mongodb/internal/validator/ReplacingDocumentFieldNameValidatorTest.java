@@ -30,11 +30,6 @@ public class ReplacingDocumentFieldNameValidatorTest {
         assertTrue(fieldNameValidator.validate("ok"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNullFieldNameValidation() {
-        fieldNameValidator.validate(null);
-    }
-
     @Test
     public void testFieldNameStartsWithDollarValidation() {
         assertFalse(fieldNameValidator.validate("$1"));
