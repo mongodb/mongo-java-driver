@@ -26,34 +26,17 @@ import java.util.function.Supplier;
  */
 public final class Locks {
     public static void runWithLock(final Lock lock, final Runnable action) {
-        try {
-            lock.lockInterruptibly();
-            try {
-                action.run();
-            } finally {
-                lock.unlock();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new MongoInterruptedException("Interrupted waiting for lock", e);
-        }
-    }
-
-    public static <V, E extends Exception> V checkedSupplyWithLock(final Lock lock, final CheckedSupplier<V, E> supplier) throws E {
-        try {
-            lock.lockInterruptibly();
-            try {
-                return supplier.get();
-            } finally {
-                lock.unlock();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new MongoInterruptedException("Interrupted waiting for lock", e);
-        }
+        supplyWithLock(lock, () -> {
+            action.run();
+            return null;
+        });
     }
 
     public static <V> V supplyWithLock(final Lock lock, final Supplier<V> supplier) {
+        return checkedSupplyWithLock(lock, supplier::get);
+    }
+
+    public static <V, E extends Exception> V checkedSupplyWithLock(final Lock lock, final CheckedSupplier<V, E> supplier) throws E {
         try {
             lock.lockInterruptibly();
             try {
