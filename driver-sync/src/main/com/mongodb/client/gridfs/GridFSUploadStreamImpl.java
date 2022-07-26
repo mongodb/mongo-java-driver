@@ -27,8 +27,10 @@ import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.withLock;
 
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final ClientSession clientSession;
@@ -43,7 +45,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private int bufferOffset;
     private int chunkIndex;
 
-    private final Object closeLock = new Object();
+    private final ReentrantLock closeLock = new ReentrantLock();
     private boolean closed = false;
 
     GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
@@ -76,10 +78,11 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     @Override
     public void abort() {
-        synchronized (closeLock) {
+        withLock(closeLock, () -> {
             checkClosed();
             closed = true;
-        }
+        });
+
         if (clientSession != null) {
             chunksCollection.deleteMany(clientSession, new Document("files_id", fileId));
         } else {
@@ -135,12 +138,12 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     @Override
     public void close() {
-        synchronized (closeLock) {
+        withLock(closeLock, () -> {
             if (closed) {
                 return;
             }
             closed = true;
-        }
+        });
         writeChunk();
         GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
                 metadata);
@@ -175,10 +178,10 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     }
 
     private void checkClosed() {
-        synchronized (closeLock) {
+        withLock(closeLock, () -> {
             if (closed) {
                 throw new MongoGridFSException("The OutputStream has been closed");
             }
-        }
+        });
     }
 }
