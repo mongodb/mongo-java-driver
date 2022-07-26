@@ -18,6 +18,7 @@ package com.mongodb.internal.validator;
 
 import org.bson.FieldNameValidator;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static java.lang.String.format;
 
 /**
@@ -36,9 +37,7 @@ public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
 
     @Override
     public String getValidationErrorMessage(final String fieldName) {
-        if (validate(fieldName)) {
-            throw new IllegalArgumentException(format("%s is valid", fieldName));
-        }
+        assertFalse(fieldName.startsWith("$"));
         return format("All update operators must start with '$', but '%s' does not", fieldName);
     }
 

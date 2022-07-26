@@ -21,6 +21,7 @@ import org.bson.FieldNameValidator;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static java.lang.String.format;
 
 /**
@@ -36,18 +37,12 @@ public class ReplacingDocumentFieldNameValidator implements FieldNameValidator {
 
     @Override
     public boolean validate(final String fieldName) {
-        if (fieldName == null) {
-            throw new IllegalArgumentException("Field name can not be null");
-        }
-
         return !fieldName.startsWith("$") || EXCEPTIONS.contains(fieldName);
     }
 
     @Override
     public String getValidationErrorMessage(final String fieldName) {
-        if (validate(fieldName)) {
-            throw new IllegalArgumentException(format("%s is valid", fieldName));
-        }
+        assertFalse(validate(fieldName));
         return format("Field names in a replacement document can not start with '$' but '%s' does", fieldName);
     }
 
