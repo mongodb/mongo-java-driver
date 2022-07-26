@@ -42,7 +42,7 @@ import java.security.PrivilegedAction;
 
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_KEY;
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY;
-import static com.mongodb.internal.Locks.supplyWithLock;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
@@ -205,7 +205,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     @NonNull
     private SubjectProvider getSubjectProvider() {
-        return supplyWithLock(getMongoCredentialWithCache().getLock(), () -> {
+        return withLock(getMongoCredentialWithCache().getLock(), () -> {
             SubjectProvider subjectProvider =
                     getMongoCredentialWithCache().getFromCache(SUBJECT_PROVIDER_CACHE_KEY, SubjectProvider.class);
             if (subjectProvider == null) {

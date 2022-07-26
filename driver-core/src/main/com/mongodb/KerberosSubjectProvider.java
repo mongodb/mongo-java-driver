@@ -29,7 +29,7 @@ import javax.security.auth.login.LoginException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.Locks.checkedSupplyWithLock;
+import static com.mongodb.internal.Locks.checkedWithLock;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -91,7 +91,7 @@ public class KerberosSubjectProvider implements SubjectProvider {
      */
     @NonNull
     public Subject getSubject() throws LoginException {
-        return checkedSupplyWithLock(lock, () -> {
+        return checkedWithLock(lock, () -> {
             if (subject == null || needNewSubject(subject)) {
                 subject = createNewSubject();
             }

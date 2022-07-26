@@ -22,8 +22,7 @@ import com.mongodb.MongoCredential;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.internal.Locks.runWithLock;
-import static com.mongodb.internal.Locks.supplyWithLock;
+import static com.mongodb.internal.Locks.withLock;
 
 public class MongoCredentialWithCache {
     private final MongoCredential credential;
@@ -69,7 +68,7 @@ public class MongoCredentialWithCache {
         private Object cacheValue;
 
         Object get(final Object key) {
-            return supplyWithLock(lock, () -> {
+            return withLock(lock, () -> {
                 if (cacheKey != null && cacheKey.equals(key)) {
                     return cacheValue;
                 }
@@ -78,7 +77,7 @@ public class MongoCredentialWithCache {
         }
 
         void set(final Object key, final Object value) {
-            runWithLock(lock, () -> {
+            withLock(lock, () -> {
                 cacheKey = key;
                 cacheValue = value;
             });

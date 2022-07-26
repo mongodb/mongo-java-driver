@@ -21,8 +21,7 @@ import org.bson.BsonTimestamp;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.internal.Locks.runWithLock;
-import static com.mongodb.internal.Locks.supplyWithLock;
+import static com.mongodb.internal.Locks.withLock;
 
 public class ClusterClock {
     private static final String CLUSTER_TIME_KEY = "clusterTime";
@@ -30,19 +29,19 @@ public class ClusterClock {
     private BsonDocument clusterTime;
 
     public BsonDocument getCurrent() {
-        return supplyWithLock(lock, () -> clusterTime);
+        return withLock(lock, () -> clusterTime);
     }
 
     public BsonTimestamp getClusterTime() {
-        return supplyWithLock(lock, () -> clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null);
+        return withLock(lock, () -> clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null);
     }
 
     public void advance(final BsonDocument other) {
-        runWithLock(lock, () -> this.clusterTime = greaterOf(other));
+        withLock(lock, () -> this.clusterTime = greaterOf(other));
     }
 
     public BsonDocument greaterOf(final BsonDocument other) {
-        return supplyWithLock(lock, () -> {
+        return withLock(lock, () -> {
             if (other == null) {
                 return clusterTime;
             } else if (clusterTime == null) {

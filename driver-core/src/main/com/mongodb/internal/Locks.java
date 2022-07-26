@@ -25,18 +25,18 @@ import java.util.function.Supplier;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class Locks {
-    public static void runWithLock(final Lock lock, final Runnable action) {
-        supplyWithLock(lock, () -> {
+    public static void withLock(final Lock lock, final Runnable action) {
+        withLock(lock, () -> {
             action.run();
             return null;
         });
     }
 
-    public static <V> V supplyWithLock(final Lock lock, final Supplier<V> supplier) {
-        return checkedSupplyWithLock(lock, supplier::get);
+    public static <V> V withLock(final Lock lock, final Supplier<V> supplier) {
+        return checkedWithLock(lock, supplier::get);
     }
 
-    public static <V, E extends Exception> V checkedSupplyWithLock(final Lock lock, final CheckedSupplier<V, E> supplier) throws E {
+    public static <V, E extends Exception> V checkedWithLock(final Lock lock, final CheckedSupplier<V, E> supplier) throws E {
         try {
             lock.lockInterruptibly();
             try {
