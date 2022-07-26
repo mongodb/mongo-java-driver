@@ -384,7 +384,8 @@ class BsonWriterSpecification extends Specification {
         writer.writeString('bad-child', 'string')
 
         then:
-        thrown(IllegalArgumentException)
+        def e = thrown(IllegalArgumentException)
+        e.getMessage() == 'testFieldNameValidator error'
 
         where:
         writer << [new BsonBinaryWriter(new BasicOutputBuffer(), new TestFieldNameValidator('bad'))]
@@ -400,6 +401,11 @@ class BsonWriterSpecification extends Specification {
         @Override
         boolean validate(final String fieldName) {
             fieldName != badFieldName
+        }
+
+        @Override
+        String getValidationErrorMessage(final String fieldName) {
+            'testFieldNameValidator error'
         }
 
         @Override
