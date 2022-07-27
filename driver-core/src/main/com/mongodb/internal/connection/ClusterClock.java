@@ -19,29 +19,36 @@ package com.mongodb.internal.connection;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+import java.util.concurrent.locks.ReentrantLock;
+
+import static com.mongodb.internal.Locks.withLock;
+
 public class ClusterClock {
     private static final String CLUSTER_TIME_KEY = "clusterTime";
+    private final ReentrantLock lock = new ReentrantLock();
     private BsonDocument clusterTime;
 
-    public synchronized BsonDocument getCurrent() {
-        return clusterTime;
+    public BsonDocument getCurrent() {
+        return withLock(lock, () -> clusterTime);
     }
 
-    public synchronized BsonTimestamp getClusterTime() {
-        return clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null;
+    public BsonTimestamp getClusterTime() {
+        return withLock(lock, () -> clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null);
     }
 
-    public synchronized void advance(final BsonDocument other) {
-        this.clusterTime = greaterOf(other);
+    public void advance(final BsonDocument other) {
+        withLock(lock, () -> this.clusterTime = greaterOf(other));
     }
 
-    public synchronized BsonDocument greaterOf(final BsonDocument other) {
-        if (other == null) {
-            return clusterTime;
-        } else if (clusterTime == null) {
-            return other;
-        } else {
-            return other.getTimestamp(CLUSTER_TIME_KEY).compareTo(clusterTime.getTimestamp(CLUSTER_TIME_KEY)) > 0 ? other : clusterTime;
-        }
+    public BsonDocument greaterOf(final BsonDocument other) {
+        return withLock(lock, () -> {
+            if (other == null) {
+                return clusterTime;
+            } else if (clusterTime == null) {
+                return other;
+            } else {
+                return other.getTimestamp(CLUSTER_TIME_KEY).compareTo(clusterTime.getTimestamp(CLUSTER_TIME_KEY)) > 0 ? other : clusterTime;
+            }
+        });
     }
 }
