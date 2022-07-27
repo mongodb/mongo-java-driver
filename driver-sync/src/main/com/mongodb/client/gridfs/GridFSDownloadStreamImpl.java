@@ -17,18 +17,21 @@
 package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.lang.Nullable;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.withLock;
 import static java.lang.String.format;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
@@ -47,8 +50,8 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private byte[] buffer = null;
     private long markPosition;
 
-    private final Object closeLock = new Object();
-    private final Object cursorLock = new Object();
+    private final ReentrantLock closeLock = new ReentrantLock();
+    private final ReentrantLock cursorLock = new ReentrantLock();
     private boolean closed = false;
 
     GridFSDownloadStreamImpl(@Nullable final ClientSession clientSession, final GridFSFile fileInfo,
@@ -156,12 +159,12 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     }
 
     @Override
-    public synchronized void mark(final int readlimit) {
+    public void mark(final int readlimit) {
         markPosition = currentPosition;
     }
 
     @Override
-    public synchronized void reset() {
+    public void reset() {
         checkClosed();
         if (currentPosition == markPosition) {
             return;
@@ -184,29 +187,29 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     @Override
     public void close() {
-        synchronized (closeLock) {
+        withLock(closeLock, () -> {
             if (!closed) {
                 closed = true;
             }
             discardCursor();
-        }
+        });
     }
 
     private void checkClosed() {
-        synchronized (closeLock) {
+        withLock(closeLock, () -> {
             if (closed) {
                 throw new MongoGridFSException("The InputStream has been closed");
             }
-        }
+        });
     }
 
     private void discardCursor() {
-        synchronized (cursorLock) {
+        withLock(cursorLock, () -> {
             if (cursor != null) {
                 cursor.close();
                 cursor = null;
             }
-        }
+        });
     }
 
     @Nullable

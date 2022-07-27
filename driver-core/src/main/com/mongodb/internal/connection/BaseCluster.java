@@ -32,6 +32,7 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.internal.Locks;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
@@ -48,6 +49,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -68,6 +70,7 @@ abstract class BaseCluster implements Cluster {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
+    private final ReentrantLock lock = new ReentrantLock();
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
     private final ClusterId clusterId;
@@ -268,8 +271,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public synchronized void withLock(final Runnable action) {
-        action.run();
+    public void withLock(final Runnable action) {
+        Locks.withLock(lock, action);
     }
 
     private void updatePhase() {
