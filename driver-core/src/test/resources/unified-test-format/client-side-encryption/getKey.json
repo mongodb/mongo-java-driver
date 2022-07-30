@@ -133,7 +133,9 @@
               }
             }
           },
-          "expectResult": {"$$unsetOrMatches": null}
+          "expectResult": {
+            "$$unsetOrMatches": null
+          }
         }
       ],
       "expectEvents": [
