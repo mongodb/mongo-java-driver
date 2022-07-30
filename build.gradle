@@ -73,14 +73,6 @@ configure(coreProjects) {
         mavenLocal()
         google()
         mavenCentral()
-
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/staging'
-            content {
-                // Only include mongodb-crypt snapshots
-                includeGroup "org.mongodb"
-            }
-        }
     }
 }
 
