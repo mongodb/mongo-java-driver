@@ -23,10 +23,10 @@ import com.mongodb.client.MongoClients;
 import org.bson.Document;
 
 // Start AWS Lambda Example 1
-public class TestAwsLambdaHandler implements RequestHandler<String, String> {
+public class ExampleAwsLambdaHandler implements RequestHandler<String, String> {
     private final MongoClient client;
 
-    public TestAwsLambdaHandler() {
+    public ExampleAwsLambdaHandler() {
         client = MongoClients.create(System.getenv("MONGODB_URI"));
     }
 
