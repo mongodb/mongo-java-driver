@@ -31,14 +31,11 @@ import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
  */
 public final class GcpCredentialHelper {
     public static BsonDocument obtainFromEnvironment() {
-        String alternateHost = System.getenv("GCE_METADATA_HOST");
-        String host = alternateHost == null ? "metadata.google.internal" : alternateHost;
-        String endpoint = "http://" + host;
-        String path = "/computeMetadata/v1/instance/service-accounts/default/token";
+        String endpoint = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 
         Map<String, String> header = new HashMap<>();
         header.put("Metadata-Flavor", "Google");
-        String response = getHttpContents("GET", endpoint + path, header);
+        String response = getHttpContents("GET", endpoint, header);
         BsonDocument responseDocument = BsonDocument.parse(response);
         if (responseDocument.containsKey("access_token")) {
             return new BsonDocument("accessToken", responseDocument.get("access_token"));
