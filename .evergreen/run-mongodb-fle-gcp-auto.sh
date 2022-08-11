@@ -4,8 +4,7 @@ set -o xtrace
 set -o errexit  # Exit the script with error if any of the commands fail
 
 # Supported/used environment variables:
-#       MONGODB_URI             Set the URI, including an optional username/password to use to connect to the server via MONGODB-AWS
-#                               authentication mechanism
+#       MONGODB_URI             Set the URI, including an optional username/password to use to connect to the server
 #       SUCCESS                 Whether the authentication is expected to succeed or fail.  One of "true" or "false"
 ############################################
 #            Main Program                  #
