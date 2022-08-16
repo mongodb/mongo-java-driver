@@ -25,6 +25,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.internal.authentication.AwsCredentialHelper;
+import com.mongodb.internal.authentication.GcpCredentialHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -110,6 +111,9 @@ public final class MongoCryptHelper {
                 }
                 kmsProvidersDocument.put("aws", awsCredentialDocument);
             }
+        }
+        if (kmsProvidersDocument.containsKey("gcp") && kmsProvidersDocument.get("gcp").asDocument().isEmpty()) {
+            kmsProvidersDocument.put("gcp", GcpCredentialHelper.obtainFromEnvironment());
         }
         return kmsProvidersDocument;
     }
