@@ -48,7 +48,7 @@ ext {
     nettyTcnativeBoringsslVersion = '2.0.48.Final'
     snappyVersion = '1.1.8.4'
     zstdVersion = '1.5.0-4'
-    mongoCryptVersion = '1.6.0-SNAPSHOT'
+    mongoCryptVersion = '1.6.0-alpha0'
     projectReactorVersion = 'Californium-SR23'
     junitBomVersion = '5.8.1'
     gitVersion = getGitVersion()
@@ -74,21 +74,13 @@ configure(coreProjects) {
         google()
         mavenCentral()
 
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/staging'
-            content {
-                // Only include mongodb-crypt snapshots
-                includeGroup "org.mongodb"
-            }
-        }
-
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-            content {
-                // Only include mongodb-crypt snapshots
-                includeGroup "org.mongodb"
-            }
-        }
+        // Uncomment this to test with a snapshot build of mongodb-crypt
+//        maven {
+//            url 'https://oss.sonatype.org/content/repositories/snapshots'
+//            content {
+//                includeGroup "org.mongodb"
+//            }
+//        }
     }
 }
 
