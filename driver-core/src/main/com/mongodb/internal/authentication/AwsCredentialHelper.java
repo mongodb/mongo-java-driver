@@ -17,19 +17,18 @@
 package com.mongodb.internal.authentication;
 
 import com.mongodb.AwsCredential;
-import com.mongodb.MongoInternalException;
-import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
+
+/**
+ * Utility class for working with AWS authentication.
+ *
+ * <p>This class should not be considered a part of the public API.</p>
+ */
 public final class AwsCredentialHelper {
 
     public static AwsCredential obtainFromEnvironment() {
@@ -73,41 +72,6 @@ public final class AwsCredentialHelper {
         header.put("X-aws-ec2-metadata-token", token);
         String role = getHttpContents("GET", endpoint + path, header);
         return getHttpContents("GET", endpoint + path + role, header);
-    }
-
-    @NonNull
-    private static String getHttpContents(final String method, final String endpoint, final Map<String, String> headers) {
-        StringBuilder content = new StringBuilder();
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) new URL(endpoint).openConnection();
-            conn.setRequestMethod(method);
-            conn.setReadTimeout(10000);
-            if (headers != null) {
-                for (Map.Entry<String, String> kvp : headers.entrySet()) {
-                    conn.setRequestProperty(kvp.getKey(), kvp.getValue());
-                }
-            }
-
-            int status = conn.getResponseCode();
-            if (status != HttpURLConnection.HTTP_OK) {
-                throw new IOException(String.format("%d %s", status, conn.getResponseMessage()));
-            }
-
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    content.append(inputLine);
-                }
-            }
-        } catch (IOException e) {
-            throw new MongoInternalException("Unexpected IOException", e);
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
-        return content.toString();
     }
 
     private AwsCredentialHelper() {
