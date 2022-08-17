@@ -73,6 +73,74 @@ abstract class ContextElement {
         return new ConnectionPoolEventMatchingContextElement(expected, actual, eventPosition);
     }
 
+    public static ContextElement ofWaitForPrimaryChange() {
+        return new ContextElement() {
+            @Override
+            public String toString() {
+                return "Wait For Primary Change Context\n";
+            }
+        };
+    }
+
+    public static ContextElement ofWaitForThread(final String threadId) {
+        return new ContextElement() {
+            @Override
+            public String toString() {
+                return "Wait For Thread Context:\n"
+                        + "   Thread id: " + threadId + "\n";
+            }
+        };
+    }
+
+    public static ContextElement ofTopologyType(final String topologyType) {
+        return new ContextElement() {
+            @Override
+            public String toString() {
+                return "Topology Type Context:\n"
+                        + "   Topology Type: " + topologyType + "\n";
+            }
+        };
+    }
+
+    public static ContextElement ofWaitForConnectionPoolEvents(final String client, final BsonDocument event, final int count) {
+        return new EventCountContext("Wait For Connection Pool Events", client, event, count);
+    }
+
+    public static ContextElement ofConnectionPoolEventCount(final String client, final BsonDocument event, final int count) {
+        return new EventCountContext("Connection Pool Event Count", client, event, count);
+    }
+
+    public static ContextElement ofWaitForServerDescriptionChangedEvents(final String client, final BsonDocument event, final int count) {
+        return new EventCountContext("Wait For Server Description Changed Events", client, event, count);
+    }
+
+    public static ContextElement ofServerDescriptionChangeEventCount(final String client, final BsonDocument event, final int count) {
+        return new EventCountContext("Server Description Changed Event Count", client, event, count);
+    }
+
+    private static class EventCountContext extends ContextElement {
+
+        private final String name;
+        private final String client;
+        private final BsonDocument event;
+        private final int count;
+
+        EventCountContext(final String name, final String client, final BsonDocument event, final int count) {
+            this.name = name;
+            this.client = client;
+            this.event = event;
+            this.count = count;
+        }
+
+        @Override
+        public String toString() {
+            return name + " Context: " + "\n"
+                    + "   Client: " + client + "\n"
+                    + "   Event:\n"
+                    + event.toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
+                    + "   Count: " + count + "\n";
+        }
+    }
 
     private static class TestContextContextElement extends ContextElement {
         private final BsonDocument definition;
