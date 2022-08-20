@@ -22,7 +22,6 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +72,7 @@ public abstract class AbstractClientSideEncryptionOnDemandGcpCredentialsTest {
         assertTrue(thrown.getCause() instanceof IOException);
    }
 
-    @NotNull
+    @NonNull
     private DataKeyOptions getDataKeyOptions() {
         return new DataKeyOptions().masterKey(BsonDocument.parse(
                 "{projectId: \"devprod-drivers\", location: \"global\", keyRing: \"key-ring-csfle\", keyName: \"key-name-csfle\"}"));

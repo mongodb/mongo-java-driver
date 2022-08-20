@@ -30,7 +30,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerType;
 import com.mongodb.selector.ServerSelector;
-import org.jetbrains.annotations.NotNull;
+import com.mongodb.lang.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Tag;
@@ -487,7 +487,7 @@ public class LoadBalancedClusterTest {
         assertEquals(ServerType.LOAD_BALANCER, serverDescription.getType());
     }
 
-    @NotNull
+    @NonNull
     private ClusterableServerFactory mockServerFactory(final ServerAddress serverAddress, final ClusterableServer expectedServer) {
         ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
         when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
@@ -495,7 +495,7 @@ public class LoadBalancedClusterTest {
         return serverFactory;
     }
 
-    @NotNull
+    @NonNull
     private ClusterableServerFactory mockServerFactory() {
         ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
         when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
