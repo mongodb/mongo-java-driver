@@ -20,10 +20,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
-import static org.assertj.core.util.Streams.stream;
+import static java.util.stream.StreamSupport.stream;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -49,7 +49,7 @@ final class IterablesTest {
     }
 
     private static <T> void assertIterable(final List<? extends T> expected, final Iterable<? extends T> actual) {
-        assertEquals(expected, stream(actual).collect(toList()));
+        assertEquals(expected, stream(actual.spliterator(), false).collect(toList()));
         assertEquals(expected.toString(), actual.toString());
     }
 }
