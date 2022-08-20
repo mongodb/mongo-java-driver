@@ -85,7 +85,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -248,7 +247,7 @@ final class UnifiedCrudHelper {
         });
     }
 
-    @NotNull
+    @NonNull
     private FindIterable<BsonDocument> createFindIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
@@ -803,7 +802,7 @@ final class UnifiedCrudHelper {
         }
     }
 
-    @NotNull
+    @NonNull
     private DeleteOptions getDeleteOptions(final BsonDocument arguments) {
         DeleteOptions options = new DeleteOptions();
 
@@ -1349,7 +1348,7 @@ final class UnifiedCrudHelper {
                 new BsonInt64(collection.estimatedDocumentCount(options)));
     }
 
-    @NotNull
+    @NonNull
     private String createRandomEntityId() {
         return "random-entity-id" + uniqueIdGenerator.getAndIncrement();
     }
@@ -1366,7 +1365,7 @@ final class UnifiedCrudHelper {
             "fullDocument:whenAvailable with changeStreamPreAndPostImages disabled",
             "fullDocumentBeforeChange:whenAvailable with changeStreamPreAndPostImages disabled");
 
-    @NotNull
+    @NonNull
     private MongoCursor<BsonDocument> createChangeStreamWrappingCursor(final ChangeStreamIterable<BsonDocument> iterable) {
         if (BSON_DOCUMENT_CHANGE_STREAM_TESTS.contains(testDescription)) {
             return iterable.withDocumentClass(BsonDocument.class).cursor();

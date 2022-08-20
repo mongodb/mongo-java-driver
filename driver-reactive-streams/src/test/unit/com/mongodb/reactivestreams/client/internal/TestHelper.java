@@ -29,12 +29,12 @@ import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.Operations;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -136,7 +136,7 @@ public class TestHelper {
         return operation;
     }
 
-    @NotNull
+    @NonNull
     private static Map<String, Object> getClassGetterValues(final Object instance) {
         return Arrays.stream(instance.getClass().getMethods())
                 .filter(n -> n.getParameterCount() == 0 && (n.getName().startsWith("get") || n.getName().startsWith("is")))

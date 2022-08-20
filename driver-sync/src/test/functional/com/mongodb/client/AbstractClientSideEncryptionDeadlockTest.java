@@ -33,11 +33,11 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -213,12 +213,12 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
         return uniqueClients.size();
     }
 
-    @NotNull
+    @NonNull
     private static MongoClientSettings getKeyVaultClientSettings(final CommandListener commandListener) {
         return getClientSettings(1, commandListener, null);
     }
 
-    @NotNull
+    @NonNull
     private static MongoClientSettings getClientSettings(final int maxPoolSize,
                                                          final CommandListener commandListener,
                                                          final AutoEncryptionSettings autoEncryptionSettings) {

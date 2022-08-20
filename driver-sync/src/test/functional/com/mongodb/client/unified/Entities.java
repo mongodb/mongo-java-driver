@@ -56,6 +56,7 @@ import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.lang.NonNull;
 import com.mongodb.internal.connection.TestServerListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -65,7 +66,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -777,7 +777,7 @@ public final class Entities {
                     .append("address", new BsonString(getAddressAsString(serverId)));
         }
 
-        @NotNull
+        @NonNull
         private String getAddressAsString(final ServerId serverId) {
             return serverId.getAddress().getHost() + ":" + serverId.getAddress().getPort();
         }

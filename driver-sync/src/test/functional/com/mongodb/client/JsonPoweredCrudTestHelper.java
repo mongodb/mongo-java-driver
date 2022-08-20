@@ -62,6 +62,7 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -74,7 +75,6 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.jetbrains.annotations.NotNull;
 import util.Hex;
 
 import java.io.ByteArrayInputStream;
@@ -274,7 +274,7 @@ public class JsonPoweredCrudTestHelper {
         return indexes.stream().anyMatch(document -> document.get("name").equals(indexName));
     }
 
-    @NotNull
+    @NonNull
     private List<String> getCollectionNames(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
         MongoDatabase database = mongoClient.getDatabase(arguments.getString("database").getValue());
         MongoIterable<String> collectionNames = clientSession != null ? database.listCollectionNames(clientSession) : database.listCollectionNames();

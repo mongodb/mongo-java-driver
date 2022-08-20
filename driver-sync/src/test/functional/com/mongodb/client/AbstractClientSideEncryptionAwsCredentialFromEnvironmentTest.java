@@ -22,11 +22,11 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -219,7 +219,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
         }
     }
 
-    @NotNull
+    @NonNull
     private static BsonDocument getSchema(final String base64DataKeyId) {
         return BsonDocument.parse("{"
                 + "  properties: {"
