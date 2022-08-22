@@ -56,8 +56,8 @@ import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
-import com.mongodb.lang.NonNull;
 import com.mongodb.internal.connection.TestServerListener;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -297,7 +297,7 @@ public final class Entities {
             String id = entity.getString("id").getValue();
             switch (entityType) {
                 case "thread":
-                    initThread(entity, id);
+                    initThread(id);
                     break;
                 case "client":
                     initClient(entity, id, mongoClientSupplier, waitForPoolAsyncWorkManagerStart);
@@ -328,7 +328,7 @@ public final class Entities {
         }
     }
 
-    private void initThread(final BsonDocument entity, final String id) {
+    private void initThread(final String id) {
         putEntity(id, Executors.newSingleThreadExecutor(), threads);
         tasks.put(id, new ArrayList<>());
     }
