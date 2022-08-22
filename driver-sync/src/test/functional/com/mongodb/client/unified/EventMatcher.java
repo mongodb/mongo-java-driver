@@ -28,10 +28,10 @@ import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -245,7 +245,7 @@ final class EventMatcher {
         context.pop();
     }
 
-    @NotNull
+    @NonNull
     private BsonDocument getEventContents(final BsonDocument expectedEvent) {
         if (!expectedEvent.getFirstKey().equals("serverDescriptionChangedEvent")) {
             throw new UnsupportedOperationException("Unsupported event type " + expectedEvent.getFirstKey());
