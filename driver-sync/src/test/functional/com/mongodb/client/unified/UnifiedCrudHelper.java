@@ -1267,11 +1267,14 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument command = arguments.getDocument("command");
+        ReadPreference readPreference = arguments.containsKey("readPreference")
+                ? asReadPreference(arguments.getDocument("readPreference")) : null;
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "command":
                 case "commandName":
                 case "session":
+                case "readPreference":
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1280,9 +1283,17 @@ final class UnifiedCrudHelper {
 
         return resultOf(() -> {
             if (session == null) {
-                return database.runCommand(command, BsonDocument.class);
+                if (readPreference == null) {
+                    return database.runCommand(command, BsonDocument.class);
+                } else {
+                    return database.runCommand(command, readPreference, BsonDocument.class);
+                }
             } else {
-                return database.runCommand(session, command, BsonDocument.class);
+                if (readPreference == null) {
+                    return database.runCommand(session, command, BsonDocument.class);
+                } else {
+                    return database.runCommand(session, command, readPreference, BsonDocument.class);
+                }
             }
         });
     }

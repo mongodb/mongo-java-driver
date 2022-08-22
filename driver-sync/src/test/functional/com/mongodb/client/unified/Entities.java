@@ -34,6 +34,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.CommandEvent;
@@ -55,6 +56,7 @@ import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.connection.TestServerListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -71,6 +73,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -97,6 +102,8 @@ public final class Entities {
                     "id", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
                     "observeEvents", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
     private final Set<String> entityNames = new HashSet<>();
+    private final Map<String, ExecutorService> threads = new HashMap<>();
+    private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
     private final Map<String, BsonValue> results = new HashMap<>();
     private final Map<String, MongoClient> clients = new HashMap<>();
     private final Map<String, MongoDatabase> databases = new HashMap<>();
@@ -107,7 +114,9 @@ public final class Entities {
     private final Map<String, ClientEncryption> clientEncryptions = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
+    private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
+    private final Map<String, ClusterDescription> topologyDescriptions = new HashMap<>();
     private final Map<String, Long> successCounts = new HashMap<>();
     private final Map<String, Long> iterationCounts = new HashMap<>();
     private final Map<String, BsonArray> errorDocumentsMap = new HashMap<>();
@@ -186,6 +195,30 @@ public final class Entities {
         return getEntity(id, cursors, "cursors");
     }
 
+    public void addTopologyDescription(final String id, final ClusterDescription clusterDescription) {
+        putEntity(id, clusterDescription, topologyDescriptions);
+    }
+
+    public ClusterDescription getTopologyDescription(final String id) {
+        return getEntity(id, topologyDescriptions, "topologyDescription");
+    }
+
+    public ExecutorService getThread(final String id) {
+        return getEntity(id, threads, "thread");
+    }
+
+    public void addThreadTask(final String id, final Future<?> task) {
+        getEntity(id, tasks, "tasks").add(task);
+    }
+
+    public List<Future<?>> getThreadTasks(final String id) {
+        return getEntity(id, tasks, "tasks");
+    }
+
+    public void clearThreadTasks(final String id) {
+        getEntity(id, tasks, "tasks").clear();
+    }
+
     public boolean hasClient(final String id) {
         return clients.containsKey(id);
     }
@@ -234,6 +267,10 @@ public final class Entities {
         return getEntity(id + "-connection-pool-listener", clientConnectionPoolListeners, "connection pool listener");
     }
 
+    public TestServerListener getServerListener(final String id) {
+        return getEntity(id + "-server-listener", clientServerListeners, "server listener");
+    }
+
     private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
         T entity = entities.get(id);
         if (entity == null) {
@@ -259,6 +296,9 @@ public final class Entities {
             BsonDocument entity = cur.asDocument().getDocument(entityType);
             String id = entity.getString("id").getValue();
             switch (entityType) {
+                case "thread":
+                    initThread(entity, id);
+                    break;
                 case "client":
                     initClient(entity, id, mongoClientSupplier, waitForPoolAsyncWorkManagerStart);
                     break;
@@ -288,6 +328,11 @@ public final class Entities {
         }
     }
 
+    private void initThread(final BsonDocument entity, final String id) {
+        putEntity(id, Executors.newSingleThreadExecutor(), threads);
+        tasks.put(id, new ArrayList<>());
+    }
+
     private void initClient(final BsonDocument entity, final String id,
                             final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                             final boolean waitForPoolAsyncWorkManagerStart) {
@@ -305,6 +350,10 @@ public final class Entities {
         } else {
             clientSettingsBuilder = getMongoClientSettingsBuilder();
         }
+
+        TestServerListener testClusterListener = new TestServerListener();
+        clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerListener(testClusterListener));
+        putEntity(id + "-server-listener", testClusterListener, clientServerListeners);
 
         if (entity.containsKey("observeEvents")) {
             List<String> ignoreCommandMonitoringEvents = entity
@@ -332,6 +381,7 @@ public final class Entities {
                     builder.addConnectionPoolListener(testConnectionPoolListener));
             putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
         }
+
         if (entity.containsKey("storeEventsAsEntities")) {
             BsonArray storeEventsAsEntitiesArray = entity.getArray("storeEventsAsEntities");
             for (BsonValue eventValue : storeEventsAsEntitiesArray) {
@@ -379,14 +429,37 @@ public final class Entities {
                                 new ReadConcern(ReadConcernLevel.fromString(value.asString().getValue())));
                         break;
                     case "w":
-                        clientSettingsBuilder.writeConcern(new WriteConcern(value.asInt32().intValue()));
+                        if (value.isString()) {
+                            clientSettingsBuilder.writeConcern(new WriteConcern(value.asString().getValue()));
+                        } else {
+                            clientSettingsBuilder.writeConcern(new WriteConcern(value.asInt32().intValue()));
+                        }
                         break;
                     case "maxPoolSize":
                         clientSettingsBuilder.applyToConnectionPoolSettings(builder -> builder.maxSize(value.asNumber().intValue()));
                         break;
+                    case "minPoolSize":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder -> builder.minSize(value.asNumber().intValue()));
+                        break;
                     case "waitQueueTimeoutMS":
                         clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
                                 builder.maxWaitTime(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "heartbeatFrequencyMS":
+                        clientSettingsBuilder.applyToServerSettings(builder ->
+                                builder.heartbeatFrequency(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "connectTimeoutMS":
+                        clientSettingsBuilder.applyToSocketSettings(builder ->
+                                builder.connectTimeout(value.asNumber().intValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "socketTimeoutMS":
+                        clientSettingsBuilder.applyToSocketSettings(builder ->
+                                builder.readTimeout(value.asNumber().intValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "serverSelectionTimeoutMS":
+                        clientSettingsBuilder.applyToClusterSettings(builder ->
+                                builder.serverSelectionTimeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
                         break;
                     case "loadBalanced":
                         if (value.asBoolean().getValue()) {
@@ -554,6 +627,9 @@ public final class Entities {
         }
         for (MongoClient client : clients.values()) {
             client.close();
+        }
+        for (ExecutorService executorService : threads.values()) {
+            executorService.shutdownNow();
         }
     }
 

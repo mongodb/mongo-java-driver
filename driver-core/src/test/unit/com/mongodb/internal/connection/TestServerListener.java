@@ -23,31 +23,47 @@ import com.mongodb.event.ServerOpeningEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
-class TestServerListener implements ServerListener {
+public class TestServerListener implements ServerListener {
     private ServerOpeningEvent serverOpeningEvent;
     private ServerClosedEvent serverClosedEvent;
     private final List<ServerDescriptionChangedEvent> serverDescriptionChangedEvents = new ArrayList<ServerDescriptionChangedEvent>();
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
+    private volatile int waitingForEventCount;
+    private Predicate<ServerDescriptionChangedEvent> waitingForEventMatcher;
 
     @Override
     public void serverOpening(final ServerOpeningEvent event) {
-        isTrue("serverOpeningEvent is null", serverOpeningEvent == null);
         serverOpeningEvent = event;
     }
 
     @Override
     public void serverClosed(final ServerClosedEvent event) {
-        isTrue("serverClostedEvent is null", serverClosedEvent == null);
         serverClosedEvent = event;
     }
 
     @Override
     public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
         notNull("event", event);
-        serverDescriptionChangedEvents.add(event);
+        lock.lock();
+        try {
+            serverDescriptionChangedEvents.add(event);
+            if (waitingForEventCount != 0 && containsEvents()) {
+                condition.signalAll();
+            }
+
+        } finally {
+            lock.unlock();
+        }
     }
 
     public ServerOpeningEvent getServerOpeningEvent() {
@@ -60,5 +76,39 @@ class TestServerListener implements ServerListener {
 
     public List<ServerDescriptionChangedEvent> getServerDescriptionChangedEvents() {
         return serverDescriptionChangedEvents;
+    }
+
+    public void waitForServerDescriptionChangedEvent(final Predicate<ServerDescriptionChangedEvent> matcher, final int count,
+            final int time, final TimeUnit unit) throws InterruptedException, TimeoutException {
+        if (count <= 0) {
+            throw new IllegalArgumentException();
+        }
+        lock.lock();
+        try {
+            if (waitingForEventCount != 0) {
+                throw new IllegalStateException("Already waiting for events");
+            }
+            waitingForEventCount = count;
+            waitingForEventMatcher = matcher;
+            if (containsEvents()) {
+                return;
+            }
+            if (!condition.await(time, unit)) {
+                throw new TimeoutException("Timed out waiting for " + count + " ServerDescriptionChangedEvent events. "
+                        + "The count after timing out is " + countEvents());
+            }
+        } finally {
+            waitingForEventCount = 0;
+            waitingForEventMatcher = null;
+            lock.unlock();
+        }
+    }
+
+    private long countEvents() {
+        return serverDescriptionChangedEvents.stream().filter(waitingForEventMatcher).count();
+    }
+
+    private boolean containsEvents() {
+        return countEvents() >= waitingForEventCount;
     }
 }
