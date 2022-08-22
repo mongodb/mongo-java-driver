@@ -34,6 +34,8 @@
     <suppress checks="MethodLength" files="AbstractClientSideEncryptionTest"/>
     <suppress checks="MethodLength" files="AggregatesSearchIntegrationTest"/>
     <suppress checks="MethodLength" files="ConnectionString"/>
+    <suppress checks="MethodLength" files="UnifiedTest"/>
+    <suppress checks="MethodLength" files="Entities"/>
 
     <suppress checks="JavadocPackage" files="com[\\/]mongodb[\\/][^\\/]*\.java"/>
     <suppress checks="JavadocPackage" files="com[\\/]mongodb[\\/]client[\\/][^\\/]*\.java"/>

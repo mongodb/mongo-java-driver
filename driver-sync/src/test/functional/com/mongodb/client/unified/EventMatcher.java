@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.connection.ServerType;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -23,16 +24,24 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
+import com.mongodb.event.ConnectionPoolReadyEvent;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.connection.TestServerListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 final class EventMatcher {
     private final ValueMatcher valueMatcher;
@@ -161,6 +170,105 @@ final class EventMatcher {
             context.pop();
         }
         context.pop();
+    }
+
+    public void waitForConnectionPoolEvents(final String client, final BsonDocument event, final int count,
+            final TestConnectionPoolListener connectionPoolListener) {
+        context.push(ContextElement.ofWaitForConnectionPoolEvents(client, event, count));
+        Class<?> eventClass;
+        switch (event.getFirstKey()) {
+            case "poolClearedEvent":
+                eventClass = ConnectionPoolClearedEvent.class;
+                break;
+            case "poolReadyEvent":
+                eventClass = ConnectionPoolReadyEvent.class;
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported event: " + event.getFirstKey());
+        }
+        if (!event.getDocument(event.getFirstKey()).isEmpty()) {
+            throw new UnsupportedOperationException("Wait for connection pool events does not support event properties");
+        }
+        try {
+            connectionPoolListener.waitForEvent(eventClass, count, 10, TimeUnit.SECONDS);
+            context.pop();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            fail(context.getMessage("Timed out waiting for connection pool events"));
+        }
+    }
+
+    public void assertConnectionPoolEventCount(final String client, final BsonDocument event, final int count, final List<Object> events) {
+        context.push(ContextElement.ofConnectionPoolEventCount(client, event, count));
+        Class<?> eventClass;
+        switch (event.getFirstKey()) {
+            case "poolClearedEvent":
+                eventClass = ConnectionPoolClearedEvent.class;
+                break;
+            case "poolReadyEvent":
+                eventClass = ConnectionPoolReadyEvent.class;
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported event: " + event.getFirstKey());
+        }
+        if (!event.getDocument(event.getFirstKey()).isEmpty()) {
+            throw new UnsupportedOperationException("Wait for connection pool events does not support event properties");
+        }
+        long matchCount = events.stream().filter(cur -> cur.getClass().equals(eventClass)).count();
+        assertEquals(context.getMessage("Expected connection pool event counts to match"), count, matchCount);
+        context.pop();
+    }
+
+
+    public void waitForServerDescriptionChangedEvents(final String client, final BsonDocument expectedEvent, final int count,
+            final TestServerListener serverListener) {
+        context.push(ContextElement.ofWaitForServerDescriptionChangedEvents(client, expectedEvent, count));
+        BsonDocument expectedEventContents = getEventContents(expectedEvent);
+        try {
+            serverListener.waitForServerDescriptionChangedEvent(
+                    event -> serverDescriptionChangedEventMatches(expectedEventContents, event), count, 10, TimeUnit.SECONDS);
+            context.pop();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            fail(context.getMessage("Timed out waiting for server description changed events"));
+        }
+    }
+
+    public void assertServerDescriptionChangeEventCount(final String client, final BsonDocument expectedEvent, final int count,
+            final List<ServerDescriptionChangedEvent> events) {
+        BsonDocument expectedEventContents = getEventContents(expectedEvent);
+        context.push(ContextElement.ofServerDescriptionChangeEventCount(client, expectedEvent, count));
+        long matchCount = events.stream().filter(event -> serverDescriptionChangedEventMatches(expectedEventContents, event)).count();
+        assertEquals(context.getMessage("Expected server description changed event counts to match"), count, matchCount);
+        context.pop();
+    }
+
+    @NotNull
+    private BsonDocument getEventContents(final BsonDocument expectedEvent) {
+        if (!expectedEvent.getFirstKey().equals("serverDescriptionChangedEvent")) {
+            throw new UnsupportedOperationException("Unsupported event type " + expectedEvent.getFirstKey());
+        }
+        @SuppressWarnings("OptionalGetWithoutIsPresent")
+        BsonDocument expectedEventContents = expectedEvent.values().stream().findFirst().get().asDocument();
+        if (expectedEventContents.size() != 1 || !expectedEventContents.getFirstKey().equals("newDescription")
+                || expectedEventContents.getDocument("newDescription").size() != 1) {
+            throw new UnsupportedOperationException("Unsupported event contents " + expectedEvent);
+        }
+        return expectedEventContents;
+    }
+
+    private static boolean serverDescriptionChangedEventMatches(final BsonDocument expectedEventContents,
+            final ServerDescriptionChangedEvent event) {
+        String newType = expectedEventContents.getDocument("newDescription").getString("type").getValue();
+        //noinspection SwitchStatementWithTooFewBranches
+        switch (newType) {
+            case "Unknown":
+                return event.getNewDescription().getType() == ServerType.UNKNOWN;
+            default:
+                throw new UnsupportedOperationException();
+        }
     }
 
     private static String getEventType(final Class<?> eventClass) {
