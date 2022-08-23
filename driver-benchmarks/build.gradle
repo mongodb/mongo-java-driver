@@ -31,7 +31,7 @@ sourceSets {
 
 dependencies {
     api project(':driver-sync')
-    implementation 'ch.qos.logback:logback-classic:1.1.1'
+    implementation 'ch.qos.logback:logback-classic:1.2.11'
 }
 
 javadoc {
