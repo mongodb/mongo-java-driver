@@ -45,7 +45,6 @@ ext {
     configDir = new File(rootDir, 'config')
     jnrUnixsocketVersion = '0.38.17'
     nettyVersion = '4.1.79.Final'
-    nettyTcnativeBoringsslVersion = '2.0.54.Final'
     snappyVersion = '1.1.8.4'
     zstdVersion = '1.5.2-3'
     mongoCryptVersion = '1.6.0-alpha0'
