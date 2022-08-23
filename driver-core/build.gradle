@@ -37,6 +37,7 @@ configurations {
     }
 }
 
+def classifiers = ["linux-x86_64", "linux-aarch_64", "osx-x86_64", "osx-aarch_64", "windows-x86_64"]
 dependencies {
     api project(path: ':bson', configuration: 'default')
     implementation project(path: ':bson-record-codec', configuration: 'default')
@@ -52,6 +53,10 @@ dependencies {
 
     testImplementation project(':bson').sourceSets.test.output
     testRuntimeOnly "io.netty:netty-tcnative-boringssl-static"
+
+    classifiers.forEach {
+        testRuntimeOnly "io.netty:netty-tcnative-boringssl-static::$it"
+    }
 }
 
 buildConfig {
