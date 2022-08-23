@@ -42,15 +42,16 @@ dependencies {
     implementation project(path: ':bson-record-codec', configuration: 'default')
 
     implementation "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
-    api "io.netty:netty-buffer:$nettyVersion", optional
-    api "io.netty:netty-transport:$nettyVersion", optional
-    api "io.netty:netty-handler:$nettyVersion", optional
+    api platform("io.netty:netty-bom:$nettyVersion")
+    api "io.netty:netty-buffer", optional
+    api "io.netty:netty-transport", optional
+    api "io.netty:netty-handler", optional
     implementation "org.xerial.snappy:snappy-java:$snappyVersion", optional
     implementation "com.github.luben:zstd-jni:$zstdVersion", optional
     implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
 
     testImplementation project(':bson').sourceSets.test.output
-    testRuntimeOnly "io.netty:netty-tcnative-boringssl-static:$nettyTcnativeBoringsslVersion"
+    testRuntimeOnly "io.netty:netty-tcnative-boringssl-static"
 }
 
 buildConfig {
