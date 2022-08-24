@@ -19,8 +19,8 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
@@ -264,6 +264,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         public void onResult(final Void result, final Throwable t) {
             if (t != null && !isNamespaceError(t)) {
                 finalCallback.onResult(null, t);
+                return;
             }
             Function<ConnectionDescription, BsonDocument> nextCommandFunction = commands.poll();
             if (nextCommandFunction == null) {

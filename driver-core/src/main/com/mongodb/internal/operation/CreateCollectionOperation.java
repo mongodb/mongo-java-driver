@@ -552,6 +552,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         public void onResult(final Void result, final Throwable t) {
             if (t != null) {
                 finalCallback.onResult(null, t);
+                return;
             }
             Function<ConnectionDescription, BsonDocument> nextCommandFunction = commands.poll();
             if (nextCommandFunction == null) {
