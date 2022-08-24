@@ -59,9 +59,9 @@ public final class UpdateDescription {
      * @since 4.3
      */
     public UpdateDescription(
-            @Nullable @BsonProperty("removedFields") final List<String> removedFields,
-            @Nullable @BsonProperty("updatedFields") final BsonDocument updatedFields,
-            @Nullable @BsonProperty("truncatedArrays") final List<TruncatedArray> truncatedArrays) {
+            @Nullable final List<String> removedFields,
+            @Nullable final BsonDocument updatedFields,
+            @Nullable final List<TruncatedArray> truncatedArrays) {
         this(removedFields, updatedFields, truncatedArrays, null);
     }
 
