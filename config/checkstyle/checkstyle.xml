@@ -224,8 +224,11 @@
             <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)"/>
             <property name="checkFormat" value="$1"/>
         </module>
-
+        <!-- Make the @SuppressWarnings annotations available to Checkstyle -->
+        <module name="SuppressWarningsHolder" />
     </module>
+
+    <module name="SuppressWarningsFilter" />
 
     <module name="SuppressionFilter">
         <property name="file" value="${config_loc}/suppressions.xml"/>
