@@ -418,6 +418,8 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Write an empty prepare_mongodb_aws so no auth environment variables are set.
+          echo "" > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
           JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials as environment variables":
