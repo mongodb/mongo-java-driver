@@ -23,7 +23,7 @@ import java.util.function.Function;
 /**
  * An asynchronous callback-based function, its synchronous counterpart is {@link Function}.
  * <p>
- * A asynchronous function provides no guarantee that it completes before
+ * An asynchronous function provides no guarantee that it completes before
  * (in the happens-before order) the method {@link #apply(Object, SingleResultCallback)} completes,
  * and produces either a successful or a failed result by passing it to a {@link SingleResultCallback} after
  * (in the happens-before order) the function completes. That is, a callback is used to emulate both normal and abrupt completion of a
