@@ -73,7 +73,7 @@ class AsynchronousClusterEventListenerTest {
         assertEquals(clusterDescriptionChangedEvent, targetListener.take());
 
         ServerHeartbeatStartedEvent serverHeartbeatStartedEvent = new ServerHeartbeatStartedEvent(connectionId);
-        listener.serverHearbeatStarted(serverHeartbeatStartedEvent);
+        listener.serverHeartbeatStarted(serverHeartbeatStartedEvent);
         assertEquals(serverHeartbeatStartedEvent, targetListener.take());
 
         ServerHeartbeatSucceededEvent serverHeartbeatSucceededEvent = new ServerHeartbeatSucceededEvent(connectionId, new BsonDocument(),
@@ -154,7 +154,7 @@ class AsynchronousClusterEventListenerTest {
         }
 
         @Override
-        public void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
+        public void serverHeartbeatStarted(final ServerHeartbeatStartedEvent event) {
             addEvent(event);
         }
 

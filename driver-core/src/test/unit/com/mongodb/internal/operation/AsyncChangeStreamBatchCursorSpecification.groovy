@@ -29,11 +29,11 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
 
     def 'should call the underlying AsyncQueryBatchCursor'() {
         given:
-        def changeStreamOpertation = Stub(ChangeStreamOperation)
+        def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
         def callback = Stub(SingleResultCallback)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         when:
@@ -64,11 +64,11 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
     }
 
     def 'should not close the cursor in next if the cursor was closed before next completed'() {
-        def changeStreamOpertation = Stub(ChangeStreamOperation)
+        def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
         def callback = Stub(SingleResultCallback)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         when:
@@ -89,10 +89,10 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
     }
 
     def 'should throw a MongoException when next/tryNext is called after the cursor is closed'() {
-        def changeStreamOpertation = Stub(ChangeStreamOperation)
+        def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
-        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
+        def cursor = new AsyncChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 
         given:

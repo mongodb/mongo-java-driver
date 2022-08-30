@@ -104,7 +104,7 @@ class DefaultServerMonitorSpecification extends Specification {
 
         def serverMonitorListener = new ServerMonitorListener() {
             @Override
-            void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
+            void serverHeartbeatStarted(final ServerHeartbeatStartedEvent event) {
                 startedEvent = event
             }
 
@@ -195,7 +195,7 @@ class DefaultServerMonitorSpecification extends Specification {
 
         def serverMonitorListener = new ServerMonitorListener() {
             @Override
-            void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
+            void serverHeartbeatStarted(final ServerHeartbeatStartedEvent event) {
                 startedEvent = event
             }
 

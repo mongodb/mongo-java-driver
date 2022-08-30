@@ -118,8 +118,8 @@ final class AsynchronousClusterEventListener implements ClusterListener, ServerL
     }
 
     @Override
-    public void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
-        addServerMonitorEventInvocation(serverMonitorListener -> serverMonitorListener.serverHearbeatStarted(event));
+    public void serverHeartbeatStarted(final ServerHeartbeatStartedEvent event) {
+        addServerMonitorEventInvocation(serverMonitorListener -> serverMonitorListener.serverHeartbeatStarted(event));
     }
 
     @Override

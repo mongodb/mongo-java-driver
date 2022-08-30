@@ -36,7 +36,7 @@ public interface ServerMonitorListener extends EventListener {
      *
      * @param event the server heartbeat started event
      */
-    default void serverHearbeatStarted(ServerHeartbeatStartedEvent event) {
+    default void serverHeartbeatStarted(ServerHeartbeatStartedEvent event) {
     }
 
     /**

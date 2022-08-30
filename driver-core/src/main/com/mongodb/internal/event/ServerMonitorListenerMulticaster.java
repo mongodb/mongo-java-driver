@@ -40,10 +40,10 @@ final class ServerMonitorListenerMulticaster implements ServerMonitorListener {
     }
 
     @Override
-    public void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
+    public void serverHeartbeatStarted(final ServerHeartbeatStartedEvent event) {
         for (ServerMonitorListener cur : serverMonitorListeners) {
             try {
-                cur.serverHearbeatStarted(event);
+                cur.serverHeartbeatStarted(event);
             } catch (Exception e) {
                 if (LOGGER.isWarnEnabled()) {
                     LOGGER.warn(format("Exception thrown raising server heartbeat started event to listener %s", cur), e);

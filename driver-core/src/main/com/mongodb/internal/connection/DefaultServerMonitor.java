@@ -199,7 +199,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
                 }
-                serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(connection.getDescription().getConnectionId()));
+                serverMonitorListener.serverHeartbeatStarted(new ServerHeartbeatStartedEvent(connection.getDescription().getConnectionId()));
 
                 long start = System.nanoTime();
                 try {

@@ -109,7 +109,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
             (1.._) * serverOpening(_)
         }
         def serverMonitorListener = Mock(ServerMonitorListener) {
-            (1.._) * serverHearbeatStarted(_) >> {
+            (1.._) * serverHeartbeatStarted(_) >> {
                 if (latch.count > 0) {
                     latch.countDown()
                 }
@@ -143,7 +143,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
             (1.._) * serverOpening(_)
         }
         def serverMonitorListener = Mock(ServerMonitorListener) {
-            (1.._) * serverHearbeatStarted(_) >> {
+            (1.._) * serverHeartbeatStarted(_) >> {
                 if (latch.count > 0) {
                     latch.countDown()
                 }
@@ -156,7 +156,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
             (1.._) * serverOpening(_)
         }
         def serverMonitorListenerTwo = Mock(ServerMonitorListener) {
-            (1.._) * serverHearbeatStarted(_) >> {
+            (1.._) * serverHeartbeatStarted(_) >> {
                 if (latch.count > 0) {
                     latch.countDown()
                 }
