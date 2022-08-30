@@ -37,7 +37,7 @@ public final class BsonTimestamp extends BsonValue implements Comparable<BsonTim
     /**
      * Construct a new instance for the given value, which combines the time in seconds and the increment as a single long value.
      *
-     * @param value the timetamp as a single long value
+     * @param value the timestamp as a single long value
      * @since 3.5
      */
     public BsonTimestamp(final long value) {
