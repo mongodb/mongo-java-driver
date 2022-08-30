@@ -363,7 +363,7 @@ public class ConnectionPoolSettings {
      * Returns the time period between runs of the maintenance job.
      *
      * @param timeUnit the TimeUnit to use for this time period
-     * @return the time period between runs of the maintainance job in the given units
+     * @return the time period between runs of the maintenance job in the given units
      */
     public long getMaintenanceFrequency(final TimeUnit timeUnit) {
         return timeUnit.convert(maintenanceFrequencyMS, MILLISECONDS);

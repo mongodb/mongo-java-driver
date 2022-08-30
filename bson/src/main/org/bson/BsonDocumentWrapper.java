@@ -48,7 +48,7 @@ public final class BsonDocumentWrapper<T> extends BsonDocument {
     private BsonDocument unwrapped;
 
     /**
-     * A helper to convert an document of type Object to a BsonDocument
+     * A helper to convert a document of type Object to a BsonDocument
      *
      * <p>If not already a BsonDocument it looks up the documents' class in the codecRegistry and wraps it into a BsonDocumentWrapper</p>
      *

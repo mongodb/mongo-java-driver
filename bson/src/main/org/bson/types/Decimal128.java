@@ -83,7 +83,7 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
     public static final Decimal128 NaN = fromIEEE754BIDEncoding(NaN_MASK, 0);
 
     /**
-     * A constant holding a postive zero value of type {@code Decimal128}.  It is equal to the value return by
+     * A constant holding a positive zero value of type {@code Decimal128}.  It is equal to the value return by
      * {@code Decimal128.valueOf("0")}.
      */
     public static final Decimal128 POSITIVE_ZERO = fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L);

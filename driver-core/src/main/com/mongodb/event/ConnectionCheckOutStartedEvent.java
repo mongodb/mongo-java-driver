@@ -21,7 +21,7 @@ import com.mongodb.connection.ServerId;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event for when the driver starts to checkout out a connection.
+ * An event for when the driver starts to check out a connection.
  *
  * @since 4.0
  */

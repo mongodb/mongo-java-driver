@@ -50,7 +50,7 @@ public class SyncMongoClient implements MongoClient {
             throw new IllegalStateException("Already enabled");
         }
         if (sleepMS <= 0) {
-            throw new IllegalArgumentException("sleepMS must be a postive value");
+            throw new IllegalArgumentException("sleepMS must be a positive value");
         }
         sleepAfterCursorOpenMS = sleepMS;
     }
@@ -66,7 +66,7 @@ public class SyncMongoClient implements MongoClient {
             throw new IllegalStateException("Already enabled");
         }
         if (sleepMS <= 0) {
-            throw new IllegalArgumentException("sleepMS must be a postive value");
+            throw new IllegalArgumentException("sleepMS must be a positive value");
         }
         sleepAfterCursorCloseMS = sleepMS;
     }
@@ -81,7 +81,7 @@ public class SyncMongoClient implements MongoClient {
             throw new IllegalStateException("Already enabled");
         }
         if (sleepMS <= 0) {
-            throw new IllegalArgumentException("sleepMS must be a postive value");
+            throw new IllegalArgumentException("sleepMS must be a positive value");
         }
         sleepAfterSessionCloseMS = sleepMS;
     }
