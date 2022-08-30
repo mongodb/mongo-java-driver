@@ -47,6 +47,9 @@ dependencies {
     api "io.netty:netty-buffer", optional
     api "io.netty:netty-transport", optional
     api "io.netty:netty-handler", optional
+
+    implementation 'software.amazon.awssdk:auth:2.17.261', optional
+
     implementation "org.xerial.snappy:snappy-java:$snappyVersion", optional
     implementation "com.github.luben:zstd-jni:$zstdVersion", optional
     implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional

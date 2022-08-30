@@ -371,7 +371,9 @@ functions:
             PASS=$(urlencode ${iam_auth_ecs_secret_access_key})
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
-          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} \
+          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER=${USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER} \
+          .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with assume role credentials":
     - command: shell.exec
@@ -400,7 +402,9 @@ functions:
             SESSION_TOKEN=$(urlencode $SESSION_TOKEN)
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
-          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} DRIVERS_TOOLS=${DRIVERS_TOOLS} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} DRIVERS_TOOLS=${DRIVERS_TOOLS} \
+          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER=${USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER} \
+          .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws EC2 credentials":
     - command: shell.exec
@@ -1637,6 +1641,18 @@ axes:
         variables:
           LOGIN_CONTEXT_NAME: "com.sun.security.jgss.initiate"
 
+  - id: aws-credential-provider
+    display_name: AWS Credential Provider
+    values:
+      - id: aws_sdk_v2
+        display_name: AWS SDK V2
+        variables:
+          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER: "false"
+      - id: built_in
+        display_name: Built-In
+        variables:
+          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER: "true"
+
 task_groups:
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
@@ -1813,8 +1829,9 @@ buildvariants:
     - name: "plain-auth-test"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
-  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu",
+                 aws-credential-provider: "*" }
+  display_name: "MONGODB-AWS Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu1804-test
   tasks:
     - name: "aws-auth-test-with-regular-aws-credentials"

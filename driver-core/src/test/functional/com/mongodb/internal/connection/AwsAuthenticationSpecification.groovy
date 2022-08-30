@@ -12,6 +12,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
+import com.mongodb.internal.authentication.AwsCredentialHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.IgnoreIf
@@ -30,6 +31,12 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 @IgnoreIf({ getCredential() == null || getCredential().getAuthenticationMechanism() != MONGODB_AWS })
 class AwsAuthenticationSpecification extends Specification {
+
+    static {
+        if (Boolean.valueOf(System.getProperty('org.mongodb.test.use.built.in.aws.credential.provider', 'false'))) {
+            AwsCredentialHelper.requireBuiltInProvider()
+        }
+    }
 
     def 'should not authorize when not authenticated'() {
         given:

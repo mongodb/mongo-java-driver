@@ -4,9 +4,9 @@ set -o xtrace
 set -o errexit  # Exit the script with error if any of the commands fail
 
 # Supported/used environment variables:
-#       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9", "jdk11"
-
+#  JDK                               Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
+#                                    "jdk5", "jdk6", "jdk7", "jdk8", "jdk9", "jdk11"
+#  USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER  "true" or "false"
 ############################################
 #            Main Program                  #
 ############################################
@@ -37,5 +37,6 @@ echo "Running tests with Java ${JAVA_VERSION}"
 
 # As this script may be executed multiple times in a single task, with different values for MONGODB_URI, it's necessary
 # to run cleanTest to ensure that the test actually executes each run
-./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --debug --info --no-build-cache \
-driver-core:cleanTest driver-core:test --tests AwsAuthenticationSpecification
+./gradlew -PjavaVersion="${JAVA_VERSION}" -Dorg.mongodb.test.uri="${MONGODB_URI}" \
+-Dorg.mongodb.test.use.built.in.aws.credential.provider="${USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER}" \
+--stacktrace --debug --info --no-build-cache driver-core:cleanTest driver-core:test --tests AwsAuthenticationSpecification

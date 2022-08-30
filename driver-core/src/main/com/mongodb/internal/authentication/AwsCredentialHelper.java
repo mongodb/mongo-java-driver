@@ -17,12 +17,13 @@
 package com.mongodb.internal.authentication;
 
 import com.mongodb.AwsCredential;
-import org.bson.BsonDocument;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.VisibleForTesting;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Supplier;
 
-import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * Utility class for working with AWS authentication.
@@ -30,48 +31,35 @@ import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
  * <p>This class should not be considered a part of the public API.</p>
  */
 public final class AwsCredentialHelper {
+    public static final Logger LOGGER = Loggers.getLogger("authenticator");
 
-    public static AwsCredential obtainFromEnvironment() {
-        if (System.getenv("AWS_ACCESS_KEY_ID") != null) {
-            return obtainFromEnvironmentVariables();
-        } else {
-            return obtainFromEc2OrEcsResponse();
+    private static volatile Supplier<AwsCredential> awsCredentialSupplier;
+
+    static {
+        try {
+            Class.forName("software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider");
+            awsCredentialSupplier = new AwsSdkV2CredentialSupplier();
+            LOGGER.info("Using software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider from AWS SDK v2 to retrieve AWS "
+                    + "credentials");
+        } catch (ClassNotFoundException e) {
+            awsCredentialSupplier = new BuiltInAwsCredentialSupplier();
+            LOGGER.info("Using built-in driver implementation to retrieve AWS credentials. Consider adding a dependency to "
+                    + "software.amazon.awssdk:auth to get access to additional AWS authentication functionality");
         }
     }
 
-    private static AwsCredential obtainFromEnvironmentVariables() {
-        return new AwsCredential(
-                System.getenv("AWS_ACCESS_KEY_ID"),
-                System.getenv("AWS_SECRET_ACCESS_KEY"),
-                System.getenv("AWS_SESSION_TOKEN"));
+    /**
+     * This method is visible to allow tests to require the built-in provider rather than rely on the fixed checks for classes on the
+     * classpath.  It allows us to easily write tests of both implementations without resorting to runtime classpath shenanigans.
+     */
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static void requireBuiltInProvider() {
+        LOGGER.info("Using built-in driver implementation to retrieve AWS credentials");
+        awsCredentialSupplier = new BuiltInAwsCredentialSupplier();
     }
 
-    private static AwsCredential obtainFromEc2OrEcsResponse() {
-        String path = System.getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
-        BsonDocument ec2OrEcsResponse = path == null ? BsonDocument.parse(getEc2Response()) : BsonDocument.parse(getEcsResponse(path));
-
-        return new AwsCredential(
-                ec2OrEcsResponse.getString("AccessKeyId").getValue(),
-                ec2OrEcsResponse.getString("SecretAccessKey").getValue(),
-                ec2OrEcsResponse.getString("Token").getValue());
-    }
-
-    private static String getEcsResponse(final String path) {
-        return getHttpContents("GET", "http://169.254.170.2" + path, null);
-    }
-
-    private static String getEc2Response() {
-        final String endpoint = "http://169.254.169.254";
-        final String path = "/latest/meta-data/iam/security-credentials/";
-
-        Map<String, String> header = new HashMap<>();
-        header.put("X-aws-ec2-metadata-token-ttl-seconds", "30");
-        String token = getHttpContents("PUT", endpoint + "/latest/api/token", header);
-
-        header.clear();
-        header.put("X-aws-ec2-metadata-token", token);
-        String role = getHttpContents("GET", endpoint + path, header);
-        return getHttpContents("GET", endpoint + path + role, header);
+    public static AwsCredential obtainFromEnvironment() {
+        return awsCredentialSupplier.get();
     }
 
     private AwsCredentialHelper() {
