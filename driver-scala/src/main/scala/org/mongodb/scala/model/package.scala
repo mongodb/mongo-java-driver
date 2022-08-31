@@ -911,6 +911,8 @@ package object model {
    * @since 4.3
    */
   type WindowOutputField = com.mongodb.client.model.WindowOutputField
+
+  type GeoNearOption = com.mongodb.client.model.GeoNearOption
 }
 
 // scalastyle:on number.of.methods number.of.types

@@ -75,12 +75,20 @@ import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWi
 
 class OperationFunctionalSpecification extends Specification {
 
-    def setup() {
+    void setup() {
+        setupInternal()
+    }
+
+    protected void setupInternal() {
         ServerHelper.checkPool(getPrimary())
         CollectionHelper.drop(getNamespace())
     }
 
-    def cleanup() {
+    void cleanup() {
+        cleanupInternal()
+    }
+
+    protected void cleanupInternal() {
         CollectionHelper.drop(getNamespace())
         checkReferenceCountReachesTarget(getBinding(), 1)
         checkReferenceCountReachesTarget(getAsyncBinding(), 1)

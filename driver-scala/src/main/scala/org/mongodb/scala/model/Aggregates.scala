@@ -17,12 +17,14 @@
 package org.mongodb.scala.model
 
 import com.mongodb.client.model.fill.FillOutputField
+
 import scala.collection.JavaConverters._
-import com.mongodb.client.model.{ Aggregates => JAggregates }
+import com.mongodb.client.model.{ Aggregates => JAggregates, GeoNearOption }
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.densify.{ DensifyOptions, DensifyRange }
 import org.mongodb.scala.model.fill.FillOptions
+import org.mongodb.scala.model.geojson.Point
 import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions }
 
 /**
@@ -255,6 +257,28 @@ object Aggregates {
    * @since 2.7
    */
   def replaceWith[TExpression](value: TExpression): Bson = JAggregates.replaceWith(value)
+
+  /**
+   * Creates an $unset pipeline stage that removes/excludes fields from documents
+   *
+   * @param fields the fields to exclude. May use dot notation.
+   * @return the $unset pipeline stage
+   * @since 4.8
+   */
+  def unset(fields: String*): Bson = JAggregates.unset(fields: _*)
+
+  /**
+   * Creates a $geoNear pipeline stage that outputs documents in order of nearest to farthest from a specified point.
+   *
+   * @param near          The point for which to find the closest documents.
+   * @param distanceField The output field that contains the calculated distance.
+   *                      To specify a field within an embedded document, use dot notation.
+   * @param options       {@link GeoNearOption}
+   * @return the $geoNear pipeline stage
+   * @since 4.8
+   */
+  def geoNear(near: Point, distanceField: String, options: GeoNearOption*): Bson =
+    JAggregates.geoNear(near, distanceField, options: _*)
 
   /**
    * Creates a `\$sort` pipeline stage for the specified sort specification

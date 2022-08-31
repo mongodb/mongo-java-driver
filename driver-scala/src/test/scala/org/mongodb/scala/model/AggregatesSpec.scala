@@ -16,7 +16,10 @@
 
 package org.mongodb.scala.model
 
+import com.mongodb.client.model.GeoNearOption
+import com.mongodb.client.model.GeoNearOption.{ distanceMultiplier, includeLocs, maxDistance, minDistance }
 import com.mongodb.client.model.fill.FillOutputField
+
 import java.lang.reflect.Modifier._
 import org.bson.BsonDocument
 import org.mongodb.scala.bson.BsonArray
@@ -31,6 +34,7 @@ import org.mongodb.scala.model.Windows.Bound.{ CURRENT, UNBOUNDED }
 import org.mongodb.scala.model.Windows.{ documents, range }
 import org.mongodb.scala.model.densify.DensifyRange.fullRangeWithStep
 import org.mongodb.scala.model.fill.FillOptions.fillOptions
+import org.mongodb.scala.model.geojson.{ Point, Position }
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
@@ -742,6 +746,49 @@ class AggregatesSpec extends BaseSpec {
           }
         }
       }""")
+    )
+  }
+
+  it should "render $unset" in {
+    toBson(
+      Aggregates.unset("title", "author.first")
+    ) should equal(
+      Document("""{ $unset: ['title', 'author.first'] }""")
+    )
+    toBson(
+      Aggregates.unset("author.first")
+    ) should equal(
+      Document("""{ "$unset": "author.first" }""")
+    )
+  }
+
+  it should "render $geoNear" in {
+    toBson(
+      Aggregates.geoNear(
+        Point(Position(-73.99279, 40.719296)),
+        "dist.calculated",
+        minDistance(0),
+        maxDistance(2),
+        GeoNearOption.query(Document("""{ "category": "Parks" }""")),
+        includeLocs("dist.location"),
+        GeoNearOption.spherical(),
+        GeoNearOption.key("location"),
+        distanceMultiplier(10.0)
+      )
+    ) should equal(
+      Document("""{
+                 |   $geoNear: {
+                 |      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },
+                 |      distanceField: 'dist.calculated',
+                 |      minDistance: 0,
+                 |      maxDistance: 2,
+                 |      query: { category: 'Parks' },
+                 |      includeLocs: 'dist.location',
+                 |      spherical: true,
+                 |      key: 'location',
+                 |      distanceMultiplier: 10.0
+                 |   }
+                 |}""".stripMargin)
     )
   }
 }
