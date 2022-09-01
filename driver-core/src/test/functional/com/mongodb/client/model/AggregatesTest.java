@@ -16,22 +16,15 @@
 
 package com.mongodb.client.model;
 
-import com.mongodb.OperationFunctionalSpecification;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.bson.Document;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.bson.codecs.DecoderContext;
 import org.bson.conversions.Bson;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -48,22 +41,7 @@ import static com.mongodb.client.model.Aggregates.unset;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public class AggregatesTest extends OperationFunctionalSpecification {
-
-    @BeforeEach
-    public void beforeEach() {
-        super.setupInternal();
-    }
-
-    @AfterEach
-    public void afterEach() {
-        super.cleanupInternal();
-    }
-
-    void insertAll(final String insertAll) {
-        List<BsonDocument> documents = BsonArray.parse(insertAll).stream().map(BsonValue::asDocument).collect(Collectors.toList());
-        getCollectionHelper().insertDocuments(documents);
-    }
+public class AggregatesTest extends OperationTest {
 
     private List<Bson> assertPipeline(final String stageAsString, final Bson stage) {
         BsonDocument expectedStage = BsonDocument.parse(stageAsString);
@@ -78,18 +56,10 @@ public class AggregatesTest extends OperationFunctionalSpecification {
         assertEquals(expectedResults, results);
     }
 
-    private List<Document> parseToList(final String s) {
-        return BsonArray.parse(s).stream().map(v -> toDocument(v.asDocument())).collect(Collectors.toList());
-    }
-
-    public Document toDocument(final BsonDocument bsonDocument) {
-        return getDefaultCodecRegistry().get(Document.class).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
-    }
-
     @Test
     public void testUnset() {
         assumeTrue(serverVersionAtLeast(4, 2));
-        insertAll("[\n"
+        getCollectionHelper().insertDocuments("[\n"
                 + "   { _id: 1, title: 'Antelope Antics', author: { last:'An', first: 'Auntie' } },\n"
                 + "   { _id: 2, title: 'Bees Babble', author: { last:'Bumble', first: 'Bee' } }\n"
                 + "]");
@@ -110,7 +80,7 @@ public class AggregatesTest extends OperationFunctionalSpecification {
 
     @Test
     public void testGeoNear() {
-        insertAll("[\n"
+        getCollectionHelper().insertDocuments("[\n"
                 + "   {\n"
                 + "      _id: 1,\n"
                 + "      name: 'Central Park',\n"

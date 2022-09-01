@@ -20,6 +20,8 @@ import org.bson.Document;
 
 /**
  * Optional fields for the {@link Aggregates#geoNear} pipeline stage.
+ *
+ * @since 4.8
  */
 public final class GeoNearOption {
     private final String key;
@@ -40,6 +42,7 @@ public final class GeoNearOption {
     /**
      * @param distanceMultiplier The factor to multiply all distances returned by the query.
      * @return the option
+     * @since 4.8
      */
     public static GeoNearOption distanceMultiplier(final Number distanceMultiplier) {
         return new GeoNearOption("distanceMultiplier", distanceMultiplier);
@@ -52,6 +55,7 @@ public final class GeoNearOption {
      *
      * @param includeLocs the output field
      * @return the option
+     * @since 4.8
      */
     public static GeoNearOption includeLocs(final String includeLocs) {
         return new GeoNearOption("includeLocs", includeLocs);
@@ -62,6 +66,7 @@ public final class GeoNearOption {
      *
      * @param key the geospatial indexed field.
      * @return the option
+     * @since 4.8
      */
     public static GeoNearOption key(final String key) {
         return new GeoNearOption("key", key);
@@ -73,6 +78,7 @@ public final class GeoNearOption {
      *
      * @param minDistance the distance in meters for GeoJSON data.
      * @return the option
+     * @since 4.8
      */
     public static GeoNearOption minDistance(final Number minDistance) {
         return new GeoNearOption("minDistance", minDistance);
@@ -84,6 +90,7 @@ public final class GeoNearOption {
      *
      * @param maxDistance the distance in meters for GeoJSON data.
      * @return the option
+     * @since 4.8
      */
     public static GeoNearOption maxDistance(final Number maxDistance) {
         return new GeoNearOption("maxDistance", maxDistance);
@@ -95,6 +102,7 @@ public final class GeoNearOption {
      *
      * @param query the query
      * @return the option
+     * @since 4.8
      */
     public static GeoNearOption query(final Document query) {
         return new GeoNearOption("query", query);
@@ -108,6 +116,7 @@ public final class GeoNearOption {
      * using spherical geometry.
      *
      * @return the option
+     * @since 4.8
      */
     public static GeoNearOption spherical() {
         return new GeoNearOption("spherical", true);

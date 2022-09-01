@@ -935,7 +935,7 @@ public final class Aggregates {
      */
     public static Bson unset(final String... fields) {
         if (fields.length == 1) {
-            return new BsonDocument().append("$unset", new BsonString(fields[0]));
+            return new BsonDocument("$unset", new BsonString(fields[0]));
         }
         BsonArray array = new BsonArray();
         Arrays.stream(fields).map(BsonString::new).forEach(array::add);
