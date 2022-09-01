@@ -250,8 +250,8 @@ public class InternalStreamConnection implements InternalConnection {
         initialServerDescription = initializationDescription.getServerDescription();
         opened.set(true);
         sendCompressor = findSendCompressor(description);
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         }
     }
 
