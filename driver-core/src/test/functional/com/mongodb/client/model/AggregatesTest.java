@@ -21,7 +21,6 @@ import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

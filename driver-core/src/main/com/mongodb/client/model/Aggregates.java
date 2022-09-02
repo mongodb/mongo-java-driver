@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.client.model.GeoNearOptions.*;
+import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -1004,53 +1004,6 @@ public final class Aggregates {
                 BuildersHelper.encodeValue(writer, field.getValue(), codecRegistry);
             }
             writer.writeEndDocument();
-        }
-    }
-
-    private static class SimplePipelineStage implements Bson {
-        private final String name;
-        private final Bson value;
-
-        SimplePipelineStage(final String name, final Bson value) {
-            this.name = name;
-            this.value = value;
-        }
-
-        @Override
-        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-            return new BsonDocument(name, value.toBsonDocument(documentClass, codecRegistry));
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            SimplePipelineStage that = (SimplePipelineStage) o;
-
-            if (name != null ? !name.equals(that.name) : that.name != null) {
-                return false;
-            }
-            return value != null ? value.equals(that.value) : that.value == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (value != null ? value.hashCode() : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "Stage{"
-                           + "name='" + name + '\''
-                           + ", value=" + value
-                           + '}';
         }
     }
 

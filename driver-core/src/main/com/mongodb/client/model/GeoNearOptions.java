@@ -46,7 +46,7 @@ public final class GeoNearOptions {
         return new GeoNearOptions(options);
     }
 
-    void appendToDocument(Document document) {
+    void appendToDocument(final Document document) {
         for (Map.Entry<String, Object> e : this.options.entrySet()) {
             document.append(e.getKey(), e.getValue());
         }
