@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.client.model.GeoNearOptions.*;
 import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -934,11 +935,24 @@ public final class Aggregates {
      * @since 4.8
      */
     public static Bson unset(final String... fields) {
-        if (fields.length == 1) {
-            return new BsonDocument("$unset", new BsonString(fields[0]));
+        return unset(Arrays.asList(fields));
+    }
+
+    /**
+     * Creates an $unset pipeline stage that removes/excludes fields from documents
+     *
+     * @param fields the fields to exclude. May use dot notation.
+     * @return the $unset pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/project/ $unset
+     * @mongodb.server.release 4.2
+     * @since 4.8
+     */
+    public static Bson unset(final List<String> fields) {
+        if (fields.size() == 1) {
+            return new BsonDocument("$unset", new BsonString(fields.get(0)));
         }
         BsonArray array = new BsonArray();
-        Arrays.stream(fields).map(BsonString::new).forEach(array::add);
+        fields.stream().map(BsonString::new).forEach(array::add);
         return new BsonDocument().append("$unset", array);
     }
 
@@ -948,7 +962,7 @@ public final class Aggregates {
      * @param near The point for which to find the closest documents.
      * @param distanceField The output field that contains the calculated distance.
      *                      To specify a field within an embedded document, use dot notation.
-     * @param options {@link GeoNearOption}
+     * @param options {@link GeoNearOptions}
      * @return the $geoNear pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
      * @since 4.8
@@ -956,14 +970,28 @@ public final class Aggregates {
     public static Bson geoNear(
             final Point near,
             final String distanceField,
-            final GeoNearOption... options) {
+            final GeoNearOptions options) {
         Document d = new Document();
         d.append("near", near);
         d.append("distanceField", distanceField);
-        for (GeoNearOption o : options) {
-            d.append(o.getKey(), o.getValue());
-        }
+        options.appendToDocument(d);
         return new Document("$geoNear", d);
+    }
+
+    /**
+     * Creates a $geoNear pipeline stage that outputs documents in order of nearest to farthest from a specified point.
+     *
+     * @param near The point for which to find the closest documents.
+     * @param distanceField The output field that contains the calculated distance.
+     *                      To specify a field within an embedded document, use dot notation.
+     * @return the $geoNear pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
+     * @since 4.8
+     */
+    public static Bson geoNear(
+            final Point near,
+            final String distanceField) {
+        return geoNear(near, distanceField, geoNearOptions());
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,

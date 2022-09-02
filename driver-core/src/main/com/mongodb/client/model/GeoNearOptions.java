@@ -18,25 +18,38 @@ package com.mongodb.client.model;
 
 import org.bson.Document;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Optional fields for the {@link Aggregates#geoNear} pipeline stage.
+ * The options for a {@link Aggregates#geoNear} pipeline stage.
  *
+ * @mongodb.driver.manual reference/operator/aggregation/unwind/ $geoNear
  * @since 4.8
  */
-public final class GeoNearOption {
-    private final String key;
-    private final Object value;
+public final class GeoNearOptions {
 
-    String getKey() {
-        return key;
-    }
-    Object getValue() {
-        return value;
+    private final Map<String, Object> options;
+
+    public static GeoNearOptions geoNearOptions() {
+        return new GeoNearOptions(Collections.unmodifiableMap(new HashMap<>()));
     }
 
-    private GeoNearOption(final String key, final Object value) {
-        this.key = key;
-        this.value = value;
+    private GeoNearOptions(final Map<String, Object> options) {
+        this.options = options;
+    }
+
+    private GeoNearOptions setOption(final String key, final Object value) {
+        Map<String, Object> options = new HashMap<>(this.options);
+        options.put(key, value);
+        return new GeoNearOptions(options);
+    }
+
+    void appendToDocument(Document document) {
+        for (Map.Entry<String, Object> e : this.options.entrySet()) {
+            document.append(e.getKey(), e.getValue());
+        }
     }
 
     /**
@@ -44,8 +57,8 @@ public final class GeoNearOption {
      * @return the option
      * @since 4.8
      */
-    public static GeoNearOption distanceMultiplier(final Number distanceMultiplier) {
-        return new GeoNearOption("distanceMultiplier", distanceMultiplier);
+    public GeoNearOptions distanceMultiplier(final Number distanceMultiplier) {
+        return setOption("distanceMultiplier", distanceMultiplier);
     }
 
     /**
@@ -57,8 +70,8 @@ public final class GeoNearOption {
      * @return the option
      * @since 4.8
      */
-    public static GeoNearOption includeLocs(final String includeLocs) {
-        return new GeoNearOption("includeLocs", includeLocs);
+    public GeoNearOptions includeLocs(final String includeLocs) {
+        return setOption("includeLocs", includeLocs);
     }
 
     /**
@@ -68,8 +81,8 @@ public final class GeoNearOption {
      * @return the option
      * @since 4.8
      */
-    public static GeoNearOption key(final String key) {
-        return new GeoNearOption("key", key);
+    public GeoNearOptions key(final String key) {
+        return setOption("key", key);
     }
 
     /**
@@ -80,8 +93,8 @@ public final class GeoNearOption {
      * @return the option
      * @since 4.8
      */
-    public static GeoNearOption minDistance(final Number minDistance) {
-        return new GeoNearOption("minDistance", minDistance);
+    public GeoNearOptions minDistance(final Number minDistance) {
+        return setOption("minDistance", minDistance);
     }
 
     /**
@@ -92,8 +105,8 @@ public final class GeoNearOption {
      * @return the option
      * @since 4.8
      */
-    public static GeoNearOption maxDistance(final Number maxDistance) {
-        return new GeoNearOption("maxDistance", maxDistance);
+    public GeoNearOptions maxDistance(final Number maxDistance) {
+        return setOption("maxDistance", maxDistance);
     }
 
     /**
@@ -104,8 +117,8 @@ public final class GeoNearOption {
      * @return the option
      * @since 4.8
      */
-    public static GeoNearOption query(final Document query) {
-        return new GeoNearOption("query", query);
+    public GeoNearOptions query(final Document query) {
+        return setOption("query", query);
     }
 
     /**
@@ -118,7 +131,7 @@ public final class GeoNearOption {
      * @return the option
      * @since 4.8
      */
-    public static GeoNearOption spherical() {
-        return new GeoNearOption("spherical", true);
+    public GeoNearOptions spherical() {
+        return setOption("spherical", true);
     }
 }

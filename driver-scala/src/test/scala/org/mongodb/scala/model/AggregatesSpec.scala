@@ -16,8 +16,7 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.GeoNearOption
-import com.mongodb.client.model.GeoNearOption.{ distanceMultiplier, includeLocs, maxDistance, minDistance }
+import com.mongodb.client.model.GeoNearOptions.geoNearOptions
 import com.mongodb.client.model.fill.FillOutputField
 
 import java.lang.reflect.Modifier._
@@ -763,17 +762,32 @@ class AggregatesSpec extends BaseSpec {
   }
 
   it should "render $geoNear" in {
+
+    toBson(
+      Aggregates.geoNear(
+        Point(Position(-73.99279, 40.719296)),
+        "dist.calculated"
+      )
+    ) should equal(
+      Document("""{
+                 |   $geoNear: {
+                 |      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },
+                 |      distanceField: 'dist.calculated'
+                 |   }
+                 |}""".stripMargin)
+    )
     toBson(
       Aggregates.geoNear(
         Point(Position(-73.99279, 40.719296)),
         "dist.calculated",
-        minDistance(0),
-        maxDistance(2),
-        GeoNearOption.query(Document("""{ "category": "Parks" }""")),
-        includeLocs("dist.location"),
-        GeoNearOption.spherical(),
-        GeoNearOption.key("location"),
-        distanceMultiplier(10.0)
+        geoNearOptions()
+          .minDistance(0)
+          .maxDistance(2)
+          .query(Document("""{ "category": "Parks" }"""))
+          .includeLocs("dist.location")
+          .spherical()
+          .key("location")
+          .distanceMultiplier(10.0)
       )
     ) should equal(
       Document("""{

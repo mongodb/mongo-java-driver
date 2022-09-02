@@ -21,6 +21,7 @@ import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,15 +30,10 @@ import org.junit.jupiter.api.Test;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
-import static com.mongodb.client.model.GeoNearOption.distanceMultiplier;
-import static com.mongodb.client.model.GeoNearOption.includeLocs;
-import static com.mongodb.client.model.GeoNearOption.key;
-import static com.mongodb.client.model.GeoNearOption.maxDistance;
-import static com.mongodb.client.model.GeoNearOption.minDistance;
-import static com.mongodb.client.model.GeoNearOption.query;
-import static com.mongodb.client.model.GeoNearOption.spherical;
+import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.unset;
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -76,6 +72,14 @@ public class AggregatesTest extends OperationTest {
                 + "   { _id: 1, title: 'Antelope Antics', author: { last:'An' } },\n"
                 + "   { _id: 2, title: 'Bees Babble', author: { last:'Bumble' } }\n"
                 + "]");
+
+        assertPipeline(
+                "{ $unset: ['title', 'author.first'] }",
+                unset(asList("title", "author.first")));
+
+        assertPipeline(
+                "{ $unset: 'author.first' }",
+                unset(asList("author.first")));
     }
 
     @Test
@@ -102,6 +106,17 @@ public class AggregatesTest extends OperationTest {
                 + "]");
         getCollectionHelper().createIndex(BsonDocument.parse("{ location: '2dsphere' }"));
 
+        assertPipeline("{\n"
+                        + "   $geoNear: {\n"
+                        + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
+                        + "      distanceField: 'dist.calculated'\n"
+                        + "   }\n"
+                        + "}",
+                geoNear(
+                        new Point(new Position(-73.99279, 40.719296)),
+                        "dist.calculated"
+                ));
+
         List<Bson> pipeline = assertPipeline("{\n"
                 + "   $geoNear: {\n"
                 + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
@@ -118,13 +133,14 @@ public class AggregatesTest extends OperationTest {
                 geoNear(
                         new Point(new Position(-73.99279, 40.719296)),
                         "dist.calculated",
-                        minDistance(0),
-                        maxDistance(2),
-                        query(new Document("category", "Parks")),
-                        includeLocs("dist.location"),
-                        spherical(),
-                        key("location"),
-                        distanceMultiplier(10.0)
+                        geoNearOptions()
+                                .minDistance(0)
+                                .maxDistance(2)
+                                .query(new Document("category", "Parks"))
+                                .includeLocs("dist.location")
+                                .spherical()
+                                .key("location")
+                                .distanceMultiplier(10.0)
                 ));
 
         assertResults(pipeline, ""
