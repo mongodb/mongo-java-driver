@@ -31,7 +31,8 @@
         "sharded-replicaset",
         "load-balanced",
         "sharded"
-      ]
+      ],
+      "serverless": "forbid"
     }
   ],
   "initialData": [
