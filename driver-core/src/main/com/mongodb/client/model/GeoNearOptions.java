@@ -32,6 +32,11 @@ public final class GeoNearOptions {
 
     private final Map<String, Object> options;
 
+    /**
+     * Returns {@link GeoNearOptions} that represents server defaults.
+     *
+     * @return {@link GeoNearOptions} that represents server defaults.
+     */
     public static GeoNearOptions geoNearOptions() {
         return new GeoNearOptions(Collections.unmodifiableMap(new HashMap<>()));
     }
