@@ -32,7 +32,7 @@ final class GeoNearConstructibleBson extends AbstractConstructibleBson<GeoNearCo
         super(base);
     }
 
-    public GeoNearConstructibleBson(final Bson base, final Document appended) {
+    private GeoNearConstructibleBson(final Bson base, final Document appended) {
         super(base, appended);
     }
 
