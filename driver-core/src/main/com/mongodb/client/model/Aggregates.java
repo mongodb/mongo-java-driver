@@ -971,11 +971,27 @@ public final class Aggregates {
             final Point near,
             final String distanceField,
             final GeoNearOptions options) {
-        Document d = new Document();
-        d.append("near", near);
-        d.append("distanceField", distanceField);
-        options.appendToDocument(d);
-        return new Document("$geoNear", d);
+        notNull("near", near);
+        notNull("distanceField", distanceField);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                Document d = new Document();
+                d.append("near", near);
+                d.append("distanceField", distanceField);
+                options.toBsonDocument(documentClass, codecRegistry).forEach(d::append);
+                return new BsonDocument("$geoNear", d.toBsonDocument(documentClass, codecRegistry));
+            }
+            @Override
+            public String toString() {
+                return "Stage{name='$densify'"
+                        + ", near=" + near
+                        + ", distanceField=" + distanceField
+                        + ", options=" + options
+                        + '}';
+            }
+        };
     }
 
     /**

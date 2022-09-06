@@ -17,10 +17,7 @@
 package com.mongodb.client.model;
 
 import org.bson.Document;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import org.bson.conversions.Bson;
 
 /**
  * The options for a {@link Aggregates#geoNear} pipeline stage.
@@ -28,43 +25,22 @@ import java.util.Map;
  * @mongodb.driver.manual reference/operator/aggregation/unwind/ $geoNear
  * @since 4.8
  */
-public final class GeoNearOptions {
-
-    private final Map<String, Object> options;
-
+public interface GeoNearOptions extends Bson {
     /**
      * Returns {@link GeoNearOptions} that represents server defaults.
      *
      * @return {@link GeoNearOptions} that represents server defaults.
      */
-    public static GeoNearOptions geoNearOptions() {
-        return new GeoNearOptions(Collections.unmodifiableMap(new HashMap<>()));
-    }
-
-    private GeoNearOptions(final Map<String, Object> options) {
-        this.options = options;
-    }
-
-    private GeoNearOptions setOption(final String key, final Object value) {
-        Map<String, Object> options = new HashMap<>(this.options);
-        options.put(key, value);
-        return new GeoNearOptions(options);
-    }
-
-    void appendToDocument(final Document document) {
-        for (Map.Entry<String, Object> e : this.options.entrySet()) {
-            document.append(e.getKey(), e.getValue());
-        }
+    static GeoNearOptions geoNearOptions() {
+        return GeoNearConstructibleBson.EMPTY_IMMUTABLE;
     }
 
     /**
      * @param distanceMultiplier The factor to multiply all distances returned by the query.
-     * @return the option
+     * @return a new {@link GeoNearOptions} with the provided option set
      * @since 4.8
      */
-    public GeoNearOptions distanceMultiplier(final Number distanceMultiplier) {
-        return setOption("distanceMultiplier", distanceMultiplier);
-    }
+    GeoNearOptions distanceMultiplier(Number distanceMultiplier);
 
     /**
      * This specifies the output field that identifies the location used to calculate the distance.
@@ -72,59 +48,49 @@ public final class GeoNearOptions {
      * To specify a field within an embedded document, use dot notation.
      *
      * @param includeLocs the output field
-     * @return the option
+     * @return a new {@link GeoNearOptions} with the provided option set
      * @since 4.8
      */
-    public GeoNearOptions includeLocs(final String includeLocs) {
-        return setOption("includeLocs", includeLocs);
-    }
+    GeoNearOptions includeLocs(String includeLocs);
 
     /**
      * Specify the geospatial indexed field to use when calculating the distance.
      *
      * @param key the geospatial indexed field.
-     * @return the option
+     * @return a new {@link GeoNearOptions} with the provided option set
      * @since 4.8
      */
-    public GeoNearOptions key(final String key) {
-        return setOption("key", key);
-    }
+    GeoNearOptions key(String key);
 
     /**
      * The minimum distance from the center point that the documents can be.
      * MongoDB limits the results to those documents that fall outside the specified distance from the center point.
      *
      * @param minDistance the distance in meters for GeoJSON data.
-     * @return the option
+     * @return a new {@link GeoNearOptions} with the provided option set
      * @since 4.8
      */
-    public GeoNearOptions minDistance(final Number minDistance) {
-        return setOption("minDistance", minDistance);
-    }
+    GeoNearOptions minDistance(Number minDistance);
 
     /**
      * The maximum distance from the center point that the documents can be.
      * MongoDB limits the results to those documents that fall within the specified distance from the center point.
      *
      * @param maxDistance the distance in meters for GeoJSON data.
-     * @return the option
+     * @return a new {@link GeoNearOptions} with the provided option set
      * @since 4.8
      */
-    public GeoNearOptions maxDistance(final Number maxDistance) {
-        return setOption("maxDistance", maxDistance);
-    }
+    GeoNearOptions maxDistance(Number maxDistance);
 
     /**
      * Limits the results to the documents that match the query.
      * The query syntax is the usual MongoDB read operation query syntax.
      *
      * @param query the query
-     * @return the option
+     * @return a new {@link GeoNearOptions} with the provided option set
      * @since 4.8
      */
-    public GeoNearOptions query(final Document query) {
-        return setOption("query", query);
-    }
+    GeoNearOptions query(Document query);
 
     /**
      * Determines how MongoDB calculates the distance between two points.
@@ -133,10 +99,8 @@ public final class GeoNearOptions {
      * When provided, MongoDB uses $nearSphere semantics and calculates distances
      * using spherical geometry.
      *
-     * @return the option
+     * @return a new {@link GeoNearOptions} with the provided option set
      * @since 4.8
      */
-    public GeoNearOptions spherical() {
-        return setOption("spherical", true);
-    }
+    GeoNearOptions spherical();
 }
