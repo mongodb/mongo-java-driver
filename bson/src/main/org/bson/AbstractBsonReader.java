@@ -321,7 +321,7 @@ public abstract class AbstractBsonReader implements BsonReader {
     @Override
     public void readEndArray() {
         if (isClosed()) {
-            throw new IllegalStateException("BSONBinaryWriter");
+            throw new IllegalStateException("BsonReader is closed");
         }
         if (getContext().getContextType() != BsonContextType.ARRAY) {
             throwInvalidContextType("readEndArray", getContext().getContextType(), BsonContextType.ARRAY);
@@ -341,7 +341,7 @@ public abstract class AbstractBsonReader implements BsonReader {
     @Override
     public void readEndDocument() {
         if (isClosed()) {
-            throw new IllegalStateException("BSONBinaryWriter");
+            throw new IllegalStateException("BsonReader is closed");
         }
         if (getContext().getContextType() != BsonContextType.DOCUMENT && getContext().getContextType() != BsonContextType.SCOPE_DOCUMENT) {
             throwInvalidContextType("readEndDocument",
@@ -715,7 +715,7 @@ public abstract class AbstractBsonReader implements BsonReader {
      */
     protected void checkPreconditions(final String methodName, final BsonType type) {
         if (isClosed()) {
-            throw new IllegalStateException("BsonWriter is closed");
+            throw new IllegalStateException("BsonReader is closed");
         }
 
         verifyBSONType(methodName, type);
