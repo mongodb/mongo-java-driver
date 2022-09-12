@@ -34,7 +34,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
-import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -977,12 +976,25 @@ public final class Aggregates {
         return new Bson() {
             @Override
             public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-                Document d = new Document();
-                d.append("near", near);
-                d.append("distanceField", distanceField);
-                options.toBsonDocument(documentClass, codecRegistry).forEach(d::append);
-                return new BsonDocument("$geoNear", d.toBsonDocument(documentClass, codecRegistry));
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartDocument("$geoNear");
+
+                writer.writeName("near");
+                BuildersHelper.encodeValue(writer, near, codecRegistry);
+                writer.writeName("distanceField");
+                BuildersHelper.encodeValue(writer, distanceField, codecRegistry);
+
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+
+                writer.writeEndDocument();
+                writer.writeEndDocument();
+                return writer.getDocument();
             }
+
             @Override
             public String toString() {
                 return "Stage{name='$densify'"
