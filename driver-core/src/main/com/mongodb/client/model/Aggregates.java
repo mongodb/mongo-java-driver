@@ -21,10 +21,12 @@ import com.mongodb.client.model.densify.DensifyOptions;
 import com.mongodb.client.model.densify.DensifyRange;
 import com.mongodb.client.model.fill.FillOutputField;
 import com.mongodb.client.model.fill.FillOptions;
+import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchOptions;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -35,11 +37,13 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -918,6 +922,104 @@ public final class Aggregates {
      */
     public static Bson searchMeta(final SearchCollector collector, final SearchOptions options) {
         return new SearchStage("$searchMeta", notNull("collector", collector), notNull("options", options));
+    }
+
+    /**
+     * Creates an $unset pipeline stage that removes/excludes fields from documents
+     *
+     * @param fields the fields to exclude. May use dot notation.
+     * @return the $unset pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/project/ $unset
+     * @mongodb.server.release 4.2
+     * @since 4.8
+     */
+    public static Bson unset(final String... fields) {
+        return unset(Arrays.asList(fields));
+    }
+
+    /**
+     * Creates an $unset pipeline stage that removes/excludes fields from documents
+     *
+     * @param fields the fields to exclude. May use dot notation.
+     * @return the $unset pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/project/ $unset
+     * @mongodb.server.release 4.2
+     * @since 4.8
+     */
+    public static Bson unset(final List<String> fields) {
+        if (fields.size() == 1) {
+            return new BsonDocument("$unset", new BsonString(fields.get(0)));
+        }
+        BsonArray array = new BsonArray();
+        fields.stream().map(BsonString::new).forEach(array::add);
+        return new BsonDocument().append("$unset", array);
+    }
+
+    /**
+     * Creates a $geoNear pipeline stage that outputs documents in order of nearest to farthest from a specified point.
+     *
+     * @param near The point for which to find the closest documents.
+     * @param distanceField The output field that contains the calculated distance.
+     *                      To specify a field within an embedded document, use dot notation.
+     * @param options {@link GeoNearOptions}
+     * @return the $geoNear pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
+     * @since 4.8
+     */
+    public static Bson geoNear(
+            final Point near,
+            final String distanceField,
+            final GeoNearOptions options) {
+        notNull("near", near);
+        notNull("distanceField", distanceField);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartDocument("$geoNear");
+
+                writer.writeName("near");
+                BuildersHelper.encodeValue(writer, near, codecRegistry);
+                writer.writeName("distanceField");
+                BuildersHelper.encodeValue(writer, distanceField, codecRegistry);
+
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+
+                writer.writeEndDocument();
+                writer.writeEndDocument();
+                return writer.getDocument();
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$geoNear'"
+                        + ", near=" + near
+                        + ", distanceField=" + distanceField
+                        + ", options=" + options
+                        + '}';
+            }
+        };
+    }
+
+    /**
+     * Creates a $geoNear pipeline stage that outputs documents in order of nearest to farthest from a specified point.
+     *
+     * @param near The point for which to find the closest documents.
+     * @param distanceField The output field that contains the calculated distance.
+     *                      To specify a field within an embedded document, use dot notation.
+     * @return the $geoNear pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
+     * @since 4.8
+     */
+    public static Bson geoNear(
+            final Point near,
+            final String distanceField) {
+        return geoNear(near, distanceField, geoNearOptions());
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,

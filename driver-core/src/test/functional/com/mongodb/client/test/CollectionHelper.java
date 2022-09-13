@@ -51,6 +51,7 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
@@ -61,6 +62,7 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
@@ -218,6 +220,11 @@ public final class CollectionHelper<T> {
             bsonDocuments.add(new BsonDocumentWrapper<I>(document, iCodec));
         }
         insertDocuments(bsonDocuments, binding);
+    }
+
+    public void insertDocuments(final String insertAll) {
+        List<BsonDocument> documents = BsonArray.parse(insertAll).stream().map(BsonValue::asDocument).collect(Collectors.toList());
+        insertDocuments(documents);
     }
 
     public List<T> find() {

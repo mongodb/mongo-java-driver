@@ -17,7 +17,7 @@
 package org.mongodb.scala
 
 import scala.collection.JavaConverters._
-import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowOutputField }
+import com.mongodb.client.model.{ GeoNearOptions, MongoTimeUnit => JMongoTimeUnit, WindowOutputField }
 import org.mongodb.scala.bson.conversions.Bson
 
 // scalastyle:off number.of.methods number.of.types
@@ -911,6 +911,8 @@ package object model {
    * @since 4.3
    */
   type WindowOutputField = com.mongodb.client.model.WindowOutputField
+
+  type GeoNearOptions = com.mongodb.client.model.GeoNearOptions
 }
 
 // scalastyle:on number.of.methods number.of.types
