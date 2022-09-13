@@ -75,7 +75,7 @@ import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWi
 
 class OperationFunctionalSpecification extends Specification {
 
-    void setup() {
+    def setup() {
         setupInternal()
     }
 

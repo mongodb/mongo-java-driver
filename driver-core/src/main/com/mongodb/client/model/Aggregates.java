@@ -997,7 +997,7 @@ public final class Aggregates {
 
             @Override
             public String toString() {
-                return "Stage{name='$densify'"
+                return "Stage{name='$geoNear'"
                         + ", near=" + near
                         + ", distanceField=" + distanceField
                         + ", options=" + options
