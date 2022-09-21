@@ -21,7 +21,7 @@ import com.mongodb.connection.ConnectionId;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event for checking our a connection from the pool.
+ * An event for checking out a connection from the pool.
  *
  * @since 3.5
  */
