@@ -26,6 +26,7 @@ import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.record.samples.TestRecordEmbedded;
 import org.bson.codecs.record.samples.TestRecordWithDeprecatedAnnotations;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnConstructor;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnMethod;
@@ -39,13 +40,19 @@ import org.bson.codecs.record.samples.TestRecordWithIllegalBsonIgnoreOnComponent
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonPropertyOnAccessor;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonPropertyOnCanonicalConstructor;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonRepresentationOnAccessor;
+import org.bson.codecs.record.samples.TestRecordWithListOfListOfRecords;
+import org.bson.codecs.record.samples.TestRecordWithListOfRecords;
+import org.bson.codecs.record.samples.TestRecordWithMapOfListOfRecords;
+import org.bson.codecs.record.samples.TestRecordWithMapOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -97,6 +104,119 @@ public class RecordCodecTest {
                         .append("name", new BsonString("Lucas"))
                         .append("hobbies", new BsonArray(List.of(new BsonString("soccer"), new BsonString("basketball"))))
                         .append("a", new BsonInt32(14)),
+                document);
+        assertEquals("_id", document.getFirstKey());
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testRecordWithNestedListOfRecords() {
+        var codec = new RecordCodec<>(TestRecordWithListOfRecords.class,
+                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithListOfRecords(identifier, List.of(new TestRecordEmbedded("embedded")));
+
+        var document = new BsonDocument();
+        var writer = new BsonDocumentWriter(document);
+
+        // when
+        codec.encode(writer, testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonObjectId(identifier))
+                        .append("nestedRecords", new BsonArray(List.of(new BsonDocument("name", new BsonString("embedded"))))),
+                document);
+        assertEquals("_id", document.getFirstKey());
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testRecordWithNestedListOfListOfRecords() {
+        var codec = new RecordCodec<>(TestRecordWithListOfListOfRecords.class,
+                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithListOfListOfRecords(identifier, List.of(List.of(new TestRecordEmbedded("embedded"))));
+
+        var document = new BsonDocument();
+        var writer = new BsonDocumentWriter(document);
+
+        // when
+        codec.encode(writer, testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonObjectId(identifier))
+                        .append("nestedRecords",
+                                new BsonArray(List.of(new BsonArray(List.of(new BsonDocument("name", new BsonString("embedded"))))))),
+                document);
+        assertEquals("_id", document.getFirstKey());
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testRecordWithNestedMapOfRecords() {
+        var codec = new RecordCodec<>(TestRecordWithMapOfRecords.class,
+                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithMapOfRecords(identifier,
+                Map.of("first", new TestRecordEmbedded("embedded")));
+
+        var document = new BsonDocument();
+        var writer = new BsonDocumentWriter(document);
+
+        // when
+        codec.encode(writer, testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonObjectId(identifier))
+                        .append("nestedRecords", new BsonDocument("first", new BsonDocument("name", new BsonString("embedded")))),
+                document);
+        assertEquals("_id", document.getFirstKey());
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testRecordWithNestedMapOfListRecords() {
+        var codec = new RecordCodec<>(TestRecordWithMapOfListOfRecords.class,
+                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithMapOfListOfRecords(identifier,
+                Map.of("first", List.of(new TestRecordEmbedded("embedded"))));
+
+        var document = new BsonDocument();
+        var writer = new BsonDocumentWriter(document);
+
+        // when
+        codec.encode(writer, testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonObjectId(identifier))
+                        .append("nestedRecords",
+                                new BsonDocument("first",
+                                        new BsonArray(List.of(new BsonDocument("name", new BsonString("embedded")))))),
                 document);
         assertEquals("_id", document.getFirstKey());
 

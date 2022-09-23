@@ -22,6 +22,7 @@ import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.Parameterizable;
 import org.bson.codecs.RepresentationConfigurable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -35,6 +36,7 @@ import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,6 +85,10 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         @SuppressWarnings("deprecation")
         private static Codec<?> computeCodec(final RecordComponent component, final CodecRegistry codecRegistry) {
             var codec = codecRegistry.get(toWrapper(component.getType()));
+            if (codec instanceof Parameterizable parameterizableCodec
+                    && component.getGenericType() instanceof ParameterizedType parameterizedType) {
+                codec = parameterizableCodec.parameterize(codecRegistry, Arrays.asList(parameterizedType.getActualTypeArguments()));
+            }
             BsonType bsonRepresentationType = null;
 
             if (component.isAnnotationPresent(BsonRepresentation.class)) {

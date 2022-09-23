@@ -21,12 +21,15 @@ import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.ContainerCodecHelper.getCodec;
 import static org.bson.codecs.ContainerCodecHelper.readValue;
 
 /**
@@ -35,7 +38,7 @@ import static org.bson.codecs.ContainerCodecHelper.readValue;
  * @since 3.3
  */
 @SuppressWarnings("rawtypes")
-public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresentationCodec<Iterable> {
+public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresentationCodec<Iterable>, Parameterizable {
 
     private final CodecRegistry registry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
@@ -63,7 +66,6 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
         this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
                 UuidRepresentation.UNSPECIFIED);
     }
-
     private IterableCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
                          final UuidRepresentation uuidRepresentation) {
         this.registry = notNull("registry", registry);
@@ -77,6 +79,15 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
         this.uuidRepresentation = uuidRepresentation;
     }
 
+
+    @Override
+    public Codec<?> parameterize(final CodecRegistry codecRegistry, final List<Type> types) {
+        if (types.size() != 1) {
+            throw new CodecConfigurationException("Expected only one parameterized type for an Iterable, but found " + types.size());
+        }
+
+        return new ParameterizedIterableCodec<>(getCodec(codecRegistry, types.get(0)));
+    }
 
     @Override
     public Codec<Iterable> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
