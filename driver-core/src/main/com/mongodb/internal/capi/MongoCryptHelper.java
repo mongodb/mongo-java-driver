@@ -23,6 +23,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import com.mongodb.internal.authentication.AwsCredentialHelper;
 import com.mongodb.internal.authentication.GcpCredentialHelper;
@@ -59,6 +60,12 @@ public final class MongoCryptHelper {
                 settings.getExtraOptions(),
                 settings.getSchemaMap(),
                 settings.getEncryptedFieldsMap());
+    }
+
+    public static void validateRewrapManyDataKeyOptions(final RewrapManyDataKeyOptions options) {
+        if (options.getMasterKey() != null && options.getProvider() == null) {
+            throw new MongoClientException("Missing the provider but supplied a master key in the RewrapManyDataKeyOptions");
+        }
     }
 
     private static MongoCryptOptions createMongoCryptOptions(

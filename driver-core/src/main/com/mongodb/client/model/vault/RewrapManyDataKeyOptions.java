@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.vault;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 /**
@@ -48,6 +49,7 @@ public final class RewrapManyDataKeyOptions {
     /**
       * @return the provider name
      */
+    @Nullable
     public String getProvider() {
         return provider;
     }
@@ -110,6 +112,7 @@ public final class RewrapManyDataKeyOptions {
      * </p>
      * @return the master key document
      */
+    @Nullable
     public BsonDocument getMasterKey() {
         return masterKey;
     }
