@@ -44,6 +44,7 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -146,6 +147,7 @@ public class ClientEncryptionImpl implements ClientEncryption, Closeable {
 
     @Override
     public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
+        validateRewrapManyDataKeyOptions(options);
         BsonDocument results = crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options);
         if (results.isEmpty()) {
             return new RewrapManyDataKeyResult();

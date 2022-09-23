@@ -47,6 +47,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -155,22 +156,23 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
-        return crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options)
-                .flatMap(results -> {
-                    if (results.isEmpty()) {
-                        return Mono.fromCallable(RewrapManyDataKeyResult::new);
-                    }
-                    List<UpdateOneModel<BsonDocument>> updateModels = results.getArray("v", new BsonArray()).stream().map(v -> {
-                        BsonDocument updateDocument = v.asDocument();
-                        return new UpdateOneModel<BsonDocument>(Filters.eq(updateDocument.get("_id")),
-                                Updates.combine(
-                                        Updates.set("masterKey", updateDocument.get("masterKey")),
-                                        Updates.set("keyMaterial", updateDocument.get("keyMaterial")),
-                                        Updates.currentDate("updateDate"))
-                        );
-                    }).collect(Collectors.toList());
-                    return Mono.from(collection.bulkWrite(updateModels)).map(RewrapManyDataKeyResult::new);
-                });
+        return Mono.fromRunnable(() -> validateRewrapManyDataKeyOptions(options)).then(
+                crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options)
+                        .flatMap(results -> {
+                            if (results.isEmpty()) {
+                                return Mono.fromCallable(RewrapManyDataKeyResult::new);
+                            }
+                            List<UpdateOneModel<BsonDocument>> updateModels = results.getArray("v", new BsonArray()).stream().map(v -> {
+                                BsonDocument updateDocument = v.asDocument();
+                                return new UpdateOneModel<BsonDocument>(Filters.eq(updateDocument.get("_id")),
+                                        Updates.combine(
+                                                Updates.set("masterKey", updateDocument.get("masterKey")),
+                                                Updates.set("keyMaterial", updateDocument.get("keyMaterial")),
+                                                Updates.currentDate("updateDate"))
+                                );
+                            }).collect(Collectors.toList());
+                            return Mono.from(collection.bulkWrite(updateModels)).map(RewrapManyDataKeyResult::new);
+                        }));
     }
 
     @Override

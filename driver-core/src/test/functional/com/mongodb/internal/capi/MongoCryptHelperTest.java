@@ -18,6 +18,8 @@ package com.mongodb.internal.capi;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.MongoClientException;
+import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
@@ -25,10 +27,13 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MongoCryptHelperTest {
 
@@ -87,6 +92,16 @@ public class MongoCryptHelperTest {
         autoEncryptionSettingsBuilder.bypassAutoEncryption(true);
         mongoCryptOptions = MongoCryptHelper.createMongoCryptOptions(autoEncryptionSettingsBuilder.build());
         assertMongoCryptOptions(mongoCryptOptionsBuilder.searchPaths(emptyList()).build(), mongoCryptOptions);
+    }
+
+    @Test
+    public void validateRewrapManyDataKeyOptionsTest() {
+        // Happy path
+        assertDoesNotThrow(() -> validateRewrapManyDataKeyOptions(new RewrapManyDataKeyOptions()));
+        assertDoesNotThrow(() -> validateRewrapManyDataKeyOptions(new RewrapManyDataKeyOptions().provider("AWS")));
+
+        // Failure
+        assertThrows(MongoClientException.class, () -> validateRewrapManyDataKeyOptions(new RewrapManyDataKeyOptions().masterKey(new BsonDocument())));
     }
 
     void assertMongoCryptOptions(final MongoCryptOptions expected, final MongoCryptOptions actual) {
