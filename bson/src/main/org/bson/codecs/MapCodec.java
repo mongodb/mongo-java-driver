@@ -21,13 +21,17 @@ import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.ContainerCodecHelper.getCodec;
 import static org.bson.codecs.ContainerCodecHelper.readValue;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -36,7 +40,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * @since 3.5
  */
-public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepresentationCodec<Map<String, Object>> {
+public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepresentationCodec<Map<String, Object>>, Parameterizable {
 
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
             new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider()));
@@ -105,6 +109,19 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
             return this;
         }
         return new MapCodec(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation);
+    }
+
+    @Override
+    public Codec<?> parameterize(final CodecRegistry codecRegistry, final List<Type> types) {
+        if (types.size() != 2) {
+            throw new CodecConfigurationException("Expected two parameterized type for an Iterable, but found "
+                    + types.size());
+        }
+        Type genericTypeOfMapKey = types.get(0);
+        if (!genericTypeOfMapKey.getTypeName().equals("java.lang.String")) {
+            throw new CodecConfigurationException("Unsupported key type for Map: " + genericTypeOfMapKey.getTypeName());
+        }
+        return new ParameterizedMapCodec<>(getCodec(codecRegistry, types.get(1)));
     }
 
     @Override
