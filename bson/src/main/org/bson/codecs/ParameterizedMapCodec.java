@@ -17,19 +17,14 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
-import org.bson.BsonType;
 import org.bson.BsonWriter;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A Codec for Map instances.
  *
  * @since 3.5
  */
-class ParameterizedMapCodec<T> implements Codec<Map<String, T>> {
-
+class ParameterizedMapCodec<T> extends AbstractMapCodec<T> {
     private final Codec<T> codec;
 
     ParameterizedMapCodec(final Codec<T> codec) {
@@ -37,42 +32,12 @@ class ParameterizedMapCodec<T> implements Codec<Map<String, T>> {
     }
 
     @Override
-    public void encode(final BsonWriter writer, final Map<String, T> map, final EncoderContext encoderContext) {
-        writer.writeStartDocument();
-        for (final Map.Entry<String, T> entry : map.entrySet()) {
-            writer.writeName(entry.getKey());
-            T value = entry.getValue();
-            if (value == null) {
-                writer.writeNull();
-            } else {
-                encoderContext.encodeWithChildContext(codec, writer, value);
-            }
-        }
-        writer.writeEndDocument();
+    T readValue(final BsonReader reader, final DecoderContext decoderContext) {
+        return decoderContext.decodeWithChildContext(codec, reader);
     }
 
     @Override
-    public Map<String, T> decode(final BsonReader reader, final DecoderContext decoderContext) {
-        Map<String, T> map = new HashMap<>();
-
-        reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            String fieldName = reader.readName();
-            if (reader.getCurrentBsonType() == BsonType.NULL) {
-                reader.readNull();
-                map.put(fieldName, null);
-            } else {
-                map.put(fieldName, decoderContext.decodeWithChildContext(codec, reader));
-            }
-        }
-
-        reader.readEndDocument();
-        return map;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @Override
-    public Class<Map<String, T>> getEncoderClass() {
-        return (Class<Map<String, T>>) ((Class) Map.class);
+    void writeValue(final BsonWriter writer, final T value, final EncoderContext encoderContext) {
+        encoderContext.encodeWithChildContext(codec, writer, value);
     }
 }

@@ -17,7 +17,6 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
-import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
@@ -25,14 +24,12 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.ContainerCodecHelper.getCodec;
-import static org.bson.codecs.ContainerCodecHelper.readValue;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -40,7 +37,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * @since 3.5
  */
-public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepresentationCodec<Map<String, Object>>, Parameterizable {
+public class MapCodec extends AbstractMapCodec<Object> implements OverridableUuidRepresentationCodec<Map<String, Object>>, Parameterizable {
 
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
             new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider()));
@@ -125,42 +122,14 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
     }
 
     @Override
-    public void encode(final BsonWriter writer, final Map<String, Object> map, final EncoderContext encoderContext) {
-        writer.writeStartDocument();
-        for (final Map.Entry<String, Object> entry : map.entrySet()) {
-            writer.writeName(entry.getKey());
-            writeValue(writer, encoderContext, entry.getValue());
-        }
-        writer.writeEndDocument();
+    Object readValue(final BsonReader reader, final DecoderContext decoderContext) {
+        return ContainerCodecHelper.readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public Map<String, Object> decode(final BsonReader reader, final DecoderContext decoderContext) {
-        Map<String, Object> map = new HashMap<String, Object>();
-
-        reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            String fieldName = reader.readName();
-            map.put(fieldName, readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer));
-        }
-
-        reader.readEndDocument();
-        return map;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Class<Map<String, Object>> getEncoderClass() {
-        return (Class<Map<String, Object>>) ((Class) Map.class);
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value) {
-        if (value == null) {
-            writer.writeNull();
-        } else {
-            Codec codec = registry.get(value.getClass());
-            encoderContext.encodeWithChildContext(codec, writer, value);
-        }
+    void writeValue(final BsonWriter writer, final Object value, final EncoderContext encoderContext) {
+        Codec codec = registry.get(value.getClass());
+        encoderContext.encodeWithChildContext(codec, writer, value);
     }
 }
