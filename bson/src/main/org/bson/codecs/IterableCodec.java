@@ -17,7 +17,6 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
-import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
@@ -25,12 +24,10 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.ContainerCodecHelper.getCodec;
-import static org.bson.codecs.ContainerCodecHelper.readValue;
 
 /**
  * Encodes and decodes {@code Iterable} objects.
@@ -38,7 +35,8 @@ import static org.bson.codecs.ContainerCodecHelper.readValue;
  * @since 3.3
  */
 @SuppressWarnings("rawtypes")
-public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresentationCodec<Iterable>, Parameterizable {
+public class IterableCodec extends AbstractIterableCodec<Object>
+        implements OverridableUuidRepresentationCodec<Iterable<Object>>, Parameterizable {
 
     private final CodecRegistry registry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
@@ -90,7 +88,7 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
     }
 
     @Override
-    public Codec<Iterable> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+    public Codec<Iterable<Object>> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
         if (this.uuidRepresentation.equals(uuidRepresentation)) {
             return this;
         }
@@ -98,40 +96,14 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
     }
 
     @Override
-    public Iterable decode(final BsonReader reader, final DecoderContext decoderContext) {
-        reader.readStartArray();
-
-        List<Object> list = new ArrayList<Object>();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer));
-        }
-
-        reader.readEndArray();
-
-        return list;
+    Object readValue(final BsonReader reader, final DecoderContext decoderContext) {
+        return ContainerCodecHelper.readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void encode(final BsonWriter writer, final Iterable value, final EncoderContext encoderContext) {
-        writer.writeStartArray();
-        for (final Object cur : value) {
-            writeValue(writer, encoderContext, cur);
-        }
-        writer.writeEndArray();
-    }
-
-    @Override
-    public Class<Iterable> getEncoderClass() {
-        return Iterable.class;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value) {
-        if (value == null) {
-            writer.writeNull();
-        } else {
-            Codec codec = registry.get(value.getClass());
-            encoderContext.encodeWithChildContext(codec, writer, value);
-        }
+    void writeValue(final BsonWriter writer, final Object value, final EncoderContext encoderContext) {
+        Codec codec = registry.get(value.getClass());
+        encoderContext.encodeWithChildContext(codec, writer, value);
     }
 }

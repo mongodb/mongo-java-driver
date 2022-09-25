@@ -17,13 +17,9 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
-import org.bson.BsonType;
 import org.bson.BsonWriter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-class ParameterizedIterableCodec<T> implements Codec<Iterable<T>> {
+class ParameterizedIterableCodec<T> extends AbstractIterableCodec<T> {
     private final Codec<T> codec;
 
     ParameterizedIterableCodec(final Codec<T> codec) {
@@ -31,39 +27,12 @@ class ParameterizedIterableCodec<T> implements Codec<Iterable<T>> {
     }
 
     @Override
-    public Iterable<T> decode(final BsonReader reader, final DecoderContext decoderContext) {
-        reader.readStartArray();
-
-        List<T> list = new ArrayList<>();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            if (reader.getCurrentBsonType() == BsonType.NULL) {
-                list.add(null);
-            } else {
-                list.add(decoderContext.decodeWithChildContext(codec, reader));
-            }
-        }
-
-        reader.readEndArray();
-
-        return list;
+    T readValue(final BsonReader reader, final DecoderContext decoderContext) {
+        return decoderContext.decodeWithChildContext(codec, reader);
     }
 
     @Override
-    public void encode(final BsonWriter writer, final Iterable<T> value, final EncoderContext encoderContext) {
-        writer.writeStartArray();
-        for (final T cur : value) {
-            if (cur == null) {
-                writer.writeNull();
-            } else {
-                encoderContext.encodeWithChildContext(codec, writer, cur);
-            }
-        }
-        writer.writeEndArray();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @Override
-    public Class<Iterable<T>> getEncoderClass() {
-        return (Class<Iterable<T>>) ((Class) Iterable.class);
+    void writeValue(final BsonWriter writer, final T cur, final EncoderContext encoderContext) {
+        encoderContext.encodeWithChildContext(codec, writer, cur);
     }
 }
