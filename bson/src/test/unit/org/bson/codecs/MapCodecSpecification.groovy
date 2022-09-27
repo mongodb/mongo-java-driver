@@ -249,8 +249,9 @@ class MapCodecSpecification extends Specification {
         then:
         writer.getDocument() == new BsonDocument()
                 .append('instants',
-                        new BsonDocument('firstMap', new BsonArray(List.of(new BsonDateTime(1), new BsonDateTime(2))))
-                        .append('secondMap', new BsonArray(List.of(new BsonDateTime(3), new BsonDateTime(4)))))
+                        new BsonDocument()
+                                .append('firstMap', new BsonArray([new BsonDateTime(1), new BsonDateTime(2)]))
+                                .append('secondMap', new BsonArray([new BsonDateTime(3), new BsonDateTime(4)])))
 
         when:
         reader.readStartDocument()
