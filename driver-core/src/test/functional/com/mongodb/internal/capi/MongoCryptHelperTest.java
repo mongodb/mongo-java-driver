@@ -27,13 +27,17 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.internal.capi.MongoCryptHelper.isMongocryptdSpawningDisabled;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MongoCryptHelperTest {
 
@@ -102,6 +106,29 @@ public class MongoCryptHelperTest {
 
         // Failure
         assertThrows(MongoClientException.class, () -> validateRewrapManyDataKeyOptions(new RewrapManyDataKeyOptions().masterKey(new BsonDocument())));
+    }
+
+    @Test
+    public void isMongocryptdSpawningDisabledTest() {
+        assertTrue(isMongocryptdSpawningDisabled(null,
+                initializeAutoEncryptionSettingsBuilder().bypassAutoEncryption(true).build()));
+        assertTrue(isMongocryptdSpawningDisabled(null,
+                initializeAutoEncryptionSettingsBuilder().bypassQueryAnalysis(true).build()));
+        assertTrue(isMongocryptdSpawningDisabled(null,
+                initializeAutoEncryptionSettingsBuilder().extraOptions(singletonMap("cryptSharedLibRequired", true)).build()));
+        assertTrue(isMongocryptdSpawningDisabled("/path/to/shared/lib.so",
+                initializeAutoEncryptionSettingsBuilder().build()));
+        assertFalse(isMongocryptdSpawningDisabled(null,
+                initializeAutoEncryptionSettingsBuilder().build()));
+        assertFalse(isMongocryptdSpawningDisabled("",
+                initializeAutoEncryptionSettingsBuilder().build()));
+    }
+
+    private static AutoEncryptionSettings.Builder initializeAutoEncryptionSettingsBuilder() {
+        AutoEncryptionSettings.Builder builder = AutoEncryptionSettings.builder()
+                .keyVaultNamespace("test.vault")
+                .kmsProviders(singletonMap("local", singletonMap("key", new byte[96])));
+        return builder;
     }
 
     void assertMongoCryptOptions(final MongoCryptOptions expected, final MongoCryptOptions actual) {
