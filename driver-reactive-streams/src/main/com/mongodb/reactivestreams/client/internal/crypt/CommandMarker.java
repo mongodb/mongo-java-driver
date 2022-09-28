@@ -34,6 +34,7 @@ import java.util.Map;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdClientSettings;
 import static com.mongodb.internal.capi.MongoCryptHelper.createProcessBuilder;
+import static com.mongodb.internal.capi.MongoCryptHelper.isMongocryptdSpawningDisabled;
 import static com.mongodb.internal.capi.MongoCryptHelper.startProcess;
 
 @SuppressWarnings("UseOfProcessBuilder")
@@ -62,18 +63,12 @@ class CommandMarker implements Closeable {
     CommandMarker(
             final MongoCrypt mongoCrypt,
             final AutoEncryptionSettings settings) {
-        Map<String, Object> extraOptions = settings.getExtraOptions();
-        String cryptSharedLibVersionString = mongoCrypt.getCryptSharedLibVersionString();
 
-        boolean bypassAutoEncryption = settings.isBypassAutoEncryption();
-        boolean isBypassQueryAnalysis = settings.isBypassQueryAnalysis();
-        boolean cryptSharedIsAvailable = cryptSharedLibVersionString != null && cryptSharedLibVersionString.isEmpty();
-        boolean cryptSharedLibRequired = (boolean) extraOptions.getOrDefault("cryptSharedLibRequired", false);
-
-        if (bypassAutoEncryption || isBypassQueryAnalysis || cryptSharedLibRequired || cryptSharedIsAvailable) {
+        if (isMongocryptdSpawningDisabled(mongoCrypt.getCryptSharedLibVersionString(), settings)) {
             processBuilder = null;
             client = null;
         } else {
+            Map<String, Object> extraOptions = settings.getExtraOptions();
             boolean mongocryptdBypassSpawn = (boolean) extraOptions.getOrDefault("mongocryptdBypassSpawn", false);
             if (!mongocryptdBypassSpawn) {
                 processBuilder = createProcessBuilder(extraOptions);
