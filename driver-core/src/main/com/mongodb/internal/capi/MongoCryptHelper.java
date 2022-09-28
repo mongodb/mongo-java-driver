@@ -136,7 +136,7 @@ public final class MongoCryptHelper {
 
     public static boolean isMongocryptdSpawningDisabled(@Nullable final String cryptSharedLibVersion,
             final AutoEncryptionSettings settings) {
-        boolean cryptSharedLibIsAvailable = cryptSharedLibVersion != null && cryptSharedLibVersion.isEmpty();
+        boolean cryptSharedLibIsAvailable = cryptSharedLibVersion != null && !cryptSharedLibVersion.isEmpty();
         boolean cryptSharedLibRequired = (boolean) settings.getExtraOptions().getOrDefault("cryptSharedLibRequired", false);
         return settings.isBypassAutoEncryption() || settings.isBypassQueryAnalysis() || cryptSharedLibRequired || cryptSharedLibIsAvailable;
     }
