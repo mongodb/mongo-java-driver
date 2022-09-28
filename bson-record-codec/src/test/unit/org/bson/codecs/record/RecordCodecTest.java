@@ -20,6 +20,7 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
@@ -27,6 +28,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.record.samples.TestRecordEmbedded;
+import org.bson.codecs.record.samples.TestRecordParameterized;
 import org.bson.codecs.record.samples.TestRecordWithDeprecatedAnnotations;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnConstructor;
 import org.bson.codecs.record.samples.TestRecordWithIllegalBsonCreatorOnMethod;
@@ -44,6 +46,7 @@ import org.bson.codecs.record.samples.TestRecordWithListOfListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithMapOfListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithMapOfRecords;
+import org.bson.codecs.record.samples.TestRecordWithParameterizedRecord;
 import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -217,6 +220,37 @@ public class RecordCodecTest {
                         .append("nestedRecords",
                                 new BsonDocument("first",
                                         new BsonArray(List.of(new BsonDocument("name", new BsonString("embedded")))))),
+                document);
+        assertEquals("_id", document.getFirstKey());
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testRecordWithNestedParameterizedRecord() {
+        var codec = new RecordCodec<>(TestRecordWithParameterizedRecord.class,
+                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithParameterizedRecord(identifier,
+                new TestRecordParameterized<>(42.0, List.of(new TestRecordEmbedded("embedded"))));
+
+        var document = new BsonDocument();
+        var writer = new BsonDocumentWriter(document);
+
+        // when
+        codec.encode(writer, testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonObjectId(identifier))
+                        .append("parameterizedRecord",
+                                new BsonDocument("number", new BsonDouble(42.0))
+                                        .append("parameterizedList",
+                                                new BsonArray(List.of(new BsonDocument("name", new BsonString("embedded")))))),
                 document);
         assertEquals("_id", document.getFirstKey());
 
