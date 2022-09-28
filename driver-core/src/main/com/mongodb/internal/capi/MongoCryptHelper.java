@@ -138,6 +138,13 @@ public final class MongoCryptHelper {
         return new BsonDocumentWrapper<>(new Document(optionsMap), new DocumentCodec());
     }
 
+    public static boolean isMongocryptdSpawningDisabled(@Nullable final String cryptSharedLibVersion,
+            final AutoEncryptionSettings settings) {
+        boolean cryptSharedLibIsAvailable = cryptSharedLibVersion != null && cryptSharedLibVersion.isEmpty();
+        boolean cryptSharedLibRequired = (boolean) settings.getExtraOptions().getOrDefault("cryptSharedLibRequired", false);
+        return settings.isBypassAutoEncryption() || settings.isBypassQueryAnalysis() || cryptSharedLibRequired || cryptSharedLibIsAvailable;
+    }
+
     @SuppressWarnings("unchecked")
     public static List<String> createMongocryptdSpawnArgs(final Map<String, Object> options) {
         List<String> spawnArgs = new ArrayList<>();
