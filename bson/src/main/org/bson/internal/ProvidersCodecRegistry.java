@@ -17,9 +17,12 @@
 package org.bson.internal;
 
 import org.bson.codecs.Codec;
+import org.bson.codecs.Parameterizable;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.internal.CodecCache.CodecCacheKey;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +42,11 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
         return get(new ChildCodecRegistry<T>(this, clazz));
     }
 
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
+        return get(new ChildCodecRegistry<T>(this, clazz, typeArguments));
+    }
+
     @SuppressWarnings("rawtypes")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         for (CodecProvider provider : codecProviders) {
@@ -50,18 +58,22 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
         return null;
     }
 
-    @SuppressWarnings({"rawtypes" })
+    @SuppressWarnings({"unchecked"})
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
-        if (!codecCache.containsKey(context.getCodecClass())) {
+        CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes());
+        if (!codecCache.containsKey(codecCacheKey)) {
             for (CodecProvider provider : codecProviders) {
                 Codec<T> codec = provider.get(context.getCodecClass(), context);
                 if (codec != null) {
-                    return codecCache.putIfMissing(context.getCodecClass(), codec);
+                    if (codec instanceof Parameterizable && context.getTypes() != null) {
+                        codec = (Codec<T>) ((Parameterizable) codec).parameterize(context, context.getTypes());
+                    }
+                    return codecCache.putIfMissing(codecCacheKey, codec);
                 }
             }
-            codecCache.put(context.getCodecClass(), null);
+            codecCache.put(codecCacheKey, null);
         }
-        return codecCache.getOrThrow(context.getCodecClass());
+        return codecCache.getOrThrow(codecCacheKey);
     }
 
     @Override

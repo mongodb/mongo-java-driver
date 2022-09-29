@@ -21,6 +21,10 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.internal.CodecCache.CodecCacheKey;
+
+import java.lang.reflect.Type;
+import java.util.List;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -48,6 +52,10 @@ public class OverridableUuidRepresentationCodecRegistry implements CycleDetectin
         return get(new ChildCodecRegistry<T>(this, clazz));
     }
 
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
+        return get(new ChildCodecRegistry<>(this, clazz, typeArguments));
+    }
 
     @Override
     @SuppressWarnings({"unchecked"})
@@ -62,14 +70,15 @@ public class OverridableUuidRepresentationCodecRegistry implements CycleDetectin
     @Override
     @SuppressWarnings({"unchecked"})
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
-        if (!codecCache.containsKey(context.getCodecClass())) {
+        CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes());
+        if (!codecCache.containsKey(codecCacheKey)) {
             Codec<T> codec = wrapped.get(context.getCodecClass(), context);
             if (codec instanceof OverridableUuidRepresentationCodec) {
                 codec = ((OverridableUuidRepresentationCodec<T>) codec).withUuidRepresentation(uuidRepresentation);
             }
-            codecCache.put(context.getCodecClass(), codec);
+            codecCache.put(codecCacheKey, codec);
         }
-        return codecCache.getOrThrow(context.getCodecClass());
+        return codecCache.getOrThrow(codecCacheKey);
     }
 
     @Override

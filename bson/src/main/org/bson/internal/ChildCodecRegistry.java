@@ -20,36 +20,59 @@ package org.bson.internal;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import javax.annotation.Nullable;
+import java.lang.reflect.Type;
+import java.util.List;
+
 // An implementation of CodecRegistry that is used to detect cyclic dependencies between Codecs
 class ChildCodecRegistry<T> implements CodecRegistry {
 
     private final ChildCodecRegistry<?> parent;
     private final CycleDetectingCodecRegistry registry;
     private final Class<T> codecClass;
+    private final List<Type> types;
 
     ChildCodecRegistry(final CycleDetectingCodecRegistry registry, final Class<T> codecClass) {
+        this(registry, codecClass, null);
+    }
+
+    ChildCodecRegistry(final CycleDetectingCodecRegistry registry, final Class<T> codecClass, final List<Type> types) {
         this.codecClass = codecClass;
         this.parent = null;
         this.registry = registry;
+        this.types = types;
     }
 
-
-    private ChildCodecRegistry(final ChildCodecRegistry<?> parent, final Class<T> codecClass) {
+    private ChildCodecRegistry(final ChildCodecRegistry<?> parent, final Class<T> codecClass, @Nullable final List<Type> types) {
         this.parent = parent;
         this.codecClass = codecClass;
         this.registry = parent.registry;
+        this.types = types;
     }
 
     public Class<T> getCodecClass() {
         return codecClass;
     }
 
+    public List<Type> getTypes() {
+        return types;
+    }
+
     // Gets a Codec, but if it detects a cyclic dependency, return a LazyCodec which breaks the chain.
     public <U> Codec<U> get(final Class<U> clazz) {
         if (hasCycles(clazz)) {
-            return new LazyCodec<U>(registry, clazz);
+            return new LazyCodec<U>(registry, clazz, null);
         } else {
-            return registry.get(new ChildCodecRegistry<U>(this, clazz));
+            return registry.get(new ChildCodecRegistry<>(this, clazz, null));
+        }
+    }
+
+    @Override
+    public <U> Codec<U> get(final Class<U> clazz, final List<Type> typeArguments) {
+        if (hasCycles(clazz)) {
+            return new LazyCodec<U>(registry, clazz, typeArguments);
+        } else {
+            return registry.get(new ChildCodecRegistry<>(this, clazz, typeArguments));
         }
     }
 
