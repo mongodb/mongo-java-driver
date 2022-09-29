@@ -23,14 +23,19 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.lang.reflect.Type;
+import java.util.List;
+
 class LazyCodec<T> implements Codec<T> {
     private final CodecRegistry registry;
     private final Class<T> clazz;
+    private final List<Type> types;
     private volatile Codec<T> wrapped;
 
-    LazyCodec(final CodecRegistry registry, final Class<T> clazz) {
+    LazyCodec(final CodecRegistry registry, final Class<T> clazz, final List<Type> types) {
         this.registry = registry;
         this.clazz = clazz;
+        this.types = types;
     }
 
     @Override
@@ -50,7 +55,11 @@ class LazyCodec<T> implements Codec<T> {
 
     private Codec<T> getWrapped() {
         if (wrapped == null) {
-            wrapped = registry.get(clazz);
+            if (types == null) {
+                wrapped = registry.get(clazz);
+            } else {
+                wrapped = registry.get(clazz, types);
+            }
         }
 
         return wrapped;
