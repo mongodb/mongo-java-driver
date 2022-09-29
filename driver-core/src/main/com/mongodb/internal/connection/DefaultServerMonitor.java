@@ -170,7 +170,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     sdamProvider.get().update(currentServerDescription);
 
                     if (((connection == null || shouldStreamResponses(currentServerDescription))
-                            && currentServerDescription.getTopologyVersion() != null)
+                            && currentServerDescription.getTopologyVersion() != null && currentServerDescription.getType() != UNKNOWN)
                             || (connection != null && connection.hasMoreToCome())
                             || (currentServerDescription.getException() instanceof MongoSocketException
                             && previousServerDescription.getType() != UNKNOWN)) {
