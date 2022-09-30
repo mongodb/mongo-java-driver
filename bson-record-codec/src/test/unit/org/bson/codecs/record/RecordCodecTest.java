@@ -27,7 +27,6 @@ import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
-import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.record.samples.TestRecordEmbedded;
 import org.bson.codecs.record.samples.TestRecordParameterized;
 import org.bson.codecs.record.samples.TestRecordWithDeprecatedAnnotations;
@@ -47,6 +46,8 @@ import org.bson.codecs.record.samples.TestRecordWithListOfListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithMapOfListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithMapOfRecords;
+import org.bson.codecs.record.samples.TestRecordWithNestedParameterized;
+import org.bson.codecs.record.samples.TestRecordWithNestedParameterizedRecord;
 import org.bson.codecs.record.samples.TestRecordWithParameterizedRecord;
 import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.conversions.Bson;
@@ -261,14 +262,6 @@ public class RecordCodecTest {
         // then
         assertEquals(testRecord, decoded);
     }
-
-    record TestRecordWithNestedParameterizedRecord(
-            @BsonId ObjectId id,
-            TestRecordWithNestedParameterized<TestRecordEmbedded, String, Double> nestedParameterized) { }
-
-    record TestRecordWithNestedParameterized<A, B, C extends Number>(
-            TestRecordParameterized<C, A> parameterizedRecord,
-            B other) { }
 
     @Test
     public void testRecordWithNestedParameterizedRecordWithDifferentlyOrderedTypeParameters() {
