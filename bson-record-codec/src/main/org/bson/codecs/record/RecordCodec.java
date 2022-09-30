@@ -38,6 +38,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,9 +50,10 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 
-final class RecordCodec<T extends Record> implements Codec<T> {
+final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
     private static final Logger LOGGER = Loggers.getLogger("RecordCodec");
     private final Class<T> clazz;
+    private final boolean requiresParameterization;
     private final Constructor<?> canonicalConstructor;
     private final List<ComponentModel> componentModels;
     private final ComponentModel componentModelForId;
@@ -62,10 +65,11 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         private final int index;
         private final String fieldName;
 
-        private ComponentModel(final RecordComponent component, final CodecRegistry codecRegistry, final int index) {
+        private ComponentModel(final List<Type> typeParameters, final RecordComponent component, final CodecRegistry codecRegistry,
+                final int index) {
             validateAnnotations(component, index);
             this.component = component;
-            this.codec = computeCodec(component, codecRegistry);
+            this.codec = computeCodec(typeParameters, component, codecRegistry);
             this.index = index;
             this.fieldName = computeFieldName(component);
         }
@@ -83,11 +87,13 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         }
 
         @SuppressWarnings("deprecation")
-        private static Codec<?> computeCodec(final RecordComponent component, final CodecRegistry codecRegistry) {
-            var codec = codecRegistry.get(toWrapper(component.getType()));
+        private static Codec<?> computeCodec(final List<Type> typeParameters, final RecordComponent component,
+                final CodecRegistry codecRegistry) {
+            var codec = codecRegistry.get(toWrapper(resolveComponentType(typeParameters, component)));
             if (codec instanceof Parameterizable parameterizableCodec
                     && component.getGenericType() instanceof ParameterizedType parameterizedType) {
-                codec = parameterizableCodec.parameterize(codecRegistry, Arrays.asList(parameterizedType.getActualTypeArguments()));
+                codec = parameterizableCodec.parameterize(codecRegistry,
+                        resolveActualTypeArguments(typeParameters, component.getDeclaringRecord(), parameterizedType));
             }
             BsonType bsonRepresentationType = null;
 
@@ -107,6 +113,36 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                 }
             }
             return codec;
+        }
+
+        private static Class<?> resolveComponentType(final List<Type> typeParameters, final RecordComponent component) {
+            Type resolvedType = resolveType(component.getGenericType(), typeParameters, component.getDeclaringRecord());
+            return resolvedType instanceof Class<?> clazz ? clazz : component.getType();
+        }
+
+        private static List<Type> resolveActualTypeArguments(final List<Type> typeParameters, final Class<?> recordClass,
+                final ParameterizedType parameterizedType) {
+            return Arrays.stream(parameterizedType.getActualTypeArguments())
+                    .map(type -> resolveType(type, typeParameters, recordClass))
+                    .toList();
+        }
+
+        private static Type resolveType(final Type type, final List<Type> typeParameters, final Class<?> recordClass) {
+            return type instanceof TypeVariable<?> typeVariable
+                    ? typeParameters.get(getIndexOfTypeParameter(typeVariable.getName(), recordClass))
+                    : type;
+        }
+
+        // Get
+        private static int getIndexOfTypeParameter(final String typeParameterName, final Class<?> recordClass) {
+            var typeParameters = recordClass.getTypeParameters();
+            for (int i = 0; i < typeParameters.length; i++) {
+                if (typeParameters[i].getName().equals(typeParameterName)) {
+                    return i;
+                }
+            }
+            throw new CodecConfigurationException(String.format("Could not find type parameter on record %s with name %s",
+                    recordClass.getName(), typeParameterName));
         }
 
         @SuppressWarnings("deprecation")
@@ -218,16 +254,47 @@ final class RecordCodec<T extends Record> implements Codec<T> {
 
     RecordCodec(final Class<T> clazz, final CodecRegistry codecRegistry) {
         this.clazz = notNull("class", clazz);
+        if (clazz.getTypeParameters().length > 0) {
+            requiresParameterization = true;
+            canonicalConstructor = null;
+            componentModels = null;
+            fieldNameToComponentModel = null;
+            componentModelForId = null;
+        } else {
+            requiresParameterization = false;
+            canonicalConstructor = notNull("canonicalConstructor", getCanonicalConstructor(clazz));
+            componentModels = getComponentModels(clazz, codecRegistry, List.of());
+            fieldNameToComponentModel = componentModels.stream()
+                    .collect(Collectors.toMap(ComponentModel::getFieldName, Function.identity()));
+            componentModelForId = getComponentModelForId(clazz, componentModels);
+        }
+    }
+
+    RecordCodec(final Class<T> clazz, final CodecRegistry codecRegistry, final List<Type> types) {
+        if (types.size() != clazz.getTypeParameters().length) {
+            throw new CodecConfigurationException("Unexpected number of type parameters for record class " + clazz);
+        }
+        this.clazz = notNull("class", clazz);
+        requiresParameterization = false;
         canonicalConstructor = notNull("canonicalConstructor", getCanonicalConstructor(clazz));
-        componentModels = getComponentModels(clazz, codecRegistry);
+        componentModels = getComponentModels(clazz, codecRegistry, types);
         fieldNameToComponentModel = componentModels.stream()
                 .collect(Collectors.toMap(ComponentModel::getFieldName, Function.identity()));
         componentModelForId = getComponentModelForId(clazz, componentModels);
     }
 
+    @Override
+    public Codec<?> parameterize(final CodecRegistry codecRegistry, final List<Type> types) {
+        return new RecordCodec<>(clazz, codecRegistry, types);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public T decode(final BsonReader reader, final DecoderContext decoderContext) {
+        if (requiresParameterization) {
+            throw new CodecConfigurationException("Can not decode to a record with type parameters that has not been parameterized");
+        }
+
         reader.readStartDocument();
 
         Object[] constructorArguments = new Object[componentModels.size()];
@@ -254,6 +321,10 @@ final class RecordCodec<T extends Record> implements Codec<T> {
 
     @Override
     public void encode(final BsonWriter writer, final T record, final EncoderContext encoderContext) {
+        if (requiresParameterization) {
+            throw new CodecConfigurationException("Can not decode to a record with type parameters that has not been parameterized");
+        }
+
         writer.writeStartDocument();
         if (componentModelForId != null) {
             writeComponent(writer, record, componentModelForId);
@@ -287,11 +358,12 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         }
     }
 
-    private static <T> List<ComponentModel> getComponentModels(final Class<T> clazz, final CodecRegistry codecRegistry) {
+    private static <T> List<ComponentModel> getComponentModels(final Class<T> clazz, final CodecRegistry codecRegistry,
+            final List<Type> typeParameters) {
         var recordComponents = clazz.getRecordComponents();
         var componentModels = new ArrayList<ComponentModel>(recordComponents.length);
         for (int i = 0; i < recordComponents.length; i++) {
-            componentModels.add(new ComponentModel(recordComponents[i], codecRegistry, i));
+            componentModels.add(new ComponentModel(typeParameters, recordComponents[i], codecRegistry, i));
         }
         return componentModels;
     }
