@@ -49,7 +49,9 @@ public final class ConnectionCreatedEvent {
     @Override
     public String toString() {
         return "ConnectionCreatedEvent{"
-                       + " connectionId=" + connectionId
-                       + '}';
+                + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + '}';
     }
 }

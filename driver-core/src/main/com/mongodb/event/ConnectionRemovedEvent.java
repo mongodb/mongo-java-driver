@@ -103,6 +103,8 @@ public final class ConnectionRemovedEvent {
     public String toString() {
         return "ConnectionRemovedEvent{"
                 + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + ", reason=" + reason
                 + '}';
     }

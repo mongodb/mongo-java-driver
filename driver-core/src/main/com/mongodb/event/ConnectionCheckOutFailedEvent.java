@@ -88,8 +88,9 @@ public final class ConnectionCheckOutFailedEvent {
     @Override
     public String toString() {
         return "ConnectionCheckOutFailedEvent{"
-                       + "serverId=" + serverId
-                       + " reason=" + reason
-                       + '}';
+                + "server=" + serverId.getAddress()
+                + ", clusterId=" + serverId.getClusterId()
+                + ", reason=" + reason
+                + '}';
     }
 }

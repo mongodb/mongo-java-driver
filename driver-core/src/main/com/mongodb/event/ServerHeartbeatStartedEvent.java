@@ -50,6 +50,8 @@ public final class ServerHeartbeatStartedEvent {
     public String toString() {
         return "ServerHeartbeatStartedEvent{"
                 + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + "} " + super.toString();
     }
 }
