@@ -110,6 +110,8 @@ public final class ServerHeartbeatFailedEvent {
     public String toString() {
         return "ServerHeartbeatFailedEvent{"
                 + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + ", awaited=" + awaited
                 + ", throwable=" + throwable

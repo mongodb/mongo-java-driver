@@ -111,6 +111,8 @@ public final class ServerHeartbeatSucceededEvent {
     public String toString() {
         return "ServerHeartbeatSucceededEvent{"
                 + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + ", reply=" + reply
                 + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + ", awaited=" + awaited
