@@ -49,7 +49,9 @@ public final class ConnectionCheckedOutEvent {
     @Override
     public String toString() {
         return "ConnectionCheckedOutEvent{"
-                       + "connectionId=" + connectionId
-                       + '}';
+                + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + '}';
     }
 }

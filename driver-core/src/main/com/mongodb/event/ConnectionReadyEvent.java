@@ -49,7 +49,9 @@ public final class ConnectionReadyEvent {
     @Override
     public String toString() {
         return "ConnectionReadyEvent{"
-                       + " connectionId=" + connectionId
-                       + '}';
+                + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + '}';
     }
 }

@@ -87,8 +87,10 @@ public final class ConnectionClosedEvent {
     @Override
     public String toString() {
         return "ConnectionClosedEvent{"
-                       + " connectionId=" + connectionId
-                       + " reason=" + reason
-                       + '}';
+                + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + ", reason=" + reason
+                + '}';
     }
 }
