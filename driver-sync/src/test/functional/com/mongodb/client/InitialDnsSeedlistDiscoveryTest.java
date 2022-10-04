@@ -71,7 +71,6 @@ import static org.junit.Assume.assumeTrue;
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
 @RunWith(Parameterized.class)
 public abstract class InitialDnsSeedlistDiscoveryTest {
-    private final String filename;
     private final Path parentDirectory;
     private final String uri;
     @Nullable
@@ -85,11 +84,10 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     private final boolean isError;
     private final BsonDocument options;
 
-    public InitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri,
+    public InitialDnsSeedlistDiscoveryTest(@SuppressWarnings("unused") final String filename, final Path parentDirectory, final String uri,
             @Nullable final List<String> seeds, @Nullable final Integer numSeeds,
             @Nullable final List<String> hosts, @Nullable final Integer numHosts,
             final boolean isError, final BsonDocument options) {
-        this.filename = filename;
         this.parentDirectory = parentDirectory;
         this.uri = uri;
         this.seeds = seeds;
@@ -121,7 +119,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
         if (isError) {
             MongoClient client = null;
             try {
-                final AtomicReference<MongoException> exceptionReference = new AtomicReference<MongoException>();
+                final AtomicReference<MongoException> exceptionReference = new AtomicReference<>();
                 final CountDownLatch latch = new CountDownLatch(1);
 
                 ConnectionString connectionString;
@@ -131,27 +129,21 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                     final SslSettings sslSettings = getSslSettings(connectionString);
                     assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
                     settings = MongoClientSettings.builder().applyConnectionString(connectionString)
-                            .applyToSslSettings(new Block<SslSettings.Builder>() {
-                                @Override
-                                public void apply(final SslSettings.Builder builder) {
-                                    builder.applySettings(sslSettings);
-                                    builder.invalidHostNameAllowed(true);
-                                }
+                            .applyToSslSettings(builder -> {
+                                builder.applySettings(sslSettings);
+                                builder.invalidHostNameAllowed(true);
                             })
-                            .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                                @Override
-                                public void apply(final ClusterSettings.Builder builder) {
-                                    builder.serverSelectionTimeout(5, TimeUnit.SECONDS);
-                                    builder.addClusterListener(new ClusterListener() {
-                                        @Override
-                                        public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-                                            if (event.getNewDescription().getSrvResolutionException() != null) {
-                                                exceptionReference.set(event.getNewDescription().getSrvResolutionException());
-                                                latch.countDown();
-                                            }
+                            .applyToClusterSettings(builder -> {
+                                builder.serverSelectionTimeout(5, TimeUnit.SECONDS);
+                                builder.addClusterListener(new ClusterListener() {
+                                    @Override
+                                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+                                        if (event.getNewDescription().getSrvResolutionException() != null) {
+                                            exceptionReference.set(event.getNewDescription().getSrvResolutionException());
+                                            latch.countDown();
                                         }
-                                    });
-                                }
+                                    }
+                                });
                             })
                             .build();
                 } catch (MongoClientException | IllegalArgumentException e) {
@@ -160,7 +152,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                 }
                 client = createMongoClient(settings);
                 // Load balancing mode has special rules regarding cluster event publishing, so we can't rely on those here.
-                // Instead we just try to execute an operation and assert that it throws
+                // Instead, we just try to execute an operation and assert that it throws
                 if (settings.getClusterSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
                     try {
                         client.getDatabase("admin").runCommand(new Document("ping", 1));
@@ -186,25 +178,33 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
             ConnectionString connectionString = new ConnectionString(this.uri);
 
             for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
-                if (entry.getKey().equals("replicaSet")) {
-                    assertEquals(entry.getValue().asString().getValue(), connectionString.getRequiredReplicaSetName());
-                } else if (entry.getKey().equals("ssl")) {
-                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.getSslEnabled());
-                } else if (entry.getKey().equals("authSource")) {
-                    // ignoring authSource for now, because without at least a userName also in the connection string,
-                    // the authSource is ignored.  If the test gets this far, at least we know that a TXT record
-                    // containing in authSource doesn't blow up.  We just don't test that it's actually used.
-                    assertTrue(true);
-                } else if (entry.getKey().equals("directConnection")) {
-                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
-                } else if (entry.getKey().equals("loadBalanced")) {
-                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
-                } else if (entry.getKey().equals("srvMaxHosts")) {
-                    assertEquals(Integer.valueOf(entry.getValue().asInt32().getValue()), connectionString.getSrvMaxHosts());
-                } else if (entry.getKey().equals("srvServiceName")) {
-                    assertEquals(entry.getValue().asString().getValue(), connectionString.getSrvServiceName());
-                } else {
-                    throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
+                switch (entry.getKey()) {
+                    case "replicaSet":
+                        assertEquals(entry.getValue().asString().getValue(), connectionString.getRequiredReplicaSetName());
+                        break;
+                    case "ssl":
+                        assertEquals(entry.getValue().asBoolean().getValue(), connectionString.getSslEnabled());
+                        break;
+                    case "authSource":
+                        // ignoring authSource for now, because without at least a userName also in the connection string,
+                        // the authSource is ignored.  If the test gets this far, at least we know that a TXT record
+                        // containing in authSource doesn't blow up.  We just don't test that it's actually used.
+                        assertTrue(true);
+                        break;
+                    case "directConnection":
+                        assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
+                        break;
+                    case "loadBalanced":
+                        assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
+                        break;
+                    case "srvMaxHosts":
+                        assertEquals(Integer.valueOf(entry.getValue().asInt32().getValue()), connectionString.getSrvMaxHosts());
+                        break;
+                    case "srvServiceName":
+                        assertEquals(entry.getValue().asString().getValue(), connectionString.getSrvServiceName());
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
                 }
             }
         }
@@ -266,12 +266,9 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                         }
                     }
                 })
-                .applyToSslSettings(new Block<SslSettings.Builder>() {
-                    @Override
-                    public void apply(final SslSettings.Builder builder) {
-                        builder.applySettings(sslSettings);
-                        builder.invalidHostNameAllowed(true);
-                    }
+                .applyToSslSettings(builder -> {
+                    builder.applySettings(sslSettings);
+                    builder.invalidHostNameAllowed(true);
                 })
                 .build();
 
@@ -284,7 +281,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/initial-dns-seedlist-discovery")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{
@@ -316,7 +313,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
         if (bsonArray == null) {
             return null;
         }
-        List<String> retVal = new ArrayList<String>(bsonArray.size());
+        List<String> retVal = new ArrayList<>(bsonArray.size());
         for (BsonValue cur : bsonArray) {
             retVal.add(cur.asString().getValue());
         }
