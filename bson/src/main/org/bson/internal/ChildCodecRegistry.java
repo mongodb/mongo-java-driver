@@ -20,8 +20,8 @@ package org.bson.internal;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 
 // An implementation of CodecRegistry that is used to detect cyclic dependencies between Codecs
@@ -33,7 +33,7 @@ class ChildCodecRegistry<T> implements CodecRegistry {
     private final List<Type> types;
 
     ChildCodecRegistry(final CycleDetectingCodecRegistry registry, final Class<T> codecClass) {
-        this(registry, codecClass, null);
+        this(registry, codecClass, Collections.emptyList());
     }
 
     ChildCodecRegistry(final CycleDetectingCodecRegistry registry, final Class<T> codecClass, final List<Type> types) {
@@ -43,7 +43,7 @@ class ChildCodecRegistry<T> implements CodecRegistry {
         this.types = types;
     }
 
-    private ChildCodecRegistry(final ChildCodecRegistry<?> parent, final Class<T> codecClass, @Nullable final List<Type> types) {
+    private ChildCodecRegistry(final ChildCodecRegistry<?> parent, final Class<T> codecClass, final List<Type> types) {
         this.parent = parent;
         this.codecClass = codecClass;
         this.registry = parent.registry;

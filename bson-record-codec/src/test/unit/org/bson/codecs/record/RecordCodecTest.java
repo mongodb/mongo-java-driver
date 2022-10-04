@@ -347,17 +347,15 @@ public class RecordCodecTest {
     public void testSelfReferentialRecords() {
         var registry = fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY);
         var codec = registry.get(TestSelfReferentialHolderRecord.class);
-        var identifier = new ObjectId();
         var testRecord = new TestSelfReferentialHolderRecord("0",
                 new TestSelfReferentialRecord<>("1",
                 new TestSelfReferentialRecord<>("2", null, null),
                 new TestSelfReferentialRecord<>("3", null, null)));
 
         var document = new BsonDocument();
-        var writer = new BsonDocumentWriter(document);
 
         // when
-        codec.encode(writer, testRecord, EncoderContext.builder().build());
+        codec.encode(new BsonDocumentWriter(document), testRecord, EncoderContext.builder().build());
 
         // then
         assertEquals(
