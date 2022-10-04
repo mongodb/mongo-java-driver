@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.Block;
-import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
@@ -27,10 +26,8 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
-import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -62,6 +59,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -81,27 +79,34 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     private final List<String> hosts;
     @Nullable
     private final Integer numHosts;
-    private final boolean isError;
     private final BsonDocument options;
+    private final BsonDocument parsedOptions;
+    private final boolean isError;
+    private final boolean executePingCommand;
 
     public InitialDnsSeedlistDiscoveryTest(@SuppressWarnings("unused") final String filename, final Path parentDirectory, final String uri,
             @Nullable final List<String> seeds, @Nullable final Integer numSeeds,
             @Nullable final List<String> hosts, @Nullable final Integer numHosts,
-            final boolean isError, final BsonDocument options) {
+            final BsonDocument options, final BsonDocument parsedOptions,
+            final boolean isError, final boolean executePingCommand) {
         this.parentDirectory = parentDirectory;
         this.uri = uri;
         this.seeds = seeds;
         this.numSeeds = numSeeds;
         this.hosts = hosts;
         this.numHosts = numHosts;
+        this.parsedOptions = parsedOptions;
         this.isError = isError;
         this.options = options;
+        this.executePingCommand = executePingCommand;
     }
 
     public abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @Before
     public void setUp() {
+        assumeFalse(isServerlessTest());
+
         if (parentDirectory.endsWith("replica-set")) {
             assumeTrue(isDiscoverableReplicaSet());
         } else if (parentDirectory.endsWith("load-balanced")) {
@@ -114,111 +119,77 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     }
 
     @Test
-    public void shouldResolveTxtRecord() throws InterruptedException {
-
+    public void shouldPassAllOutcomes() throws InterruptedException {
         if (isError) {
-            MongoClient client = null;
-            try {
-                final AtomicReference<MongoException> exceptionReference = new AtomicReference<>();
-                final CountDownLatch latch = new CountDownLatch(1);
-
-                ConnectionString connectionString;
-                MongoClientSettings settings;
-                try {
-                    connectionString = new ConnectionString(uri);
-                    final SslSettings sslSettings = getSslSettings(connectionString);
-                    assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
-                    settings = MongoClientSettings.builder().applyConnectionString(connectionString)
-                            .applyToSslSettings(builder -> {
-                                builder.applySettings(sslSettings);
-                                builder.invalidHostNameAllowed(true);
-                            })
-                            .applyToClusterSettings(builder -> {
-                                builder.serverSelectionTimeout(5, TimeUnit.SECONDS);
-                                builder.addClusterListener(new ClusterListener() {
-                                    @Override
-                                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-                                        if (event.getNewDescription().getSrvResolutionException() != null) {
-                                            exceptionReference.set(event.getNewDescription().getSrvResolutionException());
-                                            latch.countDown();
-                                        }
-                                    }
-                                });
-                            })
-                            .build();
-                } catch (MongoClientException | IllegalArgumentException e) {
-                    // all good
-                    return;
-                }
-                client = createMongoClient(settings);
-                // Load balancing mode has special rules regarding cluster event publishing, so we can't rely on those here.
-                // Instead, we just try to execute an operation and assert that it throws
-                if (settings.getClusterSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
-                    try {
-                        client.getDatabase("admin").runCommand(new Document("ping", 1));
-                    } catch (MongoClientException e) {
-                        // all good
-                    }
-                } else {
-                    if (!latch.await(5, TimeUnit.SECONDS)) {
-                        fail("Failed to capture SRV resolution exception");
-                    }
-                    try {
-                        throw exceptionReference.get();
-                    } catch (MongoClientException e) {
-                        // all good
-                    }
-                }
-            } finally {
-                if (client != null) {
-                    client.close();
-                }
-            }
+            assertErrorCondition();
         } else {
-            ConnectionString connectionString = new ConnectionString(this.uri);
+            assertNonErrorCondition();
+        }
+    }
 
-            for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
-                switch (entry.getKey()) {
-                    case "replicaSet":
-                        assertEquals(entry.getValue().asString().getValue(), connectionString.getRequiredReplicaSetName());
-                        break;
-                    case "ssl":
-                        assertEquals(entry.getValue().asBoolean().getValue(), connectionString.getSslEnabled());
-                        break;
-                    case "authSource":
-                        // ignoring authSource for now, because without at least a userName also in the connection string,
-                        // the authSource is ignored.  If the test gets this far, at least we know that a TXT record
-                        // containing in authSource doesn't blow up.  We just don't test that it's actually used.
-                        assertTrue(true);
-                        break;
-                    case "directConnection":
-                        assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
-                        break;
-                    case "loadBalanced":
-                        assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
-                        break;
-                    case "srvMaxHosts":
-                        assertEquals(Integer.valueOf(entry.getValue().asInt32().getValue()), connectionString.getSrvMaxHosts());
-                        break;
-                    case "srvServiceName":
-                        assertEquals(entry.getValue().asString().getValue(), connectionString.getSrvServiceName());
-                        break;
-                    default:
-                        throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
+    public void assertErrorCondition() throws InterruptedException {
+        final AtomicReference<MongoException> exceptionReference = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        ConnectionString connectionString;
+        MongoClientSettings settings;
+        try {
+            connectionString = new ConnectionString(uri);
+            final SslSettings sslSettings = getSslSettings(connectionString);
+            assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
+            settings = MongoClientSettings.builder().applyConnectionString(connectionString)
+                    .applyToSslSettings(builder -> {
+                        builder.applySettings(sslSettings);
+                        builder.invalidHostNameAllowed(true);
+                    })
+                    .applyToClusterSettings(builder -> {
+                        builder.serverSelectionTimeout(5, TimeUnit.SECONDS);
+                        builder.addClusterListener(new ClusterListener() {
+                            @Override
+                            public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+                                if (event.getNewDescription().getSrvResolutionException() != null) {
+                                    exceptionReference.set(event.getNewDescription().getSrvResolutionException());
+                                    latch.countDown();
+                                }
+                            }
+                        });
+                    })
+                    .build();
+        } catch (MongoClientException | IllegalArgumentException e) {
+            // all good
+            return;
+        }
+        try (MongoClient client = createMongoClient(settings)) {
+            // Load balancing mode has special rules regarding cluster event publishing, so we can't rely on those here.
+            // Instead, we just try to execute an operation and assert that it throws
+            if (settings.getClusterSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+                try {
+                    client.getDatabase("admin").runCommand(new Document("ping", 1));
+                } catch (MongoClientException e) {
+                    // all good
+                }
+            } else {
+                if (!latch.await(5, TimeUnit.SECONDS)) {
+                    fail("Failed to capture SRV resolution exception");
+                }
+                try {
+                    throw exceptionReference.get();
+                } catch (MongoClientException e) {
+                    // all good
                 }
             }
         }
     }
 
-    @Test
-    public void shouldDiscoverSrvRecord() throws InterruptedException {
-        assumeFalse(isServerlessTest());
-        assumeFalse(isError);
+    private void assertNonErrorCondition() throws InterruptedException {
+        CountDownLatch seedsLatch = new CountDownLatch(1);
+        CountDownLatch hostsLatch = new CountDownLatch(1);
+        ConnectionString connectionString = new ConnectionString(uri);
 
-        final CountDownLatch seedsLatch = new CountDownLatch(1);
-        final CountDownLatch hostsLatch = new CountDownLatch(1);
-        final ConnectionString connectionString = new ConnectionString(uri);
-        final SslSettings sslSettings = getSslSettings(connectionString);
+        assertOptions(connectionString);
+        assertParsedOptions(connectionString);
+
+        SslSettings sslSettings = getSslSettings(connectionString);
 
         assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
 
@@ -228,14 +199,6 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                     public void apply(final ClusterSettings.Builder builder) {
                         builder.applyConnectionString(connectionString)
                                 .addClusterListener(new ClusterListener() {
-                                    @Override
-                                    public void clusterOpening(final ClusterOpeningEvent event) {
-                                    }
-
-                                    @Override
-                                    public void clusterClosed(final ClusterClosedEvent event) {
-                                    }
-
                                     @Override
                                     public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
                                         List<String> seedsList = event.getNewDescription().getServerDescriptions()
@@ -273,11 +236,73 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                 .build();
 
         try (MongoClient client = createMongoClient(settings)) {
-            assertTrue(seedsLatch.await(ClusterFixture.TIMEOUT, TimeUnit.SECONDS));
-            assertTrue(hostsLatch.await(ClusterFixture.TIMEOUT, TimeUnit.SECONDS));
-            assertTrue(client.getDatabase("admin").runCommand(new Document("ping", 1)).containsKey("ok"));
+            assertTrue(seedsLatch.await(10, TimeUnit.SECONDS));
+            assertTrue(hostsLatch.await(10, TimeUnit.SECONDS));
+            if (executePingCommand) {
+                assertTrue(client.getDatabase("admin").runCommand(new Document("ping", 1)).containsKey("ok"));
+            }
         }
     }
+
+    private void assertOptions(final ConnectionString connectionString) {
+        for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
+            switch (entry.getKey()) {
+                case "replicaSet":
+                    assertEquals(entry.getValue().asString().getValue(), connectionString.getRequiredReplicaSetName());
+                    break;
+                case "ssl":
+                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.getSslEnabled());
+                    break;
+                case "authSource":
+                    // ignoring authSource for now, because without at least a userName also in the connection string,
+                    // the authSource is ignored.  If the test gets this far, at least we know that a TXT record
+                    // containing in authSource doesn't blow up.  We just don't test that it's actually used.
+                    assertTrue(true);
+                    break;
+                case "directConnection":
+                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isDirectConnection());
+                    break;
+                case "loadBalanced":
+                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.isLoadBalanced());
+                    break;
+                case "srvMaxHosts":
+                    assertEquals(Integer.valueOf(entry.getValue().asInt32().getValue()), connectionString.getSrvMaxHosts());
+                    break;
+                case "srvServiceName":
+                    assertEquals(entry.getValue().asString().getValue(), connectionString.getSrvServiceName());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
+            }
+        }
+    }
+
+    private void assertParsedOptions(final ConnectionString connectionString) {
+        for (Map.Entry<String, BsonValue> entry : parsedOptions.entrySet()) {
+            switch (entry.getKey()) {
+                case "db":
+                    assertEquals(entry.getValue().asString().getValue(), connectionString.getDatabase());
+                    break;
+                case "user":
+                    String userName = requireNonNull(connectionString.getCredential()).getUserName();
+                    assertEquals(entry.getValue().asString().getValue(), userName);
+                    break;
+                case "password":
+                    String password = new String(requireNonNull(requireNonNull(connectionString.getCredential()).getPassword()));
+                    assertEquals(entry.getValue().asString().getValue(), password);
+                    break;
+                case "auth_database":
+                    String source = connectionString.getCredential() == null
+                            ? connectionString.getDatabase()
+                            : connectionString.getCredential().getSource();
+                    assertEquals(entry.getValue().asString().getValue(), source);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
+            }
+        }
+    }
+
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
@@ -292,8 +317,10 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                     toInteger(testDocument.getNumber("numSeeds", null)),
                     toStringList(testDocument.getArray("hosts", null)),
                     toInteger(testDocument.getNumber("numHosts", null)),
+                    testDocument.getDocument("options", new BsonDocument()),
+                    testDocument.getDocument("parsed_options", new BsonDocument()),
                     testDocument.getBoolean("error", BsonBoolean.FALSE).getValue(),
-                    testDocument.getDocument("options", new BsonDocument())
+                    testDocument.getBoolean("ping", BsonBoolean.TRUE).getValue()
             });
 
         }

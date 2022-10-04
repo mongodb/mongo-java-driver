@@ -9,11 +9,12 @@
     "localhost:27018",
     "localhost:27019"
   ],
-  "options": {
-    "replicaSet": "repl0",
-    "ssl": true
+  "options" : {
+    "replicaSet" : "repl0",
+    "ssl" : true
   },
-  "parsed_options": {
-    "auth_database": "adminDB"
-  }
+  "parsed_options" : {
+    "auth_database" : "adminDB"
+  },
+  "ping" : true
 }

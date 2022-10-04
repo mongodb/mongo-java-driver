@@ -14,8 +14,9 @@ replica set name ``repl0``.
 
 The tests in the ``load-balanced`` directory MUST be executed against a
 load-balanced sharded cluster with the mongos servers running on localhost ports
-27017 and 27018 (corresponding to the script in `drivers-evergreen-tools`_). The
-load balancers, shard servers, and config servers may run on any open ports.
+27017 and 27018 and ``--loadBalancerPort`` 27050 and 27051, respectively
+(corresponding to the script in `drivers-evergreen-tools`_). The load balancers,
+shard servers, and config servers may run on any open ports.
 
 .. _`drivers-evergreen-tools`: https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/run-load-balancer.sh
 
@@ -56,7 +57,9 @@ these tests::
   _mongodb._tcp.test19.test.build.10gen.cc.   86400  IN SRV  27017  localhost.test.build.10gen.cc.
   _mongodb._tcp.test20.test.build.10gen.cc.   86400  IN SRV  27017  localhost.test.build.10gen.cc.
   _mongodb._tcp.test21.test.build.10gen.cc.   86400  IN SRV  27017  localhost.test.build.10gen.cc.
-  _customname._tcp.test22.test.build.10gen.cc 86400  IN SRV  27017  localhost.test.build.10gen.cc
+  _customname._tcp.test22.test.build.10gen.cc 86400  IN SRV  27017  localhost.test.build.10gen.cc.
+  _mongodb._tcp.test23.test.build.10gen.cc.   86400  IN SRV  8000   localhost.test.build.10gen.cc.
+  _mongodb._tcp.test24.test.build.10gen.cc.   86400  IN SRV  8000   localhost.test.build.10gen.cc.
 
   Record                                    TTL    Class   Text
   test5.test.build.10gen.cc.                86400  IN TXT  "replicaSet=repl0&authSource=thisDB"
@@ -68,12 +71,18 @@ these tests::
   test11.test.build.10gen.cc.               86400  IN TXT  "replicaS" "et=rep" "l0"
   test20.test.build.10gen.cc.               86400  IN TXT  "loadBalanced=true"
   test21.test.build.10gen.cc.               86400  IN TXT  "loadBalanced=false"
+  test24.test.build.10gen.cc.               86400  IN TXT  "loadBalanced=true"
 
-Note that ``test4`` is omitted deliberately to test what happens with no SRV
-record. ``test9`` is missing because it was deleted during the development of
-the tests. The missing ``test.`` sub-domain in the SRV record target for
-``test12`` is deliberate. ``test22`` is used to test a custom service name
-(``customname``).
+Notes:
+
+- ``test4`` is omitted deliberately to test what happens with no SRV record.
+- ``test9`` is missing because it was deleted during the development of the
+  tests.
+- The missing ``test.`` sub-domain in the SRV record target for ``test12`` is
+  deliberate.
+- ``test22`` is used to test a custom service name (``customname``).
+- ``test23`` and ``test24`` point to port 8000 (HAProxy) and are used for
+  load-balanced tests.
 
 In our tests we have used ``localhost.test.build.10gen.cc`` as the domain, and
 then configured ``localhost.test.build.10gen.cc`` to resolve to 127.0.0.1.
@@ -105,31 +114,51 @@ These YAML and JSON files contain the following fields:
 - ``error``: indicates that the parsing of the URI, or the resolving or
   contents of the SRV or TXT records included errors.
 - ``comment``: a comment to indicate why a test would fail.
+- ``ping``: if false, the test runner should not run a "ping" operation.
 
 .. _`Connection String`: ../../connection-string/connection-string-spec.rst
 .. _`URI options`: ../../uri-options/uri-options.rst
 
-For each file, create a MongoClient initialized with the ``mongodb+srv``
-connection string.
+For each YAML file:
 
-If ``seeds`` is specified, drivers SHOULD verify that the set of hosts in the
-client's initial seedlist matches the list in ``seeds``. If ``numSeeds`` is
-specified, drivers SHOULD verify that the size of that set matches ``numSeeds``.
+- Create a MongoClient initialized with the ``mongodb+srv``
+  connection string.
+- Run a "ping" operation unless ``ping`` is false or ``error`` is true.
 
-If ``hosts`` is specified, drivers MUST verify that the set of
-ServerDescriptions in the client's TopologyDescription eventually matches the
-list in ``hosts``. If ``numHosts`` is specified, drivers MUST verify that the
-size of that set matches ``numHosts``.
+Assertions:
 
-If ``options`` is specified, drivers MUST verify each of the values under
-``options`` match the MongoClient's parsed value for that option. There may be
-other options parsed by the MongoClient as well, which a test does not verify.
+- If ``seeds`` is specified, drivers SHOULD verify that the set of hosts in the
+  client's initial seedlist matches the list in ``seeds``. If ``numSeeds`` is
+  specified, drivers SHOULD verify that the size of that set matches
+  ``numSeeds``.
 
-If ``parsed_options`` is specified, drivers MUST verify that each of the values
-under ``parsed_options`` match the MongoClient's parsed value for that option.
-Supported values include, but are not limited to, ``user`` and ``password``
-(parsed from ``UserInfo``) and ``auth_database`` (parsed from
-``Auth database``).
+- If ``hosts`` is specified, drivers MUST verify that the set of
+  ServerDescriptions in the client's TopologyDescription eventually matches the
+  list in ``hosts``. If ``numHosts`` is specified, drivers MUST verify that the
+  size of that set matches ``numHosts``.
 
-If ``error`` is specified and ``true``, drivers MUST verify that an error has
-been thrown.
+- If ``options`` is specified, drivers MUST verify each of the values under
+  ``options`` match the MongoClient's parsed value for that option. There may be
+  other options parsed by the MongoClient as well, which a test does not verify.
+
+- If ``parsed_options`` is specified, drivers MUST verify that each of the
+  values under ``parsed_options`` match the MongoClient's parsed value for that
+  option. Supported values include, but are not limited to, ``user`` and
+  ``password`` (parsed from ``UserInfo``) and ``auth_database`` (parsed from
+  ``Auth database``).
+
+- If ``error`` is specified and ``true``, drivers MUST verify that initializing
+  the MongoClient throws an error. If ``error`` is not specified or is
+  ``false``, both initializing the MongoClient and running a ping operation must
+  succeed without throwing any errors.
+
+- If ``ping`` is not specified or ``true``, drivers MUST verify that running a
+  "ping" operation using the initialized MongoClient succeeds. If ``ping`` is
+  ``false``, drivers MUST NOT run a "ping" operation.
+
+    **Note:** These tests are expected to be run against MongoDB databases with
+    and without authentication enabled. The "ping" operation does not require
+    authentication so should succeed with URIs that contain no userinfo (i.e.
+    no username and password). Tests with URIs that contain userinfo always set
+    ``ping`` to ``false`` because some drivers will fail handshake on a
+    connection if userinfo is provided but incorrect.

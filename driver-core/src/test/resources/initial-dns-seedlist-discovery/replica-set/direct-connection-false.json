@@ -3,13 +3,14 @@
   "seeds": [
     "localhost.test.build.10gen.cc:27017"
   ],
-  "hosts": [
+  "hosts" : [
     "localhost:27017",
     "localhost:27018",
     "localhost:27019"
   ],
-  "options": {
-    "ssl": true,
-    "directConnection": false
-  }
+  "options" : {
+    "ssl" : true,
+    "directConnection" : false
+  },
+  "ping" : true
 }
