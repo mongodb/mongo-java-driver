@@ -61,7 +61,7 @@ class ChildCodecRegistry<T> implements CodecRegistry {
     // Gets a Codec, but if it detects a cyclic dependency, return a LazyCodec which breaks the chain.
     public <U> Codec<U> get(final Class<U> clazz) {
         if (hasCycles(clazz)) {
-            return new LazyCodec<U>(registry, clazz, null);
+            return new LazyCodec<U>(registry, clazz, types);
         } else {
             return registry.get(new ChildCodecRegistry<>(this, clazz, null));
         }
