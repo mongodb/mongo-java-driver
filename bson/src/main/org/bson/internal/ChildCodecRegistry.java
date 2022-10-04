@@ -63,7 +63,7 @@ class ChildCodecRegistry<T> implements CodecRegistry {
         if (hasCycles(clazz)) {
             return new LazyCodec<U>(registry, clazz, types);
         } else {
-            return registry.get(new ChildCodecRegistry<>(this, clazz, null));
+            return registry.get(new ChildCodecRegistry<>(this, clazz, Collections.emptyList()));
         }
     }
 
