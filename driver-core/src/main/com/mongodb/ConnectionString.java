@@ -251,7 +251,7 @@ public class ConnectionString {
     private static final String MONGODB_PREFIX = "mongodb://";
     private static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
-            new HashSet<String>(asList("authsource", "replicaset", "loadbalanced"));
+            new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
 
     private final MongoCredential credential;
@@ -395,9 +395,9 @@ public class ConnectionString {
 
         String txtRecordsQueryParameters = isSrvProtocol
                 ? new DefaultDnsResolver().resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
-        String connectionStringQueryParamenters = unprocessedConnectionString;
+        String connectionStringQueryParameters = unprocessedConnectionString;
 
-        Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParamenters);
+        Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParameters);
         Map<String, List<String>> txtRecordsOptionsMap = parseOptions(txtRecordsQueryParameters);
         if (!ALLOWED_OPTIONS_IN_TXT_RECORD.containsAll(txtRecordsOptionsMap.keySet())) {
             throw new MongoConfigurationException(format("A TXT record is only permitted to contain the keys %s, but the TXT record for "
@@ -448,12 +448,12 @@ public class ConnectionString {
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
 
-    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<String>();
-    private static final Set<String> AUTH_KEYS = new HashSet<String>();
-    private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<String>();
-    private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<String>();
-    private static final Set<String> COMPRESSOR_KEYS = new HashSet<String>();
-    private static final Set<String> ALL_KEYS = new HashSet<String>();
+    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<>();
+    private static final Set<String> AUTH_KEYS = new HashSet<>();
+    private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<>();
+    private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<>();
+    private static final Set<String> COMPRESSOR_KEYS = new HashSet<>();
+    private static final Set<String> ALL_KEYS = new HashSet<>();
 
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
@@ -525,10 +525,8 @@ public class ConnectionString {
     // even for options which multiple values, e.g. readPreferenceTags
     private Map<String, List<String>> combineOptionsMaps(final Map<String, List<String>> txtRecordsOptionsMap,
                                                          final Map<String, List<String>> connectionStringOptionsMap) {
-        Map<String, List<String>> combinedOptionsMaps = new HashMap<String, List<String>>(txtRecordsOptionsMap);
-        for (Map.Entry<String, List<String>> entry : connectionStringOptionsMap.entrySet()) {
-            combinedOptionsMaps.put(entry.getKey(), entry.getValue());
-        }
+        Map<String, List<String>> combinedOptionsMaps = new HashMap<>(txtRecordsOptionsMap);
+        combinedOptionsMaps.putAll(connectionStringOptionsMap);
         return combinedOptionsMaps;
     }
 
@@ -552,64 +550,93 @@ public class ConnectionString {
             if (value == null) {
                 continue;
             }
-            if (key.equals("maxpoolsize")) {
-                maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
-            } else if (key.equals("minpoolsize")) {
-                minConnectionPoolSize = parseInteger(value, "minpoolsize");
-            } else if (key.equals("maxidletimems")) {
-                maxConnectionIdleTime = parseInteger(value, "maxidletimems");
-            } else if (key.equals("maxlifetimems")) {
-                maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
-            } else if (key.equals("maxconnecting")) {
-                maxConnecting = parseInteger(value, "maxConnecting");
-            } else if (key.equals("waitqueuetimeoutms")) {
-                maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
-            } else if (key.equals("connecttimeoutms")) {
-                connectTimeout = parseInteger(value, "connecttimeoutms");
-            } else if (key.equals("sockettimeoutms")) {
-                socketTimeout = parseInteger(value, "sockettimeoutms");
-            } else if (key.equals("tlsallowinvalidhostnames")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
-                tlsAllowInvalidHostnamesSet = true;
-            } else if (key.equals("sslinvalidhostnameallowed")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
-                tlsAllowInvalidHostnamesSet = true;
-            } else if (key.equals("tlsinsecure")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
-                tlsInsecureSet = true;
-            } else if (key.equals("ssl")) {
-                initializeSslEnabled("ssl", value);
-            } else if (key.equals("tls")) {
-                initializeSslEnabled("tls", value);
-            } else if (key.equals("replicaset")) {
-                requiredReplicaSetName = value;
-            } else if (key.equals("readconcernlevel")) {
-                readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
-            } else if (key.equals("serverselectiontimeoutms")) {
-                serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
-            } else if (key.equals("localthresholdms")) {
-                localThreshold = parseInteger(value, "localthresholdms");
-            } else if (key.equals("heartbeatfrequencyms")) {
-                heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
-            } else if (key.equals("appname")) {
-                applicationName = value;
-            } else if (key.equals("retrywrites")) {
-                retryWrites = parseBoolean(value, "retrywrites");
-            } else if (key.equals("retryreads")) {
-                retryReads = parseBoolean(value, "retryreads");
-            } else if (key.equals("uuidrepresentation")) {
-                uuidRepresentation = createUuidRepresentation(value);
-            } else if (key.equals("directconnection")) {
-                directConnection = parseBoolean(value, "directconnection");
-            } else if (key.equals("loadbalanced")) {
-                loadBalanced = parseBoolean(value, "loadbalanced");
-            } else if (key.equals("srvmaxhosts")) {
-                srvMaxHosts = parseInteger(value, "srvmaxhosts");
-                if (srvMaxHosts < 0) {
-                    throw new IllegalArgumentException("srvMaxHosts must be >= 0");
-                }
-            } else if (key.equals("srvservicename")) {
-                srvServiceName = value;
+            switch (key) {
+                case "maxpoolsize":
+                    maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
+                    break;
+                case "minpoolsize":
+                    minConnectionPoolSize = parseInteger(value, "minpoolsize");
+                    break;
+                case "maxidletimems":
+                    maxConnectionIdleTime = parseInteger(value, "maxidletimems");
+                    break;
+                case "maxlifetimems":
+                    maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
+                    break;
+                case "maxconnecting":
+                    maxConnecting = parseInteger(value, "maxConnecting");
+                    break;
+                case "waitqueuetimeoutms":
+                    maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
+                    break;
+                case "connecttimeoutms":
+                    connectTimeout = parseInteger(value, "connecttimeoutms");
+                    break;
+                case "sockettimeoutms":
+                    socketTimeout = parseInteger(value, "sockettimeoutms");
+                    break;
+                case "tlsallowinvalidhostnames":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
+                    tlsAllowInvalidHostnamesSet = true;
+                    break;
+                case "sslinvalidhostnameallowed":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
+                    tlsAllowInvalidHostnamesSet = true;
+                    break;
+                case "tlsinsecure":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
+                    tlsInsecureSet = true;
+                    break;
+                case "ssl":
+                    initializeSslEnabled("ssl", value);
+                    break;
+                case "tls":
+                    initializeSslEnabled("tls", value);
+                    break;
+                case "replicaset":
+                    requiredReplicaSetName = value;
+                    break;
+                case "readconcernlevel":
+                    readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
+                    break;
+                case "serverselectiontimeoutms":
+                    serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
+                    break;
+                case "localthresholdms":
+                    localThreshold = parseInteger(value, "localthresholdms");
+                    break;
+                case "heartbeatfrequencyms":
+                    heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
+                    break;
+                case "appname":
+                    applicationName = value;
+                    break;
+                case "retrywrites":
+                    retryWrites = parseBoolean(value, "retrywrites");
+                    break;
+                case "retryreads":
+                    retryReads = parseBoolean(value, "retryreads");
+                    break;
+                case "uuidrepresentation":
+                    uuidRepresentation = createUuidRepresentation(value);
+                    break;
+                case "directconnection":
+                    directConnection = parseBoolean(value, "directconnection");
+                    break;
+                case "loadbalanced":
+                    loadBalanced = parseBoolean(value, "loadbalanced");
+                    break;
+                case "srvmaxhosts":
+                    srvMaxHosts = parseInteger(value, "srvmaxhosts");
+                    if (srvMaxHosts < 0) {
+                        throw new IllegalArgumentException("srvMaxHosts must be >= 0");
+                    }
+                    break;
+                case "srvservicename":
+                    srvServiceName = value;
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -651,7 +678,7 @@ public class ConnectionString {
     }
 
     private List<MongoCompressor> buildCompressors(final String compressors, @Nullable final Integer zlibCompressionLevel) {
-        List<MongoCompressor> compressorsList = new ArrayList<MongoCompressor>();
+        List<MongoCompressor> compressorsList = new ArrayList<>();
 
         for (String cur : compressors.split(",")) {
             if (cur.equals("zlib")) {
@@ -685,14 +712,21 @@ public class ConnectionString {
                 continue;
             }
 
-            if (key.equals("safe")) {
-                safe = parseBoolean(value, "safe");
-            } else if (key.equals("w")) {
-                w = value;
-            } else if (key.equals("wtimeoutms")) {
-                wTimeout = Integer.parseInt(value);
-            } else if (key.equals("journal")) {
-                journal = parseBoolean(value, "journal");
+            switch (key) {
+                case "safe":
+                    safe = parseBoolean(value, "safe");
+                    break;
+                case "w":
+                    w = value;
+                    break;
+                case "wtimeoutms":
+                    wTimeout = Integer.parseInt(value);
+                    break;
+                case "journal":
+                    journal = parseBoolean(value, "journal");
+                    break;
+                default:
+                    break;
             }
         }
         return buildWriteConcern(safe, w, wTimeout, journal);
@@ -701,7 +735,7 @@ public class ConnectionString {
     @Nullable
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         String readPreferenceType = null;
-        List<TagSet> tagSetList = new ArrayList<TagSet>();
+        List<TagSet> tagSetList = new ArrayList<>();
         long maxStalenessSeconds = -1;
 
         for (final String key : READ_PREFERENCE_KEYS) {
@@ -710,15 +744,21 @@ public class ConnectionString {
                 continue;
             }
 
-            if (key.equals("readpreference")) {
-                readPreferenceType = value;
-            } else if (key.equals("maxstalenessseconds")) {
-                 maxStalenessSeconds = parseInteger(value, "maxstalenessseconds");
-            } else if (key.equals("readpreferencetags")) {
-                for (final String cur : optionsMap.get(key)) {
-                    TagSet tagSet = getTags(cur.trim());
-                    tagSetList.add(tagSet);
-                }
+            switch (key) {
+                case "readpreference":
+                    readPreferenceType = value;
+                    break;
+                case "maxstalenessseconds":
+                    maxStalenessSeconds = parseInteger(value, "maxstalenessseconds");
+                    break;
+                case "readpreferencetags":
+                    for (final String cur : optionsMap.get(key)) {
+                        TagSet tagSet = getTags(cur.trim());
+                        tagSetList.add(tagSet);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
         return buildReadPreference(readPreferenceType, tagSetList, maxStalenessSeconds);
@@ -758,24 +798,31 @@ public class ConnectionString {
                 continue;
             }
 
-            if (key.equals("authmechanism")) {
-                if (value.equals("MONGODB-CR")) {
-                    if (userName == null) {
-                        throw new IllegalArgumentException("username can not be null");
+            switch (key) {
+                case "authmechanism":
+                    if (value.equals("MONGODB-CR")) {
+                        if (userName == null) {
+                            throw new IllegalArgumentException("username can not be null");
+                        }
+                        LOGGER.warn("Deprecated MONGDOB-CR authentication mechanism used in connection string");
+                    } else {
+                        mechanism = AuthenticationMechanism.fromMechanismName(value);
                     }
-                    LOGGER.warn("Deprecated MONGDOB-CR authentication mechanism used in connection string");
-                } else {
-                    mechanism = AuthenticationMechanism.fromMechanismName(value);
-                }
-            } else if (key.equals("authsource")) {
-                if (value.equals("")) {
-                    throw new IllegalArgumentException("authSource can not be an empty string");
-                }
-                authSource = value;
-            } else if (key.equals("gssapiservicename")) {
-                gssapiServiceName = value;
-            } else if (key.equals("authmechanismproperties")) {
-                authMechanismProperties = value;
+                    break;
+                case "authsource":
+                    if (value.equals("")) {
+                        throw new IllegalArgumentException("authSource can not be an empty string");
+                    }
+                    authSource = value;
+                    break;
+                case "gssapiservicename":
+                    gssapiServiceName = value;
+                    break;
+                case "authmechanismproperties":
+                    authMechanismProperties = value;
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -882,7 +929,7 @@ public class ConnectionString {
     }
 
     private Map<String, List<String>> parseOptions(final String optionsPart) {
-        Map<String, List<String>> optionsMap = new HashMap<String, List<String>>();
+        Map<String, List<String>> optionsMap = new HashMap<>();
         if (optionsPart.length() == 0) {
             return optionsMap;
         }
@@ -897,7 +944,7 @@ public class ConnectionString {
                 String value = part.substring(idx + 1);
                 List<String> valueList = optionsMap.get(key);
                 if (valueList == null) {
-                    valueList = new ArrayList<String>(1);
+                    valueList = new ArrayList<>(1);
                 }
                 valueList.add(urldecode(value));
                 optionsMap.put(key, valueList);
@@ -987,7 +1034,7 @@ public class ConnectionString {
     }
 
     private TagSet getTags(final String tagSetString) {
-        List<Tag> tagList = new ArrayList<Tag>();
+        List<Tag> tagList = new ArrayList<>();
         if (tagSetString.length() > 0) {
             for (final String tag : tagSetString.split(",")) {
                 String[] tagKeyValuePair = tag.split(":");
@@ -1001,8 +1048,8 @@ public class ConnectionString {
         return new TagSet(tagList);
     }
 
-    private static final Set<String> TRUE_VALUES = new HashSet<String>(asList("true", "yes", "1"));
-    private static final Set<String> FALSE_VALUES = new HashSet<String>(asList("false", "no", "0"));
+    private static final Set<String> TRUE_VALUES = new HashSet<>(asList("true", "yes", "1"));
+    private static final Set<String> FALSE_VALUES = new HashSet<>(asList("false", "no", "0"));
 
     @Nullable
     private Boolean parseBoolean(final String input, final String key) {
@@ -1040,7 +1087,7 @@ public class ConnectionString {
         if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
         }
-        List<String> hosts = new ArrayList<String>();
+        List<String> hosts = new ArrayList<>();
         for (String host : rawHosts) {
             if (host.length() == 0) {
                 throw new IllegalArgumentException(format("The connection string contains an empty host '%s'. ", rawHosts));
@@ -1327,8 +1374,9 @@ public class ConnectionString {
     }
 
     /**
-     * Gets the maximum connection life time specified in the connection string.
-     * @return the maximum connection life time
+     * Gets the maximum connection lifetime specified in the connection string.
+     *
+     * @return the maximum connection lifetime
      */
     @Nullable
     public Integer getMaxConnectionLifeTime() {
