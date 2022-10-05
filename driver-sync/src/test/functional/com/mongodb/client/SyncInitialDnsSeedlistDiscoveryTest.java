@@ -25,8 +25,9 @@ import java.util.List;
 public class SyncInitialDnsSeedlistDiscoveryTest extends InitialDnsSeedlistDiscoveryTest {
     public SyncInitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri,
             final List<String> seeds, final Integer numSeeds, final List<String> hosts, final Integer numHosts,
-            final boolean isError, final BsonDocument options) {
-        super(filename, parentDirectory, uri, seeds, numSeeds, hosts, numHosts, isError, options);
+            final BsonDocument options, final BsonDocument parsedOptions,
+            final boolean isError, final boolean executePingCommand) {
+        super(filename, parentDirectory, uri, seeds, numSeeds, hosts, numHosts, options, parsedOptions, isError, executePingCommand);
     }
 
     @Override

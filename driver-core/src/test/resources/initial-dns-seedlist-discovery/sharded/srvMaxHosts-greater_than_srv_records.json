@@ -4,12 +4,13 @@
     "localhost.test.build.10gen.cc:27017",
     "localhost.test.build.10gen.cc:27018"
   ],
-  "hosts": [
+  "hosts" : [
     "localhost.test.build.10gen.cc:27017",
     "localhost.test.build.10gen.cc:27018"
   ],
-  "options": {
-    "srvMaxHosts": 3,
-    "ssl": true
-  }
+  "options" : {
+    "srvMaxHosts" : 3,
+    "ssl" : true
+  },
+  "ping" : true
 }
