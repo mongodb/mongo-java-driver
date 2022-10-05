@@ -1,22 +1,22 @@
 {
-  "description": "New primary",
-  "uri": "mongodb://a,b/?replicaSet=rs",
-  "phases": [
+  "description" : "Secondary ignored when ok is zero",
+  "uri" : "mongodb://a,b/?replicaSet=rs",
+  "phases" : [
     {
-      "responses": [
+      "responses" : [
         [
           "a:27017",
           {
-            "ok": 1,
-            "helloOk": true,
-            "isWritablePrimary": true,
-            "setName": "rs",
-            "hosts": [
+            "ok" : 1,
+            "helloOk" : true,
+            "isWritablePrimary" : true,
+            "setName" : "rs",
+            "hosts" : [
               "a:27017",
               "b:27017"
             ],
-            "minWireVersion": 0,
-            "maxWireVersion": 6
+            "minWireVersion" : 0,
+            "maxWireVersion" : 6
           }
         ],
         [

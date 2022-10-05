@@ -45,6 +45,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.REPLICA_SET_GHOST;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
+import static com.mongodb.internal.operation.ServerVersionHelper.SIX_DOT_ZERO_WIRE_VERSION;
 import static java.lang.String.format;
 
 public abstract class AbstractMultiServerCluster extends BaseCluster {
@@ -224,9 +225,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.getType() == REPLICA_SET_GHOST) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
-            }
+            LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
             return true;
         }
 
@@ -247,10 +246,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         if (newDescription.getCanonicalAddress() != null
                 && !newDescription.getAddress().equals(new ServerAddress(newDescription.getCanonicalAddress()))
                 && !newDescription.isPrimary()) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
-                                   newDescription.getCanonicalAddress(), newDescription.getAddress()));
-            }
+            LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
+                    newDescription.getCanonicalAddress(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return true;
         }
@@ -258,35 +255,34 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         if (newDescription.isPrimary()) {
             ObjectId electionId = newDescription.getElectionId();
             Integer setVersion = newDescription.getSetVersion();
-            if (setVersion != null && electionId != null) {
-                if (isStalePrimary(newDescription)) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
-                                + "is less than one already seen of (%d, %s)",
-                                newDescription.getAddress(),
-                                setVersion, electionId,
-                                maxSetVersion, maxElectionId));
-                    }
-                    addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting();
+            if (newDescription.getMaxWireVersion() >= SIX_DOT_ZERO_WIRE_VERSION) {
+                if (nullSafeCompareTo(electionId, maxElectionId) > 0
+                        || (nullSafeCompareTo(electionId, maxElectionId) == 0 && nullSafeCompareTo(setVersion, maxSetVersion) >= 0)) {
+                    LOGGER.info(format("Setting max election id to %s and max set version to %d from replica set primary %s",
+                            newDescription.getElectionId(), newDescription.getSetVersion(), newDescription.getAddress()));
+                    maxElectionId = newDescription.getElectionId();
+                    maxSetVersion = newDescription.getSetVersion();
+                } else {
+                    invalidatePotentialPrimary(newDescription);
                     return false;
                 }
-
-                if (!electionId.equals(maxElectionId)) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Setting max election id to %s from replica set primary %s", electionId,
-                                newDescription.getAddress()));
+            } else {
+                if (setVersion != null && electionId != null) {
+                    if (nullSafeCompareTo(maxSetVersion, setVersion) <= 0
+                            && (nullSafeCompareTo(maxSetVersion, setVersion) != 0 || nullSafeCompareTo(maxElectionId, electionId) <= 0)) {
+                        LOGGER.info(format("Setting max election id to %s from replica set primary %s",
+                                newDescription.getElectionId(), newDescription.getAddress()));
+                        maxElectionId = newDescription.getElectionId();
+                    } else {
+                        invalidatePotentialPrimary(newDescription);
+                        return false;
                     }
-                    maxElectionId = electionId;
                 }
-            }
-
-            if (setVersion != null
-                    && (maxSetVersion == null || setVersion.compareTo(maxSetVersion) > 0)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info(format("Setting max set version to %d from replica set primary %s", setVersion,
-                            newDescription.getAddress()));
+                if (nullSafeCompareTo(setVersion, maxSetVersion) > 0) {
+                    LOGGER.info(format("Setting max set version to %d from replica set primary %s",
+                            newDescription.getSetVersion(), newDescription.getAddress()));
+                    maxSetVersion = setVersion;
                 }
-                maxSetVersion = setVersion;
             }
 
             if (isNotAlreadyPrimary(newDescription.getAddress())) {
@@ -297,14 +293,26 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         return true;
     }
 
-    private boolean isStalePrimary(final ServerDescription newDescription) {
-        if (maxSetVersion == null || maxElectionId == null) {
-            return false;
-        }
+    private void invalidatePotentialPrimary(final ServerDescription newDescription) {
+        LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
+                        + "is less than one already seen of (%d, %s)",
+                newDescription.getAddress(), newDescription.getSetVersion(), newDescription.getElectionId(),
+                maxSetVersion, maxElectionId));
+        addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting();
+    }
 
-        Integer setVersion = newDescription.getSetVersion();
-        return (setVersion == null || maxSetVersion.compareTo(setVersion) > 0
-                || (maxSetVersion.equals(setVersion) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
+    /**
+     * Implements the same contract as {@link Comparable#compareTo(Object)}, except that a null value is always considers less-than any
+     * other value (except null, which it considers as equal-to).
+     */
+    private static <T extends Comparable<T>> int nullSafeCompareTo(final T first, final T second) {
+        if (first == null) {
+            return second == null ? 0 : -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+        return first.compareTo(second);
     }
 
     private boolean isNotAlreadyPrimary(final ServerAddress address) {
