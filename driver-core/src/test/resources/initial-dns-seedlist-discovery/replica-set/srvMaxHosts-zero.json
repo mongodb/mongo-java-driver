@@ -4,14 +4,15 @@
     "localhost.test.build.10gen.cc:27017",
     "localhost.test.build.10gen.cc:27018"
   ],
-  "hosts": [
+  "hosts" : [
     "localhost:27017",
     "localhost:27018",
     "localhost:27019"
   ],
-  "options": {
-    "replicaSet": "repl0",
-    "srvMaxHosts": 0,
-    "ssl": true
-  }
+  "options" : {
+    "replicaSet" : "repl0",
+    "srvMaxHosts" : 0,
+    "ssl" : true
+  },
+  "ping" : true
 }
