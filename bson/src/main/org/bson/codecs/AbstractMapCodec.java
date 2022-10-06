@@ -23,6 +23,12 @@ import org.bson.BsonWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A class that may simplify implementing a {@link Codec} for {@link Map}s with {@link String} key type.
+ * @param <T> The type of mapped values.
+ *
+ * @since 4.8
+ */
 public abstract class AbstractMapCodec<T> implements Codec<Map<String, T>> {
 
     abstract T readValue(BsonReader reader, DecoderContext decoderContext);
