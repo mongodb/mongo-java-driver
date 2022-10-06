@@ -20,6 +20,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.Parameterizable;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.ParameterizationAwareCodecRegistry;
 import org.bson.internal.CodecCache.CodecCacheKey;
 
 import java.lang.reflect.Type;
@@ -28,7 +29,7 @@ import java.util.List;
 
 import static org.bson.assertions.Assertions.isTrueArgument;
 
-public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry {
+public final class ProvidersCodecRegistry implements ParameterizationAwareCodecRegistry, CycleDetectingCodecRegistry {
     private final List<CodecProvider> codecProviders;
     private final CodecCache codecCache = new CodecCache();
 
@@ -42,7 +43,7 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
         return get(new ChildCodecRegistry<T>(this, clazz));
     }
 
-    //    @Override
+    @Override
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
         return get(new ChildCodecRegistry<T>(this, clazz, typeArguments));
     }

@@ -17,5 +17,5 @@
 
 package org.bson.codecs.record.samples;
 
-public record FooRecord(BarRecord<String> bar) {
+public record FooRecord(BarRecord<TestRecordEmbedded> bar) {
 }

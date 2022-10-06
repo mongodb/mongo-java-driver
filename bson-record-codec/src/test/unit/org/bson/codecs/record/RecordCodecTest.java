@@ -24,9 +24,11 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
+import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.record.samples.BarRecord;
 import org.bson.codecs.record.samples.BazRecord;
 import org.bson.codecs.record.samples.FooRecord;
@@ -67,6 +69,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RecordCodecTest {
+
+    static class BadRegistry implements CodecRegistry {
+        private final CodecRegistry wrapped;
+
+        BadRegistry(final CodecRegistry wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+            return wrapped.get(clazz, registry);
+        }
+
+        @Override
+        public <T> Codec<T> get(final Class<T> clazz) {
+            return wrapped.get(clazz);
+        }
+    }
 
     @Test
     public void testRecordWithDeprecatedAnnotations() {
@@ -127,7 +147,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedListOfRecords() {
         var codec = new RecordCodec<>(TestRecordWithListOfRecords.class,
-                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithListOfRecords(identifier, List.of(new TestRecordEmbedded("embedded")));
 
@@ -154,7 +174,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedListOfListOfRecords() {
         var codec = new RecordCodec<>(TestRecordWithListOfListOfRecords.class,
-                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithListOfListOfRecords(identifier, List.of(List.of(new TestRecordEmbedded("embedded"))));
 
@@ -182,7 +202,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedMapOfRecords() {
         var codec = new RecordCodec<>(TestRecordWithMapOfRecords.class,
-                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithMapOfRecords(identifier,
                 Map.of("first", new TestRecordEmbedded("embedded")));
@@ -210,7 +230,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedMapOfListRecords() {
         var codec = new RecordCodec<>(TestRecordWithMapOfListOfRecords.class,
-                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithMapOfListOfRecords(identifier,
                 Map.of("first", List.of(new TestRecordEmbedded("embedded"))));
@@ -240,7 +260,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedParameterizedRecord() {
         var codec = new RecordCodec<>(TestRecordWithParameterizedRecord.class,
-                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithParameterizedRecord(identifier,
                 new TestRecordParameterized<>(42.0, List.of(new TestRecordEmbedded("embedded"))));
@@ -271,7 +291,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedParameterizedRecordWithDifferentlyOrderedTypeParameters() {
         var codec = new RecordCodec<>(TestRecordWithNestedParameterizedRecord.class,
-                fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithNestedParameterizedRecord(identifier,
                 new TestRecordWithNestedParameterized<>(
@@ -364,9 +384,9 @@ public class RecordCodecTest {
         assertEquals(
                 new BsonDocument("_id", new BsonString("0"))
                         .append("selfReferentialRecord",
-                        new BsonDocument("name", new BsonString("1"))
-                                .append("left", new BsonDocument("name", new BsonString("2")))
-                                .append("right", new BsonDocument("name", new BsonString("3")))),
+                                new BsonDocument("name", new BsonString("1"))
+                                        .append("left", new BsonDocument("name", new BsonString("2")))
+                                        .append("right", new BsonDocument("name", new BsonString("3")))),
                 document);
 
         // when
@@ -377,10 +397,11 @@ public class RecordCodecTest {
     }
 
     @Test
-    public void fooTest() {
-        var registry = fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY);
+    public void scratchTest() {
+        var registry = new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
         var codec = registry.get(FooRecord.class);
-        var testRecord = new FooRecord(new BarRecord<>(new BazRecord<>(List.of("s1"), "s2")));
+        var testRecord = new FooRecord(new BarRecord<>(new BazRecord<>(List.of(new TestRecordEmbedded("n1")),
+                new TestRecordEmbedded("n2"))));
 
         var document = new BsonDocument();
 
@@ -390,8 +411,8 @@ public class RecordCodecTest {
         // then
         assertEquals(
                 new BsonDocument("bar", new BsonDocument("baz",
-                        new BsonDocument("list", new BsonArray(List.of(new BsonString("s1"))))
-                                .append("single", new BsonString("s2")))),
+                        new BsonDocument("list", new BsonArray(List.of(new BsonDocument("name", new BsonString("n1")))))
+                                .append("single", new BsonDocument("name", new BsonString("n2"))))),
                 document);
 
         // when
