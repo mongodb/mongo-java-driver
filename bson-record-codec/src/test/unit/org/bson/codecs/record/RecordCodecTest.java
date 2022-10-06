@@ -147,7 +147,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedListOfRecords() {
         var codec = new RecordCodec<>(TestRecordWithListOfRecords.class,
-                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
+                fromProviders(new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY))));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithListOfRecords(identifier, List.of(new TestRecordEmbedded("embedded")));
 
@@ -174,7 +174,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedListOfListOfRecords() {
         var codec = new RecordCodec<>(TestRecordWithListOfListOfRecords.class,
-                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
+                fromProviders(new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY))));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithListOfListOfRecords(identifier, List.of(List.of(new TestRecordEmbedded("embedded"))));
 
@@ -202,7 +202,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedMapOfRecords() {
         var codec = new RecordCodec<>(TestRecordWithMapOfRecords.class,
-                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
+                fromProviders(new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY))));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithMapOfRecords(identifier,
                 Map.of("first", new TestRecordEmbedded("embedded")));
@@ -230,7 +230,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedMapOfListRecords() {
         var codec = new RecordCodec<>(TestRecordWithMapOfListOfRecords.class,
-                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
+                fromProviders(new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY))));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithMapOfListOfRecords(identifier,
                 Map.of("first", List.of(new TestRecordEmbedded("embedded"))));
@@ -260,7 +260,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedParameterizedRecord() {
         var codec = new RecordCodec<>(TestRecordWithParameterizedRecord.class,
-                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
+                fromProviders(new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY))));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithParameterizedRecord(identifier,
                 new TestRecordParameterized<>(42.0, List.of(new TestRecordEmbedded("embedded"))));
@@ -291,7 +291,7 @@ public class RecordCodecTest {
     @Test
     public void testRecordWithNestedParameterizedRecordWithDifferentlyOrderedTypeParameters() {
         var codec = new RecordCodec<>(TestRecordWithNestedParameterizedRecord.class,
-                new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
+                fromProviders(new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY))));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithNestedParameterizedRecord(identifier,
                 new TestRecordWithNestedParameterized<>(
@@ -398,7 +398,7 @@ public class RecordCodecTest {
 
     @Test
     public void scratchTest() {
-        var registry = new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
+        var registry = fromProviders(new BadRegistry(fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)));
         var codec = registry.get(FooRecord.class);
         var testRecord = new FooRecord(new BarRecord<>(new BazRecord<>(List.of(new TestRecordEmbedded("n1")),
                 new TestRecordEmbedded("n2"))));
