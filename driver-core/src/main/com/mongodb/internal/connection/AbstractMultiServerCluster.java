@@ -260,8 +260,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                         || (nullSafeCompareTo(electionId, maxElectionId) == 0 && nullSafeCompareTo(setVersion, maxSetVersion) >= 0)) {
                     LOGGER.info(format("Setting max election id to %s and max set version to %d from replica set primary %s",
                             newDescription.getElectionId(), newDescription.getSetVersion(), newDescription.getAddress()));
-                    maxElectionId = newDescription.getElectionId();
-                    maxSetVersion = newDescription.getSetVersion();
+                    maxElectionId = electionId;
+                    maxSetVersion = setVersion;
                 } else {
                     invalidatePotentialPrimary(newDescription);
                     return false;
@@ -272,7 +272,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                             && (nullSafeCompareTo(maxSetVersion, setVersion) != 0 || nullSafeCompareTo(maxElectionId, electionId) <= 0)) {
                         LOGGER.info(format("Setting max election id to %s from replica set primary %s",
                                 newDescription.getElectionId(), newDescription.getAddress()));
-                        maxElectionId = newDescription.getElectionId();
+                        maxElectionId = electionId;
                     } else {
                         invalidatePotentialPrimary(newDescription);
                         return false;
