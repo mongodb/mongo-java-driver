@@ -19,13 +19,14 @@ package org.bson.internal;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.ParameterizationAwareCodecRegistry;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
 // An implementation of CodecRegistry that is used to detect cyclic dependencies between Codecs
-class ChildCodecRegistry<T> implements CodecRegistry {
+class ChildCodecRegistry<T> implements ParameterizationAwareCodecRegistry {
 
     private final ChildCodecRegistry<?> parent;
     private final CycleDetectingCodecRegistry registry;

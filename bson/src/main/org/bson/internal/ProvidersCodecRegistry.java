@@ -28,7 +28,7 @@ import java.util.List;
 
 import static org.bson.assertions.Assertions.isTrueArgument;
 
-public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetectingCodecRegistry {
+public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry {
     private final List<CodecProvider> codecProviders;
     private final CodecCache codecCache = new CodecCache();
 
@@ -42,7 +42,7 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
         return get(new ChildCodecRegistry<T>(this, clazz));
     }
 
-    @Override
+    //    @Override
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
         return get(new ChildCodecRegistry<T>(this, clazz, typeArguments));
     }

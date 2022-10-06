@@ -26,6 +26,7 @@ import org.bson.codecs.Parameterizable;
 import org.bson.codecs.RepresentationConfigurable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.ParameterizationAwareCodecRegistry;
 import org.bson.codecs.record.annotations.BsonId;
 import org.bson.codecs.record.annotations.BsonProperty;
 import org.bson.codecs.record.annotations.BsonRepresentation;
@@ -91,7 +92,8 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
                 final CodecRegistry codecRegistry) {
             var rawType = toWrapper(resolveComponentType(typeParameters, component));
             var codec = component.getGenericType() instanceof ParameterizedType parameterizedType
-                    ? codecRegistry.get(rawType,
+                    && codecRegistry instanceof ParameterizationAwareCodecRegistry parameterizationAwareCodecRegistry
+                    ? parameterizationAwareCodecRegistry.get(rawType,
                     resolveActualTypeArguments(typeParameters, component.getDeclaringRecord(), parameterizedType))
                     : codecRegistry.get(rawType);
             BsonType bsonRepresentationType = null;

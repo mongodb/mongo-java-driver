@@ -21,6 +21,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.ParameterizationAwareCodecRegistry;
 import org.bson.internal.CodecCache.CodecCacheKey;
 
 import java.lang.reflect.Type;
@@ -28,7 +29,7 @@ import java.util.List;
 
 import static org.bson.assertions.Assertions.notNull;
 
-public class OverridableUuidRepresentationCodecRegistry implements CycleDetectingCodecRegistry {
+public class OverridableUuidRepresentationCodecRegistry implements CycleDetectingCodecRegistry, ParameterizationAwareCodecRegistry {
 
     private final CodecProvider wrapped;
     private final CodecCache codecCache = new CodecCache();

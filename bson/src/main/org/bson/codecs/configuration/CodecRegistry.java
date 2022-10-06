@@ -18,9 +18,6 @@ package org.bson.codecs.configuration;
 
 import org.bson.codecs.Codec;
 
-import java.lang.reflect.Type;
-import java.util.List;
-
 /**
  * A registry of Codec instances searchable by the class that the Codec can encode and decode.
  *
@@ -47,24 +44,4 @@ public interface CodecRegistry extends CodecProvider {
      * @throws CodecConfigurationException if the registry does not contain a codec for the given class.
      */
     <T> Codec<T> get(Class<T> clazz);
-
-    /**
-     * Gets a Codec for the given parameterized class, after resolving any type variables with the given type arguments.
-     *
-     * <p>
-     * The default behavior is to throw a {@link CodecConfigurationException}.  Applications are encouraged to either override this
-     * method in their own implementations of this interface, or else use the factory methods in {@link CodecRegistries}.
-     * </p>
-     *
-     * @param clazz the parameterized class
-     * @param typeArguments the type arguments to apply to the parameterized class
-     * @return a codec for the given class, with the given type parameters resolved
-     * @throws CodecConfigurationException by default, if the implementation does not override this method, or if no codec can be found
-     * for the given class and type arguments.
-     * @param <T> the class type
-     * @since 4.8
-     */
-    default <T> Codec<T> get(Class<T> clazz, List<Type> typeArguments) {
-        throw new CodecConfigurationException("Make this message really informative");  // TODO
-    }
 }

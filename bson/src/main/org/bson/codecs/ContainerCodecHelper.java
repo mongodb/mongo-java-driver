@@ -22,6 +22,7 @@ import org.bson.Transformer;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.ParameterizationAwareCodecRegistry;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -71,7 +72,13 @@ final class ContainerCodecHelper {
             return codecRegistry.get((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
-            return codecRegistry.get((Class<?>) parameterizedType.getRawType(), Arrays.asList(parameterizedType.getActualTypeArguments()));
+            if (codecRegistry instanceof ParameterizationAwareCodecRegistry) {
+                return ((ParameterizationAwareCodecRegistry) codecRegistry).get((Class<?>) parameterizedType.getRawType(),
+                        Arrays.asList(parameterizedType.getActualTypeArguments()));
+            } else {
+                // TODO: warn?
+                return codecRegistry.get((Class<?>) parameterizedType.getRawType());
+            }
         } else {
             throw new CodecConfigurationException("Unsupported generic type of container: " + type);
         }

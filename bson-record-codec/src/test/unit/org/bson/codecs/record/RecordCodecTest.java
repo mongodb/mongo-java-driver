@@ -27,6 +27,9 @@ import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.record.samples.BarRecord;
+import org.bson.codecs.record.samples.BazRecord;
+import org.bson.codecs.record.samples.FooRecord;
 import org.bson.codecs.record.samples.TestRecordEmbedded;
 import org.bson.codecs.record.samples.TestRecordParameterized;
 import org.bson.codecs.record.samples.TestRecordWithDeprecatedAnnotations;
@@ -362,8 +365,33 @@ public class RecordCodecTest {
                 new BsonDocument("_id", new BsonString("0"))
                         .append("selfReferentialRecord",
                         new BsonDocument("name", new BsonString("1"))
-                        .append("left", new BsonDocument("name", new BsonString("2")))
-                        .append("right", new BsonDocument("name", new BsonString("3")))),
+                                .append("left", new BsonDocument("name", new BsonString("2")))
+                                .append("right", new BsonDocument("name", new BsonString("3")))),
+                document);
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void fooTest() {
+        var registry = fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = registry.get(FooRecord.class);
+        var testRecord = new FooRecord(new BarRecord<>(new BazRecord<>(List.of("s1"), "s2")));
+
+        var document = new BsonDocument();
+
+        // when
+        codec.encode(new BsonDocumentWriter(document), testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("bar", new BsonDocument("baz",
+                        new BsonDocument("list", new BsonArray(List.of(new BsonString("s1"))))
+                                .append("single", new BsonString("s2")))),
                 document);
 
         // when

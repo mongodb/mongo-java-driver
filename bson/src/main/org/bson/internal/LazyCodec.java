@@ -22,6 +22,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.ParameterizationAwareCodecRegistry;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -55,10 +56,11 @@ class LazyCodec<T> implements Codec<T> {
 
     private Codec<T> getWrapped() {
         if (wrapped == null) {
-            if (types.isEmpty()) {
+            if (types.isEmpty() || (!(registry instanceof ParameterizationAwareCodecRegistry))) {
+                // TODO: warn?
                 wrapped = registry.get(clazz);
             } else {
-                wrapped = registry.get(clazz, types);
+                wrapped = ((ParameterizationAwareCodecRegistry) registry).get(clazz, types);
             }
         }
 
