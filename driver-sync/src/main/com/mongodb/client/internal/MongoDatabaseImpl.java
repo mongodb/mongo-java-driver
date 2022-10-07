@@ -56,7 +56,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 /**
@@ -119,8 +118,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoDatabaseImpl(name, withUuidRepresentation(fromProviders(codecRegistry), uuidRepresentation), readPreference,
-                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
+        return new MongoDatabaseImpl(name, withUuidRepresentation(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
     }
 
     @Override

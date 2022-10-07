@@ -98,9 +98,6 @@ public final class CodecRegistries {
      * registries.
      */
     public static CodecRegistry fromProviders(final List<? extends CodecProvider> providers) {
-        if (providers.size() == 1 && providers.get(0) instanceof ProvidersCodecRegistry) {
-            return (CodecRegistry) providers.get(0);
-        }
         return new ProvidersCodecRegistry(providers);
     }
 
