@@ -25,7 +25,10 @@ import org.bson.ByteBufNIO
 import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
+import org.bson.codecs.IntegerCodec
 import org.bson.codecs.MinKeyCodec
+import org.bson.codecs.Parameterizable
+import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
@@ -35,9 +38,12 @@ import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import spock.lang.Specification
 
+import java.lang.reflect.Type
 import java.nio.ByteBuffer
 
 import static java.util.Arrays.asList
+import static org.bson.codecs.ContainerCodecHelper.getCodec
+import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 
 class ProvidersCodecRegistrySpecification extends Specification {
 
@@ -152,6 +158,93 @@ class ProvidersCodecRegistrySpecification extends Specification {
 
         expect:
         ((SimpleCodec) provider.get(Simple, registry)).registry.is(registry)
+    }
+
+    def 'should parameterize codec'() {
+        given:
+        def registry = new ProvidersCodecRegistry([fromCodecs(new CollectionCodec()), new ValueCodecProvider()]);
+
+        when:
+        def codec = registry.get(Collection, [Integer])
+
+        then:
+        codec instanceof ParameterizedCollectionCodec
+        (codec as ParameterizedCollectionCodec).getCodec() instanceof IntegerCodec
+
+        when:
+        def secondCodec = registry.get(Collection, [Integer])
+
+        then:
+        codec == secondCodec
+    }
+
+    def 'should parameterize codec with cycles'() {
+        given:
+        def registry = new ProvidersCodecRegistry([fromCodecs(new CollectionCodec()), new ValueCodecProvider()]);
+
+        when:
+        def codec = registry.get(Collection, [Holder.getField('c').getGenericType()])
+
+        then:
+        codec instanceof ParameterizedCollectionCodec
+        (codec as ParameterizedCollectionCodec).getCodec() instanceof LazyCodec
+
+        when:
+        def secondCodec = registry.get(Collection, [Holder.getField('c').getGenericType()])
+
+        then:
+        codec == secondCodec
+    }
+}
+
+class CollectionCodec implements Codec<Collection<?>>, Parameterizable {
+
+    @Override
+    Collection<?> decode(BsonReader reader, DecoderContext decoderContext) {
+        throw new UnsupportedOperationException()
+    }
+
+    @Override
+    void encode(BsonWriter writer, Collection<?> value, EncoderContext encoderContext) {
+        throw new UnsupportedOperationException()
+    }
+
+    @Override
+    Class<Collection<?>> getEncoderClass() {
+        Collection
+    }
+
+    @Override
+    Codec<?> parameterize(CodecRegistry codecRegistry, List<Type> types) {
+        new ParameterizedCollectionCodec(getCodec(codecRegistry, types.get(0)))
+    }
+}
+
+class ParameterizedCollectionCodec<T> implements Codec<Collection<T>> {
+
+    private final Codec<T> codec
+
+    ParameterizedCollectionCodec(Codec<T> codec) {
+        this.codec = codec
+    }
+
+    Codec<T> getCodec() {
+        codec
+    }
+
+    @Override
+    Collection<T> decode(BsonReader reader, DecoderContext decoderContext) {
+        throw new UnsupportedOperationException()
+    }
+
+    @Override
+    void encode(BsonWriter writer, Collection<T> value, EncoderContext encoderContext) {
+        throw new UnsupportedOperationException()
+    }
+
+    @Override
+    Class<Collection<T>> getEncoderClass() {
+        Collection
     }
 }
 
