@@ -57,6 +57,7 @@ import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 public final class MongoClientImpl implements MongoClient {
@@ -81,7 +82,8 @@ public final class MongoClientImpl implements MongoClient {
                     + SynchronousContextProvider.class.getName() + " when using the synchronous driver");
         }
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
-                withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
+                withUuidRepresentation(fromProviders(settings.getCodecRegistry()), settings.getUuidRepresentation()), this,
+                operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
                 (SynchronousContextProvider) settings.getContextProvider());
         LOGGER.info(format("MongoClient with metadata %s created with settings %s",

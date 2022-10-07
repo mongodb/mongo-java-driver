@@ -88,6 +88,7 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 public final class MongoOperationPublisher<T> {
@@ -187,7 +188,8 @@ public final class MongoOperationPublisher<T> {
 
     MongoOperationPublisher<T> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
-                                             withUuidRepresentation(notNull("codecRegistry", codecRegistry), uuidRepresentation),
+                                             withUuidRepresentation(fromProviders(notNull("codecRegistry", codecRegistry)),
+                                                     uuidRepresentation),
                                              getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
                                              uuidRepresentation, autoEncryptionSettings, executor);
     }
