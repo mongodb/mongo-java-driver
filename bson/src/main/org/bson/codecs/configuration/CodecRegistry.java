@@ -65,6 +65,9 @@ public interface CodecRegistry extends CodecProvider {
      * @since 4.8
      */
     default <T> Codec<T> get(Class<T> clazz, List<Type> typeArguments) {
-        throw new CodecConfigurationException("Make this message really informative");  // TODO
+        throw new CodecConfigurationException("The application is configuring a codec for a parameterized class, but is using an "
+                + "implementation of org.bson.codecs.configuration.CodecRegistry that does not override the default implementation of the"
+                + "method get(java.lang.Class<T>, java.util.List<java.lang.reflect.Type>).  This implementation should be replaced by one "
+                + "that is obtained from one of the CodecRegistry builder methods in org.bson.codecs.configuration.CodecRegistries");
     }
 }
