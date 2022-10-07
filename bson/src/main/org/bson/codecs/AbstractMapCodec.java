@@ -23,7 +23,7 @@ import org.bson.BsonWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractMapCodec<T> implements Codec<Map<String, T>> {
+abstract class AbstractMapCodec<T> implements Codec<Map<String, T>> {
 
     abstract T readValue(BsonReader reader, DecoderContext decoderContext);
 
