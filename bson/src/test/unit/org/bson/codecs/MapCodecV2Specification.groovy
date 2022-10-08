@@ -64,11 +64,11 @@ import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
-class MapCodecSpecification extends Specification {
+class MapCodecV2Specification extends Specification {
 
     static final REGISTRY = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
             fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
-                    new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider())))
+                    new DocumentCodecProvider(), new CollectionCodecProvider(), new MapCodecProvider())))
 
     @Shared
     BsonDocument bsonDoc = new BsonDocument()
@@ -107,7 +107,7 @@ class MapCodecSpecification extends Specification {
         }
 
         when:
-        new MapCodec(REGISTRY).encode(writer, originalDocument, EncoderContext.builder().build())
+        new MapCodecV2(REGISTRY, new BsonTypeClassMap(), null, Map).encode(writer, originalDocument, EncoderContext.builder().build())
         BsonReader reader
         if (writer instanceof BsonDocumentWriter) {
             reader = new BsonDocumentReader(bsonDoc)
@@ -118,7 +118,7 @@ class MapCodecSpecification extends Specification {
         } else {
             reader = new JsonReader(stringWriter.toString())
         }
-        def decodedDoc = new MapCodec(REGISTRY).decode(reader, DecoderContext.builder().build())
+        def decodedDoc = new MapCodecV2(REGISTRY, new BsonTypeClassMap(), null, Map).decode(reader, DecoderContext.builder().build())
 
         then:
         decodedDoc.get('null') == originalDocument.get('null')
@@ -177,7 +177,7 @@ class MapCodecSpecification extends Specification {
         def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
 
         when:
-        def map = new MapCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()))
+        def map = new MapCodecV2(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null, Map)
                 .withUuidRepresentation(representation)
                 .decode(reader, DecoderContext.builder().build())
 
@@ -200,7 +200,7 @@ class MapCodecSpecification extends Specification {
         def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
 
         when:
-        def map = new MapCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()))
+        def map = new MapCodecV2(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null, Map)
                 .withUuidRepresentation(representation)
                 .decode(reader, DecoderContext.builder().build())
 
@@ -219,9 +219,9 @@ class MapCodecSpecification extends Specification {
 
     def 'should apply transformer to decoded values'() {
         given:
-        def codec = new MapCodec(fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()]),
+        def codec = new MapCodecV2(fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()]),
                                       new BsonTypeClassMap(),
-                                      { Object value -> 5 })
+                                      { Object value -> 5 }, Map)
         when:
         def doc = codec.decode(new BsonDocumentReader(new BsonDocument('_id', new BsonInt32(1))), DecoderContext.builder().build())
 
@@ -229,10 +229,32 @@ class MapCodecSpecification extends Specification {
         doc['_id'] == 5
     }
 
+    def 'should decode to specified generic class'() {
+        given:
+        def doc = new BsonDocument('_id', new BsonInt32(1))
+
+        when:
+        def codec = new MapCodecV2(fromProviders([new ValueCodecProvider()]), new BsonTypeClassMap(), null, mapType)
+        def map = codec.decode(new BsonDocumentReader(doc), DecoderContext.builder().build())
+
+        then:
+        codec.getEncoderClass() == mapType
+        map.getClass() == actualType
+
+        where:
+        mapType      | actualType
+        Map          | HashMap
+        NavigableMap | TreeMap
+        AbstractMap  | HashMap
+        HashMap      | HashMap
+        TreeMap      | TreeMap
+        WeakHashMap  | WeakHashMap
+    }
+
 
     def 'should parameterize'() {
         given:
-        def codec = new MapCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new MapCodecV2(REGISTRY, new BsonTypeClassMap(), null, Map)
         def writer = new BsonDocumentWriter(new BsonDocument())
         def reader = new BsonDocumentReader(writer.getDocument())
         def instants =

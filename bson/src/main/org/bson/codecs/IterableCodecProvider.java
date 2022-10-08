@@ -27,7 +27,9 @@ import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
  * A {@code CodecProvider} for classes than implement the {@code Iterable} interface.
  *
  * @since 3.3
+ * @deprecated Prefer {@link CollectionCodecProvider}
  */
+@Deprecated
 public class IterableCodecProvider implements CodecProvider {
     private final BsonTypeClassMap bsonTypeClassMap;
     private final Transformer valueTransformer;

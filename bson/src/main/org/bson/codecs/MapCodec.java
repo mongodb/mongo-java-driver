@@ -17,27 +17,32 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
-import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.lang.reflect.Type;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
-import static org.bson.codecs.ContainerCodecHelper.getCodec;
+import static org.bson.codecs.ContainerCodecHelper.readValue;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A Codec for Map instances.
  *
+ * <p>This class has been deprecated because it's not possible to extend it to support {@code Map}s that are not type-compatible with
+ * {@code HashMap}.
+ * </p>
+ *
  * @since 3.5
+ * @deprecated Prefer {@link MapCodecProvider}
  */
-public class MapCodec extends AbstractMapCodec<Object> implements OverridableUuidRepresentationCodec<Map<String, Object>>, Parameterizable {
+@Deprecated
+public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepresentationCodec<Map<String, Object>> {
 
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
             new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider()));
@@ -88,7 +93,7 @@ public class MapCodec extends AbstractMapCodec<Object> implements OverridableUui
     }
 
     private MapCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
-               final UuidRepresentation uuidRepresentation) {
+                     final UuidRepresentation uuidRepresentation) {
         this.registry = notNull("registry", registry);
         this.bsonTypeCodecMap = bsonTypeCodecMap;
         this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
@@ -109,27 +114,42 @@ public class MapCodec extends AbstractMapCodec<Object> implements OverridableUui
     }
 
     @Override
-    public Codec<?> parameterize(final CodecRegistry codecRegistry, final List<Type> types) {
-        if (types.size() != 2) {
-            throw new CodecConfigurationException("Expected two parameterized type for an Iterable, but found "
-                    + types.size());
+    public void encode(final BsonWriter writer, final Map<String, Object> map, final EncoderContext encoderContext) {
+        writer.writeStartDocument();
+        for (final Map.Entry<String, Object> entry : map.entrySet()) {
+            writer.writeName(entry.getKey());
+            writeValue(writer, encoderContext, entry.getValue());
         }
-        Type genericTypeOfMapKey = types.get(0);
-        if (!genericTypeOfMapKey.getTypeName().equals("java.lang.String")) {
-            throw new CodecConfigurationException("Unsupported key type for Map: " + genericTypeOfMapKey.getTypeName());
-        }
-        return new ParameterizedMapCodec<>(getCodec(codecRegistry, types.get(1)));
+        writer.writeEndDocument();
     }
 
     @Override
-    Object readValue(final BsonReader reader, final DecoderContext decoderContext) {
-        return ContainerCodecHelper.readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer);
+    public Map<String, Object> decode(final BsonReader reader, final DecoderContext decoderContext) {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        reader.readStartDocument();
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+            String fieldName = reader.readName();
+            map.put(fieldName, readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer));
+        }
+
+        reader.readEndDocument();
+        return map;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
-    void writeValue(final BsonWriter writer, final Object value, final EncoderContext encoderContext) {
-        Codec codec = registry.get(value.getClass());
-        encoderContext.encodeWithChildContext(codec, writer, value);
+    public Class<Map<String, Object>> getEncoderClass() {
+        return (Class<Map<String, Object>>) ((Class) Map.class);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value) {
+        if (value == null) {
+            writer.writeNull();
+        } else {
+            Codec codec = registry.get(value.getClass());
+            encoderContext.encodeWithChildContext(codec, writer, value);
+        }
     }
 }

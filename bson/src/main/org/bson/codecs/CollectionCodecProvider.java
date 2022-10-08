@@ -20,63 +20,65 @@ import org.bson.Transformer;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.Map;
+import java.util.Collection;
+import java.util.Objects;
 
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
 
 /**
- * A {@code CodecProvider} for the Map class and all the default Codec implementations on which it depends.
+ * A {@code CodecProvider} for classes than implement the {@code Collection} interface.
  *
- * @since 3.5
+ * @since 3.3
  */
-public class MapCodecProvider implements CodecProvider {
+public class CollectionCodecProvider implements CodecProvider {
     private final BsonTypeClassMap bsonTypeClassMap;
     private final Transformer valueTransformer;
 
     /**
-     * Construct a new instance with a default {@code BsonTypeClassMap}.
+     * Construct a new instance with a default {@code BsonTypeClassMap} and no {@code Transformer}.
      */
-    public MapCodecProvider() {
+    public CollectionCodecProvider() {
         this(DEFAULT_BSON_TYPE_CLASS_MAP);
     }
 
     /**
-     * Construct a new instance with the given instance of {@code BsonTypeClassMap}.
-     *
-     * @param bsonTypeClassMap the non-null {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code
-     *                         ListCodec}
-     */
-    public MapCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
-        this(bsonTypeClassMap, null);
-    }
-
-    /**
      * Construct a new instance with a default {@code BsonTypeClassMap} and the given {@code Transformer}.  The transformer is used by the
-     * MapCodec as a last step when decoding values.
+     * IterableCodec as a last step when decoding values.
      *
      * @param valueTransformer the value transformer for decoded values
      */
-    public MapCodecProvider(final Transformer valueTransformer) {
+    public CollectionCodecProvider(final Transformer valueTransformer) {
         this(DEFAULT_BSON_TYPE_CLASS_MAP, valueTransformer);
     }
 
     /**
-     * Construct a new instance with the given instance of {@code BsonTypeClassMap}.
+     * Construct a new instance with the given instance of {@code BsonTypeClassMap} and no {@code Transformer}.
      *
-     * @param bsonTypeClassMap the non-null {@code BsonTypeClassMap} with which to construct instances of {@code MapCodec}.
+     * @param bsonTypeClassMap the non-null {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code
+     *                         ListCodec}
+     */
+    public CollectionCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
+        this(bsonTypeClassMap, null);
+    }
+
+    /**
+     * Construct a new instance with the given instance of {@code BsonTypeClassMap} and {@code Transformer}.
+     *
+     * @param bsonTypeClassMap the non-null {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code
+     *                         ListCodec}.
      * @param valueTransformer the value transformer for decoded values
      */
-    public MapCodecProvider(final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
+    public CollectionCodecProvider(final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
         this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
         this.valueTransformer = valueTransformer;
     }
 
     @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (Map.class.isAssignableFrom(clazz)) {
-            return new MapCodecV2(registry, bsonTypeClassMap, valueTransformer, clazz);
+        if (Collection.class.isAssignableFrom(clazz)) {
+            return new CollectionCodec(registry, bsonTypeClassMap, valueTransformer, clazz);
         }
 
         return null;
@@ -91,11 +93,12 @@ public class MapCodecProvider implements CodecProvider {
             return false;
         }
 
-        MapCodecProvider that = (MapCodecProvider) o;
+        CollectionCodecProvider that = (CollectionCodecProvider) o;
+
         if (!bsonTypeClassMap.equals(that.bsonTypeClassMap)) {
             return false;
         }
-        if (valueTransformer != null ? !valueTransformer.equals(that.valueTransformer) : that.valueTransformer != null) {
+        if (!Objects.equals(valueTransformer, that.valueTransformer)) {
             return false;
         }
 
@@ -111,6 +114,6 @@ public class MapCodecProvider implements CodecProvider {
 
     @Override
     public String toString() {
-        return "MapCodecProvider{}";
+        return "CollectionCodecProvider{}";
     }
 }
