@@ -163,7 +163,9 @@ final class CommandOperationHelper {
                 return mostRecentAttemptException.getCause();
             }
             return mostRecentAttemptException;
-        } else if (mostRecentAttemptException instanceof ResourceSupplierInternalException) {
+        } else if (mostRecentAttemptException instanceof ResourceSupplierInternalException
+                || (mostRecentAttemptException instanceof MongoException
+                    && ((MongoException)mostRecentAttemptException).hasErrorLabel(NO_WRITES_PERFORMED_ERROR_LABEL))) {
             return previouslyChosenException;
         } else {
             return mostRecentAttemptException;
@@ -571,6 +573,7 @@ final class CommandOperationHelper {
     }
 
     static final String RETRYABLE_WRITE_ERROR_LABEL = "RetryableWriteError";
+    private static final String NO_WRITES_PERFORMED_ERROR_LABEL = "NoWritesPerformed";
 
     private static boolean decideRetryableAndAddRetryableWriteErrorLabel(final Throwable t, @Nullable final Integer maxWireVersion) {
         if (!(t instanceof MongoException)) {
