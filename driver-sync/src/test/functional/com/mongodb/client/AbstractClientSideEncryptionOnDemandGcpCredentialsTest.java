@@ -36,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class AbstractClientSideEncryptionOnDemandGcpCredentialsTest {
 
-    @NonNull
     public abstract ClientEncryption getClientEncryption(ClientEncryptionSettings settings);
 
     private ClientEncryption clientEncryption;

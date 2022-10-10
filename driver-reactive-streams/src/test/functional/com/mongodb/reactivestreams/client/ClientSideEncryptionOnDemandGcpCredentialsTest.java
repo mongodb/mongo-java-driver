@@ -19,15 +19,13 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.client.AbstractClientSideEncryptionOnDemandGcpCredentialsTest;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.lang.NonNull;
 import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 
 public class ClientSideEncryptionOnDemandGcpCredentialsTest extends AbstractClientSideEncryptionOnDemandGcpCredentialsTest {
 
-    @NonNull
     @Override
-    public ClientEncryption getClientEncryption(@NonNull final ClientEncryptionSettings settings) {
+    public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
         return new SyncClientEncryption(ClientEncryptions.create(settings));
     }
 }
