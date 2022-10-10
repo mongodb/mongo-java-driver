@@ -27,17 +27,9 @@ final class OverridableUuidRepresentationCodecProvider implements CodecProvider 
     private final CodecProvider wrapped;
     private final UuidRepresentation uuidRepresentation;
 
-    public OverridableUuidRepresentationCodecProvider(final CodecProvider wrapped, final UuidRepresentation uuidRepresentation) {
+    OverridableUuidRepresentationCodecProvider(final CodecProvider wrapped, final UuidRepresentation uuidRepresentation) {
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.wrapped = notNull("wrapped", wrapped);
-    }
-
-    public UuidRepresentation getUuidRepresentation() {
-        return uuidRepresentation;
-    }
-
-    public CodecProvider getWrapped() {
-        return wrapped;
     }
 
     @Override
