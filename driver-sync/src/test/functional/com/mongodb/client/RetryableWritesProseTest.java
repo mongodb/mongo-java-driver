@@ -196,6 +196,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         originalErrorMustBePropagatedIfNoWritesPerformed(MongoClients::create);
     }
 
+    @SuppressWarnings("try")
     public static void originalErrorMustBePropagatedIfNoWritesPerformed(
             final Function<MongoClientSettings, MongoClient> clientCreator) throws InterruptedException {
         assumeTrue(serverVersionAtLeast(6, 0) && isDiscoverableReplicaSet());

@@ -165,7 +165,7 @@ final class CommandOperationHelper {
             return mostRecentAttemptException;
         } else if (mostRecentAttemptException instanceof ResourceSupplierInternalException
                 || (mostRecentAttemptException instanceof MongoException
-                    && ((MongoException)mostRecentAttemptException).hasErrorLabel(NO_WRITES_PERFORMED_ERROR_LABEL))) {
+                    && ((MongoException) mostRecentAttemptException).hasErrorLabel(NO_WRITES_PERFORMED_ERROR_LABEL))) {
             return previouslyChosenException;
         } else {
             return mostRecentAttemptException;
