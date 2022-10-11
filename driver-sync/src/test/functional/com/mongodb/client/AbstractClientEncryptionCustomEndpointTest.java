@@ -22,7 +22,6 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.crypt.capi.MongoCryptException;
-import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -150,7 +149,6 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
         }
     }
 
-    @NonNull
     public abstract ClientEncryption getClientEncryption(ClientEncryptionSettings settings);
 
     @Test
