@@ -19,11 +19,9 @@ package com.mongodb.client;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
-import com.mongodb.lang.NonNull;
 
 public class ClientSideEncryptionOnDemandGcpCredentialsTest extends AbstractClientSideEncryptionOnDemandGcpCredentialsTest {
 
-    @NonNull
     @Override
     public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
         return ClientEncryptions.create(settings);

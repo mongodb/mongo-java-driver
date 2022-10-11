@@ -19,7 +19,6 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.InitialDnsSeedlistDiscoveryTest;
 import com.mongodb.client.MongoClient;
-import com.mongodb.lang.NonNull;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
@@ -40,7 +39,7 @@ public class ReactiveInitialDnsSeedlistDiscoveryTest extends InitialDnsSeedlistD
     }
 
     @Override
-    public MongoClient createMongoClient(@NonNull final MongoClientSettings settings) {
+    public MongoClient createMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(MongoClients.create(settings));
     }
 }

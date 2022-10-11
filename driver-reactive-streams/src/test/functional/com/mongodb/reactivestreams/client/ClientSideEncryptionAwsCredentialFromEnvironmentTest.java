@@ -21,21 +21,18 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractClientSideEncryptionAwsCredentialFromEnvironmentTest;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.lang.NonNull;
 import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 
 public class ClientSideEncryptionAwsCredentialFromEnvironmentTest extends AbstractClientSideEncryptionAwsCredentialFromEnvironmentTest {
     @Override
-    @NonNull
-    protected ClientEncryption createClientEncryption(@NonNull final ClientEncryptionSettings settings) {
+    protected ClientEncryption createClientEncryption(final ClientEncryptionSettings settings) {
         return new SyncClientEncryption(ClientEncryptions.create(settings));
     }
 
     @Override
-    @NonNull
-    protected MongoClient createMongoClient(@NonNull final MongoClientSettings settings) {
+    protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(MongoClients.create(settings));
     }
 }

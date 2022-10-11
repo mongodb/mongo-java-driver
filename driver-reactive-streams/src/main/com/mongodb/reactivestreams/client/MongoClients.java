@@ -77,12 +77,13 @@ public final class MongoClients {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param connectionString the settings
+     * @param connectionString       the settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      * @since 1.3
      */
-    public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
+    public static MongoClient create(final ConnectionString connectionString,
+            @Nullable final MongoDriverInformation mongoDriverInformation) {
         return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
     }
 
@@ -102,12 +103,12 @@ public final class MongoClients {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param settings the settings
+     * @param settings               the settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      * @since 1.8
      */
-    public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+    public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         if (settings.getStreamFactoryFactory() == null) {
             if (settings.getSslSettings().isEnabled()) {
                 return createWithTlsChannel(settings, mongoDriverInformation);
@@ -151,7 +152,7 @@ public final class MongoClients {
                 settings.getCompressorList(), settings.getServerApi());
     }
 
-    private static MongoDriverInformation wrapMongoDriverInformation(final MongoDriverInformation mongoDriverInformation) {
+    private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
         return (mongoDriverInformation == null ? MongoDriverInformation.builder() : MongoDriverInformation.builder(mongoDriverInformation))
                 .driverName("reactive-streams").build();
     }

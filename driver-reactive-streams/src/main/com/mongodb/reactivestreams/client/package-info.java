@@ -28,4 +28,8 @@
  * Each {@link org.reactivestreams.Subscription} to a {@link org.reactivestreams.Publisher} relates to a single MongoDB operation and its
  * {@link org.reactivestreams.Subscriber} will receive its own specific set of results.
  */
+
+@NonNullApi
 package com.mongodb.reactivestreams.client;
+
+import com.mongodb.lang.NonNullApi;

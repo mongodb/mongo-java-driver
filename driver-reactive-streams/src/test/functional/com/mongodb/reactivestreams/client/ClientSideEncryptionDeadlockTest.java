@@ -21,13 +21,11 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractClientSideEncryptionDeadlockTest;
 import com.mongodb.client.MongoClient;
-import com.mongodb.lang.NonNull;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
 public class ClientSideEncryptionDeadlockTest extends AbstractClientSideEncryptionDeadlockTest {
     @Override
-    @NonNull
-    protected MongoClient createMongoClient(@NonNull final MongoClientSettings settings) {
+    protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(MongoClients.create(settings));
     }
 }
