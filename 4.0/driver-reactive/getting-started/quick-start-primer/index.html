@@ -356,10 +356,6 @@ the <code>Subscription</code> is not cancelled.</p>
 
 <p>The MongoDB Reactive Streams Driver API mirrors the Sync driver API and any methods that cause network IO return a <code>Publisher&lt;T&gt;</code>,
 where <code>T</code> is the type of response for the operation.<br />
-The exception to that rule is for methods in the async driver that return a <code>Void</code> value in the callback.
-In <a href="http://www.reactive-streams.org">reactive streams</a> this is forbidden, so in those circumstances we
-return a <a href="/mongo-java-driver/4.0/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/Success.html
-"><code>Success</code></a> on the operation.</p>
 
 <div class="admonition note">
 <h5 class="admonition-title">Note</h5>
