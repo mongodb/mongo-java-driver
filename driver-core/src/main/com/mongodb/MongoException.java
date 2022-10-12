@@ -171,22 +171,6 @@ public class MongoException extends RuntimeException {
 
     /**
      * Gets the set of error labels associated with this exception.
-     * The following list of labels is not exhaustive, the labels may also be both added and removed in the future.
-     *
-     * <table>
-     *     <caption>Some error labels</caption>
-     *     <thead><tr><th>Error label</th><th>Description</th></tr></thead>
-     *     <tbody>
-     *         <tr>
-     *             <td>{@code RetryableWriteError}</td>
-     *             <td>Tells the driver, not the user of the driver, that the command may be retried.
-     *             It is not necessary safe for a user to retry the corresponding failed command, unless either the error
-     *             also has the {@code NoWritesPerformed} label, or the error is explicitly documented as safely retryable,
-     *             like {@link MongoConnectionPoolClearedException}.</td>
-     *         </tr>
-     *         <tr><td>{@code NoWritesPerformed}</td><td>Tells the user of the driver that the command may be safely retried.</td></tr>
-     *     </tbody>
-     * </table>
      *
      * @return the error labels, which may not be null but may be empty
      * @since 3.8
