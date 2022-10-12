@@ -20,10 +20,13 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.internal.MongoClientImpl;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
@@ -110,11 +113,39 @@ public final class Fixture {
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {
-        getMongoClient();
-        List<ServerDescription> serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
+        return getPrimary(getMongoClient());
+    }
+
+    /**
+     * Beware of a potential race condition hiding here: the primary you discover may differ from the one used by the {@code client}
+     * when performing some operations, as the primary may change.
+     */
+    public static ServerAddress getPrimary(final MongoClient client)
+            throws InterruptedException {
+        final Supplier<ClusterDescription> clusterDescriptionSupplier;
+        if (client instanceof MongoClientImpl) {
+            clusterDescriptionSupplier = () -> ((MongoClientImpl) client).getClusterDescription();
+        } else {
+            // com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient
+            try {
+                Object wrappedReactiveClient = client.getClass().getMethod("getWrapped").invoke(client);
+                clusterDescriptionSupplier =
+                        () -> {
+                            try {
+                                return (ClusterDescription) wrappedReactiveClient.getClass().getMethod("getClusterDescription")
+                                        .invoke(wrappedReactiveClient);
+                            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                                throw new RuntimeException(e);
+                            }
+                        };
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        List<ServerDescription> serverDescriptions = getPrimaries(clusterDescriptionSupplier.get());
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
+            serverDescriptions = getPrimaries(clusterDescriptionSupplier.get());
         }
         return serverDescriptions.get(0).getAddress();
     }

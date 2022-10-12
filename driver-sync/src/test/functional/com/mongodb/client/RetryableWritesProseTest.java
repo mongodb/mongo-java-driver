@@ -167,7 +167,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         .append("blockTimeMS", new BsonInt32(1000)));
         int timeoutSeconds = 5;
         try (MongoClient client = clientCreator.apply(clientSettings);
-                FailPoint ignored = FailPoint.enable(configureFailPoint, client)) {
+                FailPoint ignored = FailPoint.enable(configureFailPoint, Fixture.getPrimary(client))) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("poolClearedExceptionMustBeRetryable");
             collection.drop();
@@ -240,7 +240,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         // see `poolClearedExceptionMustBeRetryable` for the explanation
                         builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
                 .build());
-             FailPoint ignored = FailPoint.enable(failPointDocument, client)) {
+             FailPoint ignored = FailPoint.enable(failPointDocument, Fixture.getPrimary(client))) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
             collection.drop();
