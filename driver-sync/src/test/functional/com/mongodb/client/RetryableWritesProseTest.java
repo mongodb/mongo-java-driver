@@ -27,7 +27,6 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
-import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.BsonArray;
@@ -167,7 +166,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         .append("blockTimeMS", new BsonInt32(1000)));
         int timeoutSeconds = 5;
         try (MongoClient client = clientCreator.apply(clientSettings);
-                FailPoint ignored = FailPoint.enable(configureFailPoint, Fixture.getPrimary(client))) {
+                FailPoint ignored = FailPoint.enable(configureFailPoint, Fixture.getPrimary())) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("poolClearedExceptionMustBeRetryable");
             collection.drop();
@@ -207,7 +206,10 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
             @Override
             public void commandSucceeded(final CommandSucceededEvent event) {
-                if (event.getCommandName().equals("insert") && configureFailPoint.compareAndSet(true, false)) {
+                if (event.getCommandName().equals("insert")
+                        && event.getResponse().getDocument("writeConcernError", new BsonDocument())
+                                .getInt32("code", new BsonInt32(-1)).intValue() == 91
+                        && configureFailPoint.compareAndSet(true, false)) {
                     Assertions.assertTrue(futureFailPointFromListener.complete(FailPoint.enable(
                             new BsonDocument()
                                     .append("configureFailPoint", new BsonString("failCommand"))
@@ -240,13 +242,13 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         // see `poolClearedExceptionMustBeRetryable` for the explanation
                         builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
                 .build());
-             FailPoint ignored = FailPoint.enable(failPointDocument, Fixture.getPrimary(client))) {
+             FailPoint ignored = FailPoint.enable(failPointDocument, primaryServerAddress)) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
             collection.drop();
             try {
                 collection.insertOne(new Document());
-            } catch (MongoWriteConcernWithResponseException e) {
+            } catch (MongoException e) {
                 assertEquals(e.getCode(), 91);
                 return;
             }
