@@ -18,7 +18,6 @@ package org.bson.codecs.configuration;
 
 import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
-import org.bson.internal.OverridableUuidRepresentationCodecRegistry;
 import org.bson.internal.ProvidersCodecRegistry;
 
 import java.util.List;
@@ -41,18 +40,7 @@ public final class CodecRegistries {
      * @since 4.5
      */
     public static CodecRegistry withUuidRepresentation(final CodecRegistry codecRegistry, final UuidRepresentation uuidRepresentation) {
-        if (codecRegistry instanceof OverridableUuidRepresentationCodecRegistry) {
-            OverridableUuidRepresentationCodecRegistry overridableUuidRepresentationCodecRegistry =
-                    (OverridableUuidRepresentationCodecRegistry) codecRegistry;
-            if (overridableUuidRepresentationCodecRegistry.getUuidRepresentation().equals(uuidRepresentation)) {
-                return codecRegistry;
-            } else {
-                return new OverridableUuidRepresentationCodecRegistry(overridableUuidRepresentationCodecRegistry.getWrapped(),
-                        uuidRepresentation);
-            }
-        } else {
-            return new OverridableUuidRepresentationCodecRegistry(codecRegistry, uuidRepresentation);
-        }
+        return fromProviders(new OverridableUuidRepresentationCodecProvider(codecRegistry, uuidRepresentation));
     }
 
     /**

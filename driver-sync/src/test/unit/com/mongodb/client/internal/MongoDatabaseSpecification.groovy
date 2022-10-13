@@ -40,8 +40,8 @@ import org.bson.BsonInt32
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodecProvider
+import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
-import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -49,8 +49,8 @@ import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
+import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.JAVA_LEGACY
-import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -100,15 +100,13 @@ class MongoDatabaseSpecification extends Specification {
 
         when:
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, true, readConcern,
-                STANDARD, null, executor)
+                C_SHARP_LEGACY, null, executor)
                 .withCodecRegistry(newCodecRegistry)
 
         then:
-        database.getCodecRegistry() instanceof OverridableUuidRepresentationCodecRegistry
-        (database.getCodecRegistry() as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
-        (database.getCodecRegistry() as OverridableUuidRepresentationCodecRegistry).wrapped == newCodecRegistry
+        (database.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == C_SHARP_LEGACY
         expect database, isTheSameAs(new MongoDatabaseImpl(name, database.getCodecRegistry(), readPreference, writeConcern,
-                false, true, readConcern, STANDARD, null, executor))
+                false, true, readConcern, C_SHARP_LEGACY, null, executor))
     }
 
     def 'should behave correctly when using withReadPreference'() {

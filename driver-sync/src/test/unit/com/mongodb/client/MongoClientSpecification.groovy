@@ -36,10 +36,9 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
-import org.bson.codecs.BsonValueCodecProvider
+import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
-import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -47,7 +46,7 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
-import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation
@@ -198,20 +197,17 @@ class MongoClientSpecification extends Specification {
 
     def 'should create registry reflecting UuidRepresentation'() {
         given:
-        def codecRegistry = fromProviders([new BsonValueCodecProvider()])
+        def codecRegistry = fromProviders([new ValueCodecProvider()])
         def settings = MongoClientSettings.builder()
                 .codecRegistry(codecRegistry)
-                .uuidRepresentation(STANDARD)
+                .uuidRepresentation(C_SHARP_LEGACY)
                 .build()
 
         when:
         def client = new MongoClientImpl(Stub(Cluster), null, settings, new TestOperationExecutor([]))
-        def registry = client.getCodecRegistry()
 
         then:
-        registry instanceof OverridableUuidRepresentationCodecRegistry
-        (registry as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
-        (registry as OverridableUuidRepresentationCodecRegistry).wrapped == codecRegistry
+        (client.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == C_SHARP_LEGACY
 
         cleanup:
         client?.close()

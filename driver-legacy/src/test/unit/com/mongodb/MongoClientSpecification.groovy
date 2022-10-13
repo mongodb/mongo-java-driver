@@ -24,9 +24,9 @@ import com.mongodb.connection.ClusterSettings
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
-import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import org.bson.json.JsonObject
 import spock.lang.Specification
 
@@ -37,6 +37,7 @@ import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
@@ -345,17 +346,14 @@ class MongoClientSpecification extends Specification {
         given:
         def options = MongoClientOptions.builder()
                 .codecRegistry(codecRegistry)
-                .uuidRepresentation(STANDARD)
+                .uuidRepresentation(C_SHARP_LEGACY)
                 .build()
 
         when:
         def client = new MongoClient('localhost', options)
-        def registry = client.getCodecRegistry()
 
         then:
-        registry instanceof OverridableUuidRepresentationCodecRegistry
-        (registry as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
-        (registry as OverridableUuidRepresentationCodecRegistry).wrapped == codecRegistry
+        (client.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == C_SHARP_LEGACY
 
         cleanup:
         client?.close()

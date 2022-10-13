@@ -83,11 +83,11 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
+import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.conversions.Bson
-import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -105,8 +105,8 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.JAVA_LEGACY
-import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -150,14 +150,12 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
-                true, true, readConcern, STANDARD, null, executor).withCodecRegistry(newCodecRegistry)
+                true, true, readConcern, C_SHARP_LEGACY, null, executor).withCodecRegistry(newCodecRegistry)
 
         then:
-        collection.getCodecRegistry() instanceof OverridableUuidRepresentationCodecRegistry
-        (collection.getCodecRegistry() as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
-        (collection.getCodecRegistry() as OverridableUuidRepresentationCodecRegistry).wrapped == newCodecRegistry
+        (collection.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == C_SHARP_LEGACY
         expect collection, isTheSameAs(new MongoCollectionImpl(namespace, Document, collection.getCodecRegistry(), readPreference,
-                ACKNOWLEDGED, true, true, readConcern, STANDARD, null, executor))
+                ACKNOWLEDGED, true, true, readConcern, C_SHARP_LEGACY, null, executor))
     }
 
     def 'should behave correctly when using withReadPreference'() {
