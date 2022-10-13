@@ -1,23 +1,23 @@
 {
-  "description": "setVersion is ignored if there is no electionId",
-  "uri": "mongodb://a/?replicaSet=rs",
-  "phases": [
+  "description" : "setVersion that is less than maxSetVersion is ignored if there is no electionId",
+  "uri" : "mongodb://a/?replicaSet=rs",
+  "phases" : [
     {
-      "responses": [
+      "responses" : [
         [
           "a:27017",
           {
-            "ok": 1,
-            "helloOk": true,
-            "isWritablePrimary": true,
-            "hosts": [
+            "ok" : 1,
+            "helloOk" : true,
+            "isWritablePrimary" : true,
+            "hosts" : [
               "a:27017",
               "b:27017"
             ],
-            "setName": "rs",
-            "setVersion": 2,
-            "minWireVersion": 0,
-            "maxWireVersion": 6
+            "setName" : "rs",
+            "setVersion" : 2,
+            "minWireVersion" : 0,
+            "maxWireVersion" : 17
           }
         ]
       ],
@@ -56,22 +56,22 @@
             "setName": "rs",
             "setVersion": 1,
             "minWireVersion": 0,
-            "maxWireVersion": 6
+            "maxWireVersion" : 17
           }
         ]
       ],
       "outcome": {
         "servers": {
-          "a:27017": {
-            "type": "Unknown",
-            "setName": null,
-            "electionId": null
+          "a:27017" : {
+            "type" : "RSPrimary",
+            "setName" : "rs",
+            "setVersion" : 2,
+            "electionId" : null
           },
-          "b:27017": {
-            "type": "RSPrimary",
-            "setName": "rs",
-            "setVersion": 1,
-            "electionId": null
+          "b:27017" : {
+            "type" : "Unknown",
+            "setName" : null,
+            "electionId" : null
           }
         },
         "topologyType": "ReplicaSetWithPrimary",
