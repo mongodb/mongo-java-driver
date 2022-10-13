@@ -278,8 +278,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         ObjectId electionId = description.getElectionId();
         Integer setVersion = description.getSetVersion();
         if (description.getMaxWireVersion() >= SIX_DOT_ZERO_WIRE_VERSION) {
-            return nullSafeCompareTo(electionId, maxElectionId) <= 0
-                    && (nullSafeCompareTo(electionId, maxElectionId) != 0 || nullSafeCompareTo(setVersion, maxSetVersion) < 0);
+            return nullSafeCompareTo(electionId, maxElectionId) < 0
+                    || (nullSafeCompareTo(electionId, maxElectionId) == 0 && nullSafeCompareTo(setVersion, maxSetVersion) < 0);
         } else {
             return setVersion != null && electionId != null
                     && (nullSafeCompareTo(setVersion, maxSetVersion) < 0
