@@ -256,7 +256,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             return true;
         }
 
-        if (isInvalidPrimary(newDescription)) {
+        if (isStalePrimary(newDescription)) {
             invalidatePotentialPrimary(newDescription);
             return false;
         }
@@ -277,7 +277,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         return true;
     }
 
-    private boolean isInvalidPrimary(final ServerDescription description) {
+    private boolean isStalePrimary(final ServerDescription description) {
         ObjectId electionId = description.getElectionId();
         Integer setVersion = description.getSetVersion();
         if (description.getMaxWireVersion() >= SIX_DOT_ZERO_WIRE_VERSION) {
