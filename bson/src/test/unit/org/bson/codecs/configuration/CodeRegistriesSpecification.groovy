@@ -23,7 +23,6 @@ import org.bson.codecs.IntegerCodec
 import org.bson.codecs.LongCodec
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
-import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import org.bson.internal.ProvidersCodecRegistry
 import spock.lang.Specification
 
@@ -78,27 +77,18 @@ class CodeRegistriesSpecification extends Specification {
     def 'withUuidRepresentation should apply uuid representation'() {
         given:
         def registry = fromProviders(new ValueCodecProvider());
-
-        when:
         def registryWithStandard = withUuidRepresentation(registry, STANDARD)
 
+        when:
+        def uuidCodec = registry.get(UUID) as UuidCodec
+
         then:
-        registryWithStandard instanceof OverridableUuidRepresentationCodecRegistry
-        (registryWithStandard as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
-        (registryWithStandard as OverridableUuidRepresentationCodecRegistry).wrapped == registry
+        uuidCodec.getUuidRepresentation() == UNSPECIFIED
 
         when:
-        def registryWithUnspecified = withUuidRepresentation(registryWithStandard, UNSPECIFIED)
+        uuidCodec = registryWithStandard.get(UUID) as UuidCodec
 
         then:
-        registryWithUnspecified instanceof OverridableUuidRepresentationCodecRegistry
-        (registryWithUnspecified as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == UNSPECIFIED
-        (registryWithUnspecified as OverridableUuidRepresentationCodecRegistry).wrapped == registry
-
-        when:
-        def registryWithUnspecifiedTwo = withUuidRepresentation(registryWithUnspecified, UNSPECIFIED)
-
-        then:
-        registryWithUnspecifiedTwo === registryWithUnspecified
+        uuidCodec.getUuidRepresentation() == STANDARD
     }
 }
