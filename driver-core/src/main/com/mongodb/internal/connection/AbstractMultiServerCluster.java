@@ -261,19 +261,16 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             return false;
         }
 
-        if (nullSafeCompareTo(newDescription.getElectionId(), maxElectionId) > 0) {
-            maxElectionId = newDescription.getElectionId();
-        }
-        if (nullSafeCompareTo(newDescription.getSetVersion(), maxSetVersion) > 0) {
-            maxSetVersion = newDescription.getSetVersion();
-        }
+        maxElectionId = nullSafeMax(newDescription.getElectionId(), maxElectionId);
+        maxSetVersion = nullSafeMax(newDescription.getSetVersion(), maxSetVersion);
+
+        invalidateOldPrimaries(newDescription.getAddress());
 
         if (isNotAlreadyPrimary(newDescription.getAddress())) {
             LOGGER.info(format("Discovered replica set primary %s with max election id %s and max set version %d",
                     newDescription.getAddress(), newDescription.getElectionId(), newDescription.getSetVersion()));
         }
 
-        invalidateOldPrimaries(newDescription.getAddress());
         return true;
     }
 
@@ -313,6 +310,16 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         return first.compareTo(second);
     }
 
+    private static <T extends Comparable<T>> T nullSafeMax(final T first, final T second) {
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        return first.compareTo(second) >= 0 ? first : second;
+    }
+
     private boolean isNotAlreadyPrimary(final ServerAddress address) {
         ServerTuple serverTuple = addressToServerTupleMap.get(address);
         return serverTuple == null || !serverTuple.description.isPrimary();
@@ -321,7 +328,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     private boolean handleShardRouterChanged(final ServerDescription newDescription) {
         if (!newDescription.isShardRouter()) {
             LOGGER.error(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
-                                 SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
+                    SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
         return true;
