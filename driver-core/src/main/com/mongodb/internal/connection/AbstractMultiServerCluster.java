@@ -281,10 +281,10 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             return nullSafeCompareTo(electionId, maxElectionId) <= 0
                     && (nullSafeCompareTo(electionId, maxElectionId) != 0 || nullSafeCompareTo(setVersion, maxSetVersion) < 0);
         } else {
-            return setVersion != null && description.getElectionId() != null
+            return setVersion != null && electionId != null
                     && (nullSafeCompareTo(setVersion, maxSetVersion) < 0
                     || (nullSafeCompareTo(setVersion, maxSetVersion) == 0
-                    && nullSafeCompareTo(description.getElectionId(), maxElectionId) < 0));
+                    && nullSafeCompareTo(electionId, maxElectionId) < 0));
         }
      }
 
