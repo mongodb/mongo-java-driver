@@ -257,10 +257,6 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             Integer setVersion = newDescription.getSetVersion();
             if (newDescription.getMaxWireVersion() >= SIX_DOT_ZERO_WIRE_VERSION) {
                 if (isValidPrimary(electionId, setVersion)) {
-                    if (isNewPrimary(electionId, setVersion)) {
-                        LOGGER.info(format("Setting max election id to %s and max set version to %d from replica set primary %s",
-                                newDescription.getElectionId(), newDescription.getSetVersion(), newDescription.getAddress()));
-                    }
                     maxElectionId = electionId;
                     maxSetVersion = setVersion;
                 } else {
@@ -270,10 +266,6 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             } else {
                 if (setVersion != null && electionId != null) {
                     if (isValidPrimaryPre60(electionId, setVersion)) {
-                        if (nullSafeCompareTo(electionId, maxElectionId) > 0) {
-                            LOGGER.info(format("Setting max election id to %s from replica set primary %s",
-                                    newDescription.getElectionId(), newDescription.getAddress()));
-                        }
                         maxElectionId = electionId;
                     } else {
                         invalidatePotentialPrimary(newDescription);
@@ -281,14 +273,13 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                     }
                 }
                 if (nullSafeCompareTo(setVersion, maxSetVersion) > 0) {
-                    LOGGER.info(format("Setting max set version to %d from replica set primary %s",
-                            newDescription.getSetVersion(), newDescription.getAddress()));
                     maxSetVersion = setVersion;
                 }
             }
 
             if (isNotAlreadyPrimary(newDescription.getAddress())) {
-                LOGGER.info(format("Discovered replica set primary %s", newDescription.getAddress()));
+                LOGGER.info(format("Discovered replica set primary %s with max election id %s and max set version %d",
+                        newDescription.getAddress(), electionId, setVersion));
             }
             invalidateOldPrimaries(newDescription.getAddress());
         }
@@ -298,11 +289,6 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     private boolean isValidPrimary(final ObjectId electionId, final Integer setVersion) {
         return nullSafeCompareTo(electionId, maxElectionId) > 0
                 || (nullSafeCompareTo(electionId, maxElectionId) == 0 && nullSafeCompareTo(setVersion, maxSetVersion) >= 0);
-    }
-
-    private boolean isNewPrimary(final ObjectId electionId, final Integer setVersion) {
-        return nullSafeCompareTo(electionId, maxElectionId) > 0
-                || (nullSafeCompareTo(electionId, maxElectionId) == 0 && nullSafeCompareTo(setVersion, maxSetVersion) > 0);
     }
 
     private boolean isValidPrimaryPre60(final ObjectId electionId, final Integer setVersion) {
