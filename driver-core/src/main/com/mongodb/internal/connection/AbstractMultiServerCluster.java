@@ -252,49 +252,44 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             return true;
         }
 
-        if (newDescription.isPrimary()) {
-            ObjectId electionId = newDescription.getElectionId();
-            Integer setVersion = newDescription.getSetVersion();
-            if (newDescription.getMaxWireVersion() >= SIX_DOT_ZERO_WIRE_VERSION) {
-                if (isValidPrimary(electionId, setVersion)) {
-                    maxElectionId = electionId;
-                    maxSetVersion = setVersion;
-                } else {
-                    invalidatePotentialPrimary(newDescription);
-                    return false;
-                }
-            } else {
-                if (setVersion != null && electionId != null) {
-                    if (isValidPrimaryPre60(electionId, setVersion)) {
-                        maxElectionId = electionId;
-                    } else {
-                        invalidatePotentialPrimary(newDescription);
-                        return false;
-                    }
-                }
-                if (nullSafeCompareTo(setVersion, maxSetVersion) > 0) {
-                    maxSetVersion = setVersion;
-                }
-            }
-
-            if (isNotAlreadyPrimary(newDescription.getAddress())) {
-                LOGGER.info(format("Discovered replica set primary %s with max election id %s and max set version %d",
-                        newDescription.getAddress(), electionId, setVersion));
-            }
-            invalidateOldPrimaries(newDescription.getAddress());
+        if (!newDescription.isPrimary()) {
+            return true;
         }
+
+        if (isInvalidPrimary(newDescription)) {
+            invalidatePotentialPrimary(newDescription);
+            return false;
+        }
+
+        if (nullSafeCompareTo(newDescription.getElectionId(), maxElectionId) > 0) {
+            maxElectionId = newDescription.getElectionId();
+        }
+        if (nullSafeCompareTo(newDescription.getSetVersion(), maxSetVersion) > 0) {
+            maxSetVersion = newDescription.getSetVersion();
+        }
+
+        if (isNotAlreadyPrimary(newDescription.getAddress())) {
+            LOGGER.info(format("Discovered replica set primary %s with max election id %s and max set version %d",
+                    newDescription.getAddress(), newDescription.getElectionId(), newDescription.getSetVersion()));
+        }
+
+        invalidateOldPrimaries(newDescription.getAddress());
         return true;
     }
 
-    private boolean isValidPrimary(final ObjectId electionId, final Integer setVersion) {
-        return nullSafeCompareTo(electionId, maxElectionId) > 0
-                || (nullSafeCompareTo(electionId, maxElectionId) == 0 && nullSafeCompareTo(setVersion, maxSetVersion) >= 0);
-    }
-
-    private boolean isValidPrimaryPre60(final ObjectId electionId, final Integer setVersion) {
-        return nullSafeCompareTo(setVersion, maxSetVersion) >= 0
-                && (nullSafeCompareTo(setVersion, maxSetVersion) != 0 || nullSafeCompareTo(electionId, maxElectionId) >= 0);
-    }
+    private boolean isInvalidPrimary(final ServerDescription description) {
+        ObjectId electionId = description.getElectionId();
+        Integer setVersion = description.getSetVersion();
+        if (description.getMaxWireVersion() >= SIX_DOT_ZERO_WIRE_VERSION) {
+            return nullSafeCompareTo(electionId, maxElectionId) <= 0
+                    && (nullSafeCompareTo(electionId, maxElectionId) != 0 || nullSafeCompareTo(setVersion, maxSetVersion) < 0);
+        } else {
+            return setVersion != null && description.getElectionId() != null
+                    && (nullSafeCompareTo(setVersion, maxSetVersion) < 0
+                    || nullSafeCompareTo(setVersion, maxSetVersion) == 0
+                    && nullSafeCompareTo(description.getElectionId(), maxElectionId) < 0);
+        }
+     }
 
     private void invalidatePotentialPrimary(final ServerDescription newDescription) {
         LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
