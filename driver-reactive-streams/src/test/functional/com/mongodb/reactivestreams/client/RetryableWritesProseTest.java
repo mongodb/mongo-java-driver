@@ -98,6 +98,15 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
 
+    /**
+     * Prose test #3.
+     */
+    @Test
+    public void originalErrorMustBePropagatedIfNoWritesPerformed() throws InterruptedException {
+        com.mongodb.client.RetryableWritesProseTest.originalErrorMustBePropagatedIfNoWritesPerformed(
+                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)));
+    }
+
     private boolean canRunTests() {
         Document storageEngine = (Document) getServerStatus().get("storageEngine");
 

@@ -846,14 +846,14 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
-                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
-                ], false, ACKNOWLEDGED, true)
+                [new DeleteRequest(new BsonDocument('_id', new BsonInt32(2))), // existing key
+                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))  // existing (duplicate) key
+                ], true, ACKNOWLEDGED, true)
 
         def failPoint = BsonDocument.parse('''{
             "configureFailPoint": "failCommand",
             "mode": {"times": 2 },
-            "data": { "failCommands": ["insert"],
+            "data": { "failCommands": ["delete"],
                       "writeConcernError": {"code": 91, "errmsg": "Replication is being shut down"}}}''')
         configureFailPoint(failPoint)
 

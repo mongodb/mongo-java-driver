@@ -20,6 +20,10 @@ import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
+import com.mongodb.assertions.Assertions;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
@@ -34,12 +38,16 @@ import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getServerStatus;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -55,6 +63,7 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -138,7 +147,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                          * As a result, the client has to wait for at least its heartbeat delay until it hears back from a server
                          * (while it waits for a response, calling `ServerMonitor.connect` has no effect).
                          * Thus, we want to use small heartbeat delay to reduce delays in the test. */
-                        .minHeartbeatFrequency(50, TimeUnit.MILLISECONDS)
                         .heartbeatFrequency(50, TimeUnit.MILLISECONDS))
                 .retryReads(true)
                 .retryWrites(true)
@@ -158,7 +166,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         .append("blockTimeMS", new BsonInt32(1000)));
         int timeoutSeconds = 5;
         try (MongoClient client = clientCreator.apply(clientSettings);
-                FailPoint ignored = FailPoint.enable(configureFailPoint, client)) {
+                FailPoint ignored = FailPoint.enable(configureFailPoint, Fixture.getPrimary())) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("poolClearedExceptionMustBeRetryable");
             collection.drop();
@@ -176,6 +184,77 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             }
             assertEquals(3, commandListener.getCommandStartedEvents().size());
             commandListener.getCommandStartedEvents().forEach(event -> assertEquals(operationName, event.getCommandName()));
+        }
+    }
+
+    /**
+     * Prose test #3.
+     */
+    @Test
+    public void originalErrorMustBePropagatedIfNoWritesPerformed() throws InterruptedException {
+        originalErrorMustBePropagatedIfNoWritesPerformed(MongoClients::create);
+    }
+
+    @SuppressWarnings("try")
+    public static void originalErrorMustBePropagatedIfNoWritesPerformed(
+            final Function<MongoClientSettings, MongoClient> clientCreator) throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(6, 0) && isDiscoverableReplicaSet());
+        ServerAddress primaryServerAddress = Fixture.getPrimary();
+        CompletableFuture<FailPoint> futureFailPointFromListener = new CompletableFuture<>();
+        CommandListener commandListener = new CommandListener() {
+            private final AtomicBoolean configureFailPoint = new AtomicBoolean(true);
+
+            @Override
+            public void commandSucceeded(final CommandSucceededEvent event) {
+                if (event.getCommandName().equals("insert")
+                        && event.getResponse().getDocument("writeConcernError", new BsonDocument())
+                                .getInt32("code", new BsonInt32(-1)).intValue() == 91
+                        && configureFailPoint.compareAndSet(true, false)) {
+                    Assertions.assertTrue(futureFailPointFromListener.complete(FailPoint.enable(
+                            new BsonDocument()
+                                    .append("configureFailPoint", new BsonString("failCommand"))
+                                    .append("mode", new BsonDocument()
+                                            .append("times", new BsonInt32(1)))
+                                    .append("data", new BsonDocument()
+                                            .append("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
+                                            .append("errorCode", new BsonInt32(10107))
+                                            .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError", "NoWritesPerformed")
+                                                    .map(BsonString::new).collect(Collectors.toList())))),
+                            primaryServerAddress
+                    )));
+                }
+            }
+        };
+        BsonDocument failPointDocument = new BsonDocument()
+                .append("configureFailPoint", new BsonString("failCommand"))
+                .append("mode", new BsonDocument()
+                        .append("times", new BsonInt32(1)))
+                .append("data", new BsonDocument()
+                        .append("writeConcernError", new BsonDocument()
+                                .append("code", new BsonInt32(91))
+                                .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError")
+                                        .map(BsonString::new).collect(Collectors.toList()))))
+                        .append("failCommands", new BsonArray(singletonList(new BsonString("insert")))));
+        try (MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
+                .retryWrites(true)
+                .addCommandListener(commandListener)
+                .applyToServerSettings(builder ->
+                        // see `poolClearedExceptionMustBeRetryable` for the explanation
+                        builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                .build());
+             FailPoint ignored = FailPoint.enable(failPointDocument, primaryServerAddress)) {
+            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
+                    .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
+            collection.drop();
+            try {
+                collection.insertOne(new Document());
+            } catch (MongoException e) {
+                assertEquals(e.getCode(), 91);
+                return;
+            }
+            fail("must not reach");
+        } finally {
+            futureFailPointFromListener.thenAccept(FailPoint::close);
         }
     }
 
