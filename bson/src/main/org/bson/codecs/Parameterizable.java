@@ -34,7 +34,8 @@ public interface Parameterizable {
      * @param codecRegistry the code registry to use to resolve codecs for the generic type arguments
      * @param types         the types that are parameterizing the containing type.  The size of the list should be equal to the number of type
      *                      parameters of the class whose codec is being parameterized, e.g. for a {@link Collection} the size of the list
-     *                      would be one since {@code Collection} has a single type parameter.
+     *                      would be one since {@code Collection} has a single type parameter. Additionally, the size will never be 0
+     *                      since there is no purpose in parameterizing a codec for a type that has no type parameters.
      * @return the Codec parameterized with the given types
      */
     Codec<?> parameterize(CodecRegistry codecRegistry, List<Type> types);

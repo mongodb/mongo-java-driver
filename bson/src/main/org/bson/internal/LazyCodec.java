@@ -55,7 +55,7 @@ class LazyCodec<T> implements Codec<T> {
 
     private Codec<T> getWrapped() {
         if (wrapped == null) {
-            if (types.isEmpty()) {
+            if (types == null) {
                 wrapped = registry.get(clazz);
             } else {
                 wrapped = registry.get(clazz, types);

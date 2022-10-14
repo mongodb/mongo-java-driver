@@ -26,7 +26,9 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.String.format;
 import static org.bson.assertions.Assertions.isTrueArgument;
+import static org.bson.assertions.Assertions.notNull;
 
 public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetectingCodecRegistry {
     private final List<CodecProvider> codecProviders;
@@ -39,11 +41,16 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
 
     @Override
     public <T> Codec<T> get(final Class<T> clazz) {
-        return get(new ChildCodecRegistry<T>(this, clazz));
+        return get(new ChildCodecRegistry<T>(this, clazz, null));
     }
 
     @Override
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
+        notNull("typeArguments", typeArguments);
+        isTrueArgument("typeArguments is not empty", typeArguments.size() >= 1);
+        isTrueArgument(format("typeArguments size should equal the number of type parameters in class %s, but is %d",
+                        clazz, typeArguments.size()),
+                clazz.getTypeParameters().length == typeArguments.size());
         return get(new ChildCodecRegistry<T>(this, clazz, typeArguments));
     }
 
@@ -60,13 +67,13 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
 
     @SuppressWarnings({"unchecked"})
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
-        CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes());
+        CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes().orElse(null));
         if (!codecCache.containsKey(codecCacheKey)) {
             for (CodecProvider provider : codecProviders) {
                 Codec<T> codec = provider.get(context.getCodecClass(), context);
                 if (codec != null) {
-                    if (codec instanceof Parameterizable && !context.getTypes().isEmpty()) {
-                        codec = (Codec<T>) ((Parameterizable) codec).parameterize(context, context.getTypes());
+                    if (codec instanceof Parameterizable && context.getTypes().isPresent()) {
+                        codec = (Codec<T>) ((Parameterizable) codec).parameterize(context, context.getTypes().get());
                     }
                     return codecCache.putIfMissing(codecCacheKey, codec);
                 }

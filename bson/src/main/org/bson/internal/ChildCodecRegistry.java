@@ -21,8 +21,12 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+
+import static java.lang.String.format;
+import static org.bson.assertions.Assertions.isTrueArgument;
+import static org.bson.assertions.Assertions.notNull;
 
 // An implementation of CodecRegistry that is used to detect cyclic dependencies between Codecs
 class ChildCodecRegistry<T> implements CodecRegistry {
@@ -31,10 +35,6 @@ class ChildCodecRegistry<T> implements CodecRegistry {
     private final CycleDetectingCodecRegistry registry;
     private final Class<T> codecClass;
     private final List<Type> types;
-
-    ChildCodecRegistry(final CycleDetectingCodecRegistry registry, final Class<T> codecClass) {
-        this(registry, codecClass, Collections.emptyList());
-    }
 
     ChildCodecRegistry(final CycleDetectingCodecRegistry registry, final Class<T> codecClass, final List<Type> types) {
         this.codecClass = codecClass;
@@ -54,21 +54,26 @@ class ChildCodecRegistry<T> implements CodecRegistry {
         return codecClass;
     }
 
-    public List<Type> getTypes() {
-        return types;
+    public Optional<List<Type>> getTypes() {
+        return Optional.ofNullable(types);
     }
 
     // Gets a Codec, but if it detects a cyclic dependency, return a LazyCodec which breaks the chain.
     public <U> Codec<U> get(final Class<U> clazz) {
         if (hasCycles(clazz)) {
-            return new LazyCodec<U>(registry, clazz, types);
+            return new LazyCodec<>(registry, clazz, null);
         } else {
-            return registry.get(new ChildCodecRegistry<>(this, clazz, Collections.emptyList()));
+            return registry.get(new ChildCodecRegistry<>(this, clazz, null));
         }
     }
 
     @Override
     public <U> Codec<U> get(final Class<U> clazz, final List<Type> typeArguments) {
+        notNull("typeArguments", typeArguments);
+        isTrueArgument("typeArguments is not empty", typeArguments.size() >= 1);
+        isTrueArgument(format("typeArguments size should equal the number of type parameters in class %s, but is %d",
+                        clazz, typeArguments.size()),
+                clazz.getTypeParameters().length == typeArguments.size());
         if (hasCycles(clazz)) {
             return new LazyCodec<U>(registry, clazz, typeArguments);
         } else {
