@@ -19,7 +19,6 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
-import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
 
 import java.util.List;
@@ -109,12 +108,16 @@ public final class Fixture {
         return builder;
     }
 
+    /**
+     * Beware of a potential race condition hiding here: the primary you discover may differ from the one used by the {@code client}
+     * when performing some operations, as the primary may change.
+     */
     public static ServerAddress getPrimary() throws InterruptedException {
-        getMongoClient();
-        List<ServerDescription> serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
+        MongoClient client = getMongoClient();
+        List<ServerDescription> serverDescriptions = getPrimaries(client.getClusterDescription());
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
+            serverDescriptions = getPrimaries(client.getClusterDescription());
         }
         return serverDescriptions.get(0).getAddress();
     }

@@ -29,17 +29,17 @@ import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 public final class FailPoint implements AutoCloseable {
     private final BsonDocument failPointDocument;
     private final MongoClient client;
-    private final boolean close;
 
-    private FailPoint(final BsonDocument failPointDocument, final MongoClient client, final boolean close) {
+    private FailPoint(final BsonDocument failPointDocument, final MongoClient client) {
         this.failPointDocument = failPointDocument.toBsonDocument();
         this.client = client;
-        this.close = close;
     }
 
     /**
      * @param configureFailPointDoc A document representing {@code configureFailPoint} command to be issued as is via
      * {@link com.mongodb.client.MongoDatabase#runCommand(Bson)}.
+     * @param serverAddress One may use {@link Fixture#getPrimary()} to get the address of a primary server
+     * if that is what is needed.
      */
     public static FailPoint enable(final BsonDocument configureFailPointDoc, final ServerAddress serverAddress) {
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
@@ -48,18 +48,11 @@ public final class FailPoint implements AutoCloseable {
                         .hosts(Collections.singletonList(serverAddress)))
                 .build();
         MongoClient client = MongoClients.create(clientSettings);
-        return enable(configureFailPointDoc, client, true);
+        return enable(configureFailPointDoc, client);
     }
 
-    /**
-     * @see #enable(BsonDocument, ServerAddress)
-     */
-    public static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client) {
-        return enable(configureFailPointDoc, client, false);
-    }
-
-    private static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client, final boolean close) {
-        FailPoint result = new FailPoint(configureFailPointDoc, client, close);
+    private static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client) {
+        FailPoint result = new FailPoint(configureFailPointDoc, client);
         client.getDatabase("admin").runCommand(configureFailPointDoc);
         return result;
     }
@@ -71,9 +64,7 @@ public final class FailPoint implements AutoCloseable {
                     .append("configureFailPoint", failPointDocument.getString("configureFailPoint"))
                     .append("mode", new BsonString("off")));
         } finally {
-            if (close) {
-                client.close();
-            }
+            client.close();
         }
     }
 }
