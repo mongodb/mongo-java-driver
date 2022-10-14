@@ -38,7 +38,7 @@ public final class FailPoint implements AutoCloseable {
     /**
      * @param configureFailPointDoc A document representing {@code configureFailPoint} command to be issued as is via
      * {@link com.mongodb.client.MongoDatabase#runCommand(Bson)}.
-     * @param serverAddress One may use {@link Fixture#getPrimary(MongoClient)} to get the address of a primary server
+     * @param serverAddress One may use {@link Fixture#getPrimary()} to get the address of a primary server
      * if that is what is needed.
      */
     public static FailPoint enable(final BsonDocument configureFailPointDoc, final ServerAddress serverAddress) {
