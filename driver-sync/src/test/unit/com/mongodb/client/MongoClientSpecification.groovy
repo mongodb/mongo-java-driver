@@ -123,7 +123,6 @@ class MongoClientSpecification extends Specification {
                 .readConcern(ReadConcern.MAJORITY)
                 .codecRegistry(getDefaultCodecRegistry())
                 .build()
-        def codecRegistry = settings.getCodecRegistry()
         def readPreference = settings.getReadPreference()
         def readConcern = settings.getReadConcern()
         def client = new MongoClientImpl(Stub(Cluster), null, settings, executor)
@@ -133,7 +132,8 @@ class MongoClientSpecification extends Specification {
         def changeStreamIterable = execute(watchMethod, session)
 
         then:
-        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
                 readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true),
                 ['codec'])
 
@@ -141,7 +141,8 @@ class MongoClientSpecification extends Specification {
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
 
         then:
-        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
                 readPreference, readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT,
                 true), ['codec'])
 
@@ -149,7 +150,8 @@ class MongoClientSpecification extends Specification {
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
 
         then:
-        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
                 readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
                 ChangeStreamLevel.CLIENT, true), ['codec'])
 
