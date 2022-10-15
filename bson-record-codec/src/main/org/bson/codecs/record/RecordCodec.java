@@ -89,12 +89,11 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
         @SuppressWarnings("deprecation")
         private static Codec<?> computeCodec(final List<Type> typeParameters, final RecordComponent component,
                 final CodecRegistry codecRegistry) {
-            var codec = codecRegistry.get(toWrapper(resolveComponentType(typeParameters, component)));
-            if (codec instanceof Parameterizable parameterizableCodec
-                    && component.getGenericType() instanceof ParameterizedType parameterizedType) {
-                codec = parameterizableCodec.parameterize(codecRegistry,
-                        resolveActualTypeArguments(typeParameters, component.getDeclaringRecord(), parameterizedType));
-            }
+            var rawType = toWrapper(resolveComponentType(typeParameters, component));
+            var codec = component.getGenericType() instanceof ParameterizedType parameterizedType
+                    ? codecRegistry.get(rawType,
+                    resolveActualTypeArguments(typeParameters, component.getDeclaringRecord(), parameterizedType))
+                    : codecRegistry.get(rawType);
             BsonType bsonRepresentationType = null;
 
             if (component.isAnnotationPresent(BsonRepresentation.class)) {
@@ -271,7 +270,7 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
     }
 
     RecordCodec(final Class<T> clazz, final CodecRegistry codecRegistry, final List<Type> types) {
-        if (types.size() != clazz.getTypeParameters().length) {
+        if (types.size() != clazz.getTypeParameters().length || types.isEmpty()) {
             throw new CodecConfigurationException("Unexpected number of type parameters for record class " + clazz);
         }
         this.clazz = notNull("class", clazz);

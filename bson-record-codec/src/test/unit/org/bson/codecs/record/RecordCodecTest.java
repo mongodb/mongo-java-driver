@@ -50,6 +50,8 @@ import org.bson.codecs.record.samples.TestRecordWithNestedParameterized;
 import org.bson.codecs.record.samples.TestRecordWithNestedParameterizedRecord;
 import org.bson.codecs.record.samples.TestRecordWithParameterizedRecord;
 import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
+import org.bson.codecs.record.samples.TestSelfReferentialHolderRecord;
+import org.bson.codecs.record.samples.TestSelfReferentialRecord;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
@@ -333,6 +335,36 @@ public class RecordCodecTest {
                 .append("name", new BsonString("Felix"))
                 .append("hobbies", new BsonArray(List.of(new BsonString("rugby"), new BsonString("badminton"))))
                 .append("a", new BsonInt32(13));
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testSelfReferentialRecords() {
+        var registry = fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = registry.get(TestSelfReferentialHolderRecord.class);
+        var testRecord = new TestSelfReferentialHolderRecord("0",
+                new TestSelfReferentialRecord<>("1",
+                new TestSelfReferentialRecord<>("2", null, null),
+                new TestSelfReferentialRecord<>("3", null, null)));
+
+        var document = new BsonDocument();
+
+        // when
+        codec.encode(new BsonDocumentWriter(document), testRecord, EncoderContext.builder().build());
+
+        // then
+        assertEquals(
+                new BsonDocument("_id", new BsonString("0"))
+                        .append("selfReferentialRecord",
+                        new BsonDocument("name", new BsonString("1"))
+                        .append("left", new BsonDocument("name", new BsonString("2")))
+                        .append("right", new BsonDocument("name", new BsonString("3")))),
+                document);
 
         // when
         var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());

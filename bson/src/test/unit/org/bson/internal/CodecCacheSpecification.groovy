@@ -27,16 +27,39 @@ class CodecCacheSpecification extends Specification {
         when:
         def codec = new MinKeyCodec()
         def cache = new CodecCache()
-        cache.put(MinKey, codec)
+        def cacheKey = new CodecCache.CodecCacheKey(MinKey, null)
+        cache.put(cacheKey, codec)
 
         then:
-        cache.getOrThrow(MinKey).is(codec)
+        cache.getOrThrow(cacheKey).is(codec)
     }
 
     def 'should throw if codec for class does not exist'() {
         when:
         def cache = new CodecCache()
-        cache.getOrThrow(MinKey)
+        def cacheKey = new CodecCache.CodecCacheKey(MinKey, null)
+        cache.getOrThrow(cacheKey)
+
+        then:
+        thrown(CodecConfigurationException)
+    }
+
+    def 'should return the cached codec if a codec for the parameterized class exists'() {
+        when:
+        def codec = new MinKeyCodec()
+        def cache = new CodecCache()
+        def cacheKey = new CodecCache.CodecCacheKey(List, [Integer])
+        cache.put(cacheKey, codec)
+
+        then:
+        cache.getOrThrow(cacheKey).is(codec)
+    }
+
+    def 'should throw if codec for the parameterized class does not exist'() {
+        when:
+        def cache = new CodecCache()
+        def cacheKey = new CodecCache.CodecCacheKey(List, [Integer])
+        cache.getOrThrow(cacheKey)
 
         then:
         thrown(CodecConfigurationException)

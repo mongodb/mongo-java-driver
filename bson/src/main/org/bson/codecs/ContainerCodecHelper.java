@@ -71,12 +71,7 @@ final class ContainerCodecHelper {
             return codecRegistry.get((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
-            Codec<?> rawCodec = codecRegistry.get((Class<?>) parameterizedType.getRawType());
-            if (rawCodec instanceof Parameterizable) {
-                return ((Parameterizable) rawCodec).parameterize(codecRegistry, Arrays.asList(parameterizedType.getActualTypeArguments()));
-            } else {
-                return rawCodec;
-            }
+            return codecRegistry.get((Class<?>) parameterizedType.getRawType(), Arrays.asList(parameterizedType.getActualTypeArguments()));
         } else {
             throw new CodecConfigurationException("Unsupported generic type of container: " + type);
         }
