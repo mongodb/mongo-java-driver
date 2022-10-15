@@ -47,7 +47,7 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
     @Override
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
         notNull("typeArguments", typeArguments);
-        isTrueArgument("typeArguments is not empty", typeArguments.size() >= 1);
+        isTrueArgument("typeArguments is not empty", !typeArguments.isEmpty());
         isTrueArgument(format("typeArguments size should equal the number of type parameters in class %s, but is %d",
                         clazz, typeArguments.size()),
                 clazz.getTypeParameters().length == typeArguments.size());

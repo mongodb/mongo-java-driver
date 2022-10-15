@@ -70,7 +70,7 @@ class ChildCodecRegistry<T> implements CodecRegistry {
     @Override
     public <U> Codec<U> get(final Class<U> clazz, final List<Type> typeArguments) {
         notNull("typeArguments", typeArguments);
-        isTrueArgument("typeArguments is not empty", typeArguments.size() >= 1);
+        isTrueArgument("typeArguments is not empty", !typeArguments.isEmpty());
         isTrueArgument(format("typeArguments size should equal the number of type parameters in class %s, but is %d",
                         clazz, typeArguments.size()),
                 clazz.getTypeParameters().length == typeArguments.size());

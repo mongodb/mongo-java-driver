@@ -270,7 +270,7 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
     }
 
     RecordCodec(final Class<T> clazz, final CodecRegistry codecRegistry, final List<Type> types) {
-        if (types.size() != clazz.getTypeParameters().length) {
+        if (types.size() != clazz.getTypeParameters().length || types.isEmpty()) {
             throw new CodecConfigurationException("Unexpected number of type parameters for record class " + clazz);
         }
         this.clazz = notNull("class", clazz);
