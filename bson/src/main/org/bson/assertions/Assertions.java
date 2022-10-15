@@ -17,6 +17,8 @@
 
 package org.bson.assertions;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>
  */
@@ -78,6 +80,38 @@ public final class Assertions {
     public static <T> T isTrueArgument(final String name, final T value, final boolean condition) {
         if (!condition) {
             throw new IllegalArgumentException("state should be: " + name);
+        }
+        return value;
+    }
+
+    /**
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throw fail()}.
+     * This may be helpful in non-{@code void} methods.
+     * @throws AssertionError Always
+     */
+    public static AssertionError fail() throws AssertionError {
+        throw new AssertionError();
+    }
+
+    /**
+     * @param msg The failure message.
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throw fail("failure message")}.
+     * This may be helpful in non-{@code void} methods.
+     * @throws AssertionError Always
+     */
+    public static AssertionError fail(final String msg) throws AssertionError {
+        throw new AssertionError(assertNotNull(msg));
+    }
+
+    /**
+     * @param value A value to check.
+     * @param <T>   The type of {@code value}.
+     * @return {@code value}
+     * @throws AssertionError If {@code value} is {@code null}.
+     */
+    public static <T> T assertNotNull(@Nullable final T value) throws AssertionError {
+        if (value == null) {
+            throw new AssertionError();
         }
         return value;
     }
