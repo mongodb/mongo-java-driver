@@ -30,7 +30,7 @@ import static java.lang.String.format;
 import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
-public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetectingCodecRegistry {
+public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry {
     private final List<CodecProvider> codecProviders;
     private final CodecCache codecCache = new CodecCache();
 
@@ -54,7 +54,6 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
         return get(new ChildCodecRegistry<T>(this, clazz, typeArguments));
     }
 
-    @SuppressWarnings("rawtypes")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         for (CodecProvider provider : codecProviders) {
             Codec<T> codec = provider.get(clazz, registry);
