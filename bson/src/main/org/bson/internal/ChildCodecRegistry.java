@@ -22,6 +22,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -75,7 +76,7 @@ class ChildCodecRegistry<T> implements CodecRegistry {
                         clazz, typeArguments.size()),
                 clazz.getTypeParameters().length == typeArguments.size());
         if (hasCycles(clazz)) {
-            return new LazyCodec<U>(registry, clazz, typeArguments);
+            return new LazyCodec<>(registry, clazz, typeArguments);
         } else {
             return registry.get(new ChildCodecRegistry<>(this, clazz, typeArguments));
         }
@@ -86,9 +87,8 @@ class ChildCodecRegistry<T> implements CodecRegistry {
         return this.registry.get(clazz, registry);
     }
 
-    @SuppressWarnings("rawtypes")
     private <U> Boolean hasCycles(final Class<U> theClass) {
-        ChildCodecRegistry current = this;
+        ChildCodecRegistry<?> current = this;
         while (current != null) {
             if (current.codecClass.equals(theClass)) {
                 return true;
@@ -109,12 +109,12 @@ class ChildCodecRegistry<T> implements CodecRegistry {
             return false;
         }
 
-        ChildCodecRegistry<?> that = (ChildCodecRegistry) o;
+        ChildCodecRegistry<?> that = (ChildCodecRegistry<?>) o;
 
         if (!codecClass.equals(that.codecClass)) {
             return false;
         }
-        if (parent != null ? !parent.equals(that.parent) : that.parent != null) {
+        if (!Objects.equals(parent, that.parent)) {
             return false;
         }
         if (!registry.equals(that.registry)) {
