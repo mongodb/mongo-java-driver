@@ -17,7 +17,6 @@
 package org.bson.internal;
 
 import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecConfigurationException;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static java.lang.String.format;
+import static org.bson.assertions.Assertions.assertNotNull;
 
 final class CodecCache {
 
@@ -65,29 +64,18 @@ final class CodecCache {
         }
     }
 
-    private final ConcurrentMap<CodecCacheKey, Optional<Codec<?>>> codecCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<CodecCacheKey, Codec<?>> codecCache = new ConcurrentHashMap<>();
 
-    public boolean containsKey(final CodecCacheKey codecCacheKey) {
-        return codecCache.containsKey(codecCacheKey);
+    public <T> Codec<T> putIfAbsent(final CodecCacheKey codecCacheKey, final Codec<T> codec) {
+        assertNotNull(codec);
+        @SuppressWarnings("unchecked")
+        Codec<T> prevCodec = (Codec<T>) codecCache.putIfAbsent(codecCacheKey, codec);
+        return prevCodec == null ? codec : prevCodec;
     }
 
-    public void put(final CodecCacheKey codecCacheKey, final Codec<?> codec){
-        codecCache.put(codecCacheKey, Optional.ofNullable(codec));
-    }
-
-    @SuppressWarnings("unchecked")
-    public synchronized <T> Codec<T> putIfMissing(final CodecCacheKey codecCacheKey, final Codec<T> codec) {
-        Optional<Codec<?>> cachedCodec = codecCache.computeIfAbsent(codecCacheKey, clz -> Optional.of(codec));
-        if (cachedCodec.isPresent()) {
-            return (Codec<T>) cachedCodec.get();
-        }
-        codecCache.put(codecCacheKey, Optional.of(codec));
-        return codec;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> Codec<T> getOrThrow(final CodecCacheKey codecCacheKey) {
-        return (Codec<T>) codecCache.getOrDefault(codecCacheKey, Optional.empty()).orElseThrow(
-                () -> new CodecConfigurationException(format("Can't find a codec for %s.", codecCacheKey)));
+    public <T> Optional<Codec<T>> get(final CodecCacheKey codecCacheKey) {
+        @SuppressWarnings("unchecked")
+        Codec<T> codec = (Codec<T>) codecCache.get(codecCacheKey);
+        return Optional.ofNullable(codec);
     }
 }
