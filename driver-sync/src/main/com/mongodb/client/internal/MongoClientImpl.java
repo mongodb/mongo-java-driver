@@ -203,7 +203,7 @@ public final class MongoClientImpl implements MongoClient {
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
-        return new ChangeStreamIterableImpl<>(clientSession, "admin", settings.getCodecRegistry(), settings.getReadPreference(),
+        return new ChangeStreamIterableImpl<>(clientSession, "admin", delegate.getCodecRegistry(), settings.getReadPreference(),
                 settings.getReadConcern(), delegate.getOperationExecutor(),
                 pipeline, resultClass, ChangeStreamLevel.CLIENT, settings.getRetryReads());
     }
