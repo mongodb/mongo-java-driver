@@ -124,10 +124,8 @@ class ProvidersCodecRegistrySpecification extends Specification {
                 if (counter == 0) {
                     counter++
                     return codec
-                } else {
-                    throw new AssertionError((Object)"Must not be called more than once.")
                 }
-
+                throw new AssertionError((Object)'Must not be called more than once.')
             }
         }
 
