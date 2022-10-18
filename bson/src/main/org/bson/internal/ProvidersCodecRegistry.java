@@ -21,13 +21,11 @@ import org.bson.codecs.Parameterizable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.internal.CodecCache.CodecCacheKey;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.String.format;
 import static org.bson.assertions.Assertions.isTrueArgument;
@@ -35,7 +33,7 @@ import static org.bson.assertions.Assertions.notNull;
 
 public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry {
     private final List<CodecProvider> codecProviders;
-    private final ConcurrentMap<CodecCacheKey, Codec<?>> codecCache = new ConcurrentHashMap<>();
+    private final CodecCache codecCache = new CodecCache();
 
     public ProvidersCodecRegistry(final List<? extends CodecProvider> codecProviders) {
         isTrueArgument("codecProviders must not be null or empty", codecProviders != null && codecProviders.size() > 0);
@@ -70,17 +68,17 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
     @SuppressWarnings({"unchecked"})
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
         CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes().orElse(null));
-        return (Codec<T>) codecCache.computeIfAbsent(codecCacheKey, k -> {
+        return codecCache.<T>get(codecCacheKey).orElseGet(() -> {
             for (CodecProvider provider : codecProviders) {
-                Codec<?> codec = provider.get(context.getCodecClass(), context);
+                Codec<T> codec = provider.get(context.getCodecClass(), context);
                 if (codec != null) {
                     if (codec instanceof Parameterizable && context.getTypes().isPresent()) {
-                        codec = ((Parameterizable) codec).parameterize(context, context.getTypes().get());
+                        codec = (Codec<T>) ((Parameterizable) codec).parameterize(context, context.getTypes().get());
                     }
-                    return codec;
+                    return codecCache.putIfAbsent(codecCacheKey, codec);
                 }
             }
-            throw new CodecConfigurationException(format("Can't find a codec for %s.", k));
+            throw new CodecConfigurationException(format("Can't find a codec for %s.", codecCacheKey));
         });
     }
 
@@ -115,40 +113,5 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
         return "ProvidersCodecRegistry{"
                 + "codecProviders=" + codecProviders
                 + '}';
-    }
-
-    private static final class CodecCacheKey {
-        private final Class<?> clazz;
-        private final List<Type> types;
-
-        CodecCacheKey(final Class<?> clazz, final List<Type> types) {
-            this.clazz = clazz;
-            this.types = types;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            CodecCacheKey that = (CodecCacheKey) o;
-            return clazz.equals(that.clazz) && Objects.equals(types, that.types);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(clazz, types);
-        }
-
-        @Override
-        public String toString() {
-            return "CodecCacheKey{"
-                    + "clazz=" + clazz
-                    + ", types=" + types
-                    + '}';
-        }
     }
 }
