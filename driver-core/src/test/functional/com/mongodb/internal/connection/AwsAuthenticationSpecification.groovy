@@ -33,8 +33,16 @@ import static java.util.concurrent.TimeUnit.SECONDS
 class AwsAuthenticationSpecification extends Specification {
 
     static {
-        if (Boolean.valueOf(System.getProperty('org.mongodb.test.use.built.in.aws.credential.provider', 'false'))) {
+        def providerProperty = System.getProperty('org.mongodb.test.aws.credential.provider', 'awsSdkV2')
+
+        if (providerProperty == 'builtIn') {
             AwsCredentialHelper.requireBuiltInProvider()
+        } else if (providerProperty == 'awsSdkV1') {
+            AwsCredentialHelper.requireAwsSdkV1Provider()
+        } else if (providerProperty == 'awsSdkV2') {
+            AwsCredentialHelper.requireAwsSdkV2Provider()
+        } else {
+            throw new IllegalArgumentException("Unrecognized AWS credential provider: $providerProperty")
         }
     }
 

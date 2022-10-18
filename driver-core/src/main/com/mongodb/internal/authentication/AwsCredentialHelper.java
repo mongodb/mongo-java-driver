@@ -40,22 +40,50 @@ public final class AwsCredentialHelper {
             Class.forName("software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider");
             awsCredentialSupplier = new AwsSdkV2CredentialSupplier();
             LOGGER.info("Using software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider from AWS SDK v2 to retrieve AWS "
-                    + "credentials");
+                    + "credentials. This is the recommended configuration");
         } catch (ClassNotFoundException e) {
-            awsCredentialSupplier = new BuiltInAwsCredentialSupplier();
-            LOGGER.info("Using built-in driver implementation to retrieve AWS credentials. Consider adding a dependency to "
-                    + "software.amazon.awssdk:auth to get access to additional AWS authentication functionality");
+            try {
+                Class.forName("com.amazonaws.auth.DefaultAWSCredentialsProviderChain");
+                awsCredentialSupplier = new AwsSdkV1CredentialSupplier();
+                LOGGER.info("Using com.amazonaws.auth.DefaultAWSCredentialsProviderChain from AWS SDK v1 to retrieve AWS "
+                        + "credentials. Consider adding a dependency to AWS SDK v2's software.amazon.awssdk:auth artifact to get access "
+                        + "to additional AWS authentication functionality.");
+            } catch (ClassNotFoundException e1) {
+                awsCredentialSupplier = new BuiltInAwsCredentialSupplier();
+                LOGGER.info("Using built-in driver implementation to retrieve AWS credentials. Consider adding a dependency to AWS "
+                        + "SDK v2's software.amazon.awssdk:auth artifact to get access to additional AWS authentication functionality.");
+            }
         }
     }
 
     /**
      * This method is visible to allow tests to require the built-in provider rather than rely on the fixed checks for classes on the
-     * classpath.  It allows us to easily write tests of both implementations without resorting to runtime classpath shenanigans.
+     * classpath.  It allows us to easily write tests of the built-in implementation without resorting to runtime classpath shenanigans.
      */
     @VisibleForTesting(otherwise = PRIVATE)
     public static void requireBuiltInProvider() {
         LOGGER.info("Using built-in driver implementation to retrieve AWS credentials");
         awsCredentialSupplier = new BuiltInAwsCredentialSupplier();
+    }
+
+    /**
+     * This method is visible to allow tests to require the AWS SDK v1 provider rather than rely on the fixed checks for classes on the
+     * classpath.  It allows us to easily write tests of the AWS SDK v1 implementation without resorting to runtime classpath shenanigans.
+     */
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static void requireAwsSdkV1Provider() {
+        LOGGER.info("Using AWS SDK v1 to retrieve AWS credentials");
+        awsCredentialSupplier = new AwsSdkV1CredentialSupplier();
+    }
+
+    /**
+     * This method is visible to allow tests to require the AWS SDK v2 provider rather than rely on the fixed checks for classes on the
+     * classpath.  It allows us to easily write tests of the AWS SDK v2 implementation without resorting to runtime classpath shenanigans.
+     */
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static void requireAwsSdkV2Provider() {
+        LOGGER.info("Using AWS SDK v2 to retrieve AWS credentials");
+        awsCredentialSupplier = new AwsSdkV2CredentialSupplier();
     }
 
     public static AwsCredential obtainFromEnvironment() {

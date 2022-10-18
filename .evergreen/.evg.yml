@@ -372,7 +372,7 @@ functions:
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
           JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} \
-          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER=${USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER} \
+          AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} \
           .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with assume role credentials":
@@ -403,7 +403,7 @@ functions:
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
           JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} DRIVERS_TOOLS=${DRIVERS_TOOLS} \
-          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER=${USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER} \
+          AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} \
           .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws EC2 credentials":
@@ -424,7 +424,7 @@ functions:
           ${PREPARE_SHELL}
           # Write an empty prepare_mongodb_aws so no auth environment variables are set.
           echo "" > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
-          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials as environment variables":
     - command: shell.exec
@@ -453,7 +453,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials and session token as environment variables":
     - command: shell.exec
@@ -483,7 +483,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh
 
   "run aws ECS auth test":
     - command: shell.exec
@@ -1647,11 +1647,15 @@ axes:
       - id: aws_sdk_v2
         display_name: AWS SDK V2
         variables:
-          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER: "false"
+          AWS_CREDENTIAL_PROVIDER: "awsSdkV2"
+      - id: aws_sdk_v1
+        display_name: AWS SDK V1
+        variables:
+          AWS_CREDENTIAL_PROVIDER: "awsSdkV1"
       - id: built_in
         display_name: Built-In
         variables:
-          USE_BUILT_IN_AWS_CREDENTIAL_PROVIDER: "true"
+          AWS_CREDENTIAL_PROVIDER: "builtIn"
 
 task_groups:
   - name: testgcpkms_task_group
