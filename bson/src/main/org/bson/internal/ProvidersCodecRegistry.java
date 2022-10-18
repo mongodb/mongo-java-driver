@@ -18,6 +18,7 @@ package org.bson.internal;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.Parameterizable;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.internal.CodecCache.CodecCacheKey;
@@ -67,19 +68,18 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
     @SuppressWarnings({"unchecked"})
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
         CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes().orElse(null));
-        if (!codecCache.containsKey(codecCacheKey)) {
+        return codecCache.<T>get(codecCacheKey).orElseGet(() -> {
             for (CodecProvider provider : codecProviders) {
                 Codec<T> codec = provider.get(context.getCodecClass(), context);
                 if (codec != null) {
                     if (codec instanceof Parameterizable && context.getTypes().isPresent()) {
                         codec = (Codec<T>) ((Parameterizable) codec).parameterize(context, context.getTypes().get());
                     }
-                    return codecCache.putIfMissing(codecCacheKey, codec);
+                    return codecCache.putIfAbsent(codecCacheKey, codec);
                 }
             }
-            codecCache.put(codecCacheKey, null);
-        }
-        return codecCache.getOrThrow(codecCacheKey);
+            throw new CodecConfigurationException(format("Can't find a codec for %s.", codecCacheKey));
+        });
     }
 
     @Override
