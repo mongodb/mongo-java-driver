@@ -47,6 +47,7 @@ ext {
     nettyVersion = '4.1.79.Final'
     snappyVersion = '1.1.8.4'
     zstdVersion = '1.5.2-3'
+    awsSdkV2Version = '2.17.293'
     mongoCryptVersion = '1.6.0-alpha0'
     projectReactorVersion = '2020.0.22'
     junitBomVersion = '5.8.1'
