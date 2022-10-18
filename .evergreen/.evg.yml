@@ -1843,6 +1843,12 @@ buildvariants:
     - name: "aws-auth-test-with-aws-credentials-as-environment-variables"
     - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
     - name: "aws-auth-test-with-aws-EC2-credentials"
+
+- matrix_name: "aws-ecs-auth-test"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
+  display_name: "MONGODB-AWS ECS Auth test ${version} ${jdk}"
+  run_on: ubuntu1804-test
+  tasks:
     - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
