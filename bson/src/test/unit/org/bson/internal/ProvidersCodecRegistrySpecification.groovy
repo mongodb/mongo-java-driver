@@ -115,22 +115,32 @@ class ProvidersCodecRegistrySpecification extends Specification {
 
     def 'get should use the codecCache'() {
         given:
-        def provider = Mock(CodecProvider)
+        def codec = Mock(Codec)
+        def provider = new CodecProvider() {
+            private int counter = 0
+
+            @Override
+            Codec get(final Class clazz, final CodecRegistry registry) {
+                if (counter == 0) {
+                    counter++
+                    return codec
+                }
+                throw new AssertionError((Object)'Must not be called more than once.')
+            }
+        }
 
         when:
         def registry = new ProvidersCodecRegistry([provider])
-        registry.get(MinKey)
+        def codecFromRegistry = registry.get(MinKey)
 
         then:
-        thrown(CodecConfigurationException)
-        1 * provider.get(MinKey, _)
+        codecFromRegistry == codec
 
         when:
-        registry.get(MinKey)
+        codecFromRegistry = registry.get(MinKey)
 
         then:
-        thrown(CodecConfigurationException)
-        0 * provider.get(MinKey, _)
+        codecFromRegistry == codec
     }
 
     def 'get with codec registry should return the codec from the first source that has one'() {
@@ -537,4 +547,3 @@ class Nested {
 class Simple {
     int value = 0
 }
-
