@@ -44,7 +44,9 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 public class DocumentCodec implements CollectibleCodec<Document>, OverridableUuidRepresentationCodec<Document> {
 
     private static final String ID_FIELD_NAME = "_id";
-    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new CollectionCodecProvider(),
+    @SuppressWarnings("deprecation")
+    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
+            new CollectionCodecProvider(), new IterableCodecProvider(),
             new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider()));
     private static final BsonTypeCodecMap DEFAULT_BSON_TYPE_CODEC_MAP = new BsonTypeCodecMap(DEFAULT_BSON_TYPE_CLASS_MAP, DEFAULT_REGISTRY);
     private static final IdGenerator DEFAULT_ID_GENERATOR = new ObjectIdGenerator();

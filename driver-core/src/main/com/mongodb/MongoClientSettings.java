@@ -34,6 +34,7 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.CollectionCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.EnumCodecProvider;
+import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.JsonObjectCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
@@ -67,6 +68,7 @@ public final class MongoClientSettings {
                     new DBObjectCodecProvider(),
                     new DocumentCodecProvider(new DocumentToDBRefTransformer()),
                     new CollectionCodecProvider(new DocumentToDBRefTransformer()),
+                    new IterableCodecProvider(new DocumentToDBRefTransformer()),
                     new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider(),

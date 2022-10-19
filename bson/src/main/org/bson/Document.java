@@ -60,8 +60,10 @@ import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentati
  * @since 3.0.0
  */
 public class Document implements Map<String, Object>, Serializable, Bson {
+    @SuppressWarnings("deprecation")
     private static final Codec<Document> DEFAULT_CODEC =
-            withUuidRepresentation(fromProviders(asList(new ValueCodecProvider(), new CollectionCodecProvider(),
+            withUuidRepresentation(fromProviders(asList(new ValueCodecProvider(),
+                    new CollectionCodecProvider(), new org.bson.codecs.IterableCodecProvider(),
                     new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider())), UuidRepresentation.STANDARD)
                     .get(Document.class);
 
