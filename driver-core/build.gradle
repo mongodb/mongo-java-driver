@@ -47,6 +47,12 @@ dependencies {
     api "io.netty:netty-buffer", optional
     api "io.netty:netty-transport", optional
     api "io.netty:netty-handler", optional
+
+    // Optionally depend on both AWS SDK v2 and v1.  The driver will use v2 is present, v1 if present, or built-in functionality if
+    // neither are present
+    implementation "software.amazon.awssdk:auth:$awsSdkV2Version", optional
+    implementation "com.amazonaws:aws-java-sdk-core:$awsSdkV1Version", optional
+
     implementation "org.xerial.snappy:snappy-java:$snappyVersion", optional
     implementation "com.github.luben:zstd-jni:$zstdVersion", optional
     implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional

@@ -371,7 +371,9 @@ functions:
             PASS=$(urlencode ${iam_auth_ecs_secret_access_key})
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
-          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} \
+          AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} \
+          .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with assume role credentials":
     - command: shell.exec
@@ -400,7 +402,9 @@ functions:
             SESSION_TOKEN=$(urlencode $SESSION_TOKEN)
             MONGODB_URI="mongodb://$USER:$PASS@localhost"
           EOF
-          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} DRIVERS_TOOLS=${DRIVERS_TOOLS} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} DRIVERS_TOOLS=${DRIVERS_TOOLS} \
+          AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} \
+          .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws EC2 credentials":
     - command: shell.exec
@@ -420,7 +424,7 @@ functions:
           ${PREPARE_SHELL}
           # Write an empty prepare_mongodb_aws so no auth environment variables are set.
           echo "" > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
-          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials as environment variables":
     - command: shell.exec
@@ -449,7 +453,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials and session token as environment variables":
     - command: shell.exec
@@ -479,7 +483,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-mongodb-aws-test.sh
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh
 
   "run aws ECS auth test":
     - command: shell.exec
@@ -1637,6 +1641,22 @@ axes:
         variables:
           LOGIN_CONTEXT_NAME: "com.sun.security.jgss.initiate"
 
+  - id: aws-credential-provider
+    display_name: AWS Credential Provider
+    values:
+      - id: aws_sdk_v2
+        display_name: AWS SDK V2
+        variables:
+          AWS_CREDENTIAL_PROVIDER: "awsSdkV2"
+      - id: aws_sdk_v1
+        display_name: AWS SDK V1
+        variables:
+          AWS_CREDENTIAL_PROVIDER: "awsSdkV1"
+      - id: built_in
+        display_name: Built-In
+        variables:
+          AWS_CREDENTIAL_PROVIDER: "builtIn"
+
 task_groups:
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
@@ -1813,8 +1833,9 @@ buildvariants:
     - name: "plain-auth-test"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
-  display_name: "MONGODB-AWS Auth test ${version} ${jdk}"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu",
+                 aws-credential-provider: "*" }
+  display_name: "MONGODB-AWS Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu1804-test
   tasks:
     - name: "aws-auth-test-with-regular-aws-credentials"
@@ -1822,6 +1843,12 @@ buildvariants:
     - name: "aws-auth-test-with-aws-credentials-as-environment-variables"
     - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
     - name: "aws-auth-test-with-aws-EC2-credentials"
+
+- matrix_name: "aws-ecs-auth-test"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
+  display_name: "MONGODB-AWS ECS Auth test ${version} ${jdk}"
+  run_on: ubuntu1804-test
+  tasks:
     - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"

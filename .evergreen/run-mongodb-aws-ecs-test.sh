@@ -44,5 +44,30 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
 ./gradlew -version
 
 echo "Running tests..."
-./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --debug --info driver-core:test --tests AwsAuthenticationSpecification
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} -Dorg.mongodb.test.aws.credential.provider=awsSdkV2 --stacktrace --debug --info \
+           driver-core:test --tests AwsAuthenticationSpecification
+first=$?
+echo $first
+
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} -Dorg.mongodb.test.aws.credential.provider=awsSdkV1 --stacktrace --debug --info \
+           driver-core:test --tests AwsAuthenticationSpecification
+second=$?
+echo $second
+
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} -Dorg.mongodb.test.aws.credential.provider=builtIn --stacktrace --debug --info \
+           driver-core:test --tests AwsAuthenticationSpecification
+third=$?
+echo $third
+
+if [ $first -ne 0 ]; then
+   exit $first
+elif [ $second -ne 0 ]; then
+   exit $second
+elif [ $third -ne 0 ]; then
+   exit $third
+else
+   exit 0
+fi
+
+
 cd -
