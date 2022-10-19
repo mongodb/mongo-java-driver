@@ -36,23 +36,28 @@ public final class AwsCredentialHelper {
     private static volatile Supplier<AwsCredential> awsCredentialSupplier;
 
     static {
-        try {
-            Class.forName("software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider");
+        if (isClassAvailable("software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider")) {
             awsCredentialSupplier = new AwsSdkV2CredentialSupplier();
-            LOGGER.info("Using software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider from AWS SDK v2 to retrieve AWS "
-                    + "credentials. This is the recommended configuration");
+            LOGGER.info("Using DefaultCredentialsProvider from AWS SDK v2 to retrieve AWS credentials. This is the recommended "
+                    + "configuration");
+        } else if (isClassAvailable("com.amazonaws.auth.DefaultAWSCredentialsProviderChain")) {
+            awsCredentialSupplier = new AwsSdkV1CredentialSupplier();
+            LOGGER.info("Using DefaultAWSCredentialsProviderChain from AWS SDK v1 to retrieve AWS credentials. Consider adding a "
+                    + "dependency to AWS SDK v2's software.amazon.awssdk:auth artifact to get access to additional AWS authentication "
+                    + "functionality.");
+        } else {
+            awsCredentialSupplier = new BuiltInAwsCredentialSupplier();
+            LOGGER.info("Using built-in driver implementation to retrieve AWS credentials. Consider adding a dependency to AWS SDK "
+                    + "v2's software.amazon.awssdk:auth artifact to get access to additional AWS authentication functionality.");
+        }
+    }
+
+    private static boolean isClassAvailable(final String className) {
+        try {
+            Class.forName(className);
+            return true;
         } catch (ClassNotFoundException e) {
-            try {
-                Class.forName("com.amazonaws.auth.DefaultAWSCredentialsProviderChain");
-                awsCredentialSupplier = new AwsSdkV1CredentialSupplier();
-                LOGGER.info("Using com.amazonaws.auth.DefaultAWSCredentialsProviderChain from AWS SDK v1 to retrieve AWS "
-                        + "credentials. Consider adding a dependency to AWS SDK v2's software.amazon.awssdk:auth artifact to get access "
-                        + "to additional AWS authentication functionality.");
-            } catch (ClassNotFoundException e1) {
-                awsCredentialSupplier = new BuiltInAwsCredentialSupplier();
-                LOGGER.info("Using built-in driver implementation to retrieve AWS credentials. Consider adding a dependency to AWS "
-                        + "SDK v2's software.amazon.awssdk:auth artifact to get access to additional AWS authentication functionality.");
-            }
+            return false;
         }
     }
 
