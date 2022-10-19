@@ -12,6 +12,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
+import com.mongodb.internal.authentication.AwsCredentialHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.IgnoreIf
@@ -30,6 +31,20 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 @IgnoreIf({ getCredential() == null || getCredential().getAuthenticationMechanism() != MONGODB_AWS })
 class AwsAuthenticationSpecification extends Specification {
+
+    static {
+        def providerProperty = System.getProperty('org.mongodb.test.aws.credential.provider', 'awsSdkV2')
+
+        if (providerProperty == 'builtIn') {
+            AwsCredentialHelper.requireBuiltInProvider()
+        } else if (providerProperty == 'awsSdkV1') {
+            AwsCredentialHelper.requireAwsSdkV1Provider()
+        } else if (providerProperty == 'awsSdkV2') {
+            AwsCredentialHelper.requireAwsSdkV2Provider()
+        } else {
+            throw new IllegalArgumentException("Unrecognized AWS credential provider: $providerProperty")
+        }
+    }
 
     def 'should not authorize when not authenticated'() {
         given:
