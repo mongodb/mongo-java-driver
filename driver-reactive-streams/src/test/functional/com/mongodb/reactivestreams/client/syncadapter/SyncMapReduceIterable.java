@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 
 @SuppressWarnings("deprecation")
 class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements com.mongodb.client.MapReduceIterable<T> {
@@ -36,7 +37,7 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements com.mongo
 
     @Override
     public void toCollection() {
-        Mono.from(wrapped.toCollection()).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.toCollection()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override

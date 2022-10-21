@@ -25,6 +25,8 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
 
 public class CrudTest extends AbstractCrudTest {
 
@@ -40,6 +42,7 @@ public class CrudTest extends AbstractCrudTest {
         mongoClient = new SyncMongoClient(
                 MongoClients.create(getMongoClientSettingsBuilder()
                         .addCommandListener(commandListener)
+                        .contextProvider(CONTEXT_PROVIDER)
                         .build()));
     }
 
@@ -49,9 +52,16 @@ public class CrudTest extends AbstractCrudTest {
     }
 
     @Override
+    public void shouldPassAllOutcomes() {
+        super.shouldPassAllOutcomes();
+        assertContextPassedThrough();
+    }
+
+    @Override
     public void cleanUp() {
         if (mongoClient != null) {
             mongoClient.close();
         }
     }
+
 }

@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
 public class SyncMongoClient implements MongoClient {
@@ -121,12 +122,12 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ClientSession startSession() {
-        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession()).block(TIMEOUT_DURATION)), this);
+        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession()).contextWrite(CONTEXT).block(TIMEOUT_DURATION)), this);
     }
 
     @Override
     public ClientSession startSession(final ClientSessionOptions options) {
-        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession(options)).block(TIMEOUT_DURATION)), this);
+        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession(options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION)), this);
     }
 
     @Override

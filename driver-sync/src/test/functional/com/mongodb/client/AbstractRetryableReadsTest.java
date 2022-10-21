@@ -110,6 +110,10 @@ public abstract class AbstractRetryableReadsTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
+    protected BsonDocument getDefinition() {
+        return definition;
+    }
+
     @Before
     public void setUp() {
         assumeFalse(skipTest);

@@ -58,6 +58,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
 class SyncMongoCollection<T> implements MongoCollection<T> {
@@ -125,42 +126,42 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public long countDocuments() {
-        return requireNonNull(Mono.from(wrapped.countDocuments()).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.countDocuments()).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final Bson filter) {
-        return requireNonNull(Mono.from(wrapped.countDocuments(filter)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.countDocuments(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final Bson filter, final CountOptions options) {
-        return requireNonNull(Mono.from(wrapped.countDocuments(filter, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.countDocuments(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession) {
-        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession))).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession, final Bson filter) {
-        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession), filter)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession), filter, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long estimatedDocumentCount() {
-        return requireNonNull(Mono.from(wrapped.estimatedDocumentCount()).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.estimatedDocumentCount()).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        return requireNonNull(Mono.from(wrapped.estimatedDocumentCount(options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.estimatedDocumentCount(options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
@@ -324,121 +325,121 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests) {
-        return requireNonNull(Mono.from(wrapped.bulkWrite(requests)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.bulkWrite(requests)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
-        return requireNonNull(Mono.from(wrapped.bulkWrite(requests, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.bulkWrite(requests, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends T>> requests) {
-        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), requests)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), requests)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BulkWriteResult bulkWrite(
             final ClientSession clientSession, final List<? extends WriteModel<? extends T>> requests,
             final BulkWriteOptions options) {
-        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), requests, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), requests, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final T t) {
-        return requireNonNull(Mono.from(wrapped.insertOne(t)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertOne(t)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final T t, final InsertOneOptions options) {
-        return requireNonNull(Mono.from(wrapped.insertOne(t, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertOne(t, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final ClientSession clientSession, final T t) {
-        return requireNonNull(Mono.from(wrapped.insertOne(unwrap(clientSession), t)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertOne(unwrap(clientSession), t)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final ClientSession clientSession, final T t, final InsertOneOptions options) {
-        return requireNonNull(Mono.from(wrapped.insertOne(unwrap(clientSession), t, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertOne(unwrap(clientSession), t, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertManyResult insertMany(final List<? extends T> documents) {
-        return requireNonNull(Mono.from(wrapped.insertMany(documents)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertMany(documents)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertManyResult insertMany(final List<? extends T> documents, final InsertManyOptions options) {
-        return requireNonNull(Mono.from(wrapped.insertMany(documents, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertMany(documents, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends T> documents) {
-        return requireNonNull(Mono.from(wrapped.insertMany(unwrap(clientSession), documents)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertMany(unwrap(clientSession), documents)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertManyResult insertMany(
             final ClientSession clientSession, final List<? extends T> documents,
             final InsertManyOptions options) {
-        return requireNonNull(Mono.from(wrapped.insertMany(unwrap(clientSession), documents, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.insertMany(unwrap(clientSession), documents, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final Bson filter) {
-        return requireNonNull(Mono.from(wrapped.deleteOne(filter)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteOne(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final Bson filter, final DeleteOptions options) {
-        return requireNonNull(Mono.from(wrapped.deleteOne(filter, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteOne(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter) {
-        return requireNonNull(Mono.from(wrapped.deleteOne(unwrap(clientSession), filter)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteOne(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        return requireNonNull(Mono.from(wrapped.deleteOne(unwrap(clientSession), filter, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteOne(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final Bson filter) {
-        return requireNonNull(Mono.from(wrapped.deleteMany(filter)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteMany(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final Bson filter, final DeleteOptions options) {
-        return requireNonNull(Mono.from(wrapped.deleteMany(filter, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteMany(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter) {
-        return requireNonNull(Mono.from(wrapped.deleteMany(unwrap(clientSession), filter)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteMany(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        return requireNonNull(Mono.from(wrapped.deleteMany(unwrap(clientSession), filter, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteMany(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final T replacement) {
-        return requireNonNull(Mono.from(wrapped.replaceOne(filter, replacement)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.replaceOne(filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final T replacement, final ReplaceOptions replaceOptions) {
-        return requireNonNull(Mono.from(wrapped.replaceOne(filter, replacement, replaceOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.replaceOne(filter, replacement, replaceOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final T replacement) {
-        return requireNonNull(Mono.from(wrapped.replaceOne(unwrap(clientSession), filter, replacement)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.replaceOne(unwrap(clientSession), filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
@@ -446,130 +447,130 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
             final ClientSession clientSession, final Bson filter, final T replacement,
             final ReplaceOptions replaceOptions) {
         return requireNonNull(Mono.from(wrapped.replaceOne(unwrap(clientSession), filter, replacement, replaceOptions))
-                                      .block(TIMEOUT_DURATION));
+                                      .contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update) {
-        return requireNonNull(Mono.from(wrapped.updateOne(filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateOne(filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final Bson update) {
-        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(
             final ClientSession clientSession, final Bson filter, final Bson update,
             final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final List<? extends Bson> update) {
-        return requireNonNull(Mono.from(wrapped.updateOne(filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateOne(filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(
             final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
             final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final Bson update) {
-        return requireNonNull(Mono.from(wrapped.updateMany(filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateMany(filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final Bson update) {
-        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(
             final ClientSession clientSession, final Bson filter, final Bson update,
             final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final List<? extends Bson> update) {
-        return requireNonNull(Mono.from(wrapped.updateMany(filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateMany(filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(
             final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
             final UpdateOptions updateOptions) {
-        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public T findOneAndDelete(final Bson filter) {
-        return Mono.from(wrapped.findOneAndDelete(filter)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndDelete(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
-        return Mono.from(wrapped.findOneAndDelete(filter, options)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndDelete(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndDelete(final ClientSession clientSession, final Bson filter) {
-        return Mono.from(wrapped.findOneAndDelete(unwrap(clientSession), filter)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndDelete(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
-        return Mono.from(wrapped.findOneAndDelete(unwrap(clientSession), filter, options)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndDelete(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndReplace(final Bson filter, final T replacement) {
-        return Mono.from(wrapped.findOneAndReplace(filter, replacement)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndReplace(filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndReplace(final Bson filter, final T replacement, final FindOneAndReplaceOptions options) {
-        return Mono.from(wrapped.findOneAndReplace(filter, replacement, options)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndReplace(filter, replacement, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndReplace(final ClientSession clientSession, final Bson filter, final T replacement) {
-        return Mono.from(wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -577,91 +578,91 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
             final ClientSession clientSession, final Bson filter, final T replacement,
             final FindOneAndReplaceOptions options) {
         return Mono.from(wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement, options))
-                                      .block(TIMEOUT_DURATION);
+                                      .contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final Bson update) {
-        return Mono.from(wrapped.findOneAndUpdate(filter, update)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
-        return Mono.from(wrapped.findOneAndUpdate(filter, update, options)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(filter, update, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update) {
-        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(
             final ClientSession clientSession, final Bson filter, final Bson update,
             final FindOneAndUpdateOptions options) {
-        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update, options)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final List<? extends Bson> update) {
-        return Mono.from(wrapped.findOneAndUpdate(filter, update)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final List<? extends Bson> update, final FindOneAndUpdateOptions options) {
-        return Mono.from(wrapped.findOneAndUpdate(filter, update, options)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(filter, update, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(
             final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
             final FindOneAndUpdateOptions options) {
-        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop() {
-        Mono.from(wrapped.drop()).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        Mono.from(wrapped.drop(unwrap(clientSession))).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final DropCollectionOptions dropCollectionOptions) {
-        Mono.from(wrapped.drop(dropCollectionOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop(dropCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
-        Mono.from(wrapped.drop(unwrap(clientSession), dropCollectionOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop(unwrap(clientSession), dropCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public String createIndex(final Bson keys) {
-        return requireNonNull(Mono.from(wrapped.createIndex(keys)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.createIndex(keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public String createIndex(final Bson keys, final IndexOptions indexOptions) {
-        return requireNonNull(Mono.from(wrapped.createIndex(keys, indexOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.createIndex(keys, indexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public String createIndex(final ClientSession clientSession, final Bson keys) {
-        return requireNonNull(Mono.from(wrapped.createIndex(unwrap(clientSession), keys)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.createIndex(unwrap(clientSession), keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public String createIndex(final ClientSession clientSession, final Bson keys, final IndexOptions indexOptions) {
-        return requireNonNull(Mono.from(wrapped.createIndex(unwrap(clientSession), keys, indexOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.createIndex(unwrap(clientSession), keys, indexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
@@ -708,84 +709,84 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public void dropIndex(final String indexName) {
-        Mono.from(wrapped.dropIndex(indexName)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(indexName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
-        Mono.from(wrapped.dropIndex(indexName, dropIndexOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(indexName, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final Bson keys) {
-        Mono.from(wrapped.dropIndex(keys)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions) {
-        Mono.from(wrapped.dropIndex(keys, dropIndexOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(keys, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName) {
-        Mono.from(wrapped.dropIndex(unwrap(clientSession), indexName)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), indexName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys) {
-        Mono.from(wrapped.dropIndex(unwrap(clientSession), keys)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName, final DropIndexOptions dropIndexOptions) {
-        Mono.from(wrapped.dropIndex(unwrap(clientSession), indexName, dropIndexOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), indexName, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions) {
-        Mono.from(wrapped.dropIndex(unwrap(clientSession), keys, dropIndexOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), keys, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes() {
-        Mono.from(wrapped.dropIndexes()).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndexes()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final ClientSession clientSession) {
-        Mono.from(wrapped.dropIndexes(unwrap(clientSession))).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndexes(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final DropIndexOptions dropIndexOptions) {
-        Mono.from(wrapped.dropIndexes(dropIndexOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndexes(dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final ClientSession clientSession, final DropIndexOptions dropIndexOptions) {
-        Mono.from(wrapped.dropIndexes(unwrap(clientSession), dropIndexOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.dropIndexes(unwrap(clientSession), dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace) {
-        Mono.from(wrapped.renameCollection(newCollectionNamespace)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.renameCollection(newCollectionNamespace)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions renameCollectionOptions) {
-        Mono.from(wrapped.renameCollection(newCollectionNamespace, renameCollectionOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.renameCollection(newCollectionNamespace, renameCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace) {
-        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(
             final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
             final RenameCollectionOptions renameCollectionOptions) {
-        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace, renameCollectionOptions)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace, renameCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {

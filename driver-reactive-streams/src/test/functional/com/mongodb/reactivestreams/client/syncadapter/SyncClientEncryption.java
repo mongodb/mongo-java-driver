@@ -30,6 +30,7 @@ import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
 public class SyncClientEncryption implements ClientEncryption {
@@ -42,32 +43,32 @@ public class SyncClientEncryption implements ClientEncryption {
 
     @Override
     public BsonBinary createDataKey(final String kmsProvider) {
-        return requireNonNull(Mono.from(wrapped.createDataKey(kmsProvider, new DataKeyOptions())).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.createDataKey(kmsProvider, new DataKeyOptions())).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BsonBinary createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions) {
-        return requireNonNull(Mono.from(wrapped.createDataKey(kmsProvider, dataKeyOptions)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.createDataKey(kmsProvider, dataKeyOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BsonBinary encrypt(final BsonValue value, final EncryptOptions options) {
-        return requireNonNull(Mono.from(wrapped.encrypt(value, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.encrypt(value, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BsonValue decrypt(final BsonBinary value) {
-        return requireNonNull(Mono.from(wrapped.decrypt(value)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.decrypt(value)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteKey(final BsonBinary id) {
-        return requireNonNull(Mono.from(wrapped.deleteKey(id)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.deleteKey(id)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BsonDocument getKey(final BsonBinary id) {
-        return Mono.from(wrapped.getKey(id)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.getKey(id)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -77,27 +78,27 @@ public class SyncClientEncryption implements ClientEncryption {
 
     @Override
     public BsonDocument addKeyAltName(final BsonBinary id, final String keyAltName) {
-        return Mono.from(wrapped.addKeyAltName(id, keyAltName)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.addKeyAltName(id, keyAltName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public BsonDocument removeKeyAltName(final BsonBinary id, final String keyAltName) {
-        return Mono.from(wrapped.removeKeyAltName(id, keyAltName)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.removeKeyAltName(id, keyAltName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public BsonDocument getKeyByAltName(final String keyAltName) {
-        return Mono.from(wrapped.getKeyByAltName(keyAltName)).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped.getKeyByAltName(keyAltName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter) {
-        return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
-        return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter, options)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override

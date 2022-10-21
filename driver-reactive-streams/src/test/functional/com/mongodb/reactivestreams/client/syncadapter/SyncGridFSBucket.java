@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
 public class SyncGridFSBucket implements GridFSBucket {
@@ -154,7 +155,7 @@ public class SyncGridFSBucket implements GridFSBucket {
     public ObjectId uploadFromStream(final String filename, final InputStream source, final GridFSUploadOptions options) {
         Flux<ByteBuffer> sourceToPublisher = inputStreamToFlux(source, options);
         GridFSUploadPublisher<ObjectId> uploadPublisher = wrapped.uploadFromPublisher(filename, sourceToPublisher, options);
-        return requireNonNull(Mono.from(uploadPublisher).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(uploadPublisher).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
@@ -298,7 +299,7 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public void delete(final BsonValue id) {
-        Mono.from(wrapped.delete(id)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.delete(id)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -308,7 +309,7 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public void delete(final ClientSession clientSession, final BsonValue id) {
-        Mono.from(wrapped.delete(unwrap(clientSession), id)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.delete(unwrap(clientSession), id)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -318,7 +319,7 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public void rename(final BsonValue id, final String newFilename) {
-        Mono.from(wrapped.rename(id, newFilename)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.rename(id, newFilename)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -328,17 +329,17 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public void rename(final ClientSession clientSession, final BsonValue id, final String newFilename) {
-        Mono.from(wrapped.rename(unwrap(clientSession), id, newFilename)).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.rename(unwrap(clientSession), id, newFilename)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop() {
-        Mono.from(wrapped.drop()).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        Mono.from(wrapped.drop(unwrap(clientSession))).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     private void toOutputStream(final GridFSDownloadPublisher downloadPublisher, final OutputStream destination) {

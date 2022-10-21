@@ -157,6 +157,10 @@ public abstract class AbstractUnifiedTest {
         return description;
     }
 
+    protected final BsonDocument getDefinition() {
+        return definition;
+    }
+
     @Before
     public void setUp() {
         assumeFalse(skipTest);

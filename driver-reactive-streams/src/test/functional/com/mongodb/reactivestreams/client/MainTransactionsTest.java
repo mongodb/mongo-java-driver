@@ -27,13 +27,25 @@ import org.bson.BsonDocument;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
+
 public class MainTransactionsTest extends AbstractMainTransactionsTest {
     public static final Set<String> SESSION_CLOSE_TIMING_SENSITIVE_TESTS = new HashSet<>(Collections.singletonList(
             "implicit abort"));
+    public static final Set<String> TESTS_THAT_EXECUTE_NO_OPERATIONS = new HashSet<>(Arrays.asList(
+            "start with implicit unacknowledged write concern",
+            "start twice",
+            "commit after no-op abort",
+            "abort without start",
+            "abort directly after no-op commit"
+    ));
+
 
     public MainTransactionsTest(final String filename, final String description, final String databaseName, final String collectionName,
                                 final BsonArray data, final BsonDocument definition, final boolean skipTest) {
@@ -42,12 +54,22 @@ public class MainTransactionsTest extends AbstractMainTransactionsTest {
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(MongoClients.create(
+                MongoClientSettings.builder(settings).contextProvider(CONTEXT_PROVIDER).build()
+        ));
     }
 
     @Override
     protected StreamFactoryFactory getStreamFactoryFactory() {
         return ClusterFixture.getOverriddenStreamFactoryFactory();
+    }
+
+    @Override
+    public void shouldPassAllOutcomes() {
+        super.shouldPassAllOutcomes();
+        if (!TESTS_THAT_EXECUTE_NO_OPERATIONS.contains(getDescription())) {
+            assertContextPassedThrough(getDefinition());
+        }
     }
 
     @Before

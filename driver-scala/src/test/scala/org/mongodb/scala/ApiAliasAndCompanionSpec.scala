@@ -16,13 +16,12 @@
 
 package org.mongodb.scala
 
-import java.lang.reflect.Modifier._
-
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder, FilterBuilder }
 import org.scalatest.Inspectors.forEvery
 
+import java.lang.reflect.Modifier._
 import scala.collection.JavaConverters._
 import scala.reflect.runtime.currentMirror
 
@@ -43,6 +42,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "BSONTimestampCodec",
       "CausalConsistencyExamples",
       "ChangeStreamSamples",
+      "ContextHelper",
       "ContextProvider",
       "DBObject",
       "DBObjectCodec",

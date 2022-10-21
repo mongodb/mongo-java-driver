@@ -25,6 +25,9 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.After;
 
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
+
 public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
 
     private MongoClient mongoClient;
@@ -35,13 +38,21 @@ public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
     }
 
     @Override
-    protected void createMongoClient(final MongoClientSettings mongoClientSettings) {
-        mongoClient = new SyncMongoClient(MongoClients.create(mongoClientSettings));
+    protected void createMongoClient(final MongoClientSettings settings) {
+        mongoClient = new SyncMongoClient(MongoClients.create(
+                MongoClientSettings.builder(settings).contextProvider(CONTEXT_PROVIDER).build()
+        ));
     }
 
     @Override
     protected MongoDatabase getDatabase(final String databaseName) {
         return mongoClient.getDatabase(databaseName);
+    }
+
+    @Override
+    public void shouldPassAllOutcomes() {
+        super.shouldPassAllOutcomes();
+        assertContextPassedThrough(getDefinition());
     }
 
     @After

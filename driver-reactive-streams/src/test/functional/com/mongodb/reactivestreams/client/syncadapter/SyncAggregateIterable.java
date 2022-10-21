@@ -28,6 +28,7 @@ import reactor.core.publisher.Mono;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
 class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements AggregateIterable<T> {
@@ -40,7 +41,7 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
 
     @Override
     public void toCollection() {
-        Mono.from(wrapped.toCollection()).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.toCollection()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -112,21 +113,21 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
 
     @Override
     public Document explain() {
-        return requireNonNull(Mono.from(wrapped.explain()).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.explain()).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public Document explain(final ExplainVerbosity verbosity) {
-        return requireNonNull(Mono.from(wrapped.explain(verbosity)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.explain(verbosity)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <E> E explain(final Class<E> explainResultClass) {
-        return requireNonNull(Mono.from(wrapped.explain(explainResultClass)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
-        return requireNonNull(Mono.from(wrapped.explain(explainResultClass, verbosity)).block(TIMEOUT_DURATION));
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass, verbosity)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 }

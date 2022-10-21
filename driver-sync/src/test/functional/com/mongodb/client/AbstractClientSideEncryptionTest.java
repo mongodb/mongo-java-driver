@@ -87,6 +87,10 @@ public abstract class AbstractClientSideEncryptionTest {
         this.skipTest = skipTest;
     }
 
+    protected BsonDocument getDefinition() {
+        return definition;
+    }
+
     private boolean hasErrorContainsField(@Nullable final BsonValue expectedResult) {
         return hasErrorField(expectedResult, "errorContains");
     }
