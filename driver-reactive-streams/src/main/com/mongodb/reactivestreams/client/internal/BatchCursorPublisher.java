@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
@@ -32,7 +33,8 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-abstract class BatchCursorPublisher<T> implements Publisher<T> {
+@VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
+public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     private final ClientSession clientSession;
     private final MongoOperationPublisher<T> mongoOperationPublisher;
     private Integer batchSize;
@@ -112,6 +114,7 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
                                     sink.success(results.get(0));
                                 }
                             })
+                            .contextWrite(sink.contextView())
                             .subscribe();
                 }));
     }

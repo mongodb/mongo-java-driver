@@ -29,6 +29,7 @@ import org.bson.BsonTimestamp;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterSessionClose;
 
 class SyncClientSession implements ClientSession {
@@ -163,12 +164,12 @@ class SyncClientSession implements ClientSession {
 
     @Override
     public void commitTransaction() {
-        Mono.from(wrapped.commitTransaction()).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.commitTransaction()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void abortTransaction() {
-        Mono.from(wrapped.abortTransaction()).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.abortTransaction()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override

@@ -20,10 +20,37 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractExplainTest;
 import com.mongodb.client.MongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
+import org.junit.Test;
+
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
 
 public class ExplainTest extends AbstractExplainTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(MongoClients.create(
+                MongoClientSettings.builder(settings).contextProvider(CONTEXT_PROVIDER).build()
+        ));
+    }
+
+    @Test
+    @Override
+    public void testExplainOfFind() {
+        super.testExplainOfFind();
+        assertContextPassedThrough();
+    }
+
+    @Test
+    @Override
+    public void testExplainOfAggregateWithNewResponseStructure() {
+        super.testExplainOfAggregateWithNewResponseStructure();
+        assertContextPassedThrough();
+    }
+
+    @Test
+    @Override
+    public void testExplainOfAggregateWithOldResponseStructure() {
+        super.testExplainOfAggregateWithOldResponseStructure();
+        assertContextPassedThrough();
     }
 }

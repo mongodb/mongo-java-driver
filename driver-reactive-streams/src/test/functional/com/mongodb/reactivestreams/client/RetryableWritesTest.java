@@ -23,6 +23,9 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
+
 public class RetryableWritesTest extends AbstractRetryableWritesTest {
     public RetryableWritesTest(final String filename, final String description, final String databaseName, final BsonArray data,
                                final BsonDocument definition, final boolean skipTest) {
@@ -31,6 +34,14 @@ public class RetryableWritesTest extends AbstractRetryableWritesTest {
 
     @Override
     public MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(MongoClients.create(
+                MongoClientSettings.builder(settings).contextProvider(CONTEXT_PROVIDER).build()
+        ));
+    }
+
+    @Override
+    public void shouldPassAllOutcomes() {
+        super.shouldPassAllOutcomes();
+        assertContextPassedThrough(getDefinition());
     }
 }

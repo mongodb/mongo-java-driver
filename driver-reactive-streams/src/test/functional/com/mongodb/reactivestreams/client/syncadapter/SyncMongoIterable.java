@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.internal.BatchCursorPublisher;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 
 class SyncMongoIterable<T> implements MongoIterable<T> {
     private final Publisher<T> wrapped;
@@ -49,7 +51,7 @@ class SyncMongoIterable<T> implements MongoIterable<T> {
 
     @Override
     public T first() {
-        return Mono.from(wrapped).block(TIMEOUT_DURATION);
+        return Mono.from(((BatchCursorPublisher<T>) wrapped).first()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override

@@ -25,6 +25,7 @@ import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.Flux;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingDeque;
@@ -33,6 +34,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorClose;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorOpen;
 
@@ -50,7 +52,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
         this.batchSize = batchSize;
         CountDownLatch latch = new CountDownLatch(1);
         //noinspection ReactiveStreamsSubscriberImplementation
-        publisher.subscribe(new Subscriber<T>() {
+        Flux.from(publisher).contextWrite(CONTEXT).subscribe(new Subscriber<T>() {
             @Override
             public void onSubscribe(final Subscription s) {
                 subscription = s;
