@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 
 class SyncMongoIterable<T> implements MongoIterable<T> {
     private final Publisher<T> wrapped;
@@ -49,7 +50,7 @@ class SyncMongoIterable<T> implements MongoIterable<T> {
 
     @Override
     public T first() {
-        return Mono.from(wrapped).block(TIMEOUT_DURATION);
+        return Mono.from(wrapped).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override

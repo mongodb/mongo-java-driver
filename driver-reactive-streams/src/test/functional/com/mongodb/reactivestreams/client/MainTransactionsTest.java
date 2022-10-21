@@ -31,6 +31,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
+
 public class MainTransactionsTest extends AbstractMainTransactionsTest {
     public static final Set<String> SESSION_CLOSE_TIMING_SENSITIVE_TESTS = new HashSet<>(Collections.singletonList(
             "implicit abort"));
@@ -42,12 +45,20 @@ public class MainTransactionsTest extends AbstractMainTransactionsTest {
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(MongoClients.create(
+                MongoClientSettings.builder(settings).contextProvider(CONTEXT_PROVIDER).build()
+        ));
     }
 
     @Override
     protected StreamFactoryFactory getStreamFactoryFactory() {
         return ClusterFixture.getOverriddenStreamFactoryFactory();
+    }
+
+    @Override
+    public void shouldPassAllOutcomes() {
+        super.shouldPassAllOutcomes();
+        assertContextPassedThrough(getDefinition());
     }
 
     @Before

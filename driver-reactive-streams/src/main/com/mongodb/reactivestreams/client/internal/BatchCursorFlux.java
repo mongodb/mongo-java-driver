@@ -18,9 +18,11 @@ package com.mongodb.reactivestreams.client.internal;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.util.context.Context;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,6 +47,8 @@ class BatchCursorFlux<T> implements Publisher<T> {
                 if (calculateDemand(demand) > 0 && inProgress.compareAndSet(false, true)) {
                     if (batchCursor == null) {
                         int batchSize = calculateBatchSize(sink.requestedFromDownstream());
+                        Context initialContext =  subscriber instanceof CoreSubscriber<?> ?
+                                ((CoreSubscriber<?>) subscriber).currentContext() : null;
                         batchCursorPublisher.batchCursor(batchSize).subscribe(bc -> {
                             batchCursor = bc;
                             inProgress.set(false);
@@ -55,7 +59,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
                             } else {
                                 recurseCursor();
                             }
-                        }, sink::error);
+                        }, sink::error, null,  initialContext);
                     } else {
                         inProgress.set(false);
                         recurseCursor();
