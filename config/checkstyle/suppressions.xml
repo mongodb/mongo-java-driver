@@ -156,4 +156,6 @@
     <suppress checks="ParameterName" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]bench[\\/].*"/>
     <suppress checks="Regexp" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]bench[\\/].*"/>
 
+    <!-- Complicated expressions for demo purposes -->
+    <suppress checks="SimplifyBooleanExpressionCheck" files="ExpressionsFunctionalTest"/>
 </suppressions>

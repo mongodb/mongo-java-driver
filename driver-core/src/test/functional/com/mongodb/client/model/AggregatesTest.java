@@ -20,36 +20,21 @@ import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonDocument;
 import org.bson.Document;
-
-import java.util.Collections;
-import java.util.List;
-
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
-import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.unset;
+import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
 
-    private List<Bson> assertPipeline(final String stageAsString, final Bson stage) {
-        BsonDocument expectedStage = BsonDocument.parse(stageAsString);
-        List<Bson> pipeline = Collections.singletonList(stage);
-        assertEquals(expectedStage, pipeline.get(0).toBsonDocument(BsonDocument.class, getDefaultCodecRegistry()));
-        return pipeline;
-    }
 
-    private void assertResults(final List<Bson> pipeline, final String s) {
-        List<Document> expectedResults = parseToList(s);
-        List<Document> results = getCollectionHelper().aggregate(pipeline);
-        assertEquals(expectedResults, results);
-    }
 
     @Test
     public void testUnset() {
