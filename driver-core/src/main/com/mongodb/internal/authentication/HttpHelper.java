@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.authentication;
 
-import com.mongodb.MongoInternalException;
+import com.mongodb.MongoClientException;
 import com.mongodb.lang.NonNull;
 
 import java.io.BufferedReader;
@@ -41,9 +41,10 @@ final class HttpHelper {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(endpoint).openConnection();
+            conn.setConnectTimeout(1000);
+            conn.setReadTimeout(1000);
             conn.setRequestMethod(method);
-            conn.setReadTimeout(10000);
-            if (headers != null) {
+           if (headers != null) {
                 for (Map.Entry<String, String> kvp : headers.entrySet()) {
                     conn.setRequestProperty(kvp.getKey(), kvp.getValue());
                 }
@@ -61,7 +62,7 @@ final class HttpHelper {
                 }
             }
         } catch (IOException e) {
-            throw new MongoInternalException("Unexpected IOException", e);
+            throw new MongoClientException("Unexpected IOException from endpoint " + endpoint + ".", e);
         } finally {
             if (conn != null) {
                 conn.disconnect();

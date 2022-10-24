@@ -1445,12 +1445,27 @@ tasks:
               export GCPKMS_PROJECT=${GCPKMS_PROJECT}
               export GCPKMS_ZONE=${GCPKMS_ZONE}
               export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-              GCPKMS_CMD="MONGODB_URI='mongodb://localhost:27017' SUCCESS=true ./.evergreen/run-mongodb-fle-gcp-auto.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
+              GCPKMS_CMD="MONGODB_URI='mongodb://localhost:27017' PROVIDER="gcp" ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
 
-    - name: "testgcpkms-fail-task"
-      # testgcpkms-fail-task runs in a non-GCE environment.
-      # It is expected to fail to obtain GCE credentials.
+    - name: testazurekms-task
       commands:
+        - command: shell.exec
+          type: setup
+          params:
+            working_dir: src
+            shell: "bash"
+            script: |
+              ${PREPARE_SHELL}
+              echo "Copying files ... begin"
+              export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
+              export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
+              export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
+              tar czf /tmp/mongo-csharp-driver.tgz .
+              AZUREKMS_SRC=/tmp/mongo-csharp-driver.tgz AZUREKMS_DST="~/" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/copy-file.sh
+              echo "Copying files ... end"
+              echo "Untarring file ... begin"
+              AZUREKMS_CMD="tar xf mongo-csharp-driver.tgz" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+              echo "Untarring file ... end"
         - command: shell.exec
           type: test
           params:
@@ -1458,8 +1473,10 @@ tasks:
             shell: "bash"
             script: |
               ${PREPARE_SHELL}
-              MONGODB_URI='mongodb://localhost:27017' SUCCESS=false ./.evergreen/run-mongodb-fle-gcp-auto.sh
-
+              export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
+              export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
+              export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
+              AZUREKMS_CMD="MONGODB_URI='mongodb://localhost:27017' PROVIDER="azure" ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
 axes:
   - id: version
     display_name: MongoDB Version
@@ -1694,6 +1711,47 @@ task_groups:
             $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/delete-instance.sh
     tasks:
       - testgcpkms-task
+  - name: testazurekms_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - func: fix absolute paths
+      - func: make files executable
+      - command: shell.exec
+        params:
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            echo '${testazurekms_publickey}' > /tmp/testazurekms_publickey
+            echo '${testazurekms_privatekey}' > /tmp/testazurekms_privatekey
+            # Set 600 permissions on private key file. Otherwise ssh / scp may error with permissions "are too open".
+            chmod 600 /tmp/testazurekms_privatekey
+            export AZUREKMS_CLIENTID=${testazurekms_clientid}
+            export AZUREKMS_TENANTID=${testazurekms_tenantid}
+            export AZUREKMS_SECRET=${testazurekms_secret}
+            export AZUREKMS_DRIVERS_TOOLS=$DRIVERS_TOOLS
+            export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
+            export AZUREKMS_PUBLICKEYPATH=/tmp/testazurekms_publickey
+            export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
+            export AZUREKMS_SCOPE=${testazurekms_scope}
+            export AZUREKMS_VMNAME_PREFIX=JAVADRIVER
+            $DRIVERS_TOOLS/.evergreen/csfle/azurekms/create-and-setup-vm.sh
+      - command: expansions.update
+        params:
+          file: testazurekms-expansions.yml
+    teardown_group:
+      - command: shell.exec
+        params:
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
+            export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
+            $DRIVERS_TOOLS/.evergreen/csfle/azurekms/delete-vm.sh
+    tasks:
+      - testazurekms-task
 
 buildvariants:
 
@@ -1932,4 +1990,11 @@ buildvariants:
   tasks:
     - name: testgcpkms_task_group
       batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
-    - testgcpkms-fail-task
+
+- name: testazurekms-variant
+  display_name: "Azure KMS"
+  run_on:
+    - debian11-small
+  tasks:
+    - name: testazurekms_task_group
+      batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
