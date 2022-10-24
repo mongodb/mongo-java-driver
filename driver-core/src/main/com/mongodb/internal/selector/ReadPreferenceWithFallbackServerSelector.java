@@ -59,4 +59,13 @@ public class ReadPreferenceWithFallbackServerSelector implements ServerSelector 
                 .filter(serverDescription -> serverDescription.getState() == ServerConnectionState.CONNECTED)
                 .anyMatch(serverDescription -> serverDescription.getMaxWireVersion() < minWireVersion);
     }
+
+    @Override
+    public String toString() {
+        return "ReadPreferenceWithFallbackServerSelector{"
+                + "preferredReadPreference=" + preferredReadPreference
+                + ", fallbackReadPreference=" + fallbackReadPreference
+                + ", minWireVersionForPreferred=" + minWireVersion
+                + '}';
+    }
 }
