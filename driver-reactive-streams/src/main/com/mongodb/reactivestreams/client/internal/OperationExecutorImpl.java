@@ -167,7 +167,7 @@ public class OperationExecutorImpl implements OperationExecutor {
 
         final AsyncClusterAwareReadWriteBinding asyncReadWriteBinding = readWriteBinding;
         if (session != null) {
-            return new ClientSessionBinding(session.getWrapped(), ownsSession, asyncReadWriteBinding);
+            return new ClientSessionBinding(session, ownsSession, asyncReadWriteBinding);
         } else {
             return asyncReadWriteBinding;
         }

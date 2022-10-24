@@ -23,7 +23,6 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -33,6 +32,7 @@ import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -40,12 +40,11 @@ import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 
 public class ClientSessionBinding extends AbstractReferenceCounted implements AsyncReadWriteBinding {
     private final AsyncClusterAwareReadWriteBinding wrapped;
-    private final AsyncClientSession session;
+    private final ClientSession session;
     private final boolean ownsSession;
     private final ClientSessionContext sessionContext;
 
-    public  ClientSessionBinding(final AsyncClientSession session, final boolean ownsSession,
-                                 final AsyncClusterAwareReadWriteBinding wrapped) {
+    public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final AsyncClusterAwareReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped).retain();
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
@@ -239,9 +238,9 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
 
     private final class AsyncClientSessionContext extends ClientSessionContext implements SessionContext {
 
-        private final AsyncClientSession clientSession;
+        private final ClientSession clientSession;
 
-        AsyncClientSessionContext(final AsyncClientSession clientSession) {
+        AsyncClientSessionContext(final ClientSession clientSession) {
             super(clientSession);
             this.clientSession = clientSession;
         }

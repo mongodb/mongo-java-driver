@@ -27,7 +27,6 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.internal.IgnorableRequestContext
-import com.mongodb.internal.async.client.AsyncClientSession
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
@@ -35,12 +34,13 @@ import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.connection.Server
 import com.mongodb.internal.connection.ServerTuple
 import com.mongodb.internal.session.ClientSessionContext
+import com.mongodb.reactivestreams.client.ClientSession
 import spock.lang.Specification
 
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
-        def session = Stub(AsyncClientSession)
+        def session = Stub(ClientSession)
         def wrappedBinding = Stub(AsyncClusterAwareReadWriteBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
@@ -53,7 +53,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should return the session context from the connection source'() {
         given:
-        def session = Stub(AsyncClientSession)
+        def session = Stub(ClientSession)
         def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding) {
             getCluster() >> {
                 Mock(Cluster) {
@@ -99,7 +99,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should close client session when binding reference count drops to zero if it is owned by the binding'() {
         given:
-        def session = Mock(AsyncClientSession)
+        def session = Mock(ClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
         binding.retain()
@@ -119,7 +119,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should close client session when binding reference count drops to zero due to connection source if it is owned by the binding'() {
         given:
-        def session = Mock(AsyncClientSession)
+        def session = Mock(ClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
         def futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
@@ -150,7 +150,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should not close client session when binding reference count drops to zero if it is not owned by the binding'() {
         given:
-        def session = Mock(AsyncClientSession)
+        def session = Mock(ClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
         binding.retain()
@@ -170,7 +170,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'owned session is implicit'() {
         given:
-        def session = Mock(AsyncClientSession)
+        def session = Mock(ClientSession)
         def wrappedBinding = createStubBinding()
 
         when:
