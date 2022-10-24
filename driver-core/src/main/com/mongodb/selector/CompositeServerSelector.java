@@ -102,7 +102,7 @@ public final class CompositeServerSelector implements ServerSelector {
 
     @Override
     public String toString() {
-        return "{"
+        return "CompositeServerSelector{"
                + "serverSelectors=" + serverSelectors
                + '}';
     }
