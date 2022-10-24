@@ -41,12 +41,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.Aggregates.addFields;
 import static com.mongodb.client.model.expressions.Expressions.CURRENT;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * This test file groups expressions of each type under one test method. Each of
@@ -589,6 +591,8 @@ public class ExpressionsFunctionalTest extends OperationTest {
         stages.add(addFieldsStage);
         List<BsonDocument> results;
         if (getCollectionHelper().count() == 0) {
+            // TODO: replace documents stage for older versions of the server?
+            assumeTrue(serverVersionAtLeast(5, 1));
             BsonDocument document = new BsonDocument("val", new BsonString("#invalid string#"));
             Bson documentsStage = new BsonDocument("$documents", new BsonArray(Arrays.asList(document)));
             stages.add(0, documentsStage);
