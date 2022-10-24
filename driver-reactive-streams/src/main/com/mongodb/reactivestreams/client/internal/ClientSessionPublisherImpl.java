@@ -23,7 +23,6 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
@@ -43,7 +42,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements ClientSession, AsyncClientSession {
+final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements ClientSession {
 
     private final OperationExecutor executor;
     private TransactionState transactionState = TransactionState.NONE;
@@ -122,11 +121,6 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
         clearTransactionContext();
-    }
-
-    @Override
-    public AsyncClientSession getWrapped() {
-        return this;
     }
 
     @Override

@@ -18,7 +18,6 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.TransactionOptions;
-import com.mongodb.internal.async.client.AsyncClientSession;
 import org.reactivestreams.Publisher;
 
 /**
@@ -61,13 +60,6 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @return the transaction options
      */
     TransactionOptions getTransactionOptions();
-
-    /**
-     * For internal use only.
-     *
-     * @return the wrapped session
-     */
-    AsyncClientSession getWrapped();
 
     /**
      * Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is
