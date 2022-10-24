@@ -23,7 +23,6 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
@@ -123,24 +122,6 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
         clearTransactionContext();
-    }
-
-    @Override
-    public void commitTransaction(final SingleResultCallback<Void> callback) {
-        try {
-            Mono.from(commitTransaction()).subscribe(s -> callback.onResult(s, null), e -> callback.onResult(null, e));
-        } catch (Throwable t) {
-            callback.onResult(null, t);
-        }
-    }
-
-    @Override
-    public void abortTransaction(final SingleResultCallback<Void> callback) {
-        try {
-            Mono.from(abortTransaction()).subscribe(s -> callback.onResult(s, null), e -> callback.onResult(null, e));
-        } catch (Throwable t) {
-            callback.onResult(null, t);
-        }
     }
 
     @Override

@@ -17,7 +17,6 @@
 package com.mongodb.internal.async.client;
 
 import com.mongodb.TransactionOptions;
-import com.mongodb.internal.async.SingleResultCallback;
 
 /**
  * A client session that supports transactions.
@@ -47,38 +46,4 @@ public interface AsyncClientSession extends com.mongodb.session.ClientSession {
      * @return the transaction options
      */
     TransactionOptions getTransactionOptions();
-
-    /**
-     * Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is
-     * already an active transaction on this session.
-     *
-     * @mongodb.server.release 4.0
-     */
-    void startTransaction();
-
-    /**
-     * Start a transaction in the context of this session with the given transaction options. A transaction can not be started if there is
-     * already an active transaction on this session.
-     *
-     * @param transactionOptions the options to apply to the transaction
-     *
-     * @mongodb.server.release 4.0
-     */
-    void startTransaction(TransactionOptions transactionOptions);
-
-    /**
-     * Commit a transaction in the context of this session.  A transaction can only be commmited if one has first been started.
-     *
-     * @param callback the result callback
-     * @mongodb.server.release 4.0
-     */
-    void commitTransaction(SingleResultCallback<Void> callback);
-
-    /**
-     * Abort a transaction in the context of this session.  A transaction can only be aborted if one has first been started.
-     *
-     * @param callback the result callback
-     * @mongodb.server.release 4.0
-     */
-    void abortTransaction(SingleResultCallback<Void> callback);
 }
