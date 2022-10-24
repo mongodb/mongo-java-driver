@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.async.client;
+package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -23,6 +23,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;

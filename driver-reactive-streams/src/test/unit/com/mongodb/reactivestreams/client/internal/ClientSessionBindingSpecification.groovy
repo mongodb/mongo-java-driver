@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.async.client
+package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.async.client.AsyncClientSession
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
