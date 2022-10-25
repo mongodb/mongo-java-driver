@@ -87,6 +87,7 @@ afterEvaluate {
             'jnr.unixsocket.*;resolution:=optional',
             'com.mongodb.crypt.capi.*;resolution:=optional',
             'jdk.net.*;resolution:=optional', // Used by SocketStreamHelper & depends on JDK version
+            'org.bson.codecs.record.*;resolution:=optional', // Depends on JDK version
             '*' // import all that is not excluded or modified before
     ].join(',')
 }
