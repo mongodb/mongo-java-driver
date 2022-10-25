@@ -400,9 +400,15 @@ public final class MongoClientSettings {
         /**
          * Sets the codec registry
          *
+         * <p>The {@link CodecRegistry} configured by this method is effectively treated by the driver as an instance of
+         * {@link org.bson.codecs.configuration.CodecProvider}, which {@link CodecRegistry} extends. So there is no benefit to defining
+         * a class that implements {@link CodecRegistry}. Rather, an application should always create {@link CodecRegistry} instances
+         * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
+         *
          * @param codecRegistry the codec registry
          * @return this
          * @see MongoClientSettings#getCodecRegistry()
+         * @see org.bson.codecs.configuration.CodecRegistries
          */
         public Builder codecRegistry(final CodecRegistry codecRegistry) {
             this.codecRegistry = notNull("codecRegistry", codecRegistry);
