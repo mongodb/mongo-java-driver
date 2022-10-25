@@ -47,8 +47,8 @@ class BatchCursorFlux<T> implements Publisher<T> {
                 if (calculateDemand(demand) > 0 && inProgress.compareAndSet(false, true)) {
                     if (batchCursor == null) {
                         int batchSize = calculateBatchSize(sink.requestedFromDownstream());
-                        Context initialContext =  subscriber instanceof CoreSubscriber<?> ?
-                                ((CoreSubscriber<?>) subscriber).currentContext() : null;
+                        Context initialContext =  subscriber instanceof CoreSubscriber<?>
+                                ? ((CoreSubscriber<?>) subscriber).currentContext() : null;
                         batchCursorPublisher.batchCursor(batchSize).subscribe(bc -> {
                             batchCursor = bc;
                             inProgress.set(false);
