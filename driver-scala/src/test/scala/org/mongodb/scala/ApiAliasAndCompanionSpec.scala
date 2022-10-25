@@ -18,7 +18,7 @@ package org.mongodb.scala
 
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
-import org.reflections.util.{ClasspathHelper, ConfigurationBuilder, FilterBuilder}
+import org.reflections.util.{ ClasspathHelper, ConfigurationBuilder, FilterBuilder }
 import org.scalatest.Inspectors.forEvery
 
 import java.lang.reflect.Modifier._
