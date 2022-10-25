@@ -79,8 +79,14 @@ public interface MongoDatabase {
     /**
      * Create a new MongoDatabase instance with a different codec registry.
      *
+     * <p>The {@link CodecRegistry} configured by this method is effectively treated by the driver as an instance of
+     * {@link org.bson.codecs.configuration.CodecProvider}, which {@link CodecRegistry} extends. So there is no benefit to defining
+     * a class that implements {@link CodecRegistry}. Rather, an application should always create {@link CodecRegistry} instances
+     * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
+     *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the database
      * @return a new MongoDatabase instance with the different codec registry
+     * @see org.bson.codecs.configuration.CodecRegistries
      */
     MongoDatabase withCodecRegistry(CodecRegistry codecRegistry);
 

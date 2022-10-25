@@ -72,8 +72,15 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Create a new MongoDatabase instance with a different codec registry.
    *
+   * The { @link CodecRegistry} configured by this method is effectively treated by the driver as an
+   * instance of { @link CodecProvider}, which { @link CodecRegistry} extends.
+   * So there is no benefit to defining a class that implements { @link CodecRegistry}. Rather, an
+   * application should always create { @link CodecRegistry} instances using the factory methods in
+   * { @link CodecRegistries}.
+   *
    * @param codecRegistry the new { @link org.bson.codecs.configuration.CodecRegistry} for the collection
    * @return a new MongoDatabase instance with the different codec registry
+   * @see CodecRegistries
    */
   def withCodecRegistry(codecRegistry: CodecRegistry): MongoDatabase =
     MongoDatabase(wrapped.withCodecRegistry(codecRegistry))
