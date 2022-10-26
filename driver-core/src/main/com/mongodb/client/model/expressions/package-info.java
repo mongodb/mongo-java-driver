@@ -17,11 +17,8 @@
 /**
  * API for MQL expressions.
  *
- * <p>All undefined behaviour may become defined in the future.
+ * @see com.mongodb.client.model.expressions.Expression
  */
 @NonNullApi
-@Beta(Beta.Reason.CLIENT) // TODO beta until semi-functional
 package com.mongodb.client.model.expressions;
-
-import com.mongodb.annotations.Beta;
 import com.mongodb.lang.NonNullApi;

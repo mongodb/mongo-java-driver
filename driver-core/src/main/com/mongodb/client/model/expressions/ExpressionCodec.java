@@ -29,7 +29,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 @Immutable
-public final class ExpressionCodec implements Codec<Expression> {
+final class ExpressionCodec implements Codec<Expression> {
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final CodecRegistry codecRegistry;
