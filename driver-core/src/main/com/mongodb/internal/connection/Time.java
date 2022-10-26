@@ -16,7 +16,11 @@
 
 package com.mongodb.internal.connection;
 
-// to enable unit testing of classes that rely on System.nanoTime
+/**
+ * To enable unit testing of classes that rely on System.nanoTime
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class Time {
     static final long CONSTANT_TIME = 42;
 

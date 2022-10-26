@@ -16,6 +16,9 @@
 
 package com.mongodb.client.internal;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ClientSessionClock {
     public static final ClientSessionClock INSTANCE = new ClientSessionClock(0L);
 

@@ -24,7 +24,7 @@ import static java.lang.String.format;
 /**
  * A field name validator for update documents.  It ensures that all top-level fields start with a '$'.
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
     private int numFields = 0;

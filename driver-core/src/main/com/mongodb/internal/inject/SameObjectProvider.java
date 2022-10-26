@@ -24,6 +24,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 @ThreadSafe
 public final class SameObjectProvider<T> implements Provider<T> {
     private final AtomicReference<T> object;

@@ -82,6 +82,9 @@ import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 @NotThreadSafe
 public class InternalStreamConnection implements InternalConnection {
 

@@ -35,11 +35,6 @@ class BsonArrayWrapper<T> extends BsonArray {
         this.wrappedArray = notNull("wrappedArray", wrappedArray);
     }
 
-    /**
-     * Get the wrapped array.
-     *
-     * @return the wrapped array
-     */
     public List<T> getWrappedArray() {
         return wrappedArray;
     }

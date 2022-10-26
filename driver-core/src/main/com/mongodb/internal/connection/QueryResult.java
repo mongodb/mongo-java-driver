@@ -25,8 +25,7 @@ import java.util.List;
 /**
  * A batch of query results.
  *
- * @param <T> the type of document to decode query results to
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class QueryResult<T> {
     private final MongoNamespace namespace;

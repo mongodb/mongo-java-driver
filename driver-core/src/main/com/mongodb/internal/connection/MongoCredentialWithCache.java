@@ -24,6 +24,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.internal.Locks.withLock;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class MongoCredentialWithCache {
     private final MongoCredential credential;
     private final Cache cache;

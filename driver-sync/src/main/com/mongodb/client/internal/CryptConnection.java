@@ -51,7 +51,6 @@ import java.util.Map;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
-// because this class implements deprecated methods
 class CryptConnection implements Connection {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final int MAX_SPLITTABLE_DOCUMENT_SIZE = 2097152;

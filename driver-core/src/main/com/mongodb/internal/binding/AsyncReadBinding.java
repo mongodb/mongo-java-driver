@@ -26,7 +26,7 @@ import com.mongodb.lang.Nullable;
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface AsyncReadBinding extends ReferenceCounted {
     /**
@@ -40,7 +40,6 @@ public interface AsyncReadBinding extends ReferenceCounted {
      *
      * @return the session context, which may not be null
      *
-     * @since 3.6
      */
     SessionContext getSessionContext();
 

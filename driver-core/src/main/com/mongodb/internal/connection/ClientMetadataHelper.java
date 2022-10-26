@@ -32,6 +32,9 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ClientMetadataHelper {
     public static final BsonDocument CLIENT_METADATA_DOCUMENT = new BsonDocument();
 

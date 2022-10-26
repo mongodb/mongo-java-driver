@@ -21,9 +21,6 @@ import com.mongodb.internal.connection.QueryResult;
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
  * from the operation, and also provides access to the statistics returned in the results.
- *
- * @param <T> the operations result type.
- * @since 3.0
  */
 class MapReduceInlineResultsAsyncCursor<T> extends AsyncSingleBatchQueryCursor<T> implements MapReduceAsyncBatchCursor<T> {
 

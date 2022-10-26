@@ -29,10 +29,8 @@ import java.util.Map;
 
 /**
  * Utility class for working with HTTP servers.
- *
- * <p>This class should not be considered a part of the public API.</p>
  */
-public final class HttpHelper {
+final class HttpHelper {
 
     private HttpHelper() {
     }

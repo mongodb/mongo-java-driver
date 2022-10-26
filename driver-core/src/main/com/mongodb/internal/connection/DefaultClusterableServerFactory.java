@@ -36,6 +36,9 @@ import java.util.List;
 import static com.mongodb.internal.event.EventListenerHelper.singleServerListener;
 import static java.util.Collections.emptyList;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;

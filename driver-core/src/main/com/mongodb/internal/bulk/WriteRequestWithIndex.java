@@ -16,6 +16,9 @@
 
 package com.mongodb.internal.bulk;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class WriteRequestWithIndex {
     private final int index;
     private final WriteRequest writeRequest;

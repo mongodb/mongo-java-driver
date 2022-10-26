@@ -65,8 +65,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
 /**
  * An operation that creates one or more indexes.
  *
- * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
@@ -75,56 +74,24 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private long maxTimeMS;
     private CreateIndexCommitQuorum commitQuorum;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace     the database and collection namespace for the operation.
-     * @param requests the index request
-     */
     public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests) {
         this(namespace, requests, null);
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace     the database and collection namespace for the operation.
-     * @param requests the index request
-     * @param writeConcern the write concern
-     *
-     * @since 3.4
-     */
     public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern, which may be null
-     *
-     * @since 3.4
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    /**
-     * Gets the index requests.
-     *
-     * @return the index requests
-     */
     public List<IndexRequest> getRequests() {
         return requests;
     }
 
-    /**
-     * Gets the index names.
-     *
-     * @return a list of index names
-     */
     public List<String> getIndexNames() {
         List<String> indexNames = new ArrayList<String>(requests.size());
         for (IndexRequest request : requests) {
@@ -137,26 +104,11 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return indexNames;
     }
 
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @since 3.6
-     */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @since 3.6
-     */
     public CreateIndexesOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxTime >= 0", maxTime >= 0);
@@ -164,23 +116,10 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return this;
     }
 
-    /**
-     * Gets the create index commit quorum.
-     *
-     * @return the create index commit quorum
-     * @since 4.1
-     */
     public CreateIndexCommitQuorum getCommitQuorum() {
         return commitQuorum;
     }
 
-    /**
-     * Sets the create index commit quorum.
-     *
-     * @param commitQuorum the create index commit quorum
-     * @return this
-     * @since 4.1
-     */
     public CreateIndexesOperation commitQuorum(final CreateIndexCommitQuorum commitQuorum) {
         this.commitQuorum = commitQuorum;
         return this;

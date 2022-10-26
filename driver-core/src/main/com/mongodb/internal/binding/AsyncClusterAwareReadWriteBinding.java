@@ -21,7 +21,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.Cluster;
 
 /**
- * This interface is not part of the public API and may be removed or changed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface AsyncClusterAwareReadWriteBinding extends AsyncReadWriteBinding {
     Cluster getCluster();

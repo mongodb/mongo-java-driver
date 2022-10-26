@@ -22,14 +22,8 @@ import com.mongodb.internal.async.AsyncBatchCursor;
  * Represents the future results of a map-reduce operation as a cursor.  Users can iterate over the results and additionally get relevant
  * statistics about the operation.
  *
- * @param <T> the type of each result, usually some sort of document.
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface MapReduceAsyncBatchCursor<T> extends AsyncBatchCursor<T> {
-    /**
-     * Get the statistics for this map-reduce operation
-     *
-     * @return the statistics
-     */
     MapReduceStatistics getStatistics();
 }

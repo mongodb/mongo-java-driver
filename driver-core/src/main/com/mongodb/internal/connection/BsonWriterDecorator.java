@@ -27,6 +27,9 @@ import org.bson.types.ObjectId;
 
 import static org.bson.assertions.Assertions.notNull;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class BsonWriterDecorator implements BsonWriter {
     private final BsonWriter bsonWriter;
 

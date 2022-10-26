@@ -17,9 +17,9 @@
 package com.mongodb.internal.client.model;
 
 /**
- * The aggregation level
+ * The aggregation level where an aggregation command should take place.
  *
- * Where an aggregation command should take place.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public enum AggregationLevel {
 

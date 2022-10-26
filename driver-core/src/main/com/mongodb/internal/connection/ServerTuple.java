@@ -18,6 +18,9 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ServerDescription;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ServerTuple {
     private final Server server;
     private final ServerDescription serverDescription;

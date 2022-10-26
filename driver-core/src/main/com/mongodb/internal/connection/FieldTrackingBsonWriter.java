@@ -25,10 +25,14 @@ import org.bson.BsonWriter;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
-// Helper class to help determine when an update document contains any fields
-// It's an imperfect check because we can't tell if the pipe method ended up writing any fields.
-// For the purposes of the check, it's better to assume that pipe does end up writing a field, in order to avoid
-// incorrectly reporting an error any time pipe is used
+/**
+ * Helper class to help determine when an update document contains any fields
+ * It's an imperfect check because we can't tell if the pipe method ended up writing any fields.
+ * For the purposes of the check, it's better to assume that pipe does end up writing a field, in order to avoid
+ * incorrectly reporting an error any time pipe is used.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class FieldTrackingBsonWriter extends BsonWriterDecorator {
 
     private boolean hasWrittenField;

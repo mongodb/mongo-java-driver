@@ -58,7 +58,7 @@ import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
- * This class is NOT part of the public API. It may change at any time without notification.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class ProtocolHelper {
     private static final Logger PROTOCOL_EVENT_LOGGER = Loggers.getLogger("protocol.event");

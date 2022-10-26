@@ -24,8 +24,7 @@ import java.util.List;
  * the {@code next} method will return the first batch, and subsequent calls will trigger an asynchronous request to get the next batch
  * of results.  Clients can control the batch size by setting the {@code batchSize} property between calls to {@code next}.
  *
- * @param <T> The type of documents the cursor contains
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface AsyncBatchCursor<T> extends Closeable {
     /**

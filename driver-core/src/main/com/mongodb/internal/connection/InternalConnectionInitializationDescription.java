@@ -19,6 +19,9 @@ package com.mongodb.internal.connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class InternalConnectionInitializationDescription {
     private final ConnectionDescription connectionDescription;
     private final ServerDescription serverDescription;

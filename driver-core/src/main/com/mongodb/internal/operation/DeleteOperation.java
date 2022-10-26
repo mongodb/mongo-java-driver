@@ -29,34 +29,11 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An operation that deletes one or more documents from a collection.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DeleteOperation extends BaseWriteOperation {
     private final List<DeleteRequest> deleteRequests;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace      the database and collection namespace for the operation.
-     * @param ordered        whether the writes are ordered.
-     * @param writeConcern   the write concern for the operation.
-     * @param deleteRequests the remove requests.
-     */
-    public DeleteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<DeleteRequest> deleteRequests) {
-        this(namespace, ordered, writeConcern, false, deleteRequests);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param namespace      the database and collection namespace for the operation.
-     * @param ordered        whether the writes are ordered.
-     * @param writeConcern   the write concern for the operation.
-     * @param retryWrites   if writes should be retried if they fail due to a network error.
-     * @param deleteRequests the remove requests.
-     * @since 3.6
-     */
     public DeleteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
         super(namespace, ordered, writeConcern, retryWrites);
@@ -64,11 +41,6 @@ public class DeleteOperation extends BaseWriteOperation {
         isTrueArgument("deleteRequests not empty", !deleteRequests.isEmpty());
     }
 
-    /**
-     * Gets the list of remove requests.
-     *
-     * @return the remove requests
-     */
     public List<DeleteRequest> getDeleteRequests() {
         return deleteRequests;
     }

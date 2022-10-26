@@ -70,7 +70,9 @@ import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
-
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class BulkWriteBatch {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final Decoder<BsonDocument> DECODER = REGISTRY.get(BsonDocument.class);

@@ -48,6 +48,9 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Void> {
 
     private static final Document PROJECTION = new Document("_id", 1);

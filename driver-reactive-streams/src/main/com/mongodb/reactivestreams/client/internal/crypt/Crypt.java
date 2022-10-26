@@ -48,6 +48,9 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class Crypt implements Closeable {
     private static final RawBsonDocument EMPTY_RAW_BSON_DOCUMENT = RawBsonDocument.parse("{}");
     private static final Logger LOGGER = Loggers.getLogger("client");

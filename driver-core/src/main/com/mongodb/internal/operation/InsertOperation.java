@@ -29,34 +29,11 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An operation that inserts one or more documents into a collection.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class InsertOperation extends BaseWriteOperation {
     private final List<InsertRequest> insertRequests;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace         the database and collection namespace for the operation.
-     * @param ordered           whether the inserts are ordered.
-     * @param writeConcern      the write concern for the operation.
-     * @param insertRequests    the list of inserts.
-     */
-    public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<InsertRequest> insertRequests) {
-        this(namespace, ordered, writeConcern, false, insertRequests);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param ordered whether the inserts are ordered.
-     * @param writeConcern the write concern for the operation.
-     * @param retryWrites   if writes should be retried if they fail due to a network error.
-     * @param insertRequests the list of inserts.
-     * @since 3.6
-     */
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final boolean retryWrites, final List<InsertRequest> insertRequests) {
         super(namespace, ordered, writeConcern, retryWrites);
@@ -65,11 +42,6 @@ public class InsertOperation extends BaseWriteOperation {
     }
 
 
-    /**
-     * Gets the list of insert requests.
-     *
-     * @return the list of insert requests.
-     */
     public List<InsertRequest> getInsertRequests() {
         return insertRequests;
     }

@@ -22,6 +22,9 @@ import com.mongodb.internal.dns.DefaultDnsResolver;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class DefaultDnsSrvRecordMonitorFactory implements DnsSrvRecordMonitorFactory {
 
     // JNDI doesn't provide the TTL for DNS records, so we have to hard-code it

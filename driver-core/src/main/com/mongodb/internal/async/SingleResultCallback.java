@@ -21,8 +21,7 @@ import com.mongodb.internal.async.function.AsyncCallbackFunction;
 /**
  * An interface to describe the completion of an asynchronous function, which may be represented as {@link AsyncCallbackFunction}.
  *
- * @param <T> The type of a successful result. A failed result is of the {@link Throwable} type.
- * @see AsyncCallbackFunction
+ *<p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface SingleResultCallback<T> {
     /**

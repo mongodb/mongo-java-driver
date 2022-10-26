@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
  * applications that neglect to close the client will not exit.
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DaemonThreadFactory implements ThreadFactory {
     private static final AtomicInteger POOL_NUMBER = new AtomicInteger(1);

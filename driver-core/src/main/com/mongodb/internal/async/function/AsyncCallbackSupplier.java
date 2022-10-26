@@ -26,6 +26,8 @@ import java.util.function.Supplier;
  * Any asynchronous callback function with parameters may be represented this way by partially applying the function to its parameters
  * until no parameters are left unapplied, and only a callback is left to be consumed.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @param <R> See {@link AsyncCallbackFunction}.
  * @see AsyncCallbackFunction
  */

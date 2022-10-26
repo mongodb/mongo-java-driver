@@ -31,8 +31,7 @@ import static java.lang.String.format;
 /**
  * An OP_REPLY message.
  *
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-reply OP_REPLY
- * @param <T> the type of the result document
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ReplyMessage<T> {
 

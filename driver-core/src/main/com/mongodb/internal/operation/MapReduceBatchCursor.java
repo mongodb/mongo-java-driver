@@ -20,14 +20,8 @@ package com.mongodb.internal.operation;
  * Represents the results of a map-reduce operation as a cursor.  Users can iterate over the results and additionally get relevant
  * statistics about the operation.
  *
- * @param <T> the operations result type.
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface MapReduceBatchCursor<T> extends BatchCursor<T> {
-    /**
-     * Get the statistics for this map-reduce operation
-     *
-     * @return the statistics
-     */
     MapReduceStatistics getStatistics();
 }

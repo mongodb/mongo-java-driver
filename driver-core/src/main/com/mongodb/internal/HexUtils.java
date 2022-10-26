@@ -21,7 +21,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class HexUtils {
     /**

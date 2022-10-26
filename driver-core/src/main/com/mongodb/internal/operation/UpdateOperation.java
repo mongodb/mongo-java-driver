@@ -29,34 +29,11 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An operation that updates a document in a collection.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class UpdateOperation extends BaseWriteOperation {
     private final List<UpdateRequest> updates;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace     the database and collection namespace for the operation.
-     * @param ordered       whether the updates are ordered.
-     * @param writeConcern  the write concern for the operation.
-     * @param updates       the update requests.
-     */
-    public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<UpdateRequest> updates) {
-        this(namespace, ordered, writeConcern, false, updates);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param ordered whether the updates are ordered.
-     * @param writeConcern the write concern for the operation.
-     * @param retryWrites   if writes should be retried if they fail due to a network error.
-     * @param updates the update requests.
-     * @since 3.6
-     */
     public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final boolean retryWrites, final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern, retryWrites);
@@ -64,11 +41,6 @@ public class UpdateOperation extends BaseWriteOperation {
         isTrueArgument("updateRequests not empty", !updates.isEmpty());
     }
 
-    /**
-     * Gets the list of update requests.
-     *
-     * @return the update requests
-     */
     public List<UpdateRequest> getUpdateRequests() {
         return updates;
     }

@@ -47,6 +47,9 @@ import java.util.concurrent.atomic.LongAdder;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ServerSessionPool {
     private final ConcurrentLinkedDeque<ServerSessionImpl> available = new ConcurrentLinkedDeque<>();
     private final Cluster cluster;

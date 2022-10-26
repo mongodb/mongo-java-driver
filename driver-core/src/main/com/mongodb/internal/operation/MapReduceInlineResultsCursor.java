@@ -23,8 +23,6 @@ import org.bson.codecs.Decoder;
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
  * from the operation, and also provides access to the statistics returned in the results.
- *
- * @param <T> the operations result type.
  */
 class MapReduceInlineResultsCursor<T> extends QueryBatchCursor<T> implements MapReduceBatchCursor<T> {
     private final MapReduceStatistics statistics;

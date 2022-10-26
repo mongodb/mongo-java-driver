@@ -25,13 +25,9 @@ import com.mongodb.lang.Nullable;
 /**
  * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface ReadBinding extends ReferenceCounted {
-    /**
-     * The read preference that all connection sources returned by this instance will satisfy.
-     * @return the non-null read preference
-     */
     ReadPreference getReadPreference();
 
     /**
@@ -52,13 +48,6 @@ public interface ReadBinding extends ReferenceCounted {
      */
     ConnectionSource getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference);
 
-    /**
-     * Gets the session context for this binding.
-     *
-     * @return the session context, which may not be null
-     *
-     * @since 3.6
-     */
     SessionContext getSessionContext();
 
     @Nullable

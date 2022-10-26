@@ -48,6 +48,9 @@ import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataK
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ClientEncryptionImpl implements ClientEncryption, Closeable {
     private final Crypt crypt;
     private final ClientEncryptionSettings options;

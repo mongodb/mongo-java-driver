@@ -22,6 +22,9 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ClusterClockAdvancingSessionContext implements SessionContext {
 
     private final SessionContext wrapped;

@@ -23,6 +23,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.internal.Locks.withLock;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ClusterClock {
     private static final String CLUSTER_TIME_KEY = "clusterTime";
     private final ReentrantLock lock = new ReentrantLock();

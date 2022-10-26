@@ -49,7 +49,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 /**
  * Abstract base class for write operations.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult> {
     private final WriteConcern writeConcern;
@@ -59,26 +59,6 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     private Boolean bypassDocumentValidation;
     private BsonValue comment;
 
-    /**
-     * Construct an instance
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param ordered      whether the writes are ordered.
-     * @param writeConcern the write concern for the operation.
-     */
-    public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
-        this(namespace, ordered, writeConcern, false);
-    }
-
-    /**
-     * Construct an instance
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param ordered      whether the writes are ordered.
-     * @param writeConcern the write concern for the operation.
-     * @param retryWrites   if writes should be retried if they fail due to a network error.
-     * @since 3.6
-     */
     public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                               final boolean retryWrites) {
         this.ordered = ordered;
@@ -91,74 +71,31 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     protected abstract WriteRequest.Type getType();
 
-    /**
-     * Gets the namespace of the collection to write to.
-     *
-     * @return the namespace
-     */
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
-    /**
-     * Gets the write concern to apply
-     *
-     * @return the write concern
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    /**
-     * Gets whether the writes are ordered.  If true, no more writes will be executed after the first failure.
-     *
-     * @return whether the writes are ordered
-     */
     public boolean isOrdered() {
         return ordered;
     }
 
-    /**
-     * Gets the bypass document level validation flag
-     *
-     * @return the bypass document level validation flag
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
 
-    /**
-     * Sets the bypass document level validation flag.
-     *
-     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
-     * @return this
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
     public BaseWriteOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
-    /**
-     * @return the comment for this operation. A null value means no comment is set.
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public BsonValue getComment() {
         return comment;
     }
 
-    /**
-     * Sets the comment for this operation. A null value means no comment is set.
-     *
-     * @param comment the comment
-     * @return this
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public BaseWriteOperation comment(final BsonValue comment) {
         this.comment = comment;
         return this;

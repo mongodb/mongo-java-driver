@@ -34,21 +34,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * An operation that atomically finds and deletes a single document.
  *
- * @param <T> the operations result type.
- * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param retryWrites  if writes should be retried if they fail due to a network error.
-     * @param decoder      the decoder for the result documents.
-     * @since 3.6
-     */
     public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
                                   final Decoder<T> decoder) {
         super(namespace, writeConcern, retryWrites, decoder);
