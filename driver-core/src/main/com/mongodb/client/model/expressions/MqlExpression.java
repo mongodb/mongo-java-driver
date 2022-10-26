@@ -37,7 +37,7 @@ public class MqlExpression<T extends Expression>
     /**
      * Exposes the evaluated BsonValue so that expressions may be used in
      * aggregations. Non-public, as it is intended to be used only by the
-     * {@link ExpressionCodec}.
+     * {@link MqlExpressionCodec}.
      */
     BsonValue toBsonValue(final CodecRegistry codecRegistry) {
         return fn.apply(codecRegistry);

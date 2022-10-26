@@ -31,18 +31,14 @@ import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.Aggregates.addFields;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * This test file groups expressions of each type under one test method. Each of
@@ -50,7 +46,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * The ensuing assertions then show how to express the computation in Java (when
  * reasonable), then using the API under test, and then in MQL.
  */
-public abstract class ExpressionsFunctionalTest extends OperationTest {
+public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
 
     @BeforeEach
     public void setUp() {

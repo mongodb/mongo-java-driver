@@ -28,8 +28,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
+@SuppressWarnings("rawtypes")
 @Immutable
-final class ExpressionCodec implements Codec<Expression> {
+final class MqlExpressionCodec implements Codec<MqlExpression> {
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final CodecRegistry codecRegistry;
@@ -37,7 +38,7 @@ final class ExpressionCodec implements Codec<Expression> {
     /**
      * Creates a new instance initialised with the default codec registry.
      */
-    public ExpressionCodec() {
+    MqlExpressionCodec() {
         this(DEFAULT_REGISTRY);
     }
 
@@ -46,25 +47,25 @@ final class ExpressionCodec implements Codec<Expression> {
      *
      * @param codecRegistry the {@code CodecRegistry} to use to look up the codecs for encoding and decoding to/from BSON
      */
-    public ExpressionCodec(final CodecRegistry codecRegistry) {
+    MqlExpressionCodec(final CodecRegistry codecRegistry) {
         this.codecRegistry = codecRegistry;
     }
 
     @Override
-    public Expression decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public MqlExpression decode(final BsonReader reader, final DecoderContext decoderContext) {
         throw new UnsupportedOperationException("Decoding to an expression is not supported");
     }
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void encode(final BsonWriter writer, final Expression value, final EncoderContext encoderContext) {
-        BsonValue bsonValue = ((MqlExpression) value).toBsonValue(codecRegistry);
+    public void encode(final BsonWriter writer, final MqlExpression value, final EncoderContext encoderContext) {
+        BsonValue bsonValue = value.toBsonValue(codecRegistry);
         Codec codec = codecRegistry.get(bsonValue.getClass());
         codec.encode(writer, bsonValue, encoderContext);
     }
 
     @Override
-    public Class<Expression> getEncoderClass() {
-        return Expression.class;
+    public Class<MqlExpression> getEncoderClass() {
+        return MqlExpression.class;
     }
 }

@@ -22,13 +22,13 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 @Immutable
-public class ExpressionCodecProvider implements CodecProvider {
+public class MqlExpressionCodecProvider implements CodecProvider {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         // TODO: should this be MqlExpression.class?
         if (Expression.class.isAssignableFrom(clazz)) {
-            return (Codec<T>) new ExpressionCodec(registry);
+            return (Codec<T>) new MqlExpressionCodec(registry);
         }
         return null;
     }
