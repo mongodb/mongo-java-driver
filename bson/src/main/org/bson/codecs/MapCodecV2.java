@@ -34,8 +34,8 @@ import static org.bson.codecs.ContainerCodecHelper.getCodec;
  * A parameterized Codec for {@code Map<String, Object>}.
  *
  * <p>Supports {@link Map}, {@link java.util.NavigableMap}, {@link java.util.AbstractMap} or any concrete class that implements {@code
- * Map} and has a public no-args constructor. If the generic type is {@code Map<String, Object>}, it constructs
- * {@code HashMap<String, Object>} instances when decoding. If the generic type is {@code NavigableMap<String, Object>}, it constructs
+ * Map} and has a public no-args constructor. If the type argument is {@code Map<String, Object>}, it constructs
+ * {@code HashMap<String, Object>} instances when decoding. If the type argument is {@code NavigableMap<String, Object>}, it constructs
  * {@code TreeMap<String, Object>} instances when decoding.</p>
  *
  * <p>Replaces the now deprecated {@link MapCodec}.</p>
