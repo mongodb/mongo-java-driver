@@ -28,6 +28,7 @@ import spock.lang.Unroll
 
 import java.lang.reflect.ParameterizedType
 import java.time.Instant
+import java.util.concurrent.CopyOnWriteArrayList
 
 import static org.bson.BsonDocument.parse
 import static org.bson.UuidRepresentation.C_SHARP_LEGACY
@@ -61,18 +62,19 @@ class CollectionCodecSpecification extends Specification {
         collection.getClass() == decodedType
 
         where:
-        collectionType     | decodedType
-        Collection         | ArrayList
-        List               | ArrayList
-        AbstractList       | ArrayList
-        AbstractCollection | ArrayList
-        ArrayList          | ArrayList
-        Set                | HashSet
-        AbstractSet        | HashSet
-        HashSet            | HashSet
-        NavigableSet       | TreeSet
-        SortedSet          | TreeSet
-        TreeSet            | TreeSet
+        collectionType       | decodedType
+        Collection           | ArrayList
+        List                 | ArrayList
+        AbstractList         | ArrayList
+        AbstractCollection   | ArrayList
+        ArrayList            | ArrayList
+        Set                  | HashSet
+        AbstractSet          | HashSet
+        HashSet              | HashSet
+        NavigableSet         | TreeSet
+        SortedSet            | TreeSet
+        TreeSet              | TreeSet
+        CopyOnWriteArrayList | CopyOnWriteArrayList
     }
 
     def 'should encode a Collection to a BSON array'() {
