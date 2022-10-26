@@ -37,9 +37,9 @@ import static org.bson.codecs.ContainerCodecHelper.getCodec;
  * {@link java.util.Set}, {@link java.util.NavigableSet}, {@link java.util.SortedSet}, {@link java.util.AbstractSet} or any
  * concrete class that implements {@code Collection} and has a public no-args constructor. If the generic type is
  * {@code Collection<Object>}, {@code List<Object>}, {@code AbstractCollection<Object>}, or {@code AbstractList<Object>},
- * it constructs {@code ArrayList<Object} instances when decoding. If the generic type is {@code Set<Object} or
- * {@code AbstractSet<Object}, it constructs {@code HashSet<Object} instances when decoding. If the generic type is
- * {@code NavigableSet <Object} or {@code SortedSet<Object}, it constructs {@code TreeSet<Object} instances when decoding.</p>
+ * it constructs {@code ArrayList<Object>} instances when decoding. If the generic type is {@code Set<Object>} or
+ * {@code AbstractSet<Object>}, it constructs {@code HashSet<Object>} instances when decoding. If the generic type is
+ * {@code NavigableSet<Object>} or {@code SortedSet<Object>}, it constructs {@code TreeSet<Object>} instances when decoding.</p>
  *
  * <p>Replaces the now deprecated {@link IterableCodec}.</p>
  *

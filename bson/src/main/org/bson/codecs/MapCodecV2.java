@@ -27,18 +27,16 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.ContainerCodecHelper.getCodec;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A parameterized Codec for {@code Map<String, Object>}.
  *
  * <p>Supports {@link Map}, {@link java.util.NavigableMap}, {@link java.util.AbstractMap} or any concrete class that implements {@code
- * Map} and has a public no-args constructor. If the generic type is {@code Map<String, Object}, it constructs
- * {@code HashMap<String, Object} instances when decoding. If the generic type is {@code NavigableMap<String, Object}, it constructs
- * {@code TreeMap<String, Object} instances when decoding.</p>
+ * Map} and has a public no-args constructor. If the generic type is {@code Map<String, Object>}, it constructs
+ * {@code HashMap<String, Object>} instances when decoding. If the generic type is {@code NavigableMap<String, Object>}, it constructs
+ * {@code TreeMap<String, Object>} instances when decoding.</p>
  *
  * <p>Replaces the now deprecated {@link MapCodec}.</p>
  *
@@ -48,16 +46,12 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 final class MapCodecV2<M extends Map<String, Object>> extends AbstractMapCodec<Object, M>
         implements OverridableUuidRepresentationCodec<M>, Parameterizable {
 
-    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
-            new DocumentCodecProvider(), new CollectionCodecProvider(), new MapCodecProvider()));
-    private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final CodecRegistry registry;
     private final Transformer valueTransformer;
     private final UuidRepresentation uuidRepresentation;
 
     /**
-     /**
      * Construct a new instance with the given registry and BSON type class map. The transformer is applied as a last step when decoding
      * values, which allows users of this codec to control the decoding process.  For example, a user of this class could substitute a
      * value decoded as a Document with an instance of a special purpose class (e.g., one representing a DBRef in MongoDB).

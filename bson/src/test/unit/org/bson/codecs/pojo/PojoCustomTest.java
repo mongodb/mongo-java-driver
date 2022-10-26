@@ -104,7 +104,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("deprecated")
+@SuppressWarnings("deprecation")
 public final class PojoCustomTest extends PojoTestCase {
 
     @Test
@@ -484,7 +484,6 @@ public final class PojoCustomTest extends PojoTestCase {
                 model, "{'optionalField': null}");
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testMapStringObjectModel() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
@@ -493,7 +492,6 @@ public final class PojoCustomTest extends PojoTestCase {
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
     }
 
-    @SuppressWarnings("deprecation")
     @Test(expected = UnsupportedOperationException.class)
     public void testMapStringObjectModelWithObjectCodec() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));

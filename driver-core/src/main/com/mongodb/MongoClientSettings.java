@@ -115,6 +115,7 @@ public final class MongoClientSettings {
      * <li>{@link com.mongodb.DBObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
      * <li>{@link org.bson.codecs.CollectionCodecProvider}</li>
+     * <li>{@link org.bson.codecs.IterableCodecProvider}</li>
      * <li>{@link org.bson.codecs.MapCodecProvider}</li>
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
