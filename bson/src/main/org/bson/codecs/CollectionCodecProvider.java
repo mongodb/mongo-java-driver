@@ -107,9 +107,7 @@ public class CollectionCodecProvider implements CodecProvider {
 
     @Override
     public int hashCode() {
-        int result = bsonTypeClassMap.hashCode();
-        result = 31 * result + (valueTransformer != null ? valueTransformer.hashCode() : 0);
-        return result;
+        return Objects.hash(bsonTypeClassMap, valueTransformer);
     }
 
     @Override
