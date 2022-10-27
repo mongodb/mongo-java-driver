@@ -85,7 +85,7 @@ final class MqlExpression<T extends Expression>
      * extend Expression or its subtypes, so MqlExpression will implement any R.
      */
     @SuppressWarnings("unchecked")
-    private <R extends Expression> R assertImplementsAllExpressions() {
+    <R extends Expression> R assertImplementsAllExpressions() {
         return (R) this;
     }
 
@@ -119,6 +119,38 @@ final class MqlExpression<T extends Expression>
         return newMqlExpression(ast("$cond", left, right));
     }
 
+
+    /** @see Expression */
+
+    @Override
+    public BooleanExpression eq(final Expression eq) {
+        return new MqlExpression<>(ast("$eq", eq));
+    }
+
+    @Override
+    public BooleanExpression ne(final Expression ne) {
+        return new MqlExpression<>(ast("$ne", ne));
+    }
+
+    @Override
+    public BooleanExpression gt(final Expression gt) {
+        return new MqlExpression<>(ast("$gt", gt));
+    }
+
+    @Override
+    public BooleanExpression gte(final Expression gte) {
+        return new MqlExpression<>(ast("$gte", gte));
+    }
+
+    @Override
+    public BooleanExpression lt(final Expression lt) {
+        return new MqlExpression<>(ast("$lt", lt));
+    }
+
+    @Override
+    public BooleanExpression lte(final Expression lte) {
+        return new MqlExpression<>(ast("$lte", lte));
+    }
 
     /** @see ArrayExpression */
 

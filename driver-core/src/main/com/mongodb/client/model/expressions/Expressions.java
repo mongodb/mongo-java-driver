@@ -18,12 +18,22 @@ package com.mongodb.client.model.expressions;
 
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
+import org.bson.BsonDateTime;
+import org.bson.BsonDocument;
+import org.bson.BsonDouble;
 import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
 
 /**
  * Convenience methods related to {@link Expression}.
@@ -54,6 +64,15 @@ public final class Expressions {
     public static IntegerExpression of(final int of) {
         return new MqlExpression<>((codecRegistry) -> new BsonInt32(of));
     }
+    public static IntegerExpression of(final long of) {
+        return new MqlExpression<>((codecRegistry) -> new BsonInt64(of));
+    }
+    public static NumberExpression of(final double of) {
+        return new MqlExpression<>((codecRegistry) -> new BsonDouble(of));
+    }
+    public static NumberExpression of(final Date of) {
+        return new MqlExpression<>((codecRegistry) -> new BsonDateTime(of.getTime()));
+    }
 
     /**
      * Returns an expression having the same string value as the provided
@@ -81,4 +100,28 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new BsonArray(result));
     }
 
+
+    public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... ofIntegerArray) {
+        List<BsonValue> array = Arrays.stream(ofIntegerArray)
+                .mapToObj(BsonInt32::new)
+                .collect(Collectors.toList());
+        return new MqlExpression<>((cr) -> new BsonArray(array));
+    }
+
+    public static DocumentExpression ofDocument(final Bson document) {
+        if (document == null) {
+            throw new IllegalArgumentException("document cannot be null");
+        }
+        // All documents are wrapped in a $literal. It is possible to check
+        // for empty docs (see https://jira.mongodb.org/browse/SERVER-46422)
+        // and to traverse for $$, but doing so would be unsafe and brittle.
+        return new MqlExpression<>((cr) -> document == null
+                ? new BsonNull()
+                // TODO what is this first .class parameter?
+                : new BsonDocument("$literal", document.toBsonDocument(BsonDocument.class, cr)));
+    }
+
+    public static <R extends Expression> R ofNull() {
+        return new MqlExpression<>((cr) -> new BsonNull()).assertImplementsAllExpressions();
+    }
 }
