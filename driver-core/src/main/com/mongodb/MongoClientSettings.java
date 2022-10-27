@@ -31,6 +31,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.CollectionCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.EnumCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
@@ -66,6 +67,7 @@ public final class MongoClientSettings {
                     new DBRefCodecProvider(),
                     new DBObjectCodecProvider(),
                     new DocumentCodecProvider(new DocumentToDBRefTransformer()),
+                    new CollectionCodecProvider(new DocumentToDBRefTransformer()),
                     new IterableCodecProvider(new DocumentToDBRefTransformer()),
                     new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
@@ -112,6 +114,7 @@ public final class MongoClientSettings {
      * <li>{@link com.mongodb.DBRefCodecProvider}</li>
      * <li>{@link com.mongodb.DBObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
+     * <li>{@link org.bson.codecs.CollectionCodecProvider}</li>
      * <li>{@link org.bson.codecs.IterableCodecProvider}</li>
      * <li>{@link org.bson.codecs.MapCodecProvider}</li>
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>

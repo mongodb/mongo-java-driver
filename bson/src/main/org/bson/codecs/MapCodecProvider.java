@@ -73,10 +73,10 @@ public class MapCodecProvider implements CodecProvider {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (Map.class.isAssignableFrom(clazz)) {
-            return (Codec<T>) new MapCodec(registry, bsonTypeClassMap, valueTransformer);
+            return new MapCodecV2(registry, bsonTypeClassMap, valueTransformer, clazz);
         }
 
         return null;

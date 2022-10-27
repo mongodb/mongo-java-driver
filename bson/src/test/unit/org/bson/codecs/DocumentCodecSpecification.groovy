@@ -62,7 +62,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class DocumentCodecSpecification extends Specification {
     static final CodecRegistry REGISTRY = fromRegistries(fromCodecs(new UuidCodec(STANDARD)),
-            fromProviders(asList(new ValueCodecProvider(), new IterableCodecProvider(),
+            fromProviders(asList(new ValueCodecProvider(), new CollectionCodecProvider(),
                     new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider())))
 
     @Shared
