@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions"})
+@SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions", "ConstantConditionalExpression"})
 class BooleanExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#boolean-expression-operators
     // (Complete as of 6.0)
@@ -61,6 +61,7 @@ class BooleanExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/cond/
         StringExpression abc = Expressions.ofString("abc");
         StringExpression xyz = Expressions.ofString("xyz");
+        NumberExpression nnn = Expressions.ofInteger(123);
         assertExpression(
                 true && false ? "abc" : "xyz",
                 tru.and(fal).cond(abc, xyz),
@@ -69,5 +70,9 @@ class BooleanExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                 true || false ? "abc" : "xyz",
                 tru.or(fal).cond(abc, xyz),
                 "{'$cond': [{'$or': [true, false]}, 'abc', 'xyz']}");
+        assertExpression(
+                false ? "abc" : 123,
+                fal.cond(abc, nnn),
+                "{'$cond': [false, 'abc', 123]}");
     }
 }

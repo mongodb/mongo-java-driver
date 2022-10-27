@@ -26,8 +26,7 @@ public class MqlExpressionCodecProvider implements CodecProvider {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        // TODO: should this be MqlExpression.class?
-        if (Expression.class.isAssignableFrom(clazz)) {
+        if (MqlExpression.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new MqlExpressionCodec(registry);
         }
         return null;

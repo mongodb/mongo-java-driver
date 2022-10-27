@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.Aggregates.addFields;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,13 +70,18 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
     }
 
     private void assertEval(final Object expected, final Expression toEvaluate) {
+        BsonValue evaluated = evaluate(toEvaluate);
+        assertEquals(new Document("val", expected).toBsonDocument().get("val"), evaluated);
+    }
+
+    protected BsonValue evaluate(final Expression toEvaluate) {
         Bson addFieldsStage = addFields(new Field<>("val", toEvaluate));
         List<Bson> stages = new ArrayList<>();
         stages.add(addFieldsStage);
         List<BsonDocument> results;
         if (getCollectionHelper().count() == 0) {
             BsonDocument document = new BsonDocument("val", new BsonString("#invalid string#"));
-            if (false) { //if (serverVersionAtLeast(5, 1)) {
+            if (serverVersionAtLeast(5, 1)) {
                 Bson documentsStage = new BsonDocument("$documents", new BsonArray(Arrays.asList(document)));
                 stages.add(0, documentsStage);
                 results = getCollectionHelper().aggregateDb(stages);
@@ -88,7 +94,7 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
             results = getCollectionHelper().aggregate(stages);
         }
         BsonValue evaluated = results.get(0).get("val");
-        assertEquals(new Document("val", expected).toBsonDocument().get("val"), evaluated);
+        return evaluated;
     }
 
     private static class BsonDocumentFragmentCodec extends BsonDocumentCodec {
