@@ -48,6 +48,9 @@ import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.internal.operation.ServerVersionHelper.SIX_DOT_ZERO_WIRE_VERSION;
 import static java.lang.String.format;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public abstract class AbstractMultiServerCluster extends BaseCluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 

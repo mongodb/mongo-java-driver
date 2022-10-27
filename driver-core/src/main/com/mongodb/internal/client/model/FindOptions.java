@@ -31,8 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * The options to apply to a find operation (also commonly referred to as a query).
  *
- * @mongodb.driver.manual tutorial/query-documents/ Find
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class FindOptions {
     private int batchSize;
@@ -183,8 +182,6 @@ public final class FindOptions {
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum await execution time in the given time unit
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxAwaitTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -198,9 +195,7 @@ public final class FindOptions {
      *                      default value
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
+      */
     public FindOptions maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxAwaitTime > = 0", maxAwaitTime >= 0);
@@ -364,8 +359,6 @@ public final class FindOptions {
      * Returns the collation options
      *
      * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
      */
     @Nullable
     public Collation getCollation() {
@@ -378,8 +371,6 @@ public final class FindOptions {
      * <p>A null value represents the server default.</p>
      * @param collation the collation options to use
      * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
      */
     public FindOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
@@ -390,7 +381,6 @@ public final class FindOptions {
      * Returns the comment to send with the query. The default is not to include a comment with the query.
      *
      * @return the comment
-     * @since 3.5
      */
     @Nullable
     public BsonValue getComment() {
@@ -402,7 +392,6 @@ public final class FindOptions {
      *
      * @param comment the comment
      * @return this
-     * @since 4.6
      */
     public FindOptions comment(@Nullable final BsonValue comment) {
         this.comment = comment;
@@ -414,7 +403,6 @@ public final class FindOptions {
      *
      * @param comment the comment
      * @return this
-     * @since 3.5
      */
     public FindOptions comment(@Nullable final String comment) {
         this.comment = comment != null ? new BsonString(comment) : null;
@@ -425,7 +413,6 @@ public final class FindOptions {
      * Returns the hint for which index to use. The default is not to set a hint.
      *
      * @return the hint
-     * @since 3.5
      */
     @Nullable
     public Bson getHint() {
@@ -437,7 +424,6 @@ public final class FindOptions {
      *
      * @param hint the hint
      * @return this
-     * @since 3.5
      */
     public FindOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
@@ -448,7 +434,6 @@ public final class FindOptions {
      * Gets the hint string to apply.
      *
      * @return the hint string, which should be the name of an existing index
-     * @since 3.12
      */
     @Nullable
     public String getHintString() {
@@ -460,7 +445,6 @@ public final class FindOptions {
      *
      * @param hint the name of the index which should be used for the operation
      * @return this
-     * @since 3.12
      */
     public FindOptions hintString(@Nullable final String hint) {
         this.hintString = hint;
@@ -471,9 +455,6 @@ public final class FindOptions {
      * Add top-level variables to the operation
      *
      * @return the top level variables if set or null.
-     * @mongodb.driver.manual reference/command/find/
-     * @mongodb.server.release 5.0
-     * @since 4.6
      */
     @Nullable
     public Bson getLet() {
@@ -487,9 +468,6 @@ public final class FindOptions {
      *
      * @param variables for find operation or null
      * @return this
-     * @mongodb.driver.manual reference/command/find/
-     * @mongodb.server.release 5.0
-     * @since 4.6
      */
     public FindOptions let(@Nullable final Bson variables) {
         this.variables = variables;
@@ -500,7 +478,6 @@ public final class FindOptions {
      * Returns the exclusive upper bound for a specific index. By default there is no max bound.
      *
      * @return the max
-     * @since 3.5
      */
     @Nullable
     public Bson getMax() {
@@ -512,8 +489,7 @@ public final class FindOptions {
      *
      * @param max the max
      * @return this
-     * @since 3.5
-     */
+      */
     public FindOptions max(@Nullable final Bson max) {
         this.max = max;
         return this;
@@ -523,7 +499,6 @@ public final class FindOptions {
      * Returns the minimum inclusive lower bound for a specific index. By default there is no min bound.
      *
      * @return the min
-     * @since 3.5
      */
     @Nullable
     public Bson getMin() {
@@ -535,7 +510,6 @@ public final class FindOptions {
      *
      * @param min the min
      * @return this
-     * @since 3.5
      */
     public FindOptions min(@Nullable final Bson min) {
         this.min = min;
@@ -548,7 +522,6 @@ public final class FindOptions {
      * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
      *
      * @return the returnKey
-     * @since 3.5
      */
     public boolean isReturnKey() {
         return returnKey;
@@ -559,7 +532,6 @@ public final class FindOptions {
      *
      * @param returnKey the returnKey
      * @return this
-     * @since 3.5
      */
     public FindOptions returnKey(final boolean returnKey) {
         this.returnKey = returnKey;
@@ -573,7 +545,6 @@ public final class FindOptions {
      * The default is false.
      *
      * @return the showRecordId
-     * @since 3.5
      */
     public boolean isShowRecordId() {
         return showRecordId;
@@ -584,8 +555,7 @@ public final class FindOptions {
      *
      * @param showRecordId the showRecordId
      * @return this
-     * @since 3.5
-     */
+=     */
     public FindOptions showRecordId(final boolean showRecordId) {
         this.showRecordId = showRecordId;
         return this;

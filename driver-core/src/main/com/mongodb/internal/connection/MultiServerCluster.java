@@ -21,6 +21,9 @@ import com.mongodb.connection.ClusterSettings;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class MultiServerCluster extends AbstractMultiServerCluster {
     public MultiServerCluster(final ClusterId clusterId, final ClusterSettings settings,
                               final ClusterableServerFactory serverFactory) {

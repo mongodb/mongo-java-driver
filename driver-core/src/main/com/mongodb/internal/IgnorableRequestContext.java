@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 /**
  * A {@link RequestContext} that can be ignored by the driver.  Useful to ensure that we always
  * have a non-null {@link RequestContext} to pass around the driver.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class IgnorableRequestContext implements RequestContext {
 

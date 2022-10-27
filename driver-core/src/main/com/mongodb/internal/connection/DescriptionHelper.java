@@ -58,6 +58,9 @@ import static com.mongodb.connection.ServerType.UNKNOWN;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class DescriptionHelper {
     static ConnectionDescription createConnectionDescription(final ClusterConnectionMode clusterConnectionMode,
                                                              final ConnectionId connectionId, final BsonDocument helloResult) {

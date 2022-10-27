@@ -22,7 +22,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 /**
  * A logical connection to a MongoDB server.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
 public interface Server {

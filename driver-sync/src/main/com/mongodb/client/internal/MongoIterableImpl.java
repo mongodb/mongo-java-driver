@@ -32,9 +32,7 @@ import java.util.function.Consumer;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
- *
- * @param <TResult> the result type
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     private final ClientSession clientSession;

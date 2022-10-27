@@ -22,35 +22,14 @@ import org.bson.BsonTimestamp;
 /**
  * Extends the async batch cursor interface to include information included in an aggregate or getMore response.
  *
- * @param <T> The type of documents the cursor contains
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface AsyncAggregateResponseBatchCursor<T> extends AsyncBatchCursor<T> {
-    /**
-     * Returns the postBatchResumeToken.
-     *
-     * @return the postBatchResumeToken
-     */
     BsonDocument getPostBatchResumeToken();
 
-    /**
-     * Returns the operation time found in the aggregate or getMore response.
-     *
-     * @return the operation time
-     */
     BsonTimestamp getOperationTime();
 
-    /**
-     * Returns true if the first batch was empty.
-     *
-     * @return true if the first batch was empty
-     */
     boolean isFirstBatchEmpty();
 
-    /**
-     * Returns the max wire version.
-     *
-     * @return the max wire version
-     */
     int getMaxWireVersion();
 }

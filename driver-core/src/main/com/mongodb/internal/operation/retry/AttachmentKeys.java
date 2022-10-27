@@ -31,6 +31,8 @@ import static com.mongodb.assertions.Assertions.fail;
 /**
  * A class with {@code static} methods providing access to {@link AttachmentKey}s relevant when implementing retryable operations.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @see AttachmentKey
  */
 public final class AttachmentKeys {

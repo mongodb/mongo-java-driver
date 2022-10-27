@@ -43,7 +43,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time, and a
  * read connection source bound to a possible different server each time.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class AsyncClusterBinding extends AbstractReferenceCounted implements AsyncClusterAwareReadWriteBinding {
     private final Cluster cluster;
@@ -61,7 +61,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
      * @param readConcern    a non-null read concern
      * @param serverApi      a server API, which may be null
      * @param requestContext the request context
-     * @since 3.8
+     * <p>This class is not part of the public API and may be removed or changed at any time</p>
      */
     public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
             @Nullable final ServerApi serverApi, final RequestContext requestContext) {

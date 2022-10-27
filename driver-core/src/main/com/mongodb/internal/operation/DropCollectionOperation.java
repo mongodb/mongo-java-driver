@@ -55,7 +55,7 @@ import static java.util.Collections.singletonList;
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
  * it will not throw an Exception if the collection does not exist before trying to drop it.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DropCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private static final String ENCRYPT_PREFIX = "enxcol_.";
@@ -65,33 +65,15 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     private BsonDocument encryptedFields;
     private boolean autoEncryptedFields;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     */
     public DropCollectionOperation(final MongoNamespace namespace) {
         this(namespace, null);
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param writeConcern the write concern
-     * @since 3.4
-     */
     public DropCollectionOperation(final MongoNamespace namespace, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = writeConcern;
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern, which may be null
-     * @since 3.4
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }

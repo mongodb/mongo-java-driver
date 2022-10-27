@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
  * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have
  * been added.</p>
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class IndexMap {
 

@@ -54,6 +54,8 @@ import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_W
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class CommandMessage extends RequestMessage {
     private final MongoNamespace namespace;

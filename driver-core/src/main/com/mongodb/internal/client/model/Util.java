@@ -26,6 +26,9 @@ import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.fail;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class Util {
     public static final String SEARCH_PATH_VALUE_KEY = "value";
 

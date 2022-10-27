@@ -44,9 +44,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 /**
  * An operation that atomically finds and updates a single document.
  *
- * @param <T> the operations result type.
- * @since 3.0
- * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private final BsonDocument update;
@@ -56,16 +54,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private Boolean bypassDocumentValidation;
     private List<BsonDocument> arrayFilters;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param retryWrites  if writes should be retried if they fail due to a network error.
-     * @param decoder      the decoder for the result documents.
-     * @param update       the document containing update operators.
-     * @since 3.6
-     */
     public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
                                   final Decoder<T> decoder, final BsonDocument update) {
         super(namespace, writeConcern, retryWrites, decoder);
@@ -73,17 +61,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         this.updatePipeline = null;
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param retryWrites  if writes should be retried if they fail due to a network error.
-     * @param decoder      the decoder for the result documents.
-     * @param update       the pipeline containing update operators.
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
                                   final Decoder<T> decoder, final List<BsonDocument> update) {
         super(namespace, writeConcern, retryWrites, decoder);
@@ -91,112 +68,48 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         this.update = null;
     }
 
-    /**
-     * Gets the document containing update operators
-     *
-     * @return the update document
-     */
     @Nullable
     public BsonDocument getUpdate() {
         return update;
     }
 
-    /**
-     * Gets the pipeline containing update operators
-     *
-     * @return the update pipeline
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     @Nullable
     public List<BsonDocument> getUpdatePipeline() {
         return updatePipeline;
     }
 
-    /**
-     * When false, returns the updated document rather than the original. The default is false.
-     *
-     * @return true if the original document should be returned
-     */
     public boolean isReturnOriginal() {
         return returnOriginal;
     }
 
-    /**
-     * Set to false if the updated document rather than the original should be returned.
-     *
-     * @param returnOriginal set to false if the updated document rather than the original should be returned
-     * @return this
-     */
     public FindAndUpdateOperation<T> returnOriginal(final boolean returnOriginal) {
         this.returnOriginal = returnOriginal;
         return this;
     }
 
-    /**
-     * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
-     *
-     * @return true if a new document should be inserted if there are no matches to the query filter
-     */
     public boolean isUpsert() {
         return upsert;
     }
 
-    /**
-     * Set to true if a new document should be inserted if there are no matches to the query filter.
-     *
-     * @param upsert true if a new document should be inserted if there are no matches to the query filter
-     * @return this
-     */
     public FindAndUpdateOperation<T> upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }
 
-    /**
-     * Gets the bypass document level validation flag
-     *
-     * @return the bypass document level validation flag
-     * @since 3.2
-     */
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
 
-    /**
-     * Sets the bypass document level validation flag.
-     *
-     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
-     * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 3.2
-     */
     public FindAndUpdateOperation<T> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
-    /**
-     * Sets the array filters option
-     *
-     * @param arrayFilters the array filters, which may be null
-     * @return this
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     */
     public FindAndUpdateOperation<T> arrayFilters(final List<BsonDocument> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
 
-    /**
-     * Returns the array filters option
-     *
-     * @return the array filters, which may be null
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     */
     public List<BsonDocument> getArrayFilters() {
         return arrayFilters;
     }

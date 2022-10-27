@@ -24,6 +24,8 @@ import java.util.function.BiFunction;
  * An {@linkplain AsyncCallbackFunction asynchronous callback-based function} of two parameters.
  * This class is a callback-based counterpart of {@link BiFunction}.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @param <P1> The type of the first parameter to the function.
  * @param <P2> The type of the second parameter to the function.
  * @param <R> See {@link AsyncCallbackFunction}

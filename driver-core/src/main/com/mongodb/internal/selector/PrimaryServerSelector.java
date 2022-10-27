@@ -27,7 +27,7 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimar
 /**
  * A server selector that chooses servers that are primaries.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class PrimaryServerSelector implements ServerSelector {
 

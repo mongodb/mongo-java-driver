@@ -26,6 +26,9 @@ import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ReadConcernHelper {
 
     public static BsonDocument getReadConcernDocument(final SessionContext sessionContext, final int maxWireVersion) {

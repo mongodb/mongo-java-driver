@@ -40,6 +40,9 @@ import java.nio.ByteBuffer;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class GridFSPublisherCreator {
 
     private GridFSPublisherCreator() {

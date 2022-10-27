@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * This class is NOT part of the public API.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class ClusterDescriptionHelper {
 

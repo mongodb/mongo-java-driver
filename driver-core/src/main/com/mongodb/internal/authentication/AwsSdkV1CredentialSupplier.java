@@ -24,7 +24,7 @@ import com.mongodb.AwsCredential;
 
 import java.util.function.Supplier;
 
-public final class AwsSdkV1CredentialSupplier implements Supplier<AwsCredential> {
+final class AwsSdkV1CredentialSupplier implements Supplier<AwsCredential> {
 
     private final AWSCredentialsProvider provider = DefaultAWSCredentialsProviderChain.getInstance();
 

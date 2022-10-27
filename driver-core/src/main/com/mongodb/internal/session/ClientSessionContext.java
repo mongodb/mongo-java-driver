@@ -23,6 +23,9 @@ import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public abstract class ClientSessionContext implements SessionContext {
 
     private ClientSession clientSession;

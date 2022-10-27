@@ -53,7 +53,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 /**
  * The internal GridFSBucket implementation.
  *
- * <p>This should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class GridFSBucketImpl implements GridFSBucket {
     private static final int DEFAULT_CHUNKSIZE_BYTES = 255 * 1024;

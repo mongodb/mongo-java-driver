@@ -43,41 +43,21 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * Operation to drop a database in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
  * it will not throw an Exception if the collection does not exist before trying to drop it.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
     private final WriteConcern writeConcern;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param databaseName the name of the database for the operation.
-     */
     public DropDatabaseOperation(final String databaseName) {
         this(databaseName, null);
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param databaseName the name of the database for the operation.
-     * @param writeConcern the write concern
-     *
-     * @since 3.4
-     */
     public DropDatabaseOperation(final String databaseName, final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.writeConcern = writeConcern;
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern, which may be null
-     *
-     * @since 3.4
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }

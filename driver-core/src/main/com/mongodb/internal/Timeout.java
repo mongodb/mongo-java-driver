@@ -30,6 +30,8 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 /**
  * A <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/doc-files/ValueBased.html">value-based</a> class
  * useful for tracking timeouts.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @Immutable
 public final class Timeout {

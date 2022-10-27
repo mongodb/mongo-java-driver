@@ -22,7 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class Locks {
     public static void withLock(final Lock lock, final Runnable action) {

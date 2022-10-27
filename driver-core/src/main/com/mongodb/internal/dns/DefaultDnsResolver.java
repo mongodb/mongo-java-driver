@@ -31,7 +31,7 @@ import static java.util.Arrays.asList;
 /**
  * Utility class for resolving SRV and TXT records.
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class DefaultDnsResolver implements DnsResolver {
 

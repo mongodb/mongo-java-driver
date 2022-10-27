@@ -34,6 +34,9 @@ import java.util.Locale;
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class CommandHelper {
 
     static final String HELLO = "hello";

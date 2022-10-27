@@ -30,7 +30,7 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 /**
  * A server selector that chooses based on a read preference.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ReadPreferenceServerSelector implements ServerSelector {
     private final ReadPreference readPreference;

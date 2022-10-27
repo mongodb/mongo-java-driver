@@ -24,6 +24,9 @@ import java.util.function.BiConsumer;
 
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class TransactionContext<C extends ReferenceCounted> extends AbstractReferenceCounted {
     private final ClusterType clusterType;
     private C pinnedConnection;

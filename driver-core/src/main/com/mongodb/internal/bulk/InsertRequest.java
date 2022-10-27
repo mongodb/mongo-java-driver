@@ -23,25 +23,15 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A representation of a document to insert.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class InsertRequest extends WriteRequest {
     private final BsonDocument document;
 
-    /**
-     * Construct an instance with the given document.
-     *
-     * @param document the document, which may not be null
-     */
     public InsertRequest(final BsonDocument document) {
         this.document = notNull("document", document);
     }
 
-    /**
-     * Gets the document to insert.
-     *
-     * @return the document
-     */
     public BsonDocument getDocument() {
         return document;
     }

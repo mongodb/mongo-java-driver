@@ -37,6 +37,9 @@ import java.util.function.Function;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
     private final ClientSession clientSession;
     private final Mono<GridFSFile> gridFSFileMono;

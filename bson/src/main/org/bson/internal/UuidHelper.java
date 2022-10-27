@@ -26,6 +26,8 @@ import java.util.UUID;
 
 /**
  * Utilities for encoding and decoding UUID into binary.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class UuidHelper {
     private static void writeLongToArrayBigEndian(final byte[] bytes, final int offset, final long x) {

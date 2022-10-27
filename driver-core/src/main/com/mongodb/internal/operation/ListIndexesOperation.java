@@ -68,9 +68,7 @@ import static com.mongodb.internal.operation.OperationHelper.withSourceAndConnec
  * An operation that lists the indexes that have been created on a collection.  For flexibility, the type of each document returned is
  * generic.
  *
- * @param <T> the operations result type.
- * @since 3.0
- * @mongodb.driver.manual reference/command/listIndexes/ List indexes
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;
@@ -80,107 +78,45 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     private long maxTimeMS;
     private BsonValue comment;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param decoder   the decoder for the result documents.
-     */
     public ListIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
 
-    /**
-     * Gets the number of documents to return per batch.
-     *
-     * @return the batch size
-     * @mongodb.server.release 3.0
-     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
-     */
     public Integer getBatchSize() {
         return batchSize;
     }
 
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @mongodb.server.release 3.0
-     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
-     */
     public ListIndexesOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
 
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
-     */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
-     */
     public ListIndexesOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-    /**
-     * Enables retryable reads if a read fails due to a network error.
-     *
-     * @param retryReads true if reads should be retried
-     * @return this
-     * @since 3.11
-     */
     public ListIndexesOperation<T> retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
         return this;
     }
 
-    /**
-     * Gets the value for retryable reads. The default is true.
-     *
-     * @return the retryable reads value
-     * @since 3.11
-     */
     public boolean getRetryReads() {
         return retryReads;
     }
 
-    /**
-     * @return the comment for this operation. A null value means no comment is set.
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     @Nullable
     public BsonValue getComment() {
         return comment;
     }
 
-    /**
-     * Sets the comment for this operation. A null value means no comment is set.
-     *
-     * @param comment the comment
-     * @return this
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public ListIndexesOperation<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;

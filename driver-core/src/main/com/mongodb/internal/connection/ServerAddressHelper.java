@@ -20,6 +20,9 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ServerAddressHelper {
 
     public static ServerAddress createServerAddress(final String host) {

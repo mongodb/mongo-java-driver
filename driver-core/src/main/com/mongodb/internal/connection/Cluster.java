@@ -34,16 +34,10 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 /**
  * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface Cluster extends Closeable {
 
-    /**
-     * Gets the cluster settings with which this cluster was created.
-     *
-     * @return the cluster settings
-     * @since 3.4
-     */
     ClusterSettings getSettings();
 
     /**

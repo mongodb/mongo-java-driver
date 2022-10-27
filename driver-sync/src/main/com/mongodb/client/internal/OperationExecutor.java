@@ -26,7 +26,7 @@ import com.mongodb.lang.Nullable;
 /**
  * An interface describing the execution of a read or a write operation.
  *
- * This class is not part of the public API and may be removed or changed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @SuppressWarnings("overloads")
 public interface OperationExecutor {

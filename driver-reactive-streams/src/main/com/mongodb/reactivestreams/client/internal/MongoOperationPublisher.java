@@ -90,6 +90,9 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class MongoOperationPublisher<T> {
 
     private final Operations<T> operations;

@@ -18,6 +18,8 @@ package com.mongodb.internal.client.model.changestream;
 
 /**
  * The level at which the change stream operation operates at.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public enum ChangeStreamLevel {
     /**

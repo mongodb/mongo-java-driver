@@ -37,7 +37,7 @@ import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ClientSessionBinding extends AbstractReferenceCounted implements ReadWriteBinding {
     private final ClusterAwareReadWriteBinding wrapped;

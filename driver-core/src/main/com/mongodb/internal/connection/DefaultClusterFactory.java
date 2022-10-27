@@ -45,29 +45,10 @@ import static java.util.Collections.singletonList;
 /**
  * The default factory for cluster implementations.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class DefaultClusterFactory {
 
-    /**
-     * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
-     *
-     * @param originalClusterSettings        the cluster settings
-     * @param originalServerSettings         the server settings
-     * @param connectionPoolSettings the connection pool settings
-     * @param internalConnectionPoolSettings the internal connection pool settings
-     * @param streamFactory          the stream factory
-     * @param heartbeatStreamFactory the heartbeat stream factory
-     * @param credential             the credential, which may be null
-     * @param commandListener        an optional listener for command-related events
-     * @param applicationName        an optional application name to associate with connections to the servers in this cluster
-     * @param mongoDriverInformation the optional driver information associate with connections to the servers in this cluster
-     * @param compressorList         the list of compressors to request, in priority order
-     * @param serverApi              the server api, which may be null
-     * @return the cluster
-     *
-     * @since 3.6
-     */
     public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,
                                  final ConnectionPoolSettings connectionPoolSettings,
                                  final InternalConnectionPoolSettings internalConnectionPoolSettings,

@@ -19,6 +19,9 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import java.util.Objects;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 @Immutable
 public final class InternalConnectionPoolSettings {
     private final boolean prestartAsyncWorkManager;

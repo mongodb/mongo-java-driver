@@ -47,9 +47,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
 /**
  * An operation to create a view.
  *
- * @since 3.4
- * @mongodb.server.release 3.4
- * @mongodb.driver.manual reference/command/create Create
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
@@ -59,15 +57,6 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     private final WriteConcern writeConcern;
     private Collation collation;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param databaseName the name of the database for the operation, which may not be null
-     * @param viewName     the name of the collection to be created, which may not be null
-     * @param viewOn       the name of the collection or view that backs this view, which may not be null
-     * @param pipeline     the aggregation pipeline that defines the view, which may not be null
-     * @param writeConcern the write concern, which may not be null
-     */
     public CreateViewOperation(final String databaseName, final String viewName, final String viewOn, final List<BsonDocument> pipeline,
                                final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
@@ -77,11 +66,6 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
-    /**
-     * Gets the database name
-     *
-     * @return the database name
-     */
     public String getDatabaseName() {
         return databaseName;
     }

@@ -47,6 +47,9 @@ import org.bson.types.ObjectId;
 
 import java.util.function.Supplier;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
 
     private static final String ID_FIELD_NAME = "_id";

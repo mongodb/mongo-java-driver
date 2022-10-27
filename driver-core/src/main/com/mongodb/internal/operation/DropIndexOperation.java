@@ -50,8 +50,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
 /**
  * An operation that drops an index.
  *
- * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
@@ -60,34 +59,14 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     private final WriteConcern writeConcern;
     private long maxTimeMS;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param indexName the name of the index to be dropped.
-     */
     public DropIndexOperation(final MongoNamespace namespace, final String indexName) {
         this(namespace, indexName, null);
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param keys      the keys of the index to be dropped
-     */
     public DropIndexOperation(final MongoNamespace namespace, final BsonDocument keys) {
         this(namespace, keys, null);
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param indexName    the name of the index to be dropped.
-     * @param writeConcern the write concern
-     * @since 3.4
-     */
     public DropIndexOperation(final MongoNamespace namespace, final String indexName, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.indexName = notNull("indexName", indexName);
@@ -95,14 +74,6 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
         this.writeConcern = writeConcern;
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param indexKeys    the keys of the index to be dropped
-     * @param writeConcern the write concern
-     * @since 3.4
-     */
     public DropIndexOperation(final MongoNamespace namespace, final BsonDocument indexKeys, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.indexKeys = notNull("indexKeys", indexKeys);
@@ -110,36 +81,15 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
         this.writeConcern = writeConcern;
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern, which may be null
-     * @since 3.4
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @since 3.6
-     */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @since 3.6
-     */
     public DropIndexOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxTime >= 0", maxTime >= 0);

@@ -51,6 +51,9 @@ import static com.mongodb.MongoCredential.AWS_SESSION_TOKEN_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.lang.String.format;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class AwsAuthenticator extends SaslAuthenticator {
     private static final String MONGODB_AWS_MECHANISM_NAME = "MONGODB-AWS";
     private static final int RANDOM_LENGTH = 32;

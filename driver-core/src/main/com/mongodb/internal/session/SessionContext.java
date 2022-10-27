@@ -22,43 +22,27 @@ import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
 /**
- * The session context.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface SessionContext {
 
     /**
      * Returns true if there is a true server session associated with this context.
-     *
-     * @return true if there is a true server session associated with this context.
      */
     boolean hasSession();
 
     /**
-     * Returns true if the session is implicit, and false if the application started the session explicity.
-     *
-     * @return true if the session is implicit
+     * Returns true if the session is implicit, and false if the application started the session explicitly.
      */
     boolean isImplicitSession();
 
     /**
      * Gets the session identifier if this context has a session backing it.
-     *
-     * @return the session id
      */
     BsonDocument getSessionId();
 
-    /**
-     * Gets whether this context is associated with a causally consistent session.
-     *
-     * @return true if this context is associated with a causally consistent session
-     */
     boolean isCausallyConsistent();
 
-    /**
-     * Gets the current transaction number.
-     *
-     * @return the current transaction number
-     */
     long getTransactionNumber();
 
     /**
@@ -85,7 +69,7 @@ public interface SessionContext {
     /**
      * Advance the operation time.  If the current operation time is greater than the given operation time, this method has no effect.
      *
-     * @param operationTime the new operation time time
+     * @param operationTime the new operation time
      */
     void advanceOperationTime(BsonTimestamp operationTime);
 
@@ -110,25 +94,10 @@ public interface SessionContext {
     @Nullable
     BsonTimestamp getSnapshotTimestamp();
 
-    /**
-     * Gets whether the session has an active transaction
-     *
-     * @return true if the session has an active transaction
-     */
     boolean hasActiveTransaction();
 
-    /**
-     * Gets the read concern to apply to operations on this binding.
-     *
-     * @return the read concern to apply to operations on this binding
-     */
     ReadConcern getReadConcern();
 
-    /**
-     * Sets the recovery token in the session.
-     *
-     * @param recoveryToken the recovery token
-     */
     void setRecoveryToken(BsonDocument recoveryToken);
 
     /**
@@ -139,16 +108,8 @@ public interface SessionContext {
     /**
      * Mark the session as dirty. This happens when a command fails with a network
      * error. Dirty sessions are later discarded from the server session pool.
-     *
-     * @since 3.12
      */
     void markSessionDirty();
 
-    /**
-     * Whether the server session is marked dirty.
-     *
-     * @return true if the session has been marked dirty
-     * @since 3.12
-     */
     boolean isSessionMarkedDirty();
 }

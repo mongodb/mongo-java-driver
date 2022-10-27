@@ -28,7 +28,7 @@ import static java.lang.String.format;
  * A field name validator for documents that are meant for storage in MongoDB collections via replace operations. It ensures that no
  * top-level fields start with '$' (with the exception of "$db", "$ref", and "$id", so that DBRefs are not rejected).
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ReplacingDocumentFieldNameValidator implements FieldNameValidator {
     private static final NoOpFieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();

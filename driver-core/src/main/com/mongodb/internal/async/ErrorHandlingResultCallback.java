@@ -21,9 +21,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
- *
- * @param <T> the result type
+ * <p>This class is not part of the public API and may be removed or changed at any time.</p>
  */
 public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
     private final SingleResultCallback<T> wrapped;

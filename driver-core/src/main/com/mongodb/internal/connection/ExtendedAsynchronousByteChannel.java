@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * This interface extends {@link AsynchronousByteChannel} adding optional timeouts and scattering and gathering methods.
  * These additions are analogous to the ones made by {@link java.nio.channels.AsynchronousSocketChannel}.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel {
 

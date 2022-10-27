@@ -27,6 +27,9 @@ import static com.mongodb.assertions.Assertions.fail;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class Iterables {
     @SafeVarargs
     @SuppressWarnings("varargs")

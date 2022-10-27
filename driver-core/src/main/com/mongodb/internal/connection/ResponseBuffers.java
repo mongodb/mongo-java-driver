@@ -22,6 +22,9 @@ import org.bson.codecs.Decoder;
 
 import java.io.Closeable;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ResponseBuffers implements Closeable {
     private final ReplyHeader replyHeader;
     private final ByteBuf bodyByteBuffer;

@@ -49,13 +49,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  * <p>The command will consume as much of the payload as possible. The {@link #hasAnotherSplit()} method will return true if there is
  * another split to consume, {@link #getNextSplit} method will return the next SplittablePayload.</p>
  *
- * @see Connection#command(String, org.bson.BsonDocument, org.bson.FieldNameValidator, com.mongodb.ReadPreference,
- * org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean, SplittablePayload,
- * org.bson.FieldNameValidator)
- * @see AsyncConnection#commandAsync(String, org.bson.BsonDocument, org.bson.FieldNameValidator,
- * com.mongodb.ReadPreference, org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean,
- * SplittablePayload, org.bson.FieldNameValidator, com.mongodb.internal.async.SingleResultCallback)
- * @since 3.6
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class SplittablePayload {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());

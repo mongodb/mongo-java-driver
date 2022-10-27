@@ -24,7 +24,7 @@ import com.mongodb.lang.Nullable;
 /**
  * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface WriteBinding extends ReferenceCounted {
     /**
@@ -39,7 +39,6 @@ public interface WriteBinding extends ReferenceCounted {
      *
      * @return the session context, which may not be null
      *
-     * @since 3.6
      */
     SessionContext getSessionContext();
 

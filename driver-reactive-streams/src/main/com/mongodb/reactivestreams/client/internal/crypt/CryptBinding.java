@@ -29,6 +29,9 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
 
     private final AsyncClusterAwareReadWriteBinding wrapped;

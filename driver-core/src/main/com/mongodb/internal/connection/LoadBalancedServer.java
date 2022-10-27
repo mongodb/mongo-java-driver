@@ -46,6 +46,9 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 @ThreadSafe
 public class LoadBalancedServer implements ClusterableServer {
     private static final Logger LOGGER = Loggers.getLogger("connection");

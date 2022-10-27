@@ -24,7 +24,7 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 
 import java.util.function.Supplier;
 
-public final class AwsSdkV2CredentialSupplier implements Supplier<AwsCredential> {
+final class AwsSdkV2CredentialSupplier implements Supplier<AwsCredential> {
 
     private final AwsCredentialsProvider provider = DefaultCredentialsProvider.create();
 
