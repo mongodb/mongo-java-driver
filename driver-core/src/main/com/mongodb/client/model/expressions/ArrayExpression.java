@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 /**
  * Expresses an array value. An array value is a finite, ordered collection of
  * elements of a certain type.
@@ -23,5 +26,39 @@ package com.mongodb.client.model.expressions;
  * @param <T> the type of the elements in the array
  */
 public interface ArrayExpression<T extends Expression> extends Expression {
+
+    /**
+     * Returns an array consisting of those elements in this array that match
+     * the given predicate condition. Evaluates each expression in this array
+     * according to the cond function. If cond evaluates to logical true, then
+     * the element is preserved; if cond evaluates to logical false, the element
+     * is omitted.
+     *
+     * @param cond the function to apply to each element
+     * @return the new array
+     */
+    ArrayExpression<T> filter(Function<T, BooleanExpression> cond);
+
+    /**
+     * Returns an array consisting of the results of applying the given function
+     * to the elements of this array.
+     *
+     * @param in the function to apply to each element
+     * @return the new array
+     * @param <R> the type contained in the resulting array
+     */
+    <R extends Expression> ArrayExpression<R> map(Function<T, ? extends R> in);
+
+    /**
+     * Performs a reduction on the elements of this array, using the provided
+     * identity value and an associative accumulation function, and returns
+     * the reduced value. The initial value must be the identity value for the
+     * reducing function.
+     *
+     * @param initialValue the identity for the reducing function
+     * @param in the associative accumulation function
+     * @return the reduced value
+     */
+    T reduce(T initialValue, BiFunction<T,  T,  T> in);
 
 }

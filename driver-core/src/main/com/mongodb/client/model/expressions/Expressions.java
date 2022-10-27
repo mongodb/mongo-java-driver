@@ -16,9 +16,14 @@
 
 package com.mongodb.client.model.expressions;
 
+import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonValue;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Convenience methods related to {@link Expression}.
@@ -60,4 +65,20 @@ public final class Expressions {
     public static StringExpression of(final String of) {
         return new MqlExpression<>((codecRegistry) -> new BsonString(of));
     }
+
+    /**
+     * Returns an array expression containing the same boolean values as the
+     * provided array of booleans.
+     *
+     * @param array the array of booleans
+     * @return the boolean array expression
+     */
+    public static ArrayExpression<BooleanExpression> ofBooleanArray(final boolean... array) {
+        List<BsonValue> result = new ArrayList<>();
+        for (boolean b : array) {
+            result.add(new BsonBoolean(b));
+        }
+        return new MqlExpression<>((cr) -> new BsonArray(result));
+    }
+
 }
