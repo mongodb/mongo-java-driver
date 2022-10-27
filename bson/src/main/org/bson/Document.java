@@ -18,13 +18,13 @@ package org.bson;
 
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
+import org.bson.codecs.CollectionCodecProvider;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
-import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -60,8 +60,10 @@ import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentati
  * @since 3.0.0
  */
 public class Document implements Map<String, Object>, Serializable, Bson {
+    @SuppressWarnings("deprecation")
     private static final Codec<Document> DEFAULT_CODEC =
-            withUuidRepresentation(fromProviders(asList(new ValueCodecProvider(), new IterableCodecProvider(),
+            withUuidRepresentation(fromProviders(asList(new ValueCodecProvider(),
+                    new CollectionCodecProvider(), new org.bson.codecs.IterableCodecProvider(),
                     new BsonValueCodecProvider(), new DocumentCodecProvider(), new MapCodecProvider())), UuidRepresentation.STANDARD)
                     .get(Document.class);
 

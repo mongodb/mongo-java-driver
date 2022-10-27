@@ -19,10 +19,13 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
-class ParameterizedIterableCodec<T> extends AbstractIterableCodec<T> {
+import java.util.Collection;
+
+class ParameterizedCollectionCodec<T, C extends Collection<T>> extends AbstractCollectionCodec<T, C> {
     private final Codec<T> codec;
 
-    ParameterizedIterableCodec(final Codec<T> codec) {
+    ParameterizedCollectionCodec(final Codec<T> codec, final Class<C> clazz) {
+        super(clazz);
         this.codec = codec;
     }
 

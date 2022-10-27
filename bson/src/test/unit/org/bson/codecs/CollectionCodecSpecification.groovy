@@ -16,14 +16,19 @@
 
 package org.bson.codecs
 
+import org.bson.BsonArray
+import org.bson.BsonDateTime
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.codecs.jsr310.Jsr310CodecProvider
 import org.bson.types.Binary
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.lang.reflect.ParameterizedType
 import java.time.Instant
+import java.util.concurrent.CopyOnWriteArrayList
 
 import static org.bson.BsonDocument.parse
 import static org.bson.UuidRepresentation.C_SHARP_LEGACY
@@ -35,23 +40,46 @@ import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
-class IterableCodecSpecification extends Specification {
+class CollectionCodecSpecification extends Specification {
 
     static final REGISTRY = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
             fromProviders(new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider(),
-                    new IterableCodecProvider(), new MapCodecProvider()))
+                    new CollectionCodecProvider(), new MapCodecProvider()))
 
-    def 'should have Iterable encoding class'() {
+    def 'should decode to specified generic class'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def doc = new BsonDocument('a', new BsonArray())
 
-        expect:
-        codec.getEncoderClass() == Iterable
+        when:
+        def codec = new CollectionCodec(fromProviders([new ValueCodecProvider()]), new BsonTypeClassMap(), null, collectionType)
+        def reader = new BsonDocumentReader(doc)
+        reader.readStartDocument()
+        reader.readName('a')
+        def collection = codec.decode(reader, DecoderContext.builder().build())
+
+        then:
+        codec.getEncoderClass() == collectionType
+        collection.getClass() == decodedType
+
+        where:
+        collectionType       | decodedType
+        Collection           | ArrayList
+        List                 | ArrayList
+        AbstractList         | ArrayList
+        AbstractCollection   | ArrayList
+        ArrayList            | ArrayList
+        Set                  | HashSet
+        AbstractSet          | HashSet
+        HashSet              | HashSet
+        NavigableSet         | TreeSet
+        SortedSet            | TreeSet
+        TreeSet              | TreeSet
+        CopyOnWriteArrayList | CopyOnWriteArrayList
     }
 
-    def 'should encode an Iterable to a BSON array'() {
+    def 'should encode a Collection to a BSON array'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new CollectionCodec(REGISTRY, new BsonTypeClassMap(), null, Collection)
         def writer = new BsonDocumentWriter(new BsonDocument())
 
         when:
@@ -64,51 +92,51 @@ class IterableCodecSpecification extends Specification {
         writer.document == parse('{array : [1, 2, 3, null]}')
     }
 
-    def 'should decode a BSON array to an Iterable'() {
+    def 'should decode a BSON array to a Collection'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new CollectionCodec(REGISTRY, new BsonTypeClassMap(), null, Collection)
         def reader = new BsonDocumentReader(parse('{array : [1, 2, 3, null]}'))
 
         when:
         reader.readStartDocument()
         reader.readName('array')
-        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        def collection = codec.decode(reader, DecoderContext.builder().build())
         reader.readEndDocument()
 
         then:
-        iterable == [1, 2, 3, null]
+        collection == [1, 2, 3, null]
     }
 
-    def 'should decode a BSON array of arrays to an Iterable of Iterables'() {
+    def 'should decode a BSON array of arrays to a Collection of Collection'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new CollectionCodec(REGISTRY, new BsonTypeClassMap(), null, Collection)
         def reader = new BsonDocumentReader(parse('{array : [[1, 2], [3, 4, 5]]}'))
 
         when:
         reader.readStartDocument()
         reader.readName('array')
-        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        def collection = codec.decode(reader, DecoderContext.builder().build())
         reader.readEndDocument()
 
         then:
-        iterable == [[1, 2], [3, 4, 5]]
+        collection == [[1, 2], [3, 4, 5]]
     }
 
     def 'should use provided transformer'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), { Object from ->
+        def codec = new CollectionCodec(REGISTRY, new BsonTypeClassMap(), { Object from ->
             from.toString()
-        })
+        }, Collection)
         def reader = new BsonDocumentReader(parse('{array : [1, 2, 3]}'))
 
         when:
         reader.readStartDocument()
         reader.readName('array')
-        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        def collection = codec.decode(reader, DecoderContext.builder().build())
         reader.readEndDocument()
 
         then:
-        iterable == ['1', '2', '3']
+        collection == ['1', '2', '3']
     }
 
     @SuppressWarnings(['LineLength'])
@@ -116,17 +144,18 @@ class IterableCodecSpecification extends Specification {
     def 'should decode binary subtype 3 for UUID'() {
         given:
         def reader = new BsonDocumentReader(parse(document))
-        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+        def codec = new CollectionCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(),
+        null, Collection)
                 .withUuidRepresentation(representation)
 
         when:
         reader.readStartDocument()
         reader.readName('array')
-        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        def collection = codec.decode(reader, DecoderContext.builder().build())
         reader.readEndDocument()
 
         then:
-        value == iterable
+        value == collection
 
         where:
         representation | value                                                     | document
@@ -142,17 +171,18 @@ class IterableCodecSpecification extends Specification {
     def 'should decode binary subtype 4 for UUID'() {
         given:
         def reader = new BsonDocumentReader(parse(document))
-        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+        def codec = new CollectionCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(),
+        null, Collection)
                 .withUuidRepresentation(representation)
 
         when:
         reader.readStartDocument()
         reader.readName('array')
-        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        def collection = codec.decode(reader, DecoderContext.builder().build())
         reader.readEndDocument()
 
         then:
-        value == iterable
+        value == collection
 
         where:
         representation | value                                                     | document
@@ -161,6 +191,39 @@ class IterableCodecSpecification extends Specification {
         C_SHARP_LEGACY | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
         PYTHON_LEGACY  | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
         UNSPECIFIED    | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+    }
+
+    def 'should parameterize'() {
+        given:
+        def codec = new CollectionCodec(REGISTRY, new BsonTypeClassMap(), null, Collection)
+        def writer = new BsonDocumentWriter(new BsonDocument())
+        def reader = new BsonDocumentReader(writer.getDocument())
+        def instants = [
+                ['firstMap': [Instant.ofEpochMilli(1), Instant.ofEpochMilli(2)]],
+                ['secondMap': [Instant.ofEpochMilli(3), Instant.ofEpochMilli(4)]]]
+        when:
+        codec = codec.parameterize(fromProviders(new Jsr310CodecProvider(), REGISTRY),
+                Arrays.asList(((ParameterizedType) Container.getMethod('getInstants').genericReturnType).actualTypeArguments))
+        writer.writeStartDocument()
+        writer.writeName('instants')
+        codec.encode(writer, instants, EncoderContext.builder().build())
+        writer.writeEndDocument()
+
+        then:
+        writer.getDocument() == new BsonDocument()
+                .append('instants', new BsonArray(
+                        [
+                                new BsonDocument('firstMap', new BsonArray([new BsonDateTime(1), new BsonDateTime(2)])),
+                                new BsonDocument('secondMap', new BsonArray([new BsonDateTime(3), new BsonDateTime(4)]))
+                        ]))
+
+        when:
+        reader.readStartDocument()
+        reader.readName('instants')
+        def decodedInstants = codec.decode(reader, DecoderContext.builder().build())
+
+        then:
+        decodedInstants == instants
     }
 
     @SuppressWarnings('unused')

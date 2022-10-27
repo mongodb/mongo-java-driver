@@ -19,15 +19,18 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
+import java.util.Map;
+
 /**
  * A Codec for Map instances.
  *
  * @since 3.5
  */
-class ParameterizedMapCodec<T> extends AbstractMapCodec<T> {
+class ParameterizedMapCodec<T, M extends Map<String, T>> extends AbstractMapCodec<T, M> {
     private final Codec<T> codec;
 
-    ParameterizedMapCodec(final Codec<T> codec) {
+    ParameterizedMapCodec(final Codec<T> codec, final Class<M> clazz) {
+        super(clazz);
         this.codec = codec;
     }
 

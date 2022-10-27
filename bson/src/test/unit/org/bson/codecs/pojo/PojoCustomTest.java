@@ -24,7 +24,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.LongCodec;
-import org.bson.codecs.MapCodec;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -32,6 +32,8 @@ import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
 import org.bson.codecs.pojo.entities.AsymmetricalIgnoreModel;
 import org.bson.codecs.pojo.entities.AsymmetricalModel;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
+import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
@@ -55,7 +57,6 @@ import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
 import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
-import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
@@ -63,10 +64,9 @@ import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
-import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
-import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.BsonExtraElementsInvalidModel;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNonEmptyModel;
@@ -78,17 +78,16 @@ import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNullModel;
-import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -96,15 +95,16 @@ import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
-import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("deprecation")
 public final class PojoCustomTest extends PojoTestCase {
 
     @Test
@@ -487,7 +487,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testMapStringObjectModel() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
-        CodecRegistry registry = fromRegistries(fromCodecs(new MapCodec()),
+        CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
     }
@@ -495,7 +495,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test(expected = UnsupportedOperationException.class)
     public void testMapStringObjectModelWithObjectCodec() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
-        CodecRegistry registry = fromRegistries(fromCodecs(new MapCodec()), fromCodecs(new ObjectCodec()),
+        CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()), fromCodecs(new ObjectCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
     }
