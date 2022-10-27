@@ -24,7 +24,7 @@ import java.util.Map;
  * A field name validator that serves as a root validator for a map of validators that are applied to child fields.  Note that instances of
  * this class can be nested to achieve a wide variety of validation behaviors.
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MappedFieldNameValidator implements FieldNameValidator {
     private final FieldNameValidator defaultValidator;

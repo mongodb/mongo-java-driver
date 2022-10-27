@@ -36,6 +36,8 @@ import static java.lang.String.format;
  * and allows constructing new instances via {@link #newWithAppendedValue(String, Object)} instead of mutating {@code this}.
  * The value must itself be a {@code Bson}.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @param <S> A type introduced by the concrete class that extends this abstract class.
  * @see AbstractConstructibleBson
  */

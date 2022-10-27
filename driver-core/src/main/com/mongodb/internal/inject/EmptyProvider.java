@@ -19,6 +19,9 @@ import com.mongodb.annotations.Immutable;
 
 import java.util.Optional;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 @Immutable
 public final class EmptyProvider<T> implements OptionalProvider<T> {
     private static final EmptyProvider<?> INSTANCE = new EmptyProvider<>();

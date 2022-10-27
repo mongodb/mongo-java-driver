@@ -24,6 +24,9 @@ import com.mongodb.selector.ServerSelector;
 
 import java.util.List;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ReadPreferenceWithFallbackServerSelector implements ServerSelector {
 
     private final ReadPreference preferredReadPreference;

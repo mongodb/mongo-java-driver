@@ -20,7 +20,7 @@ package com.mongodb.internal.binding;
 /**
  * A factory of connection sources to servers that can be read from or written to.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface ReadWriteBinding extends ReadBinding, WriteBinding, ReferenceCounted {
     @Override

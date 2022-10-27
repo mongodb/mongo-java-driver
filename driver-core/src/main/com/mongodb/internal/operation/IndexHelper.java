@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class is NOT part of the public API. It may change at any time without notification.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class IndexHelper {
 

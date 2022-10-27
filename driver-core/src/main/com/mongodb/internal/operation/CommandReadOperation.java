@@ -32,21 +32,13 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeRetry
 /**
  * An operation that executes an arbitrary command that reads from the server.
  *
- * @param <T> the operations result type.
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
     private final String databaseName;
     private final BsonDocument command;
     private final Decoder<T> decoder;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param databaseName the name of the database for the operation.
-     * @param command the command to execute.
-     * @param decoder the decoder for the result documents.
-     */
     public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
         this.command = notNull("command", command);

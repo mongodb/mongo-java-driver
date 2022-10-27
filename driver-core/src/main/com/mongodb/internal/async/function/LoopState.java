@@ -34,6 +34,8 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  * {@linkplain #attachment(AttachmentKey) Attachments} may be used by the associated loop
  * to preserve a state between iterations.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @see AsyncCallbackLoop
  */
 @NotThreadSafe

@@ -41,25 +41,15 @@ import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 /**
  * A base class for transaction-related operations
  *
- * @since 3.8
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
     private final WriteConcern writeConcern;
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeConcern the write concern
-     */
     TransactionOperation(final WriteConcern writeConcern) {
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }

@@ -33,6 +33,9 @@ import java.util.Map;
 
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongoCryptOptions;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class Crypts {
 
     private Crypts() {

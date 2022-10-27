@@ -38,6 +38,9 @@ import org.bson.BsonTimestamp;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ClientSessionBinding extends AbstractReferenceCounted implements AsyncReadWriteBinding {
     private final AsyncClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;

@@ -47,8 +47,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * <p>If the new name is the same as an existing collection and dropTarget is true, this existing collection will be dropped. If
  * dropTarget is false and the newCollectionName is the same as an existing collection, a MongoServerException will be thrown.</p>
  *
- * @mongodb.driver.manual reference/command/renameCollection renameCollection
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace originalNamespace;
@@ -56,21 +55,10 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private final WriteConcern writeConcern;
     private boolean dropTarget;
 
-    /**
-     * @param originalNamespace the name of the collection to rename
-     * @param newNamespace      the desired new name for the collection
-     */
     public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace) {
         this(originalNamespace, newNamespace, null);
     }
 
-    /**
-     * @param originalNamespace the name of the collection to rename
-     * @param newNamespace      the desired new name for the collection
-     * @param writeConcern      the writeConcern
-     *
-     * @since 3.4
-     */
     public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace,
                                      final WriteConcern writeConcern) {
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
@@ -78,45 +66,19 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
         this.writeConcern = writeConcern;
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern, which may be null
-     *
-     * @since 3.4
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    /**
-     * Gets if mongod should drop the target of renameCollection prior to renaming the collection.
-     *
-     * @return true if mongod should drop the target of renameCollection prior to renaming the collection.
-     */
     public boolean isDropTarget() {
         return dropTarget;
     }
 
-    /**
-     * Sets if mongod should drop the target of renameCollection prior to renaming the collection.
-     *
-     * @param dropTarget true if mongod should drop the target of renameCollection prior to renaming the collection.
-     * @return this
-     */
     public RenameCollectionOperation dropTarget(final boolean dropTarget) {
         this.dropTarget = dropTarget;
         return this;
     }
 
-    /**
-     * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
-     *
-     * @param binding the binding
-     * @return a void result
-     * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
-     *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
-     */
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {

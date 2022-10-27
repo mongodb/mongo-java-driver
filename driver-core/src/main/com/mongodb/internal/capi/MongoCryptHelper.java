@@ -46,6 +46,9 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class MongoCryptHelper {
 
     public static MongoCryptOptions createMongoCryptOptions(final ClientEncryptionSettings settings) {

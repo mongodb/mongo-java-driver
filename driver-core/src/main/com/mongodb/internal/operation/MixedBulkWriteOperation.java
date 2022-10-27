@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -72,7 +71,7 @@ import static com.mongodb.internal.operation.OperationHelper.withSourceAndConnec
 /**
  * An operation to execute a series of write operations in bulk.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
@@ -85,16 +84,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private BsonValue comment;
     private BsonDocument variables;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace     the database and collection namespace for the operation.
-     * @param writeRequests the list of writeRequests to execute.
-     * @param ordered       whether the writeRequests must be executed in order.
-     * @param writeConcern  the write concern for the operation.
-     * @param retryWrites   if writes should be retried if they fail due to a network error.
-     * @since 3.6
-     */
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests,
                                    final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites) {
         this.ordered = ordered;
@@ -105,110 +94,45 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         isTrueArgument("writes is not an empty list", !writeRequests.isEmpty());
     }
 
-    /**
-     * Gets the namespace of the collection to write to.
-     *
-     * @return the namespace
-     */
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
-    /**
-     * Gets the write concern to apply
-     *
-     * @return the write concern
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    /**
-     * Gets whether the writes are ordered.  If true, no more writes will be executed after the first failure.
-     *
-     * @return whether the writes are ordered
-     */
     public boolean isOrdered() {
         return ordered;
     }
 
-    /**
-     * Gets the list of write requests to execute.
-     *
-     * @return the list of write requests
-     */
     public List<? extends WriteRequest> getWriteRequests() {
         return writeRequests;
     }
 
-    /**
-     * Gets the bypass document level validation flag
-     *
-     * @return the bypass document level validation flag
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
 
-    /**
-     * Sets the bypass document level validation flag.
-     *
-     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
-     * @return this
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
     public MixedBulkWriteOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
-    /**
-     * @return the comment for this operation. A null value means no comment is set.
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public BsonValue getComment() {
         return comment;
     }
 
-    /**
-     * Sets the comment for this operation. A null value means no comment is set.
-     *
-     * @param comment the comment
-     * @return this
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public MixedBulkWriteOperation comment(final BsonValue comment) {
         this.comment = comment;
         return this;
     }
 
-    /**
-     * Add top-level variables for the operation
-     *
-     * <p>Allows for improved command readability by separating the variables from the query text.
-     *
-     * @param variables for the operation
-     * @return this
-     * @mongodb.server.release 5.0
-     * @since 4.6
-     */
     public MixedBulkWriteOperation let(final BsonDocument variables) {
         this.variables = variables;
         return this;
     }
 
-    /**
-     * Returns true if writes should be retried if they fail due to a network error.
-     *
-     * @return the retryWrites value
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     */
     public Boolean getRetryWrites() {
         return retryWrites;
     }
@@ -241,13 +165,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return decision;
     }
 
-    /**
-     * Executes a bulk write operation.
-     *
-     * @param binding the WriteBinding        for the operation
-     * @return the bulk write result.
-     * @throws MongoBulkWriteException if a failure to complete the bulk write is detected based on the server response
-     */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
         /* We cannot use the tracking of attempts built in the `RetryState` class because conceptually we have to maintain multiple attempt

@@ -26,6 +26,8 @@ import reactor.core.publisher.Mono;
 
 /**
  * An interface describing the execution of a read or a write operation.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface OperationExecutor {
 

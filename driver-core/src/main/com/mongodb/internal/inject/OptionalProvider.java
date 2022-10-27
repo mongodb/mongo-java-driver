@@ -22,6 +22,8 @@ import java.util.Optional;
 /**
  * If a constructor parameter is of type {@link OptionalProvider}, then the corresponding argument must not be {@code null}.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @param <T> The type of provided objects.
  * @see Provider
  */

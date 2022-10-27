@@ -48,8 +48,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * Abstract base class for findAndModify-based operations
  *
- * @param <T> the document type
- * @since 3.8
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
 
@@ -68,14 +67,6 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     private BsonValue comment;
     private BsonDocument variables;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace   the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param retryWrites  if writes should be retried if they fail due to a network error.
-     * @param decoder     the decoder for the result documents.
-     */
     protected BaseFindAndModifyOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
                                          final boolean retryWrites, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
@@ -100,251 +91,102 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
                 getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
     }
 
-    /**
-     * Gets the namespace.
-     *
-     * @return the namespace
-     */
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
-    /**
-     * Get the write concern for this operation
-     *
-     * @return the {@link WriteConcern}
-     * @mongodb.server.release 3.2
-     * @since 3.2
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    /**
-     * Gets the decoder used to decode the result documents.
-     *
-     * @return the decoder
-     */
     public Decoder<T> getDecoder() {
         return decoder;
     }
 
-    /**
-     * Returns true if the operation should be retried.
-     *
-     * @return true if the operation should be retried
-     * @since 3.8
-     */
     public boolean isRetryWrites() {
         return retryWrites;
     }
 
-
-    /**
-     * Gets the query filter.
-     *
-     * @return the query filter
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
     public BsonDocument getFilter() {
         return filter;
     }
 
-    /**
-     * Sets the query filter to apply to the query.
-     *
-     * @param filter the query filter, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
     public BaseFindAndModifyOperation<T> filter(final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
 
-    /**
-     * Gets a document describing the fields to return for all matching documents.
-     *
-     * @return the project document, which may be null
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
     public BsonDocument getProjection() {
         return projection;
     }
 
-    /**
-     * Sets a document describing the fields to return for all matching documents.
-     *
-     * @param projection the project document, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
     public BaseFindAndModifyOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
         return this;
     }
 
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
     public BaseFindAndModifyOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-    /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
-     *
-     * @return a document describing the sort criteria
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
-     */
     public BsonDocument getSort() {
         return sort;
     }
 
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
-     */
     public BaseFindAndModifyOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
         return this;
     }
 
-    /**
-     * Returns the collation options
-     *
-     * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
     public Collation getCollation() {
         return collation;
     }
 
-    /**
-     * Returns the hint for which index to use. The default is not to set a hint.
-     *
-     * @return the hint
-     * @since 4.1
-     */
     @Nullable
     public Bson getHint() {
         return hint;
     }
 
-    /**
-     * Sets the hint for which index to use. A null value means no hint is set.
-     *
-     * @param hint the hint
-     * @return this
-     * @since 4.1
-     */
     public BaseFindAndModifyOperation<T> hint(@Nullable final Bson hint) {
         this.hint = hint;
         return this;
     }
 
-    /**
-     * Gets the hint string to apply.
-     *
-     * @return the hint string, which should be the name of an existing index
-     * @since 4.1
-     */
     @Nullable
     public String getHintString() {
         return hintString;
     }
 
-    /**
-     * Sets the hint to apply.
-     *
-     * @param hint the name of the index which should be used for the operation
-     * @return this
-     * @since 4.1
-     */
     public BaseFindAndModifyOperation<T> hintString(@Nullable final String hint) {
         this.hintString = hint;
         return this;
     }
 
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     * @param collation the collation options to use
-     * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
     public BaseFindAndModifyOperation<T> collation(final Collation collation) {
         this.collation = collation;
         return this;
     }
 
-    /**
-     * @return comment for this operation. A null value means no comment is set.
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public BsonValue getComment() {
         return comment;
     }
 
-    /**
-     * Sets the comment for this operation. A null value means no comment is set.
-     *
-     * @param comment the comment
-     * @return this
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public BaseFindAndModifyOperation<T> comment(final BsonValue comment) {
         this.comment = comment;
         return this;
     }
 
-    /**
-     * Add top-level variables to the operation
-     *
-     * @return the top level variables if set or null.
-     * @mongodb.server.release 5.0
-     * @since 4.6
-     */
     public BsonDocument getLet() {
         return variables;
     }
 
-    /**
-     * Add top-level variables for the operation
-     *
-     * <p>Allows for improved command readability by separating the variables from the query text.
-     *
-     * @param variables for the operation
-     * @return this
-     * @mongodb.server.release 5.0
-     * @since 4.6
-     */
     public BaseFindAndModifyOperation<T> let(final BsonDocument variables) {
         this.variables = variables;
         return this;

@@ -24,6 +24,9 @@ import java.util.List;
 
 import static com.mongodb.internal.connection.BsonWriterHelper.writeElements;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ElementExtendingBsonWriter extends LevelCountingBsonWriter {
     private final BsonBinaryWriter writer;
     private final List<BsonElement> extraElements;

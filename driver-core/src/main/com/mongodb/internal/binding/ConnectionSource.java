@@ -27,24 +27,12 @@ import com.mongodb.lang.Nullable;
 /**
  * A source of connections to a single MongoDB server.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface ConnectionSource extends ReferenceCounted {
 
-    /**
-     * Gets the current description of this source.
-     *
-     * @return the current details of the server state.
-     */
     ServerDescription getServerDescription();
 
-    /**
-     * Gets the session context for this source
-     *
-     * @return the session context, which may not be null
-     *
-     * @since 3.6
-     */
     @Nullable
     SessionContext getSessionContext();
 
@@ -53,18 +41,8 @@ public interface ConnectionSource extends ReferenceCounted {
 
     RequestContext getRequestContext();
 
-    /**
-     * Gets the read preference that was applied when selecting this source.
-     *
-     * @see ReadBinding#getReadConnectionSource(int, ReadPreference)
-     */
     ReadPreference getReadPreference();
 
-    /**
-     * Gets a connection from this source.
-     *
-     * @return the connection
-     */
     Connection getConnection();
 
     @Override

@@ -53,11 +53,7 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
 /**
  * Finds the distinct values for a specified field across a single collection.
  *
- * <p>When possible, the distinct command uses an index to find documents and return values.</p>
- *
- * @param <T> the type of the distinct value
- * @mongodb.driver.manual reference/command/distinct Distinct Command
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String VALUES = "values";
@@ -71,130 +67,54 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private Collation collation;
     private BsonValue comment;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param fieldName the name of the field to return distinct values.
-     * @param decoder   the decoder for the result documents.
-     */
     public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
     }
 
-    /**
-     * Gets the query filter.
-     *
-     * @return the query filter
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
     public BsonDocument getFilter() {
         return filter;
     }
 
-    /**
-     * Sets the query filter to apply to the query.
-     *
-     * @param filter the query filter, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
     public DistinctOperation<T> filter(final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
 
-    /**
-     * Enables retryable reads if a read fails due to a network error.
-     *
-     * @param retryReads true if reads should be retried
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     * @since 3.11
-     */
     public DistinctOperation<T> retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
         return this;
     }
 
-    /**
-     * Gets the value for retryable reads. The default is true.
-     *
-     * @return the retryable reads value
-     * @since 3.11
-     */
     public boolean getRetryReads() {
         return retryReads;
     }
 
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
     public DistinctOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-    /**
-     * Returns the collation options
-     *
-     * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
     public Collation getCollation() {
         return collation;
     }
 
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     * @param collation the collation options to use
-     * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
     public DistinctOperation<T> collation(final Collation collation) {
         this.collation = collation;
         return this;
     }
 
-    /**
-     * @return the comment for this operation. A null value means no comment is set.
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public BsonValue getComment() {
         return comment;
     }
 
-    /**
-     * Sets the comment for this operation. A null value means no comment is set.
-     *
-     * @param comment the comment
-     * @return this
-     * @since 4.6
-     * @mongodb.server.release 4.4
-     */
     public DistinctOperation<T> comment(final BsonValue comment) {
         this.comment = comment;
         return this;

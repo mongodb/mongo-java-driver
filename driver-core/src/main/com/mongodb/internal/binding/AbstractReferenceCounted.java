@@ -18,6 +18,9 @@ package com.mongodb.internal.binding;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public abstract class AbstractReferenceCounted implements ReferenceCounted {
     private final AtomicInteger referenceCount = new AtomicInteger(1);
     @Override

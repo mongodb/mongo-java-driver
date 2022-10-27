@@ -36,6 +36,8 @@ import java.util.function.Function;
  * are used as they defined by the Java Language Specification, while the terms "successful" and "failed completion" are used to refer to a
  * situation when the function produces either a successful or a failed result respectively.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @param <P> The type of the first parameter to the function.
  * @param <R> The type of successful result. A failed result is of the {@link Throwable} type
  * as defined by {@link SingleResultCallback#onResult(Object, Throwable)}.

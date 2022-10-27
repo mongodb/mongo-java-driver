@@ -27,6 +27,9 @@ import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public abstract class Authenticator {
     private final MongoCredentialWithCache credential;
     private final ClusterConnectionMode clusterConnectionMode;

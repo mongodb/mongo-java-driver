@@ -49,55 +49,27 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * An operation that commits a transaction.
  *
- * @since 3.8
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CommitTransactionOperation extends TransactionOperation {
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
     private Long maxCommitTimeMS;
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeConcern the write concern
-     */
     public CommitTransactionOperation(final WriteConcern writeConcern) {
         this(writeConcern, false);
     }
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeConcern the write concern
-     * @param alreadyCommitted if the transaction has already been committed.
-     * @since 3.11
-     */
     public CommitTransactionOperation(final WriteConcern writeConcern, final boolean alreadyCommitted) {
         super(writeConcern);
         this.alreadyCommitted = alreadyCommitted;
     }
 
-    /**
-     * Set the recovery token.
-     *
-     * @param recoveryToken the recovery token
-     * @return the CommitTransactionOperation
-     * @since 3.11
-     */
     public CommitTransactionOperation recoveryToken(final BsonDocument recoveryToken) {
         this.recoveryToken = recoveryToken;
         return this;
     }
 
-    /**
-     * Sets the maximum execution time on the server for the commitTransaction operation.
-     *
-     * @param maxCommitTime  the max commit time, which must be either null or greater than zero, in the given time unit
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     public CommitTransactionOperation maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
         if (maxCommitTime == null) {
             this.maxCommitTimeMS = null;
@@ -109,15 +81,6 @@ public class CommitTransactionOperation extends TransactionOperation {
         return this;
     }
 
-    /**
-     * Gets the maximum amount of time to allow a single commitTransaction command to execute.  The default is 0, which places no limit on
-     * the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     @Nullable
     public Long getMaxCommitTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);

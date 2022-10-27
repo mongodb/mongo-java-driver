@@ -18,6 +18,9 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class MongoWriteConcernWithResponseException extends MongoException {
     private static final long serialVersionUID = 1707360842648550287L;
     private final MongoException cause;

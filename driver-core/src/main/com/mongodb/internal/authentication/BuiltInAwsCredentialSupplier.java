@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 
-public class BuiltInAwsCredentialSupplier implements Supplier<AwsCredential> {
+class BuiltInAwsCredentialSupplier implements Supplier<AwsCredential> {
 
     @Override
     public AwsCredential get() {

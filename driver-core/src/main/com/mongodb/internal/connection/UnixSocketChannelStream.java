@@ -27,6 +27,9 @@ import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.Socket;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class UnixSocketChannelStream extends SocketStream {
     private final UnixServerAddress address;
 

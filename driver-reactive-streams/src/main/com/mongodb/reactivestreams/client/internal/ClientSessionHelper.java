@@ -33,6 +33,9 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ClientSessionHelper {
     private final MongoClientImpl mongoClient;
     private final ServerSessionPool serverSessionPool;

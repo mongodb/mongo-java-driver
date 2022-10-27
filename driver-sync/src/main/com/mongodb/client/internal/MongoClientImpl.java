@@ -59,6 +59,9 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class MongoClientImpl implements MongoClient {
     private static final Logger LOGGER = Loggers.getLogger("client");
 

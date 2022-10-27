@@ -30,6 +30,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
     private final DnsSrvRecordMonitor dnsSrvRecordMonitor;
     private volatile MongoException srvResolutionException;

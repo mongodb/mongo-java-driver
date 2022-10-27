@@ -32,6 +32,9 @@ import org.bson.codecs.Decoder;
 
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class DefaultServerConnection extends AbstractReferenceCounted implements Connection, AsyncConnection {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private final InternalConnection wrapped;

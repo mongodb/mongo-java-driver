@@ -27,6 +27,9 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public interface InternalConnection extends BufferProvider {
 
     int NOT_INITIALIZED_GENERATION = -1;

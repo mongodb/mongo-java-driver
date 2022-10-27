@@ -74,8 +74,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSIO
 /**
  * An operation that queries a collection using the provided criteria.
  *
- * @param <T> the operations result type.
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String FIRST_BATCH = "firstBatch";
@@ -261,8 +260,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum await execution time in the given time unit
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxAwaitTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -276,8 +273,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *                      default value
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public FindOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -289,7 +284,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Gets the number of documents to skip.  The default is 0.
      *
      * @return the number of documents to skip, which may be null
-     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public int getSkip() {
         return skip;
@@ -300,7 +294,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param skip the number of documents to skip
      * @return this
-     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public FindOperation<T> skip(final int skip) {
         this.skip = skip;
@@ -312,7 +305,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * order.
      *
      * @return a document describing the sort criteria
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public BsonDocument getSort() {
         return sort;
@@ -323,7 +315,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param sort the sort criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public FindOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
@@ -354,7 +345,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Internal replication use only.  Driver users should ordinarily not use this.
      *
      * @return oplogReplay
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
     public boolean isOplogReplay() {
         return oplogReplay;
@@ -365,7 +355,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param oplogReplay the oplogReplay value
      * @return this
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
     public FindOperation<T> oplogReplay(final boolean oplogReplay) {
         this.oplogReplay = oplogReplay;
@@ -378,7 +367,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * <p>The server normally times out idle cursors after an inactivity period (10 minutes) to prevent excess memory use.</p>
      *
      * @return if cursor timeout has been turned off
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
     public boolean isNoCursorTimeout() {
         return noCursorTimeout;
@@ -389,7 +377,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param noCursorTimeout true if the cursor timeout should be turned off.
      * @return this
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
     public FindOperation<T> noCursorTimeout(final boolean noCursorTimeout) {
         this.noCursorTimeout = noCursorTimeout;
@@ -400,7 +387,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Returns true if can get partial results from a mongos if some shards are down.
      *
      * @return if can get partial results from a mongos if some shards are down
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
     public boolean isPartial() {
         return partial;
@@ -411,7 +397,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param partial allow partial results from a mongos if some shards are down
      * @return this
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
     public FindOperation<T> partial(final boolean partial) {
         this.partial = partial;
@@ -422,8 +407,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Returns the collation options
      *
      * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
      */
     public Collation getCollation() {
         return collation;
@@ -435,8 +418,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * <p>A null value represents the server default.</p>
      * @param collation the collation options to use
      * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
      */
     public FindOperation<T> collation(final Collation collation) {
         this.collation = collation;
@@ -447,7 +428,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Returns the comment to send with the query. The default is not to include a comment with the query.
      *
      * @return the comment
-     * @since 3.5
      */
     public BsonValue getComment() {
         return comment;
@@ -458,8 +438,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param comment the comment
      * @return this
-     * @since 3.5
-     */
+]     */
     public FindOperation<T> comment(final BsonValue comment) {
         this.comment = comment;
         return this;
@@ -469,7 +448,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Returns the hint for which index to use. The default is not to set a hint.
      *
      * @return the hint
-     * @since 3.5
      */
     public BsonValue getHint() {
         return hint;
@@ -480,7 +458,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param hint the hint
      * @return this
-     * @since 3.5
      */
     public FindOperation<T> hint(final BsonValue hint) {
         this.hint = hint;
@@ -491,9 +468,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Add top-level variables to the operation
      *
      * @return the top level variables if set or null.
-     * @mongodb.driver.manual reference/command/find/
-     * @mongodb.server.release 5.0
-     * @since 4.6
      */
     public BsonDocument getLet() {
         return variables;
@@ -506,9 +480,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param variables for find operation or null
      * @return this
-     * @mongodb.driver.manual reference/command/find/
-     * @mongodb.server.release 5.0
-     * @since 4.6
      */
     public FindOperation<T> let(final BsonDocument variables) {
         this.variables = variables;
@@ -519,7 +490,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Returns the exclusive upper bound for a specific index. By default there is no max bound.
      *
      * @return the max
-     * @since 3.5
      */
     public BsonDocument getMax() {
         return max;
@@ -530,7 +500,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param max the max
      * @return this
-     * @since 3.5
      */
     public FindOperation<T> max(final BsonDocument max) {
         this.max = max;
@@ -541,7 +510,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Returns the minimum inclusive lower bound for a specific index. By default there is no min bound.
      *
      * @return the min
-     * @since 3.5
      */
     public BsonDocument getMin() {
         return min;
@@ -552,7 +520,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param min the min
      * @return this
-     * @since 3.5
      */
     public FindOperation<T> min(final BsonDocument min) {
         this.min = min;
@@ -565,7 +532,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
      *
      * @return the returnKey
-     * @since 3.5
      */
     public boolean isReturnKey() {
         return returnKey;
@@ -576,7 +542,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param returnKey the returnKey
      * @return this
-     * @since 3.5
      */
     public FindOperation<T> returnKey(final boolean returnKey) {
         this.returnKey = returnKey;
@@ -590,7 +555,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * The default is false.
      *
      * @return the showRecordId
-     * @since 3.5
      */
     public boolean isShowRecordId() {
         return showRecordId;
@@ -601,7 +565,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param showRecordId the showRecordId
      * @return this
-     * @since 3.5
      */
     public FindOperation<T> showRecordId(final boolean showRecordId) {
         this.showRecordId = showRecordId;
@@ -613,7 +576,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      *
      * @param retryReads true if reads should be retried
      * @return this
-     * @since 3.11
      */
     public FindOperation<T> retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
@@ -624,7 +586,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
      * Gets the value for retryable reads. The default is true.
      *
      * @return the retryable reads value
-     * @since 3.11
      */
     public boolean getRetryReads() {
         return retryReads;

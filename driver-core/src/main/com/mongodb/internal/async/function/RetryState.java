@@ -36,6 +36,8 @@ import static com.mongodb.assertions.Assertions.assertTrue;
  * {@linkplain #attachment(AttachmentKey) Attachments} may be used by the associated retryable activity either
  * to preserve a state between attempts.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @see RetryingSyncSupplier
  * @see RetryingAsyncCallbackSupplier
  */

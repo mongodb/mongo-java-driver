@@ -33,9 +33,7 @@ import org.bson.codecs.Decoder;
  *
  * <p> Implementations of this class are thread safe.  </p>
  *
- * <p> This interface is not stable. While methods will not be removed, new ones may be added. </p>
- *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
 public interface AsyncConnection extends ReferenceCounted {
@@ -50,41 +48,10 @@ public interface AsyncConnection extends ReferenceCounted {
      */
     ConnectionDescription getDescription();
 
-    /**
-     * Execute the command.
-     *
-     * @param <T>                  the type of the result
-     * @param database             the database to execute the command in
-     * @param command              the command document
-     * @param fieldNameValidator   the field name validator for the command document
-     * @param readPreference       the read preference that was applied to get this connection, or null if this is a write operation
-     * @param commandResultDecoder the decoder for the result
-     * @param sessionContext       the session context
-     * @param serverApi            the server api, which may be null
-     * @param callback             the callback to be passed the write result
-     * @since 4.4
-     */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
             Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext,
             SingleResultCallback<T> callback);
 
-    /**
-     * Executes the command, consuming as much of the {@code SplittablePayload} as possible.
-     *
-     * @param <T>                       the type of the result
-     * @param database                  the database to execute the command in
-     * @param command                   the command document
-     * @param commandFieldNameValidator the field name validator for the command document
-     * @param readPreference            the read preference that was applied to get this connection, or null if this is a write operation
-     * @param commandResultDecoder      the decoder for the result
-     * @param sessionContext            the session context
-     * @param serverApi                 the server api, which may be null
-     * @param responseExpected          true if a response from the server is expected
-     * @param payload                   the splittable payload to incorporate with the command
-     * @param payloadFieldNameValidator the field name validator for the payload documents
-     * @param callback                  the callback to be passed the write result
-     * @since 3.6
-     */
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
                           ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
                           ServerApi serverApi, RequestContext requestContext, boolean responseExpected, SplittablePayload payload,

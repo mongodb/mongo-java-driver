@@ -29,8 +29,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * This class should not be considered as part of the public API, and it may change or be removed at any time.
- *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ByteBufferBsonOutput extends OutputBuffer {
 

@@ -23,6 +23,9 @@ import java.util.List;
 
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class BatchCursor<T> implements AutoCloseable {
 
     private final AsyncBatchCursor<T> wrapped;

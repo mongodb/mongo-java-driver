@@ -36,7 +36,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparingInt;
 
 /**
- * This class is not part of the public API.  It may be changed or removed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class BulkWriteBatchCombiner {
     private final ServerAddress serverAddress;

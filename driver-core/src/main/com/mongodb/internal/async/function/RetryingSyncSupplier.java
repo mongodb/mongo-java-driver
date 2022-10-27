@@ -29,6 +29,8 @@ import java.util.function.Supplier;
  * For example, the {@link RetryState#breakAndThrowIfRetryAnd(Supplier)} method may be used to
  * break retrying if the original function decides so.
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
  * @see RetryingAsyncCallbackSupplier
  */
 @NotThreadSafe

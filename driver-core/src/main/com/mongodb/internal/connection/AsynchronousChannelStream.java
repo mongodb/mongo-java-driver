@@ -40,7 +40,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * Not part of the public API.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class AsynchronousChannelStream implements Stream {
     private final ServerAddress serverAddress;

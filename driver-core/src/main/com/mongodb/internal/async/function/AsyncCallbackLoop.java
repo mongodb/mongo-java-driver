@@ -35,6 +35,7 @@ import java.util.function.Supplier;
  *     <li>the original function calls {@link LoopState#breakAndCompleteIf(Supplier, SingleResultCallback)}.</li>
  * </ul>
  *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @NotThreadSafe
 public final class AsyncCallbackLoop implements AsyncCallbackRunnable {

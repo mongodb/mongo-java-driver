@@ -47,6 +47,9 @@ import static com.mongodb.internal.connection.DescriptionHelper.createConnection
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static java.lang.String.format;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
     private final ClusterConnectionMode clusterConnectionMode;
     private final Authenticator authenticator;

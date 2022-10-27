@@ -19,7 +19,7 @@ package com.mongodb.internal.operation;
 /**
  * Common statistics returned by running all types of map-reduce operations.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MapReduceStatistics {
 
@@ -28,14 +28,6 @@ public class MapReduceStatistics {
     private final int emitCount;
     private final int duration;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param inputCount  the input count.
-     * @param outputCount the output count.
-     * @param emitCount   the emit count.
-     * @param duration    the duration.
-     */
     public MapReduceStatistics(final int inputCount, final int outputCount, final int emitCount, final int duration) {
         this.inputCount = inputCount;
         this.outputCount = outputCount;
@@ -43,38 +35,18 @@ public class MapReduceStatistics {
         this.duration = duration;
     }
 
-    /**
-     * Get the number of documents that were input into the map reduce operation
-     *
-     * @return the number of documents that read while processing this map reduce
-     */
     public int getInputCount() {
         return inputCount;
     }
 
-    /**
-     * Get the number of documents generated as a result of this map reduce
-     *
-     * @return the number of documents output by the map reduce
-     */
     public int getOutputCount() {
         return outputCount;
     }
 
-    /**
-     * Get the number of messages emitted from the provided map function.
-     *
-     * @return the number of items emitted from the map function
-     */
     public int getEmitCount() {
         return emitCount;
     }
 
-    /**
-     * Get the amount of time it took to run the map-reduce.
-     *
-     * @return the duration in milliseconds
-     */
     public int getDuration() {
         return duration;
     }
