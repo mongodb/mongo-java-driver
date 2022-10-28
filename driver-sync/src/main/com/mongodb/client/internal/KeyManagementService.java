@@ -17,8 +17,8 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.SslHelper;
 
 import javax.net.SocketFactory;

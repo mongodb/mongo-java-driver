@@ -20,7 +20,7 @@ import com.mongodb.MongoDriverInformation
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.IndexModel
 import com.mongodb.client.result.InsertOneResult
-import com.mongodb.diagnostics.logging.Loggers
+import com.mongodb.internal.diagnostics.logging.Loggers
 import org.bson.BsonInt32
 import org.bson.Document
 import org.bson.RawBsonDocument

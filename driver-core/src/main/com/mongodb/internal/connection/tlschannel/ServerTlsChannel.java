@@ -19,8 +19,8 @@
 
 package com.mongodb.internal.connection.tlschannel;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.impl.BufferHolder;
 import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
 import com.mongodb.internal.connection.tlschannel.impl.TlsChannelImpl;

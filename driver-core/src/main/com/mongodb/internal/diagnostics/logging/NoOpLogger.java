@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.diagnostics.logging;
+package com.mongodb.internal.diagnostics.logging;
 
 /**
  * A logger that disables all levels and logs nothing

@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Logger;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
