@@ -32,12 +32,12 @@ import com.mongodb.annotations.Evolving;
  * that is of the wrong type, such as by applying the "not" boolean expression
  * to a document field that is an integer, null, or missing. This API does not
  * define the output in such cases (though the output may be defined within the
- * execution context - the server - where the expression is evaluated). Users
- * must mitigate any risk of applying an expression to some type where behaviour
- * is not defined (for example, by checking for null, and by ensuring that field
- * types are correctly specified). Likewise, unless otherwise specified, this
- * API does not define the order of evaluation for all arguments, as well as
- * whether all arguments to some expression shall be evaluated.
+ * execution context - the server - where the expression is evaluated). Users of
+ * this API must mitigate any risk of applying an expression to some type where
+ * resulting behaviour is not defined by this API (for example, by checking for
+ * null, by ensuring that field types are correctly specified). Likewise, unless
+ * otherwise specified, this API does not define the order of evaluation for all
+ * arguments, and whether all arguments to some expression will be evaluated.
  *
  * @see Expressions
  */
