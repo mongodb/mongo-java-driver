@@ -49,7 +49,7 @@ import org.bson.conversions.Bson;
 import java.util.List;
 
 /**
- * This class is NOT part of the public API. It may change at any time without notification.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class SyncOperations<TDocument> {
     private final Operations<TDocument> operations;

@@ -19,8 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.Operations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -63,7 +63,7 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
         return mongoOperationPublisher;
     }
 
-    Operations<T> getOperations() {
+    AsyncOperations<T> getOperations() {
         return mongoOperationPublisher.getOperations();
     }
 

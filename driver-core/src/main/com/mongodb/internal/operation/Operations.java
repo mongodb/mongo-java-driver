@@ -74,7 +74,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public final class Operations<TDocument> {
+final class Operations<TDocument> {
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final ReadPreference readPreference;
@@ -84,7 +84,7 @@ public final class Operations<TDocument> {
     private final boolean retryWrites;
     private final boolean retryReads;
 
-    public Operations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+    Operations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
             final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites,
             final boolean retryReads) {
         this.namespace = namespace;
@@ -97,39 +97,39 @@ public final class Operations<TDocument> {
         this.retryReads = retryReads;
     }
 
-    public MongoNamespace getNamespace() {
+    MongoNamespace getNamespace() {
         return namespace;
     }
 
-    public Class<TDocument> getDocumentClass() {
+    Class<TDocument> getDocumentClass() {
         return documentClass;
     }
 
-    public ReadPreference getReadPreference() {
+    ReadPreference getReadPreference() {
         return readPreference;
     }
 
-    public CodecRegistry getCodecRegistry() {
+    CodecRegistry getCodecRegistry() {
         return codecRegistry;
     }
 
-    public ReadConcern getReadConcern() {
+    ReadConcern getReadConcern() {
         return readConcern;
     }
 
-    public WriteConcern getWriteConcern() {
+    WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    public boolean isRetryWrites() {
+    boolean isRetryWrites() {
         return retryWrites;
     }
 
-    public boolean isRetryReads() {
+    boolean isRetryReads() {
         return retryReads;
     }
 
-    public CountDocumentsOperation countDocuments(final Bson filter, final CountOptions options) {
+    CountDocumentsOperation countDocuments(final Bson filter, final CountOptions options) {
         CountDocumentsOperation operation = new CountDocumentsOperation(namespace)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
@@ -146,24 +146,24 @@ public final class Operations<TDocument> {
         return operation;
     }
 
-    public EstimatedDocumentCountOperation estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
+    EstimatedDocumentCountOperation estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
         return new EstimatedDocumentCountOperation(namespace)
                 .retryReads(retryReads)
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                 .comment(options.getComment());
     }
 
-    public <TResult> FindOperation<TResult> findFirst(final Bson filter, final Class<TResult> resultClass,
+    <TResult> FindOperation<TResult> findFirst(final Bson filter, final Class<TResult> resultClass,
                                                       final FindOptions options) {
         return createFindOperation(namespace, filter, resultClass, options).batchSize(0).limit(-1);
     }
 
-    public <TResult> FindOperation<TResult> find(final Bson filter, final Class<TResult> resultClass,
+    <TResult> FindOperation<TResult> find(final Bson filter, final Class<TResult> resultClass,
                                                  final FindOptions options) {
         return createFindOperation(namespace, filter, resultClass, options);
     }
 
-    public <TResult> FindOperation<TResult> find(final MongoNamespace findNamespace, final Bson filter,
+    <TResult> FindOperation<TResult> find(final MongoNamespace findNamespace, final Bson filter,
                                                  final Class<TResult> resultClass, final FindOptions options) {
         return createFindOperation(findNamespace, filter, resultClass, options);
     }
@@ -201,7 +201,7 @@ public final class Operations<TDocument> {
         return operation;
     }
 
-    public <TResult> DistinctOperation<TResult> distinct(final String fieldName, final Bson filter,
+    <TResult> DistinctOperation<TResult> distinct(final String fieldName, final Bson filter,
                                                          final Class<TResult> resultClass, final long maxTimeMS,
                                                          final Collation collation, final BsonValue comment) {
         return new DistinctOperation<>(namespace, fieldName, codecRegistry.get(resultClass))
@@ -213,7 +213,7 @@ public final class Operations<TDocument> {
 
     }
 
-    public <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
+    <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                     final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
                                                     final Collation collation, final Bson hint, final String hintString,
                                                     final BsonValue comment,
@@ -231,7 +231,7 @@ public final class Operations<TDocument> {
                 .let(toBsonDocument(variables));
     }
 
-    public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
+    AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, final Bson hint, final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
@@ -246,7 +246,7 @@ public final class Operations<TDocument> {
     }
 
     @SuppressWarnings("deprecation")
-    public MapReduceToCollectionOperation mapReduceToCollection(final String databaseName, final String collectionName,
+    MapReduceToCollectionOperation mapReduceToCollection(final String databaseName, final String collectionName,
                                                                 final String mapFunction, final String reduceFunction,
                                                                 final String finalizeFunction, final Bson filter, final int limit,
                                                                 final long maxTimeMS, final boolean jsMode, final Bson scope,
@@ -276,7 +276,7 @@ public final class Operations<TDocument> {
         return operation;
     }
 
-    public <TResult> MapReduceWithInlineResultsOperation<TResult> mapReduce(final String mapFunction, final String reduceFunction,
+    <TResult> MapReduceWithInlineResultsOperation<TResult> mapReduce(final String mapFunction, final String reduceFunction,
                                                                             final String finalizeFunction, final Class<TResult> resultClass,
                                                                             final Bson filter, final int limit,
                                                                             final long maxTimeMS, final boolean jsMode, final Bson scope,
@@ -301,7 +301,7 @@ public final class Operations<TDocument> {
         return operation;
     }
 
-    public FindAndDeleteOperation<TDocument> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
+    FindAndDeleteOperation<TDocument> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
         return new FindAndDeleteOperation<>(namespace, writeConcern, retryWrites, getCodec())
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
@@ -314,7 +314,7 @@ public final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public FindAndReplaceOperation<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement,
+    FindAndReplaceOperation<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement,
                                                                 final FindOneAndReplaceOptions options) {
         return new FindAndReplaceOperation<>(namespace, writeConcern, retryWrites, getCodec(),
                 documentToBsonDocument(replacement))
@@ -332,7 +332,7 @@ public final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
+    FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(namespace, writeConcern, retryWrites, getCodec(),
                 toBsonDocument(update))
                 .filter(toBsonDocument(filter))
@@ -350,7 +350,7 @@ public final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
+    FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
                                                        final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(namespace, writeConcern, retryWrites, getCodec(),
                 toBsonDocumentList(update))
@@ -370,53 +370,53 @@ public final class Operations<TDocument> {
     }
 
 
-    public MixedBulkWriteOperation insertOne(final TDocument document, final InsertOneOptions options) {
+    MixedBulkWriteOperation insertOne(final TDocument document, final InsertOneOptions options) {
         return bulkWrite(singletonList(new InsertOneModel<>(document)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
 
-    public MixedBulkWriteOperation replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
+    MixedBulkWriteOperation replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
         return bulkWrite(singletonList(new ReplaceOneModel<>(filter, replacement, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation deleteOne(final Bson filter, final DeleteOptions options) {
+    MixedBulkWriteOperation deleteOne(final Bson filter, final DeleteOptions options) {
         return bulkWrite(singletonList(new DeleteOneModel<>(filter, options)),
                 new BulkWriteOptions().comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation deleteMany(final Bson filter, final DeleteOptions options) {
+    MixedBulkWriteOperation deleteMany(final Bson filter, final DeleteOptions options) {
         return bulkWrite(singletonList(new DeleteManyModel<>(filter, options)),
                 new BulkWriteOptions().comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
+    MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
+    MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
+    MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
+    MixedBulkWriteOperation updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation insertMany(final List<? extends TDocument> documents,
+    MixedBulkWriteOperation insertMany(final List<? extends TDocument> documents,
                                               final InsertManyOptions options) {
         notNull("documents", documents);
         List<InsertRequest> requests = new ArrayList<>(documents.size());
@@ -435,7 +435,7 @@ public final class Operations<TDocument> {
     }
 
     @SuppressWarnings("unchecked")
-    public MixedBulkWriteOperation bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests,
+    MixedBulkWriteOperation bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests,
                                              final BulkWriteOptions options) {
         notNull("requests", requests);
         List<WriteRequest> writeRequests = new ArrayList<>(requests.size());
@@ -505,7 +505,7 @@ public final class Operations<TDocument> {
     }
 
 
-    public DropCollectionOperation dropCollection(
+    DropCollectionOperation dropCollection(
             final DropCollectionOptions dropCollectionOptions,
             final AutoEncryptionSettings autoEncryptionSettings) {
         DropCollectionOperation operation = new DropCollectionOperation(namespace, writeConcern);
@@ -523,14 +523,14 @@ public final class Operations<TDocument> {
     }
 
 
-    public RenameCollectionOperation renameCollection(final MongoNamespace newCollectionNamespace,
+    RenameCollectionOperation renameCollection(final MongoNamespace newCollectionNamespace,
                                                       final RenameCollectionOptions renameCollectionOptions) {
         return new RenameCollectionOperation(namespace, newCollectionNamespace, writeConcern)
                 .dropTarget(renameCollectionOptions.isDropTarget());
     }
 
     @SuppressWarnings("deprecation")
-    public CreateIndexesOperation createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
+    CreateIndexesOperation createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
         notNull("indexes", indexes);
         notNull("createIndexOptions", createIndexOptions);
         List<IndexRequest> indexRequests = new ArrayList<>(indexes.size());
@@ -566,17 +566,17 @@ public final class Operations<TDocument> {
                 .commitQuorum(createIndexOptions.getCommitQuorum());
     }
 
-    public DropIndexOperation dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
+    DropIndexOperation dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
         return new DropIndexOperation(namespace, indexName, writeConcern)
                 .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
-    public DropIndexOperation dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions) {
+    DropIndexOperation dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions) {
         return new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern)
                 .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
-    public <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
+    <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                 final Bson filter, final boolean collectionNamesOnly,
                                                                 final Integer batchSize, final long maxTimeMS, final BsonValue comment) {
         return new ListCollectionsOperation<>(databaseName, codecRegistry.get(resultClass))
@@ -588,7 +588,7 @@ public final class Operations<TDocument> {
                 .comment(comment);
     }
 
-    public <TResult> ListDatabasesOperation<TResult> listDatabases(final Class<TResult> resultClass, final Bson filter,
+    <TResult> ListDatabasesOperation<TResult> listDatabases(final Class<TResult> resultClass, final Bson filter,
                                                             final Boolean nameOnly, final long maxTimeMS,
                                                             final Boolean authorizedDatabasesOnly, final BsonValue comment) {
         return new ListDatabasesOperation<>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
@@ -599,7 +599,7 @@ public final class Operations<TDocument> {
                 .comment(comment);
     }
 
-    public <TResult> ListIndexesOperation<TResult> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
+    <TResult> ListIndexesOperation<TResult> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
                                                                final long maxTimeMS, final BsonValue comment) {
         return new ListIndexesOperation<>(namespace, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
