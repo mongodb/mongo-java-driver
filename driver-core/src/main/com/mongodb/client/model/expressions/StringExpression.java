@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+/**
+ * Expresses a string value.
+ */
 public interface StringExpression extends Expression {
 
 }

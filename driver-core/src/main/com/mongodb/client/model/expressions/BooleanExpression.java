@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+/**
+ * Expresses a logical boolean value.
+ */
 public interface BooleanExpression extends Expression {
 
     /**

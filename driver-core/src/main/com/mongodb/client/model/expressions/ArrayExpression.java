@@ -16,6 +16,12 @@
 
 package com.mongodb.client.model.expressions;
 
+/**
+ * Expresses an array value. An array value is a finite, ordered collection of
+ * elements of a certain type.
+ *
+ * @param <T> the type of the elements in the array
+ */
 public interface ArrayExpression<T extends Expression> extends Expression {
 
 }

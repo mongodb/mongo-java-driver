@@ -22,7 +22,6 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.internal.connection.ServerHelper;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.conversions.Bson;
@@ -76,13 +75,10 @@ public abstract class OperationTest {
         return new MongoNamespace(getDatabaseName(), getCollectionName());
     }
 
-    public static List<BsonDocument> parseToList(final String s) {
+    private static List<BsonDocument> parseToList(final String s) {
         return BsonArray.parse(s).stream().map(v -> toBsonDocument(v.asDocument())).collect(Collectors.toList());
     }
 
-    public static Document toDocument(final BsonDocument bsonDocument) {
-        return getDefaultCodecRegistry().get(Document.class).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
-    }
     public static BsonDocument toBsonDocument(final BsonDocument bsonDocument) {
         return getDefaultCodecRegistry().get(BsonDocument.class).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
     }

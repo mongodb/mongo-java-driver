@@ -17,14 +17,16 @@
 package com.mongodb.client.model.expressions;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 @Immutable
-public class MqlExpressionCodecProvider implements CodecProvider {
+public final class MqlExpressionCodecProvider implements CodecProvider {
     @Override
     @SuppressWarnings("unchecked")
+    @Nullable
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (MqlExpression.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new MqlExpressionCodec(registry);

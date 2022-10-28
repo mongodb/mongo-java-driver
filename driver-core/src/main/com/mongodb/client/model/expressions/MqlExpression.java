@@ -30,7 +30,7 @@ final class MqlExpression<T extends Expression>
 
     private final Function<CodecRegistry, BsonValue> fn;
 
-    protected MqlExpression(final Function<CodecRegistry, BsonValue> fn) {
+    MqlExpression(final Function<CodecRegistry, BsonValue> fn) {
         this.fn = fn;
     }
 
@@ -75,9 +75,8 @@ final class MqlExpression<T extends Expression>
      * the only implementation of Expression and all subclasses, so this will
      * not mis-cast an expression as anything else.
      */
-    @SuppressWarnings("rawtypes")
-    protected BsonValue extractBsonValue(final CodecRegistry cr, final Expression expression) {
-        return ((MqlExpression) expression).toBsonValue(cr);
+    private static BsonValue extractBsonValue(final CodecRegistry cr, final Expression expression) {
+        return ((MqlExpression<?>) expression).toBsonValue(cr);
     }
 
     /**
@@ -85,11 +84,11 @@ final class MqlExpression<T extends Expression>
      * extend Expression or its subtypes, so MqlExpression will implement any R.
      */
     @SuppressWarnings("unchecked")
-    <R extends Expression> R assertImplementsAllExpressions() {
+    private <R extends Expression> R assertImplementsAllExpressions() {
         return (R) this;
     }
 
-    protected <R extends Expression> R newMqlExpression(final Function<CodecRegistry, BsonValue> ast) {
+    private static <R extends Expression> R newMqlExpression(final Function<CodecRegistry, BsonValue> ast) {
         return new MqlExpression<>(ast).assertImplementsAllExpressions();
     }
 
@@ -115,7 +114,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <Q extends Expression> Q cond(final Q left, final Q right) {
+    public <R extends Expression> R cond(final R left, final R right) {
         return newMqlExpression(ast("$cond", left, right));
     }
 

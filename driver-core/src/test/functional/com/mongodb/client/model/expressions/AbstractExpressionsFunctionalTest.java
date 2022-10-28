@@ -41,12 +41,6 @@ import static com.mongodb.client.model.Aggregates.addFields;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * This test file groups expressions of each type under one test method. Each of
- * these methods begins by showing how to express literals of the relevant type.
- * The ensuing assertions then show how to express the computation in Java (when
- * reasonable), then using the API under test, and then in MQL.
- */
 public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
 
     @BeforeEach
@@ -62,7 +56,7 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
     protected void assertExpression(final Object expectedResult, final Expression expression, final String expectedMql) {
         assertEval(expectedResult, expression);
 
-        BsonValue expressionValue = ((MqlExpression) expression).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+        BsonValue expressionValue = ((MqlExpression<?>) expression).toBsonValue(fromProviders(new BsonValueCodecProvider()));
         BsonValue bsonValue = new BsonDocumentFragmentCodec().readValue(
                 new JsonReader(expectedMql),
                 DecoderContext.builder().build());

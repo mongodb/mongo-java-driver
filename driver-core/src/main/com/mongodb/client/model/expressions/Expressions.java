@@ -20,6 +20,9 @@ import org.bson.BsonBoolean;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 
+/**
+ * Convenience methods related to {@link Expression}.
+ */
 public final class Expressions {
 
     private Expressions() {}

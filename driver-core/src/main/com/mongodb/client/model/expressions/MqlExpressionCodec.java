@@ -16,37 +16,18 @@
 
 package com.mongodb.client.model.expressions;
 
-import com.mongodb.annotations.Immutable;
 import org.bson.BsonReader;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-
 @SuppressWarnings("rawtypes")
-@Immutable
 final class MqlExpressionCodec implements Codec<MqlExpression> {
-    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
-
     private final CodecRegistry codecRegistry;
 
-    /**
-     * Creates a new instance initialised with the default codec registry.
-     */
-    MqlExpressionCodec() {
-        this(DEFAULT_REGISTRY);
-    }
-
-    /**
-     * Creates a new instance initialised with the given codec registry.
-     *
-     * @param codecRegistry the {@code CodecRegistry} to use to look up the codecs for encoding and decoding to/from BSON
-     */
     MqlExpressionCodec(final CodecRegistry codecRegistry) {
         this.codecRegistry = codecRegistry;
     }
@@ -57,7 +38,7 @@ final class MqlExpressionCodec implements Codec<MqlExpression> {
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked"})
     public void encode(final BsonWriter writer, final MqlExpression value, final EncoderContext encoderContext) {
         BsonValue bsonValue = value.toBsonValue(codecRegistry);
         Codec codec = codecRegistry.get(bsonValue.getClass());

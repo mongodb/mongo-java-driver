@@ -18,8 +18,6 @@ package com.mongodb.client.model.expressions;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions", "ConstantConditionalExpression"})
 class BooleanExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#boolean-expression-operators
@@ -32,7 +30,6 @@ class BooleanExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
     public void literalsTest() {
         assertExpression(true, tru, "true");
         assertExpression(false, fal, "false");
-        assertTrue(tru instanceof BooleanExpression);
     }
 
     @Test

@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+/**
+ * Expresses a date value.
+ */
 public interface DateExpression extends Expression {
 
 }

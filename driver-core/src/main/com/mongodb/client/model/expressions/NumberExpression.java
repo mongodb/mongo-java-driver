@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+/**
+ * Expresses a numeric value.
+ */
 public interface NumberExpression extends Expression {
 
 }

@@ -19,24 +19,25 @@ package com.mongodb.client.model.expressions;
 import com.mongodb.annotations.Evolving;
 
 /**
- * Expressions express values that may be represented in, or computations that
- * may be performed within, a MongoDB server. Each expression resolves to some
- * value, much like any Java expression ultimately resolves to some value, and
- * expressions may be thought of as boxed values, except that resolution might
- * potentially happen on a server, rather than locally.
+ * Expressions express values that may be represented in (or computations that
+ * may be performed within) a MongoDB server. Each expression evaluates to some
+ * value, much like any Java expression evaluates to some value. Expressions may
+ * be thought of as boxed values. Evaluation of an expression will usually occur
+ * on a MongoDB server.
  *
  * <p>Users should treat these interfaces as sealed, and must not implement any
  * expression interfaces.
  *
  * <p>Expressions are typed. It is possible to execute expressions against data
  * that is of the wrong type, such as by applying the "not" boolean expression
- * to a document field that is an integer. This API does not define the output
- * in such cases. Where data might have divergent types (for example, if there
- * is some field that could be null, or missing, or a boolean, or an int) then
- * users should make it explicit what should be done in each case. Likewise,
- * unless otherwise specified, this API does not define the order of evaluation
- * for all arguments, as well as whether all arguments to some expression shall
- * be evaluated.
+ * to a document field that is an integer, null, or missing. This API does not
+ * define the output in such cases (though the output may be defined within the
+ * execution context - the server - where the expression is evaluated). Users
+ * must mitigate any risk of applying an expression to some type where behaviour
+ * is not defined (for example, by checking for null, and by ensuring that field
+ * types are correctly specified). Likewise, unless otherwise specified, this
+ * API does not define the order of evaluation for all arguments, as well as
+ * whether all arguments to some expression shall be evaluated.
  *
  * @see Expressions
  */
