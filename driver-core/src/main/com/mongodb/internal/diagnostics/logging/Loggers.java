@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb.diagnostics.logging;
+package com.mongodb.internal.diagnostics.logging;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * This class is not part of the public API.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class Loggers {
     /**

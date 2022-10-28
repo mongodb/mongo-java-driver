@@ -19,8 +19,8 @@
 
 package com.mongodb.internal.connection.tlschannel.util;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

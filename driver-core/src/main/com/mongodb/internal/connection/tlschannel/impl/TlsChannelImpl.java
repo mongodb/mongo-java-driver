@@ -19,8 +19,8 @@
 
 package com.mongodb.internal.connection.tlschannel.impl;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.NeedsReadException;
 import com.mongodb.internal.connection.tlschannel.NeedsTaskException;
 import com.mongodb.internal.connection.tlschannel.NeedsWriteException;

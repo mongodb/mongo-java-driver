@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.diagnostics.logging;
+package com.mongodb.internal.diagnostics.logging;
 
 /**
  * This class is not part of the public API.  It may be removed or changed at any time.

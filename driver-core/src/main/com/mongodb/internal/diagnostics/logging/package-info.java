@@ -17,4 +17,4 @@
 /**
  * This package contains logging classes
  */
-package com.mongodb.diagnostics.logging;
+package com.mongodb.internal.diagnostics.logging;
