@@ -31,8 +31,6 @@ import org.bson.codecs.Decoder;
 /**
  * An asynchronous connection to a MongoDB server with non-blocking operations.
  *
- * <p> Implementations of this class are thread safe.  </p>
- *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
