@@ -30,6 +30,8 @@ import java.util.Collection;
  * for not using the {@code assert} statements is that they are not always enabled. We prefer having internal checks always done at the
  * cost of our code doing a relatively small amount of additional work in production.
  * The {@code assert...} methods return values to open possibilities of being used fluently.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class Assertions {
     /**
