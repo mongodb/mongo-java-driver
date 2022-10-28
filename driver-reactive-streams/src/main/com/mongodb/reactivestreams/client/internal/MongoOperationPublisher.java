@@ -58,6 +58,7 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -65,7 +66,6 @@ import com.mongodb.internal.operation.CreateCollectionOperation;
 import com.mongodb.internal.operation.CreateViewOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.IndexHelper;
-import com.mongodb.internal.operation.Operations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonDocument;
@@ -95,7 +95,7 @@ import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentati
  */
 public final class MongoOperationPublisher<T> {
 
-    private final Operations<T> operations;
+    private final AsyncOperations<T> operations;
     private final UuidRepresentation uuidRepresentation;
     private final AutoEncryptionSettings autoEncryptionSettings;
     private final OperationExecutor executor;
@@ -116,7 +116,7 @@ public final class MongoOperationPublisher<T> {
             final boolean retryWrites, final boolean retryReads, final UuidRepresentation uuidRepresentation,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings,
             final OperationExecutor executor) {
-        this.operations = new Operations<>(namespace, notNull("documentClass", documentClass),
+        this.operations = new AsyncOperations<>(namespace, notNull("documentClass", documentClass),
                                            notNull("readPreference", readPreference), notNull("codecRegistry", codecRegistry),
                                            notNull("readConcern", readConcern), notNull("writeConcern", writeConcern),
                                            retryWrites, retryReads);
@@ -157,7 +157,7 @@ public final class MongoOperationPublisher<T> {
         return operations.getDocumentClass();
     }
 
-    public Operations<T> getOperations() {
+    public AsyncOperations<T> getOperations() {
         return operations;
     }
 

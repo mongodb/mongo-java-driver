@@ -22,7 +22,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
-import com.mongodb.internal.operation.AggregateOperation;
+import com.mongodb.internal.operation.AsyncExplainableReadOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
@@ -185,7 +185,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         }
     }
 
-    private AggregateOperation<T> asAggregateOperation(final int initialBatchSize) {
+    private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
                 .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS,
                            initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);

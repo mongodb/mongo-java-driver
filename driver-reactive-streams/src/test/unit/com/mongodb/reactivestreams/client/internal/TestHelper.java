@@ -28,7 +28,6 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
-import com.mongodb.internal.operation.Operations;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
@@ -170,8 +169,6 @@ public class TestHelper {
     private static Object checkValueTypes(final Object instance) {
         Object actual = instance instanceof Optional ? ((Optional<Object>) instance).orElse(instance) : instance;
         if (actual instanceof AsyncReadOperation || actual instanceof AsyncWriteOperation) {
-            return getClassPrivateFieldValues(actual);
-        } else if (actual instanceof Operations) {
             return getClassPrivateFieldValues(actual);
         } else if (actual.getClass().getSimpleName().equals("ChangeStreamDocumentCodec")) {
             return getClassGetterValues(actual);
