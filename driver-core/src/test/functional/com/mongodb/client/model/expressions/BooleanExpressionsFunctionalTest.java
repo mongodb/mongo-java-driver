@@ -25,8 +25,8 @@ class BooleanExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#boolean-expression-operators
     // (Complete as of 6.0)
 
-    private final BooleanExpression tru = Expressions.ofTrue();
-    private final BooleanExpression fal = Expressions.ofFalse();
+    private final BooleanExpression tru = Expressions.of(true);
+    private final BooleanExpression fal = Expressions.of(false);
 
     @Test
     public void literalsTest() {
@@ -59,9 +59,9 @@ class BooleanExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
     @Test
     public void condTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/cond/
-        StringExpression abc = Expressions.ofString("abc");
-        StringExpression xyz = Expressions.ofString("xyz");
-        NumberExpression nnn = Expressions.ofInteger(123);
+        StringExpression abc = Expressions.of("abc");
+        StringExpression xyz = Expressions.of("xyz");
+        NumberExpression nnn = Expressions.of(123);
         assertExpression(
                 true && false ? "abc" : "xyz",
                 tru.and(fal).cond(abc, xyz),

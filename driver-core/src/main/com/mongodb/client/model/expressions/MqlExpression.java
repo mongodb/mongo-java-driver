@@ -24,7 +24,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.function.Function;
 
-public class MqlExpression<T extends Expression>
+final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
         StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
 

@@ -19,39 +19,39 @@ package com.mongodb.client.model.expressions;
 public interface BooleanExpression extends Expression {
 
     /**
-     * Evaluates this expression and returns logical true if the result is
-     * logical false. Otherwise, false.
+     * Returns logical true if this expression evaluates to logical false.
+     * Returns logical false if this expression evaluates to logical true.
      *
      * @return True if false; false if true.
      */
     BooleanExpression not();
 
     /**
-     * Returns logical true if this or the other expression evaluate to logical
-     * true. Otherwise, false.
+     * Returns logical true if this or the other expression evaluates to logical
+     * true. Returns logical false if both evaluate to logical false.
      *
      * @param or the other boolean expression.
-     * @return True if either true, false otherwise.
+     * @return True if either true, false if both false.
      */
     BooleanExpression or(BooleanExpression or);
 
     /**
-     * Evaluates this and the other expression and returns logical true if both
-     * this and the other expression evaluate to logical true. Otherwise, false.
+     * Returns logical true if both this and the other expression evaluate to
+     * logical true. Returns logical false if either evaluate to logical false.
      *
      * @param and the other boolean expression.
-     * @return true if both true, false otherwise.
+     * @return true if both true, false if either false.
      */
     BooleanExpression and(BooleanExpression and);
 
     /**
-     * Evaluates this expression. If true, returns the result of the evaluated
-     * left branch expression. Otherwise, returns the result of the evaluated
-     * right branch expression.
+     * If this expression evaluates to logical true, returns the result of the
+     * evaluated left branch expression. If this evaluates to logical false,
+     * returns the result of the evaluated right branch expression.
      *
-     * @param left the left branch expression, evaluated if this is true.
-     * @param right the right branch expression, evaluated if this is false.
-     * @return Left if true, right if false.
+     * @param left the left branch expression
+     * @param right the right branch expression
+     * @return left if true, right if false.
      * @param <T> The type of the resulting expression.
      */
     <T extends Expression> T cond(T left, T right);

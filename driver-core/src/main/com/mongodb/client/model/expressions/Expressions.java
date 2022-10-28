@@ -31,37 +31,19 @@ public final class Expressions {
      * @param of the boolean primitive
      * @return the boolean expression
      */
-    public static BooleanExpression ofBoolean(final boolean of) {
+    public static BooleanExpression of(final boolean of) {
         // we intentionally disallow ofBoolean(null)
         return new MqlExpression<>((codecRegistry) -> new BsonBoolean(of));
     }
 
     /**
-     * Logical true.
+     * Returns an expression having the same integer value as the provided
+     * int primitive.
      *
-     * @return logical true
-     */
-    public static BooleanExpression ofTrue() {
-        return ofBoolean(true);
-    }
-
-    /**
-     * Logical false.
-     *
-     * @return logical false
-     */
-    public static BooleanExpression ofFalse() {
-        return ofBoolean(false);
-    }
-
-    /**
-     * Returns an expression having the same logical integer value as the
-     * provided integer primitive.
-     *
-     * @param of the integer primitive
+     * @param of the int primitive
      * @return the integer expression
      */
-    public static IntegerExpression ofInteger(final int of) {
+    public static IntegerExpression of(final int of) {
         return new MqlExpression<>((codecRegistry) -> new BsonInt32(of));
     }
 
@@ -72,7 +54,7 @@ public final class Expressions {
      * @param of the string
      * @return the string expression
      */
-    public static StringExpression ofString(final String of) {
+    public static StringExpression of(final String of) {
         return new MqlExpression<>((codecRegistry) -> new BsonString(of));
     }
 }

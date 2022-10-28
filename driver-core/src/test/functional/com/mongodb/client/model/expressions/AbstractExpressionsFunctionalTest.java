@@ -59,12 +59,12 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         getCollectionHelper().drop();
     }
 
-    protected void assertExpression(final Object result, final Expression exp, final String string) {
-        assertEval(result, exp);
+    protected void assertExpression(final Object expectedResult, final Expression expression, final String expectedMql) {
+        assertEval(expectedResult, expression);
 
-        BsonValue expressionValue = ((MqlExpression) exp).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+        BsonValue expressionValue = ((MqlExpression) expression).toBsonValue(fromProviders(new BsonValueCodecProvider()));
         BsonValue bsonValue = new BsonDocumentFragmentCodec().readValue(
-                new JsonReader(string),
+                new JsonReader(expectedMql),
                 DecoderContext.builder().build());
         assertEquals(bsonValue, expressionValue, expressionValue.toString().replace("\"", "'"));
     }
