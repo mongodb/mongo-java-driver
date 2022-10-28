@@ -176,20 +176,4 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     Decoder<T> getDecoder() {
         return wrapped.getDecoder();
     }
-
-    @Override
-    public String toString() {
-        return "AggregateOperation{"
-                + "namespace=" + getNamespace()
-                + ", pipeline=" + getPipeline()
-                + ", decoder=" + getDecoder()
-                + ", allowDiskUse=" + getAllowDiskUse()
-                + ", batchSize=" + getBatchSize()
-                + ", collation=" + getCollation()
-                + ", comment=" + getComment()
-                + ", hint=" + getHint()
-                + ", maxAwaitTimeMS=" + getMaxAwaitTime(TimeUnit.MILLISECONDS)
-                + ", maxTimeMS=" + getMaxTime(TimeUnit.MILLISECONDS)
-                + "}";
-    }
 }
