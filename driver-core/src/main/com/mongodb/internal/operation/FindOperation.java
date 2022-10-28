@@ -104,141 +104,60 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private boolean showRecordId;
     private Boolean allowDiskUse;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param decoder the decoder for the result documents.
-     */
     public FindOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
 
-    /**
-     * Gets the namespace.
-     *
-     * @return the namespace
-     */
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
-    /**
-     * Gets the decoder used to decode the result documents.
-     *
-     * @return the decoder
-     */
     public Decoder<T> getDecoder() {
         return decoder;
     }
 
-    /**
-     * Gets the query filter.
-     *
-     * @return the query filter
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
     public BsonDocument getFilter() {
         return filter;
     }
 
-    /**
-     * Sets the query filter to apply to the query.
-     *
-     * @param filter the filter, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
     public FindOperation<T> filter(final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
 
-    /**
-     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch size.
-     *
-     * @return the batch size, which may be null
-     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
-     */
     public int getBatchSize() {
         return batchSize;
     }
 
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
-     */
     public FindOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
 
-    /**
-     * Gets the limit to apply.  The default is null.
-     *
-     * @return the limit
-     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
-     */
     public int getLimit() {
         return limit;
     }
 
-    /**
-     * Sets the limit to apply.
-     *
-     * @param limit the limit, which may be null
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
-     */
     public FindOperation<T> limit(final int limit) {
         this.limit = limit;
         return this;
     }
 
-    /**
-     * Gets a document describing the fields to return for all matching documents.
-     *
-     * @return the project document, which may be null
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
     public BsonDocument getProjection() {
         return projection;
     }
 
-    /**
-     * Sets a document describing the fields to return for all matching documents.
-     *
-     * @param projection the project document, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
     public FindOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
         return this;
     }
 
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
     public FindOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxTime >= 0", maxTime >= 0);
@@ -246,369 +165,157 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return this;
     }
 
-    /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
-     * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
-     * this option is ignored.
-     *
-     * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
-     * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
-     * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
-     * A zero value will be ignored.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum await execution time in the given time unit
-     */
     public long getMaxAwaitTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Sets the maximum await execution time on the server for this operation.
-     *
-     * @param maxAwaitTime  the max await time.  A zero value will be ignored, and indicates that the driver should respect the server's
-     *                      default value
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
     public FindOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxAwaitTime >= 0", maxAwaitTime >= 0);
         this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
         return this;
     }
-    /**
-     * Gets the number of documents to skip.  The default is 0.
-     *
-     * @return the number of documents to skip, which may be null
-     */
+
     public int getSkip() {
         return skip;
     }
 
-    /**
-     * Sets the number of documents to skip.
-     *
-     * @param skip the number of documents to skip
-     * @return this
-     */
     public FindOperation<T> skip(final int skip) {
         this.skip = skip;
         return this;
     }
 
-    /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
-     *
-     * @return a document describing the sort criteria
-     */
     public BsonDocument getSort() {
         return sort;
     }
 
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null.
-     * @return this
-     */
     public FindOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
         return this;
     }
 
-    /**
-     * Get the cursor type.
-     *
-     * @return the cursor type
-     */
     public CursorType getCursorType() {
         return cursorType;
     }
 
-    /**
-     * Sets the cursor type.
-     *
-     * @param cursorType the cursor type
-     * @return this
-     */
     public FindOperation<T> cursorType(final CursorType cursorType) {
         this.cursorType = notNull("cursorType", cursorType);
         return this;
     }
 
-    /**
-     * Internal replication use only.  Driver users should ordinarily not use this.
-     *
-     * @return oplogReplay
-     */
     public boolean isOplogReplay() {
         return oplogReplay;
     }
 
-    /**
-     * Internal replication use only.  Driver users should ordinarily not use this.
-     *
-     * @param oplogReplay the oplogReplay value
-     * @return this
-     */
     public FindOperation<T> oplogReplay(final boolean oplogReplay) {
         this.oplogReplay = oplogReplay;
         return this;
     }
 
-    /**
-     * Returns true if cursor timeout has been turned off.
-     *
-     * <p>The server normally times out idle cursors after an inactivity period (10 minutes) to prevent excess memory use.</p>
-     *
-     * @return if cursor timeout has been turned off
-     */
     public boolean isNoCursorTimeout() {
         return noCursorTimeout;
     }
 
-    /**
-     * Sets if the cursor timeout should be turned off.
-     *
-     * @param noCursorTimeout true if the cursor timeout should be turned off.
-     * @return this
-     */
     public FindOperation<T> noCursorTimeout(final boolean noCursorTimeout) {
         this.noCursorTimeout = noCursorTimeout;
         return this;
     }
 
-    /**
-     * Returns true if can get partial results from a mongos if some shards are down.
-     *
-     * @return if can get partial results from a mongos if some shards are down
-     */
     public boolean isPartial() {
         return partial;
     }
 
-    /**
-     * Sets if partial results from a mongos if some shards are down are allowed
-     *
-     * @param partial allow partial results from a mongos if some shards are down
-     * @return this
-     */
     public FindOperation<T> partial(final boolean partial) {
         this.partial = partial;
         return this;
     }
 
-    /**
-     * Returns the collation options
-     *
-     * @return the collation options
-     */
     public Collation getCollation() {
         return collation;
     }
 
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     * @param collation the collation options to use
-     * @return this
-     */
     public FindOperation<T> collation(final Collation collation) {
         this.collation = collation;
         return this;
     }
 
-    /**
-     * Returns the comment to send with the query. The default is not to include a comment with the query.
-     *
-     * @return the comment
-     */
     public BsonValue getComment() {
         return comment;
     }
 
-    /**
-     * Sets the comment to the query. A null value means no comment is set.
-     *
-     * @param comment the comment
-     * @return this
-]     */
     public FindOperation<T> comment(final BsonValue comment) {
         this.comment = comment;
         return this;
     }
 
-    /**
-     * Returns the hint for which index to use. The default is not to set a hint.
-     *
-     * @return the hint
-     */
     public BsonValue getHint() {
         return hint;
     }
 
-    /**
-     * Sets the hint for which index to use. A null value means no hint is set.
-     *
-     * @param hint the hint
-     * @return this
-     */
     public FindOperation<T> hint(final BsonValue hint) {
         this.hint = hint;
         return this;
     }
 
-    /**
-     * Add top-level variables to the operation
-     *
-     * @return the top level variables if set or null.
-     */
     public BsonDocument getLet() {
         return variables;
     }
 
-    /**
-     * Add top-level variables to the operation
-     *
-     * <p>Allows for improved command readability by separating the variables from the query text.</p>
-     *
-     * @param variables for find operation or null
-     * @return this
-     */
     public FindOperation<T> let(final BsonDocument variables) {
         this.variables = variables;
         return this;
     }
 
-    /**
-     * Returns the exclusive upper bound for a specific index. By default there is no max bound.
-     *
-     * @return the max
-     */
     public BsonDocument getMax() {
         return max;
     }
 
-    /**
-     * Sets the exclusive upper bound for a specific index. A null value means no max is set.
-     *
-     * @param max the max
-     * @return this
-     */
     public FindOperation<T> max(final BsonDocument max) {
         this.max = max;
         return this;
     }
 
-    /**
-     * Returns the minimum inclusive lower bound for a specific index. By default there is no min bound.
-     *
-     * @return the min
-     */
     public BsonDocument getMin() {
         return min;
     }
 
-    /**
-     * Sets the minimum inclusive lower bound for a specific index. A null value means no max is set.
-     *
-     * @param min the min
-     * @return this
-     */
     public FindOperation<T> min(final BsonDocument min) {
         this.min = min;
         return this;
     }
 
-    /**
-     * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
-     *
-     * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
-     *
-     * @return the returnKey
-     */
     public boolean isReturnKey() {
         return returnKey;
     }
 
-    /**
-     * Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.
-     *
-     * @param returnKey the returnKey
-     * @return this
-     */
     public FindOperation<T> returnKey(final boolean returnKey) {
         this.returnKey = returnKey;
         return this;
     }
 
-    /**
-     * Returns the showRecordId.
-     *
-     * Determines whether to return the record identifier for each document. If true, adds a field $recordId to the returned documents.
-     * The default is false.
-     *
-     * @return the showRecordId
-     */
     public boolean isShowRecordId() {
         return showRecordId;
     }
 
-    /**
-     * Sets the showRecordId. Set to true to add a field {@code $recordId} to the returned documents.
-     *
-     * @param showRecordId the showRecordId
-     * @return this
-     */
     public FindOperation<T> showRecordId(final boolean showRecordId) {
         this.showRecordId = showRecordId;
         return this;
     }
 
-    /**
-     * Enables retryable reads if a read fails due to a network error.
-     *
-     * @param retryReads true if reads should be retried
-     * @return this
-     */
     public FindOperation<T> retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
         return this;
     }
 
-    /**
-     * Gets the value for retryable reads. The default is true.
-     *
-     * @return the retryable reads value
-     */
     public boolean getRetryReads() {
         return retryReads;
     }
 
-    /**
-     * Returns the allowDiskUse value
-     *
-     * @return the allowDiskUse value
-     */
     public Boolean isAllowDiskUse() {
         return allowDiskUse;
     }
 
-    /**
-     * Enables writing to temporary files on the server. When set to true, the server
-     * can write temporary data to disk while executing the find operation.
-     *
-     * <p>This option is sent only if the caller explicitly sets it to true.</p>
-     *
-     * @param allowDiskUse the allowDiskUse
-     * @return this
-     */
     public FindOperation<T> allowDiskUse(@Nullable final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
