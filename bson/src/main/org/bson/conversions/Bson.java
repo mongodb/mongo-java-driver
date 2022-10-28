@@ -22,6 +22,7 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.CollectionCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.EnumCodecProvider;
+import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.JsonObjectCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
@@ -36,7 +37,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * @since 3.0
  */
-@SuppressWarnings("deprecation")
 public interface Bson {
     /**
      * This registry includes the following providers:
@@ -45,7 +45,7 @@ public interface Bson {
      *     <li>{@link BsonValueCodecProvider}</li>
      *     <li>{@link DocumentCodecProvider}</li>
      *     <li>{@link CollectionCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.IterableCodecProvider}</li>
+     *     <li>{@link IterableCodecProvider}</li>
      *     <li>{@link MapCodecProvider}</li>
      *     <li>{@link Jsr310CodecProvider}</li>
      *     <li>{@link JsonObjectCodecProvider}</li>
@@ -64,7 +64,7 @@ public interface Bson {
                     new BsonValueCodecProvider(),
                     new DocumentCodecProvider(),
                     new CollectionCodecProvider(),
-                    new org.bson.codecs.IterableCodecProvider(),
+                    new IterableCodecProvider(),
                     new MapCodecProvider(),
                     new Jsr310CodecProvider(),
                     new JsonObjectCodecProvider(),

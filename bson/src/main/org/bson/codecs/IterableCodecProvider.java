@@ -72,7 +72,7 @@ public class IterableCodecProvider implements CodecProvider {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "deprecation"})
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (Iterable.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new IterableCodec(registry, bsonTypeClassMap, valueTransformer);
