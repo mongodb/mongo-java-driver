@@ -583,30 +583,4 @@ public final class FindOptions {
         this.allowDiskUse = allowDiskUse;
         return this;
     }
-
-    @Override
-    public String toString() {
-        return "FindOptions{"
-                + "batchSize=" + batchSize
-                + ", limit=" + limit
-                + ", projection=" + projection
-                + ", maxTimeMS=" + maxTimeMS
-                + ", maxAwaitTimeMS=" + maxAwaitTimeMS
-                + ", skip=" + skip
-                + ", sort=" + sort
-                + ", cursorType=" + cursorType
-                + ", noCursorTimeout=" + noCursorTimeout
-                + ", oplogReplay=" + oplogReplay
-                + ", partial=" + partial
-                + ", collation=" + collation
-                + ", comment='" + comment + "'"
-                + ", hint=" + hint
-                + ", let=" + variables
-                + ", max=" + max
-                + ", min=" + min
-                + ", returnKey=" + returnKey
-                + ", showRecordId=" + showRecordId
-                + ", allowDiskUse=" + allowDiskUse
-                + "}";
-    }
 }
