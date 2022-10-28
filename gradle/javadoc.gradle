@@ -44,6 +44,7 @@ subprojects { project ->
     tasks.withType(Javadoc) {
         dependsOn tagletsProject.compileJava //We need taglets to be compiled
         exclude "**/com/mongodb/**/benchmark/**"
+        exclude "**/com/mongodb/**/assertions/**"
         exclude "**/com/mongodb/**/internal/**"
         exclude "**/org/bson/**/internal/**"
         options {
