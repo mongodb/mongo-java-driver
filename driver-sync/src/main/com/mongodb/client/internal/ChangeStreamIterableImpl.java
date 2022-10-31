@@ -30,8 +30,8 @@ import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ChangeStreamOperation;
 import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -43,7 +43,6 @@ import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -55,12 +54,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDocument<TResult>>
         implements ChangeStreamIterable<TResult> {
-    private final MongoNamespace namespace;
     private final CodecRegistry codecRegistry;
     private final List<? extends Bson> pipeline;
     private final Codec<ChangeStreamDocument<TResult>> codec;
     private final ChangeStreamLevel changeStreamLevel;
-
+    private final SyncOperations<TResult> operations;
     private FullDocument fullDocument = FullDocument.DEFAULT;
     private FullDocumentBeforeChange fullDocumentBeforeChange = FullDocumentBeforeChange.DEFAULT;
     private BsonDocument resumeToken;
@@ -84,11 +82,11 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
                                     final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                     final ChangeStreamLevel changeStreamLevel, final boolean retryReads) {
         super(clientSession, executor, readConcern, readPreference, retryReads);
-        this.namespace = notNull("namespace", namespace);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.pipeline = notNull("pipeline", pipeline);
         this.codec = ChangeStreamDocument.createCodec(notNull("resultClass", resultClass), codecRegistry);
         this.changeStreamLevel = notNull("changeStreamLevel", changeStreamLevel);
+        this.operations = new SyncOperations<>(namespace, resultClass, readPreference, codecRegistry, retryReads);
     }
 
     @Override
@@ -209,28 +207,8 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     private ReadOperation<BatchCursor<RawBsonDocument>> createChangeStreamOperation() {
-        return new ChangeStreamOperation<>(namespace, fullDocument, fullDocumentBeforeChange, createBsonDocumentList(pipeline),
-                new RawBsonDocumentCodec(), changeStreamLevel)
-                        .batchSize(getBatchSize())
-                        .collation(collation)
-                        .comment(comment)
-                        .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
-                        .resumeAfter(resumeToken)
-                        .startAtOperationTime(startAtOperationTime)
-                        .startAfter(startAfter)
-                        .showExpandedEvents(showExpandedEvents)
-                        .retryReads(getRetryReads());
-    }
-
-    private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
-        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
-        for (Bson obj : pipeline) {
-            if (obj == null) {
-                throw new IllegalArgumentException("pipeline cannot contain a null value");
-            }
-            aggregateList.add(obj.toBsonDocument(BsonDocument.class, codecRegistry));
-        }
-        return aggregateList;
+        return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, new RawBsonDocumentCodec(), changeStreamLevel,
+                getBatchSize(), collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 
     private BatchCursor<RawBsonDocument> execute() {

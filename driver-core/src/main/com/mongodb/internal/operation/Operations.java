@@ -46,6 +46,8 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -53,14 +55,17 @@ import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
+import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
+import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -606,6 +611,24 @@ final class Operations<TDocument> {
                 .batchSize(batchSize == null ? 0 : batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .comment(comment);
+    }
+
+    <TResult> ChangeStreamOperation<TResult> changeStream(final FullDocument fullDocument,
+            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<? extends Bson> pipeline,
+            final Decoder<TResult> decoder, final ChangeStreamLevel changeStreamLevel, final Integer batchSize,
+            final Collation collation, final BsonValue comment, final long maxAwaitTimeMS, final BsonDocument resumeToken,
+            final BsonTimestamp startAtOperationTime, final BsonDocument startAfter, final boolean showExpandedEvents) {
+        return new ChangeStreamOperation<>(namespace, fullDocument, fullDocumentBeforeChange, toBsonDocumentList(pipeline), decoder,
+                changeStreamLevel)
+                .batchSize(batchSize)
+                .collation(collation)
+                .comment(comment)
+                .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
+                .resumeAfter(resumeToken)
+                .startAtOperationTime(startAtOperationTime)
+                .startAfter(startAfter)
+                .showExpandedEvents(showExpandedEvents)
+                .retryReads(retryReads);
     }
 
     private Codec<TDocument> getCodec() {

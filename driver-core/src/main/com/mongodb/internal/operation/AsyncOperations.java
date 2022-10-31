@@ -40,10 +40,16 @@ import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
+import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -270,5 +276,14 @@ public final class AsyncOperations<TDocument> {
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
             final long maxTimeMS, final BsonValue comment) {
         return operations.listIndexes(resultClass, batchSize, maxTimeMS, comment);
+    }
+
+    public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> changeStream(final FullDocument fullDocument,
+            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<? extends Bson> pipeline,
+            final Decoder<TResult> decoder, final ChangeStreamLevel changeStreamLevel, final Integer batchSize, final Collation collation,
+            final BsonValue comment, final long maxAwaitTimeMS, final BsonDocument resumeToken, final BsonTimestamp startAtOperationTime,
+            final BsonDocument startAfter, final boolean showExpandedEvents) {
+        return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, decoder, changeStreamLevel, batchSize,
+                collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 }
