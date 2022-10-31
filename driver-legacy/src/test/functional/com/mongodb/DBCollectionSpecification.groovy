@@ -38,19 +38,16 @@ import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.CommandReadOperation
 import com.mongodb.internal.operation.CountOperation
 import com.mongodb.internal.operation.CreateIndexesOperation
-import com.mongodb.internal.operation.DeleteOperation
 import com.mongodb.internal.operation.DistinctOperation
 import com.mongodb.internal.operation.FindAndDeleteOperation
 import com.mongodb.internal.operation.FindAndReplaceOperation
 import com.mongodb.internal.operation.FindAndUpdateOperation
 import com.mongodb.internal.operation.FindOperation
-import com.mongodb.internal.operation.InsertOperation
 import com.mongodb.internal.operation.MapReduceBatchCursor
 import com.mongodb.internal.operation.MapReduceStatistics
 import com.mongodb.internal.operation.MapReduceToCollectionOperation
 import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.internal.operation.MixedBulkWriteOperation
-import com.mongodb.internal.operation.UpdateOperation
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
@@ -100,10 +97,10 @@ class DBCollectionSpecification extends Specification {
 
         when:
         collection.insert(new BasicDBObject('_id', uuid))
-        def operation = executor.writeOperation as InsertOperation
+        def operation = executor.writeOperation as LegacyMixedBulkWriteOperation
 
         then:
-        operation.insertRequests[0].document.getBinary('_id') == new BsonBinary(uuid, UuidRepresentation.STANDARD)
+        (operation.writeRequests[0] as InsertRequest).document.getBinary('_id') == new BsonBinary(uuid, UuidRepresentation.STANDARD)
     }
 
     def 'should get and set read concern'() {
@@ -737,7 +734,7 @@ class DBCollectionSpecification extends Specification {
         collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
+        expect executor.getWriteOperation(), isTheSameAs(new LegacyMixedBulkWriteOperation(collection.getNamespace(), true,
                 WriteConcern.ACKNOWLEDGED, retryWrites, asList(updateRequest)))
 
         when: // Inherits from DB
@@ -746,7 +743,7 @@ class DBCollectionSpecification extends Specification {
 
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
+        expect executor.getWriteOperation(), isTheSameAs(new LegacyMixedBulkWriteOperation(collection.getNamespace(), true,
                 WriteConcern.W3, retryWrites, asList(updateRequest)))
 
         when:
@@ -756,7 +753,7 @@ class DBCollectionSpecification extends Specification {
                 new DBCollectionUpdateOptions().collation(collation).arrayFilters(dbObjectArrayFilters))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
+        expect executor.getWriteOperation(), isTheSameAs(new LegacyMixedBulkWriteOperation(collection.getNamespace(), true,
                 WriteConcern.W1, retryWrites, asList(updateRequest.arrayFilters(bsonDocumentWrapperArrayFilters))))
 
         where:
@@ -779,7 +776,7 @@ class DBCollectionSpecification extends Specification {
         collection.remove(BasicDBObject.parse(query))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
+        expect executor.getWriteOperation(), isTheSameAs(new LegacyMixedBulkWriteOperation(collection.getNamespace(), false,
                 WriteConcern.ACKNOWLEDGED, retryWrites, asList(deleteRequest)))
 
         when: // Inherits from DB
@@ -787,7 +784,7 @@ class DBCollectionSpecification extends Specification {
         collection.remove(BasicDBObject.parse(query))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
+        expect executor.getWriteOperation(), isTheSameAs(new LegacyMixedBulkWriteOperation(collection.getNamespace(), false,
                 WriteConcern.W3, retryWrites, asList(deleteRequest)))
 
         when:
@@ -796,7 +793,7 @@ class DBCollectionSpecification extends Specification {
         collection.remove(BasicDBObject.parse(query), new DBCollectionRemoveOptions().collation(collation))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
+        expect executor.getWriteOperation(), isTheSameAs(new LegacyMixedBulkWriteOperation(collection.getNamespace(), false,
                 WriteConcern.W1, retryWrites, asList(deleteRequest)))
     }
 

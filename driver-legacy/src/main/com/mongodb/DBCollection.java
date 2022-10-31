@@ -34,18 +34,15 @@ import com.mongodb.internal.bulk.WriteRequest.Type;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.AggregateToCollectionOperation;
-import com.mongodb.internal.operation.BaseWriteOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CountOperation;
 import com.mongodb.internal.operation.CreateIndexesOperation;
-import com.mongodb.internal.operation.DeleteOperation;
 import com.mongodb.internal.operation.DistinctOperation;
 import com.mongodb.internal.operation.DropCollectionOperation;
 import com.mongodb.internal.operation.DropIndexOperation;
 import com.mongodb.internal.operation.FindAndDeleteOperation;
 import com.mongodb.internal.operation.FindAndReplaceOperation;
 import com.mongodb.internal.operation.FindAndUpdateOperation;
-import com.mongodb.internal.operation.InsertOperation;
 import com.mongodb.internal.operation.ListIndexesOperation;
 import com.mongodb.internal.operation.MapReduceBatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
@@ -54,7 +51,6 @@ import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.RenameCollectionOperation;
-import com.mongodb.internal.operation.UpdateOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -341,11 +337,11 @@ public class DBCollection {
 
     private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
                                final boolean continueOnError, @Nullable final Boolean bypassDocumentValidation) {
-        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, retryWrites, insertRequestList)
-                                     .bypassDocumentValidation(bypassDocumentValidation));
+        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), !continueOnError, writeConcern, retryWrites,
+                insertRequestList).bypassDocumentValidation(bypassDocumentValidation));
     }
 
-    WriteResult executeWriteOperation(final BaseWriteOperation operation) {
+    WriteResult executeWriteOperation(final LegacyMixedBulkWriteOperation operation) {
         return translateWriteResult(executor.execute(operation, getReadConcern()));
     }
 
@@ -426,7 +422,7 @@ public class DBCollection {
         UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
                                                          Type.REPLACE).upsert(true);
 
-        return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, retryWrites,
+        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), false, writeConcern, retryWrites,
                 singletonList(replaceRequest)));
     }
 
@@ -570,14 +566,15 @@ public class DBCollection {
         notNull("query", query);
         notNull("update", update);
         notNull("options", options);
-        WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
+        WriteConcern optionsWriteConcern = options.getWriteConcern();
+        WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         Type updateType = (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$"))
                 ? UPDATE : Type.REPLACE;
         UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, options.getEncoder()), updateType)
                                               .upsert(options.isUpsert()).multi(options.isMulti())
                                               .collation(options.getCollation())
                                               .arrayFilters(wrapAllowNull(options.getArrayFilters(), options.getEncoder()));
-        return executeWriteOperation(new UpdateOperation(getNamespace(), true, writeConcern, retryWrites,
+        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), true, writeConcern, retryWrites,
                 singletonList(updateRequest)).bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
@@ -645,9 +642,10 @@ public class DBCollection {
     public WriteResult remove(final DBObject query, final DBCollectionRemoveOptions options) {
         notNull("query", query);
         notNull("options", options);
-        WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
+        WriteConcern optionsWriteConcern = options.getWriteConcern();
+        WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         DeleteRequest deleteRequest = new DeleteRequest(wrap(query, options.getEncoder())).collation(options.getCollation());
-        return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, retryWrites,
+        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), false, writeConcern, retryWrites,
                 singletonList(deleteRequest)));
     }
 
