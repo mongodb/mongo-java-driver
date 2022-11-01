@@ -461,7 +461,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @return a Observable containing the result of the map-reduce operation
    *         [[https://www.mongodb.com/docs/manual/reference/command/mapReduce/ map-reduce]]
    */
-  @deprecated("Superseded by aggregate")
+  @deprecated("Superseded by aggregate", "4.4.0")
   def mapReduce[C](
       mapFunction: String,
       reduceFunction: String
@@ -480,7 +480,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  @deprecated("Superseded by aggregate")
+  @deprecated("Superseded by aggregate", "4.4.0")
   def mapReduce[C](clientSession: ClientSession, mapFunction: String, reduceFunction: String)(
       implicit e: C DefaultsTo TResult,
       ct: ClassTag[C]
