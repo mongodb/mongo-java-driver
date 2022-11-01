@@ -33,7 +33,7 @@ import scala.concurrent.duration.Duration
  * @tparam TResult The type of the result.
  * @since 1.0
  */
-@deprecated("Superseded by aggregate")
+@deprecated("Superseded by aggregate", "4.4.0")
 case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) extends Observable[TResult] {
 
   /**
