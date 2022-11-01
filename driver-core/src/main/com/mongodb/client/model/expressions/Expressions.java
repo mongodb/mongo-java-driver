@@ -28,8 +28,8 @@ public final class Expressions {
     private Expressions() {}
 
     /**
-     * Returns an expression having the same logical boolean value as the
-     * provided boolean primitive.
+     * Returns an expression having the same boolean value as the provided
+     * boolean primitive.
      *
      * @param of the boolean primitive
      * @return the boolean expression

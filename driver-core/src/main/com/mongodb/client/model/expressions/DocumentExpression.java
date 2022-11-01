@@ -17,9 +17,8 @@
 package com.mongodb.client.model.expressions;
 
 /**
- * Expresses a document value. A document is an ordered set of fields, which may
- * be of an arbitrary string value, that each map to a value of any other
- * expression type.
+ * Expresses a document value. A document is an ordered set of fields, where the
+ * key is a string value, mapping to a value of any other expression type.
  */
 public interface DocumentExpression extends Expression {
 
