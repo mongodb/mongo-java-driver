@@ -33,6 +33,7 @@ import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -282,12 +283,20 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> aggregate(final List<Bson> pipeline, final Decoder<D> decoder) {
+        return aggregate(pipeline, decoder, AggregationLevel.COLLECTION);
+    }
+
+    public List<T> aggregateDb(final List<Bson> pipeline) {
+        return aggregate(pipeline, codec, AggregationLevel.DATABASE);
+    }
+
+    private <D> List<D> aggregate(final List<Bson> pipeline, final Decoder<D> decoder, final AggregationLevel level) {
         List<BsonDocument> bsonDocumentPipeline = new ArrayList<BsonDocument>();
         for (Bson cur : pipeline) {
             bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
         }
-        BatchCursor<D> cursor = new AggregateOperation<D>(namespace, bsonDocumentPipeline, decoder)
-                                .execute(getBinding());
+        BatchCursor<D> cursor = new AggregateOperation<D>(namespace, bsonDocumentPipeline, decoder, level)
+                .execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
