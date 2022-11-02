@@ -34,7 +34,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions", "ConstantConditionalExpression"})
+@SuppressWarnings({"ConstantConditions"})
 class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#comparison-expression-operators
     // (Complete as of 6.0)
@@ -46,7 +46,7 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
     }
 
     // https://www.mongodb.com/docs/manual/reference/bson-type-comparison-order/#std-label-bson-types-comparison-order
-    private List<Expression> sampleValues = Arrays.asList(
+    private final List<Expression> sampleValues = Arrays.asList(
             ofRem(),
             ofNull(),
             of(0),
@@ -138,8 +138,8 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
             Expression second = sampleValues.get(j);
             BsonValue evaluate = evaluate(first.lt(second));
             if (!evaluate.asBoolean().getValue()) {
-                BsonValue v1 = ((MqlExpression) first).toBsonValue(fromProviders(new BsonValueCodecProvider()));
-                BsonValue v2 = ((MqlExpression) second).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+                BsonValue v1 = ((MqlExpression<?>) first).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+                BsonValue v2 = ((MqlExpression<?>) second).toBsonValue(fromProviders(new BsonValueCodecProvider()));
                 fail(i + "," + j + " --" + v1 + " < " + v2 + " should be true");
             }
         }
