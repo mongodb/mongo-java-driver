@@ -112,6 +112,7 @@ abstract class BatchCursorPublisher<T> implements Publisher<T> {
                                     sink.success(results.get(0));
                                 }
                             })
+                            .contextWrite(sink.contextView())
                             .subscribe();
                 }));
     }
