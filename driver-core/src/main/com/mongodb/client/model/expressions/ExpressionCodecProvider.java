@@ -16,7 +16,6 @@
 
 package com.mongodb.client.model.expressions;
 
-import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
@@ -41,12 +40,12 @@ import org.bson.codecs.configuration.CodecRegistry;
  */
 @Beta(Beta.Reason.CLIENT)
 @Immutable
-public final class MqlExpressionCodecProvider implements CodecProvider {
+public final class ExpressionCodecProvider implements CodecProvider {
     @Override
     @SuppressWarnings("unchecked")
     @Nullable
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (MqlExpression.class.isAssignableFrom(clazz)) {
+        if (MqlExpression.class.equals(clazz)) {
             return (Codec<T>) new MqlExpressionCodec(registry);
         }
         return null;
