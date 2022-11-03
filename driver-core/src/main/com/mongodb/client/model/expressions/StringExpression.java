@@ -21,4 +21,17 @@ package com.mongodb.client.model.expressions;
  */
 public interface StringExpression extends Expression {
 
+    StringExpression toLower();
+
+    StringExpression toUpper();
+
+    Expression concat(StringExpression concat);
+
+    Expression strLen();
+
+    Expression strLenBytes();
+
+    Expression substr(int start, int length);
+
+    Expression substrBytes(int start, int length);
 }

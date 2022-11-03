@@ -84,6 +84,9 @@ public final class Expressions {
      * @return the string expression
      */
     public static StringExpression of(final String of) {
+        if (of == null) {
+            throw new IllegalArgumentException("string cannot be null");
+        }
         return new MqlExpression<>((codecRegistry) -> new BsonString(of));
     }
 

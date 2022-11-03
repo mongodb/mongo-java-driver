@@ -25,6 +25,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import static com.mongodb.client.model.expressions.Expressions.of;
+
 final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
         StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
@@ -180,4 +182,41 @@ final class MqlExpression<T extends Expression>
                 .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))).apply(cr));
     }
 
+
+    /** @see StringExpression */
+
+    @Override
+    public StringExpression toLower() {
+        return new MqlExpression<>(ast("$toLower"));
+    }
+
+    @Override
+    public StringExpression toUpper() {
+        return new MqlExpression<>(ast("$toUpper"));
+    }
+
+    @Override
+    public StringExpression concat(final StringExpression concat) {
+        return new MqlExpression<>(ast("$concat", concat));
+    }
+
+    @Override
+    public IntegerExpression strLen() {
+        return new MqlExpression<>(ast("$strLenCP"));
+    }
+
+    @Override
+    public Expression strLenBytes() {
+        return new MqlExpression<>(ast("$strLenBytes"));
+    }
+
+    @Override
+    public Expression substr(final int start, final int length) {
+        return new MqlExpression<>(ast("$substrCP", of(start), of(length)));
+    }
+
+    @Override
+    public Expression substrBytes(final int start, final int length) {
+        return new MqlExpression<>(ast("$substrBytes", of(start), of(length)));
+    }
 }
