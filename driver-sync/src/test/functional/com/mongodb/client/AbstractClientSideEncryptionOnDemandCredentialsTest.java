@@ -57,7 +57,7 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
         testFailure("azure");
     }
 
-    private void testFailure(String kmsProvider) {
+    private void testFailure(final String kmsProvider) {
         try (ClientEncryption clientEncryption = initClientEncryption(kmsProvider)) {
             MongoClientException thrown = assertThrows(
                     MongoClientException.class,
