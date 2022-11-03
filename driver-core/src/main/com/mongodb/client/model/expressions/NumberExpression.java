@@ -21,4 +21,39 @@ package com.mongodb.client.model.expressions;
  */
 public interface NumberExpression extends Expression {
 
+    // TODO this must not return <T extends NumberExpression> T
+    // since it allows: IntegerEx result = oneNum.multiply(oneInt)
+    NumberExpression multiply(NumberExpression n);
+
+    default NumberExpression multiply(final double multiply) {
+        return this.multiply(Expressions.of(multiply));
+    }
+
+    NumberExpression divide(NumberExpression n);
+
+    default NumberExpression divide(final double divide) {
+        return this.divide(Expressions.of(divide));
+    }
+
+    NumberExpression add(NumberExpression n);
+
+    default NumberExpression add(final double add) {
+        return this.add(Expressions.of(add));
+    }
+
+    NumberExpression subtract(NumberExpression n);
+
+    default NumberExpression subtract(final double subtract) {
+        return this.subtract(Expressions.of(subtract));
+    }
+
+    NumberExpression max(NumberExpression n);
+
+    NumberExpression min(NumberExpression n);
+
+    IntegerExpression round();
+
+    NumberExpression round(IntegerExpression place);
+
+    NumberExpression abs();
 }

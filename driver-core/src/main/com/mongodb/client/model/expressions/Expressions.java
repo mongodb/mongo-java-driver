@@ -17,6 +17,7 @@
 package com.mongodb.client.model.expressions;
 
 import com.mongodb.assertions.Assertions;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.mongodb.client.model.expressions.MqlExpression.AstPlaceholder;
 
 /**
  * Convenience methods related to {@link Expression}.
@@ -52,7 +54,7 @@ public final class Expressions {
      */
     public static BooleanExpression of(final boolean of) {
         // we intentionally disallow ofBoolean(null)
-        return new MqlExpression<>((codecRegistry) -> new BsonBoolean(of));
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonBoolean(of)));
     }
 
     /**
@@ -63,16 +65,17 @@ public final class Expressions {
      * @return the integer expression
      */
     public static IntegerExpression of(final int of) {
-        return new MqlExpression<>((codecRegistry) -> new BsonInt32(of));
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt32(of)));
     }
     public static IntegerExpression of(final long of) {
-        return new MqlExpression<>((codecRegistry) -> new BsonInt64(of));
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt64(of)));
     }
     public static NumberExpression of(final double of) {
-        return new MqlExpression<>((codecRegistry) -> new BsonDouble(of));
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
     }
-    public static DateExpression of(final Instant of) {
-        return new MqlExpression<>((codecRegistry) -> new BsonDateTime(of.toEpochMilli()));
+    public static DateExpression of(@NonNull final Instant of) {
+        Assertions.notNull("Instant", of);
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
     }
 
     /**
@@ -82,9 +85,9 @@ public final class Expressions {
      * @param of the string
      * @return the string expression
      */
-    public static StringExpression of(final String of) {
+    public static StringExpression of(@NonNull final String of) {
         Assertions.notNull("String", of);
-        return new MqlExpression<>((codecRegistry) -> new BsonString(of));
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
     }
 
     /**
@@ -99,7 +102,7 @@ public final class Expressions {
         for (boolean b : array) {
             result.add(new BsonBoolean(b));
         }
-        return new MqlExpression<>((cr) -> new BsonArray(result));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
 
@@ -107,7 +110,7 @@ public final class Expressions {
         List<BsonValue> array = Arrays.stream(ofIntegerArray)
                 .mapToObj(BsonInt32::new)
                 .collect(Collectors.toList());
-        return new MqlExpression<>((cr) -> new BsonArray(array));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(array)));
     }
 
     public static DocumentExpression ofDocument(final Bson document) {
@@ -115,11 +118,12 @@ public final class Expressions {
         // All documents are wrapped in a $literal. If we don't wrap, we need to
         // check for empty documents and documents that are actually expressions
         // (and need to be wrapped in $literal anyway). This would be brittle.
-        return new MqlExpression<>((cr) -> new BsonDocument("$literal",
-                document.toBsonDocument(BsonDocument.class, cr)));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonDocument("$literal",
+                document.toBsonDocument(BsonDocument.class, cr))));
     }
 
     public static <R extends Expression> R ofNull() {
-        return new MqlExpression<>((cr) -> new BsonNull()).assertImplementsAllExpressions();
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonNull()))
+                .assertImplementsAllExpressions();
     }
 }

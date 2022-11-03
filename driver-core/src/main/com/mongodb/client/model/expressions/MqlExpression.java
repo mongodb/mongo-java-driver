@@ -29,9 +29,9 @@ final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
         StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
 
-    private final Function<CodecRegistry, BsonValue> fn;
+    private final Function<CodecRegistry, AstPlaceholder> fn;
 
-    MqlExpression(final Function<CodecRegistry, BsonValue> fn) {
+    MqlExpression(final Function<CodecRegistry, AstPlaceholder> fn) {
         this.fn = fn;
     }
 
@@ -41,33 +41,41 @@ final class MqlExpression<T extends Expression>
      * {@link MqlExpressionCodec}.
      */
     BsonValue toBsonValue(final CodecRegistry codecRegistry) {
-        return fn.apply(codecRegistry);
+        return fn.apply(codecRegistry).bsonValue;
     }
 
-    private Function<CodecRegistry, BsonValue> astDoc(final String name, final BsonDocument value) {
-        return (cr) -> new BsonDocument(name, value);
+    private AstPlaceholder astDoc(final String name, final BsonDocument value) {
+        return new AstPlaceholder(new BsonDocument(name, value));
     }
 
-    private Function<CodecRegistry, BsonValue> ast(final String name) {
-        return (cr) -> new BsonDocument(name, this.toBsonValue(cr));
+    static class AstPlaceholder {
+        private BsonValue bsonValue;
+
+        AstPlaceholder(final BsonValue bsonValue) {
+            this.bsonValue = bsonValue;
+        }
     }
 
-    private Function<CodecRegistry, BsonValue> ast(final String name, final Expression param1) {
+    private Function<CodecRegistry, AstPlaceholder> ast(final String name) {
+        return (cr) -> new AstPlaceholder(new BsonDocument(name, this.toBsonValue(cr)));
+    }
+
+    private Function<CodecRegistry, AstPlaceholder> ast(final String name, final Expression param1) {
         return (cr) -> {
             BsonArray value = new BsonArray();
             value.add(this.toBsonValue(cr));
             value.add(extractBsonValue(cr, param1));
-            return new BsonDocument(name, value);
+            return new AstPlaceholder(new BsonDocument(name, value));
         };
     }
 
-    private Function<CodecRegistry, BsonValue> ast(final String name, final Expression param1, final Expression param2) {
+    private Function<CodecRegistry, AstPlaceholder> ast(final String name, final Expression param1, final Expression param2) {
         return (cr) -> {
             BsonArray value = new BsonArray();
             value.add(this.toBsonValue(cr));
             value.add(extractBsonValue(cr, param1));
             value.add(extractBsonValue(cr, param2));
-            return new BsonDocument(name, value);
+            return new AstPlaceholder(new BsonDocument(name, value));
         };
     }
 
@@ -89,12 +97,12 @@ final class MqlExpression<T extends Expression>
         return (R) this;
     }
 
-    private static <R extends Expression> R newMqlExpression(final Function<CodecRegistry, BsonValue> ast) {
+    private static <R extends Expression> R newMqlExpression(final Function<CodecRegistry, AstPlaceholder> ast) {
         return new MqlExpression<>(ast).assertImplementsAllExpressions();
     }
 
     private <R extends Expression> R variable(final String variable) {
-        return newMqlExpression((cr) -> new BsonString(variable));
+        return newMqlExpression((cr) -> new AstPlaceholder(new BsonString(variable)));
     }
 
     /** @see BooleanExpression */
@@ -159,7 +167,7 @@ final class MqlExpression<T extends Expression>
         T varThis = variable("$$this");
         return new MqlExpression<>((cr) -> astDoc("$map", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
-                .append("in", extractBsonValue(cr, in.apply(varThis)))).apply(cr));
+                .append("in", extractBsonValue(cr, in.apply(varThis)))));
     }
 
     @Override
@@ -167,7 +175,7 @@ final class MqlExpression<T extends Expression>
         T varThis = variable("$$this");
         return new MqlExpression<T>((cr) -> astDoc("$filter", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
-                .append("cond", extractBsonValue(cr, cond.apply(varThis)))).apply(cr));
+                .append("cond", extractBsonValue(cr, cond.apply(varThis)))));
     }
 
     @Override
@@ -177,7 +185,81 @@ final class MqlExpression<T extends Expression>
         return newMqlExpression((cr) -> astDoc("$reduce", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
                 .append("initialValue", extractBsonValue(cr, initialValue))
-                .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))).apply(cr));
+                .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))));
+    }
+
+
+    /** @see IntegerExpression
+     *  @see NumberExpression */
+
+    @Override
+    public IntegerExpression multiply(final NumberExpression n) {
+        return newMqlExpression(ast("$multiply", n));
+    }
+
+    @Override
+    public NumberExpression add(final NumberExpression n) {
+        return new MqlExpression<>(ast("$add", n));
+    }
+
+    @Override
+    public NumberExpression divide(final NumberExpression n) {
+        return new MqlExpression<>(ast("$divide", n));
+    }
+
+    @Override
+    public NumberExpression max(final NumberExpression n) {
+        return new MqlExpression<>(ast("$max", n));
+    }
+
+    @Override
+    public NumberExpression min(final NumberExpression n) {
+        return new MqlExpression<>(ast("$min", n));
+    }
+
+    @Override
+    public IntegerExpression round() {
+        return new MqlExpression<>(ast("$round"));
+    }
+
+    @Override
+    public NumberExpression round(final IntegerExpression place) {
+        return new MqlExpression<>(ast("$round", place));
+    }
+
+    @Override
+    public IntegerExpression multiply(final IntegerExpression i) {
+        return new MqlExpression<>(ast("$multiply", i));
+    }
+
+    @Override
+    public IntegerExpression abs() {
+        return newMqlExpression(ast("$abs"));
+    }
+
+    @Override
+    public NumberExpression subtract(final NumberExpression n) {
+        return new MqlExpression<>(ast("$subtract", n));
+    }
+
+    @Override
+    public IntegerExpression add(final IntegerExpression i) {
+        return new MqlExpression<>(ast("$add", i));
+    }
+
+    @Override
+    public IntegerExpression subtract(final IntegerExpression i) {
+        return new MqlExpression<>(ast("$subtract", i));
+    }
+
+    @Override
+    public IntegerExpression max(final IntegerExpression i) {
+        return new MqlExpression<>(ast("$max", i));
+    }
+
+    @Override
+    public IntegerExpression min(final IntegerExpression i) {
+        return new MqlExpression<>(ast("$min", i));
     }
 
 
