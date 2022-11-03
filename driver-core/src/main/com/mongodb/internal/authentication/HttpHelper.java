@@ -41,8 +41,8 @@ final class HttpHelper {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(endpoint).openConnection();
-            conn.setConnectTimeout(1000);
-            conn.setReadTimeout(1000);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
             conn.setRequestMethod(method);
            if (headers != null) {
                 for (Map.Entry<String, String> kvp : headers.entrySet()) {

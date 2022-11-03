@@ -23,7 +23,6 @@ import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.io.IOException;
@@ -38,7 +37,7 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
     public abstract ClientEncryption getClientEncryption(ClientEncryptionSettings settings);
 
     @Test
-    @EnabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.enabled", matches = "true")
+    @EnabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.success.enabled", matches = "true")
     public void testSuccess() {
         String kmsProvider = System.getProperty("org.mongodb.test.fle.on.demand.credential.provider");
         try (ClientEncryption clientEncryption = initClientEncryption(kmsProvider)) {
@@ -47,23 +46,22 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.enabled", matches = "true")
+    @EnabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.failure.enabled", matches = "true")
     public void testGcpFailure() {
-        try (ClientEncryption clientEncryption = initClientEncryption("gcp")) {
-            MongoClientException thrown = assertThrows(
-                    MongoClientException.class,
-                    () -> clientEncryption.createDataKey("gcp", getDataKeyOptions("gcp")));
-            assertTrue(thrown.getCause() instanceof IOException);
-        }
+        testFailure("gcp");
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.enabled", matches = "true")
+    @EnabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.failure.enabled", matches = "true")
     public void testAzureFailure() {
-        try (ClientEncryption clientEncryption = initClientEncryption("azure")) {
+        testFailure("azure");
+    }
+
+    private void testFailure(String kmsProvider) {
+        try (ClientEncryption clientEncryption = initClientEncryption(kmsProvider)) {
             MongoClientException thrown = assertThrows(
                     MongoClientException.class,
-                    () -> clientEncryption.createDataKey("azure", getDataKeyOptions("azure")));
+                    () -> clientEncryption.createDataKey(kmsProvider, getDataKeyOptions(kmsProvider)));
             assertTrue(thrown.getCause() instanceof IOException);
         }
     }

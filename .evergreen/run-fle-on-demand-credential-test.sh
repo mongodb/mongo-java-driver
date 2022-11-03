@@ -18,14 +18,14 @@ if ! which java ; then
 fi
 
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.enabled="true" \
+ -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled="true" \
  -Dorg.mongodb.test.fle.on.demand.credential.provider="${PROVIDER}" \
  --stacktrace --debug --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
 first=$?
 echo $first
 
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.enabled="true" \
+ -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled="true" \
  -Dorg.mongodb.test.fle.on.demand.credential.provider="${PROVIDER}" \
  --stacktrace --debug --info  driver-reactive-streams:test --tests ClientSideEncryptionOnDemandCredentialsTest
 second=$?
