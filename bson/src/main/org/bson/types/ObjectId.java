@@ -421,9 +421,22 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
 
         byte[] b = new byte[OBJECT_ID_LENGTH];
         for (int i = 0; i < b.length; i++) {
-            b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+            char c1 = s.charAt(i * 2);
+            char c2 = s.charAt(i * 2 + 1);
+            b[i] = hexCharToByte(c1) * 16 + hexCharToByte(c2)
         }
         return b;
+    }
+
+    private static byte hexCharToByte(char c) {
+        if (c >= '0' && c <= '9') {
+            return c - 48;
+        } else if (c >= 'a' && c <= 'f') {
+            return c - 87;
+        } else if (c >= 'A' && c <= 'F') {
+            return c - 55;
+        }
+        throw new IllegalArgumentException("invalid hexadecimal character: [" + c + "]");
     }
 
     private static int dateToTimestampSeconds(final Date time) {
