@@ -17,14 +17,12 @@
 package com.mongodb.internal.authentication;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.internal.VisibleForTesting;
 import org.bson.BsonDocument;
 import org.bson.json.JsonParseException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 
 /**
@@ -34,16 +32,13 @@ import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
  */
 public final class AzureCredentialHelper {
     public static BsonDocument obtainFromEnvironment() {
-        return obtainFromEnvironment("169.254.169.254", 80, new HashMap<>());
-    }
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    static BsonDocument obtainFromEnvironment(final String host, final int port, final Map<String, String> headers) {
-        String endpoint = "http://" + host + ":" + port
+        String endpoint = "http://" + "169.254.169.254:80"
                 + "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net";
 
+        Map<String, String> headers = new HashMap<>();
         headers.put("Metadata", "true");
         headers.put("Accept", "application/json");
+
         String response = getHttpContents("GET", endpoint, headers);
         try {
             BsonDocument responseDocument = BsonDocument.parse(response);
