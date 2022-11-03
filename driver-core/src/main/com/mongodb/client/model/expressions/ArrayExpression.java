@@ -19,6 +19,8 @@ package com.mongodb.client.model.expressions;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import static com.mongodb.client.model.expressions.Expressions.of;
+
 /**
  * Expresses an array value. An array value is a finite, ordered collection of
  * elements of a certain type.
@@ -61,4 +63,29 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      */
     T reduce(T initialValue, BinaryOperator<T> in);
 
+    IntegerExpression size();
+
+    T arrayElemAt(IntegerExpression i);
+
+    default T arrayElemAt(final int i) {
+        return this.arrayElemAt(of(i));
+    }
+
+    T first();
+
+    T last();
+
+    BooleanExpression contains(T contains);
+
+    ArrayExpression<T> concatArrays(ArrayExpression<T> array);
+
+    ArrayExpression<T> slice(IntegerExpression start, IntegerExpression length);
+
+    default ArrayExpression<T> slice(final int start, final int length) {
+        return this.slice(of(start), of(length));
+    }
+
+    ArrayExpression<T> setUnion(ArrayExpression<T> set);
+
+    ArrayExpression<T> distinct();
 }

@@ -59,43 +59,6 @@ public final class Expressions {
     }
 
     /**
-     * Returns an expression having the same integer value as the provided
-     * int primitive.
-     *
-     * @param of the int primitive
-     * @return the integer expression
-     */
-    public static IntegerExpression of(final int of) {
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt32(of)));
-    }
-    public static IntegerExpression of(final long of) {
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt64(of)));
-    }
-    public static NumberExpression of(final double of) {
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
-    }
-    public static NumberExpression of(final Decimal128 of) {
-        Assertions.notNull("Decimal128", of);
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
-    }
-    public static DateExpression of(final Instant of) {
-        Assertions.notNull("Instant", of);
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
-    }
-
-    /**
-     * Returns an expression having the same string value as the provided
-     * string.
-     *
-     * @param of the string
-     * @return the string expression
-     */
-    public static StringExpression of(final String of) {
-        Assertions.notNull("String", of);
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
-    }
-
-    /**
      * Returns an array expression containing the same boolean values as the
      * provided array of booleans.
      *
@@ -110,12 +73,105 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
+    /**
+     * Returns an expression having the same integer value as the provided
+     * int primitive.
+     *
+     * @param of the int primitive
+     * @return the integer expression
+     */
+    public static IntegerExpression of(final int of) {
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt32(of)));
+    }
 
-    public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... ofIntegerArray) {
-        List<BsonValue> array = Arrays.stream(ofIntegerArray)
+    public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... array) {
+        List<BsonValue> list = Arrays.stream(array)
                 .mapToObj(BsonInt32::new)
                 .collect(Collectors.toList());
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(array)));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+    }
+
+    public static IntegerExpression of(final long of) {
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt64(of)));
+    }
+
+    public static ArrayExpression<IntegerExpression> ofIntegerArray(final long... array) {
+        List<BsonValue> list = Arrays.stream(array)
+                .mapToObj(BsonInt64::new)
+                .collect(Collectors.toList());
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+    }
+
+    public static NumberExpression of(final double of) {
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
+    }
+
+    public static ArrayExpression<IntegerExpression> ofNumberArray(final double... array) {
+        List<BsonValue> list = Arrays.stream(array)
+                .mapToObj(BsonDouble::new)
+                .collect(Collectors.toList());
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+    }
+
+    public static NumberExpression of(final Decimal128 of) {
+        Assertions.notNull("Decimal128", of);
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
+    }
+
+    public static ArrayExpression<IntegerExpression> ofNumberArray(final Decimal128... array) {
+        List<BsonValue> result = new ArrayList<>();
+        for (Decimal128 e : array) {
+            Assertions.notNull("elements of array", e);
+            result.add(new BsonDecimal128(e));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
+    }
+
+    public static DateExpression of(final Instant of) {
+        Assertions.notNull("Instant", of);
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
+    }
+
+    public static ArrayExpression<DateExpression> ofDateArray(final Instant... array) {
+        List<BsonValue> result = new ArrayList<>();
+        for (Instant e : array) {
+            Assertions.notNull("elements of array", e);
+            result.add(new BsonDateTime(e.toEpochMilli()));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
+    }
+
+    /**
+     * Returns an expression having the same string value as the provided
+     * string.
+     *
+     * @param of the string
+     * @return the string expression
+     */
+    public static StringExpression of(final String of) {
+        Assertions.notNull("String", of);
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
+    }
+
+
+    public static ArrayExpression<StringExpression> ofStringArray(final String... array) {
+        List<BsonValue> result = new ArrayList<>();
+        for (String e : array) {
+            Assertions.notNull("elements of array", e);
+            result.add(new BsonString(e));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
+    }
+
+    @SafeVarargs  // nothing is stored in the array
+    public static <T extends Expression> ArrayExpression<T> ofArray(final T... array) {
+        Assertions.notNull("array", array);
+        return new MqlExpression<>((cr) -> {
+            List<BsonValue> array2 = Arrays.stream(array)
+                    .map(v -> ((MqlExpression<?>) v).toBsonValue(cr))
+                    .collect(Collectors.toList());
+            return new AstPlaceholder(new BsonArray(array2));
+        });
     }
 
     public static DocumentExpression ofDocument(final Bson document) {

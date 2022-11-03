@@ -22,6 +22,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.Collections;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
@@ -173,7 +174,7 @@ final class MqlExpression<T extends Expression>
     @Override
     public ArrayExpression<T> filter(final Function<? super T, ? extends BooleanExpression> cond) {
         T varThis = variable("$$this");
-        return new MqlExpression<T>((cr) -> astDoc("$filter", new BsonDocument()
+        return new MqlExpression<>((cr) -> astDoc("$filter", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
                 .append("cond", extractBsonValue(cr, cond.apply(varThis)))));
     }
@@ -185,7 +186,76 @@ final class MqlExpression<T extends Expression>
         return newMqlExpression((cr) -> astDoc("$reduce", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
                 .append("initialValue", extractBsonValue(cr, initialValue))
-                .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))));
+                .append("in", extractBsonValue(cr, in.apply(varValue, varThis)))));
+    }
+
+    @Override
+    public IntegerExpression size() {
+        return new MqlExpression<>(
+                (cr) -> new AstPlaceholder(new BsonDocument("$size",
+                        // must wrap the first argument in a list
+                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))));
+    }
+
+    @Override
+    public T arrayElemAt(final IntegerExpression at) {
+        return new MqlExpression<>(ast("$arrayElemAt", at))
+                .assertImplementsAllExpressions();
+    }
+
+    @Override
+    public T first() {
+        return new MqlExpression<>(
+                (cr) -> new AstPlaceholder(new BsonDocument("$first",
+                        // must wrap the first argument in a list
+                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))))
+                .assertImplementsAllExpressions();
+    }
+
+    @Override
+    public T last() {
+        return new MqlExpression<>(
+                (cr) -> new AstPlaceholder(new BsonDocument("$last",
+                        // must wrap the first argument in a list
+                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))))
+                .assertImplementsAllExpressions();
+    }
+
+    @Override
+    public BooleanExpression contains(final T item) {
+        String name = "$in";
+        return new MqlExpression<>((cr) -> {
+            BsonArray value = new BsonArray();
+            value.add(extractBsonValue(cr, item));
+            value.add(this.toBsonValue(cr));
+            return new AstPlaceholder(new BsonDocument(name, value));
+        }).assertImplementsAllExpressions();
+    }
+
+    @Override
+    public ArrayExpression<T> concatArrays(final ArrayExpression<T> array) {
+        return new MqlExpression<>(ast("$concatArrays", array))
+                .assertImplementsAllExpressions();
+    }
+
+    @Override
+    public ArrayExpression<T> slice(final IntegerExpression start, final IntegerExpression length) {
+        return new MqlExpression<>(ast("$slice", start, length))
+                .assertImplementsAllExpressions();
+    }
+
+    @Override
+    public ArrayExpression<T> setUnion(final ArrayExpression<T> set) {
+        return new MqlExpression<>(ast("$setUnion", set))
+                .assertImplementsAllExpressions();
+    }
+
+    @Override
+    public ArrayExpression<T> distinct() {
+        return new MqlExpression<>(
+                (cr) -> new AstPlaceholder(new BsonDocument("$setUnion",
+                        // must wrap the first argument in a list
+                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))));
     }
 
 
