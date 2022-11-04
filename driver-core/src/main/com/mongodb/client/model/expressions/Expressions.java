@@ -117,7 +117,6 @@ public final class Expressions {
         // and to traverse for $$, but doing so would be unsafe and brittle.
         return new MqlExpression<>((cr) -> document == null
                 ? new BsonNull()
-                // TODO what is this first .class parameter?
                 : new BsonDocument("$literal", document.toBsonDocument(BsonDocument.class, cr)));
     }
 

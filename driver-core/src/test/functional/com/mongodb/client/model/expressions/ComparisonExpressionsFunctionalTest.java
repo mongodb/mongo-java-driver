@@ -59,7 +59,6 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
             ofDocument(BsonDocument.parse("{a: 2, b: 1}")),
             ofDocument(BsonDocument.parse("{b: 1, a: 2}")),
             ofDocument(BsonDocument.parse("{'':''}")),
-            // TODO: BSON Symbol type?
             ofIntegerArray(0),
             ofIntegerArray(1),
             ofBooleanArray(true),
