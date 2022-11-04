@@ -237,6 +237,8 @@ functions:
           AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN \
           AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
           GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
+          AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} \
+          AZUREKMS_KEY_NAME=${testazurekms_keyname} \
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           CRYPT_SHARED_LIB_PATH="${PROJECT_DIRECTORY}/crypt_shared/lib/mongo_crypt_v1.so" \
           .evergreen/run-tests.sh
@@ -1445,7 +1447,7 @@ tasks:
               export GCPKMS_PROJECT=${GCPKMS_PROJECT}
               export GCPKMS_ZONE=${GCPKMS_ZONE}
               export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-              GCPKMS_CMD="MONGODB_URI='mongodb://localhost:27017' PROVIDER="gcp" ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
+              GCPKMS_CMD="MONGODB_URI=mongodb://localhost:27017 PROVIDER=gcp ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
 
     - name: testazurekms-task
       commands:
@@ -1476,7 +1478,7 @@ tasks:
               export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
               export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
               export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
-              AZUREKMS_CMD="MONGODB_URI='mongodb://localhost:27017' PROVIDER="azure" ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+              AZUREKMS_CMD="MONGODB_URI=mongodb://localhost:27017 PROVIDER=azure AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
 axes:
   - id: version
     display_name: MongoDB Version

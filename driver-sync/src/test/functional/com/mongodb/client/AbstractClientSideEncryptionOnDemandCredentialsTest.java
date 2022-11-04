@@ -22,6 +22,7 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
@@ -84,8 +85,11 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
                 return new DataKeyOptions().masterKey(BsonDocument.parse(
                         "{projectId: \"devprod-drivers\", location: \"global\", keyRing: \"key-ring-csfle\", keyName: \"key-name-csfle\"}"));
             case "azure":
-                return new DataKeyOptions().masterKey(BsonDocument.parse(
-                        "{keyVaultEndpoint: \"https://keyvault-drivers-2411.vault.azure.net/keys/\", keyName: \"KEY-NAME\" }"));
+                String keyVaultEndpoint = System.getProperty("org.mongodb.test.fle.on.demand.credential.test.azure.keyVaultEndpoint");
+                String keyName = System.getProperty("org.mongodb.test.fle.on.demand.credential.test.azure.keyName");
+                return new DataKeyOptions().masterKey(new BsonDocument()
+                                .append("keyVaultEndpoint", new BsonString(keyVaultEndpoint))
+                                .append("keyName", new BsonString(keyName)));
             default:
                 throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProvider);
         }
