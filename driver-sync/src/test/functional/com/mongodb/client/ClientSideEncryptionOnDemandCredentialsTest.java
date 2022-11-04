@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package com.mongodb.reactivestreams.client;
+package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
-import com.mongodb.client.AbstractClientSideEncryptionOnDemandGcpCredentialsTest;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
-import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
+import com.mongodb.client.vault.ClientEncryptions;
 
-public class ClientSideEncryptionOnDemandGcpCredentialsTest extends AbstractClientSideEncryptionOnDemandGcpCredentialsTest {
+public class ClientSideEncryptionOnDemandCredentialsTest extends AbstractClientSideEncryptionOnDemandCredentialsTest {
 
     @Override
     public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
-        return new SyncClientEncryption(ClientEncryptions.create(settings));
+        return ClientEncryptions.create(settings);
     }
 }
