@@ -21,10 +21,11 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 
 import static com.mongodb.internal.ExpirableValue.expired;
-import static com.mongodb.internal.ExpirableValue.unexpired;
+import static com.mongodb.internal.ExpirableValue.expirable;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExpirableValueTest {
 
@@ -35,26 +36,29 @@ class ExpirableValueTest {
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
-    void testUnexpired() {
+    void testExpirable() {
         assertAll(
-                () -> assertFalse(unexpired(1, Duration.ZERO).getValue().isPresent()),
-                () -> assertEquals(1, unexpired(1, Duration.ofSeconds(1)).getValue().get()),
+                () -> assertThrows(AssertionError.class, () -> expirable(null, Duration.ofNanos(1))),
+                () -> assertThrows(AssertionError.class, () -> expirable(1, null)),
+                () -> assertFalse(expirable(1, Duration.ofNanos(-1)).getValue().isPresent()),
+                () -> assertFalse(expirable(1, Duration.ZERO).getValue().isPresent()),
+                () -> assertEquals(1, expirable(1, Duration.ofSeconds(1)).getValue().get()),
                 () -> {
-                    ExpirableValue<Integer> expirableValue = unexpired(1, Duration.ofNanos(1));
+                    ExpirableValue<Integer> expirableValue = expirable(1, Duration.ofNanos(1));
                     Thread.sleep(1);
                     assertFalse(expirableValue.getValue().isPresent());
                 },
                 () -> {
-                    ExpirableValue<Integer> expirableValue = unexpired(1, Duration.ofMinutes(60), Long.MAX_VALUE);
+                    ExpirableValue<Integer> expirableValue = expirable(1, Duration.ofMinutes(60), Long.MAX_VALUE);
                     assertEquals(1, expirableValue.getValue(Long.MAX_VALUE + Duration.ofMinutes(30).toNanos()).get());
                 },
                 () -> {
-                    ExpirableValue<Integer> expirableValue = unexpired(1, Duration.ofMinutes(60), Long.MAX_VALUE);
+                    ExpirableValue<Integer> expirableValue = expirable(1, Duration.ofMinutes(60), Long.MAX_VALUE);
                     assertEquals(1, expirableValue.getValue(Long.MAX_VALUE + Duration.ofMinutes(30).toNanos()).get());
                     assertFalse(expirableValue.getValue(Long.MAX_VALUE + Duration.ofMinutes(61).toNanos()).isPresent());
                 },
                 () -> {
-                    ExpirableValue<Integer> expirableValue = unexpired(1, Duration.ofNanos(10), Long.MAX_VALUE - 20);
+                    ExpirableValue<Integer> expirableValue = expirable(1, Duration.ofNanos(10), Long.MAX_VALUE - 20);
                     assertFalse(expirableValue.getValue(Long.MAX_VALUE - 20 + Duration.ofNanos(30).toNanos()).isPresent());
                 });
     }

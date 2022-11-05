@@ -70,7 +70,7 @@ public final class AzureCredentialHelper {
             }
             accessToken = responseDocument.getString(ACCESS_TOKEN_FIELD).getValue();
             int expiresInSeconds = Integer.parseInt(responseDocument.getString(EXPIRES_IN_FIELD).getValue());
-            cachedAccessToken = ExpirableValue.unexpired(accessToken, Duration.ofSeconds(expiresInSeconds).minus(Duration.ofMinutes(1)));
+            cachedAccessToken = ExpirableValue.expirable(accessToken, Duration.ofSeconds(expiresInSeconds).minus(Duration.ofMinutes(1)));
        }
        return new BsonDocument("accessToken", new BsonString(accessToken));
     }

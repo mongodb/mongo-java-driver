@@ -39,13 +39,13 @@ public final class ExpirableValue<T> {
         return new ExpirableValue<>(null, Duration.ofSeconds(-1), System.nanoTime());
     }
 
-    public static <T> ExpirableValue<T> unexpired(final T value, final Duration lifetime) {
-        return unexpired(value, lifetime, System.nanoTime());
+    public static <T> ExpirableValue<T> expirable(final T value, final Duration lifetime) {
+        return expirable(value, lifetime, System.nanoTime());
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    static <T> ExpirableValue<T> unexpired(final T value, final Duration lifetime, final long currentNanoTime) {
-        return new ExpirableValue<>(assertNotNull(value), lifetime, currentNanoTime);
+    static <T> ExpirableValue<T> expirable(final T value, final Duration lifetime, final long currentNanoTime) {
+        return new ExpirableValue<>(assertNotNull(value), assertNotNull(lifetime), currentNanoTime);
     }
 
     private ExpirableValue(final T value, final Duration lifetime, final long currentNanoTime) {
