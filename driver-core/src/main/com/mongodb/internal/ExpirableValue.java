@@ -28,6 +28,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  * A value associated with a lifetime.
  *
  * <p>Instances are shallowly immutable.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
 public final class ExpirableValue<T> {
