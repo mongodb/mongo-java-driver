@@ -55,7 +55,8 @@ public class ChangeStreamBatchCursorHelperTest {
 
                 () -> assertTrue(isResumableError(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()),
                         FOUR_DOT_FOUR_WIRE_VERSION)),
-                () -> assertTrue(isResumableError(new MongoCursorNotFoundException(1L, new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION)),
+                () -> assertTrue(isResumableError(new MongoCursorNotFoundException(1L, new BsonDocument("ok", new BsonInt32(0))
+                        .append("code", new BsonInt32(43)), new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION)),
                 () -> assertTrue(isResumableError(new MongoSocketException("", new ServerAddress()), FOUR_DOT_FOUR_WIRE_VERSION)),
                 () -> assertTrue(isResumableError(new MongoSocketReadTimeoutException("", new ServerAddress(), new IOException()),
                         FOUR_DOT_FOUR_WIRE_VERSION)),
