@@ -333,7 +333,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                             getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                             transformer(), connection);
                 } catch (MongoCommandException e) {
-                    throw new MongoQueryException(e);
+                    throw new MongoQueryException(e.getResponse(), e.getServerAddress());
                 }
             });
         });
@@ -370,9 +370,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                 if (t != null) {
                     if (t instanceof MongoCommandException) {
                         MongoCommandException commandException = (MongoCommandException) t;
-                        callback.onResult(result, new MongoQueryException(commandException.getServerAddress(),
-                                                                          commandException.getErrorCode(),
-                                commandException.getErrorMessage()));
+                        callback.onResult(result,
+                                new MongoQueryException(commandException.getResponse(), commandException.getServerAddress()));
                     } else {
                         callback.onResult(result, t);
                     }
