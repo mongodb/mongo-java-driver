@@ -105,7 +105,7 @@ public abstract class UnifiedTest {
     private class UnifiedTestContext {
         private final AssertionContext context = new AssertionContext();
         private final ValueMatcher valueMatcher = new ValueMatcher(entities, context);
-        private final ErrorMatcher errorMatcher = new ErrorMatcher(context);
+        private final ErrorMatcher errorMatcher = new ErrorMatcher(context, valueMatcher);
         private final EventMatcher eventMatcher = new EventMatcher(valueMatcher, context);
 
         AssertionContext getAssertionContext() {
@@ -379,6 +379,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeDropCollection(operation);
                 case "createCollection":
                     return crudHelper.executeCreateCollection(operation);
+                case "modifyCollection":
+                    return crudHelper.executeModifyCollection(operation);
                 case "rename":
                     return crudHelper.executeRenameCollection(operation);
                 case "createIndex":
