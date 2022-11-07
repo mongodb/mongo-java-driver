@@ -20,9 +20,9 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoQueryException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
@@ -36,13 +36,15 @@ import static org.junit.Assert.assertTrue;
 
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
-            asList("isError", "expectError", "isClientError", "errorCode", "errorCodeName", "errorContains",
+            asList("isError", "expectError", "isClientError", "errorCode", "errorCodeName", "errorContains", "errorResponse",
                     "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
 
     private final AssertionContext context;
+    private final ValueMatcher valueMatcher;
 
-    ErrorMatcher(final AssertionContext context) {
+    ErrorMatcher(final AssertionContext context, final ValueMatcher valueMatcher) {
         this.context = context;
+        this.valueMatcher = valueMatcher;
     }
 
     void assertErrorsMatch(final BsonDocument expectedError, final Exception e) {
@@ -66,13 +68,16 @@ final class ErrorMatcher {
             assertTrue(context.getMessage("Error message does not contain expected string: " + errorContains),
                     e.getMessage().contains(errorContains));
         }
+        if (expectedError.containsKey("errorResponse")) {
+            valueMatcher.assertValuesMatch(expectedError.getDocument("errorResponse"), ((MongoCommandException) e).getResponse());
+        }
         if (expectedError.containsKey("errorCode")) {
             assertTrue(context.getMessage("Exception must be of type MongoCommandException or MongoQueryException when checking"
                             + " for error codes"),
-                    e instanceof MongoCommandException || e instanceof MongoQueryException);
+                    e instanceof MongoCommandException || e instanceof MongoWriteException);
             int errorCode = (e instanceof MongoCommandException)
                     ? ((MongoCommandException) e).getErrorCode()
-                    : ((MongoQueryException) e).getErrorCode();
+                    : ((MongoWriteException) e).getCode();
 
             assertEquals(context.getMessage("Error codes must match"), expectedError.getNumber("errorCode").intValue(),
                     errorCode);
