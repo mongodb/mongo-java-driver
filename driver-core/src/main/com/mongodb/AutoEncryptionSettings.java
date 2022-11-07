@@ -31,7 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.unmodifiableMap;
 
 /**
- * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
+ * The client-side automatic encryption settings. In-use encryption enables an application to specify what fields in a collection
  * must be encrypted, and the driver automatically encrypts commands sent to MongoDB and decrypts responses.
  * <p>
  * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
