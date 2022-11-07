@@ -24,7 +24,7 @@ import org.bson.conversions.Bson;
  * Options for dropping a collection
  *
  * @mongodb.driver.manual reference/command/drop/ Drop Collection
- * @mongodb.driver.manual core/security-client-side-encryption/ Client side encryption
+ * @mongodb.driver.manual core/security-client-side-encryption/ In-use encryption
  * @since 4.7
  */
 public class DropCollectionOptions {
@@ -50,7 +50,7 @@ public class DropCollectionOptions {
      * @param encryptedFields the encrypted fields document
      * @return this
      * @since 4.7
-     * @mongodb.driver.manual core/security-client-side-encryption/ Client side encryption
+     * @mongodb.driver.manual core/security-client-side-encryption/ In-use encryption
      */
     public DropCollectionOptions encryptedFields(@Nullable final Bson encryptedFields) {
         this.encryptedFields = encryptedFields;

@@ -336,7 +336,7 @@ public class CreateCollectionOptions {
      * @param encryptedFields the encrypted fields document
      * @return this
      * @since 4.7
-     * @mongodb.driver.manual core/security-client-side-encryption/ Client side encryption
+     * @mongodb.driver.manual core/security-client-side-encryption/ In-use encryption
      * @mongodb.server.release 6.0
      */
     public CreateCollectionOptions encryptedFields(@Nullable final Bson encryptedFields) {
