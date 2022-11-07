@@ -357,6 +357,9 @@ final class UnifiedCrudHelper {
                 case "update":
                 case "session":
                     break;
+                case "upsert":
+                    options.upsert(cur.getValue().asBoolean().getValue());
+                    break;
                 case "returnDocument":
                     switch (cur.getValue().asString().getValue()) {
                         case "Before":
@@ -1052,6 +1055,39 @@ final class UnifiedCrudHelper {
         }
     }
 
+    public OperationResult executeModifyCollection(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        String collectionName = arguments.getString("collection").getValue();
+        ClientSession session = getSession(arguments);
+
+        BsonDocument collModCommandDocument = new BsonDocument("collMod", new BsonString(collectionName));
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "collection":
+                case "session":
+                    break;
+                case "validator":
+                    collModCommandDocument.append("validator", cur.getValue());
+                    break;
+                case "index":
+                    collModCommandDocument.append("index", cur.getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+        return resultOf(() -> {
+            if (session == null) {
+                database.runCommand(collModCommandDocument);
+            } else {
+                database.runCommand(session, collModCommandDocument);
+            }
+            return null;
+        });
+        }
+
     public OperationResult executeRenameCollection(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
@@ -1157,6 +1193,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "name":
                     options.name(cur.getValue().asString().getValue());
+                    break;
+                case "unique":
+                    options.unique(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
