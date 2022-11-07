@@ -17,8 +17,9 @@
 package com.mongodb;
 
 import com.mongodb.lang.Nullable;
-
-import static java.lang.String.format;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 
 /**
  * An exception indicating that a query operation failed on the server.
@@ -26,9 +27,19 @@ import static java.lang.String.format;
  * @since 3.0
  * @serial exclude
  */
-public class MongoQueryException extends MongoServerException {
+public class MongoQueryException extends MongoCommandException {
     private static final long serialVersionUID = -5113350133297015801L;
-    private final String errorMessage;
+
+    /**
+     * Construct an instance.
+     *
+     * @param response the server response document
+     * @param serverAddress the server address
+     * @since 4.8
+     */
+    public MongoQueryException(final BsonDocument response, final ServerAddress serverAddress) {
+        super(response, serverAddress);
+    }
 
     /**
      * Construct an instance.
@@ -36,11 +47,11 @@ public class MongoQueryException extends MongoServerException {
      * @param address the server address
      * @param errorCode the error code
      * @param errorMessage the error message
+     * @deprecated Prefer {@link #MongoQueryException(BsonDocument, ServerAddress)}
      */
+    @Deprecated
     public MongoQueryException(final ServerAddress address, final int errorCode, final String errorMessage) {
-        super(errorCode, format("Query failed with error code %d and error message '%s' on server %s", errorCode, errorMessage, address),
-              address);
-        this.errorMessage = errorMessage;
+        this(manufactureResponse(errorCode, null, errorMessage), address);
     }
 
     /**
@@ -51,14 +62,12 @@ public class MongoQueryException extends MongoServerException {
      * @param errorCodeName the error code name
      * @param errorMessage the error message
      * @since 4.6
+     * @deprecated Prefer {@link #MongoQueryException(BsonDocument, ServerAddress)}
      */
-    public MongoQueryException(final ServerAddress address, final int errorCode, final @Nullable String errorCodeName,
+    @Deprecated
+    public MongoQueryException(final ServerAddress address, final int errorCode, @Nullable final String errorCodeName,
             final String errorMessage) {
-        super(errorCode, errorCodeName,
-                format("Query failed with error code %d with name '%s' and error message '%s' on server %s", errorCode, errorCodeName,
-                        errorMessage, address),
-                address);
-        this.errorMessage = errorMessage;
+        this(manufactureResponse(errorCode, errorCodeName, errorMessage), address);
     }
 
     /**
@@ -66,28 +75,20 @@ public class MongoQueryException extends MongoServerException {
      *
      * @param commandException the command exception
      * @since 3.7
+     * @deprecated Prefer {@link #MongoQueryException(BsonDocument, ServerAddress)}
      */
+    @Deprecated
     public MongoQueryException(final MongoCommandException commandException) {
-        this(commandException.getServerAddress(), commandException.getErrorCode(), commandException.getErrorCodeName(),
-                commandException.getErrorMessage());
-        addLabels(commandException.getErrorLabels());
+        this(commandException.getResponse(), commandException.getServerAddress());
     }
 
-    /**
-     * Gets the error code for this query failure.
-     *
-     * @return the error code
-     */
-    public int getErrorCode() {
-        return getCode();
-    }
-
-    /**
-     * Gets the error message for this query failure.
-     *
-     * @return the error message
-     */
-    public String getErrorMessage() {
-        return errorMessage;
+    private static BsonDocument manufactureResponse(final int errorCode, @Nullable final String errorCodeName, final String errorMessage) {
+        BsonDocument response = new BsonDocument("ok", new BsonInt32(1))
+                .append("code", new BsonInt32(errorCode))
+                .append("errmsg", new BsonString(errorMessage));
+        if (errorCodeName != null) {
+            response.append("codeName", new BsonString(errorCodeName));
+        }
+        return response;
     }
 }

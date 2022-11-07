@@ -211,7 +211,7 @@ public final class ProtocolHelper {
         if (specialException != null) {
             return specialException;
         }
-        return new MongoQueryException(serverAddress, getErrorCode(errorDocument), getErrorMessage(errorDocument, "$err"));
+        return new MongoQueryException(errorDocument, serverAddress);
     }
 
     static MessageSettings getMessageSettings(final ConnectionDescription connectionDescription) {

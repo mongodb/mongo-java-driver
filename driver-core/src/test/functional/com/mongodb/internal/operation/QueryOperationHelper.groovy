@@ -85,9 +85,9 @@ class QueryOperationHelper {
                         new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == 43) {
-                    throw new MongoCursorNotFoundException(serverCursor.getId(), serverCursor.getAddress())
+                    throw new MongoCursorNotFoundException(serverCursor.getId(), e.getResponse(), serverCursor.getAddress())
                 } else {
-                    throw new MongoQueryException(e)
+                    throw new MongoQueryException(e.getResponse(), e.getServerAddress());
                 }
             }
         }

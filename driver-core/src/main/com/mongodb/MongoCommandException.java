@@ -83,9 +83,10 @@ public class MongoCommandException extends MongoServerException {
     }
 
     /**
-     * For internal use only.
+     * Gets the full server response document describing the error.
      *
      * @return the full response to the command failure.
+     * @since 4.8
      */
     public BsonDocument getResponse() {
         return response;
