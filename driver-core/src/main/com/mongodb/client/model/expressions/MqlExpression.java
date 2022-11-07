@@ -22,7 +22,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 final class MqlExpression<T extends Expression>
@@ -123,32 +123,29 @@ final class MqlExpression<T extends Expression>
     /** @see ArrayExpression */
 
     @Override
-    public <R extends Expression> ArrayExpression<R> map(final Function<T, ? extends R> in) {
+    public <R extends Expression> ArrayExpression<R> map(final Function<? super T, ? extends R> in) {
         T varThis = variable("$$this");
         return new MqlExpression<>((cr) -> astDoc("$map", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
-                .append("in", extractBsonValue(cr, in.apply(varThis)))
-                .toBsonDocument(BsonDocument.class, cr)).apply(cr));
+                .append("in", extractBsonValue(cr, in.apply(varThis)))).apply(cr));
     }
 
     @Override
-    public ArrayExpression<T> filter(final Function<T, BooleanExpression> cond) {
+    public ArrayExpression<T> filter(final Function<? super T, ? extends BooleanExpression> cond) {
         T varThis = variable("$$this");
         return new MqlExpression<T>((cr) -> astDoc("$filter", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
-                .append("cond", extractBsonValue(cr, cond.apply(varThis)))
-                .toBsonDocument(BsonDocument.class, cr)).apply(cr));
+                .append("cond", extractBsonValue(cr, cond.apply(varThis)))).apply(cr));
     }
 
     @Override
-    public T reduce(final T initialValue, final BiFunction<T,  T,  T> in) {
+    public T reduce(final T initialValue, final BinaryOperator<T> in) {
         T varThis = variable("$$this");
         T varValue = variable("$$value");
         return newMqlExpression((cr) -> astDoc("$reduce", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
                 .append("initialValue", extractBsonValue(cr, initialValue))
-                .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))
-                .toBsonDocument(BsonDocument.class, cr)).apply(cr));
+                .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))).apply(cr));
     }
 
 }

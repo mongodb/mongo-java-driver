@@ -16,7 +16,7 @@
 
 package com.mongodb.client.model.expressions;
 
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 /**
@@ -37,7 +37,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * @param cond the function to apply to each element
      * @return the new array
      */
-    ArrayExpression<T> filter(Function<T, BooleanExpression> cond);
+    ArrayExpression<T> filter(Function<? super T, ? extends BooleanExpression> cond);
 
     /**
      * Returns an array consisting of the results of applying the given function
@@ -47,18 +47,18 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * @return the new array
      * @param <R> the type contained in the resulting array
      */
-    <R extends Expression> ArrayExpression<R> map(Function<T, ? extends R> in);
+    <R extends Expression> ArrayExpression<R> map(Function<? super T, ? extends R> in);
 
     /**
      * Performs a reduction on the elements of this array, using the provided
-     * identity value and an associative accumulation function, and returns
+     * identity value and an associative reducing function, and returns
      * the reduced value. The initial value must be the identity value for the
      * reducing function.
      *
      * @param initialValue the identity for the reducing function
-     * @param in the associative accumulation function
+     * @param in the associative reducing function
      * @return the reduced value
      */
-    T reduce(T initialValue, BiFunction<T,  T,  T> in);
+    T reduce(T initialValue, BinaryOperator<T> in);
 
 }
