@@ -51,7 +51,7 @@ ext {
     awsSdkV1Version = '1.12.337'
     mongoCryptVersion = '1.6.1'
     projectReactorVersion = '2022.0.0'
-    junitBomVersion = '5.9.1'
+    junitBomVersion = '5.8.2'
     gitVersion = getGitVersion()
 }
 
