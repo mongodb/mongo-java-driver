@@ -112,12 +112,9 @@ public final class Expressions {
 
     public static DocumentExpression ofDocument(final Bson document) {
         Assertions.notNull("document", document);
-        // All documents are wrapped in a $literal. It is possible to check
-        // for empty docs (see https://jira.mongodb.org/browse/SERVER-46422)
-        // and wrap them, and also to traverse into each document to see if
-        // it needs to be conditionally wrapped in a $literal, but doing so
-        // would be brittle and unsafe - we might miss some future case and
-        // allow an expression where a literal document was expected.
+        // All documents are wrapped in a $literal. If we don't wrap, we need to
+        // check for empty documents and documents that are actually expressions
+        // (and need to be wrapped in $literal anyway). This would be brittle.
         return new MqlExpression<>((cr) -> new BsonDocument("$literal",
                 document.toBsonDocument(BsonDocument.class, cr)));
     }
