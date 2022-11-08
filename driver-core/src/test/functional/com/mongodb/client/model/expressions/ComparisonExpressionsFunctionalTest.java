@@ -22,6 +22,7 @@ import org.bson.BsonValue;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -64,7 +65,7 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
             ofBooleanArray(true),
             of(false),
             of(true),
-            of(new Date())
+            of(Instant.now())
     );
 
     @Test
@@ -95,11 +96,13 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 if (i == j) {
                     continue;
                 }
-                Expression u = sampleValues.get(i);
-                Expression v = sampleValues.get(j);
-                BsonValue evaluate = evaluate(u.eq(v));
+                Expression first = sampleValues.get(i);
+                Expression second = sampleValues.get(j);
+                BsonValue evaluate = evaluate(first.eq(second));
                 if (evaluate.asBoolean().getValue()) {
-                    fail(i + " " + j + " should not equal");
+                    BsonValue v1 = ((MqlExpression<?>) first).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+                    BsonValue v2 = ((MqlExpression<?>) second).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+                    fail(i + "," + j + " --" + v1 + " and " + v2 + " should not equal");
                 }
             }
         }
@@ -132,14 +135,15 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 "{'$lt': [null, 0]}");
 
         for (int i = 0; i < sampleValues.size() - 1; i++) {
-            int j = i + 1;
-            Expression first = sampleValues.get(i);
-            Expression second = sampleValues.get(j);
-            BsonValue evaluate = evaluate(first.lt(second));
-            if (!evaluate.asBoolean().getValue()) {
-                BsonValue v1 = ((MqlExpression<?>) first).toBsonValue(fromProviders(new BsonValueCodecProvider()));
-                BsonValue v2 = ((MqlExpression<?>) second).toBsonValue(fromProviders(new BsonValueCodecProvider()));
-                fail(i + "," + j + " --" + v1 + " < " + v2 + " should be true");
+            for (int j = i + 1; j < sampleValues.size(); j++) {
+                Expression first = sampleValues.get(i);
+                Expression second = sampleValues.get(j);
+                BsonValue evaluate = evaluate(first.lt(second));
+                if (!evaluate.asBoolean().getValue()) {
+                    BsonValue v1 = ((MqlExpression<?>) first).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+                    BsonValue v2 = ((MqlExpression<?>) second).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+                    fail(i + "," + j + " --" + v1 + " < " + v2 + " should be true");
+                }
             }
         }
     }

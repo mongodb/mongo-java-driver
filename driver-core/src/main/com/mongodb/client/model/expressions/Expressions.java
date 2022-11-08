@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.assertions.Assertions;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
@@ -28,6 +29,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -70,8 +72,8 @@ public final class Expressions {
     public static NumberExpression of(final double of) {
         return new MqlExpression<>((codecRegistry) -> new BsonDouble(of));
     }
-    public static NumberExpression of(final Date of) {
-        return new MqlExpression<>((codecRegistry) -> new BsonDateTime(of.getTime()));
+    public static DateExpression of(final Instant of) {
+        return new MqlExpression<>((codecRegistry) -> new BsonDateTime(of.toEpochMilli()));
     }
 
     /**
@@ -109,15 +111,15 @@ public final class Expressions {
     }
 
     public static DocumentExpression ofDocument(final Bson document) {
-        if (document == null) {
-            throw new IllegalArgumentException("document cannot be null");
-        }
+        Assertions.notNull("document", document);
         // All documents are wrapped in a $literal. It is possible to check
         // for empty docs (see https://jira.mongodb.org/browse/SERVER-46422)
-        // and to traverse for $$, but doing so would be unsafe and brittle.
-        return new MqlExpression<>((cr) -> document == null
-                ? new BsonNull()
-                : new BsonDocument("$literal", document.toBsonDocument(BsonDocument.class, cr)));
+        // and wrap them, and also to traverse into each document to see if
+        // it needs to be conditionally wrapped in a $literal, but doing so
+        // would be brittle and unsafe - we might miss some future case and
+        // allow an expression where a literal document was expected.
+        return new MqlExpression<>((cr) -> new BsonDocument("$literal",
+                document.toBsonDocument(BsonDocument.class, cr)));
     }
 
     public static <R extends Expression> R ofNull() {
