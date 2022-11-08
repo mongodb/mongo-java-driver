@@ -284,7 +284,10 @@ functions:
       working_dir: "src"
       script: |
         ${PREPARE_SHELL}
-        AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
+        AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" \
+        JAVA_VERSION="${JAVA_VERSION}" \
+        AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} \
+        SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
 
   "run scala tests":
     - command: shell.exec
@@ -311,7 +314,10 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-tests.sh
+          STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" \
+           TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" \
+           AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} \
+           .evergreen/run-tests.sh         
 
   "run plain auth test":
     - command: shell.exec
