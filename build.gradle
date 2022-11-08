@@ -25,7 +25,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:7.0.0'
-        classpath "com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.9"
+        classpath "com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.13"
         classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
 
         // Scala plugins
@@ -44,14 +44,14 @@ buildscript {
 ext {
     configDir = new File(rootDir, 'config')
     jnrUnixsocketVersion = '0.38.17'
-    nettyVersion = '4.1.79.Final'
+    nettyVersion = '4.1.84.Final'
     snappyVersion = '1.1.8.4'
-    zstdVersion = '1.5.2-3'
-    awsSdkV2Version = '2.17.293'
-    awsSdkV1Version = '1.12.291'
+    zstdVersion = '1.5.2-5'
+    awsSdkV2Version = '2.18.9'
+    awsSdkV1Version = '1.12.337'
     mongoCryptVersion = '1.6.1'
-    projectReactorVersion = '2020.0.22'
-    junitBomVersion = '5.8.1'
+    projectReactorVersion = '2022.0.0'
+    junitBomVersion = '5.8.2'
     gitVersion = getGitVersion()
 }
 
