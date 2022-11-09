@@ -61,7 +61,7 @@ public final class PolygonCoordinates {
 
         this.exterior = Collections.unmodifiableList(exterior);
 
-        List<List<Position>> holesList = new ArrayList<List<Position>>(holes.size());
+        List<List<Position>> holesList = new ArrayList<>(holes.size());
         for (List<Position> hole : holes) {
             notNull("interiorRing", hole);
             doesNotContainNull("hole", hole);

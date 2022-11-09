@@ -138,7 +138,7 @@ class CryptConnection implements Connection {
             return commandFieldNameValidator;
         }
 
-        Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
+        Map<String, FieldNameValidator> rootMap = new HashMap<>();
         rootMap.put(payload.getPayloadName(), payloadFieldNameValidator);
         return new MappedFieldNameValidator(commandFieldNameValidator, rootMap);
     }

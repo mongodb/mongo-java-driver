@@ -78,10 +78,10 @@ final class TestWindowOutputFields {
 
     @Test
     void simpleWindowFunctions() {
-        final Map<Object, BsonValue> expressions = new HashMap<>();
+        Map<Object, BsonValue> expressions = new HashMap<>();
         expressions.put(INT_EXPR.getKey(), INT_EXPR.getValue());
         expressions.put(STR_EXPR.getKey(), STR_EXPR.getValue());
-        final Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
+        Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
         assertAll(
                 () -> assertSimpleParameterWindowFunction("$sum", WindowOutputFields::sum, expressions, windows, false),
                 () -> assertSimpleParameterWindowFunction("$avg", WindowOutputFields::avg, expressions, windows, false),
@@ -192,14 +192,14 @@ final class TestWindowOutputFields {
 
     @Test
     void pick() {
-        final Map<Object, BsonValue> expressions = new HashMap<>();
+        Map<Object, BsonValue> expressions = new HashMap<>();
         expressions.put(INT_EXPR.getKey(), INT_EXPR.getValue());
         expressions.put(STR_EXPR.getKey(), STR_EXPR.getValue());
         expressions.put(DOC_EXPR.getKey(), DOC_EXPR.getValue());
-        final Map<Object, BsonValue> nExpressions = new HashMap<>();
+        Map<Object, BsonValue> nExpressions = new HashMap<>();
         nExpressions.put(INT_EXPR.getKey(), INT_EXPR.getValue());
         nExpressions.put(DOC_INT_EXPR.getKey(), DOC_INT_EXPR.getValue());
-        final Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
+        Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
         assertAll(
                 () -> assertPickNoSortWindowFunction("$minN", WindowOutputFields::minN, expressions, "input", nExpressions, windows),
                 () -> assertPickNoSortWindowFunction("$maxN", WindowOutputFields::maxN, expressions, "input", nExpressions, windows),
@@ -260,21 +260,21 @@ final class TestWindowOutputFields {
             final Collection<Window> windows) {
         Bson sortBySpec = useSortBy ? SORT_BY : null;
         for (final Map.Entry<Object, BsonValue> expressionAndEncoded: expressions.entrySet()) {
-            final Object expression = expressionAndEncoded.getKey();
-            final BsonValue encodedExpression = expressionAndEncoded.getValue();
+            Object expression = expressionAndEncoded.getKey();
+            BsonValue encodedExpression = expressionAndEncoded.getValue();
             for (final Map.Entry<Object, BsonValue> nExpressionAndEncoded: nExpressions.entrySet()) {
-                final Object nExpression = nExpressionAndEncoded.getKey();
-                final BsonValue encodedNExpression = nExpressionAndEncoded.getValue();
-                final boolean useNExpression = !nExpression.equals(NO_EXPRESSION);
+                Object nExpression = nExpressionAndEncoded.getKey();
+                BsonValue encodedNExpression = nExpressionAndEncoded.getValue();
+                boolean useNExpression = !nExpression.equals(NO_EXPRESSION);
                 for (final Window window : windows) {
-                    final BsonDocument expectedFunctionDoc = new BsonDocument(expressionKey, encodedExpression);
+                    BsonDocument expectedFunctionDoc = new BsonDocument(expressionKey, encodedExpression);
                     if (useSortBy) {
                         expectedFunctionDoc.append("sortBy", assertNotNull(sortBySpec).toBsonDocument());
                     }
                     if (useNExpression) {
                         expectedFunctionDoc.append("n", encodedNExpression);
                     }
-                    final BsonDocument expectedFunctionAndWindow = new BsonDocument(expectedFunctionName, expectedFunctionDoc);
+                    BsonDocument expectedFunctionAndWindow = new BsonDocument(expectedFunctionName, expectedFunctionDoc);
                     if (window != null) {
                         expectedFunctionAndWindow.append("window", window.toBsonDocument());
                     }
@@ -312,10 +312,10 @@ final class TestWindowOutputFields {
                                                             final boolean windowRequired) {
         boolean assertNullExpressionsNotAllowed = !expressions.containsKey(NO_EXPRESSION);
         for (final Map.Entry<Object, BsonValue> expressionAndEncoded: expressions.entrySet()) {
-            final Object expression = expressionAndEncoded.getKey();
-            final BsonValue encodedExpression = expressionAndEncoded.getValue();
+            Object expression = expressionAndEncoded.getKey();
+            BsonValue encodedExpression = expressionAndEncoded.getValue();
             for (final Window window : windows) {
-                final BsonDocument expectedFunctionAndWindow = new BsonDocument(expectedFunctionName, encodedExpression);
+                BsonDocument expectedFunctionAndWindow = new BsonDocument(expectedFunctionName, encodedExpression);
                 if (window != null) {
                     expectedFunctionAndWindow.append("window", window.toBsonDocument());
                 }
@@ -389,7 +389,7 @@ final class TestWindowOutputFields {
                                                    final QuadriFunction<String, Object, Window, MongoTimeUnit, WindowOutputField>
                                                            windowOutputFieldBuilder,
                                                    final boolean time) {
-        final BsonDocument expectedArgs = new BsonDocument("input", STR_EXPR.getValue());
+        BsonDocument expectedArgs = new BsonDocument("input", STR_EXPR.getValue());
         if (time) {
             expectedArgs.append("unit", new BsonString(MongoTimeUnit.DAY.value()));
         }

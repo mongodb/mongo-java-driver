@@ -26,7 +26,7 @@ import static com.mongodb.client.model.Updates.bitwiseXor
 
 class BitwiseUpdatesFunctionalSpecification extends OperationFunctionalSpecification {
     private static final long LONG_MASK = 0x0fffffffffffffff
-    private static final int INT_MASK = 0x0ffffffff;
+    private static final int INT_MASK = 0x0ffffffff
     private static final int NUM = 13
 
     def a = new Document('_id', 1).append('x', NUM)

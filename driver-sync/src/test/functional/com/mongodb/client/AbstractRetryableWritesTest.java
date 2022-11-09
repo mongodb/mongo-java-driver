@@ -16,14 +16,12 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ServerSettings;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -91,19 +89,14 @@ public abstract class AbstractRetryableWritesTest {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
         BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder();
 
         if (clientOptions.containsKey("retryWrites")) {
             builder.retryWrites(clientOptions.getBoolean("retryWrites").getValue());
         }
-        builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
-            @Override
-            public void apply(final ServerSettings.Builder builder) {
-                builder.heartbeatFrequency(5, TimeUnit.MILLISECONDS);
-            }
-        });
+        builder.applyToServerSettings(builder1 -> builder1.heartbeatFrequency(5, TimeUnit.MILLISECONDS));
 
         mongoClient = createMongoClient(builder.build());
 
@@ -156,7 +149,7 @@ public abstract class AbstractRetryableWritesTest {
         }
 
         if (outcome.containsKey("collection")) {
-            List<BsonDocument> collectionData = collection.withDocumentClass(BsonDocument.class).find().into(new ArrayList<BsonDocument>());
+            List<BsonDocument> collectionData = collection.withDocumentClass(BsonDocument.class).find().into(new ArrayList<>());
             assertEquals(outcome.getDocument("collection").getArray("data").getValues(), collectionData);
         }
     }
@@ -232,7 +225,7 @@ public abstract class AbstractRetryableWritesTest {
 
 
     private List<String> getListOfStringsFromBsonArrays(final BsonDocument expectedResult, final String arrayFieldName) {
-        List<String> errorLabelContainsList = new ArrayList<String>();
+        List<String> errorLabelContainsList = new ArrayList<>();
         for (BsonValue cur : expectedResult.asDocument().getArray(arrayFieldName)) {
             errorLabelContainsList.add(cur.asString().getValue());
         }
@@ -254,7 +247,7 @@ public abstract class AbstractRetryableWritesTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/retryable-writes")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {

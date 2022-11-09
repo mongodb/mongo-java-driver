@@ -40,12 +40,12 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
 
     public ProvidersCodecRegistry(final List<? extends CodecProvider> codecProviders) {
         isTrueArgument("codecProviders must not be null or empty", codecProviders != null && codecProviders.size() > 0);
-        this.codecProviders = new ArrayList<CodecProvider>(codecProviders);
+        this.codecProviders = new ArrayList<>(codecProviders);
     }
 
     @Override
     public <T> Codec<T> get(final Class<T> clazz) {
-        return get(new ChildCodecRegistry<T>(this, clazz, null));
+        return get(new ChildCodecRegistry<>(this, clazz, null));
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
         isTrueArgument(format("typeArguments size should equal the number of type parameters in class %s, but is %d",
                         clazz, typeArguments.size()),
                 clazz.getTypeParameters().length == typeArguments.size());
-        return get(new ChildCodecRegistry<T>(this, clazz, typeArguments));
+        return get(new ChildCodecRegistry<>(this, clazz, typeArguments));
     }
 
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {

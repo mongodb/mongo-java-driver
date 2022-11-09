@@ -41,7 +41,7 @@ import static java.util.Arrays.asList;
  */
 public class JMXConnectionPoolListener implements ConnectionPoolListener {
     private final ConcurrentMap<ServerId, ConnectionPoolStatistics> map =
-        new ConcurrentHashMap<ServerId, ConnectionPoolStatistics>();
+            new ConcurrentHashMap<>();
 
     @Override
     public void connectionPoolCreated(final ConnectionPoolCreatedEvent event) {

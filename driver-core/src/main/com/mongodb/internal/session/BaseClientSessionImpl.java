@@ -101,7 +101,7 @@ public class BaseClientSessionImpl implements ClientSession {
     @Override
     public boolean isCausallyConsistent() {
         Boolean causallyConsistent = options.isCausallyConsistent();
-        return causallyConsistent == null ? true : causallyConsistent;
+        return causallyConsistent == null || causallyConsistent;
     }
 
     @Override

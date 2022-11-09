@@ -153,7 +153,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     private AggregateOperation<BsonDocument> getAggregateOperation() {
-        return new AggregateOperation<BsonDocument>(namespace, getPipeline(), DECODER)
+        return new AggregateOperation<>(namespace, getPipeline(), DECODER)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)
@@ -162,7 +162,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     private List<BsonDocument> getPipeline() {
-        ArrayList<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        ArrayList<BsonDocument> pipeline = new ArrayList<>();
         pipeline.add(new BsonDocument("$match", filter != null ? filter : new BsonDocument()));
         if (skip > 0) {
             pipeline.add(new BsonDocument("$skip", new BsonInt64(skip)));

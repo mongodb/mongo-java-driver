@@ -24,12 +24,12 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.inject.Provider;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -87,7 +87,7 @@ class DefaultServerMonitor implements ServerMonitor {
                          final ClusterClock clusterClock,
                          final InternalConnectionFactory internalConnectionFactory,
                          final ClusterConnectionMode clusterConnectionMode,
-                         final @Nullable ServerApi serverApi,
+                         @Nullable final ServerApi serverApi,
                          final Provider<SdamServerDescriptionManager> sdamProvider) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);

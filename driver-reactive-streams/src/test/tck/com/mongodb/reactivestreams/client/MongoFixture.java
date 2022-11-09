@@ -142,8 +142,8 @@ public final class MongoFixture {
         }
 
         public ObservableSubscriber(final Runnable onRequest) {
-            this.received = new ArrayList<T>();
-            this.errors = new ArrayList<Throwable>();
+            this.received = new ArrayList<>();
+            this.errors = new ArrayList<>();
             this.latch = new CountDownLatch(1);
             this.onRequest = onRequest;
         }

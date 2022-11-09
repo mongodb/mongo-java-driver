@@ -25,9 +25,9 @@ import java.io.InputStream;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LazyBSONDecoderTest {
     private BSONDecoder bsonDecoder;
@@ -50,7 +50,7 @@ public class LazyBSONDecoderTest {
 
     @Test
     public void testDecodingFromByteArray() throws IOException {
-        byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        byte[] bytes = {12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
         BSONObject document = bsonDecoder.readObject(bytes);
         assertNotNull(document);
         assertThat(document, instanceOf(LazyBSONObject.class));
@@ -61,7 +61,7 @@ public class LazyBSONDecoderTest {
 
     @Test(expected = BSONException.class)
     public void testDecodingFromInvalidInput() {
-        byte[] bytes = new byte[]{16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        byte[] bytes = {16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
         bsonDecoder.readObject(bytes);
     }
 

@@ -184,7 +184,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("inExpression", inExpression);
         notNull("nExpression", nExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.INPUT, inExpression);
         args.put(ParamName.N_LOWERCASE, nExpression);
         return compoundParameterWindowFunction(path, "$minN", args, window);
@@ -227,7 +227,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("inExpression", inExpression);
         notNull("nExpression", nExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.INPUT, inExpression);
         args.put(ParamName.N_LOWERCASE, nExpression);
         return compoundParameterWindowFunction(path, "$maxN", args, window);
@@ -266,7 +266,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("expression", expression);
         notNull("window", window);
-        final Map<ParamName, Object> args = new HashMap<>(1);
+        Map<ParamName, Object> args = new HashMap<>(1);
         args.put(ParamName.INPUT, expression);
         return compoundParameterWindowFunction(path, "$derivative", args, window);
     }
@@ -296,7 +296,7 @@ public final class WindowOutputFields {
         notNull("window", window);
         notNull("unit", unit);
         isTrueArgument("unit must be either of WEEK, DAY, HOUR, MINUTE, SECOND, MILLISECOND", unit.fixed());
-        final Map<ParamName, Object> args = new LinkedHashMap<>(2);
+        Map<ParamName, Object> args = new LinkedHashMap<>(2);
         args.put(ParamName.INPUT, expression);
         args.put(ParamName.UNIT, unit.value());
         return compoundParameterWindowFunction(path, "$derivative", args, window);
@@ -323,7 +323,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("expression", expression);
         notNull("window", window);
-        final Map<ParamName, Object> args = new HashMap<>(1);
+        Map<ParamName, Object> args = new HashMap<>(1);
         args.put(ParamName.INPUT, expression);
         return compoundParameterWindowFunction(path, "$integral", args, window);
     }
@@ -353,7 +353,7 @@ public final class WindowOutputFields {
         notNull("window", window);
         notNull("unit", unit);
         isTrueArgument("unit must be either of WEEK, DAY, HOUR, MINUTE, SECOND, MILLISECOND", unit.fixed());
-        final Map<ParamName, Object> args = new LinkedHashMap<>(2);
+        Map<ParamName, Object> args = new LinkedHashMap<>(2);
         args.put(ParamName.INPUT, expression);
         args.put(ParamName.UNIT, unit.value());
         return compoundParameterWindowFunction(path, "$integral", args, window);
@@ -361,7 +361,6 @@ public final class WindowOutputFields {
 
     /**
      * Builds a window output field of the sample covariance between the evaluation results of the two expressions over the {@code window}.
-     *
      *
      * @param path The output field path.
      * @param expression1 The first expression.
@@ -422,7 +421,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("expression", expression);
         isTrueArgument("n > 0", n > 0);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(2);
+        Map<ParamName, Object> args = new LinkedHashMap<>(2);
         args.put(ParamName.INPUT, expression);
         args.put(ParamName.N_UPPERCASE, n);
         return compoundParameterWindowFunction(path, "$expMovingAvg", args, null);
@@ -447,7 +446,7 @@ public final class WindowOutputFields {
         notNull("expression", expression);
         isTrueArgument("alpha > 0", alpha > 0);
         isTrueArgument("alpha < 1", alpha < 1);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(2);
+        Map<ParamName, Object> args = new LinkedHashMap<>(2);
         args.put(ParamName.INPUT, expression);
         args.put(ParamName.ALPHA, alpha);
         return compoundParameterWindowFunction(path, "$expMovingAvg", args, null);
@@ -531,7 +530,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("inExpression", inExpression);
         notNull("nExpression", nExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.INPUT, inExpression);
         args.put(ParamName.N_LOWERCASE, nExpression);
         return compoundParameterWindowFunction(path, "$firstN", args, window);
@@ -556,7 +555,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("sortBy", sortBy);
         notNull("outExpression", outExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.SORT_BY, sortBy);
         args.put(ParamName.OUTPUT, outExpression);
         return compoundParameterWindowFunction(path, "$top", args, window);
@@ -586,7 +585,7 @@ public final class WindowOutputFields {
         notNull("sortBy", sortBy);
         notNull("outExpression", outExpression);
         notNull("nExpression", nExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.SORT_BY, sortBy);
         args.put(ParamName.OUTPUT, outExpression);
         args.put(ParamName.N_LOWERCASE, nExpression);
@@ -634,7 +633,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("inExpression", inExpression);
         notNull("nExpression", nExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.INPUT, inExpression);
         args.put(ParamName.N_LOWERCASE, nExpression);
         return compoundParameterWindowFunction(path, "$lastN", args, window);
@@ -659,7 +658,7 @@ public final class WindowOutputFields {
         notNull("path", path);
         notNull("sortBy", sortBy);
         notNull("outExpression", outExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.SORT_BY, sortBy);
         args.put(ParamName.OUTPUT, outExpression);
         return compoundParameterWindowFunction(path, "$bottom", args, window);
@@ -689,7 +688,7 @@ public final class WindowOutputFields {
         notNull("sortBy", sortBy);
         notNull("outExpression", outExpression);
         notNull("nExpression", nExpression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.SORT_BY, sortBy);
         args.put(ParamName.OUTPUT, outExpression);
         args.put(ParamName.N_LOWERCASE, nExpression);
@@ -723,7 +722,7 @@ public final class WindowOutputFields {
                                                           @Nullable final TExpression defaultExpression, final int by) {
         notNull("path", path);
         notNull("expression", expression);
-        final Map<ParamName, Object> args = new LinkedHashMap<>(3);
+        Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.OUTPUT, expression);
         args.put(ParamName.BY, by);
         if (defaultExpression != null) {
@@ -860,7 +859,7 @@ public final class WindowOutputFields {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final BsonFieldWindowOutputField that = (BsonFieldWindowOutputField) o;
+            BsonFieldWindowOutputField that = (BsonFieldWindowOutputField) o;
             return wrapped.equals(that.wrapped);
         }
 
@@ -937,7 +936,7 @@ public final class WindowOutputFields {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final SimpleParameterFunctionAndWindow that = (SimpleParameterFunctionAndWindow) o;
+            SimpleParameterFunctionAndWindow that = (SimpleParameterFunctionAndWindow) o;
             return functionName().equals(that.functionName()) && Objects.equals(expression, that.expression)
                     && window().equals(that.window());
         }
@@ -990,7 +989,7 @@ public final class WindowOutputFields {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final CompoundParameterFunctionAndWindow that = (CompoundParameterFunctionAndWindow) o;
+            CompoundParameterFunctionAndWindow that = (CompoundParameterFunctionAndWindow) o;
             return functionName().equals(that.functionName()) && Objects.equals(args, that.args) && window().equals(that.window());
         }
 

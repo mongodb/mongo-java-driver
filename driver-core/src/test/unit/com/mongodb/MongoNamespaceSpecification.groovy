@@ -21,7 +21,7 @@ import spock.lang.Specification
 class MongoNamespaceSpecification extends Specification {
     def 'invalid database name should throw IllegalArgumentException'() {
         when:
-        new MongoNamespace(databaseName, 'test');
+        new MongoNamespace(databaseName, 'test')
 
         then:
         thrown(IllegalArgumentException)
@@ -38,7 +38,7 @@ class MongoNamespaceSpecification extends Specification {
 
     def 'invalid collection name should throw IllegalArgumentException'() {
         when:
-        new MongoNamespace('test', collectionName);
+        new MongoNamespace('test', collectionName)
 
         then:
         thrown(IllegalArgumentException)
@@ -77,17 +77,17 @@ class MongoNamespaceSpecification extends Specification {
     @SuppressWarnings('ComparisonWithSelf')
     def 'testEqualsAndHashCode'() {
         given:
-        MongoNamespace namespace1 = new MongoNamespace('db1', 'coll1');
-        MongoNamespace namespace2 = new MongoNamespace('db1', 'coll1');
-        MongoNamespace namespace3 = new MongoNamespace('db2', 'coll1');
-        MongoNamespace namespace4 = new MongoNamespace('db1', 'coll2');
+        MongoNamespace namespace1 = new MongoNamespace('db1', 'coll1')
+        MongoNamespace namespace2 = new MongoNamespace('db1', 'coll1')
+        MongoNamespace namespace3 = new MongoNamespace('db2', 'coll1')
+        MongoNamespace namespace4 = new MongoNamespace('db1', 'coll2')
 
         expect:
         namespace1 != new Object()
-        namespace1 == namespace1;
-        namespace1 == namespace2;
-        namespace1 != namespace3;
-        namespace1 != namespace4;
+        namespace1 == namespace1
+        namespace1 == namespace2
+        namespace1 != namespace3
+        namespace1 != namespace4
 
         namespace1.hashCode() == 97917362
     }

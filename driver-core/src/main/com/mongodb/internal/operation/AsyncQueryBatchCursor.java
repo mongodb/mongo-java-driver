@@ -23,14 +23,14 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -106,7 +106,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         this.batchSize = batchSize;
         this.decoder = decoder;
         this.comment = comment;
-        this.cursor = new AtomicReference<ServerCursor>(firstBatch.getCursor());
+        this.cursor = new AtomicReference<>(firstBatch.getCursor());
         this.count.addAndGet(firstBatch.getResults().size());
         if (result != null) {
             this.operationTime = result.getTimestamp(OPERATION_TIME, null);
@@ -236,15 +236,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (pinnedConnection != null)  {
             getMore(pinnedConnection.retain(), cursor, callback);
         } else {
-            connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
-                @Override
-                public void onResult(final AsyncConnection connection, final Throwable t) {
-                    if (t != null) {
-                        endOperationInProgress();
-                        callback.onResult(null, t);
-                    } else {
-                        getMore(connection, cursor, callback);
-                    }
+            connectionSource.getConnection((connection, t) -> {
+                if (t != null) {
+                    endOperationInProgress();
+                    callback.onResult(null, t);
+                } else {
+                    getMore(connection, cursor, callback);
                 }
             });
         }
@@ -275,19 +272,16 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     }
 
     private void killCursorOnClose() {
-        final ServerCursor localCursor = getServerCursor();
+        ServerCursor localCursor = getServerCursor();
         if (localCursor != null) {
             if (pinnedConnection != null) {
                 killCursorAsynchronouslyAndReleaseConnectionAndSource(pinnedConnection, localCursor);
             } else {
-                connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
-                    @Override
-                    public void onResult(final AsyncConnection connection, final Throwable t) {
-                        if (t != null) {
-                            connectionSource.release();
-                        } else {
-                            killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
-                        }
+                connectionSource.getConnection((connection, t) -> {
+                    if (t != null) {
+                        connectionSource.release();
+                    } else {
+                        killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
                     }
                 });
             }
@@ -308,13 +302,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
         connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
                 ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                    connectionSource.getServerApi(), connectionSource.getRequestContext(), new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument result, final Throwable t) {
+                    connectionSource.getServerApi(), connectionSource.getRequestContext(), (result, t) -> {
                         connection.release();
                         connectionSource.release();
-                        }
-                    });
+                        });
     }
 
     private BsonDocument asKillCursorsCommandDocument(final ServerCursor localCursor) {

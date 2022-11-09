@@ -187,7 +187,7 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument toResult(final MongoIterable<BsonDocument> results) {
-        return toResult(new BsonArray(results.into(new ArrayList<BsonDocument>())));
+        return toResult(new BsonArray(results.into(new ArrayList<>())));
     }
 
     BsonDocument toResult(final String key, final BsonValue value) {
@@ -315,7 +315,7 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getAggregateResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
-        List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        List<BsonDocument> pipeline = new ArrayList<>();
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
         }
@@ -341,7 +341,7 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getDatabaseAggregateResult(final BsonDocument operationOptions, final BsonDocument arguments,
                                             @Nullable final ClientSession clientSession) {
-        List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        List<BsonDocument> pipeline = new ArrayList<>();
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
         }
@@ -868,7 +868,7 @@ public class JsonPoweredCrudTestHelper {
             }
             // Test results are expecting this to look just like bulkWrite error, so translate to InsertOneModel so the result
             // translation code can be reused.
-            List<InsertOneModel<BsonDocument>> writeModels = new ArrayList<InsertOneModel<BsonDocument>>();
+            List<InsertOneModel<BsonDocument>> writeModels = new ArrayList<>();
             for (BsonValue document : arguments.getArray("documents")) {
                 writeModels.add(new InsertOneModel<>(document.asDocument()));
             }
@@ -955,7 +955,6 @@ public class JsonPoweredCrudTestHelper {
         return toResult(updateResult);
     }
 
-    @SuppressWarnings("unchecked")
     BsonDocument getUpdateOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
         UpdateOptions options = new UpdateOptions();
@@ -1002,42 +1001,42 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getBulkWriteResult(final BsonDocument collectionOptions, final BsonDocument arguments,
-                                    final @Nullable ClientSession clientSession) {
-        List<WriteModel<BsonDocument>> writeModels = new ArrayList<WriteModel<BsonDocument>>();
+                                    @Nullable final ClientSession clientSession) {
+        List<WriteModel<BsonDocument>> writeModels = new ArrayList<>();
         for (BsonValue bsonValue : arguments.getArray("requests")) {
             BsonDocument cur = bsonValue.asDocument();
             String name = cur.getString("name").getValue();
             BsonDocument requestArguments = cur.getDocument("arguments");
             if (name.equals("insertOne")) {
-                writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
+                writeModels.add(new InsertOneModel<>(requestArguments.getDocument("document")));
             } else if (name.equals("updateOne")) {
                 if (requestArguments.isDocument("update")) {
-                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateOneModel<>(requestArguments.getDocument("filter"),
                             requestArguments.getDocument("update"),
                             getUpdateOptions(requestArguments)));
                 } else {  // update is a pipeline
-                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateOneModel<>(requestArguments.getDocument("filter"),
                             getListOfDocuments(requestArguments.getArray("update")),
                             getUpdateOptions(requestArguments)));
                 }
             } else if (name.equals("updateMany")) {
                 if (requestArguments.isDocument("update")) {
-                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateManyModel<>(requestArguments.getDocument("filter"),
                             requestArguments.getDocument("update"),
                             getUpdateOptions(requestArguments)));
                 } else {  // update is a pipeline
-                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateManyModel<>(requestArguments.getDocument("filter"),
                             getListOfDocuments(requestArguments.getArray("update")),
                             getUpdateOptions(requestArguments)));
                 }
             } else if (name.equals("deleteOne")) {
-                writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                writeModels.add(new DeleteOneModel<>(requestArguments.getDocument("filter"),
                         getDeleteOptions(requestArguments)));
             } else if (name.equals("deleteMany")) {
-                writeModels.add(new DeleteManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                writeModels.add(new DeleteManyModel<>(requestArguments.getDocument("filter"),
                         getDeleteOptions(requestArguments)));
             } else if (name.equals("replaceOne")) {
-                writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                writeModels.add(new ReplaceOneModel<>(requestArguments.getDocument("filter"),
                         requestArguments.getDocument("replacement"), getReplaceOptions(requestArguments)));
             } else {
                 throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
@@ -1059,7 +1058,7 @@ public class JsonPoweredCrudTestHelper {
                 bulkWriteResult = getCollection(collectionOptions).bulkWrite(clientSession, writeModels, options);
             }
 
-            return toResult(bulkWriteResult, writeModels, Collections.<BulkWriteError>emptyList());
+            return toResult(bulkWriteResult, writeModels, Collections.emptyList());
         } catch (MongoBulkWriteException e) {
             BsonDocument result = toResult(e.getWriteResult(), writeModels, e.getWriteErrors());
             result.put("error", BsonBoolean.TRUE);
@@ -1283,7 +1282,7 @@ public class JsonPoweredCrudTestHelper {
         if (bsonArray == null) {
             return null;
         }
-        List<BsonDocument> arrayFilters = new ArrayList<BsonDocument>(bsonArray.size());
+        List<BsonDocument> arrayFilters = new ArrayList<>(bsonArray.size());
         for (BsonValue cur : bsonArray) {
             arrayFilters.add(cur.asDocument());
         }

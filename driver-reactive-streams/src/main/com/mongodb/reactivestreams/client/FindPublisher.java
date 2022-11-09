@@ -82,12 +82,12 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
      * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
      * this option is ignored.
-     *
+     * <p>
      * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
      * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
+     * <p>
      * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param maxAwaitTime  the max await time
@@ -267,7 +267,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     /**
      * Enables writing to temporary files on the server. When set to true, the server
      * can write temporary data to disk while executing the find operation.
-     *
+     * <p>
      * This option is sent only if the caller explicitly sets it to true.
      *
      * @param allowDiskUse the allowDiskUse

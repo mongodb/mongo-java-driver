@@ -76,9 +76,9 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         datakeys.insertOne(bsonDocumentFromPath("external-key.json"));
 
         /* Step 2: create encryption objects. */
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>();
-        Map<String, Object> localMasterkey = new HashMap<String, Object>();
-        Map<String, BsonDocument> schemaMap = new HashMap<String, BsonDocument>();
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
+        Map<String, Object> localMasterkey = new HashMap<>();
+        Map<String, BsonDocument> schemaMap = new HashMap<>();
 
         byte[] localMasterkeyBytes = Base64.getDecoder().decode("Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
                 + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");

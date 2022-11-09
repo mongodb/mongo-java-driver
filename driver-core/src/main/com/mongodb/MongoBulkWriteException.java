@@ -23,6 +23,7 @@ import com.mongodb.lang.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -133,7 +134,7 @@ public class MongoBulkWriteException extends MongoServerException {
             return false;
         }
 
-        final MongoBulkWriteException that = (MongoBulkWriteException) o;
+        MongoBulkWriteException that = (MongoBulkWriteException) o;
 
         if (!errors.equals(that.errors)) {
             return false;
@@ -141,7 +142,7 @@ public class MongoBulkWriteException extends MongoServerException {
         if (!serverAddress.equals(that.serverAddress)) {
             return false;
         }
-        if (writeConcernError != null ? !writeConcernError.equals(that.writeConcernError) : that.writeConcernError != null) {
+        if (!Objects.equals(writeConcernError, that.writeConcernError)) {
             return false;
         }
         if (!writeResult.equals(that.writeResult)) {

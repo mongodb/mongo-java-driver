@@ -71,10 +71,10 @@ public class DatabaseTestCase {
     }
 
     protected CollectionHelper<Document> getCollectionHelper() {
-        return new CollectionHelper<Document>(new DocumentCodec(), getNamespace());
+        return new CollectionHelper<>(new DocumentCodec(), getNamespace());
     }
 
     protected BsonDocument wrap(final Document document) {
-        return new BsonDocumentWrapper<Document>(document, new DocumentCodec());
+        return new BsonDocumentWrapper<>(document, new DocumentCodec());
     }
 }

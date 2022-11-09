@@ -92,7 +92,7 @@ final class CollectionCodec<C extends Collection<Object>> extends AbstractCollec
         if (this.uuidRepresentation.equals(uuidRepresentation)) {
             return this;
         }
-        return new CollectionCodec<C>(registry, bsonTypeCodecMap, valueTransformer, getEncoderClass(), uuidRepresentation);
+        return new CollectionCodec<>(registry, bsonTypeCodecMap, valueTransformer, getEncoderClass(), uuidRepresentation);
     }
 
     @Override

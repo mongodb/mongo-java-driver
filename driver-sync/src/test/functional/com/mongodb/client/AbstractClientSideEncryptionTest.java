@@ -66,7 +66,7 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Parameterized.class)
 public abstract class AbstractClientSideEncryptionTest {
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    @SuppressWarnings({"unused"})
     private final String filename;
     private final BsonDocument specDocument;
     private final String description;
@@ -131,7 +131,7 @@ public abstract class AbstractClientSideEncryptionTest {
 
         String databaseName = specDocument.getString("database_name").getValue();
         String collectionName = specDocument.getString("collection_name").getValue();
-        collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), new MongoNamespace(databaseName, collectionName));
         MongoDatabase database = getMongoClient().getDatabase(databaseName);
         database.drop();
 
@@ -147,7 +147,7 @@ public abstract class AbstractClientSideEncryptionTest {
         database.createCollection(collectionName, createCollectionOptions);
 
         /* Insert data into the collection */
-        List<BsonDocument> documents = new ArrayList<BsonDocument>();
+        List<BsonDocument> documents = new ArrayList<>();
         if (!data.isEmpty()) {
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
@@ -162,7 +162,7 @@ public abstract class AbstractClientSideEncryptionTest {
                 .withWriteConcern(WriteConcern.MAJORITY);
         collection.drop();
         if (!data.isEmpty()) {
-            documents = new ArrayList<BsonDocument>();
+            documents = new ArrayList<>();
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }
@@ -176,12 +176,12 @@ public abstract class AbstractClientSideEncryptionTest {
         boolean bypassAutoEncryption = cryptOptions.getBoolean("bypassAutoEncryption", BsonBoolean.FALSE).getValue();
         boolean bypassQueryAnalysis = cryptOptions.getBoolean("bypassQueryAnalysis", BsonBoolean.FALSE).getValue();
 
-        Map<String, BsonDocument> namespaceToSchemaMap = new HashMap<String, BsonDocument>();
+        Map<String, BsonDocument> namespaceToSchemaMap = new HashMap<>();
 
         if (cryptOptions.containsKey("schemaMap")) {
             BsonDocument autoEncryptMapDocument = cryptOptions.getDocument("schemaMap");
             for (Map.Entry<String, BsonValue> entries : autoEncryptMapDocument.entrySet()) {
-                final BsonDocument autoEncryptOptionsDocument = entries.getValue().asDocument();
+                BsonDocument autoEncryptOptionsDocument = entries.getValue().asDocument();
                 namespaceToSchemaMap.put(entries.getKey(), autoEncryptOptionsDocument);
             }
         }
@@ -202,7 +202,7 @@ public abstract class AbstractClientSideEncryptionTest {
         if (cryptOptions.containsKey("extraOptions")) {
             BsonDocument extraOptionsDocument = cryptOptions.getDocument("extraOptions");
             if (extraOptionsDocument.containsKey("mongocryptdSpawnArgs")) {
-                List<String> mongocryptdSpawnArgsValue = new ArrayList<String>();
+                List<String> mongocryptdSpawnArgsValue = new ArrayList<>();
                 for (BsonValue cur: extraOptionsDocument.getArray("mongocryptdSpawnArgs")) {
                     mongocryptdSpawnArgsValue.add(cur.asString().getValue());
                 }
@@ -349,7 +349,7 @@ public abstract class AbstractClientSideEncryptionTest {
     /**
      * If the operation returns a raw command response, eg from runCommand, then compare only the fields present in the expected result
      * document.
-     *
+     * <p>
      * Otherwise, compare the method's return value to result using the same logic as the CRUD Spec Tests runner.
      */
     private void assertBsonValue(final String message, final BsonValue expectedResult, final BsonValue actualResult) {
@@ -373,7 +373,7 @@ public abstract class AbstractClientSideEncryptionTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption/legacy")) {
             BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : specDocument.getArray("tests")) {

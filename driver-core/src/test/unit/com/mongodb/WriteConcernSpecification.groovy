@@ -31,9 +31,9 @@ class WriteConcernSpecification extends Specification {
     @Unroll
     def 'constructors should set up write concern #wc correctly'() {
         expect:
-        wc.getWObject() == w;
-        wc.getWTimeout(MILLISECONDS) == wTimeout;
-        wc.getJournal() == journal;
+        wc.getWObject() == w
+        wc.getWTimeout(MILLISECONDS) == wTimeout
+        wc.getJournal() == journal
 
         where:
         wc                                                | w          | wTimeout | journal
@@ -128,8 +128,8 @@ class WriteConcernSpecification extends Specification {
 
     def 'test withW methods'() {
         expect:
-        WriteConcern.UNACKNOWLEDGED.withW(1) == new WriteConcern(1, null, null);
-        WriteConcern.UNACKNOWLEDGED.withW('dc1') == new WriteConcern('dc1', null, null);
+        WriteConcern.UNACKNOWLEDGED.withW(1) == new WriteConcern(1, null, null)
+        WriteConcern.UNACKNOWLEDGED.withW('dc1') == new WriteConcern('dc1', null, null)
 
         when:
         WriteConcern.UNACKNOWLEDGED.withW(null)
@@ -152,7 +152,7 @@ class WriteConcernSpecification extends Specification {
 
     def 'test withJournal methods'() {
         expect:
-        new WriteConcern(null, null, null).withJournal(true) == new WriteConcern(null, null, true);
+        new WriteConcern(null, null, null).withJournal(true) == new WriteConcern(null, null, true)
     }
 
     def 'test withWTimeout methods'() {
@@ -183,7 +183,7 @@ class WriteConcernSpecification extends Specification {
     @SuppressWarnings('DuplicateMapLiteral')
     def '#wc should return write concern document #commandDocument'() {
         expect:
-        wc.asDocument() == commandDocument;
+        wc.asDocument() == commandDocument
 
         where:
         wc                                | commandDocument

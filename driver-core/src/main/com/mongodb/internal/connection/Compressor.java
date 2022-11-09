@@ -37,9 +37,7 @@ abstract class Compressor {
 
     void compress(final List<ByteBuf> source, final BsonOutput target) {
         BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream(1024);
-        OutputStream outputStream = null;
-        try {
-            outputStream = getOutputStream(baos);
+        try (OutputStream outputStream = getOutputStream(baos)) {
             byte[] scratch = new byte[BUFFER_SIZE];
             for (ByteBuf cur : source) {
                 while (cur.hasRemaining()) {
@@ -51,23 +49,14 @@ abstract class Compressor {
 
         } catch (IOException e) {
             throw new MongoInternalException("Unexpected IOException", e);
-        } finally {
-            try {
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-            } catch (IOException e) {
-                // ignore
-            }
         }
+        // ignore
         target.writeBytes(baos.getInternalBytes(), 0, baos.size());
     }
 
     void uncompress(final ByteBuf source, final ByteBuf target) {
-        InputStream inputStream = null;
 
-        try {
-            inputStream = getInputStream(new ByteBufInputStream(source));
+        try (InputStream inputStream = getInputStream(new ByteBufInputStream(source))) {
             byte[] scratch = new byte[BUFFER_SIZE];
             int numBytes = inputStream.read(scratch);
             while (numBytes != -1) {
@@ -76,15 +65,8 @@ abstract class Compressor {
             }
         } catch (IOException e) {
             throw new MongoInternalException("Unexpected IOException", e);
-        } finally {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (IOException e) {
-                // ignore
-            }
         }
+        // ignore
     }
 
     // override this if not overriding the compress method

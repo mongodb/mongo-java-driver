@@ -28,13 +28,13 @@ class DocumentSpecification extends Specification {
 
     def 'should return correct type for each typed method'() {
         given:
-        Date date = new Date();
-        ObjectId objectId = new ObjectId();
+        Date date = new Date()
+        ObjectId objectId = new ObjectId()
 
         when:
         Document doc = new Document()
                 .append('int', 1).append('long', 2L).append('double', 3.0 as double).append('string', 'hi').append('boolean', true)
-                .append('objectId', objectId).append('date', date);
+                .append('objectId', objectId).append('date', date)
 
         then:
         doc.getInteger('int') == 1
@@ -143,8 +143,8 @@ class DocumentSpecification extends Specification {
 
     def 'should return embedded value'() {
         given:
-        Date date = new Date();
-        ObjectId objectId = new ObjectId();
+        Date date = new Date()
+        ObjectId objectId = new ObjectId()
 
         when:
         Document document = Document.parse("{a: 1, b: {x: [2, 3, 4], y: {m: 'one', len: 3}}, 'a.b': 'two'}")
@@ -224,40 +224,40 @@ class DocumentSpecification extends Specification {
 
     def 'should parse a valid JSON string to a Document'() {
         when:
-        Document document = Document.parse("{ 'int' : 1, 'string' : 'abc' }");
+        Document document = Document.parse("{ 'int' : 1, 'string' : 'abc' }")
 
         then:
-        document != null;
-        document.keySet().size() == 2;
-        document.getInteger('int') == 1;
-        document.getString('string') == 'abc';
+        document != null
+        document.keySet().size() == 2
+        document.getInteger('int') == 1
+        document.getString('string') == 'abc'
 
         when:
-        document = Document.parse("{ 'int' : 1, 'string' : 'abc' }", new DocumentCodec());
+        document = Document.parse("{ 'int' : 1, 'string' : 'abc' }", new DocumentCodec())
 
         then:
-        document != null;
-        document.keySet().size() == 2;
-        document.getInteger('int') == 1;
-        document.getString('string') == 'abc';
+        document != null
+        document.keySet().size() == 2
+        document.getInteger('int') == 1
+        document.getString('string') == 'abc'
     }
 
     def 'test parse method with mode'() {
         when:
-        Document document = Document.parse("{'regex' : /abc/im }");
+        Document document = Document.parse("{'regex' : /abc/im }")
 
         then:
-        document != null;
-        document.keySet().size() == 1;
+        document != null
+        document.keySet().size() == 1
 
-        BsonRegularExpression regularExpression = (BsonRegularExpression) document.get('regex');
+        BsonRegularExpression regularExpression = (BsonRegularExpression) document.get('regex')
         regularExpression.options == 'im'
         regularExpression.pattern == 'abc'
     }
 
     def 'should throw an exception when parsing an invalid JSON String'() {
         when:
-        Document.parse("{ 'int' : 1, 'string' : }");
+        Document.parse("{ 'int' : 1, 'string' : }")
 
         then:
         thrown(JsonParseException)

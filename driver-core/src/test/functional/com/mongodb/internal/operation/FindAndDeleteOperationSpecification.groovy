@@ -102,7 +102,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         Document returnedDocument = execute(operation, async)
 
         then:
-        getCollectionHelper().find().size() == 1;
+        getCollectionHelper().find().size() == 1
         getCollectionHelper().find().first().getString('name') == 'Sam'
         returnedDocument.getString('name') == 'Pete'
 
@@ -123,7 +123,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         Worker returnedDocument = execute(operation, async)
 
         then:
-        getWorkerCollectionHelper().find().size() == 1;
+        getWorkerCollectionHelper().find().size() == 1
         getWorkerCollectionHelper().find().first() == sam
         returnedDocument == pete
 

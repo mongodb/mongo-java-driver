@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public abstract class ClientSessionContext implements SessionContext {
 
-    private ClientSession clientSession;
+    private final ClientSession clientSession;
 
     public ClientSessionContext(final ClientSession clientSession) {
         this.clientSession = notNull("clientSession", clientSession);

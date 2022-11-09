@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -51,7 +52,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     private static final int SMALLEST_MAX_STALENESS_MS = 90000;
     private static final int IDLE_WRITE_PERIOD_MS = 10000;
 
-    private final List<TagSet> tagSetList = new ArrayList<TagSet>();
+    private final List<TagSet> tagSetList = new ArrayList<>();
     private final Long maxStalenessMS;
     private final ReadPreferenceHedgeOptions hedgeOptions;
 
@@ -142,7 +143,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         if (maxStalenessMS == null) {
             return null;
         }
-        return timeUnit.convert(maxStalenessMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxStalenessMS, MILLISECONDS);
     }
 
     /**
@@ -178,13 +179,13 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         TaggableReadPreference that = (TaggableReadPreference) o;
 
-        if (maxStalenessMS != null ? !maxStalenessMS.equals(that.maxStalenessMS) : that.maxStalenessMS != null) {
+        if (!Objects.equals(maxStalenessMS, that.maxStalenessMS)) {
             return false;
         }
         if (!tagSetList.equals(that.tagSetList)) {
             return false;
         }
-        if (hedgeOptions != null ? !hedgeOptions.equals(that.hedgeOptions) : that.hedgeOptions != null) {
+        if (!Objects.equals(hedgeOptions, that.hedgeOptions)) {
             return false;
         }
 
@@ -245,7 +246,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                         maxStaleness, heartbeatFrequencyMS, IDLE_WRITE_PERIOD_MS));
             }
         }
-        List<ServerDescription> freshServers = new ArrayList<ServerDescription>(servers.size());
+        List<ServerDescription> freshServers = new ArrayList<>(servers.size());
 
         ServerDescription primary = findPrimary(clusterDescription);
 

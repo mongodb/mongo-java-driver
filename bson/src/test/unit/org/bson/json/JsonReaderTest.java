@@ -313,7 +313,7 @@ public class JsonReaderTest {
 
     @Test
     public void testHexData() {
-        final byte[] expectedBytes = new byte[]{0x01, 0x23};
+        byte[] expectedBytes = {0x01, 0x23};
         String json = "HexData(0, \"0123\")";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.BINARY, bsonReader.readBsonType());
@@ -326,7 +326,7 @@ public class JsonReaderTest {
 
     @Test
     public void testHexDataWithNew() {
-        final byte[] expectedBytes = new byte[]{0x01, 0x23};
+        byte[] expectedBytes = {0x01, 0x23};
         String json = "new HexData(0, \"0123\")";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.BINARY, bsonReader.readBsonType());
@@ -874,7 +874,7 @@ public class JsonReaderTest {
 
     @Test(expected = IllegalStateException.class)
     public void testClosedState() {
-        final AbstractBsonReader bsonReader = new JsonReader("");
+        AbstractBsonReader bsonReader = new JsonReader("");
         bsonReader.close();
         bsonReader.readBinaryData();
     }
@@ -1146,7 +1146,7 @@ public class JsonReaderTest {
 
     @Test
     public void testEmptyDateTimeConstructorWithNew() {
-        final long currentTime = new Date().getTime();
+        long currentTime = new Date().getTime();
         String json = "new Date()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
@@ -1158,7 +1158,7 @@ public class JsonReaderTest {
 
     @Test
     public void testDateTimeWithOutNew() {
-        final long currentTime = currentTimeWithoutMillis();
+        long currentTime = currentTimeWithoutMillis();
         String json = "Date()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.STRING, bsonReader.readBsonType());
@@ -1170,7 +1170,7 @@ public class JsonReaderTest {
 
     @Test
     public void testDateTimeWithOutNewContainingJunk() {
-        final long currentTime = currentTimeWithoutMillis();
+        long currentTime = currentTimeWithoutMillis();
         String json = "Date({ok: 1}, 1234)";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.STRING, bsonReader.readBsonType());
@@ -1182,7 +1182,7 @@ public class JsonReaderTest {
 
     @Test
     public void testEmptyISODateTimeConstructorWithNew() {
-        final long currentTime = new Date().getTime();
+        long currentTime = new Date().getTime();
         String json = "new ISODate()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
@@ -1194,7 +1194,7 @@ public class JsonReaderTest {
 
     @Test
     public void testEmptyISODateTimeConstructor() {
-        final long currentTime = new Date().getTime();
+        long currentTime = new Date().getTime();
         String json = "ISODate()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());

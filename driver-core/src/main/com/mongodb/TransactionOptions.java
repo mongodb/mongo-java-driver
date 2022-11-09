@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -133,16 +134,16 @@ public final class TransactionOptions {
 
         TransactionOptions that = (TransactionOptions) o;
 
-        if (maxCommitTimeMS != null ? !maxCommitTimeMS.equals(that.maxCommitTimeMS) : that.maxCommitTimeMS != null) {
+        if (!Objects.equals(maxCommitTimeMS, that.maxCommitTimeMS)) {
             return false;
         }
-        if (readConcern != null ? !readConcern.equals(that.readConcern) : that.readConcern != null) {
+        if (!Objects.equals(readConcern, that.readConcern)) {
             return false;
         }
-        if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
+        if (!Objects.equals(writeConcern, that.writeConcern)) {
             return false;
         }
-        if (readPreference != null ? !readPreference.equals(that.readPreference) : that.readPreference != null) {
+        if (!Objects.equals(readPreference, that.readPreference)) {
             return false;
         }
 

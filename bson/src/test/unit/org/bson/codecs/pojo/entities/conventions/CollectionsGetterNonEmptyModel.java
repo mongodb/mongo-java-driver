@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo.entities.conventions;
 
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Arrays.asList;
 
@@ -47,7 +48,7 @@ public class CollectionsGetterNonEmptyModel {
 
         CollectionsGetterNonEmptyModel that = (CollectionsGetterNonEmptyModel) o;
 
-        return listField != null ? listField.equals(that.listField) : that.listField == null;
+        return Objects.equals(listField, that.listField);
     }
 
     @Override

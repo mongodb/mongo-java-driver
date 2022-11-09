@@ -67,7 +67,7 @@ public final class CommandMonitoringTestHelper {
 
     public static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments, final String databaseName,
                                                        final BsonDocument operation) {
-        List<CommandEvent> expectedEvents = new ArrayList<CommandEvent>(expectedEventDocuments.size());
+        List<CommandEvent> expectedEvents = new ArrayList<>(expectedEventDocuments.size());
         for (BsonValue expectedEventDocument : expectedEventDocuments) {
             BsonDocument curExpectedEventDocument = expectedEventDocument.asDocument();
             String eventType = curExpectedEventDocument.keySet().iterator().next();
@@ -248,9 +248,7 @@ public final class CommandMonitoringTestHelper {
     private static void massageCommandIndexes(final BsonArray indexes) {
         for (BsonValue indexDocument : indexes) {
             BsonDocument index = indexDocument.asDocument();
-            if (index.containsKey("ns")) {
-                index.remove("ns");
-            }
+            index.remove("ns");
         }
     }
 
@@ -326,18 +324,12 @@ public final class CommandMonitoringTestHelper {
                 command.remove("readConcern");
             }
         }
-        if (command.containsKey("recoveryToken")) {
-            command.remove("recoveryToken");
-        }
-        if (command.containsKey("query")) {
-            command.remove("query");
-        }
+        command.remove("recoveryToken");
+        command.remove("query");
         if (command.containsKey("filter") && command.getDocument("filter").isEmpty()) {
             command.remove("filter");
         }
-        if (command.containsKey("mapReduce")) {
-            command.remove("mapReduce");
-        }
+        command.remove("mapReduce");
 
         replaceTypeAssertionWithActual(command, actualEvent.getCommand());
 

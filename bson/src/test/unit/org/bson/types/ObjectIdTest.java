@@ -37,7 +37,7 @@ import static org.junit.Assert.fail;
 public class ObjectIdTest {
     @Test
     public void testToBytes() {
-        byte[] expectedBytes = new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
+        byte[] expectedBytes = {81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
         ObjectId objectId = new ObjectId(expectedBytes);
 
         assertArrayEquals(expectedBytes, objectId.toByteArray());
@@ -71,7 +71,7 @@ public class ObjectIdTest {
             assertEquals("state should be: bytes has length of 12", e.getMessage());
         }
 
-        byte[] bytes = new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
+        byte[] bytes = {81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
 
         ObjectId objectId1 = new ObjectId(bytes);
         assertEquals(0x5106FC9A, objectId1.getTimestamp());
@@ -99,7 +99,7 @@ public class ObjectIdTest {
     @Test
     public void testGetSmallestWithDate() {
         Date date = new Date(1588467737760L);
-        byte[] expectedBytes = new byte[]{94, -82, 24, 25, 0, 0, 0, 0, 0, 0, 0, 0};
+        byte[] expectedBytes = {94, -82, 24, 25, 0, 0, 0, 0, 0, 0, 0, 0};
         ObjectId objectId = ObjectId.getSmallestWithDate(date);
         assertArrayEquals(expectedBytes, objectId.toByteArray());
         assertEquals(date.getTime() / 1000 * 1000, objectId.getDate().getTime());
@@ -200,7 +200,7 @@ public class ObjectIdTest {
         oos.writeObject(objectId);
 
         // then
-        assertTrue(new String(baos.toByteArray()).contains("org.bson.types.ObjectId$SerializationProxy"));
+        assertTrue(baos.toString().contains("org.bson.types.ObjectId$SerializationProxy"));
         assertArrayEquals(new byte[] {-84, -19, 0, 5, 115, 114, 0, 42, 111, 114, 103, 46, 98, 115, 111, 110, 46, 116, 121, 112, 101, 115,
                         46, 79, 98, 106, 101, 99, 116, 73, 100, 36, 83, 101, 114, 105, 97, 108, 105, 122, 97, 116, 105, 111, 110, 80, 114,
                         111, 120, 121, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1, 91, 0, 5, 98, 121, 116, 101, 115, 116, 0, 2, 91, 66, 120, 112, 117,

@@ -27,7 +27,7 @@ import com.mongodb.connection.ClusterDescription;
  */
 public class MongoIncompatibleDriverException extends MongoException {
     private static final long serialVersionUID = -5213381354402601890L;
-    private ClusterDescription clusterDescription;
+    private final ClusterDescription clusterDescription;
 
     /**
      * Construct a new instance.

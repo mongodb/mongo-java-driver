@@ -60,7 +60,7 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
      * @param requestContext the request context
      */
     public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-            final @Nullable ServerApi serverApi, final RequestContext requestContext) {
+                          @Nullable final ServerApi serverApi, final RequestContext requestContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);

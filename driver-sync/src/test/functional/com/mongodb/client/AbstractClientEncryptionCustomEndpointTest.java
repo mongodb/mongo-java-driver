@@ -163,7 +163,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
 
         data.add(new Object[]{"1. [aws] valid endpoint",
                 "aws",

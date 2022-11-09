@@ -66,7 +66,7 @@ abstract class CodecTestCase {
     }
 
     <T> void roundTrip(final T value) {
-        roundTrip(value, new DefaultComparator<T>(value));
+        roundTrip(value, new DefaultComparator<>(value));
     }
 
     <T> void roundTrip(final T value, final Comparator<T> comparator) {
@@ -82,12 +82,7 @@ abstract class CodecTestCase {
     }
 
     public void roundTrip(final Document input, final Document expected) {
-        roundTrip(input, new Comparator<Document>() {
-            @Override
-            public void apply(final Document result) {
-                assertEquals("Codec Round Trip", expected, result);
-            }
-        });
+        roundTrip(input, result -> assertEquals("Codec Round Trip", expected, result));
     }
 
     <T> OutputBuffer encode(final Codec<T> codec, final T value) {
@@ -103,7 +98,7 @@ abstract class CodecTestCase {
     }
 
     DocumentCodecProvider getSpecificNumberDocumentCodecProvider(final Class<? extends Number> clazz) {
-        HashMap<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
+        HashMap<BsonType, Class<?>> replacements = new HashMap<>();
         replacements.put(BsonType.DOUBLE, clazz);
         replacements.put(BsonType.INT32, clazz);
         replacements.put(BsonType.INT64, clazz);

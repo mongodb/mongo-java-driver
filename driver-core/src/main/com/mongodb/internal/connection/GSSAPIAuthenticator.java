@@ -52,7 +52,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final Boolean CANONICALIZE_HOST_NAME_DEFAULT_VALUE = false;
 
     GSSAPIAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                        @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
 
         if (getMongoCredential().getAuthenticationMechanism() != GSSAPI) {
@@ -71,7 +71,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
         try {
             Map<String, Object> saslClientProperties = credential.getMechanismProperty(JAVA_SASL_CLIENT_PROPERTIES_KEY, null);
             if (saslClientProperties == null) {
-                saslClientProperties = new HashMap<String, Object>();
+                saslClientProperties = new HashMap<>();
                 saslClientProperties.put(Sasl.MAX_BUFFER, "0");
                 saslClientProperties.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
             }

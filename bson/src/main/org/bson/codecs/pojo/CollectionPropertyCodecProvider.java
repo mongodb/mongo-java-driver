@@ -86,9 +86,9 @@ final class CollectionPropertyCodecProvider implements PropertyCodecProvider {
         private Collection<T> getInstance() {
             if (encoderClass.isInterface()) {
                 if (encoderClass.isAssignableFrom(ArrayList.class)) {
-                    return new ArrayList<T>();
+                    return new ArrayList<>();
                 } else if (encoderClass.isAssignableFrom(HashSet.class)) {
-                    return new HashSet<T>();
+                    return new HashSet<>();
                 } else {
                     throw new CodecConfigurationException(format("Unsupported Collection interface of %s!", encoderClass.getName()));
                 }

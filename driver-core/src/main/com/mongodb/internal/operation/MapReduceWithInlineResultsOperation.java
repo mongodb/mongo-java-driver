@@ -20,14 +20,9 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
@@ -179,13 +174,13 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
 
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 
 
     public MapReduceWithInlineResultsOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -213,39 +208,23 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                                                      asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
-                                                              explainVerbosity), new BsonDocumentCodec());
+        return new CommandReadOperation<>(namespace.getDatabaseName(),
+                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                        explainVerbosity), new BsonDocumentCodec());
     }
 
     private CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>> transformer() {
-        return new CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>>() {
-            @Override
-            public MapReduceBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return new MapReduceInlineResultsCursor<T>(createQueryResult(result, connection.getDescription()), decoder, source,
-                                                           MapReduceHelper.createStatistics(result));
-            }
-        };
+        return (result, source, connection) -> new MapReduceInlineResultsCursor<>(createQueryResult(result, connection.getDescription()), decoder, source,
+                MapReduceHelper.createStatistics(result));
     }
 
     private CommandReadTransformerAsync<BsonDocument, MapReduceAsyncBatchCursor<T>> asyncTransformer() {
-        return new CommandReadTransformerAsync<BsonDocument, MapReduceAsyncBatchCursor<T>>() {
-            @Override
-            public MapReduceAsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
-                                                      final AsyncConnection connection) {
-                return new MapReduceInlineResultsAsyncCursor<T>(createQueryResult(result, connection.getDescription()),
-                                                                MapReduceHelper.createStatistics(result));
-            }
-        };
+        return (result, source, connection) -> new MapReduceInlineResultsAsyncCursor<>(createQueryResult(result, connection.getDescription()),
+                MapReduceHelper.createStatistics(result));
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
-            }
-        };
+        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
     }
 
     private BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
@@ -270,7 +249,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result, "results"), 0,
-                                  description.getServerAddress());
+        return new QueryResult<>(namespace, BsonDocumentWrapperHelper.toList(result, "results"), 0,
+                description.getServerAddress());
     }
 }

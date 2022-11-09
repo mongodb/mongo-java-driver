@@ -25,8 +25,6 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerListener;
@@ -34,6 +32,8 @@ import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -113,20 +113,17 @@ class DefaultServer implements ClusterableServer {
         }
         SdamIssue.Context exceptionContext = sdam.context();
         operationBegin();
-        connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {
-            @Override
-            public void onResult(final InternalConnection result, final Throwable t) {
-                if (t != null) {
-                    try {
-                        operationEnd();
-                        sdam.handleExceptionBeforeHandshake(SdamIssue.specific(t, exceptionContext));
-                    } finally {
-                        callback.onResult(null, t);
-                    }
-                } else {
-                    callback.onResult(AsyncOperationCountTrackingConnection.decorate(DefaultServer.this,
-                            connectionFactory.createAsync(result, new DefaultServerProtocolExecutor(), clusterConnectionMode)), null);
+        connectionPool.getAsync((result, t) -> {
+            if (t != null) {
+                try {
+                    operationEnd();
+                    sdam.handleExceptionBeforeHandshake(SdamIssue.specific(t, exceptionContext));
+                } finally {
+                    callback.onResult(null, t);
                 }
+            } else {
+                callback.onResult(AsyncOperationCountTrackingConnection.decorate(DefaultServer.this,
+                        connectionFactory.createAsync(result, new DefaultServerProtocolExecutor(), clusterConnectionMode)), null);
             }
         });
     }
@@ -222,25 +219,22 @@ class DefaultServer implements ClusterableServer {
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
             protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
-                @Override
-                public void onResult(final T result, final Throwable t) {
-                    if (t != null) {
-                        try {
-                            sdam.handleExceptionAfterHandshake(SdamIssue.specific(t, sdam.context(connection)));
-                        } finally {
-                            if (t instanceof MongoWriteConcernWithResponseException) {
-                                callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
-                            } else {
-                                if (t instanceof MongoSocketException && sessionContext.hasSession()) {
-                                    sessionContext.markSessionDirty();
-                                }
-                                callback.onResult(null, t);
+            protocol.executeAsync(connection, errorHandlingCallback((result, t) -> {
+                if (t != null) {
+                    try {
+                        sdam.handleExceptionAfterHandshake(SdamIssue.specific(t, sdam.context(connection)));
+                    } finally {
+                        if (t instanceof MongoWriteConcernWithResponseException) {
+                            callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
+                        } else {
+                            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                                sessionContext.markSessionDirty();
                             }
+                            callback.onResult(null, t);
                         }
-                    } else {
-                        callback.onResult(result, null);
                     }
+                } else {
+                    callback.onResult(result, null);
                 }
             }, LOGGER));
         }

@@ -41,13 +41,13 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * An implementation of a listener for all cluster-related events.  Its purpose is the following:
- *
+ * <p>
  * 1. To ensure that cluster-related events are delivered one at a time, with happens-before semantics
  * 2. To ensure that application-provided event listener methods do not execute within critical sections of the driver
- *
+ * <p>
  * This is done by adding all events to an unbounded blocking queue, and then publishing them from a dedicated thread by taking
  * them off the queue one at a time.
- *
+ * <p>
  * There is an assumption that the last event that should be published is the {@link ClusterClosedEvent}.  Once that event is published,
  * the publishing thread is allowed to die.
  */

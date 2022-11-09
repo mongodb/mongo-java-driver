@@ -31,11 +31,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class StringCodecTest {
 
-    private DecoderContext decoderContext = DecoderContext.builder().build();
-    private EncoderContext encoderContext = EncoderContext.builder().build();
-    private Codec<String> parent =  new StringCodec();
+    private final DecoderContext decoderContext = DecoderContext.builder().build();
+    private final EncoderContext encoderContext = EncoderContext.builder().build();
+    private final Codec<String> parent =  new StringCodec();
     @SuppressWarnings("unchecked")
-    private Codec<String> child = ((RepresentationConfigurable<String>) parent).withRepresentation(BsonType.OBJECT_ID);
+    private final Codec<String> child = ((RepresentationConfigurable<String>) parent).withRepresentation(BsonType.OBJECT_ID);
 
     @Test
     public void testSettingRepresentation() {

@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public final class NestedFieldReusingClassTypeParameter {
     public PropertyReusingClassTypeParameter<String> nested;
 
@@ -37,7 +39,7 @@ public final class NestedFieldReusingClassTypeParameter {
 
         NestedFieldReusingClassTypeParameter that = (NestedFieldReusingClassTypeParameter) o;
 
-        if (nested != null ? !nested.equals(that.nested) : that.nested != null) {
+        if (!Objects.equals(nested, that.nested)) {
             return false;
         }
 

@@ -41,9 +41,9 @@ class GSSAPIAuthenticatorSpecification extends Specification {
 
     def 'should use subject provider mechanism property'() {
         given:
-        def loginContext = new LoginContext(getLoginContextName());
-        loginContext.login();
-        def subject = loginContext.getSubject();
+        def loginContext = new LoginContext(getLoginContextName())
+        loginContext.login()
+        def subject = loginContext.getSubject()
         def subjectProvider = Mock(SubjectProvider)
         def credential = ClusterFixture.getCredential().withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, subjectProvider)
         def credentialWithCache = new MongoCredentialWithCache(credential)

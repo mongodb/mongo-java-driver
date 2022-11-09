@@ -17,18 +17,18 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.MongoConnectionPoolClearedException
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.event.ConnectionCheckOutFailedEvent
-import com.mongodb.internal.async.SingleResultCallback
-import com.mongodb.internal.inject.SameObjectProvider
-import util.spock.annotations.Slow
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
+import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
+import com.mongodb.event.ConnectionCheckOutFailedEvent
 import com.mongodb.event.ConnectionPoolListener
+import com.mongodb.internal.async.SingleResultCallback
+import com.mongodb.internal.inject.SameObjectProvider
 import spock.lang.Specification
 import spock.lang.Subject
+import util.spock.annotations.Slow
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
@@ -315,7 +315,7 @@ class DefaultConnectionPoolSpecification extends Specification {
             pool.get()
         } catch (UncheckedIOException e) {
             if ('expected failure' != e.getMessage()) {
-                throw e;
+                throw e
             }
         }
 
@@ -342,7 +342,7 @@ class DefaultConnectionPoolSpecification extends Specification {
             selectConnectionAsyncAndGet(pool)
         } catch (UncheckedIOException e) {
             if ('expected failure' != e.getMessage()) {
-                throw e;
+                throw e
             }
         }
 

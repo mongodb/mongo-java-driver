@@ -33,7 +33,7 @@ public class BasicDBObjectBuilder {
      * Creates a builder intialized with an empty document.
      */
     public BasicDBObjectBuilder() {
-        _stack = new LinkedList<DBObject>();
+        _stack = new LinkedList<>();
         _stack.add(new BasicDBObject());
     }
 

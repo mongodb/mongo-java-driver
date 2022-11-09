@@ -113,7 +113,7 @@ class DBCursorSpecification extends Specification {
 
     def 'find should create the correct FindOperation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -131,7 +131,7 @@ class DBCursorSpecification extends Specification {
 
     def 'one should create the correct FindOperation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -149,7 +149,7 @@ class DBCursorSpecification extends Specification {
 
     def 'DBCursor methods should be used to create the expected operation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def collation = Collation.builder().locale('en').build()
         def cursorType = CursorType.NonTailable
@@ -199,7 +199,7 @@ class DBCursorSpecification extends Specification {
 
     def 'DBCollectionFindOptions should be used to create the expected operation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def collation = Collation.builder().locale('en').build()
         def cursorType = CursorType.NonTailable
@@ -273,7 +273,7 @@ class DBCursorSpecification extends Specification {
     }
 
     def 'count should create the correct CountOperation'() {
-        def executor = new TestOperationExecutor([42L]);
+        def executor = new TestOperationExecutor([42L])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -289,7 +289,7 @@ class DBCursorSpecification extends Specification {
     }
 
     def 'size should create the correct CountOperation'() {
-        def executor = new TestOperationExecutor([42L]);
+        def executor = new TestOperationExecutor([42L])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -315,6 +315,6 @@ class DBCursorSpecification extends Specification {
                 count == 0
             }
             getServerCursor() >> new ServerCursor(12L, new ServerAddress())
-        };
+        }
     }
 }

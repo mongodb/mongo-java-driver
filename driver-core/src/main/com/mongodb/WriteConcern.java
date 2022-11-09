@@ -30,6 +30,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -91,7 +92,7 @@ public class WriteConcern implements Serializable {
      * @since 2.10.0
      * @mongodb.driver.manual core/write-concern/#write-concern-acknowledged Acknowledged
      */
-    public static final WriteConcern ACKNOWLEDGED = new WriteConcern((Object) null, null, null);
+    public static final WriteConcern ACKNOWLEDGED = new WriteConcern(null, null, null);
 
     /**
      * Write operations that use this write concern will wait for acknowledgement from a single member.
@@ -309,13 +310,13 @@ public class WriteConcern implements Serializable {
 
         WriteConcern that = (WriteConcern) o;
 
-        if (w != null ? !w.equals(that.w) : that.w != null) {
+        if (!Objects.equals(w, that.w)) {
             return false;
         }
-        if (wTimeoutMS != null ? !wTimeoutMS.equals(that.wTimeoutMS) : that.wTimeoutMS != null) {
+        if (!Objects.equals(wTimeoutMS, that.wTimeoutMS)) {
             return false;
         }
-        if (journal != null ? !journal.equals(that.journal) : that.journal != null) {
+        if (!Objects.equals(journal, that.journal)) {
             return false;
         }
 
@@ -411,7 +412,7 @@ public class WriteConcern implements Serializable {
     }
 
     static {
-        NAMED_CONCERNS = new HashMap<String, WriteConcern>();
+        NAMED_CONCERNS = new HashMap<>();
         for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
                 String key = f.getName().toLowerCase();

@@ -489,7 +489,7 @@ public final class Accumulators {
     }
 
     private static <TExpression> BsonField accumulatorOperator(final String name, final String fieldName, final TExpression expression) {
-        return new BsonField(fieldName, new SimpleExpression<TExpression>(name, expression));
+        return new BsonField(fieldName, new SimpleExpression<>(name, expression));
     }
 
     private static <InExpression, NExpression> BsonField pickNAccumulator(

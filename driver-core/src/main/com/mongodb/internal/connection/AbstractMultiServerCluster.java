@@ -18,15 +18,14 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.event.ServerDescriptionChangedEvent;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -60,7 +59,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     private Integer maxSetVersion;
 
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
-    new ConcurrentHashMap<ServerAddress, ServerTuple>();
+            new ConcurrentHashMap<>();
 
     private static final class ServerTuple {
         private final ClusterableServer server;
@@ -74,7 +73,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     AbstractMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(clusterId, settings, serverFactory);
-        isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.MULTIPLE);
+        isTrue("connection mode is multiple", settings.getMode() == MULTIPLE);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
     }
@@ -387,7 +386,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {
-        List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
+        List<ServerDescription> serverDescriptions = new ArrayList<>();
         for (final ServerTuple cur : addressToServerTupleMap.values()) {
             serverDescriptions.add(cur.description);
         }
@@ -437,7 +436,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
-        Set<ServerAddress> retVal = new HashSet<ServerAddress>();
+        Set<ServerAddress> retVal = new HashSet<>();
         addHostsToSet(serverDescription.getHosts(), retVal);
         addHostsToSet(serverDescription.getPassives(), retVal);
         addHostsToSet(serverDescription.getArbiters(), retVal);

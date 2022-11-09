@@ -71,7 +71,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
                           final String mapFunction, final String reduceFunction) {
         super(clientSession, executor, readConcern, readPreference, false);
-        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 false, false);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
@@ -200,7 +200,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         if (inline) {
             ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
                     resultClass, filter, limit, maxTimeMS, jsMode, scope, sort, verbose, collation);
-            return new WrappedMapReduceReadOperation<TResult>(operation);
+            return new WrappedMapReduceReadOperation<>(operation);
         } else {
             getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
 

@@ -127,12 +127,12 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 
     public BaseFindAndModifyOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 

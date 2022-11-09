@@ -177,7 +177,7 @@ public class ByteBufferBsonInput implements BsonInput {
     @Override
     public BsonInputMark getMark(final int readLimit) {
         return new BsonInputMark() {
-            private int mark = buffer.position();
+            private final int mark = buffer.position();
             @Override
             public void reset() {
                 ensureOpen();

@@ -83,8 +83,8 @@ public abstract class AsynchronousChannelStream implements Stream {
 
     @Override
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
-        final AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
-        final Iterator<ByteBuf> iter = buffers.iterator();
+        AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
+        Iterator<ByteBuf> iter = buffers.iterator();
         pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(final Void t) {
@@ -120,21 +120,21 @@ public abstract class AsynchronousChannelStream implements Stream {
 
     @Override
     public void open() throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
         openAsync(handler);
         handler.getOpen();
     }
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
         writeAsync(buffers, handler);
         handler.getWrite();
     }
 
     @Override
     public ByteBuf read(final int numBytes) throws IOException {
-        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<ByteBuf>();
+        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, handler);
         return handler.getRead();
     }
@@ -146,7 +146,7 @@ public abstract class AsynchronousChannelStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
-        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<ByteBuf>();
+        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, additionalTimeout, handler);
         return handler.getRead();
     }
@@ -235,7 +235,7 @@ public abstract class AsynchronousChannelStream implements Stream {
 
         private BasicCompletionHandler(final ByteBuf dst, final AsyncCompletionHandler<ByteBuf> handler) {
             super(handler);
-            this.byteBufReference = new AtomicReference<ByteBuf>(dst);
+            this.byteBufReference = new AtomicReference<>(dst);
         }
 
         @Override
@@ -275,7 +275,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         private final AtomicReference<AsyncCompletionHandler<T>> handlerReference;
 
         BaseCompletionHandler(final AsyncCompletionHandler<T> handler) {
-            this.handlerReference = new AtomicReference<AsyncCompletionHandler<T>>(handler);
+            this.handlerReference = new AtomicReference<>(handler);
         }
 
         AsyncCompletionHandler<T> getHandlerAndClear() {

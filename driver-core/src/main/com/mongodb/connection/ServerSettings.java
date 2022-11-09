@@ -68,8 +68,8 @@ public class ServerSettings {
     public static final class Builder {
         private long heartbeatFrequencyMS = 10000;
         private long minHeartbeatFrequencyMS = 500;
-        private List<ServerListener> serverListeners = new ArrayList<ServerListener>();
-        private List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
+        private List<ServerListener> serverListeners = new ArrayList<>();
+        private List<ServerMonitorListener> serverMonitorListeners = new ArrayList<>();
 
         private Builder() {
         }
@@ -87,8 +87,8 @@ public class ServerSettings {
             notNull("serverSettings", serverSettings);
             heartbeatFrequencyMS = serverSettings.heartbeatFrequencyMS;
             minHeartbeatFrequencyMS = serverSettings.minHeartbeatFrequencyMS;
-            serverListeners = new ArrayList<ServerListener>(serverSettings.serverListeners);
-            serverMonitorListeners = new ArrayList<ServerMonitorListener>(serverSettings.serverMonitorListeners);
+            serverListeners = new ArrayList<>(serverSettings.serverListeners);
+            serverMonitorListeners = new ArrayList<>(serverSettings.serverMonitorListeners);
             return this;
         }
 

@@ -21,8 +21,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAccessor;
-import java.time.temporal.TemporalQuery;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -35,12 +33,7 @@ final class DateTimeFormatter {
         if (dateTimeString.length() == DATE_STRING_LENGTH) {
             return LocalDate.parse(dateTimeString, ISO_LOCAL_DATE).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
         } else {
-            return ISO_OFFSET_DATE_TIME.parse(dateTimeString, new TemporalQuery<Instant>() {
-                @Override
-                public Instant queryFrom(final TemporalAccessor temporal) {
-                    return Instant.from(temporal);
-                }
-            }).toEpochMilli();
+            return ISO_OFFSET_DATE_TIME.parse(dateTimeString, temporal -> Instant.from(temporal)).toEpochMilli();
         }
     }
 

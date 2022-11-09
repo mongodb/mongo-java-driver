@@ -398,7 +398,7 @@ public final class Windows {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final SimpleWindow<?, ?> that = (SimpleWindow<?, ?>) o;
+            SimpleWindow<?, ?> that = (SimpleWindow<?, ?>) o;
             return type.equals(that.type) && lower.equals(that.lower) && upper.equals(that.upper) && unit == that.unit;
         }
 
@@ -438,7 +438,7 @@ public final class Windows {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final BsonWindow that = (BsonWindow) o;
+            BsonWindow that = (BsonWindow) o;
             return wrapped.equals(that.wrapped);
         }
 

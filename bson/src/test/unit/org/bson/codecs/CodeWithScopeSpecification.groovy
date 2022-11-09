@@ -26,40 +26,40 @@ import spock.lang.Subject
 import static CodecTestUtil.prepareReaderWithObjectToBeDecoded
 
 class CodeWithScopeSpecification extends Specification {
-    private final BsonWriter bsonWriter = Mock();
+    private final BsonWriter bsonWriter = Mock()
 
     @Subject
-    private final CodeWithScopeCodec codeWithScopeCodec = new CodeWithScopeCodec(new DocumentCodec());
+    private final CodeWithScopeCodec codeWithScopeCodec = new CodeWithScopeCodec(new DocumentCodec())
 
     def 'should encode code with scope as java script followed by document of scope'() {
         given:
-        String javascriptCode = '<javascript code>';
-        CodeWithScope codeWithScope = new CodeWithScope(javascriptCode, new Document('the', 'scope'));
+        String javascriptCode = '<javascript code>'
+        CodeWithScope codeWithScope = new CodeWithScope(javascriptCode, new Document('the', 'scope'))
 
         when:
-        codeWithScopeCodec.encode(bsonWriter, codeWithScope, EncoderContext.builder().build());
+        codeWithScopeCodec.encode(bsonWriter, codeWithScope, EncoderContext.builder().build())
 
         then:
-        1 * bsonWriter.writeJavaScriptWithScope(javascriptCode);
+        1 * bsonWriter.writeJavaScriptWithScope(javascriptCode)
         then:
-        1 * bsonWriter.writeStartDocument();
+        1 * bsonWriter.writeStartDocument()
         then:
-        1 * bsonWriter.writeName('the');
+        1 * bsonWriter.writeName('the')
         then:
-        1 * bsonWriter.writeString('scope');
+        1 * bsonWriter.writeString('scope')
         then:
-        1 * bsonWriter.writeEndDocument();
+        1 * bsonWriter.writeEndDocument()
     }
 
     def 'should decode code with scope'() {
         given:
-        CodeWithScope codeWithScope = new CodeWithScope('{javascript code}', new Document('the', 'scope'));
-        BsonBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
+        CodeWithScope codeWithScope = new CodeWithScope('{javascript code}', new Document('the', 'scope'))
+        BsonBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope)
 
         when:
-        CodeWithScope actualCodeWithScope = codeWithScopeCodec.decode(reader, DecoderContext.builder().build());
+        CodeWithScope actualCodeWithScope = codeWithScopeCodec.decode(reader, DecoderContext.builder().build())
 
         then:
-        actualCodeWithScope == codeWithScope;
+        actualCodeWithScope == codeWithScope
     }
 }

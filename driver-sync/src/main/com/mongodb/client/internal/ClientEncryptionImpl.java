@@ -40,7 +40,6 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
-import java.io.Closeable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +50,7 @@ import static java.util.Collections.singletonList;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ClientEncryptionImpl implements ClientEncryption, Closeable {
+public class ClientEncryptionImpl implements ClientEncryption {
     private final Crypt crypt;
     private final ClientEncryptionSettings options;
     private final MongoClient keyVaultClient;

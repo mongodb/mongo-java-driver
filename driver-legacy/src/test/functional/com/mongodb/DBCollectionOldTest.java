@@ -30,7 +30,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@SuppressWarnings({"rawtypes"})
 // DBCollection is tested a lot, however little analysis has been done to see if the tests overlap. Some of the tests in this class
 // almost definitely overlap either with DBCollectionTest or DBCollectionSpecification.  If they do not overlap,
 // they should be moved into one of those test files and this test case ultimately removed.
@@ -40,7 +39,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         DBCollection c = collection;
 
         DBObject obj = c.findOne();
-        assertEquals(obj, null);
+        assertNull(obj);
 
         DBObject inserted1 = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
         DBObject inserted2 = BasicDBObjectBuilder.start().add("x", 3).add("y", 3).get();
@@ -275,7 +274,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testMultiInsertNoContinue() {
-        List<DBObject> documents = Arrays.<DBObject>asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
+        List<DBObject> documents = Arrays.asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
                                                            new BasicDBObject("_id", 1).append("x", 3).append("y", 4),
                                                            new BasicDBObject("x", 5).append("y", 6));
         try {
@@ -297,7 +296,7 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testMultiInsertWithContinue() {
-        List<DBObject> documents = Arrays.<DBObject>asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
+        List<DBObject> documents = Arrays.asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
                                                            new BasicDBObject("_id", 1).append("x", 3).append("y", 4),
                                                            new BasicDBObject("x", 5).append("y", 6));
         try {

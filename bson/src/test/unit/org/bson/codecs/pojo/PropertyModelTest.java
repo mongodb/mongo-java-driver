@@ -33,12 +33,12 @@ public final class PropertyModelTest {
 
     private static final String FIELD_NAME = "myFieldName";
     private static final PropertyMetadata<Integer> PROPERTY_METADATA =
-            new PropertyMetadata<Integer>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
+            new PropertyMetadata<>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
 
     @Test
     public void testPropertyMapping() throws NoSuchFieldException {
-        PropertySerialization<Integer> serializer = new PropertyModelSerializationImpl<Integer>();
-        PropertyAccessor<Integer> accessor = new PropertyAccessorImpl<Integer>(PROPERTY_METADATA);
+        PropertySerialization<Integer> serializer = new PropertyModelSerializationImpl<>();
+        PropertyAccessor<Integer> accessor = new PropertyAccessorImpl<>(PROPERTY_METADATA);
         PropertyModel<Integer> propertyModel = createPropertyModelBuilder(PROPERTY_METADATA)
                 .propertySerialization(serializer)
                 .propertyAccessor(accessor)
@@ -75,7 +75,7 @@ public final class PropertyModelTest {
         assertFalse(propertyModel.useDiscriminator());
     }
 
-    private static final List<Annotation> ANNOTATIONS = Collections.<Annotation>singletonList(
+    private static final List<Annotation> ANNOTATIONS = Collections.singletonList(
             new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
@@ -93,12 +93,7 @@ public final class PropertyModelTest {
                 }
             });
 
-    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = new PropertySerialization<Integer>() {
-        @Override
-        public boolean shouldSerialize(final Integer value) {
-            return false;
-        }
-    };
+    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = value -> false;
 
     private static final PropertyAccessor<Integer> FIELD_ACCESSOR = new PropertyAccessor<Integer>() {
         @Override

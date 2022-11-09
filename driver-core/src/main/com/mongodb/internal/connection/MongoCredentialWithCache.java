@@ -52,7 +52,6 @@ public class MongoCredentialWithCache {
         return credential;
     }
 
-    @SuppressWarnings("unchecked")
     public <T> T getFromCache(final Object key, final Class<T> clazz) {
         return clazz.cast(cache.get(key));
     }

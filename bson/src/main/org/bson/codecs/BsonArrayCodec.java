@@ -62,7 +62,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
     public BsonArray decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readStartArray();
 
-        List<BsonValue> list = new ArrayList<BsonValue>();
+        List<BsonValue> list = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader, decoderContext));
         }

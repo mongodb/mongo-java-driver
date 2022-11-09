@@ -45,7 +45,7 @@ class ReadPreferenceSpecification extends Specification {
 
     static final TAG_SET = new TagSet(new Tag('rack', '1'))
     static final TAG_SET_LIST = [TAG_SET]
-    static final HEDGE_OPTIONS = ReadPreferenceHedgeOptions.builder().enabled(true).build();
+    static final HEDGE_OPTIONS = ReadPreferenceHedgeOptions.builder().enabled(true).build()
 
     def 'should have correct max staleness and tag set list'() {
         given:

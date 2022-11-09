@@ -40,6 +40,7 @@ import static com.mongodb.client.model.Filters.bitsAllSet
 import static com.mongodb.client.model.Filters.bitsAnyClear
 import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
+import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Filters.geoIntersects
@@ -53,7 +54,6 @@ import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.client.model.Filters.jsonSchema
 import static com.mongodb.client.model.Filters.lt
 import static com.mongodb.client.model.Filters.lte
-import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.mod
 import static com.mongodb.client.model.Filters.ne
 import static com.mongodb.client.model.Filters.near
@@ -162,7 +162,7 @@ class FiltersSpecification extends Specification {
 
     def 'and should render $and with clashing keys'() {
         expect:
-        toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: 1}, {a: 2}]}');
+        toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: 1}, {a: 2}]}')
     }
 
     def 'and should not flatten nested'() {

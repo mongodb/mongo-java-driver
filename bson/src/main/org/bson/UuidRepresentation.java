@@ -38,21 +38,21 @@ public enum UuidRepresentation {
 
     /**
      * The canonical representation of UUID
-     *
+     * <p>
      * BSON binary subtype 4
      */
     STANDARD,
 
     /**
      * The legacy representation of UUID used by the C# driver
-     *
+     * <p>
      * BSON binary subtype 3
      */
     C_SHARP_LEGACY,
 
     /**
      * The legacy representation of UUID used by the Java driver
-     *
+     * <p>
      * BSON binary subtype 3
      */
     JAVA_LEGACY,
@@ -60,7 +60,7 @@ public enum UuidRepresentation {
     /**
      * The legacy representation of UUID used by the Python driver, which is the same
      * format as STANDARD, but has the UUID old BSON subtype (\x03)
-     *
+     * <p>
      * BSON binary subtype 3
      */
     PYTHON_LEGACY;

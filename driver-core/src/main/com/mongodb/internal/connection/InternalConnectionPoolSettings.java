@@ -17,6 +17,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+
 import java.util.Objects;
 
 /**
@@ -54,7 +55,7 @@ public final class InternalConnectionPoolSettings {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final InternalConnectionPoolSettings that = (InternalConnectionPoolSettings) o;
+        InternalConnectionPoolSettings that = (InternalConnectionPoolSettings) o;
         return prestartAsyncWorkManager == that.prestartAsyncWorkManager;
     }
 

@@ -207,7 +207,7 @@ public class ServerAddress implements Serializable {
     public List<InetSocketAddress> getSocketAddresses() {
         try {
             InetAddress[] inetAddresses = InetAddress.getAllByName(host);
-            List<InetSocketAddress> inetSocketAddressList = new ArrayList<InetSocketAddress>();
+            List<InetSocketAddress> inetSocketAddressList = new ArrayList<>();
             for (InetAddress inetAddress : inetAddresses) {
                 inetSocketAddressList.add(new InetSocketAddress(inetAddress, port));
             }

@@ -16,7 +16,7 @@
 
 package com.mongodb.client.internal;
 
-    import com.mongodb.ClientSessionOptions;
+import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -45,7 +45,6 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
-import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.List;
@@ -143,12 +142,7 @@ final class MongoClientDelegate {
     private ClusterDescription getConnectedClusterDescription() {
         ClusterDescription clusterDescription = cluster.getDescription();
         if (getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()) {
-            cluster.selectServer(new ServerSelector() {
-                @Override
-                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                    return getServerDescriptionListToConsiderForSessionSupport(clusterDescription);
-                }
-            });
+            cluster.selectServer(clusterDescription1 -> getServerDescriptionListToConsiderForSessionSupport(clusterDescription1));
             clusterDescription = cluster.getDescription();
         }
         return clusterDescription;
@@ -252,7 +246,7 @@ final class MongoClientDelegate {
             return context == null ? IgnorableRequestContext.INSTANCE : context;
         }
 
-        private void labelException(final @Nullable ClientSession session, final MongoException e) {
+        private void labelException(@Nullable final ClientSession session, final MongoException e) {
             if (session != null && session.hasActiveTransaction()
                     && (e instanceof MongoSocketException || e instanceof MongoTimeoutException
                     || (e instanceof MongoQueryException && e.getCode() == 91))
@@ -261,7 +255,7 @@ final class MongoClientDelegate {
             }
         }
 
-        private void clearTransactionContextOnTransientTransactionError(final @Nullable ClientSession session, final MongoException e) {
+        private void clearTransactionContextOnTransientTransactionError(@Nullable final ClientSession session, final MongoException e) {
             if (session != null && e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
                 session.clearTransactionContext();
             }
@@ -289,7 +283,7 @@ final class MongoClientDelegate {
                 session = clientSessionFromOperation;
             } else {
                 session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build(), ReadConcern.DEFAULT,
-                        WriteConcern.ACKNOWLEDGED, ReadPreference.primary());
+                        WriteConcern.ACKNOWLEDGED, primary());
             }
             return session;
         }

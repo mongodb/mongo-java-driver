@@ -36,7 +36,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private final BsonBinaryWriterSettings binaryWriterSettings;
 
     private final BsonOutput bsonOutput;
-    private final Stack<Integer> maxDocumentSizeStack = new Stack<Integer>();
+    private final Stack<Integer> maxDocumentSizeStack = new Stack<>();
     private Mark mark;
 
     /**

@@ -53,7 +53,7 @@ class BasicBSONEncoderSpecification extends Specification {
     }
 
     @Subject
-    private final BSONEncoder bsonEncoder = new BasicBSONEncoder();
+    private final BSONEncoder bsonEncoder = new BasicBSONEncoder()
 
     @Unroll
     def 'should encode #aClass'() {
@@ -161,11 +161,11 @@ class BasicBSONEncoderSpecification extends Specification {
 
     def 'should throw IllegalStateException on setting buffer while encoder in use'() {
         given:
-        bsonEncoder.set(new BasicOutputBuffer());
-        bsonEncoder.putObject(new BasicBSONObject());
+        bsonEncoder.set(new BasicOutputBuffer())
+        bsonEncoder.putObject(new BasicBSONObject())
 
         when:
-        bsonEncoder.set(new BasicOutputBuffer());
+        bsonEncoder.set(new BasicOutputBuffer())
 
         then:
         thrown(IllegalStateException)

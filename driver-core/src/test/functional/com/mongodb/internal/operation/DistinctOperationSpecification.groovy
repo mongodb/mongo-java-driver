@@ -69,10 +69,10 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
 
     def getCodec(final Class clazz) {
-        codecRegistry.get(clazz);
+        codecRegistry.get(clazz)
     }
 
-    def stringDecoder = getCodec(String);
+    def stringDecoder = getCodec(String)
 
     def 'should have the correct defaults'() {
         when:
@@ -154,7 +154,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('dateStarted', sam.dateStarted)
                 .append('numberOfJobs', sam.numberOfJobs)
 
-        getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument));
+        getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument))
         DistinctOperation operation = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
 
         when:

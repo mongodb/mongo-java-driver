@@ -18,18 +18,13 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.lang.Nullable;
@@ -172,12 +167,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     private CommandCreator getCommandCreator() {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return getCommand();
-            }
-        };
+        return (serverDescription, connectionDescription) -> getCommand();
     }
 
     private BsonDocument getCommand() {
@@ -191,22 +181,11 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
-            @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
-            }
-        };
+        return (result, source, connection) -> cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return new CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>>() {
-            @Override
-            public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
-                                             final AsyncConnection connection) {
-                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
-            }
-        };
+        return (result, source, connection) -> cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

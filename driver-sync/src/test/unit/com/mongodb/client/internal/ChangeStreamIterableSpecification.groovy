@@ -67,7 +67,7 @@ class ChangeStreamIterableSpecification extends Specification {
         when: 'default input should be as expected'
         changeStreamIterable.iterator()
 
-        def codec = new RawBsonDocumentCodec();
+        def codec = new RawBsonDocumentCodec()
         def operation = executor.getReadOperation() as ChangeStreamOperation<Document>
         def readPreference = executor.getReadPreference()
 

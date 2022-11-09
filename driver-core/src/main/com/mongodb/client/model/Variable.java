@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import java.util.Objects;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -70,7 +72,7 @@ public class Variable<TExpression> {
         if (!name.equals(variable.name)) {
             return false;
         }
-        return value != null ? value.equals(variable.value) : variable.value == null;
+        return Objects.equals(value, variable.value);
 
     }
 

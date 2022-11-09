@@ -19,6 +19,7 @@ package org.bson.codecs.pojo.entities.conventions;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class BsonIgnoreInvalidMapModel {
 
@@ -61,10 +62,10 @@ public class BsonIgnoreInvalidMapModel {
 
         BsonIgnoreInvalidMapModel that = (BsonIgnoreInvalidMapModel) o;
 
-        if (stringField != null ? !stringField.equals(that.stringField) : that.stringField != null) {
+        if (!Objects.equals(stringField, that.stringField)) {
             return false;
         }
-        return invalidMap != null ? invalidMap.equals(that.invalidMap) : that.invalidMap == null;
+        return Objects.equals(invalidMap, that.invalidMap);
     }
 
     @Override

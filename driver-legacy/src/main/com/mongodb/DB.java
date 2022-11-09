@@ -81,7 +81,7 @@ public class DB {
         this.mongo = mongo;
         this.name = name;
         this.executor = executor;
-        this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
+        this.collectionCache = new ConcurrentHashMap<>();
         this.commandCodec = new DBObjectCodec(mongo.getCodecRegistry());
     }
 
@@ -223,17 +223,12 @@ public class DB {
                         mongo.getMongoClientOptions().getRetryReads()) {
                     @Override
                     public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<DBObject>(name, commandCodec)
+                        return new ListCollectionsOperation<>(name, commandCodec)
                                 .nameOnly(true);
                     }
-                }.map(new Function<DBObject, String>() {
-                            @Override
-                            public String apply(final DBObject result) {
-                                return (String) result.get("name");
-                            }
-                        }).into(new ArrayList<String>());
+                }.map(result -> (String) result.get("name")).into(new ArrayList<>());
         Collections.sort(collectionNames);
-        return new LinkedHashSet<String>(collectionNames);
+        return new LinkedHashSet<>(collectionNames);
     }
 
     /**
@@ -518,9 +513,8 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(executor.execute(new CommandReadOperation<BsonDocument>(getName(), commandDocument,
-                                                                                         new BsonDocumentCodec()),
-                                                  readPreference, getReadConcern()), getDefaultDBObjectCodec());
+        return new CommandResult(executor.execute(new CommandReadOperation<>(getName(), commandDocument,
+                        new BsonDocumentCodec()), readPreference, getReadConcern()), getDefaultDBObjectCodec());
     }
 
     OperationExecutor getExecutor() {
@@ -528,14 +522,14 @@ public class DB {
     }
 
     private BsonDocument wrap(final DBObject document) {
-        return new BsonDocumentWrapper<DBObject>(document, commandCodec);
+        return new BsonDocumentWrapper<>(document, commandCodec);
     }
 
     private BsonDocument wrap(final DBObject document, @Nullable final DBEncoder encoder) {
         if (encoder == null) {
             return wrap(document);
         } else {
-            return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+            return new BsonDocumentWrapper<>(document, new DBEncoderAdapter(encoder));
         }
     }
 
@@ -552,9 +546,9 @@ public class DB {
         boolean primaryRequired = !OBEDIENT_COMMANDS.contains(comString);
 
         if (primaryRequired) {
-            return ReadPreference.primary();
+            return primary();
         } else if (requestedPreference == null) {
-            return ReadPreference.primary();
+            return primary();
         } else {
             return requestedPreference;
         }
@@ -567,7 +561,7 @@ public class DB {
                 .withUuidRepresentation(getMongoClient().getMongoClientOptions().getUuidRepresentation());
     }
 
-    private static final Set<String> OBEDIENT_COMMANDS = new HashSet<String>();
+    private static final Set<String> OBEDIENT_COMMANDS = new HashSet<>();
 
     static {
         OBEDIENT_COMMANDS.add("aggregate");

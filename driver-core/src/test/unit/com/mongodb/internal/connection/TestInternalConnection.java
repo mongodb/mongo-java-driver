@@ -68,11 +68,11 @@ class TestInternalConnection implements InternalConnection {
 
     TestInternalConnection(final ServerId serverId, final ServerType serverType) {
         this.description = new ConnectionDescription(new ConnectionId(serverId), THREE_DOT_SIX_WIRE_VERSION, serverType, 0, 0, 0,
-                Collections.<String>emptyList());
+                Collections.emptyList());
         this.bufferProvider = new SimpleBufferProvider();
 
-        this.replies = new LinkedList<Interaction>();
-        this.sent = new LinkedList<BsonInput>();
+        this.replies = new LinkedList<>();
+        this.sent = new LinkedList<>();
     }
 
     public void enqueueReply(final ResponseBuffers responseBuffers) {
@@ -167,24 +167,18 @@ class TestInternalConnection implements InternalConnection {
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
             final RequestContext requestContext) {
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
-        try {
+        try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, sessionContext);
             sendMessage(bsonOutput.getByteBuffers(), message.getId());
-        } finally {
-            bsonOutput.close();
         }
-        ResponseBuffers responseBuffers = receiveMessage(message.getId());
-        try {
+        try (ResponseBuffers responseBuffers = receiveMessage(message.getId())) {
             boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
             responseBuffers.reset();
             if (!commandOk) {
                 throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
                         description.getServerAddress());
             }
-            return new ReplyMessage<T>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
-        } finally {
-            responseBuffers.close();
+            return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
         }
     }
 
@@ -205,7 +199,7 @@ class TestInternalConnection implements InternalConnection {
 
     private <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
                                                            final CommandMessage commandMessage, final Decoder<T> decoder) {
-        ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, commandMessage.getId());
+        ReplyMessage<T> replyMessage = new ReplyMessage<>(responseBuffers, decoder, commandMessage.getId());
         responseBuffers.reset();
         return replyMessage.getDocuments().get(0);
     }

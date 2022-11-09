@@ -40,7 +40,7 @@ public final class ImmutableDocumentCodec implements CollectibleCodec<ImmutableD
 
     @Override
     public ImmutableDocument generateIdIfAbsentFromDocument(final ImmutableDocument document) {
-        LinkedHashMap<String, Object> mutable = new LinkedHashMap<String, Object>(document);
+        LinkedHashMap<String, Object> mutable = new LinkedHashMap<>(document);
         mutable.put(ID_FIELD_NAME, new ObjectId());
         return new ImmutableDocument(mutable);
     }

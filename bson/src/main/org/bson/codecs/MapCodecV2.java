@@ -82,7 +82,7 @@ final class MapCodecV2<M extends Map<String, Object>> extends AbstractMapCodec<O
         if (this.uuidRepresentation.equals(uuidRepresentation)) {
             return this;
         }
-        return new MapCodecV2<M>(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation, getEncoderClass());
+        return new MapCodecV2<>(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation, getEncoderClass());
     }
 
     @SuppressWarnings("unchecked")

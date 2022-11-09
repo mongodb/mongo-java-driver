@@ -55,8 +55,8 @@ public class ClientSideEncryptionViewAreProhibitedTest {
 
         Mono.from(db.createView("view", "coll", Collections.<BsonDocument>emptyList())).block(TIMEOUT_DURATION);
 
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>();
-        Map<String, Object> localMasterkey = new HashMap<String, Object>();
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
+        Map<String, Object> localMasterkey = new HashMap<>();
 
         byte[] localMasterkeyBytes = Base64.getDecoder().decode("Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
                 + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");

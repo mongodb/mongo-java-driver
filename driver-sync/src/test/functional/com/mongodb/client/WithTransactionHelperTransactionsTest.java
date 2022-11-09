@@ -54,7 +54,7 @@ public class WithTransactionHelperTransactionsTest extends AbstractUnifiedTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/transactions-convenient-api")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {

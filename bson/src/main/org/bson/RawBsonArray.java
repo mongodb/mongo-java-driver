@@ -211,8 +211,7 @@ public class RawBsonArray extends BsonArray implements Serializable {
                 throw new IndexOutOfBoundsException();
             }
             int curIndex = 0;
-            BsonBinaryReader bsonReader = createReader();
-            try {
+            try (BsonBinaryReader bsonReader = createReader()) {
                 bsonReader.readStartDocument();
                 while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                     bsonReader.skipName();
@@ -223,8 +222,6 @@ public class RawBsonArray extends BsonArray implements Serializable {
                     curIndex++;
                 }
                 bsonReader.readEndDocument();
-            } finally {
-                bsonReader.close();
             }
             throw new IndexOutOfBoundsException();
         }
@@ -235,8 +232,7 @@ public class RawBsonArray extends BsonArray implements Serializable {
                 return cachedSize;
             }
             int size = 0;
-            BsonBinaryReader bsonReader = createReader();
-            try {
+            try (BsonBinaryReader bsonReader = createReader()) {
                 bsonReader.readStartDocument();
                 while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                     size++;
@@ -244,8 +240,6 @@ public class RawBsonArray extends BsonArray implements Serializable {
                     bsonReader.skipValue();
                 }
                 bsonReader.readEndDocument();
-            } finally {
-                bsonReader.close();
             }
             cachedSize = size;
             return cachedSize;

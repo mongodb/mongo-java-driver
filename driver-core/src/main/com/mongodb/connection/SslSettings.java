@@ -21,6 +21,7 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 
 import javax.net.ssl.SSLContext;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -206,7 +207,7 @@ public class SslSettings {
         if (invalidHostNameAllowed != that.invalidHostNameAllowed) {
             return false;
         }
-        return context != null ? context.equals(that.context) : that.context == null;
+        return Objects.equals(context, that.context);
     }
 
     @Override

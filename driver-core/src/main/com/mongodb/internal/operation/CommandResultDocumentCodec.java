@@ -47,7 +47,7 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     }
 
     static <P> Codec<BsonDocument> create(final Decoder<P> decoder, final List<String> fieldsContainingPayload) {
-        CodecRegistry registry = fromProviders(new CommandResultCodecProvider<P>(decoder, fieldsContainingPayload));
+        CodecRegistry registry = fromProviders(new CommandResultCodecProvider<>(decoder, fieldsContainingPayload));
         return registry.get(BsonDocument.class);
     }
 
@@ -55,9 +55,9 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
         if (fieldsContainingPayload.contains(reader.getCurrentName())) {
             if (reader.getCurrentBsonType() == BsonType.DOCUMENT) {
-                return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader, decoderContext), null);
+                return new BsonDocumentWrapper<>(payloadDecoder.decode(reader, decoderContext), null);
             } else if (reader.getCurrentBsonType() == BsonType.ARRAY) {
-                return new CommandResultArrayCodec<T>(getCodecRegistry(), payloadDecoder).decode(reader, decoderContext);
+                return new CommandResultArrayCodec<>(getCodecRegistry(), payloadDecoder).decode(reader, decoderContext);
             }
         }
         return super.readValue(reader, decoderContext);

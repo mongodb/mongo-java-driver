@@ -68,8 +68,8 @@ class UpdateRequest extends WriteRequest {
 
     @Override
     com.mongodb.internal.bulk.WriteRequest toNew(final DBCollection dbCollection) {
-        return new com.mongodb.internal.bulk.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
-                                                       new BsonDocumentWrapper<DBObject>(update, codec),
+        return new com.mongodb.internal.bulk.UpdateRequest(new BsonDocumentWrapper<>(query, codec),
+                new BsonDocumentWrapper<>(update, codec),
                                                        com.mongodb.internal.bulk.WriteRequest.Type.UPDATE)
                .upsert(isUpsert())
                .multi(isMulti())

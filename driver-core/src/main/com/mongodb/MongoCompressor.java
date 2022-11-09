@@ -137,7 +137,7 @@ public final class MongoCompressor {
         notNull("propertyKey", propertyKey);
 
         this.name = from.name;
-        this.properties = new HashMap<String, Object>(from.properties);
+        this.properties = new HashMap<>(from.properties);
         this.properties.put(propertyKey.toLowerCase(), propertyValue);
     }
 

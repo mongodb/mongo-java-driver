@@ -98,7 +98,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * Creates an empty object.
      */
     public BasicDBObject() {
-        super();
     }
 
     /**
@@ -161,7 +160,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @see #toJson(JsonWriterSettings)
      * @see JsonWriterSettings
      */
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
@@ -188,7 +186,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @return a JSON representation of this document
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
      */
-    @SuppressWarnings("deprecation")
     public String toJson(final Encoder<BasicDBObject> encoder) {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build(), encoder);
     }
@@ -283,7 +280,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
 
     @Override
     public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocumentWrapper<BasicDBObject>(this, codecRegistry.get(BasicDBObject.class));
+        return new BsonDocumentWrapper<>(this, codecRegistry.get(BasicDBObject.class));
     }
 
     // create a copy of "from", but with keys ordered alphabetically
@@ -301,8 +298,8 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     }
 
     private static Map<String, Object> canonicalizeMap(final Map<String, Object> from) {
-        Map<String, Object> canonicalized = new LinkedHashMap<String, Object>(from.size());
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        Map<String, Object> canonicalized = new LinkedHashMap<>(from.size());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -312,7 +309,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
 
     private static BasicDBObject canonicalizeBSONObject(final BSONObject from) {
         BasicDBObject canonicalized = new BasicDBObject();
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -321,7 +318,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     }
 
     private static List canonicalizeList(final List<Object> list) {
-        List<Object> canonicalized = new ArrayList<Object>(list.size());
+        List<Object> canonicalized = new ArrayList<>(list.size());
         for (Object cur : list) {
             canonicalized.add(canonicalize(cur));
         }

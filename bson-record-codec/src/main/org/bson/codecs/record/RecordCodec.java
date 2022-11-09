@@ -140,7 +140,7 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
                     return i;
                 }
             }
-            throw new CodecConfigurationException(String.format("Could not find type parameter on record %s with name %s",
+            throw new CodecConfigurationException(format("Could not find type parameter on record %s with name %s",
                     recordClass.getName(), typeParameterName));
         }
 

@@ -85,7 +85,7 @@ final class BsonWriterHelper {
         return true;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked"})
     private static Codec<BsonValue> getCodec(final BsonValue bsonValue) {
         return (Codec<BsonValue>) REGISTRY.get(bsonValue.getClass());
     }

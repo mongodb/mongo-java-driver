@@ -111,7 +111,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     def getOpenedConnection() {
-        def connection = getConnection();
+        def connection = getConnection()
         connection.open()
         connection
     }
@@ -128,7 +128,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 .type(ServerType.UNKNOWN)
                 .state(ServerConnectionState.CONNECTING)
                 .lastUpdateTimeNanos(connection.getInitialServerDescription().getLastUpdateTime(NANOSECONDS))
-                .build();
+                .build()
         when:
         connection.open()
 
@@ -154,7 +154,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 .type(ServerType.UNKNOWN)
                 .state(ServerConnectionState.CONNECTING)
                 .lastUpdateTimeNanos(connection.getInitialServerDescription().getLastUpdateTime(NANOSECONDS))
-                .build();
+                .build()
 
         when:
         connection.openAsync(futureResultCallback)
@@ -186,7 +186,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when initialization throws an exception asynchronously'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
-            startHandshakeAsync(_, _) >> { it[1].onResult(null, new MongoInternalException('Something went wrong')); }
+            startHandshakeAsync(_, _) >> { it[1].onResult(null, new MongoInternalException('Something went wrong')) }
         }
         def connection = new InternalStreamConnection(SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(), streamFactory, [], null,
                 failedInitializer)

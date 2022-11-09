@@ -34,10 +34,10 @@ final class CreatorExecutable<T> {
     private final Class<T> clazz;
     private final Constructor<T> constructor;
     private final Method method;
-    private final List<BsonProperty> properties = new ArrayList<BsonProperty>();
+    private final List<BsonProperty> properties = new ArrayList<>();
     private final Integer idPropertyIndex;
-    private final List<Class<?>> parameterTypes = new ArrayList<Class<?>>();
-    private final List<Type> parameterGenericTypes = new ArrayList<Type>();
+    private final List<Class<?>> parameterTypes = new ArrayList<>();
+    private final List<Type> parameterGenericTypes = new ArrayList<>();
 
     CreatorExecutable(final Class<T> clazz, final Constructor<T> constructor) {
         this(clazz, constructor, null);

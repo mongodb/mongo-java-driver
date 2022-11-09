@@ -16,10 +16,8 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
-import com.mongodb.connection.SocketSettings;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
@@ -49,12 +47,7 @@ public class TransactionProseTest {
                 .applyConnectionString(getMultiMongosConnectionString());
 
         client = MongoClients.create(MongoClientSettings.builder(builder.build())
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(5, TimeUnit.SECONDS);
-                    }
-                })
+                .applyToSocketSettings(builder1 -> builder1.readTimeout(5, TimeUnit.SECONDS))
                 .build());
 
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());

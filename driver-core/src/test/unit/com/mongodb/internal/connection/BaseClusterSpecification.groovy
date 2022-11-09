@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.event.ServerDescriptionChangedEvent
-import util.spock.annotations.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoClientException
 import com.mongodb.MongoException
@@ -32,10 +30,12 @@ import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.internal.selector.ReadPreferenceServerSelector
 import com.mongodb.internal.selector.ServerAddressSelector
 import com.mongodb.internal.selector.WritableServerSelector
 import spock.lang.Specification
+import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 
@@ -199,8 +199,8 @@ class BaseClusterSpecification extends Specification {
         e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting to connect. " +
                 'Client view of cluster state is {type=UNKNOWN')
         e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
-                'exception={com.mongodb.MongoInternalException: oops}}');
-        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}');
+                'exception={com.mongodb.MongoInternalException: oops}}')
+        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}')
 
         when:
         cluster.selectServer(new WritableServerSelector())
@@ -210,8 +210,8 @@ class BaseClusterSpecification extends Specification {
         e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting for a server " +
                 'that matches WritableServerSelector. Client view of cluster state is {type=UNKNOWN')
         e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
-                'exception={com.mongodb.MongoInternalException: oops}}');
-        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}');
+                'exception={com.mongodb.MongoInternalException: oops}}')
+        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}')
 
         where:
         serverSelectionTimeoutMS << [1, 0]

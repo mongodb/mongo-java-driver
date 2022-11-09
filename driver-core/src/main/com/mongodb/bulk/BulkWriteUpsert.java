@@ -65,7 +65,7 @@ public class BulkWriteUpsert {
             return false;
         }
 
-        final BulkWriteUpsert that = (BulkWriteUpsert) o;
+        BulkWriteUpsert that = (BulkWriteUpsert) o;
 
         if (index != that.index) {
             return false;

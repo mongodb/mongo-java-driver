@@ -21,9 +21,9 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -82,8 +82,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
             @Nullable final ServerApi serverApi,
             final RequestContext requestContext, final boolean responseExpected, final SplittablePayload payload,
             final FieldNameValidator payloadFieldNameValidator) {
-        return executeProtocol(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
+        return executeProtocol(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
+                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
                         requestContext),
                 sessionContext);
     }
@@ -104,8 +104,8 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                                  final boolean responseExpected,
                                  final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
-        executeProtocolAsync(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode, serverApi,
+        executeProtocolAsync(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
+                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
                         requestContext),
                 sessionContext, callback);
     }

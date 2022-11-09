@@ -375,8 +375,8 @@ class CommandMessageSpecification extends Specification {
     }
 
     private static BsonDocument getCommandDocument(ByteBufNIO byteBuf) {
-        BsonInput bsonInput = new ByteBufferBsonInput(byteBuf);
-        BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
+        BsonInput bsonInput = new ByteBufferBsonInput(byteBuf)
+        BsonBinaryReader reader = new BsonBinaryReader(bsonInput)
         new BsonDocumentCodec().decode(reader, DecoderContext.builder().build())
     }
 }

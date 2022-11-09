@@ -66,7 +66,7 @@ public final class SimpleWithStaticModel {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final SimpleWithStaticModel that = (SimpleWithStaticModel) o;
+        SimpleWithStaticModel that = (SimpleWithStaticModel) o;
         return Objects.equals(integerField, that.integerField) && Objects.equals(stringField, that.stringField);
     }
 

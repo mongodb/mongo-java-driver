@@ -35,7 +35,6 @@ public final class DeleteRequest extends WriteRequest {
     private String hintString;
 
     public DeleteRequest(final BsonDocument filter) {
-        super();
         this.filter = notNull("filter", filter);
     }
 

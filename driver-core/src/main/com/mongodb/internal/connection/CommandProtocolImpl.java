@@ -75,14 +75,11 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
         try {
             connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, sessionContext, requestContext,
-                    new SingleResultCallback<T>() {
-                        @Override
-                        public void onResult(final T result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                callback.onResult(result, null);
-                            }
+                    (result, t) -> {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            callback.onResult(result, null);
                         }
                     });
         } catch (Throwable t) {

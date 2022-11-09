@@ -64,14 +64,8 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException if there are problems writing to the {@code file}
      */
     public long writeTo(final File file) throws IOException {
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(file);
+        try (FileOutputStream out = new FileOutputStream(file)) {
             return writeTo(out);
-        } finally {
-            if (out != null) {
-                out.close();
-            }
         }
     }
 

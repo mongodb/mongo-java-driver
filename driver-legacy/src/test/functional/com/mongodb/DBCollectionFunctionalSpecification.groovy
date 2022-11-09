@@ -48,7 +48,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def setup() {
         def existingDocument = ~['a': ~[:],
                                  'b': ~[:]]
-        collection.insert(existingDocument);
+        collection.insert(existingDocument)
         idOfExistingDocument = existingDocument.get('_id')
         collection.setObjectClass(BasicDBObject)
     }
@@ -61,7 +61,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.findOne(new BasicDBObject('_id', 1)) == new BasicDBObject('_id', 1).append('x', 1)
 
         when:
-        collection.update(new BasicDBObject('_id', 2), new BasicDBObject('$set', new BasicDBObject('x', 1)));
+        collection.update(new BasicDBObject('_id', 2), new BasicDBObject('$set', new BasicDBObject('x', 1)))
 
         then:
         collection.findOne(new BasicDBObject('_id', 2)) == null
@@ -72,7 +72,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.insert([new BasicDBObject('x', 1), new BasicDBObject('x', 1)])
 
         when:
-        collection.update(new BasicDBObject('x', 1), new BasicDBObject('$set', new BasicDBObject('x', 2)), false, true);
+        collection.update(new BasicDBObject('x', 1), new BasicDBObject('$set', new BasicDBObject('x', 2)), false, true)
 
         then:
         collection.count(new BasicDBObject('x', 2)) == 2
@@ -94,10 +94,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should drop collection that exists'() {
         given:
-        collection.insert(~['name': 'myName']);
+        collection.insert(~['name': 'myName'])
 
         when:
-        collection.drop();
+        collection.drop()
 
         then:
         !(this.collectionName in database.getCollectionNames())
@@ -108,7 +108,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         !(this.collectionName in database.getCollectionNames())
 
         when:
-        collection.drop();
+        collection.drop()
 
         then:
         notThrown(MongoException)
@@ -127,8 +127,8 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should use internal classes for findAndModify'() {
         given:
-        collection.setInternalClass('a', ClassA);
-        collection.setInternalClass('b', ClassB);
+        collection.setInternalClass('a', ClassA)
+        collection.setInternalClass('b', ClassB)
 
         when:
         DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c': 1])
@@ -147,7 +147,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         ]
 
         when:
-        collection.createIndex(~['y': 1], options);
+        collection.createIndex(~['y': 1], options)
 
         then:
         collection.getIndexInfo().size() == 2
@@ -168,13 +168,13 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.count() == 2
 
         when:
-        collection.createIndex(~['y': 1], ~['unique': true]);
+        collection.createIndex(~['y': 1], ~['unique': true])
 
         then:
         thrown(DuplicateKeyException)
 
         when:
-        collection.createIndex(~['y': 1], ~['unique': true, 'dropDups': true]);
+        collection.createIndex(~['y': 1], ~['unique': true, 'dropDups': true])
 
         then:
         notThrown(DuplicateKeyException)
@@ -183,18 +183,18 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'drop index should not fail if collection does not exist'() {
         given:
-        collection.drop();
+        collection.drop()
 
         expect:
-        collection.dropIndex('indexOnCollectionThatDoesNotExist');
+        collection.dropIndex('indexOnCollectionThatDoesNotExist')
     }
 
     def 'drop index should error if index does not exist'() {
         given:
-        collection.createIndex(new BasicDBObject('x', 1));
+        collection.createIndex(new BasicDBObject('x', 1))
 
         when:
-        collection.dropIndex('y_1');
+        collection.dropIndex('y_1')
 
         then:
         def exception = thrown(MongoCommandException)
@@ -203,11 +203,11 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should throw Exception if dropping an index with an incorrect type'() {
         given:
-        BasicDBObject index = new BasicDBObject('x', 1);
-        collection.createIndex(index);
+        BasicDBObject index = new BasicDBObject('x', 1)
+        collection.createIndex(index)
 
         when:
-        collection.dropIndex(new BasicDBObject('x', '2d'));
+        collection.dropIndex(new BasicDBObject('x', '2d'))
 
         then:
         def exception = thrown(MongoCommandException)
@@ -216,13 +216,13 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should drop nested index'() {
         given:
-        collection.save(new BasicDBObject('x', new BasicDBObject('y', 1)));
-        BasicDBObject index = new BasicDBObject('x.y', 1);
-        collection.createIndex(index);
+        collection.save(new BasicDBObject('x', new BasicDBObject('y', 1)))
+        BasicDBObject index = new BasicDBObject('x.y', 1)
+        collection.createIndex(index)
         assert collection.indexInfo.size() == 2
 
         when:
-        collection.dropIndex(index);
+        collection.dropIndex(index)
 
         then:
         collection.indexInfo.size() == 1
@@ -230,12 +230,12 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should drop all indexes except the default index on _id'() {
         given:
-        collection.createIndex(new BasicDBObject('x', 1));
-        collection.createIndex(new BasicDBObject('x.y', 1));
+        collection.createIndex(new BasicDBObject('x', 1))
+        collection.createIndex(new BasicDBObject('x.y', 1))
         assert collection.indexInfo.size() == 3
 
         when:
-        collection.dropIndexes();
+        collection.dropIndexes()
 
         then:
         collection.indexInfo.size() == 1
@@ -243,11 +243,11 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should drop unique index'() {
         given:
-        BasicDBObject index = new BasicDBObject('x', 1);
-        collection.createIndex(index, new BasicDBObject('unique', true));
+        BasicDBObject index = new BasicDBObject('x', 1)
+        collection.createIndex(index, new BasicDBObject('unique', true))
 
         when:
-        collection.dropIndex(index);
+        collection.dropIndex(index)
 
         then:
         collection.indexInfo.size() == 1
@@ -255,7 +255,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should use compound index for min query'() {
         given:
-        collection.createIndex(new BasicDBObject('a', 1).append('_id', 1));
+        collection.createIndex(new BasicDBObject('a', 1).append('_id', 1))
 
         when:
         def cursor = collection.find().min(new BasicDBObject('a', 1).append('_id', idOfExistingDocument))
@@ -270,7 +270,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         String newCollectionName = 'someNewName'
 
         when:
-        collection.rename(newCollectionName);
+        collection.rename(newCollectionName)
 
         then:
         !database.getCollectionNames().contains(collectionName)
@@ -281,29 +281,29 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should be able to rename collection to an existing collection name and replace it when drop is true'() {
         given:
-        String existingCollectionName = 'anExistingCollection';
-        String originalCollectionName = 'someOriginalCollection';
+        String existingCollectionName = 'anExistingCollection'
+        String originalCollectionName = 'someOriginalCollection'
 
-        DBCollection originalCollection = database.getCollection(originalCollectionName);
-        String keyInOriginalCollection = 'someKey';
-        String valueInOriginalCollection = 'someValue';
-        originalCollection.insert(new BasicDBObject(keyInOriginalCollection, valueInOriginalCollection));
+        DBCollection originalCollection = database.getCollection(originalCollectionName)
+        String keyInOriginalCollection = 'someKey'
+        String valueInOriginalCollection = 'someValue'
+        originalCollection.insert(new BasicDBObject(keyInOriginalCollection, valueInOriginalCollection))
 
-        DBCollection existingCollection = database.getCollection(existingCollectionName);
-        String keyInExistingCollection = 'aDifferentDocument';
-        existingCollection.insert(new BasicDBObject(keyInExistingCollection, 'withADifferentValue'));
+        DBCollection existingCollection = database.getCollection(existingCollectionName)
+        String keyInExistingCollection = 'aDifferentDocument'
+        existingCollection.insert(new BasicDBObject(keyInExistingCollection, 'withADifferentValue'))
 
         assert database.getCollectionNames().contains(originalCollectionName)
         assert database.getCollectionNames().contains(existingCollectionName)
 
         when:
-        originalCollection.rename(existingCollectionName, true);
+        originalCollection.rename(existingCollectionName, true)
 
         then:
         !database.getCollectionNames().contains(originalCollectionName)
         database.getCollectionNames().contains(existingCollectionName)
 
-        DBCollection replacedCollection = database.getCollection(existingCollectionName);
+        DBCollection replacedCollection = database.getCollection(existingCollectionName)
         replacedCollection.findOne().get(keyInExistingCollection) == null
         replacedCollection.findOne().get(keyInOriginalCollection).toString() == valueInOriginalCollection
     }
@@ -312,7 +312,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         given:
         collection.drop()
         (0..99).each { collection.save(~['_id': it, 'x' : it % 10]) }
-        assert collection.count() == 100;
+        assert collection.count() == 100
 
         when:
         List distinctValuesOfFieldX = collection.distinct('x')
@@ -326,10 +326,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         given:
         collection.drop()
         (0..99).each { collection.save(~['_id': it, 'x' : it % 10, 'isOddNumber': it % 2]) }
-        assert collection.count() == 100;
+        assert collection.count() == 100
 
         when:
-        List distinctValuesOfFieldX = collection.distinct('x', ~['isOddNumber': 1]);
+        List distinctValuesOfFieldX = collection.distinct('x', ~['isOddNumber': 1])
 
         then:
         distinctValuesOfFieldX.size() == 5
@@ -408,7 +408,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.insert([_id: 6, x: 9, y: 'aaa'] as BasicDBObject)
 
         expect:
-        collection.findOne(criteria, null, sortBy)['_id'] == expectedId;
+        collection.findOne(criteria, null, sortBy)['_id'] == expectedId
 
         where:
         criteria                                  | sortBy                        | expectedId
@@ -425,7 +425,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setWriteConcern(new WriteConcern(5))
 
         when:
-        collection.rename('someOtherNewName');
+        collection.rename('someOtherNewName')
 
         then:
         def e = thrown(WriteConcernException)

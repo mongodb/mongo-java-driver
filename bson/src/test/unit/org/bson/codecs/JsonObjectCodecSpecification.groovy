@@ -20,9 +20,9 @@ import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
 import org.bson.json.JsonMode
+import org.bson.json.JsonObject
 import org.bson.json.JsonWriterSettings
 import spock.lang.Specification
-import org.bson.json.JsonObject;
 
 import static org.bson.BsonDocument.parse
 

@@ -26,7 +26,7 @@ import static java.lang.String.format;
 class ShellDateTimeConverter implements Converter<Long> {
     @Override
     public void convert(final Long value, final StrictJsonWriter writer) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         if (value >= -59014396800000L && value <= 253399536000000L) {
             writer.writeRaw(format("ISODate(\"%s\")", dateFormat.format(new Date(value))));

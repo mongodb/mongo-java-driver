@@ -275,7 +275,7 @@ final class GeometryDecoderHelper {
     private static List<? extends Geometry> decodeGeometries(final BsonReader reader) {
         validateIsArray(reader);
         reader.readStartArray();
-        List<Geometry> values = new ArrayList<Geometry>();
+        List<Geometry> values = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             Geometry geometry = decodeGeometry(reader);
             values.add(geometry);
@@ -330,7 +330,7 @@ final class GeometryDecoderHelper {
     private static PolygonCoordinates decodePolygonCoordinates(final BsonReader reader) {
         validateIsArray(reader);
         reader.readStartArray();
-        List<List<Position>> values = new ArrayList<List<Position>>();
+        List<List<Position>> values = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             values.add(decodeCoordinates(reader));
         }
@@ -353,7 +353,7 @@ final class GeometryDecoderHelper {
     private static List<PolygonCoordinates> decodeMultiPolygonCoordinates(final BsonReader reader) {
         validateIsArray(reader);
         reader.readStartArray();
-        List<PolygonCoordinates> values = new ArrayList<PolygonCoordinates>();
+        List<PolygonCoordinates> values = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             values.add(decodePolygonCoordinates(reader));
         }
@@ -368,7 +368,7 @@ final class GeometryDecoderHelper {
     private static List<Position> decodeCoordinates(final BsonReader reader) {
         validateIsArray(reader);
         reader.readStartArray();
-        List<Position> values = new ArrayList<Position>();
+        List<Position> values = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             values.add(decodePosition(reader));
         }
@@ -379,7 +379,7 @@ final class GeometryDecoderHelper {
     private static List<List<Position>> decodeMultiCoordinates(final BsonReader reader) {
         validateIsArray(reader);
         reader.readStartArray();
-        List<List<Position>> values = new ArrayList<List<Position>>();
+        List<List<Position>> values = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             values.add(decodeCoordinates(reader));
         }
@@ -390,7 +390,7 @@ final class GeometryDecoderHelper {
     private static Position decodePosition(final BsonReader reader) {
         validateIsArray(reader);
         reader.readStartArray();
-        List<Double> values = new ArrayList<Double>();
+        List<Double> values = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             values.add(readAsDouble(reader));
         }

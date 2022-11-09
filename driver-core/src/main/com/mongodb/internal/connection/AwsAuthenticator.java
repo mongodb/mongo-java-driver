@@ -59,7 +59,7 @@ public class AwsAuthenticator extends SaslAuthenticator {
     private static final int RANDOM_LENGTH = 32;
 
     public AwsAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                            @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
 
         if (getMongoCredential().getAuthenticationMechanism() != MONGODB_AWS) {
@@ -148,14 +148,14 @@ public class AwsAuthenticator extends SaslAuthenticator {
         }
 
         private byte[] computeClientFinalMessage(final byte[] serverFirst) throws SaslException {
-            final BsonDocument document = new RawBsonDocument(serverFirst);
-            final String host = document.getString("h").getValue();
+            BsonDocument document = new RawBsonDocument(serverFirst);
+            String host = document.getString("h").getValue();
 
-            final byte[] serverNonce = document.getBinary("s").getData();
+            byte[] serverNonce = document.getBinary("s").getData();
             if (serverNonce.length != (2 * RANDOM_LENGTH)) {
-                throw new SaslException(String.format("Server nonce must be %d bytes", 2 * RANDOM_LENGTH));
+                throw new SaslException(format("Server nonce must be %d bytes", 2 * RANDOM_LENGTH));
             } else if (!Arrays.equals(Arrays.copyOf(serverNonce, RANDOM_LENGTH), this.clientNonce)) {
-                throw new SaslException(String.format("The first %d bytes of the server nonce must be the client nonce", RANDOM_LENGTH));
+                throw new SaslException(format("The first %d bytes of the server nonce must be the client nonce", RANDOM_LENGTH));
             }
 
             String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")

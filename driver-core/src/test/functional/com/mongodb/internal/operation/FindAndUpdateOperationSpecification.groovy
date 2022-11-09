@@ -164,7 +164,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 3
-        helper.find().size() == 2;
+        helper.find().size() == 2
         helper.find().get(0).getInteger('numberOfJobs') == 4
 
         when:
@@ -229,7 +229,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         returnedDocument.numberOfJobs == 3
-        helper.find().size() == 2;
+        helper.find().size() == 2
         helper.find().get(0).numberOfJobs == 4
 
         when:
@@ -514,7 +514,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 3
-        helper.find().size() == 2;
+        helper.find().size() == 2
         helper.find().get(0).getInteger('numberOfJobs') == 4
 
         cleanup:

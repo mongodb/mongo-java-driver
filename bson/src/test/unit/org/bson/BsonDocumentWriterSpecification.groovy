@@ -26,7 +26,7 @@ class BsonDocumentWriterSpecification extends Specification {
 
     def 'should write all types'() {
         when:
-        def encodedDoc = new BsonDocument();
+        def encodedDoc = new BsonDocument()
         new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDoc), documentWithValuesOfEveryType(),
                 EncoderContext.builder().build())
 

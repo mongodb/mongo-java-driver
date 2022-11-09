@@ -33,7 +33,6 @@ public class JsonParseException extends RuntimeException {
      * Constructs a new runtime exception with null as its detail message.
      */
     public JsonParseException() {
-        super();
     }
 
     /**

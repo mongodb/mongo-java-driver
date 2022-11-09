@@ -239,7 +239,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         }
     }
 
-    private final class AsyncClientSessionContext extends ClientSessionContext implements SessionContext {
+    private final class AsyncClientSessionContext extends ClientSessionContext {
 
         private final ClientSession clientSession;
 

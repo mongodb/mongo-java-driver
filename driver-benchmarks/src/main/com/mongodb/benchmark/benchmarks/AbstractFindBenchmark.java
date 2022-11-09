@@ -72,7 +72,7 @@ public abstract class AbstractFindBenchmark<T> extends AbstractMongoBenchmark {
 
     private void insertCopiesOfDocument(final MongoCollection<BsonDocument> collection,
                                         final BsonDocument document) {
-        List<BsonDocument> documents = new ArrayList<BsonDocument>(NUM_INTERNAL_ITERATIONS);
+        List<BsonDocument> documents = new ArrayList<>(NUM_INTERNAL_ITERATIONS);
         for (int i = 0; i < NUM_INTERNAL_ITERATIONS; i++) {
             BsonDocument copy = document.clone();
             copy.put("_id", new BsonInt32(i));

@@ -39,7 +39,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     public static final int MAX_BUFFER_SIZE = 1 << 24;
 
     private final BufferProvider bufferProvider;
-    private final List<ByteBuf> bufferList = new ArrayList<ByteBuf>();
+    private final List<ByteBuf> bufferList = new ArrayList<>();
     private int curBufferIndex = 0;
     private int position = 0;
     private boolean closed;
@@ -127,7 +127,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     public List<ByteBuf> getByteBuffers() {
         ensureOpen();
 
-        List<ByteBuf> buffers = new ArrayList<ByteBuf>(bufferList.size());
+        List<ByteBuf> buffers = new ArrayList<>(bufferList.size());
         for (final ByteBuf cur : bufferList) {
             buffers.add(cur.duplicate().order(ByteOrder.LITTLE_ENDIAN).flip());
         }

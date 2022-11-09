@@ -21,6 +21,8 @@ import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.Objects;
+
 @BsonDiscriminator
 public final class CreatorAllFinalFieldsModel {
     private final String pid;
@@ -60,13 +62,13 @@ public final class CreatorAllFinalFieldsModel {
 
         CreatorAllFinalFieldsModel that = (CreatorAllFinalFieldsModel) o;
 
-        if (pid != null ? !pid.equals(that.pid) : that.pid != null) {
+        if (!Objects.equals(pid, that.pid)) {
             return false;
         }
-        if (fName != null ? !fName.equals(that.fName) : that.fName != null) {
+        if (!Objects.equals(fName, that.fName)) {
             return false;
         }
-        if (lName != null ? !lName.equals(that.lName) : that.lName != null) {
+        if (!Objects.equals(lName, that.lName)) {
             return false;
         }
 

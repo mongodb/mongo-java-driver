@@ -49,9 +49,9 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
@@ -344,7 +344,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     BsonDocument getCollectionInfo(final String collectionName) {
-        return new ListCollectionsOperation<BsonDocument>(getDefaultDatabaseName(), new BsonDocumentCodec())
+        return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec())
                 .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
     }
 }

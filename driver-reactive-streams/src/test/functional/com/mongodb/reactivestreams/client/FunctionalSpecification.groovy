@@ -28,8 +28,8 @@ import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabase
 import static com.mongodb.reactivestreams.client.Fixture.waitForLastServerSessionPoolRelease
 
 class FunctionalSpecification extends Specification {
-    protected MongoDatabase database;
-    protected MongoCollection<Document> collection;
+    protected MongoDatabase database
+    protected MongoCollection<Document> collection
 
     def setupSpec() {
         dropDatabase(getDefaultDatabaseName())
@@ -50,11 +50,11 @@ class FunctionalSpecification extends Specification {
             drop(collection.getNamespace())
         }
 
-        waitForLastServerSessionPoolRelease();
+        waitForLastServerSessionPoolRelease()
     }
 
     String getDatabaseName() {
-        database.getName();
+        database.getName()
     }
 
     String getCollectionName() {

@@ -71,7 +71,7 @@ public final class TruncatedArray {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final TruncatedArray that = (TruncatedArray) o;
+        TruncatedArray that = (TruncatedArray) o;
         return newSize == that.newSize && field.equals(that.field);
     }
 

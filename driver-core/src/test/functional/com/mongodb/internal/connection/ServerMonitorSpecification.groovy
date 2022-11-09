@@ -79,75 +79,75 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
     def 'should log state change if significant properties have changed'() {
         given:
-        ServerDescription.Builder builder = createBuilder();
-        ServerDescription description = builder.build();
+        ServerDescription.Builder builder = createBuilder()
+        ServerDescription description = builder.build()
         ServerDescription otherDescription
 
         expect:
         !shouldLogStageChange(description, builder.build())
 
         when:
-        otherDescription = createBuilder().address(new ServerAddress('localhost:27018')).build();
+        otherDescription = createBuilder().address(new ServerAddress('localhost:27018')).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().type(ServerType.STANDALONE).build();
+        otherDescription = createBuilder().type(ServerType.STANDALONE).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().tagSet(null).build();
+        otherDescription = createBuilder().tagSet(null).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().setName('test2').build();
+        otherDescription = createBuilder().setName('test2').build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().primary('localhost:27018').build();
+        otherDescription = createBuilder().primary('localhost:27018').build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().canonicalAddress('localhost:27018').build();
+        otherDescription = createBuilder().canonicalAddress('localhost:27018').build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().hosts(new HashSet<String>(asList('localhost:27018'))).build();
+        otherDescription = createBuilder().hosts(new HashSet<String>(asList('localhost:27018'))).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().arbiters(new HashSet<String>(asList('localhost:27018'))).build();
+        otherDescription = createBuilder().arbiters(new HashSet<String>(asList('localhost:27018'))).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().passives(new HashSet<String>(asList('localhost:27018'))).build();
+        otherDescription = createBuilder().passives(new HashSet<String>(asList('localhost:27018'))).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().ok(false).build();
+        otherDescription = createBuilder().ok(false).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().state(CONNECTING).build();
+        otherDescription = createBuilder().state(CONNECTING).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
@@ -156,13 +156,13 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().electionId(new ObjectId()).build();
+        otherDescription = createBuilder().electionId(new ObjectId()).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().setVersion(3).build();
+        otherDescription = createBuilder().setVersion(3).build()
 
         then:
         shouldLogStageChange(description, otherDescription)

@@ -37,12 +37,9 @@ public class TransactionFailureTest extends DatabaseTestCase {
 
     @Test(expected = MongoClientException.class)
     public void testTransactionFails() {
-        ClientSession clientSession = client.startSession();
-        try {
+        try (ClientSession clientSession = client.startSession()) {
             clientSession.startTransaction();
             collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}"));
-        } finally {
-            clientSession.close();
         }
     }
 

@@ -129,7 +129,7 @@ class LazyBSONObjectSpecification extends Specification {
         byte[] bytes = [
                 53, 0, 0, 0, 4, 97, 0, 26, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 16, 49, 0, 2, 0, 0, 0, 16, 50, 0,
                 3, 0, 0, 0, 0, 3, 111, 0, 16, 0, 0, 0, 1, 122, 0, -102, -103, -103, -103, -103, -103, -71, 63, 0, 0
-        ];
+        ]
 
         when:
         LazyBSONObject document = new LazyBSONObject(bytes, new LazyBSONCallback())
@@ -346,7 +346,7 @@ class LazyBSONObjectSpecification extends Specification {
 
     def 'should pipe to stream'() {
         given:
-        byte[] bytes = [16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 8, 98, 0, 1, 0];
+        byte[] bytes = [16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 8, 98, 0, 1, 0]
         LazyBSONObject document = new LazyBSONObject(bytes, new LazyBSONCallback())
         ByteArrayOutputStream baos = new ByteArrayOutputStream()
 

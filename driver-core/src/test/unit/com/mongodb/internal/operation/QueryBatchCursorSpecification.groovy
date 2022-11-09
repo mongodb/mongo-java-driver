@@ -295,7 +295,7 @@ class QueryBatchCursorSpecification extends Specification {
             if (refCounter < 0) {
                 throw new IllegalStateException('Tried to release Connection below 0')
             }
-            refCounter;
+            refCounter
         }
         mockConn.getCount() >> { refCounter }
         mockConn

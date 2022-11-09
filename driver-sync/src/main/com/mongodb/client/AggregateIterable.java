@@ -74,7 +74,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param maxAwaitTime  the max await time

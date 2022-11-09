@@ -51,7 +51,7 @@ class TransactionOptionsSpecification extends Specification {
 
     def 'should merge'() {
         given:
-        def first = TransactionOptions.builder().build();
+        def first = TransactionOptions.builder().build()
         def second = TransactionOptions.builder().readConcern(ReadConcern.MAJORITY)
                 .writeConcern(WriteConcern.MAJORITY)
                 .readPreference(ReadPreference.secondary())

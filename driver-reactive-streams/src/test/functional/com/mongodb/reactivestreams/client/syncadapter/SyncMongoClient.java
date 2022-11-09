@@ -147,7 +147,7 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ListDatabasesIterable<Document> listDatabases() {
-        return new SyncListDatabasesIterable<Document>(wrapped.listDatabases());
+        return new SyncListDatabasesIterable<>(wrapped.listDatabases());
     }
 
     @Override
@@ -157,12 +157,12 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public <TResult> ListDatabasesIterable<TResult> listDatabases(final Class<TResult> resultClass) {
-        return new SyncListDatabasesIterable<TResult>(wrapped.listDatabases(resultClass));
+        return new SyncListDatabasesIterable<>(wrapped.listDatabases(resultClass));
     }
 
     @Override
     public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return new SyncListDatabasesIterable<TResult>(wrapped.listDatabases(unwrap(clientSession), resultClass));
+        return new SyncListDatabasesIterable<>(wrapped.listDatabases(unwrap(clientSession), resultClass));
     }
 
     @Override

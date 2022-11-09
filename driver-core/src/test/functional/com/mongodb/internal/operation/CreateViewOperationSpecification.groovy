@@ -39,7 +39,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should create view'() {
         given:
-        def viewOn = getCollectionName();
+        def viewOn = getCollectionName()
         def viewName = getCollectionName() + '-view'
         def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
 
@@ -72,7 +72,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should create view with collation'() {
         given:
-        def viewOn = getCollectionName();
+        def viewOn = getCollectionName()
         def viewName = getCollectionName() + '-view'
         def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
 

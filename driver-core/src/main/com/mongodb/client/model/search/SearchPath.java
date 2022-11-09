@@ -81,11 +81,11 @@ public interface SearchPath extends Bson {
      * @see FieldSearchPath#toValue()
      */
     default BsonValue toBsonValue() {
-        final BsonDocument doc = toBsonDocument();
+        BsonDocument doc = toBsonDocument();
         if (doc.size() > 1) {
             return doc;
         } else {
-            final BsonString value = doc.getString(SEARCH_PATH_VALUE_KEY, null);
+            BsonString value = doc.getString(SEARCH_PATH_VALUE_KEY, null);
             if (value != null) {
                 // paths that contain only `SEARCH_PATH_VALUE_KEY` must be represented as a `BsonString`
                 return value;

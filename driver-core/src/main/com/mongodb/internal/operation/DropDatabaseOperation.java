@@ -20,8 +20,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
@@ -31,8 +29,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeComma
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
@@ -64,28 +60,22 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                executeCommand(binding, databaseName, getCommand(), connection, writeConcernErrorTransformer());
-                return null;
-            }
+        return withConnection(binding, connection -> {
+            executeCommand(binding, databaseName, getCommand(), connection, writeConcernErrorTransformer());
+            return null;
         });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    executeCommandAsync(binding, databaseName, getCommand(), connection,
-                            writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
+        withAsyncConnection(binding, (connection, t) -> {
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else {
+                executeCommandAsync(binding, databaseName, getCommand(), connection,
+                        writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
 
-                }
             }
         });
     }

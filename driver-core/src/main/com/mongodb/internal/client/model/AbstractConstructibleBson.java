@@ -121,7 +121,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AbstractConstructibleBson<?> that = (AbstractConstructibleBson<?>) o;
+        AbstractConstructibleBson<?> that = (AbstractConstructibleBson<?>) o;
         return Objects.equals(base, that.base) && Objects.equals(appended, that.appended);
     }
 
@@ -141,7 +141,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
     }
 
     static BsonDocument newMerged(final BsonDocument base, final BsonDocument appended) {
-        final BsonDocument result = base.clone();
+        BsonDocument result = base.clone();
         result.putAll(appended);
         return result;
     }

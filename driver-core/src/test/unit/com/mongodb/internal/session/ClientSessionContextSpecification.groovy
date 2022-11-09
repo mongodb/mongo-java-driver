@@ -35,7 +35,7 @@ class ClientSessionContextSpecification extends Specification {
 
         @Override
         boolean hasActiveTransaction() {
-            false;
+            false
         }
 
         @Override
@@ -50,7 +50,7 @@ class ClientSessionContextSpecification extends Specification {
 
         @Override
         ReadConcern getReadConcern() {
-            ReadConcern.DEFAULT;
+            ReadConcern.DEFAULT
         }
     }
 

@@ -18,12 +18,14 @@ package org.bson.codecs.pojo.entities;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.Objects;
+
 public class CustomPropertyCodecOptionalModel {
     private final Optional<String> optionalField;
 
     @BsonCreator
-    public CustomPropertyCodecOptionalModel(final @BsonProperty("optionalField") Optional<String> optionalField) {
-        this.optionalField = optionalField == null ? Optional.<String>empty() : optionalField;
+    public CustomPropertyCodecOptionalModel(@BsonProperty("optionalField") final Optional<String> optionalField) {
+        this.optionalField = optionalField == null ? Optional.empty() : optionalField;
     }
 
     public Optional<String> getOptionalField() {
@@ -41,7 +43,7 @@ public class CustomPropertyCodecOptionalModel {
 
         CustomPropertyCodecOptionalModel that = (CustomPropertyCodecOptionalModel) o;
 
-        return optionalField != null ? optionalField.equals(that.optionalField) : that.optionalField == null;
+        return Objects.equals(optionalField, that.optionalField);
     }
 
     @Override

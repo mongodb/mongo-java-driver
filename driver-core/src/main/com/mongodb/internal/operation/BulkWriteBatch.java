@@ -107,7 +107,7 @@ public final class BulkWriteBatch {
             throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
         }
         boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, sessionContext);
-        List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<WriteRequestWithIndex>();
+        List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<>();
         boolean writeRequestsAreRetryable = true;
         for (int i = 0; i < writeRequests.size(); i++) {
             WriteRequest writeRequest = writeRequests.get(i);
@@ -138,7 +138,7 @@ public final class BulkWriteBatch {
         this.retryWrites = retryWrites;
 
         List<WriteRequestWithIndex> payloadItems = new ArrayList<>();
-        List<WriteRequestWithIndex> unprocessedItems = new ArrayList<WriteRequestWithIndex>();
+        List<WriteRequestWithIndex> unprocessedItems = new ArrayList<>();
 
         IndexMap indexMap = IndexMap.create();
         for (int i = 0; i < writeRequestsWithIndices.size(); i++) {
@@ -276,8 +276,8 @@ public final class BulkWriteBatch {
 
     FieldNameValidator getFieldNameValidator() {
         if (batchType == UPDATE || batchType == REPLACE) {
-            Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
-            if (batchType == WriteRequest.Type.REPLACE) {
+            Map<String, FieldNameValidator> rootMap = new HashMap<>();
+            if (batchType == REPLACE) {
                 rootMap.put("u", new ReplacingDocumentFieldNameValidator());
             } else {
                 rootMap.put("u", new UpdateFieldNameValidator());
@@ -334,9 +334,8 @@ public final class BulkWriteBatch {
                 result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue()).collect(Collectors.toSet()));
     }
 
-    @SuppressWarnings("unchecked")
     private List<BulkWriteError> getWriteErrors(final BsonDocument result) {
-        List<BulkWriteError> writeErrors = new ArrayList<BulkWriteError>();
+        List<BulkWriteError> writeErrors = new ArrayList<>();
         BsonArray writeErrorsDocuments = (BsonArray) result.get("writeErrors");
         if (writeErrorsDocuments != null) {
             for (BsonValue cur : writeErrorsDocuments) {
@@ -370,11 +369,11 @@ public final class BulkWriteBatch {
     }
 
     private SplittablePayload.Type getPayloadType(final WriteRequest.Type batchType) {
-        if (batchType == WriteRequest.Type.INSERT) {
+        if (batchType == INSERT) {
             return SplittablePayload.Type.INSERT;
-        } else if (batchType == WriteRequest.Type.UPDATE) {
+        } else if (batchType == UPDATE) {
             return SplittablePayload.Type.UPDATE;
-        } else if (batchType == WriteRequest.Type.REPLACE) {
+        } else if (batchType == REPLACE) {
             return SplittablePayload.Type.REPLACE;
         } else {
             return SplittablePayload.Type.DELETE;

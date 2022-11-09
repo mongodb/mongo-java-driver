@@ -144,7 +144,7 @@ public abstract class AbstractConstructibleBsonElement<S extends AbstractConstru
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AbstractConstructibleBsonElement<?> that = (AbstractConstructibleBsonElement<?>) o;
+        AbstractConstructibleBsonElement<?> that = (AbstractConstructibleBsonElement<?>) o;
         return baseElement.equals(that.baseElement) && appendedElementValue.equals(that.appendedElementValue);
     }
 

@@ -21,10 +21,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -128,30 +124,24 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                executeCommand(binding, databaseName, getCommand(), new BsonDocumentCodec(),
-                        writeConcernErrorTransformer());
-                return null;
-            }
+        return withConnection(binding, connection -> {
+            executeCommand(binding, databaseName, getCommand(), new BsonDocumentCodec(),
+                    writeConcernErrorTransformer());
+            return null;
         });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                }
-                else {
-                    SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    executeCommandAsync(binding, databaseName, getCommand(), connection, writeConcernErrorWriteTransformer(),
-                            wrappedCallback);
-                }
+        withAsyncConnection(binding, (connection, t) -> {
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            }
+            else {
+                SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                executeCommandAsync(binding, databaseName, getCommand(), connection, writeConcernErrorWriteTransformer(),
+                        wrappedCallback);
             }
         });
     }

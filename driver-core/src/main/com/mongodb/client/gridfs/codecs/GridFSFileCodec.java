@@ -85,7 +85,7 @@ public final class GridFSFileCodec implements Codec<GridFSFile> {
 
         Document metadata = value.getMetadata();
         if (metadata != null) {
-            bsonDocument.put("metadata", new BsonDocumentWrapper<Document>(metadata, documentCodec));
+            bsonDocument.put("metadata", new BsonDocumentWrapper<>(metadata, documentCodec));
         }
         bsonDocumentCodec.encode(writer, bsonDocument, encoderContext);
     }

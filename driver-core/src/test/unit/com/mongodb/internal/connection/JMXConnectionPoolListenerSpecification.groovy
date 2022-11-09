@@ -94,7 +94,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
 
     def 'should create a valid ObjectName for hostname'() {
         given:
-        String beanName = jmxListener.getMBeanObjectName(SERVER_ID);
+        String beanName = jmxListener.getMBeanObjectName(SERVER_ID)
 
         when:
         ObjectName objectName = new ObjectName(beanName)

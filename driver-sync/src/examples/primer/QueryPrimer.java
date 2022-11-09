@@ -20,8 +20,6 @@ import com.mongodb.client.FindIterable;
 import org.bson.Document;
 import org.junit.Test;
 
-import java.util.function.Consumer;
-
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gt;
@@ -45,12 +43,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
         // @end: query-all
     }
@@ -67,12 +60,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify building queries the Java driver provides static helpers
@@ -95,12 +83,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify building queries the Java driver provides static helpers
@@ -121,12 +104,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify building queries the Java driver provides static helpers
@@ -146,12 +124,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify building queries the Java driver provides static helpers
@@ -171,12 +144,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify building queries the Java driver provides static helpers
@@ -196,12 +164,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify building queries the Java driver provides static helpers
@@ -221,12 +184,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify building queries the Java driver provides static helpers
@@ -247,12 +205,7 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document);
-            }
-        });
+        iterable.forEach(document -> System.out.println(document));
         // @code: end
 
         // @pre: To simplify sorting fields the Java driver provides static helpers

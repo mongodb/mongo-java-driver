@@ -21,6 +21,7 @@ package com.mongodb;
 import com.mongodb.lang.Nullable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -117,7 +118,7 @@ public class DBRef implements Serializable {
         if (!collectionName.equals(dbRef.collectionName)) {
             return false;
         }
-        if (databaseName != null ? !databaseName.equals(dbRef.databaseName) : dbRef.databaseName != null) {
+        if (!Objects.equals(databaseName, dbRef.databaseName)) {
             return false;
         }
 

@@ -19,7 +19,6 @@ package org.bson.codecs.pojo.entities;
 public final class UpperBoundsConcreteModel extends UpperBoundsModel<Long> {
 
     public UpperBoundsConcreteModel() {
-        super();
     }
 
     public UpperBoundsConcreteModel(final Long myGenericField) {

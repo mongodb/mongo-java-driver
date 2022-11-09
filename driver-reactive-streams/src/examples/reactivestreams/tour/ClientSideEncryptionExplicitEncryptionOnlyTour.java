@@ -50,7 +50,7 @@ public class ClientSideEncryptionExplicitEncryptionOnlyTour {
 
     /**
      * Run this main method to see the output of this quick example.
-     *
+     * <p>
      * Requires the mongodb-crypt library in the class path and mongocryptd on the system path.
      * Assumes the schema has already been created in MongoDB.
      *
@@ -59,7 +59,7 @@ public class ClientSideEncryptionExplicitEncryptionOnlyTour {
     public static void main(final String[] args) {
 
         // This would have to be the same master key as was used to create the encryption key
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{

@@ -122,7 +122,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
         }
 
         private Set<ServerAddress> createServerAddressSet(final List<String> resolvedHostNames) {
-            Set<ServerAddress> hosts = new HashSet<ServerAddress>(resolvedHostNames.size());
+            Set<ServerAddress> hosts = new HashSet<>(resolvedHostNames.size());
             for (String host : resolvedHostNames) {
                 hosts.add(createServerAddress(host));
             }

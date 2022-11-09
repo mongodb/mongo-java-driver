@@ -124,14 +124,11 @@ public final class RawBsonDocument extends BsonDocument {
         notNull("document", document);
         notNull("codec", codec);
         BasicOutputBuffer buffer = new BasicOutputBuffer();
-        BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
-        try {
+        try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer)) {
             codec.encode(writer, document, EncoderContext.builder().build());
             this.bytes = buffer.getInternalBuffer();
             this.offset = 0;
             this.length = buffer.getPosition();
-        } finally {
-            writer.close();
         }
     }
 
@@ -167,11 +164,8 @@ public final class RawBsonDocument extends BsonDocument {
      * @since 3.6
      */
     public <T> T decode(final Decoder<T> decoder) {
-        BsonBinaryReader reader = createReader();
-        try {
+        try (BsonBinaryReader reader = createReader()) {
             return decoder.decode(reader, DecoderContext.builder().build());
-        } finally {
-            reader.close();
         }
     }
 
@@ -202,15 +196,12 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public boolean isEmpty() {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             if (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 return false;
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return true;
@@ -219,8 +210,7 @@ public final class RawBsonDocument extends BsonDocument {
     @Override
     public int size() {
         int size = 0;
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 size++;
@@ -228,8 +218,6 @@ public final class RawBsonDocument extends BsonDocument {
                 bsonReader.skipValue();
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return size;
@@ -252,16 +240,13 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public String getFirstKey() {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             try {
                 return bsonReader.readName();
             } catch (BsonInvalidOperationException e) {
                 throw new NoSuchElementException();
             }
-        } finally {
-            bsonReader.close();
         }
     }
 
@@ -271,8 +256,7 @@ public final class RawBsonDocument extends BsonDocument {
             throw new IllegalArgumentException("key can not be null");
         }
 
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (bsonReader.readName().equals(key)) {
@@ -281,8 +265,6 @@ public final class RawBsonDocument extends BsonDocument {
                 bsonReader.skipValue();
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return false;
@@ -290,8 +272,7 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public boolean containsValue(final Object value) {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 bsonReader.skipName();
@@ -300,8 +281,6 @@ public final class RawBsonDocument extends BsonDocument {
                 }
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return false;
@@ -311,8 +290,7 @@ public final class RawBsonDocument extends BsonDocument {
     public BsonValue get(final Object key) {
         notNull("key", key);
 
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (bsonReader.readName().equals(key)) {
@@ -321,15 +299,12 @@ public final class RawBsonDocument extends BsonDocument {
                 bsonReader.skipValue();
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return null;
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
@@ -362,11 +337,8 @@ public final class RawBsonDocument extends BsonDocument {
 
     // Transform to an org.bson.BsonDocument instance
     private BsonDocument toBaseBsonDocument() {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
-        } finally {
-            bsonReader.close();
         }
     }
 

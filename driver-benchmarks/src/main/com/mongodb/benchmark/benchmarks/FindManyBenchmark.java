@@ -26,13 +26,10 @@ public class FindManyBenchmark<T> extends AbstractFindBenchmark<T> {
 
     @Override
     public void run() {
-         MongoCursor<T> cursor = collection.find().iterator();
-         try {
-             while (cursor.hasNext()) {
-                 cursor.next();
-             }
-         } finally {
-             cursor.close();
-         }
+        try (MongoCursor<T> cursor = collection.find().iterator()) {
+            while (cursor.hasNext()) {
+                cursor.next();
+            }
+        }
     }
 }

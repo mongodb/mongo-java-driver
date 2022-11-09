@@ -126,7 +126,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     }
 
     public GridFSUploadPublisher<ObjectId> withObjectId() {
-        final GridFSUploadPublisherImpl wrapped = this;
+        GridFSUploadPublisherImpl wrapped = this;
         return new GridFSUploadPublisher<ObjectId>() {
 
             @Override
@@ -224,8 +224,8 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
 
     private Mono<Long> createSaveChunksMono(final AtomicBoolean terminated) {
         return Mono.create(sink -> {
-            final AtomicLong lengthInBytes = new AtomicLong(0);
-            final AtomicInteger chunkIndex = new AtomicInteger(0);
+            AtomicLong lengthInBytes = new AtomicLong(0);
+            AtomicInteger chunkIndex = new AtomicInteger(0);
             new ResizingByteBufferFlux(source, chunkSizeBytes)
                     .flatMap((Function<ByteBuffer, Publisher<InsertOneResult>>) byteBuffer -> {
                         if (terminated.get()) {

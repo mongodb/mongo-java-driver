@@ -142,7 +142,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should query with default values'() {
         given:
         def document = new Document('_id', 1)
-        getCollectionHelper().insertDocuments(new DocumentCodec(), document);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document)
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
@@ -158,7 +158,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply filter'() {
         given:
         def document = new Document('_id', 1)
-        getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document());
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document())
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -177,7 +177,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 5),
                          new Document('_id', 4)]
-        getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents)
 
 
         when: 'ascending'
@@ -196,7 +196,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply projection'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(),
-                new Document('x', 5).append('y', 10), new Document('_id', 1).append('x', 10));
+                new Document('x', 5).append('y', 10), new Document('_id', 1).append('x', 10))
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .projection(new BsonDocument('_id', new BsonInt32(0)).append('x', new BsonInt32(1)))
 
@@ -214,7 +214,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 4),
                          new Document('_id', 5)]
-        getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .sort(new BsonDocument('_id', new BsonInt32(1)))
@@ -234,7 +234,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def documents = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3), new Document('_id', 4),
                          new Document('_id', 5)]
-        getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .sort(new BsonDocument('_id', new BsonInt32(1)))
@@ -254,7 +254,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def documents = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3), new Document('_id', 4),
                          new Document('_id', 5)]
-        getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents)
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .sort(new BsonDocument('_id', new BsonInt32(1)))
                 .batchSize(batchSize)
@@ -442,7 +442,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         cleanup:
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
                 .execute(getBinding())
-        profileCollectionHelper.drop();
+        profileCollectionHelper.drop()
 
         where:
         async << [true, false]
@@ -450,7 +450,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should apply $showDiskLoc'() {
         given:
-        String fieldName = serverVersionAtLeast(3, 2) ? '$recordId' : '$diskLoc';
+        String fieldName = serverVersionAtLeast(3, 2) ? '$recordId' : '$diskLoc'
         collectionHelper.insertDocuments(new BsonDocument())
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
@@ -491,7 +491,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 5),
                          new Document('_id', 4)]
-        collectionHelper.insertDocuments(new DocumentCodec(), documents);
+        collectionHelper.insertDocuments(new DocumentCodec(), documents)
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:

@@ -26,7 +26,7 @@ public class LazyDBEncoderTest {
 
     @Test
     public void testEncodingObject() {
-        byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        byte[] bytes = {12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
         DBObject document = new LazyDBObject(bytes, new LazyDBCallback(null));
         OutputBuffer buffer = new BasicOutputBuffer();
         new LazyDBEncoder().writeObject(buffer, document);

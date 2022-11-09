@@ -183,7 +183,7 @@ class FindIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def findIterable = new FindIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference, readConcern,
                 executor, new Document('filter', 1))
 
@@ -231,7 +231,7 @@ class FindIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -308,7 +308,7 @@ class FindIterableSpecification extends Specification {
         given:
         def cursor = Mock(BatchCursor) {
             hasNext() >> {
-                throw new MongoException('');
+                throw new MongoException('')
             }
         }
         def executor = new TestOperationExecutor([cursor])

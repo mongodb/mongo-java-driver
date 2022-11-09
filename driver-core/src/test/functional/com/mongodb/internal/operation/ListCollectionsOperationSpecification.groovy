@@ -411,7 +411,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         enableMaxTimeFailPoint()
 
         when:
-        executeAsync(operation);
+        executeAsync(operation)
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -513,7 +513,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         while (true) {
             def next = cursor.tryNext()
             if (next == null) {
-                break;
+                break
             }
             list += next
         }
@@ -526,7 +526,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         }
         def callback = new FutureResultCallback()
         cursor.next(callback)
-        def next = callback.get();
+        def next = callback.get()
         if (next == null) {
             return []
         }

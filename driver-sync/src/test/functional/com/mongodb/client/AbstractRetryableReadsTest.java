@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
@@ -28,8 +27,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ServerSettings;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
@@ -122,8 +119,8 @@ public abstract class AbstractRetryableReadsTest {
         assumeFalse("Skipping count tests", filename.startsWith("count.") || filename.startsWith("count-"));
         assumeFalse("Skipping list index names tests", filename.startsWith("listIndexNames"));
 
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
-        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
         ConnectionString connectionString = getConnectionString();
         useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
@@ -136,18 +133,8 @@ public abstract class AbstractRetryableReadsTest {
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                 .applyConnectionString(connectionString)
                 .addCommandListener(commandListener)
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(5, TimeUnit.SECONDS);
-                    }
-                })
-                .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                    @Override
-                    public void apply(final ServerSettings.Builder builder) {
-                        builder.heartbeatFrequency(5, TimeUnit.MILLISECONDS);
-                    }
-                })
+                .applyToSocketSettings(builder -> builder.readTimeout(5, TimeUnit.SECONDS))
+                .applyToServerSettings(builder -> builder.heartbeatFrequency(5, TimeUnit.MILLISECONDS))
                 .writeConcern(getWriteConcern(clientOptions))
                 .readConcern(getReadConcern(clientOptions))
                 .readPreference(getReadPreference(clientOptions))
@@ -158,7 +145,7 @@ public abstract class AbstractRetryableReadsTest {
         mongoClient = createMongoClient(settings);
 
         if (data != null) {
-            List<BsonDocument> documents = new ArrayList<BsonDocument>();
+            List<BsonDocument> documents = new ArrayList<>();
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }
@@ -218,13 +205,13 @@ public abstract class AbstractRetryableReadsTest {
         chunksCollection.drop();
 
         List<BsonDocument> filesDocuments = processFiles(
-                gridFSData.getArray("fs.files", new BsonArray()), new ArrayList<BsonDocument>());
+                gridFSData.getArray("fs.files", new BsonArray()), new ArrayList<>());
         if (!filesDocuments.isEmpty()) {
             filesCollection.insertMany(filesDocuments);
         }
 
         List<BsonDocument> chunksDocuments = processChunks(
-                gridFSData.getArray("fs.chunks", new BsonArray()), new ArrayList<BsonDocument>());
+                gridFSData.getArray("fs.chunks", new BsonArray()), new ArrayList<>());
         if (!chunksDocuments.isEmpty()) {
             chunksCollection.insertMany(chunksDocuments);
         }
@@ -262,7 +249,7 @@ public abstract class AbstractRetryableReadsTest {
 
     private void executeOperations(final BsonArray operations) {
         for (BsonValue cur : operations) {
-            final BsonDocument operation = cur.asDocument();
+            BsonDocument operation = cur.asDocument();
             BsonValue expectedResult = operation.get("result");
 
             try {
@@ -284,7 +271,7 @@ public abstract class AbstractRetryableReadsTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/retryable-reads")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {

@@ -66,10 +66,5 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
     /**
      * The {@code DBEncoderFactory} for {@code DefaultDBEncoder} instances.
      */
-    public static final DBEncoderFactory FACTORY = new DBEncoderFactory() {
-        @Override
-        public DBEncoder create() {
-            return new DefaultDBEncoder();
-        }
-    };
+    public static final DBEncoderFactory FACTORY = () -> new DefaultDBEncoder();
 }

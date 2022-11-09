@@ -55,20 +55,14 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     @Test
     public void testCallbackRaisesCustomError() {
         final String exceptionMessage = "NotTransientOrUnknownError";
-        ClientSession session = client.startSession();
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    throw new MongoException(exceptionMessage);
-                }
+        try (ClientSession session = client.startSession()) {
+            session.withTransaction((TransactionBody<Void>) () -> {
+                throw new MongoException(exceptionMessage);
             });
             // should not get here
             fail("Test should have thrown an exception.");
         } catch (MongoException e) {
             assertEquals(exceptionMessage, e.getMessage());
-        } finally {
-            session.close();
         }
     }
 
@@ -78,19 +72,13 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testCallbackReturnsValue() {
-        ClientSession session = client.startSession();
-        final String msg = "Inserted document";
-        try {
-            String returnValueFromCallback = session.withTransaction(new TransactionBody<String>() {
-                @Override
-                public String execute() {
-                    collection.insertOne(Document.parse("{ _id : 1 }"));
-                    return msg;
-                }
+        try (ClientSession session = client.startSession()) {
+            final String msg = "Inserted document";
+            String returnValueFromCallback = session.withTransaction(() -> {
+                collection.insertOne(Document.parse("{ _id : 1 }"));
+                return msg;
             });
             assertEquals(msg, returnValueFromCallback);
-        } finally {
-            session.close();
         }
     }
 
@@ -102,24 +90,18 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testRetryTimeoutEnforcedTransientTransactionError() {
         final String errorMessage = "transient transaction error";
 
-        ClientSession session = client.startSession();
-        ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
+        try (ClientSession session = client.startSession()) {
+            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
+            session.withTransaction((TransactionBody<Void>) () -> {
                 ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    MongoException e = new MongoException(112, errorMessage);
-                    e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
-                    throw e;
-                }
+                MongoException e = new MongoException(112, errorMessage);
+                e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                throw e;
             });
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
             assertEquals(errorMessage, e.getMessage());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
-        } finally {
-            session.close();
         }
     }
 
@@ -129,28 +111,23 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testRetryTimeoutEnforcedUnknownTransactionCommit() {
-        final MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 91, 'closeConnection': false}}"));
 
-        final ClientSession session = client.startSession();
-        ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    collection.insertOne(session, new Document("_id", 2));
-                    return null;
-                }
+        try (ClientSession session = client.startSession()) {
+            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
+            session.withTransaction((TransactionBody<Void>) () -> {
+                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
+                collection.insertOne(session, new Document("_id", 2));
+                return null;
             });
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
             assertEquals(91, ((MongoException) e).getCode());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
         } finally {
-            session.close();
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
     }
@@ -163,29 +140,24 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
         assumeFalse(isServerlessTest());
-        final MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251, 'codeName': 'NoSuchTransaction', "
                         + "'errmsg': 'Transaction 0 has been aborted', 'closeConnection': false}}"));
 
-        final ClientSession session = client.startSession();
-        ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    collection.insertOne(session, Document.parse("{ _id : 1 }"));
-                    return null;
-                }
+        try (ClientSession session = client.startSession()) {
+            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
+            session.withTransaction((TransactionBody<Void>) () -> {
+                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
+                collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                return null;
             });
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
             assertEquals(251, ((MongoException) e).getCode());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {
-            session.close();
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
     }

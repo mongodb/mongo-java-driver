@@ -20,6 +20,8 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 
+import java.util.Objects;
+
 public class SimpleIdImmutableModel {
     private final ObjectId id;
     private final Integer integerField;
@@ -61,13 +63,13 @@ public class SimpleIdImmutableModel {
 
         SimpleIdImmutableModel that = (SimpleIdImmutableModel) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (!Objects.equals(id, that.id)) {
             return false;
         }
-        if (integerField != null ? !integerField.equals(that.integerField) : that.integerField != null) {
+        if (!Objects.equals(integerField, that.integerField)) {
             return false;
         }
-        return stringField != null ? stringField.equals(that.stringField) : that.stringField == null;
+        return Objects.equals(stringField, that.stringField);
     }
 
     @Override

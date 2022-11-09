@@ -18,7 +18,6 @@ package com.mongodb;
 
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,10 +30,10 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -216,11 +215,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testSkip() {
-        DBCursor cursor = collection.find().skip(2);
-        try {
+        try (DBCursor cursor = collection.find().skip(2)) {
             assertEquals(8, cursor.toArray().size());
-        } finally {
-            cursor.close();
         }
     }
 
@@ -346,7 +342,7 @@ public class DBCursorTest extends DatabaseTestCase {
                           .returnKey();
         try {
             while (cursor.hasNext()) {
-                Assert.assertNull(cursor.next()
+                assertNull(cursor.next()
                                         .get("_id"));
             }
         } finally {
@@ -356,7 +352,7 @@ public class DBCursorTest extends DatabaseTestCase {
                  .returnKey();
         try {
             while (cursor.hasNext()) {
-                Assert.assertNull(cursor.next()
+                assertNull(cursor.next()
                                         .get("_id"));
             }
         } finally {

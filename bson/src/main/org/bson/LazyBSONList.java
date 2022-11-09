@@ -68,7 +68,7 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
     @Override
     public boolean containsAll(final Collection collection) {
-        Set<Object> values = new HashSet<Object>();
+        Set<Object> values = new HashSet<>();
         for (final Object o : this) {
             values.add(o);
         }

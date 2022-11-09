@@ -47,17 +47,17 @@ final class PojoBuilderHelper {
     static <T> void configureClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final Class<T> clazz) {
         classModelBuilder.type(notNull("clazz", clazz));
 
-        ArrayList<Annotation> annotations = new ArrayList<Annotation>();
-        Set<String> propertyNames = new TreeSet<String>();
-        Map<String, TypeParameterMap> propertyTypeParameterMap = new HashMap<String, TypeParameterMap>();
+        ArrayList<Annotation> annotations = new ArrayList<>();
+        Set<String> propertyNames = new TreeSet<>();
+        Map<String, TypeParameterMap> propertyTypeParameterMap = new HashMap<>();
         Class<? super T> currentClass = clazz;
         String declaringClassName =  clazz.getSimpleName();
         TypeData<?> parentClassTypeData = null;
 
-        Map<String, PropertyMetadata<?>> propertyNameMap = new HashMap<String, PropertyMetadata<?>>();
+        Map<String, PropertyMetadata<?>> propertyNameMap = new HashMap<>();
         while (!currentClass.isEnum() && currentClass.getSuperclass() != null) {
             annotations.addAll(asList(currentClass.getDeclaredAnnotations()));
-            List<String> genericTypeNames = new ArrayList<String>();
+            List<String> genericTypeNames = new ArrayList<>();
             for (TypeVariable<? extends Class<? super T>> classTypeVariable : currentClass.getTypeParameters()) {
                 genericTypeNames.add(classTypeVariable.getName());
             }
@@ -145,7 +145,7 @@ final class PojoBuilderHelper {
             }
         }
 
-        classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(new CreatorExecutable<T>(clazz, noArgsConstructor)));
+        classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<>(new CreatorExecutable<>(clazz, noArgsConstructor)));
     }
 
     private static <T, S> PropertyMetadata<T> getOrCreateMethodPropertyMetadata(final String propertyName,
@@ -194,7 +194,7 @@ final class PojoBuilderHelper {
                                                                        final TypeData<T> typeData) {
         PropertyMetadata<T> propertyMetadata = (PropertyMetadata<T>) propertyNameMap.get(propertyName);
         if (propertyMetadata == null) {
-            propertyMetadata = new PropertyMetadata<T>(propertyName, declaringClassName, typeData);
+            propertyMetadata = new PropertyMetadata<>(propertyName, declaringClassName, typeData);
             propertyNameMap.put(propertyName, propertyMetadata);
         }
         return propertyMetadata;
@@ -214,7 +214,6 @@ final class PojoBuilderHelper {
         return isGetter(method) ? method.getGenericReturnType() : method.getGenericParameterTypes()[0];
     }
 
-    @SuppressWarnings("unchecked")
     static <T> PropertyModelBuilder<T> createPropertyModelBuilder(final PropertyMetadata<T> propertyMetadata) {
         PropertyModelBuilder<T> propertyModelBuilder = PropertyModel.<T>builder()
                 .propertyName(propertyMetadata.getName())
@@ -223,8 +222,8 @@ final class PojoBuilderHelper {
                 .typeData(propertyMetadata.getTypeData())
                 .readAnnotations(propertyMetadata.getReadAnnotations())
                 .writeAnnotations(propertyMetadata.getWriteAnnotations())
-                .propertySerialization(new PropertyModelSerializationImpl<T>())
-                .propertyAccessor(new PropertyAccessorImpl<T>(propertyMetadata))
+                .propertySerialization(new PropertyModelSerializationImpl<>())
+                .propertyAccessor(new PropertyAccessorImpl<>(propertyMetadata))
                 .setError(propertyMetadata.getError());
 
         if (propertyMetadata.getTypeParameters() != null) {

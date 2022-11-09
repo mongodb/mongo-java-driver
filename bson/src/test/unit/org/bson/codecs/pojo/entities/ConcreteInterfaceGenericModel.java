@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public class ConcreteInterfaceGenericModel implements InterfaceGenericModel<String> {
     private String property;
 
@@ -47,7 +49,7 @@ public class ConcreteInterfaceGenericModel implements InterfaceGenericModel<Stri
 
         ConcreteInterfaceGenericModel that = (ConcreteInterfaceGenericModel) o;
 
-        return property != null ? property.equals(that.property) : that.property == null;
+        return Objects.equals(property, that.property);
     }
 
     @Override

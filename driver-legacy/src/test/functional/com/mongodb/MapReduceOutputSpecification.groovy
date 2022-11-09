@@ -44,15 +44,15 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return the name of the collection the results are contained in if it is not inline'() {
         given:
-        def expectedCollectionName = 'collectionForResults';
+        def expectedCollectionName = 'collectionForResults'
         def outputCollection = database.getCollection(expectedCollectionName)
         def results = outputCollection.find()
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection)
 
         when:
-        def collectionName = mapReduceOutput.getCollectionName();
+        def collectionName = mapReduceOutput.getCollectionName()
 
         then:
         collectionName != null
@@ -61,13 +61,13 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return null for the name of the collection if it is inline'() {
         given:
-        MapReduceBatchCursor mongoCursor = Mock();
+        MapReduceBatchCursor mongoCursor = Mock()
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor)
 
         when:
-        def collectionName = mapReduceOutput.getCollectionName();
+        def collectionName = mapReduceOutput.getCollectionName()
 
         then:
         collectionName == null
@@ -76,15 +76,15 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
     def 'should return the name of the database the results are contained in if it is not inline'() {
         given:
         def expectedDatabaseName = databaseName
-        def expectedCollectionName = 'collectionForResults';
+        def expectedCollectionName = 'collectionForResults'
         def outputCollection = database.getCollection(expectedCollectionName)
         def results = outputCollection.find()
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), results, null, outputCollection)
 
         when:
-        def databaseName = mapReduceOutput.getDatabaseName();
+        def databaseName = mapReduceOutput.getDatabaseName()
 
         then:
         databaseName != null
@@ -95,25 +95,25 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         given:
         def expectedDuration = 2774
 
-        MapReduceStatistics mapReduceStats = Mock();
+        MapReduceStatistics mapReduceStats = Mock()
         mapReduceStats.getDuration() >> expectedDuration
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null)
 
         expect:
-        mapReduceOutput.getDuration() == expectedDuration;
+        mapReduceOutput.getDuration() == expectedDuration
     }
 
     def 'should return the duration for an inline map-reduce'() {
         given:
         def expectedDuration = 2774
 
-        MapReduceBatchCursor mongoCursor = Mock();
+        MapReduceBatchCursor mongoCursor = Mock()
         mongoCursor.getStatistics() >> new MapReduceStatistics(5, 10, 5, expectedDuration)
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor)
 
         expect:
         mapReduceOutput.getDuration() == expectedDuration
@@ -128,7 +128,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         MapReduceStatistics mapReduceStats = new MapReduceStatistics(expectedInputCount, expectedOutputCount, expectedEmitCount, 5)
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null)
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount
@@ -143,12 +143,12 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         def expectedEmitCount = 6
         def expectedDuration = 10
 
-        MapReduceBatchCursor mapReduceCursor = Mock();
+        MapReduceBatchCursor mapReduceCursor = Mock()
         mapReduceCursor.getStatistics() >> new MapReduceStatistics(expectedInputCount, expectedOutputCount, expectedEmitCount,
                                                                    expectedDuration)
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceCursor);
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceCursor)
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount

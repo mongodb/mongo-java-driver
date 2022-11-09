@@ -29,7 +29,7 @@ public class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
     private final BsonWriter writer;
     private final BsonOutput bsonOutput;
     private final SplittablePayload payload;
-    private int maxSplittableDocumentSize;
+    private final int maxSplittableDocumentSize;
     private final MessageSettings settings;
     private final int messageStartPosition;
 

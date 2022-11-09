@@ -64,8 +64,8 @@ public abstract class MongoServerException extends MongoException {
      * @param serverAddress the address of the server
      * @since 4.6
      */
-    public MongoServerException(final int code, final @Nullable String errorCodeName, final String message,
-            final ServerAddress serverAddress) {
+    public MongoServerException(final int code, @Nullable final String errorCodeName, final String message,
+                                final ServerAddress serverAddress) {
         super(code, message);
         this.errorCodeName = errorCodeName;
         this.serverAddress = serverAddress;

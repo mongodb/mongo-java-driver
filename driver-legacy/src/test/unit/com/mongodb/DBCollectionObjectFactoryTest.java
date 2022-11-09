@@ -58,7 +58,7 @@ public class DBCollectionObjectFactoryTest {
     @Test
     public void testEmptyPath() {
         factory = factory.update(TopLevelDBObject.class);
-        assertThat(factory.getInstance(Collections.<String>emptyList()), instanceOf(TopLevelDBObject.class));
+        assertThat(factory.getInstance(Collections.emptyList()), instanceOf(TopLevelDBObject.class));
     }
 
     @Test

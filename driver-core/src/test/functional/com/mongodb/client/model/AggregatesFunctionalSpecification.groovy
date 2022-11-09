@@ -19,8 +19,8 @@ package com.mongodb.client.model
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
-import org.bson.BsonDecimal128
 import com.mongodb.client.model.fill.FillOutputField
+import org.bson.BsonDecimal128
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
@@ -79,10 +79,6 @@ import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
-import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions
-import static com.mongodb.client.model.densify.DensifyRange.rangeWithStep
-import static com.mongodb.client.model.densify.DensifyRange.fullRangeWithStep
-import static com.mongodb.client.model.densify.DensifyRange.partitionRangeWithStep
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Projections.computed
@@ -97,6 +93,10 @@ import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
 import static com.mongodb.client.model.Windows.documents
 import static com.mongodb.client.model.Windows.range
 import static com.mongodb.client.model.Windows.timeRange
+import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions
+import static com.mongodb.client.model.densify.DensifyRange.fullRangeWithStep
+import static com.mongodb.client.model.densify.DensifyRange.partitionRangeWithStep
+import static com.mongodb.client.model.densify.DensifyRange.rangeWithStep
 import static com.mongodb.client.model.fill.FillOptions.fillOptions
 import static java.util.Arrays.asList
 import static java.util.stream.Collectors.toList
@@ -919,7 +919,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         def init = 'function() { return { x: "test string" } }'
         def accumulate = 'function(state) { return state }'
         def merge = 'function(state1, state2) { return state1 }'
-        def accumulatorExpr = accumulator('testString', init, accumulate, merge);
+        def accumulatorExpr = accumulator('testString', init, accumulate, merge)
         def results1 = helper.aggregate([group('$x', asList(accumulatorExpr))])
 
         then:
@@ -933,10 +933,10 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 Document.parse('{_id: 8645, title: "Eclogues", author: "Dante", copies: 2}'),
                 Document.parse('{_id: 7000, title: "The Odyssey", author: "Homer", copies: 10}'),
                 Document.parse('{_id: 7020, title: "Iliad", author: "Homer", copies: 10}'))
-        def initFunction = 'function(initCount, initSum) { return { count: parseInt(initCount), sum: parseInt(initSum) } }';
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def initFunction = 'function(initCount, initSum) { return { count: parseInt(initCount), sum: parseInt(initSum) } }'
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
         def accumulatorExpression = accumulator('avgCopies', initFunction, [ '0', '0' ], accumulateFunction,
                 [ '$copies' ], mergeFunction, finalizeFunction)
         def results2 = helper.aggregate([group('$author', asList(

@@ -49,7 +49,7 @@ public class MapReduceOutput {
 
         this.collection = null;
         this.resultsFromCollection = null;
-        this.inlineResults = new ArrayList<DBObject>();
+        this.inlineResults = new ArrayList<>();
         while (results.hasNext()) {
             this.inlineResults.addAll(results.next());
         }
@@ -74,7 +74,6 @@ public class MapReduceOutput {
      *
      * @return the results in iterable form
      */
-    @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
         if (inlineResults != null) {
             return inlineResults;

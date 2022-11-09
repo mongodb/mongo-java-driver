@@ -21,8 +21,8 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import static org.bson.assertions.Assertions.notNull;
 import static org.bson.assertions.Assertions.isTrueArgument;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * A wrapper class that holds a JSON object string. This class makes decoding JSON efficient.
@@ -69,7 +69,7 @@ public class JsonObject implements Bson {
 
     @Override
     public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry registry) {
-        return new BsonDocumentWrapper<JsonObject>(this, registry.get(JsonObject.class));
+        return new BsonDocumentWrapper<>(this, registry.get(JsonObject.class));
     }
 
     @Override

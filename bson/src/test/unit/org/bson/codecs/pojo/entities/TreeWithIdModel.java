@@ -18,6 +18,8 @@ package org.bson.codecs.pojo.entities;
 
 import org.bson.types.ObjectId;
 
+import java.util.Objects;
+
 public class TreeWithIdModel {
     private ObjectId id;
     private String level;
@@ -85,16 +87,16 @@ public class TreeWithIdModel {
 
         TreeWithIdModel that = (TreeWithIdModel) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (!Objects.equals(id, that.id)) {
             return false;
         }
-        if (level != null ? !level.equals(that.level) : that.level != null) {
+        if (!Objects.equals(level, that.level)) {
             return false;
         }
-        if (left != null ? !left.equals(that.left) : that.left != null) {
+        if (!Objects.equals(left, that.left)) {
             return false;
         }
-        return right != null ? right.equals(that.right) : that.right == null;
+        return Objects.equals(right, that.right);
     }
 
     @Override

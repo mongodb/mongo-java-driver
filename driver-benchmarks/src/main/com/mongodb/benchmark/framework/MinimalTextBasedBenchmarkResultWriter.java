@@ -19,8 +19,6 @@ package com.mongodb.benchmark.framework;
 
 import java.io.PrintStream;
 
-import static java.lang.String.format;
-
 public class MinimalTextBasedBenchmarkResultWriter implements BenchmarkResultWriter {
 
     public static final double ONE_BILLION = 1000000000.0; // To convert nanoseconds to seconds
@@ -32,8 +30,8 @@ public class MinimalTextBasedBenchmarkResultWriter implements BenchmarkResultWri
 
     @Override
     public void write(final BenchmarkResult benchmarkResult) {
-        printStream.println(format("%s: %.3f", benchmarkResult.getName(),
-                benchmarkResult.getElapsedTimeNanosAtPercentile(50) / ONE_BILLION));
+        printStream.printf("%s: %.3f%n", benchmarkResult.getName(),
+                benchmarkResult.getElapsedTimeNanosAtPercentile(50) / ONE_BILLION);
     }
 
     @Override

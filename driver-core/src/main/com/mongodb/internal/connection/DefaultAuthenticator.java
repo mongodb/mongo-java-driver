@@ -40,7 +40,7 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
     private Authenticator delegate;
 
     DefaultAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                         @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
         isTrueArgument("unspecified authentication mechanism", credential.getAuthenticationMechanism() == null);
     }

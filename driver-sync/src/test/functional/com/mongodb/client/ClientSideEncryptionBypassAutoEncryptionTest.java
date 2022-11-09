@@ -55,7 +55,7 @@ public class ClientSideEncryptionBypassAutoEncryptionTest {
 
         MongoClient mongoClient = getMongoClient();
 
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{

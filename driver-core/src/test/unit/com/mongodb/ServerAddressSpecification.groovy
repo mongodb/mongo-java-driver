@@ -47,51 +47,51 @@ class ServerAddressSpecification extends Specification {
 
     def 'ipv4 host with a port specified should throw when a port is also specified as an argument'() {
         when:
-        new ServerAddress('10.0.0.1:80', 80);
+        new ServerAddress('10.0.0.1:80', 80)
         then:
-        thrown(IllegalArgumentException);
+        thrown(IllegalArgumentException)
 
         when:
-        new ServerAddress('10.0.0.1:1000', 80);
+        new ServerAddress('10.0.0.1:1000', 80)
         then:
-        thrown(IllegalArgumentException);
+        thrown(IllegalArgumentException)
     }
 
     def 'ipv6 host with a port specified should throw when a port is also specified as an argument'() {
         when:
         new ServerAddress('[2010:836B:4179::836B:4179]:80', 80)
         then:
-        thrown(IllegalArgumentException);
+        thrown(IllegalArgumentException)
 
         when:
         new ServerAddress('[2010:836B:4179::836B:4179]:1000', 80)
         then:
-        thrown(IllegalArgumentException);
+        thrown(IllegalArgumentException)
     }
 
     def 'ipv6 host should throw when terminating ] is not specified'() {
         when:
         new ServerAddress('[2010:836B:4179::836B:4179')
         then:
-        thrown(IllegalArgumentException);
+        thrown(IllegalArgumentException)
     }
 
     def 'hostname with a port specified should throw when a port is also specified as an argument'() {
         when:
         new ServerAddress('somewhere:80', 80)
         then:
-        thrown(IllegalArgumentException);
+        thrown(IllegalArgumentException)
 
         when:
         new ServerAddress('somewhere:1000', 80)
         then:
-        thrown(IllegalArgumentException);
+        thrown(IllegalArgumentException)
     }
 
     def 'uri missing port should throw an exception'() {
         when:
         new ServerAddress('mongodb://somewhere/')
         then:
-        thrown(MongoException);
+        thrown(MongoException)
     }
 }

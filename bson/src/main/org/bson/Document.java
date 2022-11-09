@@ -78,7 +78,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Creates an empty Document instance.
      */
     public Document() {
-        documentAsMap = new LinkedHashMap<String, Object>();
+        documentAsMap = new LinkedHashMap<>();
     }
 
     /**
@@ -88,7 +88,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @param value value
      */
     public Document(final String key, final Object value) {
-        documentAsMap = new LinkedHashMap<String, Object>();
+        documentAsMap = new LinkedHashMap<>();
         documentAsMap.put(key, value);
     }
 
@@ -98,7 +98,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @param map initial map
      */
     public Document(final Map<String, ?> map) {
-        documentAsMap = new LinkedHashMap<String, Object>(map);
+        documentAsMap = new LinkedHashMap<>(map);
     }
 
 
@@ -131,7 +131,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
 
     @Override
     public <C> BsonDocument toBsonDocument(final Class<C> documentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocumentWrapper<Document>(this, codecRegistry.get(Document.class));
+        return new BsonDocumentWrapper<>(this, codecRegistry.get(Document.class));
     }
 
     /**
@@ -186,7 +186,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Gets the value in an embedded document, casting it to the given {@code Class<T>}.  The list of keys represents a path to the
      * embedded value, drilling down into an embedded document for each key. This is useful to avoid having casts in
      * client code, though the effect is the same.
-     *
+     * <p>
      * The generic type of the keys list is {@code ?} to be consistent with the corresponding {@code get} methods, but in practice
      * the actual type of the argument should be {@code List<String>}. So to get the embedded value of a key list that is of type String,
      * you would write {@code String name = doc.getEmbedded(List.of("employee", "manager", "name"), String.class)} instead of
@@ -210,7 +210,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Gets the value in an embedded document, casting it to the given {@code Class<T>} or returning the default value if null.
      * The list of keys represents a path to the embedded value, drilling down into an embedded document for each key.
      * This is useful to avoid having casts in client code, though the effect is the same.
-     *
+     * <p>
      * The generic type of the keys list is {@code ?} to be consistent with the corresponding {@code get} methods, but in practice
      * the actual type of the argument should be {@code List<String>}. So to get the embedded value of a key list that is of type String,
      * you would write {@code String name = doc.getEmbedded(List.of("employee", "manager", "name"), "John Smith")} instead of
@@ -414,7 +414,6 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @see #toJson(JsonWriterSettings)
      * @see JsonWriterSettings
      */
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
@@ -441,7 +440,6 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @return a JSON representation of this document
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
      */
-    @SuppressWarnings("deprecation")
     public String toJson(final Encoder<Document> encoder) {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build(), encoder);
     }

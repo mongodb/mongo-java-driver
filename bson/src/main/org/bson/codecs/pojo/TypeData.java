@@ -45,7 +45,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
      * @return the builder
      */
     public static <T> Builder<T> builder(final Class<T> type) {
-        return new Builder<T>(notNull("type", type));
+        return new Builder<>(notNull("type", type));
     }
 
     public static TypeData<?> newInstance(final Method method) {
@@ -112,7 +112,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
      */
     public static final class Builder<T> {
         private final Class<T> type;
-        private final List<TypeData<?>> typeParameters = new ArrayList<TypeData<?>>();
+        private final List<TypeData<?>> typeParameters = new ArrayList<>();
 
         private Builder(final Class<T> type) {
             this.type = type;
@@ -148,7 +148,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
          * @return the class type data
          */
         public TypeData<T> build() {
-            return new TypeData<T>(type, Collections.unmodifiableList(typeParameters));
+            return new TypeData<>(type, Collections.unmodifiableList(typeParameters));
         }
     }
 
@@ -227,7 +227,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
 
     private static final Map<Class<?>, Class<?>> PRIMITIVE_CLASS_MAP;
     static {
-        Map<Class<?>, Class<?>> map = new HashMap<Class<?>, Class<?>>();
+        Map<Class<?>, Class<?>> map = new HashMap<>();
         map.put(boolean.class, Boolean.class);
         map.put(byte.class, Byte.class);
         map.put(char.class, Character.class);

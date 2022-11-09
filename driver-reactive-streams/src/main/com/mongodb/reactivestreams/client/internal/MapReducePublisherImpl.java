@@ -202,9 +202,9 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     private WrappedMapReduceReadOperation<T> createMapReduceInlineOperation() {
-        return new WrappedMapReduceReadOperation<T>(getOperations().mapReduce(mapFunction, reduceFunction, finalizeFunction,
-                                                                              getDocumentClass(), filter, limit, maxTimeMS, jsMode, scope,
-                                                                              sort, verbose, collation));
+        return new WrappedMapReduceReadOperation<>(getOperations().mapReduce(mapFunction, reduceFunction, finalizeFunction,
+                getDocumentClass(), filter, limit, maxTimeMS, jsMode, scope,
+                sort, verbose, collation));
     }
 
     private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation() {

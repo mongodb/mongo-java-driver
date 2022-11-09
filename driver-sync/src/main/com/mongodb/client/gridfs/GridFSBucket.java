@@ -625,7 +625,6 @@ public interface GridFSBucket {
     /**
      * Given a {@code id}, delete this stored file's files collection document and associated chunks from a GridFS bucket.
      *
-     *
      * @param clientSession the client session with which to associate this operation
      * @param id the ObjectId of the file to be deleted
      * @since 3.6

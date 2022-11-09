@@ -53,7 +53,7 @@ class DistinctIterableSpecification extends Specification {
 
     def 'should build the expected DistinctOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null])
         def distinctIterable = new DistinctIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
                 executor, 'field', new BsonDocument(), true)
 
@@ -84,7 +84,7 @@ class DistinctIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def distinctIterable = new DistinctIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, executor, 'field', new BsonDocument())
 
@@ -129,7 +129,7 @@ class DistinctIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -143,7 +143,7 @@ class DistinctIterableSpecification extends Specification {
                 }
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new DistinctIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, ReadConcern.LOCAL,
                 executor, 'field', new BsonDocument())
 

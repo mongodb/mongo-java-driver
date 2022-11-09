@@ -29,7 +29,7 @@ class PropertyCodecRegistryImpl implements PropertyCodecRegistry {
 
     PropertyCodecRegistryImpl(final PojoCodec<?> pojoCodec, final CodecRegistry codecRegistry,
                               final List<PropertyCodecProvider> propertyCodecProviders) {
-        List<PropertyCodecProvider> augmentedProviders = new ArrayList<PropertyCodecProvider>();
+        List<PropertyCodecProvider> augmentedProviders = new ArrayList<>();
         if (propertyCodecProviders != null) {
             augmentedProviders.addAll(propertyCodecProviders);
         }

@@ -45,7 +45,7 @@ import static org.bson.internal.UuidHelper.encodeUuidToBinary
 class BasicBSONDecoderSpecification extends Specification {
 
     @Subject
-    private final BasicBSONDecoder bsonDecoder = new BasicBSONDecoder();
+    private final BasicBSONDecoder bsonDecoder = new BasicBSONDecoder()
 
     def setupSpec() {
         Map.metaClass.bitwiseNegate = { new BasicBSONObject(delegate as Map) }
@@ -56,7 +56,7 @@ class BasicBSONDecoderSpecification extends Specification {
 
     def 'should decode from input stream'() {
         setup:
-        InputStream is = new ByteArrayInputStream((byte[]) [12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]);
+        InputStream is = new ByteArrayInputStream((byte[]) [12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0])
 
         when:
         BSONObject document = bsonDecoder.readObject(is)

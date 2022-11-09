@@ -43,7 +43,7 @@ public abstract class Optional<T> {
         if (it == null) {
             return (Optional<T>) Optional.NONE;
         } else {
-            return new Optional.Some<T>(it);
+            return new Optional.Some<>(it);
         }
     }
 

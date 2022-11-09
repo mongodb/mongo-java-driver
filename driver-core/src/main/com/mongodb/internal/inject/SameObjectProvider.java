@@ -31,7 +31,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 public final class SameObjectProvider<T> implements Provider<T> {
     private final AtomicReference<T> object;
 
-    private SameObjectProvider(final @Nullable T o) {
+    private SameObjectProvider(@Nullable final T o) {
         object = new AtomicReference<>();
         if (o != null) {
             initialize(o);

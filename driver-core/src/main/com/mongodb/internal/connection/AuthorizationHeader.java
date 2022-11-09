@@ -60,15 +60,15 @@ final class AuthorizationHeader {
 
     static String createCanonicalRequest(final String method, final String query, final String body,
                                          final Map<String, String> requestHeaders) throws SaslException {
-        final String headers = getCanonicalHeaders(requestHeaders);
-        final String signedHeaders = getSignedHeaders(requestHeaders);
+        String headers = getCanonicalHeaders(requestHeaders);
+        String signedHeaders = getSignedHeaders(requestHeaders);
 
-        final List<String> request = Arrays.asList(method, "/", query, headers, signedHeaders, hash(body));
+        List<String> request = Arrays.asList(method, "/", query, headers, signedHeaders, hash(body));
         return String.join("\n", request);
     }
 
     static String createStringToSign(final String hash, final String timestamp, final String credentialScope) {
-        final List<String> toSign = Arrays.asList(AWS4_HMAC_SHA256, timestamp, credentialScope, hash);
+        List<String> toSign = Arrays.asList(AWS4_HMAC_SHA256, timestamp, credentialScope, hash);
         return String.join("\n", toSign);
     }
 

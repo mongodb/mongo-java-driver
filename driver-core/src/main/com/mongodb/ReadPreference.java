@@ -226,7 +226,7 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference primaryPreferred(final long maxStaleness, final TimeUnit timeUnit) {
-        return new PrimaryPreferredReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new PrimaryPreferredReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**
@@ -245,7 +245,7 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference secondary(final long maxStaleness, final TimeUnit timeUnit) {
-        return new SecondaryReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new SecondaryReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**
@@ -264,7 +264,7 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference secondaryPreferred(final long maxStaleness, final TimeUnit timeUnit) {
-        return new SecondaryPreferredReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new SecondaryPreferredReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**
@@ -283,7 +283,7 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference nearest(final long maxStaleness, final TimeUnit timeUnit) {
-        return new NearestReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new NearestReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**

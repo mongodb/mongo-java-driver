@@ -39,14 +39,10 @@ public class BenchmarkSuite {
     private static final int MAX_TIME_SECONDS = 300;
 
     private static final Class DOCUMENT_CLASS = Document.class;
-    private static final IdRemover<Document> ID_REMOVER = new IdRemover<Document>() {
-        public void removeId(final Document document) {
-            document.remove("_id");
-        }
-    };
+    private static final IdRemover<Document> ID_REMOVER = document -> document.remove("_id");
     private static final Codec<Document> DOCUMENT_CODEC = getDefaultCodecRegistry().get(DOCUMENT_CLASS);
 
-    private static final List<BenchmarkResultWriter> WRITERS = Arrays.<BenchmarkResultWriter>asList(
+    private static final List<BenchmarkResultWriter> WRITERS = Arrays.asList(
             new EvergreenBenchmarkResultWriter());
 
     public static void main(String[] args) throws Exception {
@@ -60,15 +56,15 @@ public class BenchmarkSuite {
     private static void runBenchmarks()
             throws Exception {
 
-        runBenchmark(new BsonEncodingBenchmark<Document>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonEncodingBenchmark<Document>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonEncodingBenchmark<Document>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonEncodingBenchmark<>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonEncodingBenchmark<>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonEncodingBenchmark<>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
 
-        runBenchmark(new BsonDecodingBenchmark<Document>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonDecodingBenchmark<Document>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonDecodingBenchmark<Document>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonDecodingBenchmark<>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonDecodingBenchmark<>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonDecodingBenchmark<>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
 
-        runBenchmark(new RunCommandBenchmark<Document>(DOCUMENT_CODEC));
+        runBenchmark(new RunCommandBenchmark<>(DOCUMENT_CODEC));
         runBenchmark(new FindOneBenchmark<Document>("single_and_multi_document/tweet.json", BenchmarkSuite.DOCUMENT_CLASS));
 
         runBenchmark(new InsertOneBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10000,

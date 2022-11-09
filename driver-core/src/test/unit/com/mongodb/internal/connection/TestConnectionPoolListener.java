@@ -46,7 +46,7 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
 
     private final Set<String> eventTypes;
 
-    private final List<Object> events = new ArrayList<Object>();
+    private final List<Object> events = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile Class<?> waitingForEventClass;
@@ -69,7 +69,7 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
     public List<Object> getEvents() {
         lock.lock();
         try {
-            return new ArrayList<Object>(events);
+            return new ArrayList<>(events);
         } finally {
             lock.unlock();
         }

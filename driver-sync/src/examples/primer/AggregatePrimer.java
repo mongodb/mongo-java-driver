@@ -20,8 +20,6 @@ import com.mongodb.client.AggregateIterable;
 import org.bson.Document;
 import org.junit.Test;
 
-import java.util.function.Consumer;
-
 import static java.util.Arrays.asList;
 
 // @import: start
@@ -40,12 +38,7 @@ public class AggregatePrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document.toJson());
-            }
-        });
+        iterable.forEach(document -> System.out.println(document.toJson()));
         // @code: end
 
         /*
@@ -74,12 +67,7 @@ public class AggregatePrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document
         // @code: start
-        iterable.forEach(new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document.toJson());
-            }
-        });
+        iterable.forEach(document -> System.out.println(document.toJson()));
         // @code: end
 
         /*

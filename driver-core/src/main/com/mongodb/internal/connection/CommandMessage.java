@@ -70,15 +70,15 @@ public final class CommandMessage extends RequestMessage {
     private final ServerApi serverApi;
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                   final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
+                   @Nullable final ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
-            final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
+                   final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
+                   final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
                 clusterConnectionMode, serverApi);
     }
@@ -86,7 +86,7 @@ public final class CommandMessage extends RequestMessage {
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                   final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
+                   final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
                 payloadFieldNameValidator, clusterConnectionMode, serverApi);
     }
@@ -95,7 +95,7 @@ public final class CommandMessage extends RequestMessage {
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
                    final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                   final ClusterConnectionMode clusterConnectionMode, final @Nullable ServerApi serverApi) {
+                   final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.namespace = namespace;
         this.command = command;

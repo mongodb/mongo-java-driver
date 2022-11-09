@@ -18,13 +18,14 @@ package org.bson.codecs.pojo.entities.conventions;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class CollectionsGetterImmutableModel {
 
     private final List<Integer> listField;
 
     public CollectionsGetterImmutableModel() {
-        this(Collections.<Integer>emptyList());
+        this(Collections.emptyList());
     }
 
     public CollectionsGetterImmutableModel(final List<Integer> listField) {
@@ -46,7 +47,7 @@ public class CollectionsGetterImmutableModel {
 
         CollectionsGetterImmutableModel that = (CollectionsGetterImmutableModel) o;
 
-        return listField != null ? listField.equals(that.listField) : that.listField == null;
+        return Objects.equals(listField, that.listField);
     }
 
     @Override

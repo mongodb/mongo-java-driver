@@ -248,7 +248,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         given:
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(4, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false)
 
         when:
         cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
@@ -276,7 +276,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     def 'should block waiting for next batch on a tailable cursor'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData)
 
 
         when:
@@ -319,7 +319,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         given:
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), Document.parse('{}'))
-        def firstBatch = executeQuery(new BsonDocument('_id', BsonNull.VALUE), 0, 1, true, true);
+        def firstBatch = executeQuery(new BsonDocument('_id', BsonNull.VALUE), 0, 1, true, true)
 
         when:
         cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 1, 500, new DocumentCodec(), null, connectionSource, connection)
@@ -434,7 +434,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
             }
         }
 
-        def futureResultCallback = new FutureResultCallback<BsonDocument>();
+        def futureResultCallback = new FutureResultCallback<BsonDocument>()
         connection.commandAsync(getDatabaseName(), findCommand, NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
                     connectionSource.sessionContext, binding.getServerApi(), IgnorableRequestContext.INSTANCE, futureResultCallback)
@@ -447,6 +447,6 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
                 new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
                         .append('collection', new BsonString(namespace.getCollectionName())),
                 NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                connectionSource.getServerApi());
+                connectionSource.getServerApi())
     }
 }

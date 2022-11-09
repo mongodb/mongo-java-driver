@@ -68,7 +68,7 @@ public class NativeAuthenticatorUnitTest {
     public void testFailedAuthenticationAsync() {
         enqueueUnsuccessfulReplies();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
         subject.authenticateAsync(connection, connectionDescription, futureCallback);
 
         try {
@@ -101,7 +101,7 @@ public class NativeAuthenticatorUnitTest {
         enqueueSuccessfulReplies();
         enqueueSuccessfulReplies();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
         subject.authenticateAsync(connection, connectionDescription, futureCallback);
 
         futureCallback.get();

@@ -19,7 +19,6 @@ package org.bson.codecs.pojo.entities;
 public final class ConcreteStandAloneAbstractInterfaceModel extends AbstractInterfaceModel {
 
     public ConcreteStandAloneAbstractInterfaceModel() {
-        super();
     }
 
     public ConcreteStandAloneAbstractInterfaceModel(final String name) {

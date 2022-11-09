@@ -119,7 +119,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
     def 'should authorize when successfully authenticated with Subject property'() {
         when:
         def loginContext = new LoginContext(getLoginContextName())
-        loginContext.login();
+        loginContext.login()
         def subject = loginContext.getSubject()
 
         then:
@@ -145,10 +145,10 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
     def 'should throw MongoSecurityException when authentication fails with Subject property'() {
         when:
-        LoginContext context = new LoginContext(getLoginContextName());
-        context.login();
+        LoginContext context = new LoginContext(getLoginContextName())
+        context.login()
 
-        Subject subject = context.getSubject();
+        Subject subject = context.getSubject()
 
         then:
         subject != null
@@ -188,11 +188,11 @@ class GSSAPIAuthenticationSpecification extends Specification {
     }
 
     private static MongoCredential getMongoCredential(final Map<String, Object> saslClientProperties) {
-        getMongoCredential().withMechanismProperty(MongoCredential.JAVA_SASL_CLIENT_PROPERTIES_KEY, saslClientProperties);
+        getMongoCredential().withMechanismProperty(MongoCredential.JAVA_SASL_CLIENT_PROPERTIES_KEY, saslClientProperties)
     }
 
     private static MongoCredential getMongoCredential(final Subject subject) {
-        getMongoCredential(getMongoCredential(), subject);
+        getMongoCredential(getMongoCredential(), subject)
     }
 
     private static MongoCredential getMongoCredential(final MongoCredential mongoCredential, final Subject subject) {
@@ -217,9 +217,9 @@ class GSSAPIAuthenticationSpecification extends Specification {
 
     private static void openConnection(final InternalConnection connection, final boolean async) {
         if (async) {
-            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>()
             connection.openAsync(futureResultCallback)
-            futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS);
+            futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS)
         } else {
             connection.open()
         }

@@ -136,7 +136,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
 
             @Override
             public MongoChangeStreamCursor<TDocument> cursor() {
-                return new MongoChangeStreamCursorImpl<TDocument>(execute(), codecRegistry.get(clazz), initialResumeToken());
+                return new MongoChangeStreamCursorImpl<>(execute(), codecRegistry.get(clazz), initialResumeToken());
             }
 
             @Override
@@ -184,20 +184,17 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
 
     @Override
     public MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor() {
-        return new MongoChangeStreamCursorImpl<ChangeStreamDocument<TResult>>(execute(), codec, initialResumeToken());
+        return new MongoChangeStreamCursorImpl<>(execute(), codec, initialResumeToken());
     }
 
     @Nullable
     @Override
     public ChangeStreamDocument<TResult> first() {
-        MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor = cursor();
-        try {
+        try (MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor = cursor()) {
             if (!cursor.hasNext()) {
                 return null;
             }
             return cursor.next();
-        } finally {
-            cursor.close();
         }
     }
 

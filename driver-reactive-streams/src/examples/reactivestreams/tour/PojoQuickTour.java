@@ -69,7 +69,7 @@ public class PojoQuickTour {
         MongoDatabase database = mongoClient.getDatabase("mydb").withCodecRegistry(pojoCodecRegistry);
 
         // get a handle to the "people" collection
-        final MongoCollection<Person> collection = database.getCollection("people", Person.class);
+        MongoCollection<Person> collection = database.getCollection("people", Person.class);
 
         // drop all the data in it
         ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
@@ -77,7 +77,7 @@ public class PojoQuickTour {
         successSubscriber.await();
 
         // make a document and insert it
-        final Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
+        Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
         System.out.println("Original Person Model: " + ada);
 
         ObservableSubscriber<InsertOneResult> insertOneSubscriber = new OperationSubscriber<>();

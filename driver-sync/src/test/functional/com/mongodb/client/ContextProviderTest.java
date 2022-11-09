@@ -50,11 +50,8 @@ public class ContextProviderTest {
     @Test
     public void shouldPropagateExceptionFromContextProvider() {
             try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
-                    .contextProvider(new SynchronousContextProvider() {
-                        @Override
-                        public RequestContext getContext() {
-                            throw new RuntimeException();
-                        }
+                    .contextProvider((SynchronousContextProvider) () -> {
+                        throw new RuntimeException();
                     })
                     .build())) {
 
@@ -92,12 +89,7 @@ public class ContextProviderTest {
 
         TestCommandListener commandListener = new TestCommandListener(requestContext);
         try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
-                .contextProvider(new SynchronousContextProvider() {
-                    @Override
-                    public RequestContext getContext() {
-                        return requestContext;
-                    }
-                })
+                .contextProvider((SynchronousContextProvider) () -> requestContext)
                 .addCommandListener(commandListener)
                 .build())) {
 

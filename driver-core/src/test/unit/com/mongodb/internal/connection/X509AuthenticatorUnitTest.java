@@ -69,7 +69,7 @@ public class X509AuthenticatorUnitTest {
     public void testFailedAuthenticationAsync() {
         enqueueFailedAuthenticationReply();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
         subject.authenticateAsync(connection, connectionDescription, futureCallback);
 
         try {
@@ -101,7 +101,7 @@ public class X509AuthenticatorUnitTest {
     public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
         enqueueSuccessfulAuthenticationReply();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
         subject.authenticateAsync(connection, connectionDescription, futureCallback);
 
         futureCallback.get();

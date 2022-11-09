@@ -36,7 +36,7 @@ class MongoClientURISpecification extends Specification {
 
     def 'should throw Exception if URI does not have a trailing slash'() {
         when:
-        new MongoClientURI('mongodb://localhost?wtimeoutMS=5');
+        new MongoClientURI('mongodb://localhost?wtimeoutMS=5')
 
         then:
         thrown(IllegalArgumentException)
@@ -44,7 +44,7 @@ class MongoClientURISpecification extends Specification {
 
     def 'should not throw an Exception if URI contains an unknown option'() {
         when:
-        new MongoClientURI('mongodb://localhost/?unknownOption=5');
+        new MongoClientURI('mongodb://localhost/?unknownOption=5')
 
         then:
         notThrown(IllegalArgumentException)
@@ -53,12 +53,12 @@ class MongoClientURISpecification extends Specification {
     @Unroll
     def 'should parse #uri into correct components'() {
         expect:
-        uri.getHosts().size() == num;
-        uri.getHosts() == hosts;
-        uri.getDatabase() == database;
-        uri.getCollection() == collection;
-        uri.getUsername() == username;
-        uri.getPassword() == password;
+        uri.getHosts().size() == num
+        uri.getHosts() == hosts
+        uri.getDatabase() == database
+        uri.getCollection() == collection
+        uri.getUsername() == username
+        uri.getPassword() == password
 
         where:
         uri                                            | num | hosts              | database | collection | username | password
@@ -95,7 +95,7 @@ class MongoClientURISpecification extends Specification {
 
     def 'should correctly parse different write concerns'() {
         expect:
-        uri.getOptions().getWriteConcern() == writeConcern;
+        uri.getOptions().getWriteConcern() == writeConcern
 
         where:
         uri                                                                                  | writeConcern
@@ -113,7 +113,7 @@ class MongoClientURISpecification extends Specification {
     @Unroll
     def 'should correctly parse legacy wtimeout write concerns'() {
         expect:
-        uri.getOptions().getWriteConcern() == writeConcern;
+        uri.getOptions().getWriteConcern() == writeConcern
 
         where:
         uri                                                                                | writeConcern
@@ -170,7 +170,7 @@ class MongoClientURISpecification extends Specification {
 
     def 'should have correct defaults for options'() {
         when:
-        MongoClientOptions options = new MongoClientURI('mongodb://localhost').getOptions();
+        MongoClientOptions options = new MongoClientURI('mongodb://localhost').getOptions()
 
         then:
         options.getConnectionsPerHost() == 100
@@ -283,7 +283,7 @@ class MongoClientURISpecification extends Specification {
     @Unroll
     def 'should correct parse read preference for #readPreference'() {
         expect:
-        uri.getOptions().getReadPreference() == readPreference;
+        uri.getOptions().getReadPreference() == readPreference
 
         where:
         uri                                                      | readPreference
@@ -301,14 +301,14 @@ class MongoClientURISpecification extends Specification {
 
     def 'should apply SRV parameters'() {
         when:
-        def uri = new MongoClientURI('mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=4&srvServiceName=test');
+        def uri = new MongoClientURI('mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=4&srvServiceName=test')
 
         then:
         uri.getSrvMaxHosts() == 4
         uri.getSrvServiceName() == 'test'
 
         when:
-        def options = uri.getOptions();
+        def options = uri.getOptions()
 
         then:
         options.getSrvMaxHosts() == 4
