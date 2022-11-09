@@ -50,7 +50,7 @@ public class ClientSideEncryptionExplicitEncryptionOnlyTour {
 
     /**
      * Run this main method to see the output of this quick example.
-     *
+     * <p>
      * Requires the mongodb-crypt library in the class path and mongocryptd on the system path.
      * Assumes the schema has already been created in MongoDB.
      *

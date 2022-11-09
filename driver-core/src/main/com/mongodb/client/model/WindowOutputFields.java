@@ -362,7 +362,6 @@ public final class WindowOutputFields {
     /**
      * Builds a window output field of the sample covariance between the evaluation results of the two expressions over the {@code window}.
      *
-     *
      * @param path The output field path.
      * @param expression1 The first expression.
      * @param expression2 The second expression.

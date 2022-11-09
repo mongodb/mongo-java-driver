@@ -53,7 +53,7 @@ public class MongoClientFactory implements ObjectFactory {
      *
      * Specification of the connection string in the {@code environment} parameter takes precedence over specification in the {@code obj}
      * parameter.  The {@code name} and {@code nameCtx} parameters are ignored.
-     *
+     * <p>
      * If a non-empty connection string is not specified in either of these two ways, a {@link MongoException} is thrown.
      * @return an instance of {@link MongoClient} based on the specified connection string
      */

@@ -49,7 +49,7 @@ public class ClientSideEncryptionQueryableEncryptionTour {
 
     /**
      * Run this main method to test queryable encryption.
-     *
+     * <p>
      * Requires the latest mongodb-crypt library in the class path.
      *
      * @param args ignored args

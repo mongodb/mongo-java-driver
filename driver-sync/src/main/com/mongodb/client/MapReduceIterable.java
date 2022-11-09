@@ -160,7 +160,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets if the post-processing step will prevent MongoDB from locking the database.
-     *
+     * <p>
      * Valid only with the {@code MapReduceAction.MERGE} or {@code MapReduceAction.REDUCE} actions.
      *
      * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.

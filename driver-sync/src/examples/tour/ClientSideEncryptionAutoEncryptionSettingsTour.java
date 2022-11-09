@@ -42,7 +42,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
 
     /**
      * Run this main method to see the output of this quick example.
-     *
+     * <p>
      * Requires the mongodb-crypt library in the class path and mongocryptd on the system path.
      *
      * @param args ignored args

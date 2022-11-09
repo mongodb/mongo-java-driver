@@ -349,7 +349,7 @@ public abstract class AbstractClientSideEncryptionTest {
     /**
      * If the operation returns a raw command response, eg from runCommand, then compare only the fields present in the expected result
      * document.
-     *
+     * <p>
      * Otherwise, compare the method's return value to result using the same logic as the CRUD Spec Tests runner.
      */
     private void assertBsonValue(final String message, final BsonValue expectedResult, final BsonValue actualResult) {

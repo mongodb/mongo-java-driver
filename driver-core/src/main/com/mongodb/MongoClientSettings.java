@@ -519,7 +519,7 @@ public final class MongoClientSettings {
 
         /**
          * Sets the auto-encryption settings
-         *
+         * <p>
          * A separate, internal {@code MongoClient} is created if any of the following are true:
          *
          * <ul>

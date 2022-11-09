@@ -184,7 +184,7 @@ public final class ChangeStreamDocument<TDocument> {
 
     /**
      * Returns the namespace, derived from the "ns" field in a change stream document.
-     *
+     * <p>
      * The invalidate operation type does include a MongoNamespace in the ChangeStreamDocument response. The
      * dropDatabase operation type includes a MongoNamespace, but does not include a collection name as part
      * of the namespace.
@@ -207,7 +207,7 @@ public final class ChangeStreamDocument<TDocument> {
 
     /**
      * Returns the namespace document, derived from the "ns" field in a change stream document.
-     *
+     * <p>
      * The namespace document is a BsonDocument containing the values associated with a MongoNamespace. The
      * 'db' key refers to the database name and the 'coll' key refers to the collection name.
      *

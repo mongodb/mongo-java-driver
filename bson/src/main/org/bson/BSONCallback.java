@@ -22,7 +22,7 @@ import org.bson.types.ObjectId;
 /**
  * A callback interface for describing the structure of a BSON document. Implementations of this define how to turn BSON read from MongoDB
  * into Java objects.
- *
+ * <p>
  * See the <a href="http://bsonspec.org/spec.html">BSON Spec</a>.
  */
 public interface BSONCallback {

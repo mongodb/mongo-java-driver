@@ -110,7 +110,7 @@ public final class MongoCredential {
 
     /**
      * Mechanism property key for overriding the SaslClient properties for GSSAPI authentication.
-     *
+     * <p>
      * The value of this property must be a {@code Map<String, Object>}.  In most cases there is no need to set this mechanism property.
      * But if an application does:
      * <ul>
@@ -205,7 +205,6 @@ public final class MongoCredential {
      * the driver uses the SCRAM-SHA-1 mechanism regardless of whether the server you are connecting to supports the
      * authentication mechanism.  Otherwise use the {@link #createCredential(String, String, char[])} method to allow the driver to
      * negotiate the best mechanism based on the server version.
-     *
      *
      * @param userName the non-null user name
      * @param source the source where the user is defined.
