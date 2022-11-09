@@ -84,7 +84,7 @@ class DBRefCodecSpecification extends Specification {
     def 'codec should throw UnsupportedOperationException on decode'() {
         when:
         new DBRefCodec(fromProviders([new ValueCodecProvider()])).decode(new BsonDocumentReader(new BsonDocument()),
-                                                                                 DecoderContext.builder().build());
+                                                                                 DecoderContext.builder().build())
 
         then:
         thrown(UnsupportedOperationException)

@@ -57,7 +57,7 @@ public class ConnectionDescription {
      */
     public ConnectionDescription(final ServerId serverId) {
         this(new ConnectionId(serverId), 0, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
-             getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.<String>emptyList());
+             getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.emptyList());
     }
 
     /**
@@ -122,7 +122,7 @@ public class ConnectionDescription {
         this.maxDocumentSize = maxDocumentSize;
         this.maxMessageSize = maxMessageSize;
         this.maxWireVersion = maxWireVersion;
-        this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
+        this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<>(compressors)));
         this.saslSupportedMechanisms = saslSupportedMechanisms;
     }
     /**

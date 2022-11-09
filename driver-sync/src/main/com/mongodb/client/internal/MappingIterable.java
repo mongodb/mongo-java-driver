@@ -36,7 +36,7 @@ class MappingIterable<U, V> implements MongoIterable<V> {
 
     @Override
     public MongoCursor<V> iterator() {
-        return new MongoMappingCursor<U, V>(iterable.iterator(), mapper);
+        return new MongoMappingCursor<>(iterable.iterator(), mapper);
     }
 
     @Override
@@ -56,22 +56,12 @@ class MappingIterable<U, V> implements MongoIterable<V> {
 
     @Override
     public void forEach(final Consumer<? super V> block) {
-        iterable.forEach(new Consumer<U>() {
-            @Override
-            public void accept(final U document) {
-                block.accept(mapper.apply(document));
-            }
-        });
+        iterable.forEach(document -> block.accept(mapper.apply(document)));
     }
 
     @Override
     public <A extends Collection<? super V>> A into(final A target) {
-        forEach(new Consumer<V>() {
-            @Override
-            public void accept(final V v) {
-                target.add(v);
-            }
-        });
+        forEach(v -> target.add(v));
         return target;
     }
 
@@ -83,7 +73,7 @@ class MappingIterable<U, V> implements MongoIterable<V> {
 
     @Override
     public <W> MongoIterable<W> map(final Function<V, W> newMap) {
-        return new MappingIterable<V, W>(this, newMap);
+        return new MappingIterable<>(this, newMap);
     }
 
     MongoIterable<U> getMapped() {

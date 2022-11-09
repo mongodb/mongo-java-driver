@@ -55,7 +55,7 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
 
     /**
      * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param maxAwaitTime  the max await time

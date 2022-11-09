@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
@@ -45,7 +44,7 @@ public class PlainAuthenticatorTest {
     private String userName;
     private String source;
     private String password;
-    private StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
+    private final StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
 
     @Before
     public void setUp() {
@@ -54,7 +53,7 @@ public class PlainAuthenticatorTest {
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         internalConnection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE, streamFactory, null, null,
-                null, Collections.<MongoCompressor>emptyList(), null, getServerApi()).create(new ServerId(new ClusterId(),
+                null, Collections.emptyList(), null, getServerApi()).create(new ServerId(new ClusterId(),
                 new ServerAddress(host)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
     }

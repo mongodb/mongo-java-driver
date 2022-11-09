@@ -34,15 +34,15 @@ import static java.util.regex.Pattern.compile
 class LazyDBObjectSpecification extends Specification {
     BSONEncoder encoder = new DefaultDBEncoder()
     OutputBuffer buf = new BasicOutputBuffer()
-    ByteArrayOutputStream bios;
-    LazyDBDecoder lazyDBDecoder;
-    DefaultDBDecoder defaultDBDecoder;
+    ByteArrayOutputStream bios
+    LazyDBDecoder lazyDBDecoder
+    DefaultDBDecoder defaultDBDecoder
 
     def setup() {
-        encoder.set(buf);
-        bios = new ByteArrayOutputStream();
-        lazyDBDecoder = new LazyDBDecoder();
-        defaultDBDecoder = new DefaultDBDecoder();
+        encoder.set(buf)
+        bios = new ByteArrayOutputStream()
+        lazyDBDecoder = new LazyDBDecoder()
+        defaultDBDecoder = new DefaultDBDecoder()
     }
 
     def 'should lazily decode a DBRef'() {
@@ -80,12 +80,12 @@ class LazyDBObjectSpecification extends Specification {
 
     def testToString() throws IOException {
         given:
-        DBObject origDoc = new BasicDBObject('x', true);
-        encoder.putObject(origDoc);
-        buf.pipe(bios);
+        DBObject origDoc = new BasicDBObject('x', true)
+        encoder.putObject(origDoc)
+        buf.pipe(bios)
 
         when:
-        DBObject doc = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        DBObject doc = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         then:
         doc.toString() == '{"x": true}'
@@ -93,37 +93,37 @@ class LazyDBObjectSpecification extends Specification {
 
     def testDecodeAllTypes() throws IOException {
         given:
-        DBObject origDoc = getTestDocument();
-        encoder.putObject(origDoc);
-        buf.pipe(bios);
+        DBObject origDoc = getTestDocument()
+        encoder.putObject(origDoc)
+        buf.pipe(bios)
 
         when:
-        DBObject doc = defaultDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        DBObject doc = defaultDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         then:
-        assertDocsSame(origDoc, doc);
+        assertDocsSame(origDoc, doc)
     }
 
     def testLazyDecodeAllTypes() throws InterruptedException, IOException {
         given:
-        DBObject origDoc = getTestDocument();
-        encoder.putObject(origDoc);
-        buf.pipe(bios);
+        DBObject origDoc = getTestDocument()
+        encoder.putObject(origDoc)
+        buf.pipe(bios)
 
         when:
-        DBObject doc = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        DBObject doc = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         then:
-        assertDocsSame(origDoc, doc);
+        assertDocsSame(origDoc, doc)
     }
 
     def testMissingKey() throws IOException {
         given:
-        encoder.putObject(getSimpleTestDocument());
-        buf.pipe(bios);
+        encoder.putObject(getSimpleTestDocument())
+        buf.pipe(bios)
 
         when:
-        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         then:
         decodedObj['missingKey'] == null
@@ -131,27 +131,27 @@ class LazyDBObjectSpecification extends Specification {
 
     def testKeySet() throws IOException {
         given:
-        DBObject obj = getSimpleTestDocument();
-        encoder.putObject(obj);
-        buf.pipe(bios);
+        DBObject obj = getSimpleTestDocument()
+        encoder.putObject(obj)
+        buf.pipe(bios)
 
         when:
-        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         then:
         decodedObj != null
         decodedObj instanceof LazyDBObject
-        Set<String> keySet = decodedObj.keySet();
+        Set<String> keySet = decodedObj.keySet()
 
         keySet.size() == 6
         !keySet.isEmpty()
 
         keySet.toArray().length == 6
 
-        def typedArray = keySet.toArray(new String[0]);
+        def typedArray = keySet.toArray(new String[0])
         typedArray.length == 6
 
-        def array = keySet.toArray(new String[7]);
+        def array = keySet.toArray(new String[7])
         array.length == 7
         array[6] == null
 
@@ -171,44 +171,44 @@ class LazyDBObjectSpecification extends Specification {
 
     def testEntrySet() throws IOException {
         given:
-        DBObject obj = getSimpleTestDocument();
-        encoder.putObject(obj);
-        buf.pipe(bios);
+        DBObject obj = getSimpleTestDocument()
+        encoder.putObject(obj)
+        buf.pipe(bios)
 
         when:
-        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         then:
-        Set<Map.Entry<String, Object>> entrySet = decodedObj.entrySet();
+        Set<Map.Entry<String, Object>> entrySet = decodedObj.entrySet()
         entrySet.size() == 6
         !entrySet.isEmpty()
 
         entrySet.toArray().length == 6   // kind of a lame test
 
-        Map.Entry<String, Object>[] typedArray = entrySet.toArray(new Map.Entry[entrySet.size()]);
+        Map.Entry<String, Object>[] typedArray = entrySet.toArray(new Map.Entry[entrySet.size()])
         typedArray.length == 6
 
-        def array = entrySet.toArray(new Map.Entry[7]);
+        def array = entrySet.toArray(new Map.Entry[7])
         array.length == 7
         array[6] == null
     }
 
     def testPipe() throws IOException {
         given:
-        DBObject obj = getSimpleTestDocument();
-        encoder.putObject(obj);
-        buf.pipe(bios);
+        DBObject obj = getSimpleTestDocument()
+        encoder.putObject(obj)
+        buf.pipe(bios)
 
         when:
-        LazyDBObject lazyDBObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
-        bios.reset();
-        int byteCount = lazyDBObj.pipe(bios);
+        LazyDBObject lazyDBObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
+        bios.reset()
+        int byteCount = lazyDBObj.pipe(bios)
 
         then:
         lazyDBObj.getBSONSize() == byteCount
 
         when:
-        LazyDBObject lazyDBObjectFromPipe = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        LazyDBObject lazyDBObjectFromPipe = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         then:
         lazyDBObj == lazyDBObjectFromPipe
@@ -217,24 +217,24 @@ class LazyDBObjectSpecification extends Specification {
     def testLazyDBEncoder() throws IOException {
         // this is all set up just to get a lazy db object that can be encoded
         given:
-        DBObject obj = getSimpleTestDocument();
-        encoder.putObject(obj);
-        buf.pipe(bios);
+        DBObject obj = getSimpleTestDocument()
+        encoder.putObject(obj)
+        buf.pipe(bios)
         LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(
-                new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+                new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null)
 
         // now to the actual test
         when:
-        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
-        int size = new LazyDBEncoder().writeObject(outputBuffer, lazyDBObj);
+        BasicOutputBuffer outputBuffer = new BasicOutputBuffer()
+        int size = new LazyDBEncoder().writeObject(outputBuffer, lazyDBObj)
 
         then:
         lazyDBObj.getBSONSize() == size
         lazyDBObj.getBSONSize() == outputBuffer.size()
 
         // this is just asserting that the encoder actually piped the correct bytes
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        lazyDBObj.pipe(baos);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        lazyDBObj.pipe(baos)
         baos.toByteArray() == outputBuffer.toByteArray()
     }
 
@@ -244,7 +244,7 @@ class LazyDBObjectSpecification extends Specification {
          second: 'str1',
          third : true,
          fourth : null,
-         fifth: [firstNested: 1] as BasicDBObject] as BasicDBObject;
+         fifth: [firstNested: 1] as BasicDBObject] as BasicDBObject
     }
 
     def getTestDocument() {

@@ -70,7 +70,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 [], null, getServerApi()).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
-        getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)));
+        getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
         def countCommand = new BsonDocument('count', new BsonString(getCollectionName()))
         countCommand.put('query', new BsonDocument('$where', new BsonString('sleep(5050); return true;')))
 
@@ -106,7 +106,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 [], null, getServerApi()).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
-        getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)));
+        getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
         def countCommand = new BsonDocument('count', new BsonString(getCollectionName()))
         countCommand.put('query', new BsonDocument('$where', new BsonString('sleep(5050); return true;')))
 

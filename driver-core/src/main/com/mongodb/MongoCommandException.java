@@ -105,7 +105,7 @@ public class MongoCommandException extends MongoServerException {
         if (errorCodeName.isEmpty()) {
             return Integer.toString(errorCode);
         } else {
-            return String.format("%d (%s)", errorCode, errorCodeName);
+            return format("%d (%s)", errorCode, errorCodeName);
         }
     }
 

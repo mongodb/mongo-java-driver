@@ -53,7 +53,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public BSONObject create(final boolean array, final List<String> path) {
-        return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : Collections.<String>emptyList());
+        return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : Collections.emptyList());
     }
 
     @Override
@@ -77,10 +77,5 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     /**
      * The {@code DBCallbackFactory} for {@code DefaultDBCallback} instances.
      */
-    public static final DBCallbackFactory FACTORY = new DBCallbackFactory() {
-        @Override
-        public DBCallback create(final DBCollection collection) {
-            return new DefaultDBCallback(collection);
-        }
-    };
+    public static final DBCallbackFactory FACTORY = collection -> new DefaultDBCallback(collection);
 }

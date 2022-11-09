@@ -25,9 +25,9 @@ import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.connection.AsynchronousChannelStream;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import reactor.core.publisher.Mono;
@@ -107,7 +107,7 @@ class KeyManagementService implements Closeable {
         int bytesNeeded = keyDecryptor.bytesNeeded();
         if (bytesNeeded > 0) {
             AsynchronousChannelStream asyncStream = (AsynchronousChannelStream) stream;
-            final ByteBuf buffer = asyncStream.getBuffer(bytesNeeded);
+            ByteBuf buffer = asyncStream.getBuffer(bytesNeeded);
             asyncStream.getChannel().read(buffer.asNIO(), asyncStream.getSettings().getReadTimeout(MILLISECONDS), MILLISECONDS, null,
                                           new CompletionHandler<Integer, Void>() {
 

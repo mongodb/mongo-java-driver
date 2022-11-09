@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 class CommandResultCodecProvider<P> implements CodecProvider {
-    private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
+    private final Map<Class<?>, Codec<?>> codecs = new HashMap<>();
     private final Decoder<P> payloadDecoder;
     private final List<String> fieldsContainingPayload;
 
@@ -72,7 +72,7 @@ class CommandResultCodecProvider<P> implements CodecProvider {
         }
 
         if (clazz == BsonDocument.class) {
-            return (Codec<T>) new CommandResultDocumentCodec<P>(registry, payloadDecoder, fieldsContainingPayload);
+            return (Codec<T>) new CommandResultDocumentCodec<>(registry, payloadDecoder, fieldsContainingPayload);
         }
 
         return null;

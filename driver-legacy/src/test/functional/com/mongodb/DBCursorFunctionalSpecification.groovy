@@ -74,7 +74,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
     def 'should use provided hint for count'() {
         expect:
-        collection.createIndex(new BasicDBObject('a', 1));
+        collection.createIndex(new BasicDBObject('a', 1))
         collection.find().hint('a_1').count() == 1
         collection.find().hint(new BasicDBObject('a', 1)).count() == 1
     }
@@ -104,14 +104,14 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().count() == 2
 
         when:
-        collection.createIndex(new BasicDBObject('a', 1));
+        collection.createIndex(new BasicDBObject('a', 1))
 
         then:
         collection.find(new BasicDBObject('a', 1)).hint('_id_').count() == 1
         collection.find().hint('_id_').count() == 2
 
         when:
-        collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
+        collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true))
 
         then:
         collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == 0

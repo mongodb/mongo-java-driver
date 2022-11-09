@@ -137,22 +137,17 @@ public final class ConventionsTest {
                 .discriminatorKey("_cls")
                 .discriminator("Simples")
                 .conventions(singletonList(CLASS_AND_PROPERTY_CONVENTION))
-                .instanceCreatorFactory(new InstanceCreatorFactory<SimpleModel>() {
-                    @Override
-                    public InstanceCreator<SimpleModel> create() {
-                        return null;
-                    }
-                });
+                .instanceCreatorFactory(() -> null);
 
         PropertyModelBuilder<Integer> propertyModelBuilder = (PropertyModelBuilder<Integer>) builder.getProperty("integerField");
         propertyModelBuilder.writeName("id")
-                .propertySerialization(new PropertyModelSerializationImpl<Integer>())
-                .propertyAccessor(new PropertyAccessorTest<Integer>());
+                .propertySerialization(new PropertyModelSerializationImpl<>())
+                .propertyAccessor(new PropertyAccessorTest<>());
 
         PropertyModelBuilder<String> propertyModelBuilder2 = (PropertyModelBuilder<String>) builder.getProperty("stringField");
         propertyModelBuilder2.writeName("_id")
-                .propertySerialization(new PropertyModelSerializationImpl<String>())
-                .propertyAccessor(new PropertyAccessorTest<String>());
+                .propertySerialization(new PropertyModelSerializationImpl<>())
+                .propertyAccessor(new PropertyAccessorTest<>());
 
         ClassModel<SimpleModel> classModel  = builder.idPropertyName("stringField").build();
 

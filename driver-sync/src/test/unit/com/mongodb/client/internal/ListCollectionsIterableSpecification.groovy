@@ -46,7 +46,7 @@ class ListCollectionsIterableSpecification extends Specification {
 
     def 'should build the expected listCollectionOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null]);
+        def executor = new TestOperationExecutor([null, null, null])
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry,
                 readPreference, executor)
                 .filter(new Document('filter', 1))
@@ -92,7 +92,7 @@ class ListCollectionsIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(clientSession, 'db', false, Document, codecRegistry,
                 readPreference, executor)
 
@@ -118,7 +118,7 @@ class ListCollectionsIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -132,7 +132,7 @@ class ListCollectionsIterableSpecification extends Specification {
                 }
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
                 executor)
 

@@ -49,7 +49,7 @@ class CommandMarker implements Closeable {
      *
      * <p>
      * If the extraOptions.cryptSharedLibRequired option is true then the driver MUST NOT attempt to spawn or connect to mongocryptd.
-     *
+     * <p>
      * If the following conditions are met:
      * <ul>
      *  <li>The user's MongoClient is configured for client-side encryption (i.e. bypassAutoEncryption is not false)</li>

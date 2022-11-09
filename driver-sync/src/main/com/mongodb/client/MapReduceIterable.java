@@ -135,7 +135,6 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
      */
-    @SuppressWarnings("deprecation")
     MapReduceIterable<TResult> action(com.mongodb.client.model.MapReduceAction action);
 
     /**
@@ -160,7 +159,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets if the post-processing step will prevent MongoDB from locking the database.
-     *
+     * <p>
      * Valid only with the {@code MapReduceAction.MERGE} or {@code MapReduceAction.REDUCE} actions.
      *
      * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.

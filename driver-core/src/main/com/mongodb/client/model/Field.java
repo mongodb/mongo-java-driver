@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import java.util.Objects;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -28,7 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class Field<TExpression> {
     private final String name;
-    private TExpression value;
+    private final TExpression value;
 
     /**
      * Creates a new field definition for use in $addFields pipeline stages
@@ -70,7 +72,7 @@ public class Field<TExpression> {
         if (!name.equals(field.name)) {
             return false;
         }
-        return value != null ? value.equals(field.value) : field.value == null;
+        return Objects.equals(value, field.value);
 
     }
 

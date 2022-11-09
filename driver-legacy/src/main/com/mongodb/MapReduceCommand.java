@@ -266,7 +266,7 @@ public class MapReduceCommand {
      * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the map and reduce functions
      * @since 2.13
      */
-    public void setJsMode(final @Nullable Boolean jsMode) {
+    public void setJsMode(@Nullable final Boolean jsMode) {
         this.jsMode = jsMode;
     }
 

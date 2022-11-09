@@ -147,7 +147,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         @Override
         public ConnectionDescription getDescription() {
             return new ConnectionDescription(connectionId, 7, ServerType.UNKNOWN, 1000,
-                    getDefaultMaxDocumentSize(), 100000, Collections.<String>emptyList());
+                    getDefaultMaxDocumentSize(), 100000, Collections.emptyList());
 
         }
 

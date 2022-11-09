@@ -29,45 +29,44 @@ import java.io.StringWriter;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 
 // Don't convert to Spock, as Groovy intercepts equals/hashCode methods that we are trying to test
 public class BsonDocumentTest {
-    private BsonDocument emptyDocument = new BsonDocument();
-    private BsonDocument emptyRawDocument = new RawBsonDocument(emptyDocument, new BsonDocumentCodec());
-    private BsonDocument document = new BsonDocument()
+    private final BsonDocument emptyDocument = new BsonDocument();
+    private final BsonDocument emptyRawDocument = new RawBsonDocument(emptyDocument, new BsonDocumentCodec());
+    private final BsonDocument document = new BsonDocument()
                                     .append("a", new BsonInt32(1))
                                     .append("b", new BsonInt32(2))
                                     .append("c", new BsonDocument("x", BsonBoolean.TRUE))
-                                    .append("d", new BsonArray(Arrays.<BsonValue>asList(new BsonDocument("y",
+                                    .append("d", new BsonArray(Arrays.asList(new BsonDocument("y",
                                                                                                          BsonBoolean.FALSE),
                                                                                         new BsonInt32(1))));
 
-    private BsonDocument rawDocument = new RawBsonDocument(document, new BsonDocumentCodec());
+    private final BsonDocument rawDocument = new RawBsonDocument(document, new BsonDocumentCodec());
 
     @Test
     public void shouldBeEqualToItself() {
-        assertTrue(emptyDocument.equals(emptyDocument));
-        assertTrue(document.equals(document));
+        assertEquals(emptyDocument, emptyDocument);
+        assertEquals(document, document);
     }
 
     @Test
     public void shouldBeEqualToEquivalentBsonDocument() {
-        assertTrue(emptyDocument.equals(emptyRawDocument));
-        assertTrue(document.equals(rawDocument));
-        assertTrue(emptyRawDocument.equals(emptyDocument));
-        assertTrue(rawDocument.equals(document));
+        assertEquals(emptyDocument, emptyRawDocument);
+        assertEquals(document, rawDocument);
+        assertEquals(emptyRawDocument, emptyDocument);
+        assertEquals(rawDocument, document);
     }
 
     @Test
     public void shouldNotBeEqualToDifferentBsonDocument() {
         // expect
-        assertFalse(emptyDocument.equals(document));
-        assertFalse(document.equals(emptyRawDocument));
-        assertFalse(document.equals(emptyRawDocument));
-        assertFalse(emptyRawDocument.equals(document));
-        assertFalse(rawDocument.equals(emptyDocument));
+        assertNotEquals(emptyDocument, document);
+        assertNotEquals(document, emptyRawDocument);
+        assertNotEquals(document, emptyRawDocument);
+        assertNotEquals(emptyRawDocument, document);
+        assertNotEquals(rawDocument, emptyDocument);
     }
 
     @Test

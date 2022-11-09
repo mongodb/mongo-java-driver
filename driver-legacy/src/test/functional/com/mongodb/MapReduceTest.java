@@ -130,7 +130,7 @@ public class MapReduceTest extends DatabaseTestCase {
 
         assertNotNull(output.results());
 
-        Map<String, Integer> map = new HashMap<String, Integer>();
+        Map<String, Integer> map = new HashMap<>();
         for (final DBObject r : output.results()) {
             map.put(r.get("_id").toString(), ((Number) (r.get("value"))).intValue());
         }
@@ -171,7 +171,7 @@ public class MapReduceTest extends DatabaseTestCase {
                                                         MapReduceCommand.OutputType.INLINE,
                                                         null);
 
-        Map<String, Object> scope = new HashMap<String, Object>();
+        Map<String, Object> scope = new HashMap<>();
         scope.put("exclude", "a");
         command.setScope(scope);
 
@@ -352,7 +352,7 @@ public class MapReduceTest extends DatabaseTestCase {
     //TODO: test read preferences - always go to primary for non-inline.  Presumably do whatever if inline
 
     private List<DBObject> toList(final Iterable<DBObject> results) {
-        List<DBObject> resultsAsList = new ArrayList<DBObject>();
+        List<DBObject> resultsAsList = new ArrayList<>();
         for (final DBObject result : results) {
             resultsAsList.add(result);
         }
@@ -360,7 +360,7 @@ public class MapReduceTest extends DatabaseTestCase {
     }
 
     private Map<String, Object> toMap(final Iterable<DBObject> result) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         for (final DBObject document : result) {
             map.put((String) document.get("_id"), document.get("value"));
         }

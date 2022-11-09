@@ -96,12 +96,7 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
                      final UuidRepresentation uuidRepresentation) {
         this.registry = notNull("registry", registry);
         this.bsonTypeCodecMap = bsonTypeCodecMap;
-        this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
-            @Override
-            public Object transform(final Object value) {
-                return value;
-            }
-        };
+        this.valueTransformer = valueTransformer != null ? valueTransformer : value -> value;
         this.uuidRepresentation = uuidRepresentation;
     }
 
@@ -125,7 +120,7 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
 
     @Override
     public Map<String, Object> decode(final BsonReader reader, final DecoderContext decoderContext) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {

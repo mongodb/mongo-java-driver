@@ -21,14 +21,13 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.Server;
-import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.session.SessionContext;
@@ -83,25 +82,19 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        final CountDownLatch latch = new CountDownLatch(2);
-        cluster.selectServerAsync(new WritableServerSelector(), new SingleResultCallback<ServerTuple>() {
-            @Override
-            public void onResult(final ServerTuple result, final Throwable t) {
-                if (t == null) {
-                    writeServer = result.getServer();
-                    writeServerDescription = result.getServerDescription();
-                    latch.countDown();
-                }
+        CountDownLatch latch = new CountDownLatch(2);
+        cluster.selectServerAsync(new WritableServerSelector(), (result, t) -> {
+            if (t == null) {
+                writeServer = result.getServer();
+                writeServerDescription = result.getServerDescription();
+                latch.countDown();
             }
         });
-        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), new SingleResultCallback<ServerTuple>() {
-            @Override
-            public void onResult(final ServerTuple result, final Throwable t) {
-                if (t == null) {
-                    readServer = result.getServer();
-                    readServerDescription = result.getServerDescription();
-                    latch.countDown();
-                }
+        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), (result, t) -> {
+            if (t == null) {
+                readServer = result.getServer();
+                readServerDescription = result.getServerDescription();
+                latch.countDown();
             }
         });
 
@@ -111,13 +104,10 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             throw new MongoInternalException("Failure to select server");
         }
 
-        final CountDownLatch writeServerLatch = new CountDownLatch(1);
-        writeServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection result, final Throwable t) {
-                writeConnection = result;
-                writeServerLatch.countDown();
-            }
+        CountDownLatch writeServerLatch = new CountDownLatch(1);
+        writeServer.getConnectionAsync((result, t) -> {
+            writeConnection = result;
+            writeServerLatch.countDown();
         });
 
         awaitLatch(maxWaitTime, timeUnit, writeServerLatch);
@@ -126,14 +116,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             throw new MongoInternalException("Failure to get connection");
         }
 
-        final CountDownLatch readServerLatch = new CountDownLatch(1);
+        CountDownLatch readServerLatch = new CountDownLatch(1);
 
-        readServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection result, final Throwable t) {
-                readConnection = result;
-                readServerLatch.countDown();
-            }
+        readServer.getConnectionAsync((result, t) -> {
+            readConnection = result;
+            readServerLatch.countDown();
         });
         awaitLatch(maxWaitTime, timeUnit, readServerLatch);
 
@@ -250,7 +237,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            isTrue("open", super.getCount() > 0);
+            isTrue("open", getCount() > 0);
             callback.onResult(connection.retain(), null);
         }
 

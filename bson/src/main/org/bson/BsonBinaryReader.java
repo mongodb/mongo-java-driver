@@ -406,7 +406,6 @@ public class BsonBinaryReader extends AbstractBsonReader {
          * Construct an instance.
          */
         protected Mark() {
-            super();
             startPosition = BsonBinaryReader.this.getContext().startPosition;
             size = BsonBinaryReader.this.getContext().size;
             bsonInputMark = BsonBinaryReader.this.bsonInput.getMark(Integer.MAX_VALUE);

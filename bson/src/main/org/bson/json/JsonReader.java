@@ -93,7 +93,6 @@ public class JsonReader extends AbstractBsonReader {
     }
 
     private JsonReader(final JsonScanner scanner) {
-        super();
         this.scanner = scanner;
         setContext(new Context(null, BsonContextType.TOP_LEVEL));
     }
@@ -1006,10 +1005,7 @@ public class JsonReader extends AbstractBsonReader {
             verifyToken(JsonTokenType.END_OBJECT);
 
             return new BsonBinary(type, data);
-        } catch (JsonParseException e) {
-            mark.reset();
-            return null;
-        } catch (NumberFormatException e) {
+        } catch (JsonParseException | NumberFormatException e) {
             mark.reset();
             return null;
         } finally {
@@ -1038,7 +1034,7 @@ public class JsonReader extends AbstractBsonReader {
             JsonToken nameToken = popToken();
             String name = nameToken.getValue(String.class);
             if (!name.equals("$numberLong")) {
-                throw new JsonParseException(String.format("JSON reader expected $numberLong within $date, but found %s", name));
+                throw new JsonParseException(format("JSON reader expected $numberLong within $date, but found %s", name));
             }
             value = visitNumberLongExtendedJson();
             verifyToken(JsonTokenType.END_OBJECT);
@@ -1360,7 +1356,6 @@ public class JsonReader extends AbstractBsonReader {
          * Construct an instance.
          */
         protected Mark() {
-            super();
             pushedToken = JsonReader.this.pushedToken;
             currentValue = JsonReader.this.currentValue;
             markPos = JsonReader.this.scanner.mark();

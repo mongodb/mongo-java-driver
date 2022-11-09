@@ -96,7 +96,7 @@ public final class ClusterSettings {
         private ServerSelector serverSelector;
         private long serverSelectionTimeoutMS = MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private long localThresholdMS = MILLISECONDS.convert(15, MILLISECONDS);
-        private List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
+        private List<ClusterListener> clusterListeners = new ArrayList<>();
 
         private Builder() {
         }
@@ -121,7 +121,7 @@ public final class ClusterSettings {
             requiredClusterType = clusterSettings.requiredClusterType;
             localThresholdMS = clusterSettings.localThresholdMS;
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
-            clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
+            clusterListeners = new ArrayList<>(clusterSettings.clusterListeners);
             serverSelector = clusterSettings.serverSelector;
             return this;
         }
@@ -197,12 +197,12 @@ public final class ClusterSettings {
             if (srvHost != null) {
                 throw new IllegalArgumentException("srvHost must be null");
             }
-            Set<ServerAddress> hostsSet = new LinkedHashSet<ServerAddress>(hosts.size());
+            Set<ServerAddress> hostsSet = new LinkedHashSet<>(hosts.size());
             for (ServerAddress serverAddress : hosts) {
                 notNull("serverAddress", serverAddress);
                 hostsSet.add(createServerAddress(serverAddress.getHost(), serverAddress.getPort()));
             }
-            this.hosts = unmodifiableList(new ArrayList<ServerAddress>(hostsSet));
+            this.hosts = unmodifiableList(new ArrayList<>(hostsSet));
             return this;
         }
 

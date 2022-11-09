@@ -66,7 +66,7 @@ public class BulkWriteInsert {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final BulkWriteInsert that = (BulkWriteInsert) o;
+        BulkWriteInsert that = (BulkWriteInsert) o;
         return index == that.index && Objects.equals(id, that.id);
     }
 

@@ -159,7 +159,7 @@ class BsonDocumentCodecSpecification extends Specification {
     def 'should encode nested raw documents'() {
         given:
         def doc = new BsonDocument('a', BsonBoolean.TRUE)
-        def rawDoc = new RawBsonDocument(doc, new BsonDocumentCodec());
+        def rawDoc = new RawBsonDocument(doc, new BsonDocumentCodec())
         def docWithNestedRawDoc = new BsonDocument('a', rawDoc).append('b', new BsonArray(asList(rawDoc)))
 
         when:
@@ -173,13 +173,13 @@ class BsonDocumentCodecSpecification extends Specification {
 
     def 'should determine if document has an id'() {
         expect:
-        !new BsonDocumentCodec().documentHasId(new BsonDocument());
-        new BsonDocumentCodec().documentHasId(new BsonDocument('_id', new BsonInt32(1)));
+        !new BsonDocumentCodec().documentHasId(new BsonDocument())
+        new BsonDocumentCodec().documentHasId(new BsonDocument('_id', new BsonInt32(1)))
     }
 
     def 'should get document id'() {
         expect:
-        !new BsonDocumentCodec().getDocumentId(new BsonDocument());
+        !new BsonDocumentCodec().getDocumentId(new BsonDocument())
         new BsonDocumentCodec().getDocumentId(new BsonDocument('_id', new BsonInt32(1))) == new BsonInt32(1)
     }
 
@@ -188,7 +188,7 @@ class BsonDocumentCodecSpecification extends Specification {
         def document = new BsonDocument()
 
         when:
-        document = new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
+        document = new BsonDocumentCodec().generateIdIfAbsentFromDocument(document)
 
         then:
         document.get('_id') instanceof BsonObjectId
@@ -199,7 +199,7 @@ class BsonDocumentCodecSpecification extends Specification {
         def document = new BsonDocument('_id', new BsonInt32(1))
 
         when:
-        document = new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
+        document = new BsonDocumentCodec().generateIdIfAbsentFromDocument(document)
 
         then:
         document.get('_id') == new BsonInt32(1)

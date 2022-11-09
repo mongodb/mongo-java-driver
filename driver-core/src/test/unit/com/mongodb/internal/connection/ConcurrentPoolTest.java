@@ -35,7 +35,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatGetDecreasesAvailability() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         pool.get();
         pool.get();
@@ -50,7 +50,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatReleaseIncreasesAvailability() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         pool.get();
         pool.get();
@@ -60,7 +60,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatGetReleasesPermitIfCreateFails() {
-        pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
+        pool = new ConcurrentPool<>(1, new TestItemFactory(true));
 
         try {
             pool.get();
@@ -74,7 +74,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testInUseCount() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         assertEquals(0, pool.getInUseCount());
         TestCloseable closeable = pool.get();
@@ -85,7 +85,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testAvailableCount() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         assertEquals(0, pool.getAvailableCount());
         TestCloseable closeable = pool.get();
@@ -99,7 +99,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testAddItemToPoolOnRelease() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable closeable = pool.get();
         pool.release(closeable, false);
@@ -108,7 +108,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseItemOnReleaseWithDiscard() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable closeable = pool.get();
         pool.release(closeable, true);
@@ -117,7 +117,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseAllItemsAfterPoolClosed() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable c1 = pool.get();
         TestCloseable c2 = pool.get();
@@ -130,7 +130,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseItemOnReleaseAfterPoolClosed() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable c1 = pool.get();
         pool.close();
@@ -140,7 +140,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testEnsureMinSize() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
         Consumer<TestCloseable> initAndRelease = connection -> pool.release(connection);
         pool.ensureMinSize(0, initAndRelease);
         assertEquals(0, pool.getAvailableCount());
@@ -161,7 +161,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void whenEnsuringMinSizeShouldNotInitializePooledItemIfNotRequested() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         pool.ensureMinSize(1, pool::release);
         assertFalse(pool.get().isInitialized());
@@ -169,7 +169,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void whenEnsuringMinSizeShouldInitializePooledItemIfRequested() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         pool.ensureMinSize(1, connection -> {
             connection.initialized = true;
@@ -180,7 +180,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatEnsuringMinSizeReleasesPermitIfCreateFails() {
-        pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
+        pool = new ConcurrentPool<>(1, new TestItemFactory(true));
 
         try {
             pool.ensureMinSize(1, ignore -> fail());
@@ -194,7 +194,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testPrune() {
-        pool = new ConcurrentPool<TestCloseable>(5, new TestItemFactory());
+        pool = new ConcurrentPool<>(5, new TestItemFactory());
 
         TestCloseable t1 = pool.get();
         TestCloseable t2 = pool.get();
@@ -215,9 +215,9 @@ public class ConcurrentPoolTest {
         assertEquals(2, pool.getAvailableCount());
         assertEquals(0, pool.getInUseCount());
         assertTrue(t1.isClosed());
-        assertTrue(!t2.isClosed());
+        assertFalse(t2.isClosed());
         assertTrue(t3.isClosed());
-        assertTrue(!t4.isClosed());
+        assertFalse(t4.isClosed());
     }
 
     class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {

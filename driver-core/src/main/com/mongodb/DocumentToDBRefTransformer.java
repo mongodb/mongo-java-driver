@@ -21,7 +21,7 @@ import org.bson.Transformer;
 
 /**
  * A Document to DBRef Transformer.
- *
+ * <p>
  * Can be used with any {@link org.bson.codecs.Codec} that takes a {@link Transformer}.
  *
  * @since 3.5

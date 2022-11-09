@@ -37,7 +37,7 @@ class JsonStringBuffer implements JsonBuffer {
             eof = true;
             return -1;
         } else {
-            return (int) buffer.charAt(position++);
+            return buffer.charAt(position++);
         }
     }
 

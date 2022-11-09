@@ -74,7 +74,7 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
             public void initialize(final MongoException initializationException) {
                 if (!initialized) {
                     srvResolutionException = initializationException;
-                    DnsMultiServerCluster.this.initialize(Collections.<ServerAddress>emptyList());
+                    DnsMultiServerCluster.this.initialize(Collections.emptyList());
                 }
             }
 

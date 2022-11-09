@@ -20,7 +20,6 @@ import com.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -65,7 +64,7 @@ public final class TagSet implements Iterable<Tag> {
         notNull("tagList", tagList);
 
         // Ensure no duplicates
-        Set<String> tagNames = new HashSet<String>();
+        Set<String> tagNames = new HashSet<>();
         for (Tag tag : tagList) {
             if (tag == null) {
                 throw new IllegalArgumentException("Null tags are not allowed");
@@ -74,13 +73,8 @@ public final class TagSet implements Iterable<Tag> {
                 throw new IllegalArgumentException("Duplicate tag names not allowed in a tag set: " + tag.getName());
             }
         }
-        ArrayList<Tag> copy = new ArrayList<Tag>(tagList);
-        Collections.sort(copy, new Comparator<Tag>() {
-            @Override
-            public int compare(final Tag o1, final Tag o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
+        ArrayList<Tag> copy = new ArrayList<>(tagList);
+        Collections.sort(copy, (o1, o2) -> o1.getName().compareTo(o2.getName()));
         this.wrapped = Collections.unmodifiableList(copy);
     }
 
@@ -108,7 +102,7 @@ public final class TagSet implements Iterable<Tag> {
             return false;
         }
 
-        final TagSet tags = (TagSet) o;
+        TagSet tags = (TagSet) o;
 
         if (!wrapped.equals(tags.wrapped)) {
             return false;

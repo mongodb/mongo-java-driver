@@ -32,7 +32,7 @@ class RawBsonDocumentCodecSpecification extends Specification {
 
     def codec = new RawBsonDocumentCodec()
     def document = new BsonDocument([new BsonElement('b1', BsonBoolean.TRUE), new BsonElement('b2', BsonBoolean.FALSE)])
-    def documentBytes = [15, 0, 0, 0, 8, 98, 49, 0, 1, 8, 98, 50, 0, 0, 0] as byte[];
+    def documentBytes = [15, 0, 0, 0, 8, 98, 49, 0, 1, 8, 98, 50, 0, 0, 0] as byte[]
 
     def 'should get encoder class'() {
         expect:

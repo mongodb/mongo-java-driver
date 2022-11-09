@@ -19,6 +19,8 @@ package com.mongodb.client.model;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.util.Objects;
+
 /**
  * The options to apply to a $push update operator.
  *
@@ -145,16 +147,16 @@ public class PushOptions {
 
         PushOptions that = (PushOptions) o;
 
-        if (position != null ? !position.equals(that.position) : that.position != null) {
+        if (!Objects.equals(position, that.position)) {
             return false;
         }
-        if (slice != null ? !slice.equals(that.slice) : that.slice != null) {
+        if (!Objects.equals(slice, that.slice)) {
             return false;
         }
-        if (sort != null ? !sort.equals(that.sort) : that.sort != null) {
+        if (!Objects.equals(sort, that.sort)) {
             return false;
         }
-        return sortDocument != null ? sortDocument.equals(that.sortDocument) : that.sortDocument == null;
+        return Objects.equals(sortDocument, that.sortDocument);
     }
 
     @Override

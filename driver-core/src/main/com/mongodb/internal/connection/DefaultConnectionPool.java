@@ -29,8 +29,6 @@ import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent.Reason;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
@@ -48,6 +46,8 @@ import com.mongodb.internal.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.inject.OptionalProvider;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
@@ -139,7 +139,7 @@ class DefaultConnectionPool implements ConnectionPool {
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
-        pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory, String.format("The server at %s is no longer available",
+        pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory, format("The server at %s is no longer available",
                 serverId.getAddress()));
         this.sdamProvider = assertNotNull(sdamProvider);
         this.connectionPoolListener = getConnectionPoolListener(settings);
@@ -677,12 +677,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
                 final RequestContext requestContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, new SingleResultCallback<T>() {
-                @Override
-                public void onResult(final T result, final Throwable t) {
-                    callback.onResult(result, t);
-                }
-            });
+            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, (result, t) -> callback.onResult(result, t));
         }
 
         @Override
@@ -694,23 +689,13 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendMessageAsync(byteBuffers, lastRequestId, new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    callback.onResult(null, t);
-                }
-            });
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, (result, t) -> callback.onResult(null, t));
         }
 
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.receiveMessageAsync(responseTo, new SingleResultCallback<ResponseBuffers>() {
-                @Override
-                public void onResult(final ResponseBuffers result, final Throwable t) {
-                    callback.onResult(result, t);
-                }
-            });
+            wrapped.receiveMessageAsync(responseTo, (result, t) -> callback.onResult(result, t));
         }
 
         @Override

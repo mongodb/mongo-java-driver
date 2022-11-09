@@ -23,13 +23,13 @@ import static com.mongodb.Fixture.getMongoClient
 import static com.mongodb.Fixture.getServerSessionPoolInUseCount
 
 class FunctionalSpecification extends Specification {
-    protected DB database;
-    protected DBCollection collection;
+    protected DB database
+    protected DBCollection collection
 
     def setup() {
         database = getMongoClient().getDB(getDefaultDatabaseName())
         collection = database.getCollection(getClass().getName())
-        collection.drop();
+        collection.drop()
     }
 
     def cleanup() {
@@ -37,7 +37,7 @@ class FunctionalSpecification extends Specification {
             collection.drop()
         }
         if (getServerSessionPoolInUseCount() != 0) {
-            throw new IllegalStateException('Server session in use count is ' + getServerSessionPoolInUseCount());
+            throw new IllegalStateException('Server session in use count is ' + getServerSessionPoolInUseCount())
         }
     }
 

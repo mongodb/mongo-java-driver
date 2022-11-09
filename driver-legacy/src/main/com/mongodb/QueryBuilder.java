@@ -336,7 +336,6 @@ public class QueryBuilder {
      * @param y2 the y coordinate of the second box corner.
      * @return {@code this}
      */
-    @SuppressWarnings("unchecked")
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
                    new BasicDBObject(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));
@@ -360,9 +359,9 @@ public class QueryBuilder {
     }
 
     private List<List<Double>> convertToListOfLists(final List<Double[]> points) {
-        List<List<Double>> listOfLists = new ArrayList<List<Double>>(points.size());
+        List<List<Double>> listOfLists = new ArrayList<>(points.size());
         for (Double[] cur : points) {
-            List<Double> list = new ArrayList<Double>(cur.length);
+            List<Double> list = new ArrayList<>(cur.length);
             Collections.addAll(list, cur);
             listOfLists.add(list);
         }

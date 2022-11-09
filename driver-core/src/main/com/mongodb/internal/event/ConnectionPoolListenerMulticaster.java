@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.event;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
@@ -30,6 +28,8 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +45,7 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
 
     ConnectionPoolListenerMulticaster(final List<ConnectionPoolListener> connectionPoolListeners) {
         isTrue("All ConnectionPoolListener instances are non-null", !connectionPoolListeners.contains(null));
-        this.connectionPoolListeners = new ArrayList<ConnectionPoolListener>(connectionPoolListeners);
+        this.connectionPoolListeners = new ArrayList<>(connectionPoolListeners);
     }
 
     @Override

@@ -70,8 +70,8 @@ public class Decimal128QuickTour {
         Decimal128 amount3 = (Decimal128) first.get("amount3");
         BigDecimal amount2AsBigDecimal = amount3.bigDecimalValue();
 
-        System.out.println(amount3.toString());
-        System.out.println(amount2AsBigDecimal.toString());
+        System.out.println(amount3);
+        System.out.println(amount2AsBigDecimal);
 
     }
 }

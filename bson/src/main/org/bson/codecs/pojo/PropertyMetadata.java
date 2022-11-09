@@ -37,8 +37,8 @@ final class PropertyMetadata<T> {
     private final String name;
     private final String declaringClassName;
     private final TypeData<T> typeData;
-    private final Map<Class<? extends Annotation>, Annotation> readAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
-    private final Map<Class<? extends Annotation>, Annotation> writeAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    private final Map<Class<? extends Annotation>, Annotation> readAnnotations = new HashMap<>();
+    private final Map<Class<? extends Annotation>, Annotation> writeAnnotations = new HashMap<>();
     private TypeParameterMap typeParameterMap;
     private List<TypeData<?>> typeParameters;
 
@@ -58,7 +58,7 @@ final class PropertyMetadata<T> {
     }
 
     public List<Annotation> getReadAnnotations() {
-        return new ArrayList<Annotation>(readAnnotations.values());
+        return new ArrayList<>(readAnnotations.values());
     }
 
     public PropertyMetadata<T> addReadAnnotation(final Annotation annotation) {
@@ -74,7 +74,7 @@ final class PropertyMetadata<T> {
     }
 
     public List<Annotation> getWriteAnnotations() {
-        return new ArrayList<Annotation>(writeAnnotations.values());
+        return new ArrayList<>(writeAnnotations.values());
     }
 
     public PropertyMetadata<T> addWriteAnnotation(final Annotation annotation) {

@@ -70,7 +70,7 @@ public abstract class IndexMap {
     public abstract int map(int index);
 
     private static class HashBased extends IndexMap {
-        private final Map<Integer, Integer> indexMap = new HashMap<Integer, Integer>();
+        private final Map<Integer, Integer> indexMap = new HashMap<>();
 
         HashBased(final int startIndex, final int count) {
             for (int i = startIndex; i < startIndex + count; i++) {

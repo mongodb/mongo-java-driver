@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -132,7 +133,7 @@ public final class ConnectionId {
         if (!serverId.equals(that.serverId)) {
             return false;
         }
-        if (serverValue != null ? !serverValue.equals(that.serverValue) : that.serverValue != null) {
+        if (!Objects.equals(serverValue, that.serverValue)) {
             return false;
         }
 

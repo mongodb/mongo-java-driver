@@ -62,7 +62,7 @@ public class PlainAuthenticatorUnitTest {
     public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
         enqueueSuccessfulReply();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
         subject.authenticateAsync(connection, connectionDescription, futureCallback);
         futureCallback.get();
 

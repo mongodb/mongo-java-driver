@@ -28,6 +28,7 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.BuildersHelper.encodeValue;
@@ -75,7 +76,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/set/ $set
      */
     public static <TItem> Bson set(final String fieldName, @Nullable final TItem value) {
-        return new SimpleUpdate<TItem>(fieldName, value, "$set");
+        return new SimpleUpdate<>(fieldName, value, "$set");
     }
 
     /**
@@ -86,7 +87,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/unset/ $unset
      */
     public static Bson unset(final String fieldName) {
-        return new SimpleUpdate<String>(fieldName, "", "$unset");
+        return new SimpleUpdate<>(fieldName, "", "$unset");
     }
 
     /**
@@ -114,7 +115,7 @@ public final class Updates {
      * @see UpdateOptions#upsert(boolean)
      */
     public static <TItem> Bson setOnInsert(final String fieldName, @Nullable final TItem value) {
-        return new SimpleUpdate<TItem>(fieldName, value, "$setOnInsert");
+        return new SimpleUpdate<>(fieldName, value, "$setOnInsert");
     }
 
     /**
@@ -127,7 +128,7 @@ public final class Updates {
      */
     public static Bson rename(final String fieldName, final String newFieldName) {
         notNull("newFieldName", newFieldName);
-        return new SimpleUpdate<String>(fieldName, newFieldName, "$rename");
+        return new SimpleUpdate<>(fieldName, newFieldName, "$rename");
     }
 
     /**
@@ -140,7 +141,7 @@ public final class Updates {
      */
     public static Bson inc(final String fieldName, final Number number) {
         notNull("number", number);
-        return new SimpleUpdate<Number>(fieldName, number, "$inc");
+        return new SimpleUpdate<>(fieldName, number, "$inc");
     }
 
     /**
@@ -153,7 +154,7 @@ public final class Updates {
      */
     public static Bson mul(final String fieldName, final Number number) {
         notNull("number", number);
-        return new SimpleUpdate<Number>(fieldName, number, "$mul");
+        return new SimpleUpdate<>(fieldName, number, "$mul");
     }
 
 
@@ -168,7 +169,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/min/ $min
      */
     public static <TItem> Bson min(final String fieldName, final TItem value) {
-        return new SimpleUpdate<TItem>(fieldName, value, "$min");
+        return new SimpleUpdate<>(fieldName, value, "$min");
     }
 
     /**
@@ -182,7 +183,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/min/ $min
      */
     public static <TItem> Bson max(final String fieldName, final TItem value) {
-        return new SimpleUpdate<TItem>(fieldName, value, "$max");
+        return new SimpleUpdate<>(fieldName, value, "$max");
     }
 
     /**
@@ -194,7 +195,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/bson-types/#date Date
      */
     public static Bson currentDate(final String fieldName) {
-        return new SimpleUpdate<Boolean>(fieldName, true, "$currentDate");
+        return new SimpleUpdate<>(fieldName, true, "$currentDate");
     }
 
     /**
@@ -206,7 +207,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/bson-types/#document-bson-type-timestamp Timestamp
      */
     public static Bson currentTimestamp(final String fieldName) {
-        return new SimpleUpdate<BsonDocument>(fieldName, new BsonDocument("$type", new BsonString("timestamp")), "$currentDate");
+        return new SimpleUpdate<>(fieldName, new BsonDocument("$type", new BsonString("timestamp")), "$currentDate");
     }
 
     /**
@@ -220,7 +221,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/addToSet/ $addToSet
      */
     public static <TItem> Bson addToSet(final String fieldName, @Nullable final TItem value) {
-        return new SimpleUpdate<TItem>(fieldName, value, "$addToSet");
+        return new SimpleUpdate<>(fieldName, value, "$addToSet");
     }
 
     /**
@@ -234,7 +235,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/addToSet/ $addToSet
      */
     public static <TItem> Bson addEachToSet(final String fieldName, final List<TItem> values) {
-        return new WithEachUpdate<TItem>(fieldName, values, "$addToSet");
+        return new WithEachUpdate<>(fieldName, values, "$addToSet");
     }
 
     /**
@@ -247,7 +248,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/push/ $push
      */
     public static <TItem> Bson push(final String fieldName, @Nullable final TItem value) {
-        return new SimpleUpdate<TItem>(fieldName, value, "$push");
+        return new SimpleUpdate<>(fieldName, value, "$push");
     }
 
     /**
@@ -260,7 +261,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/push/ $push
      */
     public static <TItem> Bson pushEach(final String fieldName, final List<TItem> values) {
-        return new PushUpdate<TItem>(fieldName, values, new PushOptions());
+        return new PushUpdate<>(fieldName, values, new PushOptions());
     }
 
     /**
@@ -275,7 +276,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/push/ $push
      */
     public static <TItem> Bson pushEach(final String fieldName, final List<TItem> values, final PushOptions options) {
-        return new PushUpdate<TItem>(fieldName, values, options);
+        return new PushUpdate<>(fieldName, values, options);
     }
 
     /**
@@ -288,7 +289,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/pull/ $pull
      */
     public static <TItem> Bson pull(final String fieldName, @Nullable final TItem value) {
-        return new SimpleUpdate<TItem>(fieldName, value, "$pull");
+        return new SimpleUpdate<>(fieldName, value, "$pull");
     }
 
     /**
@@ -326,7 +327,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/pull/ $pull
      */
     public static <TItem> Bson pullAll(final String fieldName, final List<TItem> values) {
-        return new PullAllUpdate<TItem>(fieldName, values);
+        return new PullAllUpdate<>(fieldName, values);
     }
 
     /**
@@ -337,7 +338,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/pop/ $pop
      */
     public static Bson popFirst(final String fieldName) {
-        return new SimpleUpdate<Integer>(fieldName, -1, "$pop");
+        return new SimpleUpdate<>(fieldName, -1, "$pop");
     }
 
     /**
@@ -348,7 +349,7 @@ public final class Updates {
      * @mongodb.driver.manual reference/operator/update/pop/ $pop
      */
     public static Bson popLast(final String fieldName) {
-        return new SimpleUpdate<Integer>(fieldName, 1, "$pop");
+        return new SimpleUpdate<>(fieldName, 1, "$pop");
     }
 
     /**
@@ -530,10 +531,10 @@ public final class Updates {
             if (!fieldName.equals(that.fieldName)) {
                 return false;
             }
-            if (value != null ? !value.equals(that.value) : that.value != null) {
+            if (!Objects.equals(value, that.value)) {
                 return false;
             }
-            return operator != null ? operator.equals(that.operator) : that.operator == null;
+            return Objects.equals(operator, that.operator);
         }
 
         @Override
@@ -619,7 +620,7 @@ public final class Updates {
             if (!values.equals(that.values)) {
                 return false;
             }
-            return operator != null ? operator.equals(that.operator) : that.operator == null;
+            return Objects.equals(operator, that.operator);
         }
 
         @Override
@@ -810,7 +811,7 @@ public final class Updates {
 
             CompositeUpdate that = (CompositeUpdate) o;
 
-            return updates != null ? updates.equals(that.updates) : that.updates == null;
+            return Objects.equals(updates, that.updates);
         }
 
         @Override

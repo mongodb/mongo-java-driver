@@ -169,12 +169,12 @@ public final class DBCollectionFindOptions {
      * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
      * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
      * this option is ignored.
-     *
+     * <p>
      * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
      * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
+     * <p>
      * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param timeUnit the time unit to return the result in
@@ -541,7 +541,7 @@ public final class DBCollectionFindOptions {
 
     /**
      * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
-     *
+     * <p>
      * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
      *
      * @return the returnKey
@@ -565,7 +565,7 @@ public final class DBCollectionFindOptions {
 
     /**
      * Returns the showRecordId.
-     *
+     * <p>
      * Determines whether to return the record identifier for each document. If true, adds a field $recordId to the returned documents.
      * The default is false.
      *

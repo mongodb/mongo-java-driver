@@ -116,7 +116,7 @@ final class NettyStream implements Stream {
     private boolean isClosed;
     private volatile Channel channel;
 
-    private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<io.netty.buffer.ByteBuf>();
+    private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<>();
     /* The fields pendingReader, pendingException are always written/read inside synchronized blocks
      * that use the same NettyStream object, so they can be plain.*/
     private PendingReader pendingReader;
@@ -150,7 +150,7 @@ final class NettyStream implements Stream {
 
     @Override
     public void open() throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
         openAsync(handler);
         handler.get();
     }
@@ -160,7 +160,7 @@ final class NettyStream implements Stream {
         Queue<SocketAddress> socketAddressQueue;
 
         try {
-            socketAddressQueue = new LinkedList<SocketAddress>(address.getSocketAddresses());
+            socketAddressQueue = new LinkedList<>(address.getSocketAddresses());
         } catch (Throwable t) {
             handler.failed(t);
             return;
@@ -212,14 +212,14 @@ final class NettyStream implements Stream {
                     pipeline.addLast(new InboundBufferHandler());
                 }
             });
-            final ChannelFuture channelFuture = bootstrap.connect(nextAddress);
+            ChannelFuture channelFuture = bootstrap.connect(nextAddress);
             channelFuture.addListener(new OpenChannelFutureListener(socketAddressQueue, channelFuture, handler));
         }
     }
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
-        FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<Void>();
+        FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<>();
         writeAsync(buffers, future);
         future.get();
     }
@@ -237,7 +237,7 @@ final class NettyStream implements Stream {
     @Override
     public ByteBuf read(final int numBytes, final int additionalTimeoutMillis) throws IOException {
         isTrueArgument("additionalTimeoutMillis must not be negative", additionalTimeoutMillis >= 0);
-        FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<ByteBuf>();
+        FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, future, combinedTimeout(readTimeoutMillis, additionalTimeoutMillis));
         return future.get();
     }
@@ -249,14 +249,11 @@ final class NettyStream implements Stream {
             composite.addComponent(true, ((NettyByteBuf) cur).asByteBuf());
         }
 
-        channel.writeAndFlush(composite).addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(final ChannelFuture future) throws Exception {
-                if (!future.isSuccess()) {
-                    handler.failed(future.cause());
-                } else {
-                    handler.completed(null);
-                }
+        channel.writeAndFlush(composite).addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+                handler.failed(future.cause());
+            } else {
+                handler.completed(null);
             }
         });
     }
@@ -505,12 +502,7 @@ final class NettyStream implements Stream {
                         channelFuture.channel().close();
                     } else {
                         channel = channelFuture.channel();
-                        channel.closeFuture().addListener(new ChannelFutureListener() {
-                            @Override
-                            public void operationComplete(final ChannelFuture future) {
-                                handleReadResponse(null, new IOException("The connection to the server was closed"));
-                            }
-                        });
+                        channel.closeFuture().addListener((ChannelFutureListener) future1 -> handleReadResponse(null, new IOException("The connection to the server was closed")));
                     }
                     handler.completed(null);
                 } else {

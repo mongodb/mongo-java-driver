@@ -27,7 +27,6 @@ public final class ConcreteAndNestedAbstractInterfaceModel extends AbstractInter
     private List<? extends InterfaceBasedModel> wildcardList;
 
     public ConcreteAndNestedAbstractInterfaceModel() {
-        super();
     }
 
     public ConcreteAndNestedAbstractInterfaceModel(final String name, final InterfaceBasedModel child) {

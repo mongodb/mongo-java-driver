@@ -18,6 +18,8 @@ package org.bson.types;
 
 import org.bson.Document;
 
+import java.util.Objects;
+
 /**
  * A representation of the JavaScript Code with Scope BSON type.
  *
@@ -66,7 +68,7 @@ public class CodeWithScope extends Code {
 
         CodeWithScope that = (CodeWithScope) o;
 
-        if (scope != null ? !scope.equals(that.scope) : that.scope != null) {
+        if (!Objects.equals(scope, that.scope)) {
             return false;
         }
 

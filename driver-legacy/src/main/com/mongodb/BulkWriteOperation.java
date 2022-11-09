@@ -40,7 +40,7 @@ public class BulkWriteOperation {
     private static final String ID_FIELD_NAME = "_id";
     private final boolean ordered;
     private final DBCollection collection;
-    private final List<WriteRequest> requests = new ArrayList<WriteRequest>();
+    private final List<WriteRequest> requests = new ArrayList<>();
     private Boolean bypassDocumentValidation;
     private boolean closed;
 

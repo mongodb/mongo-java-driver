@@ -35,7 +35,7 @@ import static org.bson.assertions.Assertions.notNull;
  */
 public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     private final BsonWriterSettings settings;
-    private final Stack<FieldNameValidator> fieldNameValidatorStack = new Stack<FieldNameValidator>();
+    private final Stack<FieldNameValidator> fieldNameValidatorStack = new Stack<>();
     private State state;
     private Context context;
     private int serializationDepth;

@@ -35,6 +35,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -62,9 +63,9 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         try {
             Mono.from(collection.insertOne(Document.parse("{ x : 1 }"))).block(TIMEOUT_DURATION);
         } catch (MongoClientException e) {
-            assertTrue(e.getMessage().equals("This MongoDB deployment does not support retryable writes. "
-                    + "Please add retryWrites=false to your connection string."));
-            assertTrue(((MongoException) e.getCause()).getCode() == 20);
+            assertEquals("This MongoDB deployment does not support retryable writes. "
+                    + "Please add retryWrites=false to your connection string.", e.getMessage());
+            assertEquals(20, ((MongoException) e.getCause()).getCode());
             assertTrue(e.getCause().getMessage().contains("Transaction numbers"));
             exceptionFound = true;
         }
@@ -79,9 +80,9 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         try {
             Mono.from(collection.findOneAndDelete(Document.parse("{ x : 1 }"))).block(TIMEOUT_DURATION);
         } catch (MongoClientException e) {
-            assertTrue(e.getMessage().equals("This MongoDB deployment does not support retryable writes. "
-                    + "Please add retryWrites=false to your connection string."));
-            assertTrue(((MongoException) e.getCause()).getCode() == 20);
+            assertEquals("This MongoDB deployment does not support retryable writes. "
+                    + "Please add retryWrites=false to your connection string.", e.getMessage());
+            assertEquals(20, ((MongoException) e.getCause()).getCode());
             assertTrue(e.getCause().getMessage().contains("Transaction numbers"));
             exceptionFound = true;
         }

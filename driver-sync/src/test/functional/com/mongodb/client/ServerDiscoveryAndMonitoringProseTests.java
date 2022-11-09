@@ -16,13 +16,9 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.connection.ServerSettings;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
@@ -32,6 +28,8 @@ import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.Timeout;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -50,7 +48,6 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
 import static com.mongodb.ClusterFixture.disableFailPoint;
@@ -70,9 +67,9 @@ import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.junit.Assert.fail;
 
 /**
  * See
@@ -94,22 +91,19 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
         CountDownLatch latch = new CountDownLatch(5);
         MongoClientSettings settings = getMongoClientSettingsBuilder()
-                                       .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                                           @Override
-                                           public void apply(final ServerSettings.Builder builder) {
-                                               builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS);
-                                               builder.addServerMonitorListener(new ServerMonitorListener() {
-                                                   @Override
-                                                   public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
-                                                       latch.countDown();
-                                                   }
-                                               });
-                                           }
+                                       .applyToServerSettings(builder -> {
+                                           builder.heartbeatFrequency(50, MILLISECONDS);
+                                           builder.addServerMonitorListener(new ServerMonitorListener() {
+                                               @Override
+                                               public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
+                                                   latch.countDown();
+                                               }
+                                           });
                                        }).build();
 
         try (MongoClient ignored = MongoClients.create(settings)) {
             assertTrue("Took longer than expected to reach expected number of hearbeats",
-                       latch.await(500, TimeUnit.MILLISECONDS));
+                       latch.await(500, MILLISECONDS));
         }
     }
 
@@ -121,17 +115,14 @@ public class ServerDiscoveryAndMonitoringProseTests {
         List<ServerDescriptionChangedEvent> events = synchronizedList(new ArrayList<>());
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applicationName("streamingRttTest")
-                                       .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                                           @Override
-                                           public void apply(final ServerSettings.Builder builder) {
-                                               builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS);
-                                               builder.addServerListener(new ServerListener() {
-                                                   @Override
-                                                   public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-                                                       events.add(event);
-                                                   }
-                                               });
-                                           }
+                                       .applyToServerSettings(builder -> {
+                                           builder.heartbeatFrequency(50, MILLISECONDS);
+                                           builder.addServerListener(new ServerListener() {
+                                               @Override
+                                               public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
+                                                   events.add(event);
+                                               }
+                                           });
                                        }).build();
         try (MongoClient client = MongoClients.create(settings)) {
             client.getDatabase("admin").runCommand(new Document("ping", 1));
@@ -206,7 +197,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                 .applicationName(appName)
                 .applyToClusterSettings(ClusterFixture::setDirectConnection)
                 .applyToServerSettings(builder -> builder
-                        .heartbeatFrequency(100, TimeUnit.MILLISECONDS)
+                        .heartbeatFrequency(100, MILLISECONDS)
                         .addServerMonitorListener(serverMonitorListener))
                 .applyToConnectionPoolSettings(builder -> builder
                         .addConnectionPoolListener(connectionPoolListener))
@@ -301,7 +292,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                             encountered.add(found);
                             return encountered.equals(required);
                         }).orElseGet(() -> {
-                            assertTrue(String.format("allowed %s, required %s, actual %s", allowed, required, elementClass),
+                            assertTrue(format("allowed %s, required %s, actual %s", allowed, required, elementClass),
                                     allowed != null && allowed.isAssignableFrom(elementClass));
                             return false;
                         })) {
@@ -309,7 +300,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                 }
             }
             if (timeout.expired()) {
-                fail(String.format("encountered %s, required %s", encountered, required));
+                fail(format("encountered %s, required %s", encountered, required));
             }
         }
     }

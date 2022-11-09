@@ -84,7 +84,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         def optionsBuilder = MongoClientOptions.builder(mongoClientURI.options)
                 .addCommandListener(first)
                 .addCommandListener(second)
-        def client = new MongoClient(getMongoClientURI(optionsBuilder));
+        def client = new MongoClient(getMongoClientURI(optionsBuilder))
 
         when:
         client.getDatabase('admin').runCommand(new Document('ping', 1))
@@ -121,7 +121,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
                 .addClusterListener(clusterListener)
                 .addServerListener(serverListener)
                 .addServerMonitorListener(serverMonitorListener)
-        def client = new MongoClient(getMongoClientURI(optionsBuilder));
+        def client = new MongoClient(getMongoClientURI(optionsBuilder))
 
         when:
         def finished = latch.await(5, TimeUnit.SECONDS)
@@ -171,7 +171,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
                 .addClusterListener(clusterListenerTwo)
                 .addServerListener(serverListenerTwo)
                 .addServerMonitorListener(serverMonitorListenerTwo)
-        def client = new MongoClient(getMongoClientURI(optionsBuilder));
+        def client = new MongoClient(getMongoClientURI(optionsBuilder))
 
         when:
         def finished = latch.await(5, TimeUnit.SECONDS)

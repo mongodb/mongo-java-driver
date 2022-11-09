@@ -87,7 +87,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
 
     @Override
     public MongoCursor<TResult> iterator() {
-        return new MongoBatchCursorAdapter<TResult>(execute());
+        return new MongoBatchCursorAdapter<>(execute());
     }
 
     @Override
@@ -98,20 +98,17 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     @Nullable
     @Override
     public TResult first() {
-        MongoCursor<TResult> cursor = iterator();
-        try {
+        try (MongoCursor<TResult> cursor = iterator()) {
             if (!cursor.hasNext()) {
                 return null;
             }
             return cursor.next();
-        } finally {
-            cursor.close();
         }
     }
 
     @Override
     public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
+        return new MappingIterable<>(this, mapper);
     }
 
     @Override

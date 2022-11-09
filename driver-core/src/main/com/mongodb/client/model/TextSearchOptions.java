@@ -18,6 +18,8 @@ package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.Objects;
+
 /**
  * Text search options for the {@link Filters#text(String, TextSearchOptions)} helper
  *
@@ -108,13 +110,13 @@ public final class TextSearchOptions {
 
         TextSearchOptions that = (TextSearchOptions) o;
 
-        if (language != null ? !language.equals(that.language) : that.language != null) {
+        if (!Objects.equals(language, that.language)) {
             return false;
         }
-        if (caseSensitive != null ? !caseSensitive.equals(that.caseSensitive) : that.caseSensitive != null) {
+        if (!Objects.equals(caseSensitive, that.caseSensitive)) {
             return false;
         }
-        return diacriticSensitive != null ? diacriticSensitive.equals(that.diacriticSensitive) : that.diacriticSensitive == null;
+        return Objects.equals(diacriticSensitive, that.diacriticSensitive);
     }
 
     @Override

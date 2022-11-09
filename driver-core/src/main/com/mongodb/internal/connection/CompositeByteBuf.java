@@ -38,7 +38,7 @@ class CompositeByteBuf implements ByteBuf {
     CompositeByteBuf(final List<ByteBuf> buffers) {
         notNull("buffers", buffers);
         isTrueArgument("buffer list not empty", !buffers.isEmpty());
-        components = new ArrayList<Component>(buffers.size());
+        components = new ArrayList<>(buffers.size());
 
         int offset = 0;
         for (ByteBuf cur : buffers) {

@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.DBRef;
-import com.mongodb.Function;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -30,9 +29,9 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.json.JsonObject;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
+import org.bson.json.JsonObject;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -47,9 +46,9 @@ import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
@@ -84,7 +83,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         try {
             collection.findOneAndUpdate(new Document(), new Document());
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().equals("Invalid BSON document for an update. The document may not be empty."));
+            assertEquals("Invalid BSON document for an update. The document may not be empty.", e.getMessage());
             exceptionFound = true;
         }
         assertTrue(exceptionFound);
@@ -110,18 +109,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // when
         List<String> listOfStringObjectIds = collection.find(new Document("i", 1))
-                                                       .map(new Function<Concrete, ObjectId>() {
-                                                           @Override
-                                                           public ObjectId apply(final Concrete concrete) {
-                                                               return concrete.getId();
-                                                           }
-                                                       })
-                                                       .map(new Function<ObjectId, String>() {
-                                                           @Override
-                                                           public String apply(final ObjectId objectId) {
-                                                               return objectId.toString();
-                                                           }
-                                                       }).into(new ArrayList<String>());
+                                                       .map(concrete -> concrete.getId())
+                                                       .map(objectId -> objectId.toString()).into(new ArrayList<>());
 
         // then
         assertThat(listOfStringObjectIds.size(), is(1));
@@ -129,13 +118,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // when
         List<ObjectId> listOfObjectIds = collection.find(new Document("i", 1))
-                                                   .map(new Function<Concrete, ObjectId>() {
-                                                       @Override
-                                                       public ObjectId apply(final Concrete concrete) {
-                                                           return concrete.getId();
-                                                       }
-                                                   })
-                                                   .into(new ArrayList<ObjectId>());
+                                                   .map(concrete -> concrete.getId())
+                                                   .into(new ArrayList<>());
 
         // then
         assertThat(listOfObjectIds.size(), is(1));
@@ -162,7 +146,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                 .withWriteConcern(WriteConcern.ACKNOWLEDGED);
 
         // when
-        List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<Name>());
+        List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<>());
 
         // then
         assertTrue(result.contains(new Name("Pete", 2)));
@@ -183,7 +167,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // when
         List<Document> result = collection.aggregate(Collections.singletonList(new Document("$out", "outCollection")))
-                .into(new ArrayList<Document>());
+                .into(new ArrayList<>());
 
         // then
         assertEquals(documents, result);

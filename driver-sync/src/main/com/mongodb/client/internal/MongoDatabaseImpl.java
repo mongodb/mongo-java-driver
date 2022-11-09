@@ -17,7 +17,6 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
-import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
@@ -225,12 +224,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private MongoIterable<String> createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
         return createListCollectionsIterable(clientSession, BsonDocument.class, true)
-                .map(new Function<BsonDocument, String>() {
-                    @Override
-                    public String apply(final BsonDocument result) {
-                        return result.getString("name").getValue();
-                    }
-                });
+                .map(result -> result.getString("name").getValue());
     }
 
     @Override
@@ -315,12 +309,12 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public ChangeStreamIterable<Document> watch() {
-        return watch(Collections.<Bson>emptyList());
+        return watch(Collections.emptyList());
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        return watch(Collections.<Bson>emptyList(), resultClass);
+        return watch(Collections.emptyList(), resultClass);
     }
 
     @Override
@@ -335,12 +329,12 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
-        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+        return watch(clientSession, Collections.emptyList(), Document.class);
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+        return watch(clientSession, Collections.emptyList(), resultClass);
     }
 
     @Override

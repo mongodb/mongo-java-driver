@@ -75,7 +75,7 @@ public final class SyncOperations<TDocument> {
     public SyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
                           final boolean retryWrites, final boolean retryReads) {
-        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 retryWrites, retryReads);
     }
 

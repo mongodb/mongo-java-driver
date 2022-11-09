@@ -44,7 +44,7 @@ public class InvalidMapPropertyCodecProvider implements PropertyCodecProvider {
     }
 
     private static final class InvalidMapModelCodec implements Codec<Map<Integer, Integer>> {
-        private Class<Map<Integer, Integer>> encoderClass;
+        private final Class<Map<Integer, Integer>> encoderClass;
 
         private InvalidMapModelCodec(final Class<Map<Integer, Integer>> encoderClass) {
             this.encoderClass = encoderClass;
@@ -52,7 +52,7 @@ public class InvalidMapPropertyCodecProvider implements PropertyCodecProvider {
 
         @Override
         public Map<Integer, Integer> decode(final BsonReader reader, final DecoderContext decoderContext) {
-            Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+            Map<Integer, Integer> map = new HashMap<>();
 
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {

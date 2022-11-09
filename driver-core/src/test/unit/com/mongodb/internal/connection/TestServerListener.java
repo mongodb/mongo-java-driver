@@ -35,7 +35,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class TestServerListener implements ServerListener {
     private ServerOpeningEvent serverOpeningEvent;
     private ServerClosedEvent serverClosedEvent;
-    private final List<ServerDescriptionChangedEvent> serverDescriptionChangedEvents = new ArrayList<ServerDescriptionChangedEvent>();
+    private final List<ServerDescriptionChangedEvent> serverDescriptionChangedEvents = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile int waitingForEventCount;

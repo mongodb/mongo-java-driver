@@ -47,8 +47,8 @@ public class BasicBSONCallback implements BSONCallback {
      * Creates a new instance.
      */
     public BasicBSONCallback() {
-        stack = new LinkedList<BSONObject>();
-        nameStack = new LinkedList<String>();
+        stack = new LinkedList<>();
+        nameStack = new LinkedList<>();
         reset();
     }
 

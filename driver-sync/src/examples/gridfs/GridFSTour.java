@@ -24,7 +24,6 @@ import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.GridFSUploadStream;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
-import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -35,7 +34,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Consumer;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -98,23 +96,13 @@ public final class GridFSTour {
         /*
          * Find documents
          */
-        gridFSBucket.find().forEach(new Consumer<GridFSFile>() {
-            @Override
-            public void accept(final GridFSFile gridFSFile) {
-                System.out.println(gridFSFile.getFilename());
-            }
-        });
+        gridFSBucket.find().forEach(gridFSFile -> System.out.println(gridFSFile.getFilename()));
 
         /*
          * Find documents with a filter
          */
         gridFSBucket.find(eq("metadata.contentType", "image/png")).forEach(
-                new Consumer<GridFSFile>() {
-                    @Override
-                    public void accept(final GridFSFile gridFSFile) {
-                        System.out.println(gridFSFile.getFilename());
-                    }
-                });
+                gridFSFile -> System.out.println(gridFSFile.getFilename()));
 
         /*
          * DownloadToStream

@@ -19,8 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
@@ -70,15 +68,12 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     }
 
     CommandCreator getCommandCreator() {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
-                if (!writeConcern.isServerDefault()) {
-                    command.put("writeConcern", writeConcern.asDocument());
-                }
-                return command;
+        return (serverDescription, connectionDescription) -> {
+            BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
+            if (!writeConcern.isServerDefault()) {
+                command.put("writeConcern", writeConcern.asDocument());
             }
+            return command;
         };
     }
 

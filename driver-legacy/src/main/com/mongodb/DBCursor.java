@@ -78,7 +78,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private DBObject currentObject;
     private int numSeen;
     private boolean closed;
-    private final List<DBObject> all = new ArrayList<DBObject>();
+    private final List<DBObject> all = new ArrayList<>();
     private MongoCursor<DBObject> cursor;
     private DBCursorCleaner optionalCleaner;
 
@@ -430,7 +430,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
 
-        return new FindOperation<DBObject>(collection.getNamespace(), decoder)
+        return new FindOperation<>(collection.getNamespace(), decoder)
                                                 .filter(collection.wrapAllowNull(filter))
                                                 .batchSize(findOptions.getBatchSize())
                                                 .skip(findOptions.getSkip())
@@ -606,11 +606,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     @Nullable
     public DBObject one() {
-        DBCursor findOneCursor = copy().limit(-1);
-        try {
+        try (DBCursor findOneCursor = copy().limit(-1)) {
             return findOneCursor.hasNext() ? findOneCursor.next() : null;
-        } finally {
-            findOneCursor.close();
         }
     }
 
@@ -807,7 +804,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private void initializeCursor(final FindOperation<DBObject> operation) {
-        cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreference(), getReadConcern()));
+        cursor = new MongoBatchCursorAdapter<>(executor.execute(operation, getReadPreference(), getReadConcern()));
         ServerCursor serverCursor = cursor.getServerCursor();
         if (isCursorFinalizerEnabled() && serverCursor != null) {
             optionalCleaner = DBCursorCleaner.create(collection.getDB().getMongoClient(), collection.getNamespace(),

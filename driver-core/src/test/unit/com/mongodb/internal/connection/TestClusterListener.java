@@ -30,7 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 class TestClusterListener implements ClusterListener {
     private ClusterOpeningEvent clusterOpeningEvent;
     private ClusterClosedEvent clusterClosingEvent;
-    private final List<ClusterDescriptionChangedEvent> clusterDescriptionChangedEvents = new ArrayList<ClusterDescriptionChangedEvent>();
+    private final List<ClusterDescriptionChangedEvent> clusterDescriptionChangedEvents = new ArrayList<>();
 
     @Override
     public void clusterOpening(final ClusterOpeningEvent event) {

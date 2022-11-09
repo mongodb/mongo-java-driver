@@ -124,7 +124,7 @@ public class ClientSideEncryptionCorpusTest {
                 }});
         }};
 
-        HashMap<String, BsonDocument> schemaMap = new HashMap<String, BsonDocument>();
+        HashMap<String, BsonDocument> schemaMap = new HashMap<>();
         schemaMap.put("db.coll", schemaDocument);
 
         AutoEncryptionSettings.Builder autoEncryptionSettingsBuilder = AutoEncryptionSettings.builder()

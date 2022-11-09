@@ -32,6 +32,7 @@ import java.util.concurrent.TimeoutException;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -95,7 +96,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         assertEquals(firstDBObject, cur.curr());
         assertEquals(1, cur.numSeen());
 
-        assertEquals(null, cur.tryNext());
+        assertNull(cur.tryNext());
         assertEquals(firstDBObject, cur.curr());
         assertEquals(1, cur.numSeen());
 
@@ -104,7 +105,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         assertEquals(secondDBObject, cur.curr());
         assertEquals(2, cur.numSeen());
 
-        assertEquals(null, cur.tryNext());
+        assertNull(cur.tryNext());
         assertEquals(secondDBObject, cur.curr());
         assertEquals(2, cur.numSeen());
 
@@ -120,28 +121,25 @@ public class DBCursorOldTest extends DatabaseTestCase {
             c.save(new BasicDBObject("x", i), WriteConcern.ACKNOWLEDGED);
         }
 
-        final DBCursor cur = c.find()
+        DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
                               .cursorType(CursorType.Tailable);
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        Callable<Integer> callable = new Callable<Integer>() {
-            @Override
-            public Integer call() throws Exception {
-                // the following call will block on the last hasNext
-                int i = 0;
-                while (cur.hasNext()) {
-                    DBObject obj = cur.next();
-                    i++;
-                    if (i == 10) {
-                        latch.countDown();
-                    } else if (i > 10) {
-                        return (Integer) obj.get("x");
-                    }
+        CountDownLatch latch = new CountDownLatch(1);
+        Callable<Integer> callable = () -> {
+            // the following call will block on the last hasNext
+            int i = 0;
+            while (cur.hasNext()) {
+                DBObject obj = cur.next();
+                i++;
+                if (i == 10) {
+                    latch.countDown();
+                } else if (i > 10) {
+                    return (Integer) obj.get("x");
                 }
-
-                return null;
             }
+
+            return null;
         };
 
         ExecutorService es = Executors.newSingleThreadExecutor();
@@ -165,27 +163,24 @@ public class DBCursorOldTest extends DatabaseTestCase {
             c.save(new BasicDBObject("x", i), WriteConcern.ACKNOWLEDGED);
         }
 
-        final DBCursor cur = c.find()
+        DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
                               .cursorType(CursorType.Tailable);
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        Callable<Integer> callable = new Callable<Integer>() {
-            @Override
-            public Integer call() {
-                // the following call will block on the last hasNext
-                int i = 0;
-                while (i < 11) {
-                    DBObject obj = cur.next();
-                    i++;
-                    if (i == 10) {
-                        latch.countDown();
-                    } else if (i > 10) {
-                        return (Integer) obj.get("x");
-                    }
+        CountDownLatch latch = new CountDownLatch(1);
+        Callable<Integer> callable = () -> {
+            // the following call will block on the last hasNext
+            int i = 0;
+            while (i < 11) {
+                DBObject obj = cur.next();
+                i++;
+                if (i == 10) {
+                    latch.countDown();
+                } else if (i > 10) {
+                    return (Integer) obj.get("x");
                 }
-                return null;
             }
+            return null;
         };
 
         ExecutorService es = Executors.newSingleThreadExecutor();
@@ -207,16 +202,13 @@ public class DBCursorOldTest extends DatabaseTestCase {
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
         c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
-        DBCursor cur = c.find()
-                        .sort(new BasicDBObject("$natural", 1))
-                        .cursorType(CursorType.Tailable);
 
-        try {
+        try (DBCursor cur = c.find()
+                .sort(new BasicDBObject("$natural", 1))
+                .cursorType(CursorType.Tailable)) {
             cur.tryNext();
         } catch (IllegalArgumentException e) {
             fail();
-        } finally {
-            cur.close();
         }
     }
 
@@ -227,16 +219,13 @@ public class DBCursorOldTest extends DatabaseTestCase {
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
         c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
-        DBCursor cur = c.find()
-                        .sort(new BasicDBObject("$natural", 1))
-                        .cursorType(CursorType.TailableAwait);
 
-        try {
+        try (DBCursor cur = c.find()
+                .sort(new BasicDBObject("$natural", 1))
+                .cursorType(CursorType.TailableAwait)) {
             cur.tryNext();
         } catch (IllegalArgumentException e) {
             fail();
-        } finally {
-            cur.close();
         }
     }
 
@@ -367,7 +356,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     private void insertTestData(final DBCollection dbCollection, final int numberOfDocuments) {
-        List<DBObject> documents = new ArrayList<DBObject>();
+        List<DBObject> documents = new ArrayList<>();
         for (int i = 0; i < numberOfDocuments; i++) {
             documents.add(new BasicDBObject("x", i));
         }

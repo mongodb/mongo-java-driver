@@ -24,8 +24,7 @@ import org.junit.Test;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 
 public class JsonObjectTest {
 
@@ -100,13 +99,13 @@ public class JsonObjectTest {
         JsonObject j2 = new JsonObject("{hello: 1}");
         JsonObject j3 = new JsonObject("{world: 2}");
 
-        assertTrue(j1.equals(j1));
-        assertTrue(j1.equals(j2));
-        assertTrue(j2.equals(j1));
-        assertFalse(j1.equals(j3));
-        assertFalse(j3.equals(j1));
-        assertFalse(j1.equals(null));
-        assertFalse(j1.equals("{hello: 1}"));
+        assertEquals(j1, j1);
+        assertEquals(j1, j2);
+        assertEquals(j2, j1);
+        assertNotEquals(j1, j3);
+        assertNotEquals(j3, j1);
+        assertNotEquals(null, j1);
+        assertNotEquals("{hello: 1}", j1);
 
         assertEquals(j1.hashCode(), j1.hashCode());
         assertEquals(j1.hashCode(), j2.hashCode());

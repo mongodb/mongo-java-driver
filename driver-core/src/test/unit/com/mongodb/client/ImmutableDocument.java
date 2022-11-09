@@ -36,7 +36,7 @@ public final class ImmutableDocument implements Map<String, Object>, Bson {
      * @param map initial map
      */
     public ImmutableDocument(final Map<String, Object> map) {
-        immutableDocument = Collections.unmodifiableMap(new LinkedHashMap<String, Object>(map));
+        immutableDocument = Collections.unmodifiableMap(new LinkedHashMap<>(map));
     }
 
 
@@ -102,6 +102,6 @@ public final class ImmutableDocument implements Map<String, Object>, Bson {
 
     @Override
     public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocumentWrapper<ImmutableDocument>(this, codecRegistry.get(ImmutableDocument.class));
+        return new BsonDocumentWrapper<>(this, codecRegistry.get(ImmutableDocument.class));
     }
 }

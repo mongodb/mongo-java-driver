@@ -34,7 +34,7 @@ public final class PropertyModelBuilderTest {
 
     private static final String FIELD_NAME = "myFieldName";
     private static final PropertyMetadata<Integer> PROPERTY_METADATA =
-            new PropertyMetadata<Integer>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
+            new PropertyMetadata<>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
 
     @Test
     public void testFieldMapping() throws NoSuchFieldException {
@@ -75,7 +75,7 @@ public final class PropertyModelBuilderTest {
                 .build();
     }
 
-    private static final List<Annotation> ANNOTATIONS = Collections.<Annotation>singletonList(
+    private static final List<Annotation> ANNOTATIONS = Collections.singletonList(
             new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
@@ -93,12 +93,7 @@ public final class PropertyModelBuilderTest {
                 }
             });
 
-    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = new PropertySerialization<Integer>() {
-        @Override
-        public boolean shouldSerialize(final Integer value) {
-            return false;
-        }
-    };
+    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = value -> false;
 
     private static final PropertyAccessor<Integer> FIELD_ACCESSOR = new PropertyAccessor<Integer>() {
         @Override

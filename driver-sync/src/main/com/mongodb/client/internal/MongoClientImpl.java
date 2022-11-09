@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
-import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
@@ -36,12 +35,12 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -158,12 +157,12 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public ChangeStreamIterable<Document> watch() {
-        return watch(Collections.<Bson>emptyList());
+        return watch(Collections.emptyList());
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        return watch(Collections.<Bson>emptyList(), resultClass);
+        return watch(Collections.emptyList(), resultClass);
     }
 
     @Override
@@ -178,12 +177,12 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
-        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+        return watch(clientSession, Collections.emptyList(), Document.class);
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+        return watch(clientSession, Collections.emptyList(), resultClass);
     }
 
     @Override
@@ -244,13 +243,8 @@ public final class MongoClientImpl implements MongoClient {
                 delegate.getOperationExecutor(), settings.getRetryReads());
     }
 
-    private MongoIterable<String> createListDatabaseNamesIterable(final @Nullable ClientSession clientSession) {
-        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
-            @Override
-            public String apply(final BsonDocument result) {
-                return result.getString("name").getValue();
-            }
-        });
+    private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
+        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(result -> result.getString("name").getValue());
     }
 
     public ServerSessionPool getServerSessionPool() {

@@ -76,7 +76,7 @@ class CodeRegistriesSpecification extends Specification {
 
     def 'withUuidRepresentation should apply uuid representation'() {
         given:
-        def registry = fromProviders(new ValueCodecProvider());
+        def registry = fromProviders(new ValueCodecProvider())
         def registryWithStandard = withUuidRepresentation(registry, STANDARD)
 
         when:

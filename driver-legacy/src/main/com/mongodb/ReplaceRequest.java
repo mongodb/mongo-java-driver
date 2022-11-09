@@ -57,8 +57,8 @@ class ReplaceRequest extends WriteRequest {
 
     @Override
     com.mongodb.internal.bulk.WriteRequest toNew(final DBCollection dbCollection) {
-        return new UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
-                                                       new BsonDocumentWrapper<DBObject>(document, replacementCodec),
+        return new UpdateRequest(new BsonDocumentWrapper<>(query, codec),
+                new BsonDocumentWrapper<>(document, replacementCodec),
                                                        com.mongodb.internal.bulk.WriteRequest.Type.REPLACE)
                .upsert(isUpsert())
                .collation(getCollation());

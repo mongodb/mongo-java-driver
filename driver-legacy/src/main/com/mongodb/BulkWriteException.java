@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An exception that represents all errors associated with a bulk write operation.
@@ -99,7 +100,7 @@ public class BulkWriteException extends MongoServerException {
         if (!serverAddress.equals(that.serverAddress)) {
             return false;
         }
-        if (writeConcernError != null ? !writeConcernError.equals(that.writeConcernError) : that.writeConcernError != null) {
+        if (!Objects.equals(writeConcernError, that.writeConcernError)) {
             return false;
         }
         if (!writeResult.equals(that.writeResult)) {

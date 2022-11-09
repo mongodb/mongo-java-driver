@@ -52,7 +52,7 @@ public class BenchmarkRunner {
             benchmark.after();
         }
 
-        List<Long> elapsedTimeNanosList = new ArrayList<Long>(numIterations);
+        List<Long> elapsedTimeNanosList = new ArrayList<>(numIterations);
 
         long totalTimeNanos = 0;
 

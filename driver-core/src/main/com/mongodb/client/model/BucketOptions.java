@@ -20,6 +20,7 @@ import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Arrays.asList;
 
@@ -58,7 +59,7 @@ public class BucketOptions {
      */
     @Nullable
     public List<BsonField> getOutput() {
-        return output == null ? null : new ArrayList<BsonField>(output);
+        return output == null ? null : new ArrayList<>(output);
     }
 
     /**
@@ -94,10 +95,10 @@ public class BucketOptions {
 
         BucketOptions that = (BucketOptions) o;
 
-        if (defaultBucket != null ? !defaultBucket.equals(that.defaultBucket) : that.defaultBucket != null) {
+        if (!Objects.equals(defaultBucket, that.defaultBucket)) {
             return false;
         }
-        return output != null ? output.equals(that.output) : that.output == null;
+        return Objects.equals(output, that.output);
     }
 
     @Override

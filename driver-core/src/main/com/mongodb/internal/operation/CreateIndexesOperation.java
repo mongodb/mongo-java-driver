@@ -30,8 +30,6 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.IndexRequest;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -53,8 +51,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.writeConcern
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.IndexHelper.generateIndexName;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
@@ -93,12 +89,12 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     public List<String> getIndexNames() {
-        List<String> indexNames = new ArrayList<String>(requests.size());
+        List<String> indexNames = new ArrayList<>(requests.size());
         for (IndexRequest request : requests) {
             if (request.getName() != null) {
                 indexNames.add(request.getName());
             } else {
-                indexNames.add(IndexHelper.generateIndexName(request.getKeys()));
+                indexNames.add(generateIndexName(request.getKeys()));
             }
         }
         return indexNames;
@@ -127,42 +123,31 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                try {
-                    executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                            connection, writeConcernErrorTransformer());
-                } catch (MongoCommandException e) {
-                    throw checkForDuplicateKeyError(e);
-                }
-                return null;
+        return withConnection(binding, connection -> {
+            try {
+                executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                        connection, writeConcernErrorTransformer());
+            } catch (MongoCommandException e) {
+                throw checkForDuplicateKeyError(e);
             }
+            return null;
         });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    try {
-                        executeCommandAsync(binding, namespace.getDatabaseName(),
-                                getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
-                                new SingleResultCallback<Void>() {
-                                    @Override
-                                    public void onResult(final Void result, final Throwable t) {
-                                        wrappedCallback.onResult(null, translateException(t));
-                                    }
-                                });
-                    } catch (Throwable t1) {
-                        wrappedCallback.onResult(null, t1);
-                    }
+        withAsyncConnection(binding, (connection, t) -> {
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else {
+                SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                try {
+                    executeCommandAsync(binding, namespace.getDatabaseName(),
+                            getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
+                            (result, t12) -> wrappedCallback.onResult(null, translateException(t12)));
+                } catch (Throwable t1) {
+                    wrappedCallback.onResult(null, t1);
                 }
             }
         });
@@ -238,7 +223,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument command = new BsonDocument("createIndexes", new BsonString(namespace.getCollectionName()));
-        List<BsonDocument> values = new ArrayList<BsonDocument>();
+        List<BsonDocument> values = new ArrayList<>();
         for (IndexRequest request : requests) {
             values.add(getIndex(request));
         }

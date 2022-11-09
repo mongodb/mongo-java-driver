@@ -31,7 +31,7 @@ public class DBRefTest extends DatabaseTestCase {
     @Test
     public void testRefListRoundTrip() {
         DBCollection a = database.getCollection("reflistfield");
-        List<DBRef> refs = new ArrayList<DBRef>();
+        List<DBRef> refs = new ArrayList<>();
         refs.add(new DBRef("other", 12));
         refs.add(new DBRef("other", 14));
         refs.add(new DBRef("other", 16));

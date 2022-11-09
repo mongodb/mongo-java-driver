@@ -53,10 +53,10 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
     private static final BigInteger BIG_INT_ONE = new BigInteger("1");
     private static final BigInteger BIG_INT_ZERO = new BigInteger("0");
 
-    private static final Set<String> NaN_STRINGS = new HashSet<String>(singletonList("nan"));
-    private static final Set<String> NEGATIVE_NaN_STRINGS = new HashSet<String>(singletonList("-nan"));
-    private static final Set<String> POSITIVE_INFINITY_STRINGS = new HashSet<String>(asList("inf", "+inf", "infinity", "+infinity"));
-    private static final Set<String> NEGATIVE_INFINITY_STRINGS = new HashSet<String>(asList("-inf", "-infinity"));
+    private static final Set<String> NaN_STRINGS = new HashSet<>(singletonList("nan"));
+    private static final Set<String> NEGATIVE_NaN_STRINGS = new HashSet<>(singletonList("-nan"));
+    private static final Set<String> POSITIVE_INFINITY_STRINGS = new HashSet<>(asList("inf", "+inf", "infinity", "+infinity"));
+    private static final Set<String> NEGATIVE_INFINITY_STRINGS = new HashSet<>(asList("-inf", "-infinity"));
 
     /**
      * A constant holding the positive infinity of type {@code Decimal128}.  It is equal to the value return by

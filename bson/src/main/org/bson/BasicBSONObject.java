@@ -78,7 +78,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return the DBObject
      */
     public Map toMap() {
-        return new LinkedHashMap<String, Object>(this);
+        return new LinkedHashMap<>(this);
     }
 
     /**
@@ -98,7 +98,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return if the field exists
      */
     public boolean containsField(final String field) {
-        return super.containsKey(field);
+        return containsKey(field);
     }
 
     /**
@@ -382,8 +382,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     private static Map<String, Object> canonicalizeMap(final Map<String, Object> from) {
-        Map<String, Object> canonicalized = new LinkedHashMap<String, Object>(from.size());
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        Map<String, Object> canonicalized = new LinkedHashMap<>(from.size());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -393,7 +393,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
 
     private static BasicBSONObject canonicalizeBSONObject(final BSONObject from) {
         BasicBSONObject canonicalized = new BasicBSONObject();
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -402,7 +402,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     private static List canonicalizeList(final List<Object> list) {
-        List<Object> canonicalized = new ArrayList<Object>(list.size());
+        List<Object> canonicalized = new ArrayList<>(list.size());
         for (Object cur : list) {
             canonicalized.add(canonicalize(cur));
         }

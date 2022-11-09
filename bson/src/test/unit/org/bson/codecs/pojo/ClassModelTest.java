@@ -53,7 +53,6 @@ import static org.junit.Assert.assertNull;
 public final class ClassModelTest {
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testSimpleGenericsModel() {
         ClassModel<?> classModel = ClassModel.builder(SimpleGenericsModel.class).build();
 
@@ -112,7 +111,6 @@ public final class ClassModelTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testWildcardModel() {
         ClassModel<?> classModel = ClassModel.builder(ConcreteAndNestedAbstractInterfaceModel.class).build();
 
@@ -132,7 +130,6 @@ public final class ClassModelTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testMappingConcreteGenericTypes() {
         ClassModel<?> classModel = ClassModel.builder(NestedGenericHolderMapModel.class).build();
 

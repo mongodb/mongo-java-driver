@@ -30,7 +30,7 @@ final class BuildersHelper {
         if (value == null) {
             writer.writeNull();
         } else if (value instanceof Bson) {
-            ((Encoder) codecRegistry.get(BsonDocument.class)).encode(writer,
+            codecRegistry.get(BsonDocument.class).encode(writer,
                                                                      ((Bson) value).toBsonDocument(BsonDocument.class, codecRegistry),
                                                                      EncoderContext.builder().build());
         } else {

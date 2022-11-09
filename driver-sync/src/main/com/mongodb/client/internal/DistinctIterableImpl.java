@@ -58,7 +58,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
                          final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter,
                          final boolean retryReads) {
         super(clientSession, executor, readConcern, readPreference, retryReads);
-        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, retryReads);
+        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, retryReads);
         this.resultClass = notNull("resultClass", resultClass);
         this.fieldName = notNull("mapFunction", fieldName);
         this.filter = filter;

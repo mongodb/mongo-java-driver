@@ -74,7 +74,7 @@ class DBCollectionSpecification extends Specification {
 
     private static final DEFAULT_DBOBJECT_CODEC_FACTORY = new DBObjectCodec(MongoClient.getDefaultCodecRegistry(),
             DBObjectCodec.getDefaultBsonTypeClassMap(),
-            new DBCollectionObjectFactory());
+            new DBCollectionObjectFactory())
 
     def 'should throw IllegalArgumentException if name is invalid'() {
         when:
@@ -129,9 +129,9 @@ class DBCollectionSpecification extends Specification {
 
     def 'should use CreateIndexOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null]);
+        def executor = new TestOperationExecutor([null, null, null])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        def keys = new BasicDBObject('a', 1);
+        def keys = new BasicDBObject('a', 1)
 
         when:
         collection.createIndex(keys)
@@ -189,12 +189,12 @@ class DBCollectionSpecification extends Specification {
 
     def 'should support boolean index options that are numbers'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        def options = new BasicDBObject('sparse', value);
+        def options = new BasicDBObject('sparse', value)
 
         when:
-        collection.createIndex(new BasicDBObject('y', 1), options);
+        collection.createIndex(new BasicDBObject('y', 1), options)
 
         then:
         def operation = executor.getWriteOperation() as CreateIndexesOperation
@@ -214,12 +214,12 @@ class DBCollectionSpecification extends Specification {
 
     def 'should support integer index options that are numbers'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        def options = new BasicDBObject('expireAfterSeconds', integerValue);
+        def options = new BasicDBObject('expireAfterSeconds', integerValue)
 
         when:
-        collection.createIndex(new BasicDBObject('y', 1), options);
+        collection.createIndex(new BasicDBObject('y', 1), options)
 
         then:
         def operation = executor.getWriteOperation() as CreateIndexesOperation
@@ -231,12 +231,12 @@ class DBCollectionSpecification extends Specification {
 
     def 'should support double index options that are numbers'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        def options = new BasicDBObject('max', doubleValue);
+        def options = new BasicDBObject('max', doubleValue)
 
         when:
-        collection.createIndex(new BasicDBObject('y', '2d'), options);
+        collection.createIndex(new BasicDBObject('y', '2d'), options)
 
         then:
         def operation = executor.getWriteOperation() as CreateIndexesOperation
@@ -248,13 +248,13 @@ class DBCollectionSpecification extends Specification {
 
     def 'should throw IllegalArgumentException for unsupported option value type'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        def options = new BasicDBObject('sparse', 'true');
+        def options = new BasicDBObject('sparse', 'true')
 
 
         when:
-        collection.createIndex(new BasicDBObject('y', '1'), options);
+        collection.createIndex(new BasicDBObject('y', '1'), options)
 
         then:
         thrown(IllegalArgumentException)
@@ -262,7 +262,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'getStats should execute the expected command with the collection default read preference'() {
         given:
-        def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonInt32(1))]);
+        def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonInt32(1))])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         collection.setReadPreference(ReadPreference.secondary())
 
@@ -443,7 +443,7 @@ class DBCollectionSpecification extends Specification {
 
     def 'count should create the correct CountOperation'() {
         given:
-        def executor = new TestOperationExecutor([42L, 42L, 42L]);
+        def executor = new TestOperationExecutor([42L, 42L, 42L])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
         def collection = db.getCollection('test')
 
@@ -487,7 +487,7 @@ class DBCollectionSpecification extends Specification {
                 count == 0
             }
         }
-        def executor = new TestOperationExecutor([cursor, cursor, cursor]);
+        def executor = new TestOperationExecutor([cursor, cursor, cursor])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
         def collection = db.getCollection('test')
 

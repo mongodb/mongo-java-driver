@@ -156,7 +156,7 @@ public class BatchCursorPublisherTest {
         if (batchSize == 0) {
             return singletonList(expected);
         }
-        final AtomicInteger counter = new AtomicInteger();
+        AtomicInteger counter = new AtomicInteger();
         return new ArrayList<>(expected.stream().collect(groupingBy(it -> counter.getAndIncrement() / batchSize)).values());
     }
 

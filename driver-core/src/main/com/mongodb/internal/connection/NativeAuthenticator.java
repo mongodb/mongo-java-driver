@@ -21,9 +21,9 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -38,7 +38,7 @@ class NativeAuthenticator extends Authenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
 
     NativeAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                        @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
     }
 
@@ -63,29 +63,23 @@ class NativeAuthenticator extends Authenticator {
                            final SingleResultCallback<Void> callback) {
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         executeCommandAsync(getMongoCredential().getSource(), getNonceCommand(), getClusterConnectionMode(), getServerApi(), connection,
-                            new SingleResultCallback<BsonDocument>() {
-                                @Override
-                                public void onResult(final BsonDocument nonceResult, final Throwable t) {
-                                    if (t != null) {
-                                        errHandlingCallback.onResult(null, translateThrowable(t));
+                (nonceResult, t) -> {
+                    if (t != null) {
+                        errHandlingCallback.onResult(null, translateThrowable(t));
+                    } else {
+                        executeCommandAsync(getMongoCredential().getSource(),
+                                            getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
+                                                           ((BsonString) nonceResult.get("nonce")).getValue()),
+                                getClusterConnectionMode(), getServerApi(), connection,
+                                (result, t1) -> {
+                                    if (t1 != null) {
+                                        errHandlingCallback.onResult(null, translateThrowable(t1));
                                     } else {
-                                        executeCommandAsync(getMongoCredential().getSource(),
-                                                            getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
-                                                                           ((BsonString) nonceResult.get("nonce")).getValue()),
-                                                getClusterConnectionMode(), getServerApi(), connection,
-                                                            new SingleResultCallback<BsonDocument>() {
-                                                                @Override
-                                                                public void onResult(final BsonDocument result, final Throwable t) {
-                                                                    if (t != null) {
-                                                                        errHandlingCallback.onResult(null, translateThrowable(t));
-                                                                    } else {
-                                                                        errHandlingCallback.onResult(null, null);
-                                                                    }
-                                                                }
-                                                            });
+                                        errHandlingCallback.onResult(null, null);
                                     }
-                                }
-                            });
+                                });
+                    }
+                });
     }
 
     private Throwable translateThrowable(final Throwable t) {

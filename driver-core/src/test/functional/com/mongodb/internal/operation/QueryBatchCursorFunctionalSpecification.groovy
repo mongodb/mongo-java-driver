@@ -198,7 +198,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def connection = connectionSource.getConnection()
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData)
 
         when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), null, connectionSource, connection)
@@ -244,7 +244,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     def 'test try next with tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true)
 
 
         when:
@@ -270,7 +270,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         Connection conn = connectionSource.getConnection()
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true)
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), null, connectionSource, conn)
         cursor.next()
         def closeCompleted = new CountDownLatch(1)
@@ -299,7 +299,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     def 'test maxTimeMS'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true)
 
         def connection = connectionSource.getConnection()
         def maxTimeMS = 10
@@ -641,7 +641,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                         connectionSource.sessionContext, connectionSource.getServerApi(), IgnorableRequestContext.INSTANCE)
             cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } finally {
-            connection.release();
+            connection.release()
         }
     }
 
@@ -659,6 +659,6 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
                         .append('collection', new BsonString(namespace.getCollectionName())),
                 NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                connectionSource.getServerApi());
+                connectionSource.getServerApi())
     }
 }

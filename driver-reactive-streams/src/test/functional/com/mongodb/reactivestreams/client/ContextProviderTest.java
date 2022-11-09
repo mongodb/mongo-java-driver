@@ -26,7 +26,6 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
-import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -51,11 +50,8 @@ public class ContextProviderTest {
     @Test
     public void shouldPropagateExceptionFromContextProvider() {
         try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
-                .contextProvider(new ReactiveContextProvider() {
-                    @Override
-                    public RequestContext getContext(final Subscriber<?> subscriber) {
-                        throw new RuntimeException();
-                    }
+                .contextProvider((ReactiveContextProvider) subscriber -> {
+                    throw new RuntimeException();
                 })
                 .build())) {
 
@@ -93,12 +89,7 @@ public class ContextProviderTest {
 
         TestCommandListener commandListener = new TestCommandListener(requestContext);
         try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
-                .contextProvider(new ReactiveContextProvider() {
-                    @Override
-                    public RequestContext getContext(final Subscriber<?> subscriber) {
-                        return requestContext;
-                    }
-                })
+                .contextProvider((ReactiveContextProvider) subscriber -> requestContext)
                 .addCommandListener(commandListener)
                 .build())) {
 

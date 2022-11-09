@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public final class NestedSelfReferentialGenericModel<T, V, Z> {
     private T t;
     private V v;
@@ -86,19 +88,19 @@ public final class NestedSelfReferentialGenericModel<T, V, Z> {
 
         NestedSelfReferentialGenericModel<?, ?, ?> that = (NestedSelfReferentialGenericModel<?, ?, ?>) o;
 
-        if (t != null ? !t.equals(that.t) : that.t != null) {
+        if (!Objects.equals(t, that.t)) {
             return false;
         }
-        if (v != null ? !v.equals(that.v) : that.v != null) {
+        if (!Objects.equals(v, that.v)) {
             return false;
         }
-        if (z != null ? !z.equals(that.z) : that.z != null) {
+        if (!Objects.equals(z, that.z)) {
             return false;
         }
-        if (selfRef1 != null ? !selfRef1.equals(that.selfRef1) : that.selfRef1 != null) {
+        if (!Objects.equals(selfRef1, that.selfRef1)) {
             return false;
         }
-        if (selfRef2 != null ? !selfRef2.equals(that.selfRef2) : that.selfRef2 != null) {
+        if (!Objects.equals(selfRef2, that.selfRef2)) {
             return false;
         }
 

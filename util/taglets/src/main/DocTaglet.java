@@ -17,19 +17,25 @@
 import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.UnknownBlockTagTree;
 import jdk.javadoc.doclet.Taglet;
+
 import javax.lang.model.element.Element;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
-import static jdk.javadoc.doclet.Taglet.Location.*;
+import static jdk.javadoc.doclet.Taglet.Location.CONSTRUCTOR;
+import static jdk.javadoc.doclet.Taglet.Location.FIELD;
+import static jdk.javadoc.doclet.Taglet.Location.METHOD;
+import static jdk.javadoc.doclet.Taglet.Location.OVERVIEW;
+import static jdk.javadoc.doclet.Taglet.Location.PACKAGE;
+import static jdk.javadoc.doclet.Taglet.Location.TYPE;
 
 public abstract class DocTaglet implements Taglet {
 
     @Override
     public Set<Location> getAllowedLocations() {
-        return new HashSet<Location>(asList(CONSTRUCTOR, METHOD, FIELD, OVERVIEW, PACKAGE, TYPE));
+        return new HashSet<>(asList(CONSTRUCTOR, METHOD, FIELD, OVERVIEW, PACKAGE, TYPE));
     }
 
     @Override
@@ -58,7 +64,7 @@ public abstract class DocTaglet implements Taglet {
         int firstSpace = text.indexOf(' ');
         if (firstSpace != -1) {
             relativePath = text.substring(0, firstSpace);
-            display = text.substring(firstSpace, text.length()).trim();
+            display = text.substring(firstSpace).trim();
         }
 
         return String.format("<a href='%s%s'>%s</a>", getBaseDocURI(), relativePath, display);

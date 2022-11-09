@@ -40,7 +40,7 @@ public interface ReadBinding extends ReferenceCounted {
      * Return a connection source that satisfies the read preference with which this instance is configured, if all connected servers have
      * a maxWireVersion >= the given minWireVersion.  Otherwise, return a connection source that satisfied the given
      * fallbackReadPreference.
-     *
+     * <p>
      * This is useful for operations that are able to execute on a secondary on later server versions, but must execute on the primary on
      * earlier server versions.
      *

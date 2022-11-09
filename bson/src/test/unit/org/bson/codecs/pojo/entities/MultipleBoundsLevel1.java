@@ -18,12 +18,12 @@ package org.bson.codecs.pojo.entities;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class MultipleBoundsLevel1<T> extends MultipleBoundsLevel2<Integer> {
     private T level1;
 
     public MultipleBoundsLevel1() {
-        super();
     }
 
     public MultipleBoundsLevel1(final Map<String, String> level3, final List<Integer> level2, final T level1) {
@@ -53,7 +53,7 @@ public class MultipleBoundsLevel1<T> extends MultipleBoundsLevel2<Integer> {
 
         MultipleBoundsLevel1<?> that = (MultipleBoundsLevel1<?>) o;
 
-        if (level1 != null ? !level1.equals(that.level1) : that.level1 != null) {
+        if (!Objects.equals(level1, that.level1)) {
             return false;
         }
 

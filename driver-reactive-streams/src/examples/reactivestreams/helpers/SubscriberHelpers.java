@@ -45,8 +45,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static java.lang.String.format;
-
 /**
  *  Subscriber helper implementations for the Quick Tour.
  */
@@ -225,7 +223,7 @@ public final class SubscriberHelpers {
 
         @Override
         public void onComplete() {
-            System.out.println(format(message, getReceived()));
+            System.out.printf((message) + "%n", getReceived());
             super.onComplete();
         }
     }

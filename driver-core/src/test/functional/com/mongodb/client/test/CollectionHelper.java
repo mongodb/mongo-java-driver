@@ -70,9 +70,9 @@ import static java.util.Collections.singletonList;
 
 public final class CollectionHelper<T> {
 
-    private Codec<T> codec;
-    private CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
-    private MongoNamespace namespace;
+    private final Codec<T> codec;
+    private final CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
+    private final MongoNamespace namespace;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;
@@ -80,7 +80,7 @@ public final class CollectionHelper<T> {
     }
 
     public T hello() {
-        return new CommandReadOperation<T>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
+        return new CommandReadOperation<>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
     }
 
     public static void drop(final MongoNamespace namespace) {
@@ -186,7 +186,7 @@ public final class CollectionHelper<T> {
     }
 
     public void insertDocuments(final List<BsonDocument> documents, final WriteConcern writeConcern, final WriteBinding binding) {
-        List<InsertRequest> insertRequests = new ArrayList<InsertRequest>(documents.size());
+        List<InsertRequest> insertRequests = new ArrayList<>(documents.size());
         for (BsonDocument document : documents) {
             insertRequests.add(new InsertRequest(document));
         }
@@ -214,9 +214,9 @@ public final class CollectionHelper<T> {
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final List<I> documents) {
-        List<BsonDocument> bsonDocuments = new ArrayList<BsonDocument>(documents.size());
+        List<BsonDocument> bsonDocuments = new ArrayList<>(documents.size());
         for (I document : documents) {
-            bsonDocuments.add(new BsonDocumentWrapper<I>(document, iCodec));
+            bsonDocuments.add(new BsonDocumentWrapper<>(document, iCodec));
         }
         insertDocuments(bsonDocuments, binding);
     }
@@ -231,10 +231,10 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final Codec<D> codec) {
-        BatchCursor<D> cursor = new FindOperation<D>(namespace, codec)
+        BatchCursor<D> cursor = new FindOperation<>(namespace, codec)
                 .sort(new BsonDocument("_id", new BsonInt32(1)))
                 .execute(getBinding());
-        List<D> results = new ArrayList<D>();
+        List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
         }
@@ -281,13 +281,13 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> aggregate(final List<Bson> pipeline, final Decoder<D> decoder) {
-        List<BsonDocument> bsonDocumentPipeline = new ArrayList<BsonDocument>();
+        List<BsonDocument> bsonDocumentPipeline = new ArrayList<>();
         for (Bson cur : pipeline) {
             bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
         }
-        BatchCursor<D> cursor = new AggregateOperation<D>(namespace, bsonDocumentPipeline, decoder)
+        BatchCursor<D> cursor = new AggregateOperation<>(namespace, bsonDocumentPipeline, decoder)
                                 .execute(getBinding());
-        List<D> results = new ArrayList<D>();
+        List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
         }
@@ -320,9 +320,9 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final BsonDocument projection, final Decoder<D> decoder) {
-        BatchCursor<D> cursor = new FindOperation<D>(namespace, decoder).filter(filter).sort(sort).projection(projection)
+        BatchCursor<D> cursor = new FindOperation<>(namespace, decoder).filter(filter).sort(sort).projection(projection)
                                                                         .execute(getBinding());
-        List<D> results = new ArrayList<D>();
+        List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
         }
@@ -346,7 +346,7 @@ public final class CollectionHelper<T> {
     }
 
     public BsonDocument wrap(final Document document) {
-        return new BsonDocumentWrapper<Document>(document, new DocumentCodec());
+        return new BsonDocumentWrapper<>(document, new DocumentCodec());
     }
 
     public BsonDocument toBsonDocument(final Bson document) {
@@ -383,8 +383,8 @@ public final class CollectionHelper<T> {
     }
 
     public List<BsonDocument> listIndexes(){
-        List<BsonDocument> indexes = new ArrayList<BsonDocument>();
-        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<BsonDocument>(namespace, new BsonDocumentCodec()).execute(getBinding());
+        List<BsonDocument> indexes = new ArrayList<>();
+        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<>(namespace, new BsonDocumentCodec()).execute(getBinding());
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next());
         }

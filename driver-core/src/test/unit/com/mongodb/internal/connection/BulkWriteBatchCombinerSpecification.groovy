@@ -92,7 +92,7 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should throw last write concern error'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
-        combiner.addWriteConcernErrorResult(new WriteConcernError(65, 'journalError', 'journal error', new BsonDocument()));
+        combiner.addWriteConcernErrorResult(new WriteConcernError(65, 'journalError', 'journal error', new BsonDocument()))
         def writeConcernError = new WriteConcernError(75, 'wtimeout', 'wtimeout message', new BsonDocument())
         combiner.addWriteConcernErrorResult(writeConcernError)
 
@@ -137,10 +137,10 @@ class BulkWriteBatchCombinerSpecification extends Specification {
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), false, ACKNOWLEDGED)
         combiner.addErrorResult([new BulkWriteError(11000, 'dup key', new BsonDocument(), 1),
                                  new BulkWriteError(45, 'wc error', new BsonDocument(), 0)],
-                                null, new IndexMap.RangeBased().add(0, 0).add(1, 1).add(2, 2));
+                                null, new IndexMap.RangeBased().add(0, 0).add(1, 1).add(2, 2))
 
         when:
-        combiner.getResult();
+        combiner.getResult()
 
         then:
         def e = thrown(MongoBulkWriteException)

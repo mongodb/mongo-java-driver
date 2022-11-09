@@ -29,7 +29,7 @@ import org.bson.types.ObjectId;
  * @since 3.0
  */
 public class StringCodec implements Codec<String>, RepresentationConfigurable<String> {
-    private BsonType representation;
+    private final BsonType representation;
 
     /**
      * Constructs a StringCodec with a String representation.

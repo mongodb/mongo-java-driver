@@ -53,7 +53,7 @@ public class MongoException extends RuntimeException {
     private static final long serialVersionUID = -4415279469780082174L;
 
     private final int code;
-    private final Set<String> errorLabels = new HashSet<String>();
+    private final Set<String> errorLabels = new HashSet<>();
 
     /**
      * Static helper to create or cast a MongoException from a throwable

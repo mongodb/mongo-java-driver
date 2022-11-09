@@ -35,7 +35,7 @@ public final class ServerApi {
     private final Boolean deprecationErrors;
     private final Boolean strict;
 
-    private ServerApi(final ServerApiVersion version, final @Nullable Boolean strict, final @Nullable Boolean deprecationErrors) {
+    private ServerApi(final ServerApiVersion version, @Nullable final Boolean strict, @Nullable final Boolean deprecationErrors) {
         this.version = notNull("version", version);
         this.deprecationErrors = deprecationErrors;
         this.strict = strict;

@@ -120,7 +120,7 @@ final class ConventionAnnotationImpl implements Convention {
                         if (creatorExecutable != null) {
                             throw new CodecConfigurationException("Found multiple constructors annotated with @BsonCreator");
                         }
-                        creatorExecutable = new CreatorExecutable<T>(clazz, (Constructor<T>) constructor);
+                        creatorExecutable = new CreatorExecutable<>(clazz, (Constructor<T>) constructor);
                     }
                 }
             }
@@ -140,7 +140,7 @@ final class ConventionAnnotationImpl implements Convention {
                                         format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s",
                                                 method.getReturnType(), bsonCreatorClass));
                             }
-                            creatorExecutable = new CreatorExecutable<T>(clazz, method);
+                            creatorExecutable = new CreatorExecutable<>(clazz, method);
                             foundStaticBsonCreatorMethod = true;
                         }
                     }
@@ -204,7 +204,7 @@ final class ConventionAnnotationImpl implements Convention {
                         propertyModelBuilder.getWriteName(), propertyModelBuilder.getTypeData().getType(), parameterType));
                 }
             }
-            classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
+            classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<>(creatorExecutable));
         }
     }
 
@@ -222,14 +222,14 @@ final class ConventionAnnotationImpl implements Convention {
     private <T, S> PropertyModelBuilder<S> addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder,
                                                                                  final String name,
                                                                                  final Class<S> clazz) {
-        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<S>(name,
-            classModelBuilder.getType().getSimpleName(), TypeData.builder(clazz).build())).readName(null).writeName(name);
+        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<>(name,
+                classModelBuilder.getType().getSimpleName(), TypeData.builder(clazz).build())).readName(null).writeName(name);
         classModelBuilder.addProperty(propertyModelBuilder);
         return propertyModelBuilder;
     }
 
     private void cleanPropertyBuilders(final ClassModelBuilder<?> classModelBuilder) {
-        List<String> propertiesToRemove = new ArrayList<String>();
+        List<String> propertiesToRemove = new ArrayList<>();
         for (PropertyModelBuilder<?> propertyModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
             if (!propertyModelBuilder.isReadable() && !propertyModelBuilder.isWritable()) {
                 propertiesToRemove.add(propertyModelBuilder.getName());

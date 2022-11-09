@@ -82,7 +82,6 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -166,27 +165,24 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testConventionsCustom() {
-        List<Convention> conventions = Collections.<Convention>singletonList(
-                new Convention() {
-                    @Override
-                    public void apply(final ClassModelBuilder<?> classModelBuilder) {
-                        for (PropertyModelBuilder<?> fieldModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
-                            fieldModelBuilder.discriminatorEnabled(false);
-                            fieldModelBuilder.readName(
-                                    fieldModelBuilder.getName()
-                                            .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
-                            fieldModelBuilder.writeName(
-                                    fieldModelBuilder.getName()
-                                            .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
-                        }
-                        if (classModelBuilder.getProperty("customId") != null) {
-                            classModelBuilder.idPropertyName("customId");
-                        }
-                        classModelBuilder.enableDiscriminator(true);
-                        classModelBuilder.discriminatorKey("_cls");
-                        classModelBuilder.discriminator(classModelBuilder.getType().getSimpleName()
-                                .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
+        List<Convention> conventions = singletonList(
+                classModelBuilder -> {
+                    for (PropertyModelBuilder<?> fieldModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
+                        fieldModelBuilder.discriminatorEnabled(false);
+                        fieldModelBuilder.readName(
+                                fieldModelBuilder.getName()
+                                        .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
+                        fieldModelBuilder.writeName(
+                                fieldModelBuilder.getName()
+                                        .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
                     }
+                    if (classModelBuilder.getProperty("customId") != null) {
+                        classModelBuilder.idPropertyName("customId");
+                    }
+                    classModelBuilder.enableDiscriminator(true);
+                    classModelBuilder.discriminatorKey("_cls");
+                    classModelBuilder.discriminator(classModelBuilder.getType().getSimpleName()
+                            .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
                 });
 
         ClassModelBuilder<ConventionModel> classModel = ClassModel.builder(ConventionModel.class).conventions(conventions);
@@ -253,7 +249,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testSetPrivateFieldConvention() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(PrivateSetterFieldModel.class);
-        ArrayList<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        ArrayList<Convention> conventions = new ArrayList<>(DEFAULT_CONVENTIONS);
         conventions.add(SET_PRIVATE_FIELDS_CONVENTION);
         builder.conventions(conventions);
 
@@ -387,12 +383,7 @@ public final class PojoCustomTest extends PojoTestCase {
         model.setIntegerField(null);
         ClassModelBuilder<SimpleModel> classModel = ClassModel.builder(SimpleModel.class);
         ((PropertyModelBuilder<Integer>) classModel.getProperty("integerField"))
-                .propertySerialization(new PropertySerialization<Integer>() {
-                    @Override
-                    public boolean shouldSerialize(final Integer value) {
-                        return true;
-                    }
-                });
+                .propertySerialization(value -> true);
 
         roundTrip(getPojoCodecProviderBuilder(classModel), model, "{'integerField': null, 'stringField': 'myString'}");
     }
@@ -404,12 +395,7 @@ public final class PojoCustomTest extends PojoTestCase {
         model.setSimple(null);
         ClassModelBuilder<SimpleNestedPojoModel> classModel = ClassModel.builder(SimpleNestedPojoModel.class);
         ((PropertyModelBuilder<SimpleModel>) classModel.getProperty("simple"))
-                .propertySerialization(new PropertySerialization<SimpleModel>() {
-                    @Override
-                    public boolean shouldSerialize(final SimpleModel value) {
-                        return true;
-                    }
-                });
+                .propertySerialization(value -> true);
         ClassModelBuilder<SimpleModel> classModelSimple = ClassModel.builder(SimpleModel.class);
 
         roundTrip(getPojoCodecProviderBuilder(classModel, classModelSimple), model, "{'simple': null}");
@@ -425,19 +411,9 @@ public final class PojoCustomTest extends PojoTestCase {
         ClassModelBuilder<ConcreteCollectionsModel> classModel =
                 ClassModel.builder(ConcreteCollectionsModel.class);
         ((PropertyModelBuilder<Collection<Integer>>) classModel.getProperty("collection"))
-                .propertySerialization(new PropertySerialization<Collection<Integer>>() {
-                    @Override
-                    public boolean shouldSerialize(final Collection<Integer> value) {
-                        return true;
-                    }
-                });
+                .propertySerialization(value -> true);
         ((PropertyModelBuilder<Map<String, Double>>) classModel.getProperty("map"))
-                .propertySerialization(new PropertySerialization<Map<String, Double>>() {
-                    @Override
-                    public boolean shouldSerialize(final Map<String, Double> value) {
-                        return true;
-                    }
-                });
+                .propertySerialization(value -> true);
 
         roundTrip(getPojoCodecProviderBuilder(classModel), model,
                 "{'collection': null, 'list': [4, 5, 6], 'linked': [7, 8, 9], 'map': null,"
@@ -461,7 +437,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void testCanHandleTopLevelGenericIfHasCodec() {
-        UpperBoundsModel<Long> model = new UpperBoundsModel<Long>(5L);
+        UpperBoundsModel<Long> model = new UpperBoundsModel<>(5L);
 
         ClassModelBuilder<UpperBoundsModel> classModelBuilder = ClassModel.builder(UpperBoundsModel.class);
         ((PropertyModelBuilder<Long>) classModelBuilder.getProperty("myGenericField")).codec(new LongCodec());
@@ -479,14 +455,14 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testCustomRegisteredPropertyCodecOmittedValue() {
-        CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.<String>empty());
+        CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.empty());
         roundTrip(getPojoCodecProviderBuilder(CustomPropertyCodecOptionalModel.class).register(new OptionalPropertyCodecProvider()),
                 model, "{'optionalField': null}");
     }
 
     @Test
     public void testMapStringObjectModel() {
-        MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
+        MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
         CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
@@ -494,7 +470,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testMapStringObjectModelWithObjectCodec() {
-        MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
+        MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
         CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()), fromCodecs(new ObjectCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
@@ -638,7 +614,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testRoundTripWithoutBsonAnnotation() {
-        roundTrip(getPojoCodecProviderBuilder(BsonRepresentationModel.class).conventions(Arrays.asList(CLASS_AND_PROPERTY_CONVENTION)),
+        roundTrip(getPojoCodecProviderBuilder(BsonRepresentationModel.class).conventions(asList(CLASS_AND_PROPERTY_CONVENTION)),
                 new BsonRepresentationModel("hello", 1), "{'_id': 'hello', 'age': 1}");
     }
 
@@ -668,7 +644,7 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {
-        List<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        List<Convention> conventions = new ArrayList<>(DEFAULT_CONVENTIONS);
         conventions.add(USE_GETTERS_FOR_SETTERS);
         return conventions;
     }

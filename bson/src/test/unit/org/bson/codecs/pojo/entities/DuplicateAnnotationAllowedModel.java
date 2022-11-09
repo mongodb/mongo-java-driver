@@ -20,6 +20,7 @@ import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 public class DuplicateAnnotationAllowedModel {
 
@@ -79,7 +80,7 @@ public class DuplicateAnnotationAllowedModel {
 
         DuplicateAnnotationAllowedModel that = (DuplicateAnnotationAllowedModel) o;
 
-        return (id != null ? id.equals(that.id) : that.id == null);
+        return (Objects.equals(id, that.id));
     }
 
     @Override

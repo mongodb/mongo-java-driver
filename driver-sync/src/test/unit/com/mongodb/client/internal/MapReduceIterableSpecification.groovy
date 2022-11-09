@@ -60,7 +60,7 @@ class MapReduceIterableSpecification extends Specification {
 
     def 'should build the expected MapReduceWithInlineResultsOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null])
         def mapReduceIterable = new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, 'map', 'reduce')
 
@@ -105,7 +105,7 @@ class MapReduceIterableSpecification extends Specification {
 
     def 'should build the expected MapReduceToCollectionOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null]);
+        def executor = new TestOperationExecutor([null, null, null])
 
         when: 'mapReduce to a collection'
         def collectionNamespace = new MongoNamespace('dbName', 'collName')
@@ -172,7 +172,7 @@ class MapReduceIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def mapReduceIterable = new MapReduceIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, 'map', 'reduce')
 
@@ -197,7 +197,7 @@ class MapReduceIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([null, batchCursor, null, batchCursor, null]);
+        def executor = new TestOperationExecutor([null, batchCursor, null, batchCursor, null])
         def mapReduceIterable = new MapReduceIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, 'map', 'reduce')
                 .collectionName('collName')
@@ -262,7 +262,7 @@ class MapReduceIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -276,7 +276,7 @@ class MapReduceIterableSpecification extends Specification {
                 }
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new MapReduceIterableImpl(null, namespace, BsonDocument, BsonDocument, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, 'map', 'reduce')
 

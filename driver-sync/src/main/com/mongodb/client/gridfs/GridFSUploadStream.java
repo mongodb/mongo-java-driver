@@ -37,7 +37,7 @@ public abstract class GridFSUploadStream extends OutputStream {
 
     /**
      * Gets the {@link ObjectId} for the file to be uploaded or throws an error if an alternative BsonType has been used for the id.
-     *
+     * <p>
      * Throws a MongoGridFSException if the file id is not an ObjectId.
      * @return the ObjectId for the file to be uploaded
      */

@@ -49,7 +49,6 @@ import java.util.List;
  *
  * @mongodb.driver.manual core/gridfs/ GridFS
  */
-@SuppressWarnings("rawtypes")
 public class GridFS {
 
     /**
@@ -228,7 +227,7 @@ public class GridFS {
      * @throws com.mongodb.MongoException if the operation fails
      */
     public List<GridFSDBFile> find(final DBObject query, final DBObject sort) {
-        List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
+        List<GridFSDBFile> files = new ArrayList<>();
 
         DBCursor cursor = filesCollection.find(query);
         if (sort != null) {

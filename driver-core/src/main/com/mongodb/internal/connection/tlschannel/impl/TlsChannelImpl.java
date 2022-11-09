@@ -19,8 +19,6 @@
 
 package com.mongodb.internal.connection.tlschannel.impl;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.NeedsReadException;
 import com.mongodb.internal.connection.tlschannel.NeedsTaskException;
 import com.mongodb.internal.connection.tlschannel.NeedsWriteException;
@@ -28,6 +26,8 @@ import com.mongodb.internal.connection.tlschannel.TlsChannelCallbackException;
 import com.mongodb.internal.connection.tlschannel.TrackingAllocator;
 import com.mongodb.internal.connection.tlschannel.WouldBlockException;
 import com.mongodb.internal.connection.tlschannel.util.Util;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -202,7 +202,7 @@ public class TlsChannelImpl implements ByteChannel {
 
   // read
 
-  public long read(ByteBufferSet dest) throws IOException, NeedsTaskException {
+  public long read(ByteBufferSet dest) throws IOException {
     checkReadBuffer(dest);
     if (!dest.hasRemaining()) return 0;
     handshake();

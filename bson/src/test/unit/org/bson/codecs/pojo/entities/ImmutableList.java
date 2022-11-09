@@ -31,7 +31,7 @@ public final class ImmutableList<T> implements List<T> {
         if (list instanceof ImmutableList) {
             return (ImmutableList<T>) list;
         } else {
-            return new ImmutableList<T>(new ArrayList<T>(list));
+            return new ImmutableList<>(new ArrayList<>(list));
         }
     }
 
@@ -161,6 +161,6 @@ public final class ImmutableList<T> implements List<T> {
 
     @Override
     public List<T> subList(final int fromIndex, final int toIndex) {
-        return new ImmutableList<T>(list.subList(fromIndex, toIndex));
+        return new ImmutableList<>(list.subList(fromIndex, toIndex));
     }
 }

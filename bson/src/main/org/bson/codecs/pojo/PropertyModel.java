@@ -19,6 +19,8 @@ package org.bson.codecs.pojo;
 import org.bson.BsonType;
 import org.bson.codecs.Codec;
 
+import java.util.Objects;
+
 /**
  * Represents a property on a class and stores various metadata such as generic parameters
  *
@@ -60,7 +62,7 @@ public final class PropertyModel<T> {
      * @return the builder
      */
     public static <T> PropertyModelBuilder<T> builder() {
-        return new PropertyModelBuilder<T>();
+        return new PropertyModelBuilder<>();
     }
 
     /**
@@ -189,7 +191,7 @@ public final class PropertyModel<T> {
                 .getPropertySerialization() != null) {
             return false;
         }
-        if (useDiscriminator != null ? !useDiscriminator.equals(that.useDiscriminator) : that.useDiscriminator != null) {
+        if (!Objects.equals(useDiscriminator, that.useDiscriminator)) {
             return false;
         }
         if (getPropertyAccessor() != null ? !getPropertyAccessor().equals(that.getPropertyAccessor())

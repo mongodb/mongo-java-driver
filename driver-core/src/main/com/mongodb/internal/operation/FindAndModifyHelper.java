@@ -19,8 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformerAsync;
 import org.bson.BsonArray;
@@ -34,26 +32,13 @@ import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernE
 final class FindAndModifyHelper {
 
     static <T> CommandWriteTransformer<BsonDocument, T> transformer() {
-        return new CommandWriteTransformer<BsonDocument, T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final BsonDocument result, final Connection connection) {
-                return transformDocument(result, connection.getDescription().getServerAddress());
-            }
-        };
+        return (result, connection) -> transformDocument(result, connection.getDescription().getServerAddress());
     }
 
     static <T> CommandWriteTransformerAsync<BsonDocument, T> asyncTransformer() {
-        return new CommandWriteTransformerAsync<BsonDocument, T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final BsonDocument result, final AsyncConnection connection) {
-                return transformDocument(result, connection.getDescription().getServerAddress());
-            }
-        };
+        return (result, connection) -> transformDocument(result, connection.getDescription().getServerAddress());
     }
 
-    @SuppressWarnings("deprecation")
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
             MongoWriteConcernException writeConcernException = new MongoWriteConcernException(

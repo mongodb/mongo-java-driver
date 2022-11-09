@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo.entities;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class MultipleBoundsLevel3<T> {
     private Map<String, T> level3;
@@ -47,7 +48,7 @@ public class MultipleBoundsLevel3<T> {
 
         MultipleBoundsLevel3<?> that = (MultipleBoundsLevel3<?>) o;
 
-        if (level3 != null ? !level3.equals(that.level3) : that.level3 != null) {
+        if (!Objects.equals(level3, that.level3)) {
             return false;
         }
 

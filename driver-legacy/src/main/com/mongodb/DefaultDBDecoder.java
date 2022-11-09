@@ -53,10 +53,5 @@ public class DefaultDBDecoder extends BasicBSONDecoder implements DBDecoder {
     /**
      * The {@code DBDecoderFactory} for {@code DefaultDBDecoder} instances.
      */
-    public static final DBDecoderFactory FACTORY = new DBDecoderFactory() {
-        @Override
-        public DBDecoder create() {
-            return new DefaultDBDecoder();
-        }
-    };
+    public static final DBDecoderFactory FACTORY = () -> new DefaultDBDecoder();
 }

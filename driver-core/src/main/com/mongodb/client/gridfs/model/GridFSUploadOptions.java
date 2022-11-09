@@ -21,7 +21,7 @@ import org.bson.Document;
 
 /**
  * GridFS upload options
- *
+ * <p>
  * Customizable options used when uploading files into GridFS
  *
  * @since 3.1

@@ -39,7 +39,7 @@ import java.util.Map;
  * @since 3.7
  */
 public class Jsr310CodecProvider implements CodecProvider {
-    private static final Map<Class<?>, Codec<?>> JSR310_CODEC_MAP = new HashMap<Class<?>, Codec<?>>();
+    private static final Map<Class<?>, Codec<?>> JSR310_CODEC_MAP = new HashMap<>();
     static {
         putCodec(new InstantCodec());
         putCodec(new LocalDateCodec());

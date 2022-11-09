@@ -40,18 +40,15 @@ public class TransactionFailureTest extends DatabaseTestCase {
 
     @Test(expected = MongoClientException.class)
     public void testTransactionFails() {
-        final ClientSession clientSession = createSession();
 
-        try {
+        try (ClientSession clientSession = createSession()) {
             clientSession.startTransaction();
             Mono.from(collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}"))).block(TIMEOUT_DURATION);
-        } finally {
-            clientSession.close();
         }
     }
 
     private ClientSession createSession() {
-        final ClientSessionOptions options = ClientSessionOptions.builder().build();
+        ClientSessionOptions options = ClientSessionOptions.builder().build();
         return Mono.from(client.startSession(options)).block(TIMEOUT_DURATION);
     }
 

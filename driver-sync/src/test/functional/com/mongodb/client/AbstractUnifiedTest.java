@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -32,11 +31,8 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -68,7 +64,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
@@ -168,7 +163,7 @@ public abstract class AbstractUnifiedTest {
                 !definition.containsKey("skipReason"));
         assumeFalse("Skipping test of count", filename.equals("count.json"));
 
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
 
@@ -177,7 +172,7 @@ public abstract class AbstractUnifiedTest {
         }
 
         if (!data.isEmpty()) {
-            List<BsonDocument> documents = new ArrayList<BsonDocument>();
+            List<BsonDocument> documents = new ArrayList<>();
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }
@@ -189,7 +184,7 @@ public abstract class AbstractUnifiedTest {
             collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
         }
 
-        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
         connectionString = getConnectionString();
         useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
@@ -211,14 +206,11 @@ public abstract class AbstractUnifiedTest {
                         setDirectConnection(clusterSettingsBuilder);
                     }
                 })
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(clientOptions.getInt32(
-                                "socketTimeoutMS", new BsonInt32(toIntExact(SECONDS.toMillis(5)))).getValue(), MILLISECONDS);
-                        if (clientOptions.containsKey("connectTimeoutMS")) {
-                            builder.connectTimeout(clientOptions.getNumber("connectTimeoutMS").intValue(), MILLISECONDS);
-                        }
+                .applyToSocketSettings(builder13 -> {
+                    builder13.readTimeout(clientOptions.getInt32(
+                            "socketTimeoutMS", new BsonInt32(toIntExact(SECONDS.toMillis(5)))).getValue(), MILLISECONDS);
+                    if (clientOptions.containsKey("connectTimeoutMS")) {
+                        builder13.connectTimeout(clientOptions.getNumber("connectTimeoutMS").intValue(), MILLISECONDS);
                     }
                 })
                 .writeConcern(getWriteConcern(clientOptions))
@@ -232,21 +224,13 @@ public abstract class AbstractUnifiedTest {
                         poolSettingsBuilder.minSize(clientOptions.getInt32("minPoolSize").getValue());
                     }
                 })
-                .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                    @Override
-                    public void apply(final ServerSettings.Builder builder) {
-                        builder.heartbeatFrequency(50, MILLISECONDS);
-                        builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, MILLISECONDS);
-                        builder.addServerListener(serverListener);
-                    }
+                .applyToServerSettings(builder12 -> {
+                    builder12.heartbeatFrequency(50, MILLISECONDS);
+                    builder12.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, MILLISECONDS);
+                    builder12.addServerListener(serverListener);
                 });
         if (clientOptions.containsKey("heartbeatFrequencyMS")) {
-            builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
-                @Override
-                public void apply(final ServerSettings.Builder builder) {
-                    builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), MILLISECONDS);
-                }
-            });
+            builder.applyToServerSettings(builder1 -> builder1.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), MILLISECONDS));
         }
         if (clientOptions.containsKey("appname")) {
             builder.applicationName(clientOptions.getString("appname").getValue());
@@ -355,12 +339,7 @@ public abstract class AbstractUnifiedTest {
     private void runDistinctOnHost(final String host) {
         MongoClient client = MongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
-                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                    @Override
-                    public void apply(final ClusterSettings.Builder builder) {
-                        builder.hosts(singletonList(new ServerAddress(host)));
-                    }
-                }).build());
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host)))).build());
         client.getDatabase(databaseName).getCollection(collectionName).distinct("_id", BsonValue.class).into(new BsonArray());
         client.close();
     }
@@ -414,7 +393,7 @@ public abstract class AbstractUnifiedTest {
             BsonDocument collectionDocument = expectedOutcome.getDocument("collection");
             List<BsonDocument> collectionData;
             if (collectionDocument.containsKey("name")) {
-                collectionData = new CollectionHelper<Document>(new DocumentCodec(),
+                collectionData = new CollectionHelper<>(new DocumentCodec(),
                         new MongoNamespace(databaseName, collectionDocument.getString("name").getValue()))
                         .find(new BsonDocumentCodec());
             } else {
@@ -430,7 +409,7 @@ public abstract class AbstractUnifiedTest {
 
         try {
             for (BsonValue cur : operations) {
-                final BsonDocument operation = cur.asDocument();
+                BsonDocument operation = cur.asDocument();
                 String operationName = operation.getString("name").getValue();
                 BsonValue expectedResult = operation.get("result");
                 String receiver = operation.getString("object").getValue();
@@ -454,7 +433,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("abortTransaction")) {
                         nonNullClientSession(clientSession).abortTransaction();
                     } else if (operationName.equals("withTransaction")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 
                         TransactionOptions transactionOptions = null;
                         if (arguments.containsKey("options")) {
@@ -462,20 +441,14 @@ public abstract class AbstractUnifiedTest {
                         }
 
                         if (transactionOptions == null) {
-                            nonNullClientSession(clientSession).withTransaction(new TransactionBody<Object>() {
-                                @Override
-                                public Void execute() {
-                                    executeOperations(arguments.getDocument("callback").getArray("operations"), true);
-                                    return null;
-                                }
+                            nonNullClientSession(clientSession).withTransaction(() -> {
+                                executeOperations(arguments.getDocument("callback").getArray("operations"), true);
+                                return null;
                             });
                         } else {
-                            nonNullClientSession(clientSession).withTransaction(new TransactionBody<Object>() {
-                                @Override
-                                public Void execute() {
-                                    executeOperations(arguments.getDocument("callback").getArray("operations"), true);
-                                    return null;
-                                }
+                            nonNullClientSession(clientSession).withTransaction(() -> {
+                                executeOperations(arguments.getDocument("callback").getArray("operations"), true);
+                                return null;
                             }, transactionOptions);
                         }
                     } else if (operationName.equals("targetedFailPoint")) {
@@ -505,7 +478,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("waitForEvent")) {
                         String event = operation.getDocument("arguments").getString("event").getValue();
                         int count = operation.getDocument("arguments").getNumber("count").intValue();
-                        long timeoutMillis = TimeUnit.SECONDS.toMillis(5);
+                        long timeoutMillis = SECONDS.toMillis(5);
                         switch (event) {
                             case "PoolClearedEvent":
                                 connectionPoolListener.waitForEvent(ConnectionPoolClearedEvent.class, count, timeoutMillis, MILLISECONDS);
@@ -560,13 +533,13 @@ public abstract class AbstractUnifiedTest {
                             collectionHelper.runAdminCommand(command);
                         }
                     } else if (operationName.equals("assertSessionPinned")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         assertNotNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
                     } else if (operationName.equals("assertSessionUnpinned")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         assertNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
                     } else if (operationName.equals("assertSessionTransactionState")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         ClientSession session = sessionsMap.get(arguments.getString("session").getValue());
                         String state = arguments.getString("state").getValue();
                         if (state.equals("starting") || state.equals("in_progress")) {
@@ -619,9 +592,7 @@ public abstract class AbstractUnifiedTest {
                         if (expectedResult != null) {
                             BsonValue actualResult = actualOutcome.get("result");
                             if (actualResult.isDocument()) {
-                                if (((BsonDocument) actualResult).containsKey("recoveryToken")) {
-                                    ((BsonDocument) actualResult).remove("recoveryToken");
-                                }
+                                ((BsonDocument) actualResult).remove("recoveryToken");
                             }
 
                             assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
@@ -646,7 +617,8 @@ public abstract class AbstractUnifiedTest {
         }
     }
 
-    private @Nullable ServerAddress getCurrentPrimary() {
+    @Nullable
+    private ServerAddress getCurrentPrimary() {
         for (ServerDescription serverDescription: mongoClient.getClusterDescription().getServerDescriptions()) {
             if (serverDescription.getType() == ServerType.REPLICA_SET_PRIMARY) {
                 return serverDescription.getAddress();
@@ -679,7 +651,7 @@ public abstract class AbstractUnifiedTest {
     }
 
     private boolean collectionExists(final String databaseName, final String collectionName) {
-        return getMongoClient().getDatabase(databaseName).listCollectionNames().into(new ArrayList<String>()).contains(collectionName);
+        return getMongoClient().getDatabase(databaseName).listCollectionNames().into(new ArrayList<>()).contains(collectionName);
     }
 
     private void assertIndexExists(final BsonDocument operation, final boolean shouldExist) {
@@ -692,7 +664,7 @@ public abstract class AbstractUnifiedTest {
 
     private boolean indexExists(final String databaseName, final String collectionName, final String indexName) {
         ArrayList<Document> indexes = getMongoClient().getDatabase(databaseName).getCollection(collectionName).listIndexes()
-                .into(new ArrayList<Document>());
+                .into(new ArrayList<>());
         return indexes.stream().anyMatch(document -> document.get("name").equals(indexName));
     }
 
@@ -796,7 +768,7 @@ public abstract class AbstractUnifiedTest {
 
 
     private List<String> getListOfStringsFromBsonArrays(final BsonDocument expectedResult, final String arrayFieldName) {
-        List<String> errorLabelContainsList = new ArrayList<String>();
+        List<String> errorLabelContainsList = new ArrayList<>();
         for (BsonValue cur : expectedResult.asDocument().getArray(arrayFieldName)) {
             errorLabelContainsList.add(cur.asString().getValue());
         }
@@ -850,18 +822,13 @@ public abstract class AbstractUnifiedTest {
 
         TargetedFailPoint(final BsonDocument operation) {
             super(operation);
-            final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-            final ClientSession clientSession = sessionsMap.get(arguments.getString("session").getValue());
+            BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+            ClientSession clientSession = sessionsMap.get(arguments.getString("session").getValue());
 
             if (clientSession.getPinnedServerAddress() != null) {
                 mongoClient = MongoClients.create(MongoClientSettings.builder()
                         .applyConnectionString(connectionString)
-                        .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                            @Override
-                            public void apply(final ClusterSettings.Builder builder) {
-                                builder.hosts(singletonList(clientSession.getPinnedServerAddress()));
-                            }
-                        }).build());
+                        .applyToClusterSettings(builder -> builder.hosts(singletonList(clientSession.getPinnedServerAddress()))).build());
 
                 adminDB = mongoClient.getDatabase("admin");
             } else {

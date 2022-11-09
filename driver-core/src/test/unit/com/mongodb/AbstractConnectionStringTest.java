@@ -37,7 +37,7 @@ import static java.util.Arrays.asList;
 @RunWith(Parameterized.class)
 public abstract class AbstractConnectionStringTest extends TestCase {
     private static final Set<String> UNSUPPORTED_OPTIONS =
-            new HashSet<String>(asList(
+            new HashSet<>(asList(
                     "tlsallowinvalidcertificates",
                     "tlsallowinvalidhostnames",
                     "tlscafile",
@@ -295,7 +295,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
     }
 
     private void assertExpectedHosts(final List<String> hosts) {
-        List<String> cleanedHosts = new ArrayList<String>();
+        List<String> cleanedHosts = new ArrayList<>();
         for (String host : hosts) {
             if (host.startsWith("[")) {
                 int idx = host.indexOf("]");
@@ -306,7 +306,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         }
 
 
-        List<String> expectedHosts = new ArrayList<String>();
+        List<String> expectedHosts = new ArrayList<>();
         for (BsonValue rawHost : definition.getArray("hosts")) {
             BsonDocument hostDoc = rawHost.asDocument();
             String host = hostDoc.getString("host").getValue();

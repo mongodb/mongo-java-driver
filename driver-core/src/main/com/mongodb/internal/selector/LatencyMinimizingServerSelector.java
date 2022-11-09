@@ -108,7 +108,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
 
     private List<ServerDescription> getServersWithAcceptableLatencyDifference(final List<ServerDescription> servers,
                                                                               final long bestPingTime) {
-        List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
+        List<ServerDescription> goodSecondaries = new ArrayList<>(servers.size());
         for (final ServerDescription cur : servers) {
             if (!cur.isOk()) {
                 continue;

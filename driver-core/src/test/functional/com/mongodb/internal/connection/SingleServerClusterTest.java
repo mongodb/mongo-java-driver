@@ -16,22 +16,18 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoCompressor;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
-import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonString;
@@ -40,7 +36,6 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.List;
 
 import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
@@ -73,7 +68,7 @@ public class SingleServerClusterTest {
                         streamFactory, streamFactory, getCredential(),
 
                         null, null, null,
-                        Collections.<MongoCompressor>emptyList(), getServerApi()));
+                        Collections.emptyList(), getServerApi()));
     }
 
     @After
@@ -106,12 +101,7 @@ public class SingleServerClusterTest {
         setUpCluster(getPrimary());
 
         // when
-        ServerTuple serverTuple = cluster.selectServer(new ServerSelector() {
-            @Override
-            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                return getPrimaries(clusterDescription);
-            }
-        });
+        ServerTuple serverTuple = cluster.selectServer(clusterDescription -> getPrimaries(clusterDescription));
 
         // then
         assertTrue(serverTuple.getServerDescription().isOk());

@@ -52,15 +52,15 @@ final class PropertyReflectionUtils {
 
     static String toPropertyName(final Method method) {
         String name = method.getName();
-        String propertyName = name.substring(name.startsWith(IS_PREFIX) ? 2 : 3, name.length());
+        String propertyName = name.substring(name.startsWith(IS_PREFIX) ? 2 : 3);
         char[] chars = propertyName.toCharArray();
         chars[0] = Character.toLowerCase(chars[0]);
         return new String(chars);
     }
 
     static PropertyMethods getPropertyMethods(final Class<?> clazz) {
-        List<Method> setters = new ArrayList<Method>();
-        List<Method> getters = new ArrayList<Method>();
+        List<Method> setters = new ArrayList<>();
+        List<Method> getters = new ArrayList<>();
 
         // get all the default method from interface
         for (Class<?> i : clazz.getInterfaces()) {

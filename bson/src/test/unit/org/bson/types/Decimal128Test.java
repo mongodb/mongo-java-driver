@@ -30,6 +30,7 @@ import static org.bson.types.Decimal128.fromIEEE754BIDEncoding;
 import static org.bson.types.Decimal128.parse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -301,12 +302,12 @@ public class Decimal128Test {
         Decimal128 d4 = fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000011L);
 
         // expect
-        assertTrue(d1.equals(d1));
-        assertTrue(d1.equals(d2));
-        assertFalse(d1.equals(d3));
-        assertFalse(d1.equals(d4));
-        assertFalse(d1.equals(null));
-        assertFalse(d1.equals(0L));
+        assertEquals(d1, d1);
+        assertEquals(d1, d2);
+        assertNotEquals(d1, d3);
+        assertNotEquals(d1, d4);
+        assertNotEquals(null, d1);
+        assertNotEquals(0L, d1);
     }
 
     @Test

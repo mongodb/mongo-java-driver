@@ -29,7 +29,6 @@ import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOpti
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
-        CompoundSearchOperatorBase, CompoundSearchOperator,
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
         ExistsSearchOperator, TextSearchOperator, AutocompleteSearchOperator,
         NumberNearSearchOperator, DateNearSearchOperator, GeoNearSearchOperator,
@@ -124,7 +123,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         isTrueArgument("clauses must not be empty", sizeAtLeast(clauses, 1));
         return newWithMutatedValue(doc -> {
             Iterable<?> existingClauses = doc.get(ruleName, Iterable.class);
-            final Iterable<?> newClauses;
+            Iterable<?> newClauses;
             if (existingClauses == null) {
                 newClauses = clauses;
             } else {

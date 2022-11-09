@@ -84,15 +84,15 @@ public final class SaslPrep {
         boolean containsLCat = false;
         boolean initialRandALCat = false;
         for (int i = 0; i < normalized.length();) {
-            final int codepoint = normalized.codePointAt(i);
+            int codepoint = normalized.codePointAt(i);
             // 3. Prohibit
             if (prohibited(codepoint)) {
                 throw new IllegalArgumentException("Prohibited character at position " + i);
             }
 
             // 4. Check bidi
-            final byte directionality = Character.getDirectionality(codepoint);
-            final boolean isRandALcat = directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT
+            byte directionality = Character.getDirectionality(codepoint);
+            boolean isRandALcat = directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT
                     || directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC;
             containsRandALCat |= isRandALcat;
             containsLCat |= directionality == Character.DIRECTIONALITY_LEFT_TO_RIGHT;

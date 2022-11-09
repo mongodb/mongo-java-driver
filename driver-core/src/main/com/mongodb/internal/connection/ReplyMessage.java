@@ -42,19 +42,14 @@ public class ReplyMessage<T> {
         this(responseBuffers.getReplyHeader(), requestId);
 
         if (replyHeader.getNumberReturned() > 0) {
-            BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer().duplicate());
-            try {
+            try (BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer().duplicate())) {
                 while (documents.size() < replyHeader.getNumberReturned()) {
-                    BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
-                    try {
+                    try (BsonBinaryReader reader = new BsonBinaryReader(bsonInput)) {
                         documents.add(decoder.decode(reader, DecoderContext.builder().build()));
-                    } finally {
-                        reader.close();
                     }
                 }
             } finally {
-               bsonInput.close();
-               responseBuffers.reset();
+                responseBuffers.reset();
             }
         }
     }
@@ -66,7 +61,7 @@ public class ReplyMessage<T> {
         }
         this.replyHeader = replyHeader;
 
-        documents = new ArrayList<T>(replyHeader.getNumberReturned());
+        documents = new ArrayList<>(replyHeader.getNumberReturned());
     }
 
     /**

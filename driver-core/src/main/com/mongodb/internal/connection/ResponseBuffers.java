@@ -47,7 +47,7 @@ public class ResponseBuffers implements Closeable {
     }
 
     <T extends BsonDocument> T getResponseDocument(final int messageId, final Decoder<T> decoder) {
-        ReplyMessage<T> replyMessage = new ReplyMessage<T>(this, decoder, messageId);
+        ReplyMessage<T> replyMessage = new ReplyMessage<>(this, decoder, messageId);
         reset();
         return replyMessage.getDocuments().get(0);
     }

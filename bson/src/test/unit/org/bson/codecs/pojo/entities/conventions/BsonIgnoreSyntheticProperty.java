@@ -20,6 +20,8 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.Objects;
+
 public class BsonIgnoreSyntheticProperty {
     private final String stringField;
 
@@ -55,7 +57,7 @@ public class BsonIgnoreSyntheticProperty {
 
         BsonIgnoreSyntheticProperty that = (BsonIgnoreSyntheticProperty) o;
 
-        return stringField != null ? stringField.equals(that.stringField) : that.stringField == null;
+        return Objects.equals(stringField, that.stringField);
     }
 
     @Override

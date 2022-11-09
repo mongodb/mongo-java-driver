@@ -22,7 +22,7 @@ class JsonWriterSettingsSpecification extends Specification {
 
     def 'test defaults'() {
         when:
-        def settings = JsonWriterSettings.builder().build();
+        def settings = JsonWriterSettings.builder().build()
 
         then:
         !settings.isIndent()

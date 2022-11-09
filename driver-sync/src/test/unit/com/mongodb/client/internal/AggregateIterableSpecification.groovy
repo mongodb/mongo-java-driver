@@ -58,7 +58,7 @@ class AggregateIterableSpecification extends Specification {
 
     def 'should build the expected AggregationOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null, null, null]);
+        def executor = new TestOperationExecutor([null, null, null, null, null])
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
@@ -415,7 +415,7 @@ class AggregateIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -516,7 +516,7 @@ class AggregateIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
@@ -542,7 +542,7 @@ class AggregateIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([null, batchCursor, null, batchCursor, null]);
+        def executor = new TestOperationExecutor([null, batchCursor, null, batchCursor, null])
         def pipeline = [new Document('$match', 1), new Document('$out', 'collName')]
         def aggregationIterable = new AggregateIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
@@ -611,7 +611,7 @@ class AggregateIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null

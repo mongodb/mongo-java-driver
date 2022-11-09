@@ -108,7 +108,7 @@ class MapCodecSpecification extends Specification {
         if (writer instanceof BsonDocumentWriter) {
             reader = new BsonDocumentReader(bsonDoc)
         } else if (writer instanceof BsonBinaryWriter) {
-            BasicOutputBuffer buffer = (BasicOutputBuffer)writer.getBsonOutput();
+            BasicOutputBuffer buffer = (BasicOutputBuffer)writer.getBsonOutput()
             reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(
                     ByteBuffer.wrap(buffer.toByteArray()))))
         } else {

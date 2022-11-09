@@ -66,7 +66,7 @@ public class BsonExtraElementsInvalidModel {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final BsonExtraElementsInvalidModel that = (BsonExtraElementsInvalidModel) o;
+        BsonExtraElementsInvalidModel that = (BsonExtraElementsInvalidModel) o;
         return Objects.equals(integerField, that.integerField)
                 && Objects.equals(stringField, that.stringField)
                 && Objects.equals(extraElements, that.extraElements);

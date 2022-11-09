@@ -20,7 +20,6 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,7 @@ import static org.bson.codecs.pojo.PojoBuilderHelper.stateNotNull;
  */
 public class ClassModelBuilder<T> {
     static final String ID_PROPERTY_NAME = "_id";
-    private final List<PropertyModelBuilder<?>> propertyModelBuilders = new ArrayList<PropertyModelBuilder<?>>();
+    private final List<PropertyModelBuilder<?>> propertyModelBuilders = new ArrayList<>();
     private IdGenerator<?> idGenerator;
     private InstanceCreatorFactory<T> instanceCreatorFactory;
     private Class<T> type;
@@ -256,7 +255,7 @@ public class ClassModelBuilder<T> {
      * @return the properties on the modeled type
      */
     public List<PropertyModelBuilder<?>> getPropertyModelBuilders() {
-        return Collections.unmodifiableList(propertyModelBuilders);
+        return unmodifiableList(propertyModelBuilders);
     }
 
     /**
@@ -265,7 +264,7 @@ public class ClassModelBuilder<T> {
      * @return the new instance
      */
     public ClassModel<T> build() {
-        List<PropertyModel<?>> propertyModels = new ArrayList<PropertyModel<?>>();
+        List<PropertyModel<?>> propertyModels = new ArrayList<>();
         PropertyModel<?> idPropertyModel = null;
 
         stateNotNull("type", type);
@@ -292,7 +291,7 @@ public class ClassModelBuilder<T> {
             }
         }
         validatePropertyModels(type.getSimpleName(), propertyModels);
-        return new ClassModel<T>(type, propertyNameToTypeParameterMap, instanceCreatorFactory, discriminatorEnabled, discriminatorKey,
+        return new ClassModel<>(type, propertyNameToTypeParameterMap, instanceCreatorFactory, discriminatorEnabled, discriminatorKey,
                 discriminator, IdPropertyModelHolder.create(type, idPropertyModel, idGenerator), unmodifiableList(propertyModels));
     }
 
@@ -306,7 +305,7 @@ public class ClassModelBuilder<T> {
     }
 
     ClassModelBuilder<T> propertyNameToTypeParameterMap(final Map<String, TypeParameterMap> propertyNameToTypeParameterMap) {
-        this.propertyNameToTypeParameterMap = unmodifiableMap(new HashMap<String, TypeParameterMap>(propertyNameToTypeParameterMap));
+        this.propertyNameToTypeParameterMap = unmodifiableMap(new HashMap<>(propertyNameToTypeParameterMap));
         return this;
     }
 
@@ -316,9 +315,9 @@ public class ClassModelBuilder<T> {
     }
 
     private void validatePropertyModels(final String declaringClass, final List<PropertyModel<?>> propertyModels) {
-        Map<String, Integer> propertyNameMap = new HashMap<String, Integer>();
-        Map<String, Integer> propertyReadNameMap = new HashMap<String, Integer>();
-        Map<String, Integer> propertyWriteNameMap = new HashMap<String, Integer>();
+        Map<String, Integer> propertyNameMap = new HashMap<>();
+        Map<String, Integer> propertyReadNameMap = new HashMap<>();
+        Map<String, Integer> propertyWriteNameMap = new HashMap<>();
 
         for (PropertyModel<?> propertyModel : propertyModels) {
             if (propertyModel.hasError()) {

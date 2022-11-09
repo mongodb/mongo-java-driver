@@ -23,7 +23,7 @@ class ExponentiallyWeightedMovingAverageSpecification extends Specification {
 
     def 'constructor should throw if alpha is not between 0.0 and 1.0'() {
         when:
-        new ExponentiallyWeightedMovingAverage(alpha);
+        new ExponentiallyWeightedMovingAverage(alpha)
 
         then:
         thrown(IllegalArgumentException)
@@ -34,7 +34,7 @@ class ExponentiallyWeightedMovingAverageSpecification extends Specification {
 
     def 'constructor should not throw if alpha is between 0.0 and 1.0'() {
         when:
-        new ExponentiallyWeightedMovingAverage(alpha);
+        new ExponentiallyWeightedMovingAverage(alpha)
 
         then:
         true

@@ -58,13 +58,13 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public abstract class AbstractExplicitUuidCodecUuidRepresentationTest {
 
-    private UuidRepresentation uuidRepresentationForExplicitEncoding;
+    private final UuidRepresentation uuidRepresentationForExplicitEncoding;
     private final UuidCodec uuidCodec;
     private final UuidRepresentation uuidRepresentationForClient;
     private final BsonBinarySubType subType;
     private final UUID uuid;
     private final byte[] encodedValue;
-    private byte[] standardEncodedValue;
+    private final byte[] standardEncodedValue;
     private MongoCollection<Document> documentCollection;
     private MongoCollection<DBObject> dbObjectCollection;
     private MongoCollection<UuidIdPojo> uuidIdPojoCollection;
@@ -143,7 +143,7 @@ public abstract class AbstractExplicitUuidCodecUuidRepresentationTest {
 
     @Test
     public void shouldDecodeDocumentWithUuidRepresentation() {
-        bsonDocumentCollection.insertOne(new BsonDocument("standard", new BsonBinary(uuid, UuidRepresentation.STANDARD))
+        bsonDocumentCollection.insertOne(new BsonDocument("standard", new BsonBinary(uuid, STANDARD))
                 .append("legacy", new BsonBinary(uuid, uuidRepresentationForExplicitEncoding)));
 
         Document document;
@@ -157,19 +157,19 @@ public abstract class AbstractExplicitUuidCodecUuidRepresentationTest {
             return;
         }
 
-        if (uuidRepresentationForClient == UuidRepresentation.STANDARD) {
+        if (uuidRepresentationForClient == STANDARD) {
             assertEquals(UUID.class, document.get("standard").getClass());
             assertEquals(uuid, document.get("standard"));
 
             assertEquals(Binary.class, document.get("legacy").getClass());
-            assertEquals(new Binary(BsonBinarySubType.UUID_LEGACY, encodedValue), document.get("legacy"));
+            assertEquals(new Binary(UUID_LEGACY, encodedValue), document.get("legacy"));
         } else {
-            if (uuidRepresentationForClient == UuidRepresentation.JAVA_LEGACY) {
+            if (uuidRepresentationForClient == JAVA_LEGACY) {
                 assertEquals(UUID.class, document.get("standard").getClass());
                 assertEquals(uuid, document.get("standard"));
             } else {
                 assertEquals(Binary.class, document.get("standard").getClass());
-                assertEquals(new Binary(BsonBinarySubType.UUID_STANDARD, standardEncodedValue), document.get("standard"));
+                assertEquals(new Binary(UUID_STANDARD, standardEncodedValue), document.get("standard"));
             }
 
             assertEquals(UUID.class, document.get("legacy").getClass());
@@ -179,7 +179,7 @@ public abstract class AbstractExplicitUuidCodecUuidRepresentationTest {
 
     @Test
     public void shouldDecodeDBObjectWithUuidRepresentation() {
-        bsonDocumentCollection.insertOne(new BsonDocument("standard", new BsonBinary(uuid, UuidRepresentation.STANDARD))
+        bsonDocumentCollection.insertOne(new BsonDocument("standard", new BsonBinary(uuid, STANDARD))
                 .append("legacy", new BsonBinary(uuid, uuidRepresentationForExplicitEncoding)));
 
         DBObject document;
@@ -193,19 +193,19 @@ public abstract class AbstractExplicitUuidCodecUuidRepresentationTest {
             return;
         }
 
-        if (uuidRepresentationForClient == UuidRepresentation.STANDARD) {
+        if (uuidRepresentationForClient == STANDARD) {
             assertEquals(UUID.class, document.get("standard").getClass());
             assertEquals(uuid, document.get("standard"));
 
             assertEquals(Binary.class, document.get("legacy").getClass());
-            assertEquals(new Binary(BsonBinarySubType.UUID_LEGACY, encodedValue), document.get("legacy"));
+            assertEquals(new Binary(UUID_LEGACY, encodedValue), document.get("legacy"));
         } else {
-            if (uuidRepresentationForClient == UuidRepresentation.JAVA_LEGACY) {
+            if (uuidRepresentationForClient == JAVA_LEGACY) {
                 assertEquals(UUID.class, document.get("standard").getClass());
                 assertEquals(uuid, document.get("standard"));
             } else {
                 assertEquals(Binary.class, document.get("standard").getClass());
-                assertEquals(new Binary(BsonBinarySubType.UUID_STANDARD, standardEncodedValue), document.get("standard"));
+                assertEquals(new Binary(UUID_STANDARD, standardEncodedValue), document.get("standard"));
             }
 
             assertEquals(UUID.class, document.get("legacy").getClass());
@@ -249,7 +249,7 @@ public abstract class AbstractExplicitUuidCodecUuidRepresentationTest {
 
         byte[] standardEncodedValue = Hex.decode("00112233445566778899AABBCCDDEEFF");
 
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         data.add(new Object[]{
                 JAVA_LEGACY,
                 PYTHON_LEGACY,
@@ -262,7 +262,7 @@ public abstract class AbstractExplicitUuidCodecUuidRepresentationTest {
                 STANDARD,
                 C_SHARP_LEGACY,
                 UUID_LEGACY,
-                new UuidCodec(UuidRepresentation.C_SHARP_LEGACY),
+                new UuidCodec(C_SHARP_LEGACY),
                 uuid,
                 Hex.decode("33221100554477668899AABBCCDDEEFF"),
                 standardEncodedValue});

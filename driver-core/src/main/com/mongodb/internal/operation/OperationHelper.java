@@ -24,8 +24,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -44,6 +42,8 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
@@ -248,27 +248,27 @@ final class OperationHelper {
 
     static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
                                                           final ServerAddress serverAddress, final int batchSize) {
-        return new QueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L,
+        return new QueryBatchCursor<>(new QueryResult<>(namespace, Collections.emptyList(), 0L,
                 serverAddress),
                 0, batchSize, decoder);
     }
 
     static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final ServerAddress serverAddress) {
-        return new AsyncSingleBatchQueryCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress));
+        return new AsyncSingleBatchQueryCursor<>(new QueryResult<>(namespace, Collections.emptyList(), 0L, serverAddress));
     }
 
     static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
             final BsonValue comment, final ConnectionSource source, final Connection connection, final int batchSize) {
-        return new QueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
+        return new QueryBatchCursor<>(OperationHelper.cursorDocumentToQueryResult(cursorDocument,
                 source.getServerDescription().getAddress()),
                 0, batchSize, 0, decoder, comment, source, connection);
     }
 
     static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
             final BsonValue comment, final AsyncConnectionSource source, final AsyncConnection connection, final int batchSize) {
-        return new AsyncQueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
+        return new AsyncQueryBatchCursor<>(OperationHelper.cursorDocumentToQueryResult(cursorDocument,
                 source.getServerDescription().getAddress()),
-                                            0, batchSize, 0, decoder, comment, source, connection, cursorDocument);
+                0, batchSize, 0, decoder, comment, source, connection, cursorDocument);
     }
 
 
@@ -284,12 +284,12 @@ final class OperationHelper {
                                                                   final String fieldNameContainingBatch) {
         long cursorId = ((BsonInt64) cursorDocument.get("id")).getValue();
         MongoNamespace queryResultNamespace = new MongoNamespace(cursorDocument.getString("ns").getValue());
-        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(cursorDocument, fieldNameContainingBatch),
+        return new QueryResult<>(queryResultNamespace, BsonDocumentWrapperHelper.toList(cursorDocument, fieldNameContainingBatch),
                 cursorId, serverAddress);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnection connection) {
-        return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, singletonList(connection));
+        return new ReferenceCountedReleasingWrappedCallback<>(wrapped, singletonList(connection));
     }
 
     private static class ReferenceCountedReleasingWrappedCallback<T> implements SingleResultCallback<T> {
@@ -468,15 +468,12 @@ final class OperationHelper {
 
     private static void withAsyncConnectionSourceCallableConnection(final AsyncConnectionSource source,
                                                                     final AsyncCallableWithConnection callable) {
-        source.getConnection(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection connection, final Throwable t) {
-                source.release();
-                if (t != null) {
-                    callable.call(null, t);
-                } else {
-                    callable.call(connection, null);
-                }
+        source.getConnection((connection, t) -> {
+            source.release();
+            if (t != null) {
+                callable.call(null, t);
+            } else {
+                callable.call(connection, null);
             }
         });
     }
@@ -486,12 +483,7 @@ final class OperationHelper {
     }
 
     private static void withAsyncConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
-        source.getConnection(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection result, final Throwable t) {
-                callable.call(source, result, t);
-            }
-        });
+        source.getConnection((result, t) -> callable.call(source, result, t));
     }
 
     private static class AsyncCallableWithConnectionAndSourceCallback implements SingleResultCallback<AsyncConnectionSource> {

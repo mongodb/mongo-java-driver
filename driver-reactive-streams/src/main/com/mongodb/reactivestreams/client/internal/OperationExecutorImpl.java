@@ -77,7 +77,7 @@ public class OperationExecutorImpl implements OperationExecutor {
         }
 
         return Mono.from(subscriber ->
-                clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
+                clientSessionHelper.withClientSession(session, this)
                         .map(clientSession -> getReadWriteBinding(getContext(subscriber), readPreference, readConcern, clientSession,
                                 session == null && clientSession != null))
                         .switchIfEmpty(Mono.fromCallable(() ->
@@ -113,11 +113,11 @@ public class OperationExecutorImpl implements OperationExecutor {
         }
 
         return Mono.from(subscriber ->
-                clientSessionHelper.withClientSession(session, OperationExecutorImpl.this)
-                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), ReadPreference.primary(), readConcern,
+                clientSessionHelper.withClientSession(session, this)
+                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), primary(), readConcern,
                                 clientSession, session == null && clientSession != null))
                         .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(subscriber), ReadPreference.primary(), readConcern, session, false)))
+                                getReadWriteBinding(getContext(subscriber), primary(), readConcern, session, false)))
                         .flatMap(binding ->
                                 Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
                                     try {
@@ -168,7 +168,7 @@ public class OperationExecutorImpl implements OperationExecutor {
             readWriteBinding = new CryptBinding(readWriteBinding, crypt);
         }
 
-        final AsyncClusterAwareReadWriteBinding asyncReadWriteBinding = readWriteBinding;
+        AsyncClusterAwareReadWriteBinding asyncReadWriteBinding = readWriteBinding;
         if (session != null) {
             return new ClientSessionBinding(session, ownsSession, asyncReadWriteBinding);
         } else {

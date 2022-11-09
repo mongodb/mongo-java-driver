@@ -496,7 +496,7 @@ final class GridFSBucketImpl implements GridFSBucket {
             listIndexesIterable = collection.listIndexes();
         }
 
-        ArrayList<Document> indexes = listIndexesIterable.into(new ArrayList<Document>());
+        ArrayList<Document> indexes = listIndexesIterable.into(new ArrayList<>());
         for (Document result : indexes) {
             Document indexDoc = result.get("key", new Document());
             for (final Map.Entry<String, Object> entry : indexDoc.entrySet()) {

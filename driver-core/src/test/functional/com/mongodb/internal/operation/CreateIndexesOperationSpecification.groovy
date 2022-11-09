@@ -581,11 +581,11 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         indexes
     }
 
-    def List<Document> getUserCreatedIndexes() {
+    List<Document> getUserCreatedIndexes() {
         getIndexes().findAll { it.key != [_id: 1] }
     }
 
-    def List<Document> getUserCreatedIndexes(String keyname) {
+    List<Document> getUserCreatedIndexes(String keyname) {
         getUserCreatedIndexes()*.get(keyname).findAll { it != null }
     }
 

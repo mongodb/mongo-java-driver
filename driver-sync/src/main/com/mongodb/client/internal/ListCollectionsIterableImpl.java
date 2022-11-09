@@ -56,7 +56,7 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
                                 final OperationExecutor executor, final boolean retryReads) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads); // TODO: read concern?
         this.collectionNamesOnly = collectionNamesOnly;
-        this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, retryReads);
+        this.operations = new SyncOperations<>(BsonDocument.class, readPreference, codecRegistry, retryReads);
         this.databaseName = notNull("databaseName", databaseName);
         this.resultClass = notNull("resultClass", resultClass);
     }

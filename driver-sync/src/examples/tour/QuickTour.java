@@ -89,7 +89,7 @@ public class QuickTour {
         System.out.println(myDoc.toJson());
 
         // now, lets add lots of little documents to the collection so we can explore queries and cursors
-        List<Document> documents = new ArrayList<Document>();
+        List<Document> documents = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             documents.add(new Document("i", i));
         }
@@ -145,12 +145,7 @@ public class QuickTour {
         System.out.println(myDoc.toJson());
 
         // now use a range query to get a larger subset
-        Consumer<Document> printBlock = new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
+        Consumer<Document> printBlock = document -> System.out.println(document.toJson());
         collection.find(gt("i", 50)).forEach(printBlock);
 
         // filter where; 50 < i <= 100

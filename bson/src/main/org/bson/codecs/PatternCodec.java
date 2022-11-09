@@ -105,7 +105,7 @@ public class PatternCodec implements Codec<Pattern> {
         UNICODE_CASE(Pattern.UNICODE_CASE, 'u', "Pattern.UNICODE_CASE"),
         COMMENTS(Pattern.COMMENTS, 'x', null);
 
-        private static final Map<Character, RegexFlag> BY_CHARACTER = new HashMap<Character, RegexFlag>();
+        private static final Map<Character, RegexFlag> BY_CHARACTER = new HashMap<>();
 
         private final int javaFlag;
         private final char flagChar;

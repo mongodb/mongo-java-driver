@@ -224,7 +224,7 @@ class CompositeByteBufSpecification extends Specification {
         buf.clear()
 
         then:
-        buf.position() == 0;
+        buf.position() == 0
         buf.limit() == 3
     }
 
@@ -240,7 +240,7 @@ class CompositeByteBufSpecification extends Specification {
         def duplicate = buf.duplicate()
 
         then:
-        duplicate.position() == 2;
+        duplicate.position() == 2
         duplicate.limit() == 6
         duplicate.getInt() == 67305985
         !duplicate.hasRemaining()
