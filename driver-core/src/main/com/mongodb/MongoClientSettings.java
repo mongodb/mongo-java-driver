@@ -740,7 +740,7 @@ public final class MongoClientSettings {
     /**
      * Gets the auto-encryption settings.
      * <p>
-     * Client side encryption enables an application to specify what fields in a collection must be
+     * In-use encryption enables an application to specify what fields in a collection must be
      * encrypted, and the driver automatically encrypts commands and decrypts results.
      * </p>
      * <p>

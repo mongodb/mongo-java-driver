@@ -361,7 +361,7 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoConnectionPoolClearedException = com.mongodb.MongoConnectionPoolClearedException
 
   /**
-   * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
+   * The client-side automatic encryption settings. In-use encryption enables an application to specify what fields in a collection
    * must be encrypted, and the driver automatically encrypts commands sent to MongoDB and decrypts responses.
    *
    * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
