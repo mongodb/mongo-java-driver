@@ -160,7 +160,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @see #toJson(JsonWriterSettings)
      * @see JsonWriterSettings
      */
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
@@ -187,7 +186,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @return a JSON representation of this document
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
      */
-    @SuppressWarnings("deprecation")
     public String toJson(final Encoder<BasicDBObject> encoder) {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build(), encoder);
     }

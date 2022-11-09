@@ -440,7 +440,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         return executeBulkWrite(clientSession, requests, options);
     }
 
-    @SuppressWarnings("unchecked")
     private BulkWriteResult executeBulkWrite(@Nullable final ClientSession clientSession,
                                              final List<? extends WriteModel<? extends TDocument>> requests,
                                              final BulkWriteOptions options) {

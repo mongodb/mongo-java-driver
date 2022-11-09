@@ -311,7 +311,6 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
 
     private CommandWriteTransformer<BsonDocument, MapReduceStatistics> transformer() {
         return new CommandWriteTransformer<BsonDocument, MapReduceStatistics>() {
-            @SuppressWarnings("unchecked")
             @Override
             public MapReduceStatistics apply(final BsonDocument result, final Connection connection) {
                 throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),

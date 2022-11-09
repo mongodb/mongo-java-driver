@@ -66,7 +66,7 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Parameterized.class)
 public abstract class AbstractClientSideEncryptionTest {
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    @SuppressWarnings({"unused"})
     private final String filename;
     private final BsonDocument specDocument;
     private final String description;

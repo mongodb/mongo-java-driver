@@ -41,13 +41,11 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
         return execute(operation, readPreference, readConcern, null);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern) {
         return execute(operation, readConcern, null);
     }

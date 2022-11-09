@@ -214,7 +214,6 @@ final class PojoBuilderHelper {
         return isGetter(method) ? method.getGenericReturnType() : method.getGenericParameterTypes()[0];
     }
 
-    @SuppressWarnings("unchecked")
     static <T> PropertyModelBuilder<T> createPropertyModelBuilder(final PropertyMetadata<T> propertyMetadata) {
         PropertyModelBuilder<T> propertyModelBuilder = PropertyModel.<T>builder()
                 .propertyName(propertyMetadata.getName())

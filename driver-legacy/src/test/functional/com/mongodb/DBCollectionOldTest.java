@@ -30,7 +30,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@SuppressWarnings({"rawtypes"})
 // DBCollection is tested a lot, however little analysis has been done to see if the tests overlap. Some of the tests in this class
 // almost definitely overlap either with DBCollectionTest or DBCollectionSpecification.  If they do not overlap,
 // they should be moved into one of those test files and this test case ultimately removed.

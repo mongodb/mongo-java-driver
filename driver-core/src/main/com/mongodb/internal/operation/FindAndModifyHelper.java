@@ -35,7 +35,6 @@ final class FindAndModifyHelper {
 
     static <T> CommandWriteTransformer<BsonDocument, T> transformer() {
         return new CommandWriteTransformer<BsonDocument, T>() {
-            @SuppressWarnings("unchecked")
             @Override
             public T apply(final BsonDocument result, final Connection connection) {
                 return transformDocument(result, connection.getDescription().getServerAddress());
@@ -45,7 +44,6 @@ final class FindAndModifyHelper {
 
     static <T> CommandWriteTransformerAsync<BsonDocument, T> asyncTransformer() {
         return new CommandWriteTransformerAsync<BsonDocument, T>() {
-            @SuppressWarnings("unchecked")
             @Override
             public T apply(final BsonDocument result, final AsyncConnection connection) {
                 return transformDocument(result, connection.getDescription().getServerAddress());
@@ -53,7 +51,6 @@ final class FindAndModifyHelper {
         };
     }
 
-    @SuppressWarnings("deprecation")
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
             MongoWriteConcernException writeConcernException = new MongoWriteConcernException(

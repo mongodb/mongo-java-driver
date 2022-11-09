@@ -334,7 +334,6 @@ public final class BulkWriteBatch {
                 result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue()).collect(Collectors.toSet()));
     }
 
-    @SuppressWarnings("unchecked")
     private List<BulkWriteError> getWriteErrors(final BsonDocument result) {
         List<BulkWriteError> writeErrors = new ArrayList<>();
         BsonArray writeErrorsDocuments = (BsonArray) result.get("writeErrors");

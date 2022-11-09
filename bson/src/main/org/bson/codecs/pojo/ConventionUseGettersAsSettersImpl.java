@@ -46,7 +46,6 @@ final class ConventionUseGettersAsSettersImpl implements Convention {
         return Collection.class.isAssignableFrom(clazz) || Map.class.isAssignableFrom(clazz);
     }
 
-    @SuppressWarnings("unchecked")
     private <T> void setPropertyAccessor(final PropertyModelBuilder<T> propertyModelBuilder) {
         propertyModelBuilder.propertyAccessor(new PrivatePropertyAccessor<>(
                 (PropertyAccessorImpl<T>) propertyModelBuilder.getPropertyAccessor()));

@@ -86,12 +86,10 @@ abstract class PojoTestCase {
 
     static final BsonDocumentCodec DOCUMENT_CODEC = new BsonDocumentCodec();
 
-    @SuppressWarnings("unchecked")
     <T> void roundTrip(final T value, final String json) {
         roundTrip(PojoCodecProvider.builder().automatic(true), value, json);
     }
 
-    @SuppressWarnings("unchecked")
     <T> void roundTrip(final PojoCodecProvider.Builder builder, final T value, final String json) {
         encodesTo(getCodecRegistry(builder), value, json);
         decodesTo(getCodecRegistry(builder), json, value);
@@ -129,7 +127,6 @@ abstract class PojoTestCase {
         }
     }
 
-    @SuppressWarnings("unchecked")
     <T> void roundTrip(final CodecRegistry registry, final T value, final String json) {
         encodesTo(registry, value, json);
         decodesTo(registry, json, value);
@@ -153,12 +150,10 @@ abstract class PojoTestCase {
         encodesTo(codec, value, json, collectible);
     }
 
-    @SuppressWarnings("unchecked")
     <T> void encodesTo(final Codec<T> codec, final T value, final String json) {
        encodesTo(codec, value, json, false);
     }
 
-    @SuppressWarnings("unchecked")
     <T> void encodesTo(final Codec<T> codec, final T value, final String json, final boolean collectible) {
         OutputBuffer encoded = encode(codec, value, collectible);
 

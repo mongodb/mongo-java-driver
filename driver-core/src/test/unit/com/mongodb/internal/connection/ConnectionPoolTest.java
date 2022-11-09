@@ -31,7 +31,6 @@ import java.util.concurrent.Callable;
 // Implementation of
 // https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
 // specification tests
-@SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
 public class ConnectionPoolTest extends AbstractConnectionPoolTest {
     private static final Logger LOGGER = Loggers.getLogger(ConnectionPoolTest.class.getSimpleName());

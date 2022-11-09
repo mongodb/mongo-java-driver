@@ -336,7 +336,6 @@ public class QueryBuilder {
      * @param y2 the y coordinate of the second box corner.
      * @return {@code this}
      */
-    @SuppressWarnings("unchecked")
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
                    new BasicDBObject(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));

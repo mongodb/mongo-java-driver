@@ -40,7 +40,6 @@ final class ConventionSetPrivateFieldImpl implements Convention {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private <T> void setPropertyAccessor(final PropertyModelBuilder<T> propertyModelBuilder) {
         propertyModelBuilder.propertyAccessor(new FieldPropertyAccessor<>((PropertyAccessorImpl<T>) propertyModelBuilder.getPropertyAccessor()));
     }

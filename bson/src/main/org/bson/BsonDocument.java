@@ -834,7 +834,6 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      * @see #toJson(JsonWriterSettings)
      * @see JsonWriterSettings
      */
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }

@@ -419,7 +419,6 @@ public class DBCollection {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private WriteResult replaceOrInsert(final DBObject obj, final Object id, final WriteConcern writeConcern) {
         DBObject filter = new BasicDBObject(ID_FIELD_NAME, id);
 
@@ -1023,7 +1022,6 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/distinct Distinct Command
      * @since 3.4
      */
-    @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBCollectionDistinctOptions options) {
         notNull("fieldName", fieldName);
         return new MongoIterableImpl<BsonValue>(null, executor,
@@ -1273,7 +1271,6 @@ public class DBCollection {
                 primaryPreferred(), getReadConcern()), getDefaultDBObjectCodec());
     }
 
-    @SuppressWarnings("unchecked")
     List<BsonDocument> preparePipeline(final List<? extends DBObject> pipeline) {
         List<BsonDocument> stages = new ArrayList<>();
         for (final DBObject op : pipeline) {

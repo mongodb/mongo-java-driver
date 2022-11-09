@@ -74,7 +74,6 @@ public class MapReduceOutput {
      *
      * @return the results in iterable form
      */
-    @SuppressWarnings("unchecked")
     public Iterable<DBObject> results() {
         if (inlineResults != null) {
             return inlineResults;

@@ -135,7 +135,6 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
      */
-    @SuppressWarnings("deprecation")
     MapReduceIterable<TResult> action(com.mongodb.client.model.MapReduceAction action);
 
     /**

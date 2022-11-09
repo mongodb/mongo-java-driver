@@ -955,7 +955,6 @@ public class JsonPoweredCrudTestHelper {
         return toResult(updateResult);
     }
 
-    @SuppressWarnings("unchecked")
     BsonDocument getUpdateOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
         UpdateOptions options = new UpdateOptions();

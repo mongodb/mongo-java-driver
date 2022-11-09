@@ -123,7 +123,6 @@ public class DocumentCodecTest {
     public void testIterableContainingOtherIterableEncoding() throws IOException {
         DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
-        @SuppressWarnings("unchecked")
         List<List<Integer>> listOfLists = asList(asList(1), asList(2));
         doc.put("array", listOfLists);
 

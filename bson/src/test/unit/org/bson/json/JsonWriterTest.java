@@ -33,7 +33,6 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
-@SuppressWarnings("unchecked")
 public class JsonWriterTest {
     private StringWriter stringWriter;
     private JsonWriter writer;

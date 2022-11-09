@@ -49,7 +49,6 @@ import java.util.List;
  *
  * @mongodb.driver.manual core/gridfs/ GridFS
  */
-@SuppressWarnings("rawtypes")
 public class GridFS {
 
     /**
