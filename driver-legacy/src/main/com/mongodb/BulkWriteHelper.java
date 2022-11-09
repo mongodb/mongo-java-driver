@@ -40,7 +40,7 @@ final class BulkWriteHelper {
 
     static List<BulkWriteUpsert> translateBulkWriteUpserts(final List<com.mongodb.bulk.BulkWriteUpsert> upserts,
                                                            final Decoder<DBObject> decoder) {
-        List<BulkWriteUpsert> retVal = new ArrayList<BulkWriteUpsert>(upserts.size());
+        List<BulkWriteUpsert> retVal = new ArrayList<>(upserts.size());
         for (com.mongodb.bulk.BulkWriteUpsert cur : upserts) {
             retVal.add(new com.mongodb.BulkWriteUpsert(cur.getIndex(), getUpsertedId(cur, decoder)));
         }
@@ -63,7 +63,7 @@ final class BulkWriteHelper {
     }
 
     static List<BulkWriteError> translateWriteErrors(final List<com.mongodb.bulk.BulkWriteError> errors) {
-        List<BulkWriteError> retVal = new ArrayList<BulkWriteError>(errors.size());
+        List<BulkWriteError> retVal = new ArrayList<>(errors.size());
         for (com.mongodb.bulk.BulkWriteError cur : errors) {
             retVal.add(new BulkWriteError(cur.getCode(), cur.getMessage(), DBObjects.toDBObject(cur.getDetails()), cur.getIndex()));
         }

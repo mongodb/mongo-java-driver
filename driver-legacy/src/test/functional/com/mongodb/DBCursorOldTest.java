@@ -368,7 +368,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     private void insertTestData(final DBCollection dbCollection, final int numberOfDocuments) {
-        List<DBObject> documents = new ArrayList<DBObject>();
+        List<DBObject> documents = new ArrayList<>();
         for (int i = 0; i < numberOfDocuments; i++) {
             documents.add(new BasicDBObject("x", i));
         }

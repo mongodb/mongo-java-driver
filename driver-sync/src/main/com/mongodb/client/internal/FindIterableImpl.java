@@ -58,7 +58,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                      final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads) {
         super(clientSession, executor, readConcern, readPreference, retryReads);
-        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, retryReads);
+        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, retryReads);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
         this.findOptions = new FindOptions();

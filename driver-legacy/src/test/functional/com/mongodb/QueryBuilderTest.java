@@ -297,7 +297,7 @@ public class QueryBuilderTest extends DatabaseTestCase {
         queryTrue = QueryBuilder.start(key).withinCenterSphere(50, 30, 0.5).get();
         assertTrue(testQuery(collection, queryTrue));
 
-        ArrayList<Double[]> points = new ArrayList<Double[]>();
+        ArrayList<Double[]> points = new ArrayList<>();
         points.add(new Double[]{(double) 30, (double) 30});
         points.add(new Double[]{(double) 70, (double) 30});
         points.add(new Double[]{(double) 70, (double) 30});
@@ -312,7 +312,7 @@ public class QueryBuilderTest extends DatabaseTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionIfNoVerticesDefinedForPolygon() {
-        QueryBuilder.start("loc").withinPolygon(new ArrayList<Double[]>());
+        QueryBuilder.start("loc").withinPolygon(new ArrayList<>());
     }
 
     @Test(expected = IllegalArgumentException.class)

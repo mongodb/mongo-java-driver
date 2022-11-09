@@ -25,7 +25,7 @@ public class MapGetterMutableModel {
     private final Map<String, Integer> mapField;
 
     public MapGetterMutableModel() {
-        this.mapField = new HashMap<String, Integer>();
+        this.mapField = new HashMap<>();
     }
 
     public MapGetterMutableModel(final Map<String, Integer> mapField) {

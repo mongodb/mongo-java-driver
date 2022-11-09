@@ -147,7 +147,7 @@ public final class Aggregates {
      */
     public static <TExpression, TBoundary> Bson bucket(final TExpression groupBy, final List<TBoundary> boundaries,
                                                        final BucketOptions options) {
-        return new BucketStage<TExpression, TBoundary>(groupBy, boundaries, options);
+        return new BucketStage<>(groupBy, boundaries, options);
     }
 
     /**
@@ -178,7 +178,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson bucketAuto(final TExpression groupBy, final int buckets, final BucketAutoOptions options) {
-        return new BucketAutoStage<TExpression>(groupBy, buckets, options);
+        return new BucketAutoStage<>(groupBy, buckets, options);
     }
 
     /**
@@ -253,7 +253,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson sortByCount(final TExpression filter) {
-        return new SortByCountStage<TExpression>(filter);
+        return new SortByCountStage<>(filter);
     }
 
     /**
@@ -329,7 +329,7 @@ public final class Aggregates {
      */
     public static <TExpression> Bson lookup(final String from, @Nullable final List<Variable<TExpression>> let,
                                             final List<? extends Bson> pipeline, final String as) {
-       return new LookupStage<TExpression>(from, let, pipeline, as);
+       return new LookupStage<>(from, let, pipeline, as);
     }
 
     /**
@@ -395,7 +395,7 @@ public final class Aggregates {
     public static <TExpression> Bson graphLookup(final String from, final TExpression startWith, final String connectFromField,
                                                  final String connectToField, final String as, final GraphLookupOptions options) {
         notNull("options", options);
-        return new GraphLookupStage<TExpression>(from, startWith, connectFromField, connectToField, as, options);
+        return new GraphLookupStage<>(from, startWith, connectFromField, connectToField, as, options);
     }
 
     /**
@@ -423,7 +423,7 @@ public final class Aggregates {
      * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
      */
     public static <TExpression> Bson group(@Nullable final TExpression id, final List<BsonField> fieldAccumulators) {
-        return new GroupStage<TExpression>(id, fieldAccumulators);
+        return new GroupStage<>(id, fieldAccumulators);
     }
 
     /**
@@ -579,7 +579,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson replaceRoot(final TExpression value) {
-        return new ReplaceStage<TExpression>(value);
+        return new ReplaceStage<>(value);
     }
 
     /**
@@ -598,7 +598,7 @@ public final class Aggregates {
      * @since 3.11
      */
     public static <TExpression> Bson replaceWith(final TExpression value) {
-        return new ReplaceStage<TExpression>(value, true);
+        return new ReplaceStage<>(value, true);
     }
 
     /**

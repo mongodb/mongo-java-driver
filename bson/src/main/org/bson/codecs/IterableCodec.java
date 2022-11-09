@@ -89,7 +89,7 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
     public Iterable decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readStartArray();
 
-        List<Object> list = new ArrayList<Object>();
+        List<Object> list = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer));
         }

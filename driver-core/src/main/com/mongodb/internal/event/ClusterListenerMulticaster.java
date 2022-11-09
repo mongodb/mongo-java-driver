@@ -16,12 +16,12 @@
 
 package com.mongodb.internal.event;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ final class ClusterListenerMulticaster implements ClusterListener {
 
     ClusterListenerMulticaster(final List<ClusterListener> clusterListeners) {
         isTrue("All ClusterListener instances are non-null", !clusterListeners.contains(null));
-        this.clusterListeners = new ArrayList<ClusterListener>(clusterListeners);
+        this.clusterListeners = new ArrayList<>(clusterListeners);
     }
 
     @Override

@@ -60,7 +60,7 @@ public final class Projections {
      * @see Aggregates#project(Bson)
      */
     public static <TExpression> Bson computed(final String fieldName, final TExpression expression) {
-        return new SimpleExpression<TExpression>(fieldName, expression);
+        return new SimpleExpression<>(fieldName, expression);
     }
 
     /**

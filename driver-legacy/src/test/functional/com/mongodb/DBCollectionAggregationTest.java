@@ -64,7 +64,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         assertEquals(0, database.getCollection(aggCollection)
                                        .count());
 
-        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        List<DBObject> pipeline = new ArrayList<>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
         verify(pipeline, AggregationOptions.builder()
                                            .build());
@@ -76,7 +76,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
     public void testDollarOutOnSecondary() throws InterruptedException {
         assumeTrue(clusterIsType(REPLICA_SET));
 
-        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        List<DBObject> pipeline = new ArrayList<>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         AggregationOptions options = AggregationOptions.builder()
             .build();
@@ -105,14 +105,14 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
     @Test
     public void testExplain() {
         assumeTrue(serverVersionAtLeast(3, 6));
-        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        List<DBObject> pipeline = new ArrayList<>(prepareData());
         CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder().build());
         assertTrue(out.keySet().iterator().hasNext());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullOptions() {
-        collection.aggregate(new ArrayList<DBObject>(), null);
+        collection.aggregate(new ArrayList<>(), null);
     }
 
     @Test
@@ -174,7 +174,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         ServerAddress serverAddress;
         Map<String, DBObject> results;
         try {
-            results = new HashMap<String, DBObject>();
+            results = new HashMap<>();
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
                 results.put((String) next.get("_id"), next);

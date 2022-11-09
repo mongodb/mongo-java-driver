@@ -252,7 +252,7 @@ public class ServerDescription {
          * @return this
          */
         public Builder hosts(final Set<String> hosts) {
-            this.hosts = hosts == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<String>(hosts));
+            this.hosts = hosts == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(hosts));
             return this;
         }
 
@@ -264,7 +264,7 @@ public class ServerDescription {
          * @return this
          */
         public Builder passives(final Set<String> passives) {
-            this.passives = passives == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<String>(passives));
+            this.passives = passives == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(passives));
             return this;
         }
 
@@ -276,7 +276,7 @@ public class ServerDescription {
          * @return this
          */
         public Builder arbiters(final Set<String> arbiters) {
-            this.arbiters = arbiters == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<String>(arbiters));
+            this.arbiters = arbiters == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(arbiters));
             return this;
         }
 

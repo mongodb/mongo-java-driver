@@ -125,7 +125,7 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
 
     @Override
     public Map<String, Object> decode(final BsonReader reader, final DecoderContext decoderContext) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {

@@ -138,7 +138,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.toList(result, VALUES), 0L,
+        return new QueryResult<>(namespace, BsonDocumentWrapperHelper.toList(result, VALUES), 0L,
                 description.getServerAddress());
     }
 
@@ -147,7 +147,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
             @Override
             public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new QueryBatchCursor<T>(queryResult, 0, 0, decoder, comment, source);
+                return new QueryBatchCursor<>(queryResult, 0, 0, decoder, comment, source);
             }
         };
     }
@@ -158,7 +158,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
             public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                              final AsyncConnection connection) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new AsyncSingleBatchQueryCursor<T>(queryResult);
+                return new AsyncSingleBatchQueryCursor<>(queryResult);
             }
         };
     }

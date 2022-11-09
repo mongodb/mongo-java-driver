@@ -66,7 +66,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
                     }
                 }).build();
 
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(),
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(),
                 new MongoNamespace(getDefaultDatabaseName(), COLLECTION_NAME));
         client = MongoClients.create(settings);
         MongoDatabase database = client.getDatabase(getDefaultDatabaseName());

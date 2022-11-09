@@ -412,7 +412,7 @@ public class WriteConcern implements Serializable {
     }
 
     static {
-        NAMED_CONCERNS = new HashMap<String, WriteConcern>();
+        NAMED_CONCERNS = new HashMap<>();
         for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
                 String key = f.getName().toLowerCase();

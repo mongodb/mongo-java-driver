@@ -47,7 +47,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
     public ServerVersion(final List<Integer> versionList) {
         notNull("versionList", versionList);
         isTrue("version array has three elements", versionList.size() == 3);
-        this.versionList = Collections.unmodifiableList(new ArrayList<Integer>(versionList));
+        this.versionList = Collections.unmodifiableList(new ArrayList<>(versionList));
     }
 
     /**

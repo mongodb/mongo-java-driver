@@ -181,7 +181,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     }
 
     private ClusterDescription createClusterDescriptionFromClusterDescriptionDocument(final BsonDocument clusterDescriptionDocument) {
-        List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
+        List<ServerDescription> serverDescriptions = new ArrayList<>();
         for (BsonValue cur : clusterDescriptionDocument.getArray("servers"))  {
             serverDescriptions.add(createServerDescriptionFromServerDescriptionDocument(cur.asDocument()));
         }
@@ -209,7 +209,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     }
 
     private Set<String> getHostNamesSet(final BsonDocument serverDescriptionDocument, final String fieldName) {
-        Set<String> hostsSet = new HashSet<String>();
+        Set<String> hostsSet = new HashSet<>();
         for (BsonValue cur : serverDescriptionDocument.getArray(fieldName)) {
             hostsSet.add(cur.asString().getValue());
         }
@@ -218,7 +218,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
 
     private static class TestServerListenerFactory implements ServerListenerFactory {
         private final Map<ServerAddress, TestServerListener> serverAddressServerListenerMap =
-                new HashMap<ServerAddress, TestServerListener>();
+                new HashMap<>();
 
         @Override
         public ServerListener create(final ServerAddress serverAddress) {

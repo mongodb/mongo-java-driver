@@ -106,7 +106,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         this.batchSize = batchSize;
         this.decoder = decoder;
         this.comment = comment;
-        this.cursor = new AtomicReference<ServerCursor>(firstBatch.getCursor());
+        this.cursor = new AtomicReference<>(firstBatch.getCursor());
         this.count.addAndGet(firstBatch.getResults().size());
         if (result != null) {
             this.operationTime = result.getTimestamp(OPERATION_TIME, null);

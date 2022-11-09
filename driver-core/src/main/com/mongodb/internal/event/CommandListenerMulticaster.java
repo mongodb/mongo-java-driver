@@ -16,12 +16,12 @@
 
 package com.mongodb.internal.event;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ final class CommandListenerMulticaster implements CommandListener {
 
     CommandListenerMulticaster(final List<CommandListener> commandListeners) {
         isTrue("All CommandListener instances are non-null", !commandListeners.contains(null));
-        this.commandListeners = new ArrayList<CommandListener>(commandListeners);
+        this.commandListeners = new ArrayList<>(commandListeners);
     }
 
     @Override

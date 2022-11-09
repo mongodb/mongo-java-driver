@@ -39,7 +39,7 @@ public final class IndexHelper {
      * @return the list of index names
      */
     public static List<String> getIndexNames(final List<IndexModel> indexes, final CodecRegistry codecRegistry) {
-        List<String> indexNames = new ArrayList<String>(indexes.size());
+        List<String> indexNames = new ArrayList<>(indexes.size());
         for (IndexModel index : indexes) {
             String name = index.getOptions().getName();
             if (name != null) {

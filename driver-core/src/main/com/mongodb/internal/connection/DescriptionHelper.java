@@ -173,7 +173,7 @@ public final class DescriptionHelper {
         if (array == null || array.isEmpty()) {
             return Collections.emptySet();
         } else {
-            Set<String> set = new HashSet<String>();
+            Set<String> set = new HashSet<>();
             for (BsonValue value : array) {
                 set.add(value.asString().getValue());
             }
@@ -228,7 +228,7 @@ public final class DescriptionHelper {
     }
 
     private static TagSet getTagSetFromDocument(final BsonDocument tagsDocuments) {
-        List<Tag> tagList = new ArrayList<Tag>();
+        List<Tag> tagList = new ArrayList<>();
         for (final Map.Entry<String, BsonValue> curEntry : tagsDocuments.entrySet()) {
             tagList.add(new Tag(curEntry.getKey(), curEntry.getValue().asString().getValue()));
         }
@@ -236,7 +236,7 @@ public final class DescriptionHelper {
     }
 
     private static List<String> getCompressors(final BsonDocument helloResult) {
-        List<String> compressorList = new ArrayList<String>();
+        List<String> compressorList = new ArrayList<>();
         for (BsonValue compressor : helloResult.getArray("compression", new BsonArray())) {
             compressorList.add(compressor.asString().getValue());
         }

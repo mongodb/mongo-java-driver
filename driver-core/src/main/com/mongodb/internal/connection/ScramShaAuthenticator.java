@@ -307,7 +307,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
          * For example: a=kg4io3,b=skljsfoiew,c=1203
          */
         private HashMap<String, String> parseServerResponse(final String response) {
-            HashMap<String, String> map = new HashMap<String, String>();
+            HashMap<String, String> map = new HashMap<>();
             String[] pairs = response.split(",");
             for (String pair : pairs) {
                 String[] parts = pair.split("=", 2);

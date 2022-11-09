@@ -91,7 +91,7 @@ public abstract class AbstractRetryableWritesTest {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
         BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder();
 
@@ -156,7 +156,7 @@ public abstract class AbstractRetryableWritesTest {
         }
 
         if (outcome.containsKey("collection")) {
-            List<BsonDocument> collectionData = collection.withDocumentClass(BsonDocument.class).find().into(new ArrayList<BsonDocument>());
+            List<BsonDocument> collectionData = collection.withDocumentClass(BsonDocument.class).find().into(new ArrayList<>());
             assertEquals(outcome.getDocument("collection").getArray("data").getValues(), collectionData);
         }
     }
@@ -232,7 +232,7 @@ public abstract class AbstractRetryableWritesTest {
 
 
     private List<String> getListOfStringsFromBsonArrays(final BsonDocument expectedResult, final String arrayFieldName) {
-        List<String> errorLabelContainsList = new ArrayList<String>();
+        List<String> errorLabelContainsList = new ArrayList<>();
         for (BsonValue cur : expectedResult.asDocument().getArray(arrayFieldName)) {
             errorLabelContainsList.add(cur.asString().getValue());
         }
@@ -254,7 +254,7 @@ public abstract class AbstractRetryableWritesTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/retryable-writes")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {

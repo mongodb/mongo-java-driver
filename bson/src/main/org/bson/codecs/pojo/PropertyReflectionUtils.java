@@ -59,8 +59,8 @@ final class PropertyReflectionUtils {
     }
 
     static PropertyMethods getPropertyMethods(final Class<?> clazz) {
-        List<Method> setters = new ArrayList<Method>();
-        List<Method> getters = new ArrayList<Method>();
+        List<Method> setters = new ArrayList<>();
+        List<Method> getters = new ArrayList<>();
 
         // get all the default method from interface
         for (Class<?> i : clazz.getInterfaces()) {

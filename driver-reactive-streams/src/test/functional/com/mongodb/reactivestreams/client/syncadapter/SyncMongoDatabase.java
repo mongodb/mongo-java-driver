@@ -184,7 +184,7 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return new SyncListCollectionsIterable<TResult>(wrapped.listCollections(unwrap(clientSession), resultClass));
+        return new SyncListCollectionsIterable<>(wrapped.listCollections(unwrap(clientSession), resultClass));
     }
 
     @Override

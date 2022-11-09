@@ -115,7 +115,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         FindIterable<Document> findIterable = collection.find(eq("item", "canvas"));
         // End Example 2
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 3
         Document journal = new Document("item", "journal")
@@ -169,37 +169,37 @@ public final class DocumentationSamples extends DatabaseTestCase {
         FindIterable<Document> findIterable = collection.find(new Document());
         // End Example 7
 
-        assertEquals(5, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(5, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 8
         findIterable = collection.find();
         // End Example 8
 
-        assertEquals(5, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(5, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 9
         findIterable = collection.find(eq("status", "D"));
         // End Example 9
 
-        assertEquals(2, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(2, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 10
         findIterable = collection.find(in("status", "A", "D"));
         // End Example 10
 
-        assertEquals(5, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(5, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 11
         findIterable = collection.find(and(eq("status", "A"), lt("qty", 30)));
         // End Example 11
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 12
         findIterable = collection.find(or(eq("status", "A"), lt("qty", 30)));
         // End Example 12
 
-        assertEquals(3, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(3, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 13
         findIterable = collection.find(
@@ -208,7 +208,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         );
         // End Example 13
 
-        assertEquals(2, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(2, findIterable.into(new ArrayList<>()).size());
     }
 
     @Test
@@ -229,25 +229,25 @@ public final class DocumentationSamples extends DatabaseTestCase {
         FindIterable<Document> findIterable = collection.find(eq("size", Document.parse("{ h: 14, w: 21, uom: 'cm' }")));
         // End Example 15
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 16
         findIterable = collection.find(eq("size", Document.parse("{ w: 21, h: 14, uom: 'cm' }")));
         // End Example 16
 
-        assertEquals(0, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(0, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 17
         findIterable = collection.find(eq("size.uom", "in"));
         // End Example 17
 
-        assertEquals(2, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(2, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 18
         findIterable = collection.find(lt("size.h", 15));
         // End Example 18
 
-        assertEquals(4, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(4, findIterable.into(new ArrayList<>()).size());
 
         // Start Example 19
         findIterable = collection.find(and(
@@ -257,7 +257,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         // End Example 19
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
     }
 
     @Test
@@ -279,49 +279,49 @@ public final class DocumentationSamples extends DatabaseTestCase {
         FindIterable<Document> findIterable = collection.find(eq("tags", asList("red", "blank")));
         //End Example 21
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 22
         findIterable = collection.find(all("tags", asList("red", "blank")));
         //End Example 22
 
-        assertEquals(4, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(4, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 23
         findIterable = collection.find(eq("tags", "red"));
         //End Example 23
 
-        assertEquals(4, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(4, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 24
         findIterable = collection.find(gt("dim_cm", 25));
         //End Example 24
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 25
         findIterable = collection.find(and(gt("dim_cm", 15), lt("dim_cm", 20)));
         //End Example 25
 
-        assertEquals(4, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(4, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 26
         findIterable = collection.find(elemMatch("dim_cm", Document.parse("{ $gt: 22, $lt: 30 }")));
         //End Example 26
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 27
         findIterable = collection.find(gt("dim_cm.1", 25));
         //End Example 27
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 28
         findIterable = collection.find(size("tags", 3));
         //End Example 28
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
     }
 
     @Test
@@ -343,49 +343,49 @@ public final class DocumentationSamples extends DatabaseTestCase {
         FindIterable<Document> findIterable = collection.find(eq("instock", Document.parse("{ warehouse: 'A', qty: 5 }")));
         //End Example 30
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 31
         findIterable = collection.find(eq("instock", Document.parse("{ qty: 5, warehouse: 'A' }")));
         //End Example 31
 
-        assertEquals(0, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(0, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 32
         findIterable = collection.find(lte("instock.0.qty", 20));
         //End Example 32
 
-        assertEquals(3, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(3, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 33
         findIterable = collection.find(lte("instock.qty", 20));
         //End Example 33
 
-        assertEquals(5, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(5, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 34
         findIterable = collection.find(elemMatch("instock", Document.parse("{ qty: 5, warehouse: 'A' }")));
         //End Example 34
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 35
         findIterable = collection.find(elemMatch("instock", Document.parse("{ qty: { $gt: 10, $lte: 20 } }")));
         //End Example 35
 
-        assertEquals(3, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(3, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 36
         findIterable = collection.find(and(gt("instock.qty", 10), lte("instock.qty", 20)));
         //End Example 36
 
-        assertEquals(4, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(4, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 37
         findIterable = collection.find(and(eq("instock.qty", 5), eq("instock.warehouse", "A")));
         //End Example 37
 
-        assertEquals(2, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(2, findIterable.into(new ArrayList<>()).size());
     }
 
     @Test
@@ -404,19 +404,19 @@ public final class DocumentationSamples extends DatabaseTestCase {
         FindIterable<Document> findIterable = collection.find(eq("item", null));
         //End Example 39
 
-        assertEquals(2, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(2, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 40
         findIterable = collection.find(type("item", BsonType.NULL));
         //End Example 40
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 41
         findIterable = collection.find(exists("item", false));
         //End Example 41
 
-        assertEquals(1, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(1, findIterable.into(new ArrayList<>()).size());
     }
 
     @Test
@@ -440,7 +440,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         FindIterable<Document> findIterable = collection.find(eq("status", "A"));
         //End Example 43
 
-        assertEquals(3, findIterable.into(new ArrayList<Document>()).size());
+        assertEquals(3, findIterable.into(new ArrayList<>()).size());
 
         //Start Example 44
         findIterable = collection.find(eq("status", "A")).projection(include("item", "status"));
@@ -449,7 +449,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable.forEach(new Consumer<Document>() {
             @Override
             public void accept(final Document document) {
-                assertEquals(new HashSet<String>(asList("_id", "item", "status")), document.keySet());
+                assertEquals(new HashSet<>(asList("_id", "item", "status")), document.keySet());
             }
         });
 
@@ -461,7 +461,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable.forEach(new Consumer<Document>() {
             @Override
             public void accept(final Document document) {
-                assertEquals(new HashSet<String>(asList("item", "status")), document.keySet());
+                assertEquals(new HashSet<>(asList("item", "status")), document.keySet());
             }
         });
 
@@ -472,7 +472,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable.forEach(new Consumer<Document>() {
             @Override
             public void accept(final Document document) {
-                assertEquals(new HashSet<String>(asList("_id", "size", "instock")), document.keySet());
+                assertEquals(new HashSet<>(asList("_id", "size", "instock")), document.keySet());
             }
         });
 
@@ -483,8 +483,8 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable.forEach(new Consumer<Document>() {
             @Override
             public void accept(final Document document) {
-                assertEquals(new HashSet<String>(asList("_id", "item", "status", "size")), document.keySet());
-                assertEquals(new HashSet<String>(singletonList("uom")), document.get("size", Document.class).keySet());
+                assertEquals(new HashSet<>(asList("_id", "item", "status", "size")), document.keySet());
+                assertEquals(new HashSet<>(singletonList("uom")), document.get("size", Document.class).keySet());
             }
         });
 
@@ -495,8 +495,8 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable.forEach(new Consumer<Document>() {
             @Override
             public void accept(final Document document) {
-                assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status", "size")), document.keySet());
-                assertEquals(new HashSet<String>(asList("h", "w")), document.get("size", Document.class).keySet());
+                assertEquals(new HashSet<>(asList("_id", "item", "instock", "status", "size")), document.keySet());
+                assertEquals(new HashSet<>(asList("h", "w")), document.get("size", Document.class).keySet());
             }
         });
 
@@ -507,11 +507,11 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable.forEach(new Consumer<Document>() {
             @Override
             public void accept(final Document document) {
-                assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status")), document.keySet());
+                assertEquals(new HashSet<>(asList("_id", "item", "instock", "status")), document.keySet());
 
                 List<Document> instock = (List<Document>) document.get("instock");
                 for (Document stockDocument : instock) {
-                    assertEquals(new HashSet<String>(singletonList("qty")), stockDocument.keySet());
+                    assertEquals(new HashSet<>(singletonList("qty")), stockDocument.keySet());
                 }
             }
         });
@@ -524,7 +524,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         findIterable.forEach(new Consumer<Document>() {
             @Override
             public void accept(final Document document) {
-                assertEquals(new HashSet<String>(asList("_id", "item", "instock", "status")), document.keySet());
+                assertEquals(new HashSet<>(asList("_id", "item", "instock", "status")), document.keySet());
 
                 List<Document> instock = (List<Document>) document.get("instock");
                 assertEquals(1, instock.size());
@@ -546,7 +546,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         // End Aggregation Example 1
 
-        aggregateIterable.into(new ArrayList<Document>());
+        aggregateIterable.into(new ArrayList<>());
 
         // Start Aggregation Example 2
         aggregateIterable = salesCollection.aggregate(asList(
@@ -561,7 +561,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 sort(Indexes.ascending("numberSold"))));
         // End Aggregation Example 2
 
-        aggregateIterable.into(new ArrayList<Document>());
+        aggregateIterable.into(new ArrayList<>());
 
         // Start Aggregation Example 3
         aggregateIterable = salesCollection.aggregate(asList(
@@ -579,14 +579,14 @@ public final class DocumentationSamples extends DatabaseTestCase {
                                                 .append("else", 0)))))));
         // End Aggregation Example 3
 
-        aggregateIterable.into(new ArrayList<Document>());
+        aggregateIterable.into(new ArrayList<>());
 
         MongoCollection<Document> airAlliancesCollection = database.getCollection("air_alliances");
 
         // Start Aggregation Example 4
         aggregateIterable = airAlliancesCollection.aggregate(asList(
                 lookup("air_airlines",
-                        singletonList(new Variable<String>("constituents", "$airlines")),
+                        singletonList(new Variable<>("constituents", "$airlines")),
                         singletonList(match(expr(new Document("$in", asList("$name", "$$constituents"))))),
                         "airlines"),
                 project(fields(
@@ -600,7 +600,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
         // End Aggregation Example 4
 
-        aggregateIterable.into(new ArrayList<Document>());
+        aggregateIterable.into(new ArrayList<>());
     }
 
     @Test
@@ -747,7 +747,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
         // Start Changestream Example 4
         List<Bson> pipeline = asList(match(Document.parse("{'fullDocument.username': 'alice'}")),
-                addFields(new Field<String>("newField", "this is an added field!")));
+                addFields(new Field<>("newField", "this is an added field!")));
         cursor = inventory.watch(pipeline).iterator();
         next = cursor.next();
         // End Changestream Example 4

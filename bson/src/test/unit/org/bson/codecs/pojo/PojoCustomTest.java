@@ -252,7 +252,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testSetPrivateFieldConvention() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(PrivateSetterFieldModel.class);
-        ArrayList<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        ArrayList<Convention> conventions = new ArrayList<>(DEFAULT_CONVENTIONS);
         conventions.add(SET_PRIVATE_FIELDS_CONVENTION);
         builder.conventions(conventions);
 
@@ -460,7 +460,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void testCanHandleTopLevelGenericIfHasCodec() {
-        UpperBoundsModel<Long> model = new UpperBoundsModel<Long>(5L);
+        UpperBoundsModel<Long> model = new UpperBoundsModel<>(5L);
 
         ClassModelBuilder<UpperBoundsModel> classModelBuilder = ClassModel.builder(UpperBoundsModel.class);
         ((PropertyModelBuilder<Long>) classModelBuilder.getProperty("myGenericField")).codec(new LongCodec());
@@ -485,7 +485,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testMapStringObjectModel() {
-        MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
+        MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
         CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
@@ -493,7 +493,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testMapStringObjectModelWithObjectCodec() {
-        MapStringObjectModel model = new MapStringObjectModel(new HashMap<String, Object>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
+        MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
         CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()), fromCodecs(new ObjectCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
@@ -667,7 +667,7 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {
-        List<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        List<Convention> conventions = new ArrayList<>(DEFAULT_CONVENTIONS);
         conventions.add(USE_GETTERS_FOR_SETTERS);
         return conventions;
     }

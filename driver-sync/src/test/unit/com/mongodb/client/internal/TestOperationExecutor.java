@@ -30,11 +30,11 @@ import java.util.List;
 public class TestOperationExecutor implements OperationExecutor {
 
     private final List<Object> responses;
-    private final List<ClientSession> clientSessions = new ArrayList<ClientSession>();
-    private final List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
-    private final List<ReadConcern> readConcerns = new ArrayList<ReadConcern>();
-    private final List<ReadOperation> readOperations = new ArrayList<ReadOperation>();
-    private final List<WriteOperation> writeOperations = new ArrayList<WriteOperation>();
+    private final List<ClientSession> clientSessions = new ArrayList<>();
+    private final List<ReadPreference> readPreferences = new ArrayList<>();
+    private final List<ReadConcern> readConcerns = new ArrayList<>();
+    private final List<ReadOperation> readOperations = new ArrayList<>();
+    private final List<WriteOperation> writeOperations = new ArrayList<>();
 
     public TestOperationExecutor(final List<Object> responses) {
         this.responses = responses;

@@ -38,7 +38,7 @@ public final class ClusterDescriptionHelper {
      * @return the set of server descriptions
      */
     public static Set<ServerDescription> getAll(final ClusterDescription clusterDescription) {
-        Set<ServerDescription> serverDescriptionSet = new TreeSet<ServerDescription>((o1, o2) -> {
+        Set<ServerDescription> serverDescriptionSet = new TreeSet<>((o1, o2) -> {
             int val = o1.getAddress().getHost().compareTo(o2.getAddress().getHost());
             if (val != 0) {
                 return val;
@@ -129,7 +129,7 @@ public final class ClusterDescriptionHelper {
     }
 
     public static List<ServerDescription> getServersByPredicate(final ClusterDescription clusterDescription, final Predicate predicate) {
-        List<ServerDescription> membersByTag = new ArrayList<ServerDescription>();
+        List<ServerDescription> membersByTag = new ArrayList<>();
 
         for (final ServerDescription cur : clusterDescription.getServerDescriptions()) {
             if (predicate.apply(cur)) {

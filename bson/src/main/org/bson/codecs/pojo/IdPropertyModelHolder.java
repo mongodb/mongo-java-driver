@@ -39,7 +39,7 @@ final class IdPropertyModelHolder<I> {
             throw new CodecConfigurationException(format("Invalid IdGenerator. Mismatching types, the IdProperty type is: %s but"
                     + " the IdGenerator type is: %s", idProperty.getTypeData().getType(), idGenerator.getType()));
         }
-        return new IdPropertyModelHolder<I>(idProperty, (IdGenerator<I>) idGenerator);
+        return new IdPropertyModelHolder<>(idProperty, (IdGenerator<I>) idGenerator);
     }
 
     private IdPropertyModelHolder(final PropertyModel<I> propertyModel, final IdGenerator<I> idGenerator) {

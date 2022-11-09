@@ -167,7 +167,7 @@ public abstract class AbstractUnifiedTest {
                 !definition.containsKey("skipReason"));
         assumeFalse("Skipping test of count", filename.equals("count.json"));
 
-        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
 
@@ -176,7 +176,7 @@ public abstract class AbstractUnifiedTest {
         }
 
         if (!data.isEmpty()) {
-            List<BsonDocument> documents = new ArrayList<BsonDocument>();
+            List<BsonDocument> documents = new ArrayList<>();
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }
@@ -413,7 +413,7 @@ public abstract class AbstractUnifiedTest {
             BsonDocument collectionDocument = expectedOutcome.getDocument("collection");
             List<BsonDocument> collectionData;
             if (collectionDocument.containsKey("name")) {
-                collectionData = new CollectionHelper<Document>(new DocumentCodec(),
+                collectionData = new CollectionHelper<>(new DocumentCodec(),
                         new MongoNamespace(databaseName, collectionDocument.getString("name").getValue()))
                         .find(new BsonDocumentCodec());
             } else {
@@ -677,7 +677,7 @@ public abstract class AbstractUnifiedTest {
     }
 
     private boolean collectionExists(final String databaseName, final String collectionName) {
-        return getMongoClient().getDatabase(databaseName).listCollectionNames().into(new ArrayList<String>()).contains(collectionName);
+        return getMongoClient().getDatabase(databaseName).listCollectionNames().into(new ArrayList<>()).contains(collectionName);
     }
 
     private void assertIndexExists(final BsonDocument operation, final boolean shouldExist) {
@@ -690,7 +690,7 @@ public abstract class AbstractUnifiedTest {
 
     private boolean indexExists(final String databaseName, final String collectionName, final String indexName) {
         ArrayList<Document> indexes = getMongoClient().getDatabase(databaseName).getCollection(collectionName).listIndexes()
-                .into(new ArrayList<Document>());
+                .into(new ArrayList<>());
         return indexes.stream().anyMatch(document -> document.get("name").equals(indexName));
     }
 
@@ -794,7 +794,7 @@ public abstract class AbstractUnifiedTest {
 
 
     private List<String> getListOfStringsFromBsonArrays(final BsonDocument expectedResult, final String arrayFieldName) {
-        List<String> errorLabelContainsList = new ArrayList<String>();
+        List<String> errorLabelContainsList = new ArrayList<>();
         for (BsonValue cur : expectedResult.asDocument().getArray(arrayFieldName)) {
             errorLabelContainsList.add(cur.asString().getValue());
         }

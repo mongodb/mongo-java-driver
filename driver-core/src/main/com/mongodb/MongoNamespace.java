@@ -41,7 +41,7 @@ public final class MongoNamespace {
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
     private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =
-            new HashSet<Character>(asList('\0', '/', '\\', ' ', '"', '.'));
+            new HashSet<>(asList('\0', '/', '\\', ' ', '"', '.'));
 
     private final String databaseName;
     private final String collectionName;

@@ -104,7 +104,7 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
                     BufferedReader reader = new BufferedReader(readFromRelativePath(resourcePath), 1024 * 64);
                     try {
                         String json;
-                        List<RawBsonDocument> documents = new ArrayList<RawBsonDocument>(1000);
+                        List<RawBsonDocument> documents = new ArrayList<>(1000);
                         while ((json = reader.readLine()) != null) {
                             RawBsonDocument document = codec.decode(new JsonReader(json), DecoderContext.builder().build());
                             documents.add(document);
@@ -117,7 +117,7 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
                                         latch.countDown();
                                     }
                                 });
-                                documents = new ArrayList<RawBsonDocument>(1000);
+                                documents = new ArrayList<>(1000);
                             }
                         }
                         if (!documents.isEmpty()) {

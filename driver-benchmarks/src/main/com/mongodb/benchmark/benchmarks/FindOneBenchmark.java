@@ -35,6 +35,6 @@ public class FindOneBenchmark<T> extends AbstractFindBenchmark<T> {
     }
 
     public static void main(String[] args) throws Exception {
-        new BenchmarkRunner(new FindOneBenchmark<BsonDocument>("/benchmarks/TWEET.json", BsonDocument.class), 0, 1).run();
+        new BenchmarkRunner(new FindOneBenchmark<>("/benchmarks/TWEET.json", BsonDocument.class), 0, 1).run();
     }
 }

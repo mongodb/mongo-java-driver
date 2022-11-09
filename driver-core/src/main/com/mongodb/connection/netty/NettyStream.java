@@ -116,7 +116,7 @@ final class NettyStream implements Stream {
     private boolean isClosed;
     private volatile Channel channel;
 
-    private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<io.netty.buffer.ByteBuf>();
+    private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<>();
     /* The fields pendingReader, pendingException are always written/read inside synchronized blocks
      * that use the same NettyStream object, so they can be plain.*/
     private PendingReader pendingReader;
@@ -150,7 +150,7 @@ final class NettyStream implements Stream {
 
     @Override
     public void open() throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
         openAsync(handler);
         handler.get();
     }
@@ -160,7 +160,7 @@ final class NettyStream implements Stream {
         Queue<SocketAddress> socketAddressQueue;
 
         try {
-            socketAddressQueue = new LinkedList<SocketAddress>(address.getSocketAddresses());
+            socketAddressQueue = new LinkedList<>(address.getSocketAddresses());
         } catch (Throwable t) {
             handler.failed(t);
             return;
@@ -219,7 +219,7 @@ final class NettyStream implements Stream {
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
-        FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<Void>();
+        FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<>();
         writeAsync(buffers, future);
         future.get();
     }
@@ -237,7 +237,7 @@ final class NettyStream implements Stream {
     @Override
     public ByteBuf read(final int numBytes, final int additionalTimeoutMillis) throws IOException {
         isTrueArgument("additionalTimeoutMillis must not be negative", additionalTimeoutMillis >= 0);
-        FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<ByteBuf>();
+        FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, future, combinedTimeout(readTimeoutMillis, additionalTimeoutMillis));
         return future.get();
     }

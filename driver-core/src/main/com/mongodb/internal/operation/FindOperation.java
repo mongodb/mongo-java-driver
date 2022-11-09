@@ -385,7 +385,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     @Override
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                        final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
@@ -393,7 +393,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     @Override
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
@@ -494,7 +494,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                                          final Connection connection) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                         connection.getDescription().getServerAddress());
-                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection,
+                return new QueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection,
                         result);
             }
         };
@@ -511,7 +511,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                              final AsyncConnection connection) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                         connection.getDescription().getServerAddress());
-                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
+                return new AsyncQueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
                         connection, result);
             }
         };

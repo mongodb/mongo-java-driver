@@ -103,7 +103,7 @@ public class ServerSelectionSelectionTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/server_selection")) {
             data.add(new Object[]{getServerSelectionTestDescription(file), JsonPoweredTestHelper.getTestDocument(file)});
         }
@@ -156,7 +156,7 @@ public class ServerSelectionSelectionTest {
     }
 
     private static List<ServerDescription> buildServerDescriptions(final BsonArray serverDescriptions) {
-        List<ServerDescription> descriptions = new ArrayList<ServerDescription>();
+        List<ServerDescription> descriptions = new ArrayList<>();
         for (BsonValue document : serverDescriptions) {
             descriptions.add(buildServerDescription(document.asDocument()));
         }
@@ -219,7 +219,7 @@ public class ServerSelectionSelectionTest {
     }
 
     private List<TagSet> buildTagSets(final BsonArray tags) {
-        List<TagSet> tagSets = new ArrayList<TagSet>();
+        List<TagSet> tagSets = new ArrayList<>();
         for (BsonValue tag : tags) {
             tagSets.add(buildTagSet(tag.asDocument()));
         }
@@ -228,7 +228,7 @@ public class ServerSelectionSelectionTest {
 
 
     private static TagSet buildTagSet(final BsonDocument tags) {
-        List<Tag> tagsSetTags = new ArrayList<Tag>();
+        List<Tag> tagsSetTags = new ArrayList<>();
         for (String key : tags.keySet()) {
             tagsSetTags.add(new Tag(key, tags.getString(key).getValue()));
         }

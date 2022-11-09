@@ -65,7 +65,7 @@ public class X509AuthenticatorNoUserNameTest {
     public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
         enqueueSuccessfulAuthenticationReply();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
         new X509Authenticator(getCredentialWithCache(), MULTIPLE, getServerApi()).authenticateAsync(connection,
                 connectionDescriptionThreeSix, futureCallback);
 

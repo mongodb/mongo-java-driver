@@ -168,7 +168,7 @@ public final class MongoClientSettings {
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory;
-        private List<CommandListener> commandListeners = new ArrayList<CommandListener>();
+        private List<CommandListener> commandListeners = new ArrayList<>();
 
         private final ClusterSettings.Builder clusterSettingsBuilder = ClusterSettings.builder();
         private final SocketSettings.Builder socketSettingsBuilder = SocketSettings.builder();
@@ -194,8 +194,8 @@ public final class MongoClientSettings {
         private Builder(final MongoClientSettings settings) {
             notNull("settings", settings);
             applicationName = settings.getApplicationName();
-            commandListeners = new ArrayList<CommandListener>(settings.getCommandListeners());
-            compressorList = new ArrayList<MongoCompressor>(settings.getCompressorList());
+            commandListeners = new ArrayList<>(settings.getCommandListeners());
+            compressorList = new ArrayList<>(settings.getCompressorList());
             codecRegistry = settings.getCodecRegistry();
             readPreference = settings.getReadPreference();
             writeConcern = settings.getWriteConcern();
@@ -449,7 +449,7 @@ public final class MongoClientSettings {
          */
         public Builder commandListenerList(final List<CommandListener> commandListeners) {
             notNull("commandListeners", commandListeners);
-            this.commandListeners = new ArrayList<CommandListener>(commandListeners);
+            this.commandListeners = new ArrayList<>(commandListeners);
             return this;
         }
 
@@ -483,7 +483,7 @@ public final class MongoClientSettings {
          */
         public Builder compressorList(final List<MongoCompressor> compressorList) {
             notNull("compressorList", compressorList);
-            this.compressorList = new ArrayList<MongoCompressor>(compressorList);
+            this.compressorList = new ArrayList<>(compressorList);
             return this;
         }
 

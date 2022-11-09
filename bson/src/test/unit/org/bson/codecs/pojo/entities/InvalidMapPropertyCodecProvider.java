@@ -52,7 +52,7 @@ public class InvalidMapPropertyCodecProvider implements PropertyCodecProvider {
 
         @Override
         public Map<Integer, Integer> decode(final BsonReader reader, final DecoderContext decoderContext) {
-            Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+            Map<Integer, Integer> map = new HashMap<>();
 
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {

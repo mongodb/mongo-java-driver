@@ -68,7 +68,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
 
     private Map<List<String>, Class<? extends DBObject>> updatePathToClassMap(final Class<? extends DBObject> aClass,
                                                                               final List<String> path) {
-        Map<List<String>, Class<? extends DBObject>> map = new HashMap<List<String>, Class<? extends DBObject>>(pathToClassMap);
+        Map<List<String>, Class<? extends DBObject>> map = new HashMap<>(pathToClassMap);
         if (aClass != null) {
             map.put(path, aClass);
         } else {

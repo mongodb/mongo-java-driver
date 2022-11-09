@@ -59,7 +59,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         Queue<SocketAddress> socketAddressQueue;
 
         try {
-            socketAddressQueue = new LinkedList<SocketAddress>(serverAddress.getSocketAddresses());
+            socketAddressQueue = new LinkedList<>(serverAddress.getSocketAddresses());
         } catch (Throwable t) {
             handler.failed(t);
             return;
@@ -106,7 +106,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
 
         OpenCompletionHandler(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue,
                               final AsynchronousSocketChannel attemptConnectionChannel) {
-            this.handlerReference = new AtomicReference<AsyncCompletionHandler<Void>>(handler);
+            this.handlerReference = new AtomicReference<>(handler);
             this.socketAddressQueue = socketAddressQueue;
             this.attemptConnectionChannel = attemptConnectionChannel;
         }

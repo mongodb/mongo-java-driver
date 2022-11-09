@@ -96,7 +96,7 @@ public class ClusterDescription {
         this.connectionMode = notNull("connectionMode", connectionMode);
         this.type = notNull("type", type);
         this.srvResolutionException = srvResolutionException;
-        this.serverDescriptions = new ArrayList<ServerDescription>(serverDescriptions);
+        this.serverDescriptions = new ArrayList<>(serverDescriptions);
         this.clusterSettings = clusterSettings;
         this.serverSettings = serverSettings;
         this.logicalSessionTimeoutMinutes = calculateLogicalSessionTimeoutMinutes();

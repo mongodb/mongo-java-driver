@@ -59,7 +59,7 @@ public class BucketOptions {
      */
     @Nullable
     public List<BsonField> getOutput() {
-        return output == null ? null : new ArrayList<BsonField>(output);
+        return output == null ? null : new ArrayList<>(output);
     }
 
     /**

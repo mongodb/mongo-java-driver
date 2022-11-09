@@ -395,7 +395,7 @@ public final class MongoCredential {
         this.source = notNull("source", source);
 
         this.password = password != null ? password.clone() : null;
-        this.mechanismProperties = new HashMap<String, Object>(mechanismProperties);
+        this.mechanismProperties = new HashMap<>(mechanismProperties);
     }
 
     private boolean mechanismRequiresPassword(@Nullable final AuthenticationMechanism mechanism) {
@@ -418,7 +418,7 @@ public final class MongoCredential {
         this.userName = from.userName;
         this.source = from.source;
         this.password = from.password;
-        this.mechanismProperties = new HashMap<String, Object>(from.mechanismProperties);
+        this.mechanismProperties = new HashMap<>(from.mechanismProperties);
         this.mechanismProperties.put(mechanismPropertyKey.toLowerCase(), mechanismPropertyValue);
     }
 

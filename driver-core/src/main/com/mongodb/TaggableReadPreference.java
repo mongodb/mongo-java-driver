@@ -52,7 +52,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     private static final int SMALLEST_MAX_STALENESS_MS = 90000;
     private static final int IDLE_WRITE_PERIOD_MS = 10000;
 
-    private final List<TagSet> tagSetList = new ArrayList<TagSet>();
+    private final List<TagSet> tagSetList = new ArrayList<>();
     private final Long maxStalenessMS;
     private final ReadPreferenceHedgeOptions hedgeOptions;
 
@@ -246,7 +246,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                         maxStaleness, heartbeatFrequencyMS, IDLE_WRITE_PERIOD_MS));
             }
         }
-        List<ServerDescription> freshServers = new ArrayList<ServerDescription>(servers.size());
+        List<ServerDescription> freshServers = new ArrayList<>(servers.size());
 
         ServerDescription primary = findPrimary(clusterDescription);
 

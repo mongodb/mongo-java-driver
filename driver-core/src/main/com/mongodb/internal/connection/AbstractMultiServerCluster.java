@@ -59,7 +59,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     private Integer maxSetVersion;
 
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
-    new ConcurrentHashMap<ServerAddress, ServerTuple>();
+            new ConcurrentHashMap<>();
 
     private static final class ServerTuple {
         private final ClusterableServer server;
@@ -386,7 +386,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {
-        List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
+        List<ServerDescription> serverDescriptions = new ArrayList<>();
         for (final ServerTuple cur : addressToServerTupleMap.values()) {
             serverDescriptions.add(cur.description);
         }
@@ -436,7 +436,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
-        Set<ServerAddress> retVal = new HashSet<ServerAddress>();
+        Set<ServerAddress> retVal = new HashSet<>();
         addHostsToSet(serverDescription.getHosts(), retVal);
         addHostsToSet(serverDescription.getPassives(), retVal);
         addHostsToSet(serverDescription.getArbiters(), retVal);

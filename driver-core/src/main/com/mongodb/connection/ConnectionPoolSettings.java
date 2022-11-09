@@ -75,7 +75,7 @@ public class ConnectionPoolSettings {
      */
     @NotThreadSafe
     public static final class Builder {
-        private List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
+        private List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<>();
         private int maxSize = 100;
         private int minSize;
         private long maxWaitTimeMS = 1000 * 60 * 2;
@@ -99,7 +99,7 @@ public class ConnectionPoolSettings {
          */
         public Builder applySettings(final ConnectionPoolSettings connectionPoolSettings) {
             notNull("connectionPoolSettings", connectionPoolSettings);
-            connectionPoolListeners = new ArrayList<ConnectionPoolListener>(connectionPoolSettings.connectionPoolListeners);
+            connectionPoolListeners = new ArrayList<>(connectionPoolSettings.connectionPoolListeners);
             maxSize = connectionPoolSettings.maxSize;
             minSize = connectionPoolSettings.minSize;
             maxWaitTimeMS = connectionPoolSettings.maxWaitTimeMS;

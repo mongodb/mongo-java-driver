@@ -93,7 +93,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     public List<String> getIndexNames() {
-        List<String> indexNames = new ArrayList<String>(requests.size());
+        List<String> indexNames = new ArrayList<>(requests.size());
         for (IndexRequest request : requests) {
             if (request.getName() != null) {
                 indexNames.add(request.getName());
@@ -238,7 +238,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument command = new BsonDocument("createIndexes", new BsonString(namespace.getCollectionName()));
-        List<BsonDocument> values = new ArrayList<BsonDocument>();
+        List<BsonDocument> values = new ArrayList<>();
         for (IndexRequest request : requests) {
             values.add(getIndex(request));
         }

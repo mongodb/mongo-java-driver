@@ -138,7 +138,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
     }
 
     private static List<TestData> testCases() {
-        List<TestData> data = new ArrayList<TestData>();
+        List<TestData> data = new ArrayList<>();
         data.add(new TestData("Simple model", getSimpleModel(), PojoCodecProvider.builder().register(SimpleModel.class),
                 SIMPLE_MODEL_JSON));
 
@@ -285,7 +285,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'right': {'field1': 'right', 'field2': 4, 'left': {'field1': 'left', 'field2': 5}}}}"));
 
         data.add(new TestData("Nested multiple level",
-                new NestedMultipleLevelGenericModel(42, new MultipleLevelGenericModel<String>("string", getGenericTreeModel())),
+                new NestedMultipleLevelGenericModel(42, new MultipleLevelGenericModel<>("string", getGenericTreeModel())),
                 getPojoCodecProviderBuilder(NestedMultipleLevelGenericModel.class, MultipleLevelGenericModel.class, GenericTreeModel.class),
                 "{'intField': 42, 'nested': {'stringField': 'string', 'nested': {'field1': 'top', 'field2': 1, "
                         + "'left': {'field1': 'left', 'field2': 2, 'left': {'field1': 'left', 'field2': 3}}, "
@@ -300,7 +300,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "         'myLongField': {'$numberLong': '42' }}}"));
 
         data.add(new TestData("Nested property reusing type parameter",
-                new NestedFieldReusingClassTypeParameter(new PropertyReusingClassTypeParameter<String>(getGenericTreeModelStrings())),
+                new NestedFieldReusingClassTypeParameter(new PropertyReusingClassTypeParameter<>(getGenericTreeModelStrings())),
                 getPojoCodecProviderBuilder(NestedFieldReusingClassTypeParameter.class, PropertyReusingClassTypeParameter.class,
                         GenericTreeModel.class),
                 "{'nested': {'tree': {'field1': 'top', 'field2': '1', "
@@ -542,7 +542,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
 
         for (TestData testData : testCases()) {
             data.add(new Object[]{format("%s", testData.getName()), testData.getModel(), testData.getJson(), testData.getBuilder()});

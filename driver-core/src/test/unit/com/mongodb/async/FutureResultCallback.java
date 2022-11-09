@@ -41,7 +41,7 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
 
     public FutureResultCallback() {
         latch = new CountDownLatch(1);
-        result = new CallbackResultHolder<T>();
+        result = new CallbackResultHolder<>();
     }
 
     @Override

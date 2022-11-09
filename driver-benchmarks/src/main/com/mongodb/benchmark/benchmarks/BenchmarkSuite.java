@@ -60,15 +60,15 @@ public class BenchmarkSuite {
     private static void runBenchmarks()
             throws Exception {
 
-        runBenchmark(new BsonEncodingBenchmark<Document>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonEncodingBenchmark<Document>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonEncodingBenchmark<Document>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonEncodingBenchmark<>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonEncodingBenchmark<>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonEncodingBenchmark<>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
 
-        runBenchmark(new BsonDecodingBenchmark<Document>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonDecodingBenchmark<Document>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
-        runBenchmark(new BsonDecodingBenchmark<Document>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonDecodingBenchmark<>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonDecodingBenchmark<>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
+        runBenchmark(new BsonDecodingBenchmark<>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
 
-        runBenchmark(new RunCommandBenchmark<Document>(DOCUMENT_CODEC));
+        runBenchmark(new RunCommandBenchmark<>(DOCUMENT_CODEC));
         runBenchmark(new FindOneBenchmark<Document>("single_and_multi_document/tweet.json", BenchmarkSuite.DOCUMENT_CLASS));
 
         runBenchmark(new InsertOneBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10000,

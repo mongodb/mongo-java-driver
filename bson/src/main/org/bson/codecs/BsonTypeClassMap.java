@@ -71,7 +71,7 @@ import java.util.Set;
  */
 public class BsonTypeClassMap {
     static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
-    private final Map<BsonType, Class<?>> map = new HashMap<BsonType, Class<?>>();
+    private final Map<BsonType, Class<?>> map = new HashMap<>();
 
     /**
      * Construct an instance with the default mapping, but replacing the default mapping with any values contained in the given map.

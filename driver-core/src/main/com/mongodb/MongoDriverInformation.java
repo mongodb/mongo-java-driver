@@ -159,7 +159,7 @@ public final class MongoDriverInformation {
             if (value == null) {
                 return stringList;
             } else {
-                ArrayList<String> newList = new ArrayList<String>();
+                ArrayList<String> newList = new ArrayList<>();
                 newList.add(value);
                 newList.addAll(stringList);
                 return Collections.unmodifiableList(newList);

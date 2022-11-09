@@ -304,9 +304,9 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                                                      ExplainHelper.asExplainCommand(getCommand(null), explainVerbosity),
-                                                      new BsonDocumentCodec());
+        return new CommandReadOperation<>(namespace.getDatabaseName(),
+                ExplainHelper.asExplainCommand(getCommand(null), explainVerbosity),
+                new BsonDocumentCodec());
     }
 
     private CommandWriteTransformer<BsonDocument, MapReduceStatistics> transformer() {

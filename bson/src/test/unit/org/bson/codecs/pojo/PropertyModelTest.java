@@ -33,12 +33,12 @@ public final class PropertyModelTest {
 
     private static final String FIELD_NAME = "myFieldName";
     private static final PropertyMetadata<Integer> PROPERTY_METADATA =
-            new PropertyMetadata<Integer>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
+            new PropertyMetadata<>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
 
     @Test
     public void testPropertyMapping() throws NoSuchFieldException {
-        PropertySerialization<Integer> serializer = new PropertyModelSerializationImpl<Integer>();
-        PropertyAccessor<Integer> accessor = new PropertyAccessorImpl<Integer>(PROPERTY_METADATA);
+        PropertySerialization<Integer> serializer = new PropertyModelSerializationImpl<>();
+        PropertyAccessor<Integer> accessor = new PropertyAccessorImpl<>(PROPERTY_METADATA);
         PropertyModel<Integer> propertyModel = createPropertyModelBuilder(PROPERTY_METADATA)
                 .propertySerialization(serializer)
                 .propertyAccessor(accessor)

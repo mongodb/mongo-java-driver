@@ -71,12 +71,12 @@ abstract class BaseCluster implements Cluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final ReentrantLock lock = new ReentrantLock();
-    private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
+    private final AtomicReference<CountDownLatch> phase = new AtomicReference<>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
     private final ClusterId clusterId;
     private final ClusterSettings settings;
     private final ClusterListener clusterListener;
-    private final Deque<ServerSelectionRequest> waitQueue = new ConcurrentLinkedDeque<ServerSelectionRequest>();
+    private final Deque<ServerSelectionRequest> waitQueue = new ConcurrentLinkedDeque<>();
     private final ClusterClock clusterClock = new ClusterClock();
     private Thread waitQueueHandler;
 

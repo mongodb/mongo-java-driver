@@ -360,9 +360,9 @@ public class QueryBuilder {
     }
 
     private List<List<Double>> convertToListOfLists(final List<Double[]> points) {
-        List<List<Double>> listOfLists = new ArrayList<List<Double>>(points.size());
+        List<List<Double>> listOfLists = new ArrayList<>(points.size());
         for (Double[] cur : points) {
-            List<Double> list = new ArrayList<Double>(cur.length);
+            List<Double> list = new ArrayList<>(cur.length);
             Collections.addAll(list, cur);
             listOfLists.add(list);
         }

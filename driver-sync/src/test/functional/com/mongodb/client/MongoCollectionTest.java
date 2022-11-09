@@ -121,7 +121,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                                                            public String apply(final ObjectId objectId) {
                                                                return objectId.toString();
                                                            }
-                                                       }).into(new ArrayList<String>());
+                                                       }).into(new ArrayList<>());
 
         // then
         assertThat(listOfStringObjectIds.size(), is(1));
@@ -135,7 +135,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                                                            return concrete.getId();
                                                        }
                                                    })
-                                                   .into(new ArrayList<ObjectId>());
+                                                   .into(new ArrayList<>());
 
         // then
         assertThat(listOfObjectIds.size(), is(1));
@@ -162,7 +162,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                 .withWriteConcern(WriteConcern.ACKNOWLEDGED);
 
         // when
-        List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<Name>());
+        List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<>());
 
         // then
         assertTrue(result.contains(new Name("Pete", 2)));
@@ -183,7 +183,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // when
         List<Document> result = collection.aggregate(Collections.singletonList(new Document("$out", "outCollection")))
-                .into(new ArrayList<Document>());
+                .into(new ArrayList<>());
 
         // then
         assertEquals(documents, result);

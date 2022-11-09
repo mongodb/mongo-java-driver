@@ -78,7 +78,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Creates an empty Document instance.
      */
     public Document() {
-        documentAsMap = new LinkedHashMap<String, Object>();
+        documentAsMap = new LinkedHashMap<>();
     }
 
     /**
@@ -88,7 +88,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @param value value
      */
     public Document(final String key, final Object value) {
-        documentAsMap = new LinkedHashMap<String, Object>();
+        documentAsMap = new LinkedHashMap<>();
         documentAsMap.put(key, value);
     }
 
@@ -98,7 +98,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @param map initial map
      */
     public Document(final Map<String, ?> map) {
-        documentAsMap = new LinkedHashMap<String, Object>(map);
+        documentAsMap = new LinkedHashMap<>(map);
     }
 
 
@@ -131,7 +131,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
 
     @Override
     public <C> BsonDocument toBsonDocument(final Class<C> documentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocumentWrapper<Document>(this, codecRegistry.get(Document.class));
+        return new BsonDocumentWrapper<>(this, codecRegistry.get(Document.class));
     }
 
     /**

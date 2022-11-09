@@ -76,7 +76,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline,
             final Decoder<T> decoder, final ChangeStreamLevel changeStreamLevel) {
-        this.wrapped = new AggregateOperationImpl<RawBsonDocument>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
+        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
                 getAggregateTarget(), getPipelineCreator());
         this.fullDocument = notNull("fullDocument", fullDocument);
         this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
@@ -189,7 +189,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
             public BatchCursor<T> call(final ConnectionSource source) {
                 AggregateResponseBatchCursor<RawBsonDocument> cursor =
                         (AggregateResponseBatchCursor<RawBsonDocument>) wrapped.execute(binding);
-                return new ChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
+                return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                         setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
                                 cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
             }
@@ -212,7 +212,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                             if (t != null) {
                                 callback.onResult(null, t);
                             } else {
-                                callback.onResult(new AsyncChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
+                                callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                                         setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
                                                 cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
                             }
@@ -264,7 +264,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return new AggregateOperationImpl.PipelineCreator() {
             @Override
             public BsonArray create() {
-                List<BsonDocument> changeStreamPipeline = new ArrayList<BsonDocument>();
+                List<BsonDocument> changeStreamPipeline = new ArrayList<>();
                 BsonDocument changeStream = new BsonDocument();
                 if (fullDocument != FullDocument.DEFAULT) {
                     changeStream.append("fullDocument", new BsonString(fullDocument.getValue()));

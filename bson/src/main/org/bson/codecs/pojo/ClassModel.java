@@ -49,13 +49,13 @@ public final class ClassModel<T> {
         this.type = clazz;
         this.hasTypeParameters = clazz.getTypeParameters().length > 0;
         this.propertyNameToTypeParameterMap = Collections.unmodifiableMap(
-                new HashMap<String, TypeParameterMap>(propertyNameToTypeParameterMap));
+                new HashMap<>(propertyNameToTypeParameterMap));
         this.instanceCreatorFactory = instanceCreatorFactory;
         this.discriminatorEnabled = discriminatorEnabled;
         this.discriminatorKey = discriminatorKey;
         this.discriminator = discriminator;
         this.idPropertyModelHolder = idPropertyModelHolder;
-        this.propertyModels = Collections.unmodifiableList(new ArrayList<PropertyModel<?>>(propertyModels));
+        this.propertyModels = Collections.unmodifiableList(new ArrayList<>(propertyModels));
     }
 
     /**
@@ -66,7 +66,7 @@ public final class ClassModel<T> {
      * @return a new Class Model builder instance using reflection on the {@code clazz}.
      */
     public static <S> ClassModelBuilder<S> builder(final Class<S> type) {
-        return new ClassModelBuilder<S>(type);
+        return new ClassModelBuilder<>(type);
     }
 
     /**

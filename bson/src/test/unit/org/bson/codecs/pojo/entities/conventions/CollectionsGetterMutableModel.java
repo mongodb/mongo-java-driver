@@ -25,7 +25,7 @@ public class CollectionsGetterMutableModel {
     private final List<Integer> listField;
 
     public CollectionsGetterMutableModel() {
-        this(new ArrayList<Integer>());
+        this(new ArrayList<>());
     }
 
     public CollectionsGetterMutableModel(final List<Integer> listField) {

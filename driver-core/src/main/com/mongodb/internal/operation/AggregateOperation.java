@@ -50,7 +50,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
 
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
                               final AggregationLevel aggregationLevel) {
-        this.wrapped = new AggregateOperationImpl<T>(namespace, pipeline, decoder, aggregationLevel);
+        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, decoder, aggregationLevel);
     }
 
     public List<BsonDocument> getPipeline() {
@@ -156,14 +156,14 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
 
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<R>(getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }

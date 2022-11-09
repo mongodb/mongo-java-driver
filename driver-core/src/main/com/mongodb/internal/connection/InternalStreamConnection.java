@@ -88,7 +88,7 @@ import static java.util.Arrays.asList;
 @NotThreadSafe
 public class InternalStreamConnection implements InternalConnection {
 
-    private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<String>(asList(
+    private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<>(asList(
             "authenticate",
             "saslStart",
             "saslContinue",
@@ -99,7 +99,7 @@ public class InternalStreamConnection implements InternalConnection {
             "copydbsaslstart",
             "copydb"));
 
-    private static final Set<String> SECURITY_SENSITIVE_HELLO_COMMANDS = new HashSet<String>(asList(
+    private static final Set<String> SECURITY_SENSITIVE_HELLO_COMMANDS = new HashSet<>(asList(
             HELLO,
             LEGACY_HELLO,
             LEGACY_HELLO_LOWER));
@@ -259,7 +259,7 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private Map<Byte, Compressor> createCompressorMap(final List<MongoCompressor> compressorList) {
-        Map<Byte, Compressor> compressorMap = new HashMap<Byte, Compressor>(this.compressorList.size());
+        Map<Byte, Compressor> compressorMap = new HashMap<>(this.compressorList.size());
 
         for (MongoCompressor mongoCompressor : compressorList) {
             Compressor compressor = createCompressor(mongoCompressor);
@@ -535,7 +535,7 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private <T> T getCommandResult(final Decoder<T> decoder, final ResponseBuffers responseBuffers, final int messageId) {
-        T result = new ReplyMessage<T>(responseBuffers, decoder, messageId).getDocuments().get(0);
+        T result = new ReplyMessage<>(responseBuffers, decoder, messageId).getDocuments().get(0);
         MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers, description.getServerAddress());
         if (writeConcernBasedError != null) {
             throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);

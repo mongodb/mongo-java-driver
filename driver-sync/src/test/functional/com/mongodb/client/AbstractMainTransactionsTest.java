@@ -59,7 +59,7 @@ public abstract class AbstractMainTransactionsTest extends AbstractUnifiedTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/transactions")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
 

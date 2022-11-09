@@ -26,7 +26,7 @@ public class InvalidCollection implements Collection {
     private final List<Integer> wrapped;
 
     public InvalidCollection(final List<Integer> wrapped) {
-        this.wrapped = new ArrayList<Integer>(wrapped);
+        this.wrapped = new ArrayList<>(wrapped);
     }
 
     @Override

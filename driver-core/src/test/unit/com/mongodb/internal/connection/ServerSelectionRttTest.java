@@ -58,7 +58,7 @@ public class ServerSelectionRttTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/rtt")) {
             data.add(new Object[]{file.getName(), JsonPoweredTestHelper.getTestDocument(file)});
         }

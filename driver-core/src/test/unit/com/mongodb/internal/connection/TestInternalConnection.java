@@ -71,8 +71,8 @@ class TestInternalConnection implements InternalConnection {
                 Collections.emptyList());
         this.bufferProvider = new SimpleBufferProvider();
 
-        this.replies = new LinkedList<Interaction>();
-        this.sent = new LinkedList<BsonInput>();
+        this.replies = new LinkedList<>();
+        this.sent = new LinkedList<>();
     }
 
     public void enqueueReply(final ResponseBuffers responseBuffers) {
@@ -182,7 +182,7 @@ class TestInternalConnection implements InternalConnection {
                 throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
                         description.getServerAddress());
             }
-            return new ReplyMessage<T>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
+            return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
         } finally {
             responseBuffers.close();
         }
@@ -205,7 +205,7 @@ class TestInternalConnection implements InternalConnection {
 
     private <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
                                                            final CommandMessage commandMessage, final Decoder<T> decoder) {
-        ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, commandMessage.getId());
+        ReplyMessage<T> replyMessage = new ReplyMessage<>(responseBuffers, decoder, commandMessage.getId());
         responseBuffers.reset();
         return replyMessage.getDocuments().get(0);
     }

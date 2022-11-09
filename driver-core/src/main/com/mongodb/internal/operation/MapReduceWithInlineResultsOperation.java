@@ -213,17 +213,17 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                                                      asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
-                                                              explainVerbosity), new BsonDocumentCodec());
+        return new CommandReadOperation<>(namespace.getDatabaseName(),
+                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                        explainVerbosity), new BsonDocumentCodec());
     }
 
     private CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>> transformer() {
         return new CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>>() {
             @Override
             public MapReduceBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return new MapReduceInlineResultsCursor<T>(createQueryResult(result, connection.getDescription()), decoder, source,
-                                                           MapReduceHelper.createStatistics(result));
+                return new MapReduceInlineResultsCursor<>(createQueryResult(result, connection.getDescription()), decoder, source,
+                        MapReduceHelper.createStatistics(result));
             }
         };
     }
@@ -233,8 +233,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             @Override
             public MapReduceAsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                                       final AsyncConnection connection) {
-                return new MapReduceInlineResultsAsyncCursor<T>(createQueryResult(result, connection.getDescription()),
-                                                                MapReduceHelper.createStatistics(result));
+                return new MapReduceInlineResultsAsyncCursor<>(createQueryResult(result, connection.getDescription()),
+                        MapReduceHelper.createStatistics(result));
             }
         };
     }
@@ -270,7 +270,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.toList(result, "results"), 0,
-                                  description.getServerAddress());
+        return new QueryResult<>(namespace, BsonDocumentWrapperHelper.toList(result, "results"), 0,
+                description.getServerAddress());
     }
 }

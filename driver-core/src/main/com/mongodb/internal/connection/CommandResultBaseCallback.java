@@ -35,7 +35,7 @@ abstract class CommandResultBaseCallback<T> extends ResponseCallback {
             if (t != null || responseBuffers == null) {
                 callCallback((T) null, t);
             } else {
-                ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, getRequestId());
+                ReplyMessage<T> replyMessage = new ReplyMessage<>(responseBuffers, decoder, getRequestId());
                 callCallback(replyMessage.getDocuments().get(0), null);
             }
         } finally {

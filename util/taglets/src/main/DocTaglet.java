@@ -35,7 +35,7 @@ public abstract class DocTaglet implements Taglet {
 
     @Override
     public Set<Location> getAllowedLocations() {
-        return new HashSet<Location>(asList(CONSTRUCTOR, METHOD, FIELD, OVERVIEW, PACKAGE, TYPE));
+        return new HashSet<>(asList(CONSTRUCTOR, METHOD, FIELD, OVERVIEW, PACKAGE, TYPE));
     }
 
     @Override

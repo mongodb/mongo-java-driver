@@ -48,7 +48,7 @@ final class ConventionUseGettersAsSettersImpl implements Convention {
 
     @SuppressWarnings("unchecked")
     private <T> void setPropertyAccessor(final PropertyModelBuilder<T> propertyModelBuilder) {
-        propertyModelBuilder.propertyAccessor(new PrivatePropertyAccessor<T>(
+        propertyModelBuilder.propertyAccessor(new PrivatePropertyAccessor<>(
                 (PropertyAccessorImpl<T>) propertyModelBuilder.getPropertyAccessor()));
     }
 

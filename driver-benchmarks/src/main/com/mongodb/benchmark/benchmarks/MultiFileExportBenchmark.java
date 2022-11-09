@@ -127,7 +127,7 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
             public void run() {
                 List<RawBsonDocument> documents = collection.find(new BsonDocument("fileId", new BsonInt32(fileId)))
                         .batchSize(5000)
-                        .into(new ArrayList<RawBsonDocument>(5000));
+                        .into(new ArrayList<>(5000));
                 fileWritingService.submit(writeJsonFile(fileId, documents, latch));
             }
         };
@@ -172,7 +172,7 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
                         BufferedReader reader = new BufferedReader(readFromRelativePath(resourcePath), 1024 * 64);
                         try {
                             String json;
-                            List<BsonDocument> documents = new ArrayList<BsonDocument>(1000);
+                            List<BsonDocument> documents = new ArrayList<>(1000);
                             while ((json = reader.readLine()) != null) {
                                 BsonDocument document = new BsonDocumentCodec().decode(new JsonReader(json),
                                         DecoderContext.builder().build());

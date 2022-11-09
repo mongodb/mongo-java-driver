@@ -46,7 +46,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         int numDocuments = responseBuffers.getReplyHeader().getNumberReturned();
         ByteBuf documentsBuffer = responseBuffers.getBodyByteBuffer();
         documentsBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        List<ByteBufBsonDocument> documents = new ArrayList<ByteBufBsonDocument>(numDocuments);
+        List<ByteBufBsonDocument> documents = new ArrayList<>(numDocuments);
         while (documents.size() < numDocuments) {
             int documentSizeInBytes = documentsBuffer.getInt();
             documentsBuffer.position(documentsBuffer.position() - 4);
@@ -63,7 +63,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
         CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
         outputByteBuf.position(startPosition);
-        List<ByteBufBsonDocument> documents = new ArrayList<ByteBufBsonDocument>();
+        List<ByteBufBsonDocument> documents = new ArrayList<>();
         int curDocumentStartPosition = startPosition;
         while (outputByteBuf.hasRemaining()) {
             int documentSizeInBytes = outputByteBuf.getInt();

@@ -95,7 +95,7 @@ public class DocumentCodecTest {
         DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document()
                        .append("list", asList(1, 2, 3, 4, 5))
-                       .append("set", new HashSet<Integer>(asList(1, 2, 3, 4)));
+                       .append("set", new HashSet<>(asList(1, 2, 3, 4)));
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 

@@ -140,7 +140,7 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public Set<String> keySet() {
-        Set<String> keys = new LinkedHashSet<String>();
+        Set<String> keys = new LinkedHashSet<>();
         BsonBinaryReader reader = getBsonReader();
         try {
             reader.readStartDocument();
@@ -292,12 +292,12 @@ public class LazyBSONObject implements BSONObject {
      * @return then entry set
      */
     public Set<Map.Entry<String, Object>> entrySet() {
-        List<Map.Entry<String, Object>> entries = new ArrayList<Map.Entry<String, Object>>();
+        List<Map.Entry<String, Object>> entries = new ArrayList<>();
         BsonBinaryReader reader = getBsonReader();
         try {
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-                entries.add(new AbstractMap.SimpleImmutableEntry<String, Object>(reader.readName(), readValue(reader)));
+                entries.add(new AbstractMap.SimpleImmutableEntry<>(reader.readName(), readValue(reader)));
             }
             reader.readEndDocument();
         } finally {
@@ -471,7 +471,7 @@ public class LazyBSONObject implements BSONObject {
     @Override
     @SuppressWarnings("rawtypes")
     public Map toMap() {
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
         for (final Map.Entry<String, Object> entry : entrySet()) {
             map.put(entry.getKey(), entry.getValue());
         }

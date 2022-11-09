@@ -38,6 +38,6 @@ class KeyRetriever {
     public List<BsonDocument> find(final BsonDocument keyFilter) {
         return client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
                 .withReadConcern(ReadConcern.MAJORITY)
-                .find(keyFilter).into(new ArrayList<BsonDocument>());
+                .find(keyFilter).into(new ArrayList<>());
     }
 }

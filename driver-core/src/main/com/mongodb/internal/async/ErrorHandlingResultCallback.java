@@ -31,7 +31,7 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
         if (callback instanceof ErrorHandlingResultCallback) {
             return callback;
         } else {
-            return new ErrorHandlingResultCallback<T>(callback, logger);
+            return new ErrorHandlingResultCallback<>(callback, logger);
         }
     }
 

@@ -141,7 +141,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
             public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
-                return new QueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, comment, source);
+                return new QueryBatchCursor<>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, comment, source);
             }
         };
     }
@@ -151,14 +151,14 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                              final AsyncConnection connection) {
-                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, 0, decoder,
+                return new AsyncQueryBatchCursor<>(createQueryResult(result, connection.getDescription()), 0, 0, 0, decoder,
                         comment, source, connection, result);
             }
         };
     }
 
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        return new QueryResult<T>(null, BsonDocumentWrapperHelper.toList(result, "databases"), 0,
+        return new QueryResult<>(null, BsonDocumentWrapperHelper.toList(result, "databases"), 0,
                 description.getServerAddress());
     }
 

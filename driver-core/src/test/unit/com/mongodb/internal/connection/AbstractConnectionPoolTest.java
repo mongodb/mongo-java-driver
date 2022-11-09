@@ -104,14 +104,14 @@ public abstract class AbstractConnectionPoolTest {
     private final BsonDocument definition;
     private final boolean skipTest;
     private ConnectionPoolSettings settings;
-    private final Map<String, ExecutorService> executorServiceMap = new HashMap<String, ExecutorService>();
-    private final Map<String, Future<Exception>> futureMap = new HashMap<String, Future<Exception>>();
+    private final Map<String, ExecutorService> executorServiceMap = new HashMap<>();
+    private final Map<String, Future<Exception>> futureMap = new HashMap<>();
 
     private TestConnectionPoolListener listener;
     @Nullable
     private BsonDocument configureFailPointCommand;
 
-    private final Map<String, InternalConnection> connectionMap = new HashMap<String, InternalConnection>();
+    private final Map<String, InternalConnection> connectionMap = new HashMap<>();
     private ConnectionPool pool;
 
     public AbstractConnectionPoolTest(
@@ -407,7 +407,7 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     private List<Object> getNonIgnoredActualEvents() {
-        List<Object> nonIgnoredActualEvents = new ArrayList<Object>();
+        List<Object> nonIgnoredActualEvents = new ArrayList<>();
         Set<Class<?>> ignoredEventClasses = getIgnoredEventClasses();
         for (Object cur : listener.getEvents()) {
             if (!ignoredEventClasses.contains(cur.getClass())) {
@@ -418,7 +418,7 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     private Set<Class<?>> getIgnoredEventClasses() {
-        Set<Class<?>> ignoredEventClasses = new HashSet<Class<?>>();
+        Set<Class<?>> ignoredEventClasses = new HashSet<>();
         ignoredEventClasses.add(com.mongodb.event.ConnectionPoolOpenedEvent.class);
         ignoredEventClasses.add(com.mongodb.event.ConnectionAddedEvent.class);
         ignoredEventClasses.add(com.mongodb.event.ConnectionRemovedEvent.class);
@@ -502,7 +502,7 @@ public abstract class AbstractConnectionPoolTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/connection-monitoring-and-pooling")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{

@@ -114,12 +114,12 @@ public class ServerDescriptionTest {
                                               .roundTripTime(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
                                               .primary("localhost:27017")
                                               .canonicalAddress("localhost:27018")
-                                              .hosts(new HashSet<String>(asList("localhost:27017",
-                                                                                "localhost:27018",
-                                                                                "localhost:27019",
-                                                                                "localhost:27020")))
-                                              .arbiters(new HashSet<String>(singletonList("localhost:27019")))
-                                              .passives(new HashSet<String>(singletonList("localhost:27020")))
+                                              .hosts(new HashSet<>(asList("localhost:27017",
+                                                      "localhost:27018",
+                                                      "localhost:27019",
+                                                      "localhost:27020")))
+                                              .arbiters(new HashSet<>(singletonList("localhost:27019")))
+                                              .passives(new HashSet<>(singletonList("localhost:27020")))
                                               .ok(true)
                                               .state(CONNECTED)
                                               .minWireVersion(1)
@@ -152,11 +152,11 @@ public class ServerDescriptionTest {
 
         assertEquals("localhost:27017", serverDescription.getPrimary());
         assertEquals("localhost:27018", serverDescription.getCanonicalAddress());
-        assertEquals(new HashSet<String>(asList("localhost:27017", "localhost:27018", "localhost:27019", "localhost:27020")),
+        assertEquals(new HashSet<>(asList("localhost:27017", "localhost:27018", "localhost:27019", "localhost:27020")),
                      serverDescription.getHosts());
         assertEquals(new TagSet(new Tag("dc", "ny")), serverDescription.getTagSet());
-        assertEquals(new HashSet<String>(singletonList("localhost:27019")), serverDescription.getArbiters());
-        assertEquals(new HashSet<String>(singletonList("localhost:27020")), serverDescription.getPassives());
+        assertEquals(new HashSet<>(singletonList("localhost:27019")), serverDescription.getArbiters());
+        assertEquals(new HashSet<>(singletonList("localhost:27020")), serverDescription.getPassives());
         assertEquals("test", serverDescription.getSetName());
         assertEquals(1, serverDescription.getMinWireVersion());
         assertEquals(2, serverDescription.getMaxWireVersion());
@@ -205,13 +205,13 @@ public class ServerDescriptionTest {
         otherDescription = createBuilder().canonicalAddress("localhost:27018").build();
         assertNotEquals(builder.build(), otherDescription);
 
-        otherDescription = createBuilder().hosts(new HashSet<String>(singletonList("localhost:27018"))).build();
+        otherDescription = createBuilder().hosts(new HashSet<>(singletonList("localhost:27018"))).build();
         assertNotEquals(builder.build(), otherDescription);
 
-        otherDescription = createBuilder().arbiters(new HashSet<String>(singletonList("localhost:27018"))).build();
+        otherDescription = createBuilder().arbiters(new HashSet<>(singletonList("localhost:27018"))).build();
         assertNotEquals(builder.build(), otherDescription);
 
-        otherDescription = createBuilder().passives(new HashSet<String>(singletonList("localhost:27018"))).build();
+        otherDescription = createBuilder().passives(new HashSet<>(singletonList("localhost:27018"))).build();
         assertNotEquals(builder.build(), otherDescription);
 
         otherDescription = createBuilder().ok(false).build();
@@ -265,9 +265,9 @@ public class ServerDescriptionTest {
                        .roundTripTime(50000, TimeUnit.NANOSECONDS)
                        .primary("localhost:27017")
                        .canonicalAddress("localhost:27017")
-                       .hosts(new HashSet<String>(asList("localhost:27017", "localhost:27018")))
-                       .passives(new HashSet<String>(singletonList("localhost:27019")))
-                       .arbiters(new HashSet<String>(singletonList("localhost:27020")))
+                       .hosts(new HashSet<>(asList("localhost:27017", "localhost:27018")))
+                       .passives(new HashSet<>(singletonList("localhost:27019")))
+                       .arbiters(new HashSet<>(singletonList("localhost:27020")))
                        .ok(true)
                        .state(CONNECTED)
                        .minWireVersion(1)
@@ -526,9 +526,9 @@ public class ServerDescriptionTest {
             .roundTripTime(50000, TimeUnit.NANOSECONDS)
             .primary("localhost:27017")
             .canonicalAddress("localhost:27017")
-            .hosts(new HashSet<String>(asList("localhost:27017", "localhost:27018")))
-            .passives(new HashSet<String>(singletonList("localhost:27019")))
-            .arbiters(new HashSet<String>(singletonList("localhost:27020")))
+            .hosts(new HashSet<>(asList("localhost:27017", "localhost:27018")))
+            .passives(new HashSet<>(singletonList("localhost:27019")))
+            .arbiters(new HashSet<>(singletonList("localhost:27020")))
             .ok(true)
             .state(CONNECTED)
             .minWireVersion(1)

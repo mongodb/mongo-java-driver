@@ -87,7 +87,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
                              EncoderContext.builder().isEncodingCollectibleDocument(true).build());
 
         // then
-        assertEquals(new ArrayList<String>(encodedDocument.keySet()), asList("_id", "x"));
+        assertEquals(new ArrayList<>(encodedDocument.keySet()), asList("_id", "x"));
 
         // when
         encodedDocument.clear();
@@ -96,7 +96,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
                              EncoderContext.builder().isEncodingCollectibleDocument(false).build());
 
         // then
-        assertEquals(new ArrayList<String>(encodedDocument.keySet()), asList("x", "_id"));
+        assertEquals(new ArrayList<>(encodedDocument.keySet()), asList("x", "_id"));
     }
 
     @Test
@@ -115,7 +115,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     @Test
     public void shouldEncodedNestedMapsListsAndDocuments() {
         byte[] zeroOneDocumentBytes = {19, 0, 0, 0, 16, 48, 0, 0, 0, 0, 0, 16, 49, 0, 1, 0, 0, 0, 0}; //  {"0" : 0, "1", 1}
-        Map<String, Object> zeroOneMap = new HashMap<String, Object>();
+        Map<String, Object> zeroOneMap = new HashMap<>();
         zeroOneMap.put("0", 0);
         zeroOneMap.put("1", 1);
         DBObject zeroOneDBObject = new BasicDBObject();

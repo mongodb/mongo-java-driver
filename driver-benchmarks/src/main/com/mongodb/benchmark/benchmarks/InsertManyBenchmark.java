@@ -27,7 +27,7 @@ public class InsertManyBenchmark<T> extends AbstractInsertBenchmark<T> {
     public InsertManyBenchmark(final String name, final String resourcePath, final int numDocuments, final Class<T> clazz) {
         super(name + " doc bulk insert", resourcePath, clazz);
         this.numDocuments = numDocuments;
-        documentList = new ArrayList<T>(numDocuments);
+        documentList = new ArrayList<>(numDocuments);
     }
 
     @Override

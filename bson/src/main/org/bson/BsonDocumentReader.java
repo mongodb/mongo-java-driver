@@ -271,7 +271,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
     private static class BsonDocumentMarkableIterator<T> implements Iterator<T> {
 
         private final Iterator<T> baseIterator;
-        private final List<T> markIterator = new ArrayList<T>();
+        private final List<T> markIterator = new ArrayList<>();
         private int curIndex; // index of the cursor
         private boolean marking;
 
@@ -348,7 +348,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
          */
         protected Context(final Context parentContext, final BsonContextType contextType, final BsonArray array) {
             super(parentContext, contextType);
-            arrayIterator = new BsonDocumentMarkableIterator<BsonValue>(array.iterator());
+            arrayIterator = new BsonDocumentMarkableIterator<>(array.iterator());
         }
 
         /**
@@ -360,7 +360,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
          */
         protected Context(final Context parentContext, final BsonContextType contextType, final BsonDocument document) {
             super(parentContext, contextType);
-            documentIterator = new BsonDocumentMarkableIterator<Map.Entry<String, BsonValue>>(document.entrySet().iterator());
+            documentIterator = new BsonDocumentMarkableIterator<>(document.entrySet().iterator());
         }
 
         /**

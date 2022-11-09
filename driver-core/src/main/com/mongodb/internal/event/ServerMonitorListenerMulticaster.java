@@ -16,12 +16,12 @@
 
 package com.mongodb.internal.event;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ final class ServerMonitorListenerMulticaster implements ServerMonitorListener {
 
     ServerMonitorListenerMulticaster(final List<ServerMonitorListener> serverMonitorListeners) {
         isTrue("All ServerMonitorListener instances are non-null", !serverMonitorListeners.contains(null));
-        this.serverMonitorListeners = new ArrayList<ServerMonitorListener>(serverMonitorListeners);
+        this.serverMonitorListeners = new ArrayList<>(serverMonitorListeners);
     }
 
     @Override

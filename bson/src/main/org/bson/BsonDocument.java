@@ -97,14 +97,14 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      * @since 4.3
      */
     public BsonDocument(final int initialCapacity) {
-        map = new LinkedHashMap<String, BsonValue>(initialCapacity);
+        map = new LinkedHashMap<>(initialCapacity);
     }
 
     /**
      * Construct an empty document.
      */
     public BsonDocument() {
-         map = new LinkedHashMap<String, BsonValue>();
+         map = new LinkedHashMap<>();
     }
 
     @Override

@@ -224,13 +224,13 @@ public class BasicDBObjectTest {
         assertEquality(new BasicDBObject("a", new BasicDBList().put(1, new BasicDBObject("y", 2).append("x", 1))),
                        new BasicBSONObject("a", new BasicBSONList().put(1, new BasicBSONObject("x", 1).append("y", 2))));
 
-        Map<String, Object> first = new HashMap<String, Object>();
+        Map<String, Object> first = new HashMap<>();
         first.put("1", new BasicDBObject("y", 2).append("x", 1));
         first.put("2", new BasicDBObject("a", 2).append("b", 1));
-        Map<String, Object> second = new TreeMap<String, Object>();
+        Map<String, Object> second = new TreeMap<>();
         second.put("2", new BasicDBObject("b", 1).append("a", 2));
         second.put("1", new BasicDBObject("x", 1).append("y", 2));
-        Map<String, Object> third = new TreeMap<String, Object>();
+        Map<String, Object> third = new TreeMap<>();
         third.put("2", new BasicBSONObject("a", 2).append("b", 1));
         third.put("1", new BasicBSONObject("x", 1).append("y", 2));
 

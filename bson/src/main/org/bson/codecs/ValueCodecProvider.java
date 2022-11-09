@@ -54,7 +54,7 @@ import java.util.Map;
  * @since 3.0
  */
 public class ValueCodecProvider implements CodecProvider {
-    private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
+    private final Map<Class<?>, Codec<?>> codecs = new HashMap<>();
 
     /**
      * A provider of Codecs for simple value types.

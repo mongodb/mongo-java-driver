@@ -49,7 +49,7 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
      * Construct an empty BsonArray
      */
     public BsonArray() {
-        this(new ArrayList<BsonValue>(), false);
+        this(new ArrayList<>(), false);
     }
 
     /**
@@ -61,13 +61,13 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
      * @since 4.3
      */
     public BsonArray(final int initialCapacity) {
-        this(new ArrayList<BsonValue>(initialCapacity), false);
+        this(new ArrayList<>(initialCapacity), false);
     }
 
     @SuppressWarnings("unchecked")
     BsonArray(final List<? extends BsonValue> values, final boolean copy) {
         if (copy) {
-            this.values = new ArrayList<BsonValue>(values);
+            this.values = new ArrayList<>(values);
         } else {
             this.values = (List<BsonValue>) values;
         }

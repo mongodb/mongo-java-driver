@@ -62,7 +62,7 @@ public final class PropertyModel<T> {
      * @return the builder
      */
     public static <T> PropertyModelBuilder<T> builder() {
-        return new PropertyModelBuilder<T>();
+        return new PropertyModelBuilder<>();
     }
 
     /**

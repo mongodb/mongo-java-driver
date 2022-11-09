@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
@@ -33,7 +31,9 @@ import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
@@ -182,7 +182,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                                                final Consumer<BsonDocument> lastIdConsumer) {
         List<T> results = null;
         if (rawDocuments != null) {
-            results = new ArrayList<T>();
+            results = new ArrayList<>();
             for (RawBsonDocument rawDocument : rawDocuments) {
                 if (!rawDocument.containsKey("_id")) {
                     throw new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.");

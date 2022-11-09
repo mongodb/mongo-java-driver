@@ -25,6 +25,6 @@ final class InstanceCreatorFactoryImpl<T> implements InstanceCreatorFactory<T> {
 
     @Override
     public InstanceCreator<T> create() {
-        return new InstanceCreatorImpl<T>(creatorExecutable);
+        return new InstanceCreatorImpl<>(creatorExecutable);
     }
 }

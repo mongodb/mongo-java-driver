@@ -22,9 +22,9 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -47,7 +47,7 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
     protected Callable<Exception> createCallable(final BsonDocument operation) {
         String name = operation.getString("name").getValue();
         if (name.equals("checkOut")) {
-            FutureResultCallback<InternalConnection> callback = new FutureResultCallback<InternalConnection>();
+            FutureResultCallback<InternalConnection> callback = new FutureResultCallback<>();
             return new Callable<Exception>() {
                 @Override
                 public Exception call() {

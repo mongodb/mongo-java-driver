@@ -451,7 +451,7 @@ public final class ChangeStreamDocument<TDocument> {
      */
     public static <TFullDocument> Codec<ChangeStreamDocument<TFullDocument>> createCodec(final Class<TFullDocument> fullDocumentClass,
                                                                                          final CodecRegistry codecRegistry) {
-        return new ChangeStreamDocumentCodec<TFullDocument>(fullDocumentClass, codecRegistry);
+        return new ChangeStreamDocumentCodec<>(fullDocumentClass, codecRegistry);
     }
 
     @Override

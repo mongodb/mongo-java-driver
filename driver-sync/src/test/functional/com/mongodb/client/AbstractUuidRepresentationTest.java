@@ -282,7 +282,7 @@ public abstract class AbstractUuidRepresentationTest {
 
         byte[] standardEncodedValue = Hex.decode("00112233445566778899AABBCCDDEEFF");
 
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         data.add(new Object[]{
                 JAVA_LEGACY,
                 BsonBinarySubType.UUID_LEGACY,

@@ -76,13 +76,13 @@ public final class PojoCodecProvider implements CodecProvider {
     private <T> PojoCodec<T> getPojoCodec(final Class<T> clazz, final CodecRegistry registry) {
         ClassModel<T> classModel = (ClassModel<T>) classModels.get(clazz);
         if (classModel != null) {
-            return new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders, discriminatorLookup);
+            return new PojoCodecImpl<>(classModel, registry, propertyCodecProviders, discriminatorLookup);
         } else if (automatic || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             try {
                 classModel = createClassModel(clazz, conventions);
                 if (clazz.isInterface() || !classModel.getPropertyModels().isEmpty()) {
                     discriminatorLookup.addClassModel(classModel);
-                    return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders,
+                    return new AutomaticPojoCodec<>(new PojoCodecImpl<>(classModel, registry, propertyCodecProviders,
                             discriminatorLookup));
                 }
             } catch (Exception e) {
@@ -97,11 +97,11 @@ public final class PojoCodecProvider implements CodecProvider {
      * A Builder for the PojoCodecProvider
      */
     public static final class Builder {
-        private final Set<String> packages = new HashSet<String>();
-        private final Map<Class<?>, ClassModel<?>> classModels = new HashMap<Class<?>, ClassModel<?>>();
-        private final List<Class<?>> clazzes = new ArrayList<Class<?>>();
+        private final Set<String> packages = new HashSet<>();
+        private final Map<Class<?>, ClassModel<?>> classModels = new HashMap<>();
+        private final List<Class<?>> clazzes = new ArrayList<>();
         private List<Convention> conventions = null;
-        private final List<PropertyCodecProvider> propertyCodecProviders = new ArrayList<PropertyCodecProvider>();
+        private final List<PropertyCodecProvider> propertyCodecProviders = new ArrayList<>();
         private boolean automatic;
 
         /**
@@ -112,7 +112,7 @@ public final class PojoCodecProvider implements CodecProvider {
          */
         public PojoCodecProvider build() {
             List<Convention> immutableConventions = conventions != null
-                    ? Collections.unmodifiableList(new ArrayList<Convention>(conventions))
+                    ? Collections.unmodifiableList(new ArrayList<>(conventions))
                     : null;
             for (Class<?> clazz : clazzes) {
                 if (!classModels.containsKey(clazz)) {

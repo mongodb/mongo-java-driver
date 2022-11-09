@@ -79,7 +79,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
     private final UuidRepresentation uuidRepresentation;
 
     private static BsonTypeClassMap createDefaultBsonTypeClassMap() {
-        Map<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
+        Map<BsonType, Class<?>> replacements = new HashMap<>();
         replacements.put(BsonType.REGULAR_EXPRESSION, Pattern.class);
         replacements.put(BsonType.SYMBOL, String.class);
         replacements.put(BsonType.TIMESTAMP, BSONTimestamp.class);
@@ -163,7 +163,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUui
 
     @Override
     public DBObject decode(final BsonReader reader, final DecoderContext decoderContext) {
-        List<String> path = new ArrayList<String>(10);
+        List<String> path = new ArrayList<>(10);
         return readDocument(reader, decoderContext, path);
     }
 

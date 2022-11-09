@@ -240,25 +240,25 @@ public class JsonWriterTest {
 
     @Test
     public void testDouble() {
-        List<TestData<Double>> tests = asList(new TestData<Double>(0.0, "0.0"), new TestData<Double>(0.0005, "5.0E-4"),
-                new TestData<Double>(0.5, "0.5"), new TestData<Double>(1.0, "1.0"),
-                new TestData<Double>(1.5, "1.5"), new TestData<Double>(1.5E+40, "1.5E40"),
-                new TestData<Double>(1.5E-40, "1.5E-40"),
-                new TestData<Double>(1234567890.1234568E+123, "1.2345678901234568E132"),
-                new TestData<Double>(Double.MAX_VALUE, "1.7976931348623157E308"),
-                new TestData<Double>(Double.MIN_VALUE, "4.9E-324"),
+        List<TestData<Double>> tests = asList(new TestData<>(0.0, "0.0"), new TestData<>(0.0005, "5.0E-4"),
+                new TestData<>(0.5, "0.5"), new TestData<>(1.0, "1.0"),
+                new TestData<>(1.5, "1.5"), new TestData<>(1.5E+40, "1.5E40"),
+                new TestData<>(1.5E-40, "1.5E-40"),
+                new TestData<>(1234567890.1234568E+123, "1.2345678901234568E132"),
+                new TestData<>(Double.MAX_VALUE, "1.7976931348623157E308"),
+                new TestData<>(Double.MIN_VALUE, "4.9E-324"),
 
-                new TestData<Double>(-0.0005, "-5.0E-4"),
-                new TestData<Double>(-0.5, "-0.5"),
-                new TestData<Double>(-1.0, "-1.0"),
-                new TestData<Double>(-1.5, "-1.5"),
-                new TestData<Double>(-1.5E+40, "-1.5E40"),
-                new TestData<Double>(-1.5E-40, "-1.5E-40"),
-                new TestData<Double>(-1234567890.1234568E+123, "-1.2345678901234568E132"),
+                new TestData<>(-0.0005, "-5.0E-4"),
+                new TestData<>(-0.5, "-0.5"),
+                new TestData<>(-1.0, "-1.0"),
+                new TestData<>(-1.5, "-1.5"),
+                new TestData<>(-1.5E+40, "-1.5E40"),
+                new TestData<>(-1.5E-40, "-1.5E-40"),
+                new TestData<>(-1234567890.1234568E+123, "-1.2345678901234568E132"),
 
-                new TestData<Double>(Double.NaN, "NaN"),
-                new TestData<Double>(Double.NEGATIVE_INFINITY, "-Infinity"),
-                new TestData<Double>(Double.POSITIVE_INFINITY, "Infinity"));
+                new TestData<>(Double.NaN, "NaN"),
+                new TestData<>(Double.NEGATIVE_INFINITY, "-Infinity"),
+                new TestData<>(Double.POSITIVE_INFINITY, "Infinity"));
         for (final TestData<Double> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build());
@@ -272,13 +272,13 @@ public class JsonWriterTest {
 
     @Test
     public void testInt64Shell() {
-        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "NumberLong(\"-9223372036854775808\")"),
-                new TestData<Long>(Integer.MIN_VALUE - 1L, "NumberLong(\"-2147483649\")"),
-                new TestData<Long>((long) Integer.MIN_VALUE, "NumberLong(-2147483648)"),
-                new TestData<Long>(0L, "NumberLong(0)"),
-                new TestData<Long>((long) Integer.MAX_VALUE, "NumberLong(2147483647)"),
-                new TestData<Long>(Integer.MAX_VALUE + 1L, "NumberLong(\"2147483648\")"),
-                new TestData<Long>(Long.MAX_VALUE, "NumberLong(\"9223372036854775807\")"));
+        List<TestData<Long>> tests = asList(new TestData<>(Long.MIN_VALUE, "NumberLong(\"-9223372036854775808\")"),
+                new TestData<>(Integer.MIN_VALUE - 1L, "NumberLong(\"-2147483649\")"),
+                new TestData<>((long) Integer.MIN_VALUE, "NumberLong(-2147483648)"),
+                new TestData<>(0L, "NumberLong(0)"),
+                new TestData<>((long) Integer.MAX_VALUE, "NumberLong(2147483647)"),
+                new TestData<>(Integer.MAX_VALUE + 1L, "NumberLong(\"2147483648\")"),
+                new TestData<>(Long.MAX_VALUE, "NumberLong(\"9223372036854775807\")"));
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build());
@@ -292,13 +292,13 @@ public class JsonWriterTest {
 
     @Test
     public void testInt64Relaxed() {
-        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
-                new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
-                new TestData<Long>((long) Integer.MIN_VALUE, "-2147483648"),
-                new TestData<Long>(0L, "0"),
-                new TestData<Long>((long) Integer.MAX_VALUE, "2147483647"),
-                new TestData<Long>(Integer.MAX_VALUE + 1L, "2147483648"),
-                new TestData<Long>(Long.MAX_VALUE, "9223372036854775807"));
+        List<TestData<Long>> tests = asList(new TestData<>(Long.MIN_VALUE, "-9223372036854775808"),
+                new TestData<>(Integer.MIN_VALUE - 1L, "-2147483649"),
+                new TestData<>((long) Integer.MIN_VALUE, "-2147483648"),
+                new TestData<>(0L, "0"),
+                new TestData<>((long) Integer.MAX_VALUE, "2147483647"),
+                new TestData<>(Integer.MAX_VALUE + 1L, "2147483648"),
+                new TestData<>(Long.MAX_VALUE, "9223372036854775807"));
 
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
@@ -314,8 +314,8 @@ public class JsonWriterTest {
     @Test
     public void testDecimal128SShell() {
         List<TestData<Decimal128>> tests = asList(
-                new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
-                new TestData<Decimal128>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
+                new TestData<>(Decimal128.parse("1.0"), "1.0"),
+                new TestData<>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
 
 
         for (final TestData<Decimal128> cur : tests) {
@@ -332,8 +332,8 @@ public class JsonWriterTest {
     @Test
     public void testDecimal128Relaxed() {
         List<TestData<Decimal128>> tests = asList(
-                new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
-                new TestData<Decimal128>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
+                new TestData<>(Decimal128.parse("1.0"), "1.0"),
+                new TestData<>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
 
 
         for (final TestData<Decimal128> cur : tests) {
@@ -362,19 +362,19 @@ public class JsonWriterTest {
 
     @Test
     public void testBinaryRelaxed() {
-        List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]),
+        List<TestData<BsonBinary>> tests = asList(new TestData<>(new BsonBinary(new byte[0]),
                         "{\"$binary\": {\"base64\": \"\", "
                                 + "\"subType\": \"00\"}}"),
-                new TestData<BsonBinary>(new BsonBinary(new byte[]{1}),
+                new TestData<>(new BsonBinary(new byte[]{1}),
                         "{\"$binary\": {\"base64\": \"AQ==\", "
                                 + "\"subType\": \"00\"}}"),
-                new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2}),
+                new TestData<>(new BsonBinary(new byte[]{1, 2}),
                         "{\"$binary\": {\"base64\": \"AQI=\", "
                                 + "\"subType\": \"00\"}}"),
-                new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2, 3}),
+                new TestData<>(new BsonBinary(new byte[]{1, 2, 3}),
                         "{\"$binary\": {\"base64\": \"AQID\", "
                                 + "\"subType\": \"00\"}}"),
-                new TestData<BsonBinary>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
+                new TestData<>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
                         "{\"$binary\": {\"base64\": \"AQID\", "
                                 + "\"subType\": \"80\"}}"));
         for (final TestData<BsonBinary> cur : tests) {
@@ -390,11 +390,11 @@ public class JsonWriterTest {
 
     @Test
     public void testBinaryShell() {
-        List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]), "new BinData(0, \"\")"),
-                new TestData<BsonBinary>(new BsonBinary(new byte[]{1}), "new BinData(0, \"AQ==\")"),
-                new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2}), "new BinData(0, \"AQI=\")"),
-                new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2, 3}), "new BinData(0, \"AQID\")"),
-                new TestData<BsonBinary>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
+        List<TestData<BsonBinary>> tests = asList(new TestData<>(new BsonBinary(new byte[0]), "new BinData(0, \"\")"),
+                new TestData<>(new BsonBinary(new byte[]{1}), "new BinData(0, \"AQ==\")"),
+                new TestData<>(new BsonBinary(new byte[]{1, 2}), "new BinData(0, \"AQI=\")"),
+                new TestData<>(new BsonBinary(new byte[]{1, 2, 3}), "new BinData(0, \"AQID\")"),
+                new TestData<>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
                         "new BinData(128, \"AQID\")"));
         for (final TestData<BsonBinary> cur : tests) {
             stringWriter = new StringWriter();
@@ -409,9 +409,9 @@ public class JsonWriterTest {
 
     @Test
     public void testDateTimeRelaxed() {
-        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "{\"$date\": \"1970-01-01T00:00:00Z\"}"),
-                new TestData<Date>(new Date(Long.MAX_VALUE), "{\"$date\": {\"$numberLong\": \"9223372036854775807\"}}"),
-                new TestData<Date>(new Date(Long.MIN_VALUE), "{\"$date\": {\"$numberLong\": \"-9223372036854775808\"}}"));
+        List<TestData<Date>> tests = asList(new TestData<>(new Date(0), "{\"$date\": \"1970-01-01T00:00:00Z\"}"),
+                new TestData<>(new Date(Long.MAX_VALUE), "{\"$date\": {\"$numberLong\": \"9223372036854775807\"}}"),
+                new TestData<>(new Date(Long.MIN_VALUE), "{\"$date\": {\"$numberLong\": \"-9223372036854775808\"}}"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
@@ -425,11 +425,11 @@ public class JsonWriterTest {
 
     @Test
     public void testDateTimeShell() {
-        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "ISODate(\"1970-01-01T00:00:00.000Z\")"),
-                new TestData<Date>(new Date(1), "ISODate(\"1970-01-01T00:00:00.001Z\")"),
-                new TestData<Date>(new Date(-1), "ISODate(\"1969-12-31T23:59:59.999Z\")"),
-                new TestData<Date>(new Date(Long.MAX_VALUE), "new Date(9223372036854775807)"),
-                new TestData<Date>(new Date(Long.MIN_VALUE), "new Date(-9223372036854775808)"));
+        List<TestData<Date>> tests = asList(new TestData<>(new Date(0), "ISODate(\"1970-01-01T00:00:00.000Z\")"),
+                new TestData<>(new Date(1), "ISODate(\"1970-01-01T00:00:00.001Z\")"),
+                new TestData<>(new Date(-1), "ISODate(\"1969-12-31T23:59:59.999Z\")"),
+                new TestData<>(new Date(Long.MAX_VALUE), "new Date(9223372036854775807)"),
+                new TestData<>(new Date(Long.MIN_VALUE), "new Date(-9223372036854775808)"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build());
@@ -539,15 +539,15 @@ public class JsonWriterTest {
     @Test
     public void testRegularExpressionShell() {
         List<TestData<BsonRegularExpression>> tests;
-        tests = asList(new TestData<BsonRegularExpression>(new BsonRegularExpression(""), "/(?:)/"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a"), "/a/"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a/b"), "/a\\/b/"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a\\b"), "/a\\b/"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "i"), "/a/i"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"), "/a/m"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"), "/a/x"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"), "/a/s"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"), "/a/imsx"));
+        tests = asList(new TestData<>(new BsonRegularExpression(""), "/(?:)/"),
+                new TestData<>(new BsonRegularExpression("a"), "/a/"),
+                new TestData<>(new BsonRegularExpression("a/b"), "/a\\/b/"),
+                new TestData<>(new BsonRegularExpression("a\\b"), "/a\\b/"),
+                new TestData<>(new BsonRegularExpression("a", "i"), "/a/i"),
+                new TestData<>(new BsonRegularExpression("a", "m"), "/a/m"),
+                new TestData<>(new BsonRegularExpression("a", "x"), "/a/x"),
+                new TestData<>(new BsonRegularExpression("a", "s"), "/a/s"),
+                new TestData<>(new BsonRegularExpression("a", "imxs"), "/a/imsx"));
         for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build());
@@ -562,23 +562,23 @@ public class JsonWriterTest {
     @Test
     public void testRegularExpressionRelaxed() {
         List<TestData<BsonRegularExpression>> tests;
-        tests = asList(new TestData<BsonRegularExpression>(new BsonRegularExpression(""),
+        tests = asList(new TestData<>(new BsonRegularExpression(""),
                         "{\"$regularExpression\": {\"pattern\": \"\", \"options\": \"\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a"),
+                new TestData<>(new BsonRegularExpression("a"),
                         "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a/b"),
+                new TestData<>(new BsonRegularExpression("a/b"),
                         "{\"$regularExpression\": {\"pattern\": \"a/b\", \"options\": \"\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a\\b"),
+                new TestData<>(new BsonRegularExpression("a\\b"),
                         "{\"$regularExpression\": {\"pattern\": \"a\\\\b\", \"options\": \"\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "i"),
+                new TestData<>(new BsonRegularExpression("a", "i"),
                         "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"i\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"),
+                new TestData<>(new BsonRegularExpression("a", "m"),
                         "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"m\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"),
+                new TestData<>(new BsonRegularExpression("a", "x"),
                         "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"x\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"),
+                new TestData<>(new BsonRegularExpression("a", "s"),
                         "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"s\"}}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"),
+                new TestData<>(new BsonRegularExpression("a", "imxs"),
                         "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"imsx\"}}"));
         for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();

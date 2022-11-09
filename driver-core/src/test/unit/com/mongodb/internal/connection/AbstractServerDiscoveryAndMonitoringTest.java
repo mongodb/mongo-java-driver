@@ -57,7 +57,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     public static Collection<Object[]> data(final String root) throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
+        List<Object[]> data = new ArrayList<>();
         for (File file : JsonPoweredTestHelper.getTestFiles(root)) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{file.getName() + ": " + testDocument.getString("description").getValue(), testDocument});

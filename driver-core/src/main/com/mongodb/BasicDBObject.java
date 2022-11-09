@@ -282,7 +282,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
 
     @Override
     public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocumentWrapper<BasicDBObject>(this, codecRegistry.get(BasicDBObject.class));
+        return new BsonDocumentWrapper<>(this, codecRegistry.get(BasicDBObject.class));
     }
 
     // create a copy of "from", but with keys ordered alphabetically
@@ -300,8 +300,8 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     }
 
     private static Map<String, Object> canonicalizeMap(final Map<String, Object> from) {
-        Map<String, Object> canonicalized = new LinkedHashMap<String, Object>(from.size());
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        Map<String, Object> canonicalized = new LinkedHashMap<>(from.size());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -311,7 +311,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
 
     private static BasicDBObject canonicalizeBSONObject(final BSONObject from) {
         BasicDBObject canonicalized = new BasicDBObject();
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -320,7 +320,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     }
 
     private static List canonicalizeList(final List<Object> list) {
-        List<Object> canonicalized = new ArrayList<Object>(list.size());
+        List<Object> canonicalized = new ArrayList<>(list.size());
         for (Object cur : list) {
             canonicalized.add(canonicalize(cur));
         }

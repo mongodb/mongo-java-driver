@@ -325,12 +325,12 @@ public class DBCollection {
         WriteConcern writeConcern = insertOptions.getWriteConcern() != null ? insertOptions.getWriteConcern() : getWriteConcern();
         Encoder<DBObject> encoder = toEncoder(insertOptions.getDbEncoder());
 
-        List<InsertRequest> insertRequestList = new ArrayList<InsertRequest>(documents.size());
+        List<InsertRequest> insertRequestList = new ArrayList<>(documents.size());
         for (DBObject cur : documents) {
             if (cur.get(ID_FIELD_NAME) == null) {
                 cur.put(ID_FIELD_NAME, new ObjectId());
             }
-            insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<DBObject>(cur, encoder)));
+            insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<>(cur, encoder)));
         }
         return insert(insertRequestList, writeConcern, insertOptions.isContinueOnError(), insertOptions.getBypassDocumentValidation());
     }
@@ -1032,7 +1032,7 @@ public class DBCollection {
                                                   retryReads) {
             @Override
             public ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
-                return new DistinctOperation<BsonValue>(getNamespace(), fieldName, new BsonValueCodec())
+                return new DistinctOperation<>(getNamespace(), fieldName, new BsonValueCodec())
                                .filter(wrapAllowNull(options.getFilter()))
                                .collation(options.getCollation())
                                .retryReads(retryReads);
@@ -1047,7 +1047,7 @@ public class DBCollection {
                 DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document), DecoderContext.builder().build());
                 return obj.get("value");
             }
-        }).into(new ArrayList<Object>());
+        }).into(new ArrayList<>());
     }
 
     /**
@@ -1118,7 +1118,7 @@ public class DBCollection {
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
 
             MapReduceWithInlineResultsOperation<DBObject> operation =
-                    new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(), new BsonJavaScript(command.getMap()),
+                    new MapReduceWithInlineResultsOperation<>(getNamespace(), new BsonJavaScript(command.getMap()),
                             new BsonJavaScript(command.getReduce()), getDefaultDBObjectCodec())
                             .filter(wrapAllowNull(command.getQuery()))
                             .limit(command.getLimit())
@@ -1240,14 +1240,14 @@ public class DBCollection {
                 throw createWriteConcernException(e);
             }
         } else {
-            AggregateOperation<DBObject> operation = new AggregateOperation<DBObject>(getNamespace(), stages, getDefaultDBObjectCodec())
+            AggregateOperation<DBObject> operation = new AggregateOperation<>(getNamespace(), stages, getDefaultDBObjectCodec())
                     .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
                     .collation(options.getCollation())
                     .retryReads(retryReads);
             BatchCursor<DBObject> cursor1 = executor.execute(operation, readPreference, getReadConcern());
-            result = new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor1));
+            result = new MongoCursorAdapter(new MongoBatchCursorAdapter<>(cursor1));
         }
         return result;
     }
@@ -1263,8 +1263,8 @@ public class DBCollection {
      * @mongodb.server.release 3.6
      */
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
-        AggregateOperation<BsonDocument> operation = new AggregateOperation<BsonDocument>(getNamespace(), preparePipeline(pipeline),
-                                                                                          new BsonDocumentCodec())
+        AggregateOperation<BsonDocument> operation = new AggregateOperation<>(getNamespace(), preparePipeline(pipeline),
+                new BsonDocumentCodec())
                                                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                          .allowDiskUse(options.getAllowDiskUse())
                                                          .collation(options.getCollation())
@@ -1275,7 +1275,7 @@ public class DBCollection {
 
     @SuppressWarnings("unchecked")
     List<BsonDocument> preparePipeline(final List<? extends DBObject> pipeline) {
-        List<BsonDocument> stages = new ArrayList<BsonDocument>();
+        List<BsonDocument> stages = new ArrayList<>();
         for (final DBObject op : pipeline) {
             stages.add(wrap(op));
         }
@@ -1655,7 +1655,7 @@ public class DBCollection {
         WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         WriteOperation<DBObject> operation;
         if (options.isRemove()) {
-            operation = new FindAndDeleteOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec)
+            operation = new FindAndDeleteOperation<>(getNamespace(), writeConcern, retryWrites, objectCodec)
                         .filter(wrapAllowNull(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
@@ -1667,7 +1667,7 @@ public class DBCollection {
                 throw new IllegalArgumentException("update can not be null unless it's a remove");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec,
+                operation = new FindAndUpdateOperation<>(getNamespace(), writeConcern, retryWrites, objectCodec,
                         wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -1679,7 +1679,7 @@ public class DBCollection {
                         .collation(options.getCollation())
                         .arrayFilters(wrapAllowNull(options.getArrayFilters(), (Encoder<DBObject>) null));
             } else {
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec,
+                operation = new FindAndReplaceOperation<>(getNamespace(), writeConcern, retryWrites, objectCodec,
                         wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -1860,9 +1860,9 @@ public class DBCollection {
         return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(), retryReads) {
             @Override
             public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                return new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()).retryReads(retryReads);
+                return new ListIndexesOperation<>(getNamespace(), getDefaultDBObjectCodec()).retryReads(retryReads);
             }
-        }.into(new ArrayList<DBObject>());
+        }.into(new ArrayList<>());
     }
 
     /**
@@ -2033,7 +2033,7 @@ public class DBCollection {
     }
 
     private List<com.mongodb.internal.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
-        List<com.mongodb.internal.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.internal.bulk.WriteRequest>(writeRequests.size());
+        List<com.mongodb.internal.bulk.WriteRequest> retVal = new ArrayList<>(writeRequests.size());
         for (WriteRequest cur : writeRequests) {
             retVal.add(cur.toNew(this));
         }
@@ -2173,7 +2173,7 @@ public class DBCollection {
         if (documentList == null) {
             return null;
         }
-        List<BsonDocument> wrappedDocumentList = new ArrayList<BsonDocument>(documentList.size());
+        List<BsonDocument> wrappedDocumentList = new ArrayList<>(documentList.size());
         for (DBObject cur : documentList) {
             wrappedDocumentList.add(encoder == null ? wrap(cur) : wrap(cur, encoder));
         }
@@ -2182,14 +2182,14 @@ public class DBCollection {
 
 
     BsonDocument wrap(final DBObject document) {
-        return new BsonDocumentWrapper<DBObject>(document, getDefaultDBObjectCodec());
+        return new BsonDocumentWrapper<>(document, getDefaultDBObjectCodec());
     }
 
     BsonDocument wrap(final DBObject document, @Nullable final DBEncoder encoder) {
         if (encoder == null) {
             return wrap(document);
         } else {
-            return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+            return new BsonDocumentWrapper<>(document, new DBEncoderAdapter(encoder));
         }
     }
 
@@ -2197,7 +2197,7 @@ public class DBCollection {
         if (encoder == null) {
             return wrap(document);
         } else {
-            return new BsonDocumentWrapper<DBObject>(document, encoder);
+            return new BsonDocumentWrapper<>(document, encoder);
         }
     }
 

@@ -54,7 +54,7 @@ public final class ClassModelBuilderTest {
             assertEquals(field.getName(), builder.getProperty(field.getName()).getWriteName());
         }
 
-        Map<String, TypeParameterMap> fieldNameToTypeParameterMap = new HashMap<String, TypeParameterMap>();
+        Map<String, TypeParameterMap> fieldNameToTypeParameterMap = new HashMap<>();
         fieldNameToTypeParameterMap.put("myIntegerField", TypeParameterMap.builder().build());
         fieldNameToTypeParameterMap.put("myGenericField", TypeParameterMap.builder().addIndex(0).build());
         fieldNameToTypeParameterMap.put("myListField", TypeParameterMap.builder().addIndex(0, 1).build());

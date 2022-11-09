@@ -122,7 +122,7 @@ public class ClusterDescriptionTest {
     public void testAll() {
         ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.emptyList());
         assertTrue(getAll(description).isEmpty());
-        assertEquals(new HashSet<ServerDescription>(asList(primary, secondary, otherSecondary, uninitiatedMember, notOkMember)),
+        assertEquals(new HashSet<>(asList(primary, secondary, otherSecondary, uninitiatedMember, notOkMember)),
                      getAll(cluster));
     }
 

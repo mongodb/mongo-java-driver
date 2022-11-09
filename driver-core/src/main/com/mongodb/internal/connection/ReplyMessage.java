@@ -66,7 +66,7 @@ public class ReplyMessage<T> {
         }
         this.replyHeader = replyHeader;
 
-        documents = new ArrayList<T>(replyHeader.getNumberReturned());
+        documents = new ArrayList<>(replyHeader.getNumberReturned());
     }
 
     /**

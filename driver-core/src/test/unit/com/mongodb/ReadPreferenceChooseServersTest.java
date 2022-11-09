@@ -84,7 +84,7 @@ public class ReadPreferenceChooseServersTest {
                                                                .maxDocumentSize(FOUR_MEG)
                                                                .build();
 
-        List<ServerDescription> nodeList = new ArrayList<ServerDescription>();
+        List<ServerDescription> nodeList = new ArrayList<>();
         nodeList.add(primary);
         nodeList.add(secondary);
         nodeList.add(otherSecondary);

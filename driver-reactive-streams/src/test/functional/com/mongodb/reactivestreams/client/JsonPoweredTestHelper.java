@@ -40,7 +40,7 @@ public final class JsonPoweredTestHelper {
     }
 
     public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
-        List<File> files = new ArrayList<File>();
+        List<File> files = new ArrayList<>();
         addFilesFromDirectory(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()), files);
         return files;
     }

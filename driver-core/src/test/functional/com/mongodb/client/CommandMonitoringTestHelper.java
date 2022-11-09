@@ -67,7 +67,7 @@ public final class CommandMonitoringTestHelper {
 
     public static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments, final String databaseName,
                                                        final BsonDocument operation) {
-        List<CommandEvent> expectedEvents = new ArrayList<CommandEvent>(expectedEventDocuments.size());
+        List<CommandEvent> expectedEvents = new ArrayList<>(expectedEventDocuments.size());
         for (BsonValue expectedEventDocument : expectedEventDocuments) {
             BsonDocument curExpectedEventDocument = expectedEventDocument.asDocument();
             String eventType = curExpectedEventDocument.keySet().iterator().next();
