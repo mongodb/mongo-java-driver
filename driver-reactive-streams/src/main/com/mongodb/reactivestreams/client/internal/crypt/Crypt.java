@@ -255,7 +255,6 @@ public class Crypt implements Closeable {
     private void executeStateMachineWithSink(final MongoCryptContext cryptContext, @Nullable final String databaseName,
             final MonoSink<RawBsonDocument> sink) {
         State state = cryptContext.getState();
-        LOGGER.info("executeStateMachine: " + state);
         switch (state) {
             case NEED_MONGO_COLLINFO:
                 collInfo(cryptContext, databaseName, sink);
