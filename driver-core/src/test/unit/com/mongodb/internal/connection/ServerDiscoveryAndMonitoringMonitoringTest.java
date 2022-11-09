@@ -194,7 +194,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
         ServerType serverType = getServerType(serverDescriptionDocument.getString("type").getValue());
         return ServerDescription.builder()
                 .address(new ServerAddress(serverDescriptionDocument.getString("address").getValue()))
-                .ok(serverType == ServerType.UNKNOWN ? false : true)
+                .ok(serverType != ServerType.UNKNOWN)
                 .state(serverType == ServerType.UNKNOWN ? CONNECTING : CONNECTED)
                 .type(serverType)
                 .setName(serverDescriptionDocument.containsKey("setName")

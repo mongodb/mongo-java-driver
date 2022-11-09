@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
+import java.util.Objects;
+
 public class CreatorInSuperClassModelImpl extends CreatorInSuperClassModel {
     private final String propertyA;
     private final String propertyB;
@@ -46,10 +48,10 @@ public class CreatorInSuperClassModelImpl extends CreatorInSuperClassModel {
 
         CreatorInSuperClassModelImpl that = (CreatorInSuperClassModelImpl) o;
 
-        if (propertyA != null ? !propertyA.equals(that.propertyA) : that.propertyA != null) {
+        if (!Objects.equals(propertyA, that.propertyA)) {
             return false;
         }
-        return propertyB != null ? propertyB.equals(that.propertyB) : that.propertyB == null;
+        return Objects.equals(propertyB, that.propertyB);
     }
 
     @Override

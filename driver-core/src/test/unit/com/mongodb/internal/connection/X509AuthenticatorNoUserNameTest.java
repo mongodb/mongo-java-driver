@@ -49,7 +49,7 @@ public class X509AuthenticatorNoUserNameTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescriptionThreeSix = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 THREE_DOT_SIX_WIRE_VERSION, ServerType.STANDALONE, 1000, 16000,
-                48000, Collections.<String>emptyList());
+                48000, Collections.emptyList());
     }
 
     @Test

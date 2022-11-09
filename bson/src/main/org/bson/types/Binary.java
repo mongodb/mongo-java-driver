@@ -117,7 +117,7 @@ public class Binary implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = (int) type;
+        int result = type;
         result = 31 * result + Arrays.hashCode(data);
         return result;
     }

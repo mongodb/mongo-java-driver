@@ -22,10 +22,10 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class AcknowledgedBulkWriteResult extends BulkWriteResult {
-    private int insertedCount;
-    private int matchedCount;
-    private int removedCount;
-    private int modifiedCount;
+    private final int insertedCount;
+    private final int matchedCount;
+    private final int removedCount;
+    private final int modifiedCount;
     private final List<BulkWriteUpsert> upserts;
 
     AcknowledgedBulkWriteResult(final int insertedCount, final int matchedCount, final int removedCount,

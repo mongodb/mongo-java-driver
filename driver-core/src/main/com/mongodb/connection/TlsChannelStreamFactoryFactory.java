@@ -19,8 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.connection.ExtendedAsynchronousByteChannel;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
@@ -29,6 +27,8 @@ import com.mongodb.internal.connection.tlschannel.ClientTlsChannel;
 import com.mongodb.internal.connection.tlschannel.TlsChannel;
 import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannel;
 import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannelGroup;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -175,7 +175,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
         }
     }
 
-    private static class TlsChannelStream extends AsynchronousChannelStream implements Stream {
+    private static class TlsChannelStream extends AsynchronousChannelStream {
 
         private final AsynchronousTlsChannelGroup group;
         private final SelectorMonitor selectorMonitor;
@@ -199,7 +199,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
         public void openAsync(final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);
             try {
-                final SocketChannel socketChannel = SocketChannel.open();
+                SocketChannel socketChannel = SocketChannel.open();
                 socketChannel.configureBlocking(false);
 
                 socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);

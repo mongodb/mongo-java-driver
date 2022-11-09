@@ -30,9 +30,9 @@ public final class PropertySelectionModel {
 
     private static final String staticFinalStringField = "staticFinalStringField";
 
-    private static String staticStringField = "staticStringField";
+    private static final String staticStringField = "staticStringField";
 
-    private transient String transientString = "transientString";
+    private final transient String transientString = "transientString";
 
     public PropertySelectionModel() {
     }

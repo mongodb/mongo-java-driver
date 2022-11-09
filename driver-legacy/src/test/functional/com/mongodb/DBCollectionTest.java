@@ -114,7 +114,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void insertEmptyListShouldThrowIllegalArgumentException() {
         try {
-            collection.insert(Collections.<DBObject>emptyList());
+            collection.insert(Collections.emptyList());
             fail("Should throw IllegalArgumentException");
         } catch (IllegalArgumentException e) {
            // empty
@@ -497,7 +497,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testDotKeysMapInArraySucceeds() {
-        final Map<String, Object> map = new HashMap<String, Object>(1);
+        Map<String, Object> map = new HashMap<String, Object>(1);
         map.put("foo.bar", 2);
         DBObject obj = new BasicDBObject("x", 1).append("y", 2).append("array", new Object[]{map});
         collection.insert(obj);
@@ -642,7 +642,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(4, result.getMatchedCount());
         assertEquals(3, result.getRemovedCount());
         assertEquals(4, result.getModifiedCount());
-        assertEquals(Arrays.asList(new BulkWriteUpsert(1, upsertOneId),
+        assertEquals(asList(new BulkWriteUpsert(1, upsertOneId),
                                    new BulkWriteUpsert(2, upsertTwoId)),
                      result.getUpserts());
 
@@ -783,7 +783,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         } catch (WriteConcernException e) {
             assertEquals(1, e.getWriteConcernResult().getCount());
             assertTrue(e.getWriteConcernResult().isUpdateOfExisting());
-            assertEquals(null, e.getWriteConcernResult().getUpsertedId());
+            assertNull(e.getWriteConcernResult().getUpsertedId());
         }
     }
 

@@ -95,7 +95,7 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable importJsonFile(final CountDownLatch latch, final int fileId) {
-        final RawBsonDocumentCodec codec = new RawBsonDocumentCodec();
+        RawBsonDocumentCodec codec = new RawBsonDocumentCodec();
         return new Runnable() {
             @Override
             public void run() {
@@ -109,7 +109,7 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
                             RawBsonDocument document = codec.decode(new JsonReader(json), DecoderContext.builder().build());
                             documents.add(document);
                             if (documents.size() == 1000) {
-                                final List<RawBsonDocument> documentsToInsert = documents;
+                                List<RawBsonDocument> documentsToInsert = documents;
                                 documentWritingService.submit(new Runnable() {
                                     @Override
                                     public void run() {

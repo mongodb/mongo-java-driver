@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -251,7 +252,7 @@ public class ServerDescription {
          * @return this
          */
         public Builder hosts(final Set<String> hosts) {
-            this.hosts = hosts == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(hosts));
+            this.hosts = hosts == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<String>(hosts));
             return this;
         }
 
@@ -263,7 +264,7 @@ public class ServerDescription {
          * @return this
          */
         public Builder passives(final Set<String> passives) {
-            this.passives = passives == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(passives));
+            this.passives = passives == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<String>(passives));
             return this;
         }
 
@@ -275,7 +276,7 @@ public class ServerDescription {
          * @return this
          */
         public Builder arbiters(final Set<String> arbiters) {
-            this.arbiters = arbiters == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(arbiters));
+            this.arbiters = arbiters == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<String>(arbiters));
             return this;
         }
 
@@ -867,7 +868,7 @@ public class ServerDescription {
         if (!arbiters.equals(that.arbiters)) {
             return false;
         }
-        if (canonicalAddress != null ? !canonicalAddress.equals(that.canonicalAddress) : that.canonicalAddress != null) {
+        if (!Objects.equals(canonicalAddress, that.canonicalAddress)) {
             return false;
         }
         if (!hosts.equals(that.hosts)) {
@@ -876,10 +877,10 @@ public class ServerDescription {
         if (!passives.equals(that.passives)) {
             return false;
         }
-        if (primary != null ? !primary.equals(that.primary) : that.primary != null) {
+        if (!Objects.equals(primary, that.primary)) {
             return false;
         }
-        if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
+        if (!Objects.equals(setName, that.setName)) {
             return false;
         }
         if (state != that.state) {
@@ -897,17 +898,17 @@ public class ServerDescription {
         if (maxWireVersion != that.maxWireVersion) {
             return false;
         }
-        if (electionId != null ? !electionId.equals(that.electionId) : that.electionId != null) {
+        if (!Objects.equals(electionId, that.electionId)) {
             return false;
         }
-        if (setVersion != null ? !setVersion.equals(that.setVersion) : that.setVersion != null) {
+        if (!Objects.equals(setVersion, that.setVersion)) {
             return false;
         }
-        if (topologyVersion != null ? !topologyVersion.equals(that.topologyVersion) : that.topologyVersion != null) {
+        if (!Objects.equals(topologyVersion, that.topologyVersion)) {
             return false;
         }
 
-        if (lastWriteDate != null ? !lastWriteDate.equals(that.lastWriteDate) : that.lastWriteDate != null) {
+        if (!Objects.equals(lastWriteDate, that.lastWriteDate)) {
             return false;
         }
 
@@ -915,9 +916,7 @@ public class ServerDescription {
             return false;
         }
 
-        if (logicalSessionTimeoutMinutes != null
-                    ? !logicalSessionTimeoutMinutes.equals(that.logicalSessionTimeoutMinutes)
-                    : that.logicalSessionTimeoutMinutes != null) {
+        if (!Objects.equals(logicalSessionTimeoutMinutes, that.logicalSessionTimeoutMinutes)) {
             return false;
         }
 
@@ -928,13 +927,13 @@ public class ServerDescription {
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
-        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+        if (!Objects.equals(thisExceptionClass, thatExceptionClass)) {
             return false;
         }
 
         String thisExceptionMessage = exception != null ? exception.getMessage() : null;
         String thatExceptionMessage = that.exception != null ? that.exception.getMessage() : null;
-        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+        if (!Objects.equals(thisExceptionMessage, thatExceptionMessage)) {
             return false;
         }
 

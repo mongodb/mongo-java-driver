@@ -60,7 +60,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     public InternalStreamConnectionInitializer(final ClusterConnectionMode clusterConnectionMode, final Authenticator authenticator,
                                                final BsonDocument clientMetadataDocument, final List<MongoCompressor> requestedCompressors,
-                                               final @Nullable ServerApi serverApi) {
+                                               @Nullable final ServerApi serverApi) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.authenticator = authenticator;
         this.clientMetadataDocument = clientMetadataDocument;
@@ -88,7 +88,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     @Override
     public void startHandshakeAsync(final InternalConnection internalConnection,
                                     final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-        final long startTime = System.nanoTime();
+        long startTime = System.nanoTime();
         executeCommandAsync("admin", createHelloCommand(authenticator, internalConnection), clusterConnectionMode, serverApi,
                 internalConnection, new SingleResultCallback<BsonDocument>() {
                     @Override

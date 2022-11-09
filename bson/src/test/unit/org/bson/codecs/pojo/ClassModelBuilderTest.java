@@ -23,8 +23,8 @@ import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdModel;
-import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
+import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -117,7 +117,7 @@ public final class ClassModelBuilderTest {
 
     @Test
     public void testOverrides() throws NoSuchFieldException {
-        ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.<SimpleGenericsModel>builder(SimpleGenericsModel.class)
+        ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class)
                 .annotations(TEST_ANNOTATIONS)
                 .conventions(TEST_CONVENTIONS)
                 .discriminatorKey("_cls")
@@ -176,7 +176,7 @@ public final class ClassModelBuilderTest {
                 }).build();
     }
 
-    private static final List<Annotation> TEST_ANNOTATIONS = Collections.<Annotation>singletonList(
+    private static final List<Annotation> TEST_ANNOTATIONS = Collections.singletonList(
             new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
@@ -194,7 +194,7 @@ public final class ClassModelBuilderTest {
                 }
             });
 
-    private static final List<Convention> TEST_CONVENTIONS = Collections.<Convention>singletonList(
+    private static final List<Convention> TEST_CONVENTIONS = Collections.singletonList(
             new Convention() {
                 @Override
                 public void apply(final ClassModelBuilder<?> builder) {

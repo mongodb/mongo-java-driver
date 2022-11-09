@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo.entities;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CollectionSpecificReturnTypeModel {
     private ImmutableList<String> properties;
@@ -47,7 +48,7 @@ public class CollectionSpecificReturnTypeModel {
 
         CollectionSpecificReturnTypeModel that = (CollectionSpecificReturnTypeModel) o;
 
-        return properties != null ? properties.equals(that.properties) : that.properties == null;
+        return Objects.equals(properties, that.properties);
     }
 
     @Override

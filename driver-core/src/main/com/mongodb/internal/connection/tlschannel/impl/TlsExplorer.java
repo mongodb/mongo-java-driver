@@ -215,14 +215,12 @@ public final class TlsExplorer {
         byte[] encoded = new byte[snLen];
         input.get(encoded);
         SNIServerName serverName;
-        switch (code) {
-          case StandardConstants.SNI_HOST_NAME:
-            if (encoded.length == 0)
-              throw new SSLProtocolException("Empty HostName in server name indication");
-            serverName = new SNIHostName(encoded);
-            break;
-          default:
-            serverName = new UnknownServerName(code, encoded);
+        if (code == StandardConstants.SNI_HOST_NAME) {
+          if (encoded.length == 0)
+            throw new SSLProtocolException("Empty HostName in server name indication");
+          serverName = new SNIHostName(encoded);
+        } else {
+          serverName = new UnknownServerName(code, encoded);
         }
         // check for duplicated server name type
         if (sniMap.put(serverName.getType(), serverName) != null)

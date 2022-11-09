@@ -33,7 +33,7 @@ class WritableServerSelectorSpecification extends Specification {
     private static final ServerDescription.Builder SERVER_DESCRIPTION_BUILDER = ServerDescription.builder()
             .state(CONNECTED)
             .address(new ServerAddress())
-            .ok(true);
+            .ok(true)
     private static final ServerDescription PRIMARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(REPLICA_SET_PRIMARY).build()
     private static final ServerDescription SECONDARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(REPLICA_SET_SECONDARY).build()
 

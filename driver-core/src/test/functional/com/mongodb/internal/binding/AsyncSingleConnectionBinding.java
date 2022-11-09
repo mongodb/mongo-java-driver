@@ -21,9 +21,9 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.NoOpSessionContext;
@@ -83,7 +83,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        final CountDownLatch latch = new CountDownLatch(2);
+        CountDownLatch latch = new CountDownLatch(2);
         cluster.selectServerAsync(new WritableServerSelector(), new SingleResultCallback<ServerTuple>() {
             @Override
             public void onResult(final ServerTuple result, final Throwable t) {
@@ -111,7 +111,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             throw new MongoInternalException("Failure to select server");
         }
 
-        final CountDownLatch writeServerLatch = new CountDownLatch(1);
+        CountDownLatch writeServerLatch = new CountDownLatch(1);
         writeServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
             @Override
             public void onResult(final AsyncConnection result, final Throwable t) {
@@ -126,7 +126,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             throw new MongoInternalException("Failure to get connection");
         }
 
-        final CountDownLatch readServerLatch = new CountDownLatch(1);
+        CountDownLatch readServerLatch = new CountDownLatch(1);
 
         readServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
             @Override
@@ -250,7 +250,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            isTrue("open", super.getCount() > 0);
+            isTrue("open", getCount() > 0);
             callback.onResult(connection.retain(), null);
         }
 

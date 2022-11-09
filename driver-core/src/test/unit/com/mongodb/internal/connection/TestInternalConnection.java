@@ -68,7 +68,7 @@ class TestInternalConnection implements InternalConnection {
 
     TestInternalConnection(final ServerId serverId, final ServerType serverType) {
         this.description = new ConnectionDescription(new ConnectionId(serverId), THREE_DOT_SIX_WIRE_VERSION, serverType, 0, 0, 0,
-                Collections.<String>emptyList());
+                Collections.emptyList());
         this.bufferProvider = new SimpleBufferProvider();
 
         this.replies = new LinkedList<Interaction>();

@@ -22,7 +22,6 @@ import java.util.Map;
 public final class MultipleBoundsModel extends MultipleBoundsLevel1<Double> {
 
     public MultipleBoundsModel() {
-        super();
     }
 
     public MultipleBoundsModel(final Map<String, String> level3, final List<Integer> level2, final Double level1) {

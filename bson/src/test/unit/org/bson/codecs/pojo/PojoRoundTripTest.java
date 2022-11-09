@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.BsonDocument;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.CollectionSpecificReturnTypeCreatorModel;
@@ -66,7 +67,6 @@ import org.bson.codecs.pojo.entities.ShapeHolderModel;
 import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
-import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
@@ -107,7 +107,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -207,12 +206,12 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 "{'collection': [1, null, 3], 'list': [4, null, 6], 'linked': [null, 8, 9], 'map': {'A': 1.1, 'B': null, 'C': 3.3}}"));
 
         data.add(new TestData("Concrete specific return collection type model through BsonCreator",
-                new CollectionSpecificReturnTypeCreatorModel(Arrays.asList("foo", "bar")),
+                new CollectionSpecificReturnTypeCreatorModel(asList("foo", "bar")),
                 getPojoCodecProviderBuilder(CollectionSpecificReturnTypeCreatorModel.class),
                 "{'properties': ['foo', 'bar']}"));
 
         data.add(new TestData("Concrete specific return collection type model through getter and setter",
-                new CollectionSpecificReturnTypeModel(Arrays.asList("foo", "bar")),
+                new CollectionSpecificReturnTypeModel(asList("foo", "bar")),
                 getPojoCodecProviderBuilder(CollectionSpecificReturnTypeModel.class),
                 "{'properties': ['foo', 'bar']}"));
 
@@ -392,7 +391,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("Collection of discriminators interfaces", new CollectionDiscriminatorInterfacesModel().setList(
                 asList(new InterfaceModelImplA().setName("abc").setValue(true),
                        new InterfaceModelImplB().setInteger(234).setValue(false))).setMap(
-                Collections.<String, InterfaceModel>singletonMap("key", new InterfaceModelImplB().setInteger(123).setValue(true))),
+                Collections.singletonMap("key", new InterfaceModelImplB().setInteger(123).setValue(true))),
                 getPojoCodecProviderBuilder(CollectionDiscriminatorInterfacesModel.class, InterfaceModelImplA.class,
                         InterfaceModelImplB.class, InterfaceModel.class),
                 "{list: [{_t: 'org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA', value: true, name: 'abc'},"

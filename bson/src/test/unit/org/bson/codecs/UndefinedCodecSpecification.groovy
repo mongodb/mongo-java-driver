@@ -24,7 +24,7 @@ import spock.lang.Subject
 
 class UndefinedCodecSpecification extends Specification {
     @Subject
-    BsonUndefinedCodec codec = new BsonUndefinedCodec();
+    BsonUndefinedCodec codec = new BsonUndefinedCodec()
 
     def 'should return Undefined class'() {
         expect:

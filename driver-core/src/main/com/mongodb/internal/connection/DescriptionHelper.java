@@ -210,7 +210,7 @@ public final class DescriptionHelper {
             }
 
             if (helloResult.containsKey("setName") && helloResult.containsKey("hosts")) {
-                return ServerType.REPLICA_SET_OTHER;
+                return REPLICA_SET_OTHER;
             }
 
             return ServerType.REPLICA_SET_GHOST;

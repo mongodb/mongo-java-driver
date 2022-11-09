@@ -68,7 +68,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
@@ -189,7 +188,7 @@ public abstract class AbstractUnifiedTest {
             collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
         }
 
-        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
         connectionString = getConnectionString();
         useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
@@ -430,7 +429,7 @@ public abstract class AbstractUnifiedTest {
 
         try {
             for (BsonValue cur : operations) {
-                final BsonDocument operation = cur.asDocument();
+                BsonDocument operation = cur.asDocument();
                 String operationName = operation.getString("name").getValue();
                 BsonValue expectedResult = operation.get("result");
                 String receiver = operation.getString("object").getValue();
@@ -454,7 +453,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("abortTransaction")) {
                         nonNullClientSession(clientSession).abortTransaction();
                     } else if (operationName.equals("withTransaction")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 
                         TransactionOptions transactionOptions = null;
                         if (arguments.containsKey("options")) {
@@ -505,7 +504,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("waitForEvent")) {
                         String event = operation.getDocument("arguments").getString("event").getValue();
                         int count = operation.getDocument("arguments").getNumber("count").intValue();
-                        long timeoutMillis = TimeUnit.SECONDS.toMillis(5);
+                        long timeoutMillis = SECONDS.toMillis(5);
                         switch (event) {
                             case "PoolClearedEvent":
                                 connectionPoolListener.waitForEvent(ConnectionPoolClearedEvent.class, count, timeoutMillis, MILLISECONDS);
@@ -560,13 +559,13 @@ public abstract class AbstractUnifiedTest {
                             collectionHelper.runAdminCommand(command);
                         }
                     } else if (operationName.equals("assertSessionPinned")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         assertNotNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
                     } else if (operationName.equals("assertSessionUnpinned")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         assertNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
                     } else if (operationName.equals("assertSessionTransactionState")) {
-                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         ClientSession session = sessionsMap.get(arguments.getString("session").getValue());
                         String state = arguments.getString("state").getValue();
                         if (state.equals("starting") || state.equals("in_progress")) {
@@ -619,9 +618,7 @@ public abstract class AbstractUnifiedTest {
                         if (expectedResult != null) {
                             BsonValue actualResult = actualOutcome.get("result");
                             if (actualResult.isDocument()) {
-                                if (((BsonDocument) actualResult).containsKey("recoveryToken")) {
-                                    ((BsonDocument) actualResult).remove("recoveryToken");
-                                }
+                                ((BsonDocument) actualResult).remove("recoveryToken");
                             }
 
                             assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
@@ -646,7 +643,8 @@ public abstract class AbstractUnifiedTest {
         }
     }
 
-    private @Nullable ServerAddress getCurrentPrimary() {
+    @Nullable
+    private ServerAddress getCurrentPrimary() {
         for (ServerDescription serverDescription: mongoClient.getClusterDescription().getServerDescriptions()) {
             if (serverDescription.getType() == ServerType.REPLICA_SET_PRIMARY) {
                 return serverDescription.getAddress();
@@ -850,8 +848,8 @@ public abstract class AbstractUnifiedTest {
 
         TargetedFailPoint(final BsonDocument operation) {
             super(operation);
-            final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-            final ClientSession clientSession = sessionsMap.get(arguments.getString("session").getValue());
+            BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+            ClientSession clientSession = sessionsMap.get(arguments.getString("session").getValue());
 
             if (clientSession.getPinnedServerAddress() != null) {
                 mongoClient = MongoClients.create(MongoClientSettings.builder()

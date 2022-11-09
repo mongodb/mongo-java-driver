@@ -122,7 +122,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
+                    SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
                     executeCommandAsync(binding, namespace.getDatabaseName(), getCommand(),
                             connection, writeConcernErrorWriteTransformer(), new SingleResultCallback<Void>() {
                                 @Override

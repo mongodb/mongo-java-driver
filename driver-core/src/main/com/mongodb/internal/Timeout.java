@@ -227,7 +227,7 @@ public final class Timeout {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final Timeout other = (Timeout) o;
+        Timeout other = (Timeout) o;
         return durationNanos == other.durationNanos && startNanos == other.startNanos;
     }
 

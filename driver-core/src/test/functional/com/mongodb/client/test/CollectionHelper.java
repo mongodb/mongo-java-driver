@@ -70,9 +70,9 @@ import static java.util.Collections.singletonList;
 
 public final class CollectionHelper<T> {
 
-    private Codec<T> codec;
-    private CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
-    private MongoNamespace namespace;
+    private final Codec<T> codec;
+    private final CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
+    private final MongoNamespace namespace;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;

@@ -107,7 +107,7 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
         return new Runnable() {
             @Override
             public void run() {
-                final UnsafeByteArrayOutputStream outputStream = new UnsafeByteArrayOutputStream(5242880);
+                UnsafeByteArrayOutputStream outputStream = new UnsafeByteArrayOutputStream(5242880);
                 bucket.downloadToStream(GridFSMultiFileDownloadBenchmark.this.getFileName(fileId), outputStream);
                 fileService.submit(new Runnable() {
                     @Override

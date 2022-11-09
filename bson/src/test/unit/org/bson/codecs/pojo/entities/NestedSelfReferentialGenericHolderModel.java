@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public final class NestedSelfReferentialGenericHolderModel {
     private NestedSelfReferentialGenericModel<Boolean, Long, Double> nested;
 
@@ -45,7 +47,7 @@ public final class NestedSelfReferentialGenericHolderModel {
 
         NestedSelfReferentialGenericHolderModel that = (NestedSelfReferentialGenericHolderModel) o;
 
-        if (nested != null ? !nested.equals(that.nested) : that.nested != null) {
+        if (!Objects.equals(nested, that.nested)) {
             return false;
         }
 

@@ -274,9 +274,9 @@ public class JsonWriterTest {
     public void testInt64Shell() {
         List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "NumberLong(\"-9223372036854775808\")"),
                 new TestData<Long>(Integer.MIN_VALUE - 1L, "NumberLong(\"-2147483649\")"),
-                new TestData<Long>(Integer.MIN_VALUE + 0L, "NumberLong(-2147483648)"),
+                new TestData<Long>((long) Integer.MIN_VALUE, "NumberLong(-2147483648)"),
                 new TestData<Long>(0L, "NumberLong(0)"),
-                new TestData<Long>(Integer.MAX_VALUE + 0L, "NumberLong(2147483647)"),
+                new TestData<Long>((long) Integer.MAX_VALUE, "NumberLong(2147483647)"),
                 new TestData<Long>(Integer.MAX_VALUE + 1L, "NumberLong(\"2147483648\")"),
                 new TestData<Long>(Long.MAX_VALUE, "NumberLong(\"9223372036854775807\")"));
         for (final TestData<Long> cur : tests) {
@@ -294,9 +294,9 @@ public class JsonWriterTest {
     public void testInt64Relaxed() {
         List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
                 new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
-                new TestData<Long>(Integer.MIN_VALUE - 0L, "-2147483648"),
+                new TestData<Long>((long) Integer.MIN_VALUE, "-2147483648"),
                 new TestData<Long>(0L, "0"),
-                new TestData<Long>(Integer.MAX_VALUE + 0L, "2147483647"),
+                new TestData<Long>((long) Integer.MAX_VALUE, "2147483647"),
                 new TestData<Long>(Integer.MAX_VALUE + 1L, "2147483648"),
                 new TestData<Long>(Long.MAX_VALUE, "9223372036854775807"));
 

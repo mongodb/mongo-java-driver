@@ -114,7 +114,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldEncodedNestedMapsListsAndDocuments() {
-        byte[] zeroOneDocumentBytes = new byte[]{19, 0, 0, 0, 16, 48, 0, 0, 0, 0, 0, 16, 49, 0, 1, 0, 0, 0, 0}; //  {"0" : 0, "1", 1}
+        byte[] zeroOneDocumentBytes = {19, 0, 0, 0, 16, 48, 0, 0, 0, 0, 0, 16, 49, 0, 1, 0, 0, 0, 0}; //  {"0" : 0, "1", 1}
         Map<String, Object> zeroOneMap = new HashMap<String, Object>();
         zeroOneMap.put("0", 0);
         zeroOneMap.put("1", 1);

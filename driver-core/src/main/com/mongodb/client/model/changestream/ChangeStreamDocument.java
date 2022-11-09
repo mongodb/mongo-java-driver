@@ -465,43 +465,40 @@ public final class ChangeStreamDocument<TDocument> {
 
         ChangeStreamDocument<?> that = (ChangeStreamDocument<?>) o;
 
-        if (resumeToken != null ? !resumeToken.equals(that.resumeToken) : that.resumeToken != null) {
+        if (!Objects.equals(resumeToken, that.resumeToken)) {
             return false;
         }
-        if (namespaceDocument != null ? !namespaceDocument.equals(that.namespaceDocument) : that.namespaceDocument != null) {
+        if (!Objects.equals(namespaceDocument, that.namespaceDocument)) {
             return false;
         }
-        if (destinationNamespaceDocument != null
-                ? !destinationNamespaceDocument.equals(that.destinationNamespaceDocument)
-                : that.destinationNamespaceDocument != null) {
+        if (!Objects.equals(destinationNamespaceDocument, that.destinationNamespaceDocument)) {
             return false;
         }
-        if (fullDocument != null ? !fullDocument.equals(that.fullDocument) : that.fullDocument != null) {
+        if (!Objects.equals(fullDocument, that.fullDocument)) {
             return false;
         }
-        if (fullDocumentBeforeChange != null ? !fullDocumentBeforeChange.equals(that.fullDocumentBeforeChange)
-                : that.fullDocumentBeforeChange != null) {
+        if (!Objects.equals(fullDocumentBeforeChange, that.fullDocumentBeforeChange)) {
             return false;
         }
-        if (documentKey != null ? !documentKey.equals(that.documentKey) : that.documentKey != null) {
+        if (!Objects.equals(documentKey, that.documentKey)) {
             return false;
         }
         if (!Objects.equals(operationTypeString, that.operationTypeString)) {
             return false;
         }
-        if (clusterTime != null ? !clusterTime.equals(that.clusterTime) : that.clusterTime != null) {
+        if (!Objects.equals(clusterTime, that.clusterTime)) {
             return false;
         }
-        if (updateDescription != null ? !updateDescription.equals(that.updateDescription) : that.updateDescription != null) {
+        if (!Objects.equals(updateDescription, that.updateDescription)) {
             return false;
         }
-        if (txnNumber != null ? !txnNumber.equals(that.txnNumber) : that.txnNumber != null) {
+        if (!Objects.equals(txnNumber, that.txnNumber)) {
             return false;
         }
-        if (lsid != null ? !lsid.equals(that.lsid) : that.lsid != null) {
+        if (!Objects.equals(lsid, that.lsid)) {
             return false;
         }
-        if (wallTime != null ? !wallTime.equals(that.wallTime) : that.wallTime != null) {
+        if (!Objects.equals(wallTime, that.wallTime)) {
             return false;
         }
 

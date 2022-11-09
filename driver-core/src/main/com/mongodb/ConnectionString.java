@@ -969,7 +969,7 @@ public class ConnectionString {
                                     ? "secondaryPreferred" : "primary";
             optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn(String.format("Uri option '%s' has been deprecated, use 'readpreference' instead.", legacySecondaryOkOption));
+                LOGGER.warn(format("Uri option '%s' has been deprecated, use 'readpreference' instead.", legacySecondaryOkOption));
             }
         }
         // handle legacy j settings
@@ -1523,7 +1523,7 @@ public class ConnectionString {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ConnectionString that = (ConnectionString) o;
+        ConnectionString that = (ConnectionString) o;
         return isSrvProtocol == that.isSrvProtocol
                 && Objects.equals(directConnection, that.directConnection)
                 && Objects.equals(credential, that.credential)

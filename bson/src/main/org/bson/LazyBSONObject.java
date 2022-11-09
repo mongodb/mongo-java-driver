@@ -292,7 +292,7 @@ public class LazyBSONObject implements BSONObject {
      * @return then entry set
      */
     public Set<Map.Entry<String, Object>> entrySet() {
-        final List<Map.Entry<String, Object>> entries = new ArrayList<Map.Entry<String, Object>>();
+        List<Map.Entry<String, Object>> entries = new ArrayList<Map.Entry<String, Object>>();
         BsonBinaryReader reader = getBsonReader();
         try {
             reader.readStartDocument();

@@ -82,7 +82,6 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -166,7 +165,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testConventionsCustom() {
-        List<Convention> conventions = Collections.<Convention>singletonList(
+        List<Convention> conventions = singletonList(
                 new Convention() {
                     @Override
                     public void apply(final ClassModelBuilder<?> classModelBuilder) {
@@ -479,7 +478,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testCustomRegisteredPropertyCodecOmittedValue() {
-        CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.<String>empty());
+        CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.empty());
         roundTrip(getPojoCodecProviderBuilder(CustomPropertyCodecOptionalModel.class).register(new OptionalPropertyCodecProvider()),
                 model, "{'optionalField': null}");
     }
@@ -638,7 +637,7 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test
     public void testRoundTripWithoutBsonAnnotation() {
-        roundTrip(getPojoCodecProviderBuilder(BsonRepresentationModel.class).conventions(Arrays.asList(CLASS_AND_PROPERTY_CONVENTION)),
+        roundTrip(getPojoCodecProviderBuilder(BsonRepresentationModel.class).conventions(asList(CLASS_AND_PROPERTY_CONVENTION)),
                 new BsonRepresentationModel("hello", 1), "{'_id': 'hello', 'age': 1}");
     }
 

@@ -18,6 +18,7 @@ package org.bson.codecs.pojo.entities.conventions;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class MapGetterMutableModel {
 
@@ -45,7 +46,7 @@ public class MapGetterMutableModel {
         }
 
         MapGetterMutableModel that = (MapGetterMutableModel) o;
-        return mapField != null ? mapField.equals(that.mapField) : that.mapField == null;
+        return Objects.equals(mapField, that.mapField);
     }
 
     @Override

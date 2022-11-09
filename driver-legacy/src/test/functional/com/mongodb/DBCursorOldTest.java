@@ -32,6 +32,7 @@ import java.util.concurrent.TimeoutException;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -95,7 +96,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         assertEquals(firstDBObject, cur.curr());
         assertEquals(1, cur.numSeen());
 
-        assertEquals(null, cur.tryNext());
+        assertNull(cur.tryNext());
         assertEquals(firstDBObject, cur.curr());
         assertEquals(1, cur.numSeen());
 
@@ -104,7 +105,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         assertEquals(secondDBObject, cur.curr());
         assertEquals(2, cur.numSeen());
 
-        assertEquals(null, cur.tryNext());
+        assertNull(cur.tryNext());
         assertEquals(secondDBObject, cur.curr());
         assertEquals(2, cur.numSeen());
 
@@ -120,11 +121,11 @@ public class DBCursorOldTest extends DatabaseTestCase {
             c.save(new BasicDBObject("x", i), WriteConcern.ACKNOWLEDGED);
         }
 
-        final DBCursor cur = c.find()
+        DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
                               .cursorType(CursorType.Tailable);
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
             @Override
             public Integer call() throws Exception {
@@ -165,11 +166,11 @@ public class DBCursorOldTest extends DatabaseTestCase {
             c.save(new BasicDBObject("x", i), WriteConcern.ACKNOWLEDGED);
         }
 
-        final DBCursor cur = c.find()
+        DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
                               .cursorType(CursorType.Tailable);
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
             @Override
             public Integer call() {

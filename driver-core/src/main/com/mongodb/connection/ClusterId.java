@@ -19,6 +19,8 @@ package com.mongodb.connection;
 import com.mongodb.internal.VisibleForTesting;
 import org.bson.types.ObjectId;
 
+import java.util.Objects;
+
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
@@ -88,7 +90,7 @@ public final class ClusterId {
         if (!value.equals(clusterId.value)) {
             return false;
         }
-        if (description != null ? !description.equals(clusterId.description) : clusterId.description != null) {
+        if (!Objects.equals(description, clusterId.description)) {
             return false;
         }
 

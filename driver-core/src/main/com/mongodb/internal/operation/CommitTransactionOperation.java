@@ -148,7 +148,7 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     CommandCreator getCommandCreator() {
-        final CommandCreator creator = new CommandCreator() {
+        CommandCreator creator = new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 BsonDocument command = CommitTransactionOperation.super.getCommandCreator().create(serverDescription,
@@ -186,8 +186,8 @@ public class CommitTransactionOperation extends TransactionOperation {
             @Override
             public BsonDocument apply(final BsonDocument command) {
                 WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-                if (retryWriteConcern.getWTimeout(TimeUnit.MILLISECONDS) == null) {
-                    retryWriteConcern = retryWriteConcern.withWTimeout(10000, TimeUnit.MILLISECONDS);
+                if (retryWriteConcern.getWTimeout(MILLISECONDS) == null) {
+                    retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
                 }
                 command.put("writeConcern", retryWriteConcern.asDocument());
                 if (recoveryToken != null) {

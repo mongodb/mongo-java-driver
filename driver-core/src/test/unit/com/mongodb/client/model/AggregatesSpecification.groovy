@@ -105,11 +105,11 @@ class AggregatesSpecification extends Specification {
     @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should render $accumulator'() {
         given:
-        def initFunction = 'function() { return { count : 0, sum : 0 } }';
-        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def initFunction = 'function() { return { count : 0, sum : 0 } }'
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }'
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
 
         expect:
         toBson(group(null, accumulator('test', initFunction, accumulateFunction, mergeFunction))) ==
@@ -1231,12 +1231,12 @@ class AggregatesSpecification extends Specification {
     @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should test equals for accumulator operator'() {
         given:
-        def initFunction = 'function() { return { count : 0, sum : 0 } }';
-        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
+        def initFunction = 'function() { return { count : 0, sum : 0 } }'
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }'
         def initArgs = ['0', '0']
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
 
         expect:
         accumulator('test', initFunction, accumulateFunction, mergeFunction)
@@ -1256,12 +1256,12 @@ class AggregatesSpecification extends Specification {
     @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should test hashCode for accumulator operator'() {
         given:
-        def initFunction = 'function() { return { count : 0, sum : 0 } }';
-        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
+        def initFunction = 'function() { return { count : 0, sum : 0 } }'
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }'
         def initArgs = ['0', '0']
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
 
         expect:
         accumulator('test', initFunction, accumulateFunction, mergeFunction).hashCode() ==

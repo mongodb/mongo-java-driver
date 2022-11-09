@@ -77,7 +77,7 @@ public class BsonExtraElementsModel {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final BsonExtraElementsModel that = (BsonExtraElementsModel) o;
+        BsonExtraElementsModel that = (BsonExtraElementsModel) o;
         return Objects.equals(integerField, that.integerField)
                 && Objects.equals(stringField, that.stringField)
                 && Objects.equals(extraElements, that.extraElements);

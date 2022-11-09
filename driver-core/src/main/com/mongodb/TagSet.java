@@ -108,7 +108,7 @@ public final class TagSet implements Iterable<Tag> {
             return false;
         }
 
-        final TagSet tags = (TagSet) o;
+        TagSet tags = (TagSet) o;
 
         if (!wrapped.equals(tags.wrapped)) {
             return false;

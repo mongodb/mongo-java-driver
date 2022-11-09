@@ -30,9 +30,9 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.json.JsonObject;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
+import org.bson.json.JsonObject;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -47,9 +47,9 @@ import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
@@ -84,7 +84,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         try {
             collection.findOneAndUpdate(new Document(), new Document());
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().equals("Invalid BSON document for an update. The document may not be empty."));
+            assertEquals("Invalid BSON document for an update. The document may not be empty.", e.getMessage());
             exceptionFound = true;
         }
         assertTrue(exceptionFound);

@@ -20,8 +20,8 @@ import org.bson.Document
 import spock.lang.Specification
 
 class FunctionalSpecification extends Specification {
-    protected MongoDatabase database;
-    protected MongoCollection<Document> collection;
+    protected MongoDatabase database
+    protected MongoCollection<Document> collection
 
     def setup() {
         database = Fixture.getMongoClient().getDatabase(Fixture.getDefaultDatabaseName())

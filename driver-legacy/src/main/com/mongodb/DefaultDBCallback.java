@@ -53,7 +53,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public BSONObject create(final boolean array, final List<String> path) {
-        return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : Collections.<String>emptyList());
+        return array ? new BasicDBList() : objectFactory.getInstance(path != null ? path : Collections.emptyList());
     }
 
     @Override

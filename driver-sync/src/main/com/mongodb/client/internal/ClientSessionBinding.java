@@ -215,7 +215,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         }
     }
 
-    private final class SyncClientSessionContext extends ClientSessionContext implements SessionContext {
+    private final class SyncClientSessionContext extends ClientSessionContext {
 
         private final ClientSession clientSession;
 

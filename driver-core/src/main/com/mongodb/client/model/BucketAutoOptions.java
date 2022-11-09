@@ -20,6 +20,7 @@ import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Arrays.asList;
 
@@ -96,7 +97,7 @@ public class BucketAutoOptions {
 
         BucketAutoOptions that = (BucketAutoOptions) o;
 
-        if (output != null ? !output.equals(that.output) : that.output != null) {
+        if (!Objects.equals(output, that.output)) {
             return false;
         }
         return granularity == that.granularity;

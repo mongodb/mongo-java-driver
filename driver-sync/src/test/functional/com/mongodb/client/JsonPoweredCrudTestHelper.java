@@ -1002,7 +1002,7 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getBulkWriteResult(final BsonDocument collectionOptions, final BsonDocument arguments,
-                                    final @Nullable ClientSession clientSession) {
+                                    @Nullable final ClientSession clientSession) {
         List<WriteModel<BsonDocument>> writeModels = new ArrayList<WriteModel<BsonDocument>>();
         for (BsonValue bsonValue : arguments.getArray("requests")) {
             BsonDocument cur = bsonValue.asDocument();
@@ -1059,7 +1059,7 @@ public class JsonPoweredCrudTestHelper {
                 bulkWriteResult = getCollection(collectionOptions).bulkWrite(clientSession, writeModels, options);
             }
 
-            return toResult(bulkWriteResult, writeModels, Collections.<BulkWriteError>emptyList());
+            return toResult(bulkWriteResult, writeModels, Collections.emptyList());
         } catch (MongoBulkWriteException e) {
             BsonDocument result = toResult(e.getWriteResult(), writeModels, e.getWriteErrors());
             result.put("error", BsonBoolean.TRUE);

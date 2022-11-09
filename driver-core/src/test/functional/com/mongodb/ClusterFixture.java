@@ -118,8 +118,8 @@ public final class ClusterFixture {
     private static ConnectionString connectionString;
     private static Cluster cluster;
     private static Cluster asyncCluster;
-    private static Map<ReadPreference, ReadWriteBinding> bindingMap = new HashMap<ReadPreference, ReadWriteBinding>();
-    private static Map<ReadPreference, AsyncReadWriteBinding> asyncBindingMap = new HashMap<ReadPreference, AsyncReadWriteBinding>();
+    private static final Map<ReadPreference, ReadWriteBinding> BINDING_MAP = new HashMap<>();
+    private static final Map<ReadPreference, AsyncReadWriteBinding> ASYNC_BINDING_MAP = new HashMap<>();
 
     private static ServerVersion serverVersion;
     private static BsonDocument serverParameters;
@@ -143,7 +143,7 @@ public final class ClusterFixture {
 
     public static ServerVersion getServerVersion() {
         if (serverVersion == null) {
-            serverVersion = getVersion(new CommandReadOperation<BsonDocument>("admin",
+            serverVersion = getVersion(new CommandReadOperation<>("admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
                     .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(),
                             IgnorableRequestContext.INSTANCE)));
@@ -168,7 +168,7 @@ public final class ClusterFixture {
     }
 
     public static List<Integer> getVersionList(final String versionString) {
-        List<Integer> versionList = new ArrayList<Integer>();
+        List<Integer> versionList = new ArrayList<>();
         for (String s : versionString.split("\\.")) {
             versionList.add(Integer.valueOf(s));
         }
@@ -224,7 +224,7 @@ public final class ClusterFixture {
 
     public static synchronized boolean isDataLakeTest() {
         String isDataLakeSystemProperty = System.getProperty(DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME);
-        return isDataLakeSystemProperty != null && isDataLakeSystemProperty.equals("true");
+        return "true".equals(isDataLakeSystemProperty);
     }
 
     public static synchronized ConnectionString getConnectionString() {
@@ -241,7 +241,7 @@ public final class ClusterFixture {
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
                 new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
-            BsonDocument helloResult = new CommandReadOperation<BsonDocument>("admin",
+            BsonDocument helloResult = new CommandReadOperation<>("admin",
                     new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
                     ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(), IgnorableRequestContext.INSTANCE));
             if (helloResult.containsKey("setName")) {
@@ -299,15 +299,15 @@ public final class ClusterFixture {
     }
 
     private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
-        if (!bindingMap.containsKey(readPreference)) {
+        if (!BINDING_MAP.containsKey(readPreference)) {
             ReadWriteBinding binding = new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(),
                     IgnorableRequestContext.INSTANCE);
             if (serverVersionAtLeast(3, 6)) {
                 binding = new SessionBinding(binding);
             }
-            bindingMap.put(readPreference, binding);
+            BINDING_MAP.put(readPreference, binding);
         }
-        return bindingMap.get(readPreference);
+        return BINDING_MAP.get(readPreference);
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
@@ -336,15 +336,15 @@ public final class ClusterFixture {
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
-        if (!asyncBindingMap.containsKey(readPreference)) {
+        if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
             AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(),
                     IgnorableRequestContext.INSTANCE);
             if (serverVersionAtLeast(3, 6)) {
                 binding = new AsyncSessionBinding(binding);
             }
-            asyncBindingMap.put(readPreference, binding);
+            ASYNC_BINDING_MAP.put(readPreference, binding);
         }
-        return asyncBindingMap.get(readPreference);
+        return ASYNC_BINDING_MAP.get(readPreference);
     }
 
     public static synchronized Cluster getCluster() {
@@ -379,7 +379,7 @@ public final class ClusterFixture {
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                 streamFactory, streamFactory, credential, null, null, null,
-                Collections.<MongoCompressor>emptyList(), getServerApi());
+                Collections.emptyList(), getServerApi());
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
@@ -605,7 +605,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncWriteBinding binding) throws Throwable {
-        final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
+        FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
@@ -617,15 +617,15 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadBinding binding) throws Throwable {
-        final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
+        FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) throws Throwable {
-        List<FutureResultCallback<Void>> futures = new ArrayList<FutureResultCallback<Void>>();
+        List<FutureResultCallback<Void>> futures = new ArrayList<>();
         for (AsyncBatchCursor<T> batchCursor : batchCursors) {
-            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
             futures.add(futureResultCallback);
             loopCursor(batchCursor, block, futureResultCallback);
         }
@@ -635,7 +635,7 @@ public final class ClusterFixture {
     }
 
     public static <T> void loopCursor(final AsyncReadOperation<AsyncBatchCursor<T>> op, final Block<T> block) throws Throwable {
-        final FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+        FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
         loopCursor(executeAsync(op), block, futureResultCallback);
         futureResultCallback.get(TIMEOUT, SECONDS);
     }
@@ -668,8 +668,8 @@ public final class ClusterFixture {
     }
 
     public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) throws Throwable {
-        final List<T> results = new ArrayList<T>();
-        FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+        List<T> results = new ArrayList<>();
+        FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
         loopCursor(batchCursor, new Block<T>() {
             @Override
             public void apply(final T t) {
@@ -681,7 +681,7 @@ public final class ClusterFixture {
     }
 
     public static <T> List<T> collectCursorResults(final BatchCursor<T> batchCursor) {
-        List<T> results = new ArrayList<T>();
+        List<T> results = new ArrayList<>();
         while (batchCursor.hasNext()) {
             results.addAll(batchCursor.next());
         }
@@ -689,19 +689,19 @@ public final class ClusterFixture {
     }
 
     public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
-        final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
+        FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<>();
         binding.getWriteConnectionSource(futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static AsyncConnectionSource getReadConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
-        final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
+        FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<>();
         binding.getReadConnectionSource(futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static AsyncConnection getConnection(final AsyncConnectionSource source) throws Throwable {
-        final FutureResultCallback<AsyncConnection> futureResultCallback = new FutureResultCallback<AsyncConnection>();
+        FutureResultCallback<AsyncConnection> futureResultCallback = new FutureResultCallback<>();
         source.getConnection(futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }

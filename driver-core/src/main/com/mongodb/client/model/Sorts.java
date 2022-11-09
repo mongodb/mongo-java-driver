@@ -24,6 +24,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -160,7 +161,7 @@ public final class Sorts {
 
             CompoundSort that = (CompoundSort) o;
 
-            return sorts != null ? sorts.equals(that.sorts) : that.sorts == null;
+            return Objects.equals(sorts, that.sorts);
         }
 
         @Override

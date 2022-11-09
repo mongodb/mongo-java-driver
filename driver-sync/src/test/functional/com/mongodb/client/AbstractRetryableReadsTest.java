@@ -123,7 +123,7 @@ public abstract class AbstractRetryableReadsTest {
         assumeFalse("Skipping list index names tests", filename.startsWith("listIndexNames"));
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
-        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
         ConnectionString connectionString = getConnectionString();
         useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
@@ -262,7 +262,7 @@ public abstract class AbstractRetryableReadsTest {
 
     private void executeOperations(final BsonArray operations) {
         for (BsonValue cur : operations) {
-            final BsonDocument operation = cur.asDocument();
+            BsonDocument operation = cur.asDocument();
             BsonValue expectedResult = operation.get("result");
 
             try {

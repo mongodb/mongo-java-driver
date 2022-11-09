@@ -40,7 +40,7 @@ class PlainAuthenticator extends SaslAuthenticator {
     private static final String DEFAULT_PROTOCOL = "mongodb";
 
     PlainAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                       @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
     }
 
@@ -51,7 +51,7 @@ class PlainAuthenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient(final ServerAddress serverAddress) {
-        final MongoCredential credential = getMongoCredential();
+        MongoCredential credential = getMongoCredential();
         isTrue("mechanism is PLAIN", credential.getAuthenticationMechanism() == PLAIN);
         try {
             return Sasl.createSaslClient(new String[]{PLAIN.getMechanismName()},

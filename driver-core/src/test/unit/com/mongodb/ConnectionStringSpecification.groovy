@@ -196,15 +196,15 @@ class ConnectionStringSpecification extends Specification {
     def 'should correctly parse URI options for #type'() {
         expect:
         connectionString.getMinConnectionPoolSize() == 5
-        connectionString.getMaxConnectionPoolSize() == 10;
-        connectionString.getMaxWaitTime() == 150;
+        connectionString.getMaxConnectionPoolSize() == 10
+        connectionString.getMaxWaitTime() == 150
         connectionString.getMaxConnectionIdleTime() == 200
         connectionString.getMaxConnectionLifeTime() == 300
         connectionString.getMaxConnecting() == 1
-        connectionString.getConnectTimeout() == 2500;
-        connectionString.getSocketTimeout() == 5500;
-        connectionString.getWriteConcern() == new WriteConcern(1, 2500);
-        connectionString.getReadPreference() == primary() ;
+        connectionString.getConnectTimeout() == 2500
+        connectionString.getSocketTimeout() == 5500
+        connectionString.getWriteConcern() == new WriteConcern(1, 2500)
+        connectionString.getReadPreference() == primary()
         connectionString.getRequiredReplicaSetName() == 'test'
         connectionString.getSslEnabled()
         connectionString.getSslInvalidHostnameAllowed()
@@ -378,7 +378,7 @@ class ConnectionStringSpecification extends Specification {
     @Unroll
     def 'should throw IllegalArgumentException when the string #cause'() {
         when:
-        new ConnectionString(connectionString);
+        new ConnectionString(connectionString)
 
         then:
         thrown(IllegalArgumentException)
@@ -418,14 +418,14 @@ class ConnectionStringSpecification extends Specification {
         def connectionString = new ConnectionString('mongodb://localhost')
 
         then:
-        connectionString.getMaxConnectionPoolSize() == null;
-        connectionString.getMaxWaitTime() == null;
-        connectionString.getMaxConnecting() == null;
-        connectionString.getConnectTimeout() == null;
-        connectionString.getSocketTimeout() == null;
-        connectionString.getWriteConcern() == null;
-        connectionString.getReadConcern() == null;
-        connectionString.getReadPreference() == null;
+        connectionString.getMaxConnectionPoolSize() == null
+        connectionString.getMaxWaitTime() == null
+        connectionString.getMaxConnecting() == null
+        connectionString.getConnectTimeout() == null
+        connectionString.getSocketTimeout() == null
+        connectionString.getWriteConcern() == null
+        connectionString.getReadConcern() == null
+        connectionString.getReadPreference() == null
         connectionString.getRequiredReplicaSetName() == null
         connectionString.getSslEnabled() == null
         connectionString.getSslInvalidHostnameAllowed() == null
@@ -530,7 +530,7 @@ class ConnectionStringSpecification extends Specification {
     @Unroll
     def 'should correct parse read preference for #readPreference'() {
         expect:
-        uri.getReadPreference() == readPreference;
+        uri.getReadPreference() == readPreference
 
         where:
         uri                                                              | readPreference
@@ -569,7 +569,7 @@ class ConnectionStringSpecification extends Specification {
     @Unroll
     def 'should correct parse read concern for #readConcern'() {
         expect:
-        uri.getReadConcern() == readConcern;
+        uri.getReadConcern() == readConcern
 
         where:
         uri                                                                     | readConcern

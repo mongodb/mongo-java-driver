@@ -26,6 +26,7 @@ import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
+import java.util.Objects;
 
 /**
  * An abstract class for representations of GeoJSON geometry objects.
@@ -101,8 +102,7 @@ public abstract class Geometry {
 
         Geometry geometry = (Geometry) o;
 
-        if (coordinateReferenceSystem != null ? !coordinateReferenceSystem.equals(geometry.coordinateReferenceSystem)
-                                              : geometry.coordinateReferenceSystem != null) {
+        if (!Objects.equals(coordinateReferenceSystem, geometry.coordinateReferenceSystem)) {
             return false;
         }
 

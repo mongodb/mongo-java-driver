@@ -118,7 +118,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     protected ClusterType getClusterType(final String topologyType) {
-        return getClusterType(topologyType, Collections.<ServerDescription>emptyList());
+        return getClusterType(topologyType, Collections.emptyList());
     }
 
     protected ClusterType getClusterType(final String topologyType, final Collection<ServerDescription> serverDescriptions) {

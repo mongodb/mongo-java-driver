@@ -103,7 +103,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         enableMaxTimeFailPoint()
 
         when:
-        executeAsync(operation);
+        executeAsync(operation)
 
         then:
         thrown(MongoExecutionTimeoutException)

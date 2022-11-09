@@ -21,9 +21,9 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -38,7 +38,7 @@ class NativeAuthenticator extends Authenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
 
     NativeAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                        @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
     }
 

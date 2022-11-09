@@ -552,9 +552,9 @@ public class DB {
         boolean primaryRequired = !OBEDIENT_COMMANDS.contains(comString);
 
         if (primaryRequired) {
-            return ReadPreference.primary();
+            return primary();
         } else if (requestedPreference == null) {
-            return ReadPreference.primary();
+            return primary();
         } else {
             return requestedPreference;
         }

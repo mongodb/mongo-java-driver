@@ -19,6 +19,8 @@ package com.mongodb.client.model;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.util.Objects;
+
 /**
  * The options for a graphLookup aggregation pipeline stage
  *
@@ -101,14 +103,13 @@ public final class GraphLookupOptions {
 
         GraphLookupOptions that = (GraphLookupOptions) o;
 
-        if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null) {
+        if (!Objects.equals(maxDepth, that.maxDepth)) {
             return false;
         }
-        if (depthField != null ? !depthField.equals(that.depthField) : that.depthField != null) {
+        if (!Objects.equals(depthField, that.depthField)) {
             return false;
         }
-        return restrictSearchWithMatch != null ? restrictSearchWithMatch.equals(that.restrictSearchWithMatch)
-                : that.restrictSearchWithMatch == null;
+        return Objects.equals(restrictSearchWithMatch, that.restrictSearchWithMatch);
     }
 
     @Override

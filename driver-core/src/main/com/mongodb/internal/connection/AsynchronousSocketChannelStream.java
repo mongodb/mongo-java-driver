@@ -21,7 +21,6 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.Stream;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -41,7 +40,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class AsynchronousSocketChannelStream extends AsynchronousChannelStream implements Stream {
+public final class AsynchronousSocketChannelStream extends AsynchronousChannelStream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
     private final AsynchronousChannelGroup group;
@@ -101,7 +100,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     }
 
     private class OpenCompletionHandler implements CompletionHandler<Void, Object>  {
-        private AtomicReference<AsyncCompletionHandler<Void>> handlerReference;
+        private final AtomicReference<AsyncCompletionHandler<Void>> handlerReference;
         private final Queue<SocketAddress> socketAddressQueue;
         private final AsynchronousSocketChannel attemptConnectionChannel;
 

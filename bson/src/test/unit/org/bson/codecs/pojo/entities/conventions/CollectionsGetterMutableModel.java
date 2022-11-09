@@ -18,6 +18,7 @@ package org.bson.codecs.pojo.entities.conventions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CollectionsGetterMutableModel {
 
@@ -45,7 +46,7 @@ public class CollectionsGetterMutableModel {
         }
 
         CollectionsGetterMutableModel that = (CollectionsGetterMutableModel) o;
-        return listField != null ? listField.equals(that.listField) : that.listField == null;
+        return Objects.equals(listField, that.listField);
     }
 
     @Override

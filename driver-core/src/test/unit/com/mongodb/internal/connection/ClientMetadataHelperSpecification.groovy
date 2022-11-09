@@ -144,8 +144,8 @@ class ClientMetadataHelperSpecification extends Specification {
     }
 
     def encode(final BsonDocument document) {
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
-        new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
+        BasicOutputBuffer buffer = new BasicOutputBuffer()
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build())
         buffer.toByteArray()
     }
 

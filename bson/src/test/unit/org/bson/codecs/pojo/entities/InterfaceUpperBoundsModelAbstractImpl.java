@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public class InterfaceUpperBoundsModelAbstractImpl extends InterfaceUpperBoundsModelAbstract {
     private String name;
     private InterfaceModelImpl nestedModel;
@@ -57,10 +59,10 @@ public class InterfaceUpperBoundsModelAbstractImpl extends InterfaceUpperBoundsM
 
         InterfaceUpperBoundsModelAbstractImpl that = (InterfaceUpperBoundsModelAbstractImpl) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) {
+        if (!Objects.equals(name, that.name)) {
             return false;
         }
-        return nestedModel != null ? nestedModel.equals(that.nestedModel) : that.nestedModel == null;
+        return Objects.equals(nestedModel, that.nestedModel);
     }
 
     @Override

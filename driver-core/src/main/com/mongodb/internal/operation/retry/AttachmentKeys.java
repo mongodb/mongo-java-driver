@@ -91,7 +91,7 @@ public final class AttachmentKeys {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final DefaultAttachmentKey<?> that = (DefaultAttachmentKey<?>) o;
+            DefaultAttachmentKey<?> that = (DefaultAttachmentKey<?>) o;
             return key.equals(that.key);
         }
 

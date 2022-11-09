@@ -55,7 +55,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         def clientSession = getMongoClient().startSession()
 
         expect:
-        clientSession.getOriginator() == getMongoClient().getDelegate();
+        clientSession.getOriginator() == getMongoClient().getDelegate()
         clientSession.isCausallyConsistent()
         clientSession.getOptions() == ClientSessionOptions.builder()
                 .defaultTransactionOptions(TransactionOptions.builder()
@@ -282,16 +282,16 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                 .build())
         try {
             for (int i = 0; i < 16; i++) {
-                Document document = new Document('_id', i);
+                Document document = new Document('_id', i)
                 collection.insertOne(clientSession, document)
                 Document foundDocument = collection
                         .withReadPreference(ReadPreference.secondaryPreferred()) // read from secondary if available
                         .withReadConcern(readConcern)
                         .find(clientSession, document)
                         .maxTime(30, TimeUnit.SECONDS)  // to avoid the test running forever in case replication is broken
-                        .first();
+                        .first()
                 if (foundDocument == null) {
-                    Assert.fail('Should have found recently inserted document on secondary with causal consistency enabled');
+                    Assert.fail('Should have found recently inserted document on secondary with causal consistency enabled')
                 }
             }
         } finally {

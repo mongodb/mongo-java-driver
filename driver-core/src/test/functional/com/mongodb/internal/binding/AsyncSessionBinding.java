@@ -19,8 +19,8 @@ package com.mongodb.internal.binding;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
@@ -119,7 +119,7 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     }
 
     private class SessionBindingAsyncConnectionSource implements AsyncConnectionSource {
-        private AsyncConnectionSource wrapped;
+        private final AsyncConnectionSource wrapped;
 
         SessionBindingAsyncConnectionSource(final AsyncConnectionSource wrapped) {
             this.wrapped = wrapped;

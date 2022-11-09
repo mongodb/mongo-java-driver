@@ -92,7 +92,7 @@ public class PojoQuickTour {
         collection.insertMany(people);
         System.out.println("total # of people " + collection.countDocuments());
 
-        System.out.println("");
+        System.out.println();
         // lets get all the documents in the collection and print them out
         Consumer<Person> printBlock = new Consumer<Person>() {
             @Override
@@ -103,25 +103,25 @@ public class PojoQuickTour {
 
         collection.find().forEach(printBlock);
 
-        System.out.println("");
+        System.out.println();
         // now use a query to get 1 document out
         somebody = collection.find(eq("address.city", "Wimborne")).first();
         System.out.println(somebody);
 
-        System.out.println("");
+        System.out.println();
         // now lets find every over 30
         collection.find(gt("age", 30)).forEach(printBlock);
 
-        System.out.println("");
+        System.out.println();
         // Update One
         collection.updateOne(eq("name", "Ada Byron"), combine(set("age", 23), set("name", "Ada Lovelace")));
 
-        System.out.println("");
+        System.out.println();
         // Update Many
         UpdateResult updateResult = collection.updateMany(not(eq("zip", null)), set("zip", null));
         System.out.println(updateResult.getModifiedCount());
 
-        System.out.println("");
+        System.out.println();
         // Replace One
         updateResult = collection.replaceOne(eq("name", "Ada Lovelace"), ada);
         System.out.println(updateResult.getModifiedCount());

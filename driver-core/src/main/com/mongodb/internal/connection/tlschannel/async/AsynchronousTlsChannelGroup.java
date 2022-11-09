@@ -19,14 +19,14 @@
 
 package com.mongodb.internal.connection.tlschannel.async;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.NeedsReadException;
 import com.mongodb.internal.connection.tlschannel.NeedsTaskException;
 import com.mongodb.internal.connection.tlschannel.NeedsWriteException;
 import com.mongodb.internal.connection.tlschannel.TlsChannel;
 import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
 import com.mongodb.internal.connection.tlschannel.util.Util;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
@@ -70,7 +70,7 @@ public class AsynchronousTlsChannelGroup {
     /** The main executor of the group has a queue, whose size is a multiple of the number of CPUs. */
     private static final int queueLengthMultiplier = 32;
 
-    private static AtomicInteger globalGroupCount = new AtomicInteger();
+    private static final AtomicInteger globalGroupCount = new AtomicInteger();
 
     class RegisteredSocket {
 
@@ -180,21 +180,21 @@ public class AsynchronousTlsChannelGroup {
 
     private volatile Shutdown shutdown = Shutdown.No;
 
-    private LongAdder selectionCount = new LongAdder();
+    private final LongAdder selectionCount = new LongAdder();
 
-    private LongAdder startedReads = new LongAdder();
-    private LongAdder startedWrites = new LongAdder();
-    private LongAdder successfulReads = new LongAdder();
-    private LongAdder successfulWrites = new LongAdder();
-    private LongAdder failedReads = new LongAdder();
-    private LongAdder failedWrites = new LongAdder();
-    private LongAdder cancelledReads = new LongAdder();
-    private LongAdder cancelledWrites = new LongAdder();
+    private final LongAdder startedReads = new LongAdder();
+    private final LongAdder startedWrites = new LongAdder();
+    private final LongAdder successfulReads = new LongAdder();
+    private final LongAdder successfulWrites = new LongAdder();
+    private final LongAdder failedReads = new LongAdder();
+    private final LongAdder failedWrites = new LongAdder();
+    private final LongAdder cancelledReads = new LongAdder();
+    private final LongAdder cancelledWrites = new LongAdder();
 
     private final ConcurrentHashMap<RegisteredSocket, Boolean> registrations = new ConcurrentHashMap<>();
 
-    private LongAdder currentReads = new LongAdder();
-    private LongAdder currentWrites = new LongAdder();
+    private final LongAdder currentReads = new LongAdder();
+    private final LongAdder currentWrites = new LongAdder();
 
     /**
      * Creates an instance of this class.

@@ -215,9 +215,9 @@ public class ConcurrentPoolTest {
         assertEquals(2, pool.getAvailableCount());
         assertEquals(0, pool.getInUseCount());
         assertTrue(t1.isClosed());
-        assertTrue(!t2.isClosed());
+        assertFalse(t2.isClosed());
         assertTrue(t3.isClosed());
-        assertTrue(!t4.isClosed());
+        assertFalse(t4.isClosed());
     }
 
     class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {

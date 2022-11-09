@@ -46,7 +46,7 @@ public class AbortTransactionOperation extends TransactionOperation {
 
     @Override
     CommandOperationHelper.CommandCreator getCommandCreator() {
-        final CommandOperationHelper.CommandCreator creator = super.getCommandCreator();
+        CommandOperationHelper.CommandCreator creator = super.getCommandCreator();
         if (recoveryToken != null) {
             return new CommandOperationHelper.CommandCreator() {
                 @Override

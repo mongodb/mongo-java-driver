@@ -26,16 +26,16 @@ class DBEncoderDecoderDBRefSpecification extends Specification {
 
     def 'should encode and decode DBRefs'() {
         given:
-        DBRef reference = new DBRef('coll', 'hello world');
-        DBObject document = new BasicDBObject('!', reference);
-        OutputBuffer buffer = new BasicOutputBuffer();
+        DBRef reference = new DBRef('coll', 'hello world')
+        DBObject document = new BasicDBObject('!', reference)
+        OutputBuffer buffer = new BasicOutputBuffer()
 
         when:
-        DefaultDBEncoder.FACTORY.create().writeObject(buffer, document);
-        DefaultDBCallback callback = new DefaultDBCallback(null);
-        BSONDecoder decoder = new BasicBSONDecoder();
-        decoder.decode(buffer.toByteArray(), callback);
-        DBRef decoded = ((DBObject) callback.get()).get('!');
+        DefaultDBEncoder.FACTORY.create().writeObject(buffer, document)
+        DefaultDBCallback callback = new DefaultDBCallback(null)
+        BSONDecoder decoder = new BasicBSONDecoder()
+        decoder.decode(buffer.toByteArray(), callback)
+        DBRef decoded = ((DBObject) callback.get()).get('!')
 
         then:
         decoded.databaseName == null
@@ -45,16 +45,16 @@ class DBEncoderDecoderDBRefSpecification extends Specification {
 
     def 'should encode and decode DBRefs with a database name'() {
         given:
-        DBRef reference = new DBRef('db', 'coll', 'hello world');
-        DBObject document = new BasicDBObject('!', reference);
-        OutputBuffer buffer = new BasicOutputBuffer();
+        DBRef reference = new DBRef('db', 'coll', 'hello world')
+        DBObject document = new BasicDBObject('!', reference)
+        OutputBuffer buffer = new BasicOutputBuffer()
 
         when:
-        DefaultDBEncoder.FACTORY.create().writeObject(buffer, document);
-        DefaultDBCallback callback = new DefaultDBCallback(null);
-        BSONDecoder decoder = new BasicBSONDecoder();
-        decoder.decode(buffer.toByteArray(), callback);
-        DBRef decoded = ((DBObject) callback.get()).get('!');
+        DefaultDBEncoder.FACTORY.create().writeObject(buffer, document)
+        DefaultDBCallback callback = new DefaultDBCallback(null)
+        BSONDecoder decoder = new BasicBSONDecoder()
+        decoder.decode(buffer.toByteArray(), callback)
+        DBRef decoded = ((DBObject) callback.get()).get('!')
 
         then:
         decoded.databaseName == 'db'

@@ -139,7 +139,7 @@ public class GridFSTest extends DatabaseTestCase {
         in.put("meta", 5);
         in.save();
         GridFSDBFile out = gridFS.findOne(new BasicDBObject("_id", in.getId()));
-        assertTrue(out.get("meta").equals(5));
+        assertEquals(5, out.get("meta"));
     }
 
     @Test
@@ -255,7 +255,7 @@ public class GridFSTest extends DatabaseTestCase {
         position += toSkip;
         assertEquals((byte) (position++ % 251), (byte) inputStream.read());
 
-        skipped = inputStream.skip(2 * fileSize);
+        skipped = inputStream.skip(2L * fileSize);
         assertEquals(fileSize - position, skipped);
         assertEquals(-1, inputStream.read());
     }

@@ -103,7 +103,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
 
     public void sendNotification(final ServerAddress serverAddress, final long roundTripTimeMillis, final ServerType serverType,
             final List<ServerAddress> hosts, final String setName) {
-        sendNotification(serverAddress, roundTripTimeMillis, serverType, hosts, setName, (ObjectId) null);
+        sendNotification(serverAddress, roundTripTimeMillis, serverType, hosts, setName, null);
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
@@ -113,28 +113,28 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName, final ObjectId electionId) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.emptyList(),
                                                              true, setName, electionId, null, 1)
                                                   .build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final long roundTripTimeMillis, final ServerType serverType,
             final List<ServerAddress> hosts, final String setName, final ObjectId electionId) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.emptyList(),
                 true, setName, electionId, null, roundTripTimeMillis)
                 .build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName, final ObjectId electionId, final ServerAddress trueAddress) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.emptyList(),
                                                              true, setName, electionId, trueAddress, 1)
                                                   .build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final boolean ok) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.emptyList(),
                                                              ok, null, null, null, 1)
                                                   .build());
     }

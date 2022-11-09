@@ -88,7 +88,7 @@ public class BsonTypeClassMap {
      * Construct an instance with the default mappings.
      */
     public BsonTypeClassMap() {
-        this(Collections.<BsonType, Class<?>>emptyMap());
+        this(Collections.emptyMap());
     }
 
     Set<BsonType> keys() {
@@ -137,7 +137,7 @@ public class BsonTypeClassMap {
             return false;
         }
 
-        final BsonTypeClassMap that = (BsonTypeClassMap) o;
+        BsonTypeClassMap that = (BsonTypeClassMap) o;
 
         if (!map.equals(that.map)) {
             return false;

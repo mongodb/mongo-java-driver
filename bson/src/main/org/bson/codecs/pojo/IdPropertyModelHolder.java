@@ -18,6 +18,8 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
 
+import java.util.Objects;
+
 import static java.lang.String.format;
 
 final class IdPropertyModelHolder<I> {
@@ -64,10 +66,10 @@ final class IdPropertyModelHolder<I> {
 
         IdPropertyModelHolder<?> that = (IdPropertyModelHolder<?>) o;
 
-        if (propertyModel != null ? !propertyModel.equals(that.propertyModel) : that.propertyModel != null) {
+        if (!Objects.equals(propertyModel, that.propertyModel)) {
             return false;
         }
-        return idGenerator != null ? idGenerator.equals(that.idGenerator) : that.idGenerator == null;
+        return Objects.equals(idGenerator, that.idGenerator);
     }
 
     @Override

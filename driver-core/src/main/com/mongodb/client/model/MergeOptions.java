@@ -20,6 +20,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Options to control the behavior of the $merge aggregation stage
@@ -219,16 +220,16 @@ public final class MergeOptions {
 
         MergeOptions that = (MergeOptions) o;
 
-        if (uniqueIdentifier != null ? !uniqueIdentifier.equals(that.uniqueIdentifier) : that.uniqueIdentifier != null) {
+        if (!Objects.equals(uniqueIdentifier, that.uniqueIdentifier)) {
             return false;
         }
         if (whenMatched != that.whenMatched) {
             return false;
         }
-        if (variables != null ? !variables.equals(that.variables) : that.variables != null) {
+        if (!Objects.equals(variables, that.variables)) {
             return false;
         }
-        if (whenMatchedPipeline != null ? !whenMatchedPipeline.equals(that.whenMatchedPipeline) : that.whenMatchedPipeline != null) {
+        if (!Objects.equals(whenMatchedPipeline, that.whenMatchedPipeline)) {
             return false;
         }
         if (whenNotMatched != that.whenNotMatched) {

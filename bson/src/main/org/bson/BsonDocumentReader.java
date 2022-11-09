@@ -42,7 +42,6 @@ public class BsonDocumentReader extends AbstractBsonReader {
      * @param document the document to read from
      */
     public BsonDocumentReader(final BsonDocument document) {
-        super();
         setContext(new Context(null, BsonContextType.TOP_LEVEL, document));
         currentValue = document;
     }
@@ -255,7 +254,6 @@ public class BsonDocumentReader extends AbstractBsonReader {
          * Construct an instance.
          */
         protected Mark() {
-            super();
             currentValue = BsonDocumentReader.this.currentValue;
             context = BsonDocumentReader.this.getContext();
             context.mark();
@@ -272,8 +270,8 @@ public class BsonDocumentReader extends AbstractBsonReader {
 
     private static class BsonDocumentMarkableIterator<T> implements Iterator<T> {
 
-        private Iterator<T> baseIterator;
-        private List<T> markIterator = new ArrayList<T>();
+        private final Iterator<T> baseIterator;
+        private final List<T> markIterator = new ArrayList<T>();
         private int curIndex; // index of the cursor
         private boolean marking;
 

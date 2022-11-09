@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getServersByPredicate;
@@ -270,13 +271,13 @@ public class ClusterDescription {
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = srvResolutionException != null ? srvResolutionException.getClass() : null;
         Class<?> thatExceptionClass = that.srvResolutionException != null ? that.srvResolutionException.getClass() : null;
-        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+        if (!Objects.equals(thisExceptionClass, thatExceptionClass)) {
             return false;
         }
 
         String thisExceptionMessage = srvResolutionException != null ? srvResolutionException.getMessage() : null;
         String thatExceptionMessage = that.srvResolutionException != null ? that.srvResolutionException.getMessage() : null;
-        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+        if (!Objects.equals(thisExceptionMessage, thatExceptionMessage)) {
             return false;
         }
 

@@ -160,10 +160,10 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
     private void importJsonFiles() throws InterruptedException {
         ExecutorService importService = Executors.newFixedThreadPool(FILE_READING_THREAD_POOL_SIZE);
 
-        final CountDownLatch latch = new CountDownLatch(100);
+        CountDownLatch latch = new CountDownLatch(100);
 
         for (int i = 0; i < 100; i++) {
-            final int fileId = i;
+            int fileId = i;
             importService.submit(new Runnable() {
                 @Override
                 public void run() {

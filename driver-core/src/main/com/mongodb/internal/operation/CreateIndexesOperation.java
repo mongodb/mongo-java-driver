@@ -98,7 +98,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             if (request.getName() != null) {
                 indexNames.add(request.getName());
             } else {
-                indexNames.add(IndexHelper.generateIndexName(request.getKeys()));
+                indexNames.add(generateIndexName(request.getKeys()));
             }
         }
         return indexNames;

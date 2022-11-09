@@ -18,6 +18,8 @@ package org.bson.codecs.pojo.entities;
 
 import org.bson.types.ObjectId;
 
+import java.util.Objects;
+
 public class SimpleIdModel {
     private ObjectId id;
     private Integer integerField;
@@ -71,13 +73,13 @@ public class SimpleIdModel {
 
         SimpleIdModel that = (SimpleIdModel) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (!Objects.equals(id, that.id)) {
             return false;
         }
-        if (integerField != null ? !integerField.equals(that.integerField) : that.integerField != null) {
+        if (!Objects.equals(integerField, that.integerField)) {
             return false;
         }
-        return stringField != null ? stringField.equals(that.stringField) : that.stringField == null;
+        return Objects.equals(stringField, that.stringField);
     }
 
     @Override

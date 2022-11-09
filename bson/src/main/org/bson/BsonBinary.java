@@ -137,7 +137,7 @@ public class BsonBinary extends BsonValue {
     public UUID asUuid(final UuidRepresentation uuidRepresentation) {
         Assertions.notNull("uuidRepresentation", uuidRepresentation);
 
-        final byte uuidType = uuidRepresentation == UuidRepresentation.STANDARD
+        byte uuidType = uuidRepresentation == UuidRepresentation.STANDARD
                 ? BsonBinarySubType.UUID_STANDARD.getValue()
                 : BsonBinarySubType.UUID_LEGACY.getValue();
 
@@ -197,7 +197,7 @@ public class BsonBinary extends BsonValue {
 
     @Override
     public int hashCode() {
-        int result = (int) type;
+        int result = type;
         result = 31 * result + Arrays.hashCode(data);
         return result;
     }

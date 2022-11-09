@@ -30,7 +30,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
 
     DBCollectionObjectFactory() {
-        this(Collections.<List<String>, Class<? extends DBObject>>emptyMap());
+        this(Collections.emptyMap());
     }
 
     private DBCollectionObjectFactory(final Map<List<String>, Class<? extends DBObject>> pathToClassMap) {
@@ -39,7 +39,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
 
     @Override
     public DBObject getInstance() {
-        return getInstance(Collections.<String>emptyList());
+        return getInstance(Collections.emptyList());
     }
 
     @Override
@@ -59,7 +59,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     }
 
     public DBCollectionObjectFactory update(final Class<? extends DBObject> aClass) {
-        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, Collections.<String>emptyList()));
+        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, Collections.emptyList()));
     }
 
     public DBCollectionObjectFactory update(final Class<? extends DBObject> aClass, final List<String> path) {

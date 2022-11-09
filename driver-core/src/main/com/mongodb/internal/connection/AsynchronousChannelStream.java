@@ -83,8 +83,8 @@ public abstract class AsynchronousChannelStream implements Stream {
 
     @Override
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
-        final AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
-        final Iterator<ByteBuf> iter = buffers.iterator();
+        AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
+        Iterator<ByteBuf> iter = buffers.iterator();
         pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(final Void t) {

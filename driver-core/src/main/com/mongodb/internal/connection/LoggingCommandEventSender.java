@@ -19,8 +19,8 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoCommandException;
 import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.diagnostics.logging.Logger;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonReader;
@@ -69,7 +69,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendStartedEvent() {
         if (loggingRequired()) {
-            String commandString = redactionRequired ? String.format("{\"%s\": ...", commandName) : getTruncatedJsonCommand();
+            String commandString = redactionRequired ? format("{\"%s\": ...", commandName) : getTruncatedJsonCommand();
             // TODO: log RequestContext?
             logger.debug(
                     format("Sending command '%s' with request id %d to database %s on connection [%s] to server %s",

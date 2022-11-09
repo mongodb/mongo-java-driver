@@ -52,7 +52,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final Boolean CANONICALIZE_HOST_NAME_DEFAULT_VALUE = false;
 
     GSSAPIAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                        @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
 
         if (getMongoCredential().getAuthenticationMechanism() != GSSAPI) {

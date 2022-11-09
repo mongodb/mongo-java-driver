@@ -128,14 +128,14 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     }
 
     public void assertErrorCondition() throws InterruptedException {
-        final AtomicReference<MongoException> exceptionReference = new AtomicReference<>();
-        final CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<MongoException> exceptionReference = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
 
         ConnectionString connectionString;
         MongoClientSettings settings;
         try {
             connectionString = new ConnectionString(uri);
-            final SslSettings sslSettings = getSslSettings(connectionString);
+            SslSettings sslSettings = getSslSettings(connectionString);
             assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
             settings = MongoClientSettings.builder().applyConnectionString(connectionString)
                     .applyToSslSettings(builder -> {

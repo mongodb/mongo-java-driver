@@ -167,7 +167,7 @@ public final class MongoDriverInformation {
         }
 
         private Builder() {
-            List<String> immutableEmptyList = Collections.unmodifiableList(Collections.<String>emptyList());
+            List<String> immutableEmptyList = Collections.unmodifiableList(Collections.emptyList());
             driverInformation = new MongoDriverInformation(immutableEmptyList, immutableEmptyList, immutableEmptyList);
         }
 

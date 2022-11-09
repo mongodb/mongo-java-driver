@@ -19,13 +19,13 @@
 
 package com.mongodb.internal.connection.tlschannel;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.tlschannel.impl.BufferHolder;
 import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
 import com.mongodb.internal.connection.tlschannel.impl.TlsChannelImpl;
 import com.mongodb.internal.connection.tlschannel.impl.TlsChannelImpl.EofException;
 import com.mongodb.internal.connection.tlschannel.impl.TlsExplorer;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
@@ -64,7 +64,7 @@ public class ServerTlsChannel implements TlsChannel {
 
   private static class SniSslContextStrategy implements SslContextStrategy {
 
-    private SniSslContextFactory sniSslContextFactory;
+    private final SniSslContextFactory sniSslContextFactory;
 
     public SniSslContextStrategy(SniSslContextFactory sniSslContextFactory) {
       this.sniSslContextFactory = sniSslContextFactory;

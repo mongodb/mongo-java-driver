@@ -30,10 +30,12 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class BsonBinaryWriterTest {
@@ -102,10 +104,10 @@ public class BsonBinaryWriterTest {
         reader.readStartDocument();
         assertThat(reader.readBsonType(), is(BsonType.BOOLEAN));
         assertEquals("b1", reader.readName());
-        assertEquals(true, reader.readBoolean());
+        assertTrue(reader.readBoolean());
         assertThat(reader.readBsonType(), is(BsonType.BOOLEAN));
         assertEquals("b2", reader.readName());
-        assertEquals(false, reader.readBoolean());
+        assertFalse(reader.readBoolean());
         reader.readEndDocument();
     }
 
@@ -432,11 +434,11 @@ public class BsonBinaryWriterTest {
             {
                 assertEquals(BsonType.BOOLEAN, reader.readBsonType());
                 assertEquals("b1", reader.readName());
-                assertEquals(true, reader.readBoolean());
+                assertTrue(reader.readBoolean());
 
                 assertEquals(BsonType.BOOLEAN, reader.readBsonType());
                 assertEquals("b2", reader.readName());
-                assertEquals(false, reader.readBoolean());
+                assertFalse(reader.readBoolean());
 
                 assertEquals(BsonType.ARRAY, reader.readBsonType());
                 assertEquals("a1", reader.readName());
@@ -551,7 +553,7 @@ public class BsonBinaryWriterTest {
         reader2.readStartDocument(); //checking what writer piped
         assertEquals(BsonType.BOOLEAN, reader2.readBsonType());
         assertEquals("a", reader2.readName());
-        assertEquals(true, reader2.readBoolean());
+        assertTrue(reader2.readBoolean());
         reader2.readEndDocument();
     }
 

@@ -28,6 +28,7 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.BuildersHelper.encodeValue;
@@ -530,10 +531,10 @@ public final class Updates {
             if (!fieldName.equals(that.fieldName)) {
                 return false;
             }
-            if (value != null ? !value.equals(that.value) : that.value != null) {
+            if (!Objects.equals(value, that.value)) {
                 return false;
             }
-            return operator != null ? operator.equals(that.operator) : that.operator == null;
+            return Objects.equals(operator, that.operator);
         }
 
         @Override
@@ -619,7 +620,7 @@ public final class Updates {
             if (!values.equals(that.values)) {
                 return false;
             }
-            return operator != null ? operator.equals(that.operator) : that.operator == null;
+            return Objects.equals(operator, that.operator);
         }
 
         @Override
@@ -810,7 +811,7 @@ public final class Updates {
 
             CompositeUpdate that = (CompositeUpdate) o;
 
-            return updates != null ? updates.equals(that.updates) : that.updates == null;
+            return Objects.equals(updates, that.updates);
         }
 
         @Override

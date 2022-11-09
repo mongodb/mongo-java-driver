@@ -241,7 +241,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         enableMaxTimeFailPoint()
 
         when:
-        executeAsync(operation);
+        executeAsync(operation)
 
         then:
         thrown(MongoExecutionTimeoutException)

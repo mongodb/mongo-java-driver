@@ -29,6 +29,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -289,7 +290,7 @@ public final class Projections {
 
             FieldsProjection that = (FieldsProjection) o;
 
-            return projections != null ? projections.equals(that.projections) : that.projections == null;
+            return Objects.equals(projections, that.projections);
         }
 
         @Override
@@ -331,10 +332,10 @@ public final class Projections {
 
             ElemMatchFilterProjection that = (ElemMatchFilterProjection) o;
 
-            if (fieldName != null ? !fieldName.equals(that.fieldName) : that.fieldName != null) {
+            if (!Objects.equals(fieldName, that.fieldName)) {
                 return false;
             }
-            return filter != null ? filter.equals(that.filter) : that.filter == null;
+            return Objects.equals(filter, that.filter);
         }
 
         @Override

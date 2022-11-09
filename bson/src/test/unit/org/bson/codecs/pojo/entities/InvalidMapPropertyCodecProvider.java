@@ -44,7 +44,7 @@ public class InvalidMapPropertyCodecProvider implements PropertyCodecProvider {
     }
 
     private static final class InvalidMapModelCodec implements Codec<Map<Integer, Integer>> {
-        private Class<Map<Integer, Integer>> encoderClass;
+        private final Class<Map<Integer, Integer>> encoderClass;
 
         private InvalidMapModelCodec(final Class<Map<Integer, Integer>> encoderClass) {
             this.encoderClass = encoderClass;

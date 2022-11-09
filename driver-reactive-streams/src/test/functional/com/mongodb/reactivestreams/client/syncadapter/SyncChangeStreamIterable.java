@@ -45,7 +45,7 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     }
 
     public MongoChangeStreamCursor<ChangeStreamDocument<T>> cursor() {
-        final MongoCursor<ChangeStreamDocument<T>> wrapped = super.cursor();
+        MongoCursor<ChangeStreamDocument<T>> wrapped = super.cursor();
         return new MongoChangeStreamCursor<ChangeStreamDocument<T>>() {
             @Override
             public BsonDocument getResumeToken() {

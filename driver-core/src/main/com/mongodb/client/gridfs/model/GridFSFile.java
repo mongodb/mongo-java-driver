@@ -23,6 +23,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -141,7 +142,7 @@ public final class GridFSFile {
 
         GridFSFile that = (GridFSFile) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (!Objects.equals(id, that.id)) {
             return false;
         }
         if (!filename.equals(that.filename)) {
@@ -156,7 +157,7 @@ public final class GridFSFile {
         if (!uploadDate.equals(that.uploadDate)) {
             return false;
         }
-        if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) {
+        if (!Objects.equals(metadata, that.metadata)) {
             return false;
         }
         return true;

@@ -277,7 +277,7 @@ public final class BulkWriteBatch {
     FieldNameValidator getFieldNameValidator() {
         if (batchType == UPDATE || batchType == REPLACE) {
             Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
-            if (batchType == WriteRequest.Type.REPLACE) {
+            if (batchType == REPLACE) {
                 rootMap.put("u", new ReplacingDocumentFieldNameValidator());
             } else {
                 rootMap.put("u", new UpdateFieldNameValidator());
@@ -370,11 +370,11 @@ public final class BulkWriteBatch {
     }
 
     private SplittablePayload.Type getPayloadType(final WriteRequest.Type batchType) {
-        if (batchType == WriteRequest.Type.INSERT) {
+        if (batchType == INSERT) {
             return SplittablePayload.Type.INSERT;
-        } else if (batchType == WriteRequest.Type.UPDATE) {
+        } else if (batchType == UPDATE) {
             return SplittablePayload.Type.UPDATE;
-        } else if (batchType == WriteRequest.Type.REPLACE) {
+        } else if (batchType == REPLACE) {
             return SplittablePayload.Type.REPLACE;
         } else {
             return SplittablePayload.Type.DELETE;

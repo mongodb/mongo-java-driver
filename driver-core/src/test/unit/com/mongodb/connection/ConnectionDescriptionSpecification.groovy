@@ -23,7 +23,7 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 
 class ConnectionDescriptionSpecification extends Specification {
-    private final serverId = new ObjectId();
+    private final serverId = new ObjectId()
     private final id = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
     private final saslSupportedMechanisms = new BsonArray([new BsonString('SCRAM-SHA-256')])
     private final description = new ConnectionDescription(serverId, id, 5, ServerType.STANDALONE, 1, 2, 3,
@@ -62,7 +62,7 @@ class ConnectionDescriptionSpecification extends Specification {
 
     def 'withServerId should return a new instance with the given serverId and preserve the rest'() {
         given:
-        def newServerId = new ObjectId();
+        def newServerId = new ObjectId()
         def newDescription = description.withServiceId(newServerId)
 
         expect:

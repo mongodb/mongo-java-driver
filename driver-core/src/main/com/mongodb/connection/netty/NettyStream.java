@@ -212,7 +212,7 @@ final class NettyStream implements Stream {
                     pipeline.addLast(new InboundBufferHandler());
                 }
             });
-            final ChannelFuture channelFuture = bootstrap.connect(nextAddress);
+            ChannelFuture channelFuture = bootstrap.connect(nextAddress);
             channelFuture.addListener(new OpenChannelFutureListener(socketAddressQueue, channelFuture, handler));
         }
     }

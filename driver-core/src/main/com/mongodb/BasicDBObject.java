@@ -98,7 +98,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * Creates an empty object.
      */
     public BasicDBObject() {
-        super();
     }
 
     /**

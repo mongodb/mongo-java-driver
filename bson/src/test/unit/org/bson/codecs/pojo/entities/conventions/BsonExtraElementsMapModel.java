@@ -76,7 +76,7 @@ public class BsonExtraElementsMapModel {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final BsonExtraElementsMapModel that = (BsonExtraElementsMapModel) o;
+        BsonExtraElementsMapModel that = (BsonExtraElementsMapModel) o;
         return Objects.equals(integerField, that.integerField)
                 && Objects.equals(stringField, that.stringField)
                 && Objects.equals(extraElements, that.extraElements);

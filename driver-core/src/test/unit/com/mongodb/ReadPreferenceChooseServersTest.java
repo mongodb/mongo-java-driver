@@ -33,6 +33,7 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class ReadPreferenceChooseServersTest {
@@ -46,9 +47,9 @@ public class ReadPreferenceChooseServersTest {
 
     @Before
     public void setUp() throws IOException {
-        final TagSet tags1 = new TagSet(asList(new Tag("foo", "1"), new Tag("bar", "2"), new Tag("baz", "1")));
-        final TagSet tags2 = new TagSet(asList(new Tag("foo", "1"), new Tag("bar", "2"), new Tag("baz", "2")));
-        final TagSet tags3 = new TagSet(asList(new Tag("foo", "1"), new Tag("bar", "2"), new Tag("baz", "3")));
+        TagSet tags1 = new TagSet(asList(new Tag("foo", "1"), new Tag("bar", "2"), new Tag("baz", "1")));
+        TagSet tags2 = new TagSet(asList(new Tag("foo", "1"), new Tag("bar", "2"), new Tag("baz", "2")));
+        TagSet tags3 = new TagSet(asList(new Tag("foo", "1"), new Tag("bar", "2"), new Tag("baz", "3")));
 
         long acceptableLatencyMS = 15;
         long bestRoundTripTime = 50;
@@ -159,7 +160,7 @@ public class ReadPreferenceChooseServersTest {
 
         // test that the primary is returned if no secondaries match the tag
         pref = ReadPreference.secondaryPreferred(new TagSet(new Tag("unknown", "2")));
-        assertTrue(pref.choose(set).get(0).equals(primary));
+        assertEquals(pref.choose(set).get(0), primary);
 
         pref = ReadPreference.secondaryPreferred();
         candidates = pref.choose(set);
@@ -173,13 +174,13 @@ public class ReadPreferenceChooseServersTest {
     @Test
     public void testNearestMode() {
         ReadPreference pref = ReadPreference.nearest();
-        assertTrue(pref.choose(set) != null);
+        assertNotNull(pref.choose(set));
 
         pref = ReadPreference.nearest(new TagSet(new Tag("baz", "1")));
-        assertTrue(pref.choose(set).get(0).equals(primary));
+        assertEquals(pref.choose(set).get(0), primary);
 
         pref = ReadPreference.nearest(new TagSet(new Tag("baz", "2")));
-        assertTrue(pref.choose(set).get(0).equals(secondary));
+        assertEquals(pref.choose(set).get(0), secondary);
 
         pref = ReadPreference.nearest(new TagSet(new Tag("unknown", "2")));
         assertTrue(pref.choose(set).isEmpty());

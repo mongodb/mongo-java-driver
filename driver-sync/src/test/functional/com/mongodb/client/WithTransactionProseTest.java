@@ -129,12 +129,12 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testRetryTimeoutEnforcedUnknownTransactionCommit() {
-        final MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 91, 'closeConnection': false}}"));
 
-        final ClientSession session = client.startSession();
+        ClientSession session = client.startSession();
         ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
         try {
             session.withTransaction(new TransactionBody<Void>() {
@@ -163,13 +163,13 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
         assumeFalse(isServerlessTest());
-        final MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251, 'codeName': 'NoSuchTransaction', "
                         + "'errmsg': 'Transaction 0 has been aborted', 'closeConnection': false}}"));
 
-        final ClientSession session = client.startSession();
+        ClientSession session = client.startSession();
         ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
         try {
             session.withTransaction(new TransactionBody<Void>() {

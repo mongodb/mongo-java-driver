@@ -77,7 +77,7 @@ public class ReadConcernTest {
                 .append("readConcern", ReadConcern.LOCAL.asDocument())
                 .append("filter", new BsonDocument());
 
-        assertEventsEquality(Arrays.<CommandEvent>asList(new CommandStartedEvent(1, null, getDefaultDatabaseName(),
+        assertEventsEquality(Arrays.asList(new CommandStartedEvent(1, null, getDefaultDatabaseName(),
                         "find", commandDocument)), events);
     }
 

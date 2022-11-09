@@ -18,6 +18,8 @@ package org.bson.codecs.pojo.entities.conventions;
 
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 
+import java.util.Objects;
+
 @BsonDiscriminator
 public class InterfaceModelImplA implements InterfaceModel {
     private boolean value;
@@ -55,7 +57,7 @@ public class InterfaceModelImplA implements InterfaceModel {
         if (value != that.value) {
             return false;
         }
-        return name != null ? name.equals(that.name) : that.name == null;
+        return Objects.equals(name, that.name);
     }
 
     @Override

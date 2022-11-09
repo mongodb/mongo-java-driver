@@ -245,7 +245,7 @@ final class AggregatesSearchIntegrationTest {
         for (int i = 0; i < stageUnderTestCustomizers.size(); i++) {
             Bson stageUnderTest = stageUnderTestCreator.apply(stageUnderTestCustomizers.get(i));
             Accessory accessory = accessories.get(i);
-            final List<Bson> pipeline = new ArrayList<>();
+            List<Bson> pipeline = new ArrayList<>();
             pipeline.add(stageUnderTest);
             pipeline.addAll(accessory.postStages);
             Supplier<String> msgSupplier = () -> "For reference, the pipeline (" + pipeline.size() + " elements) used in the test is\n[\n"

@@ -24,9 +24,9 @@ import com.mongodb.ServerApi;
 import com.mongodb.SubjectProvider;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
@@ -51,7 +51,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
     private static final String SUBJECT_PROVIDER_CACHE_KEY = "SUBJECT_PROVIDER";
     SaslAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
-            final @Nullable ServerApi serverApi) {
+                      @Nullable final ServerApi serverApi) {
         super(credential, clusterConnectionMode, serverApi);
     }
 
@@ -101,7 +101,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
             doAsSubject(new PrivilegedAction<Void>() {
                 @Override
                 public Void run() {
-                    final SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+                    SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
                     throwIfSaslClientIsNull(saslClient);
                     getNextSaslResponseAsync(saslClient, connection, callback);
                     return null;

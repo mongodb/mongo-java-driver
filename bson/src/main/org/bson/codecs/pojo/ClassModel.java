@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This model represents the metadata for a class and all its properties.
@@ -194,8 +195,7 @@ public final class ClassModel<T> {
         if (getDiscriminator() != null ? !getDiscriminator().equals(that.getDiscriminator()) : that.getDiscriminator() != null) {
             return false;
         }
-        if (idPropertyModelHolder != null ? !idPropertyModelHolder.equals(that.idPropertyModelHolder)
-                : that.idPropertyModelHolder != null) {
+        if (!Objects.equals(idPropertyModelHolder, that.idPropertyModelHolder)) {
             return false;
         }
         if (!getPropertyModels().equals(that.getPropertyModels())) {

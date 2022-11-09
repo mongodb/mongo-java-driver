@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo.entities;
 
 import java.util.Map;
+import java.util.Objects;
 
 public final class InvalidMapModel {
     private Map<Integer, Integer> invalidMap;
@@ -47,7 +48,7 @@ public final class InvalidMapModel {
 
         InvalidMapModel that = (InvalidMapModel) o;
 
-        return invalidMap != null ? invalidMap.equals(that.invalidMap) : that.invalidMap == null;
+        return Objects.equals(invalidMap, that.invalidMap);
     }
 
     @Override

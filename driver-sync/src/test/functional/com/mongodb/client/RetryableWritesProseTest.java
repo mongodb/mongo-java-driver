@@ -87,9 +87,9 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         try {
             collection.insertOne(Document.parse("{x: 1}"));
         } catch (MongoClientException e) {
-            assertTrue(e.getMessage().equals("This MongoDB deployment does not support retryable writes. "
-                    + "Please add retryWrites=false to your connection string."));
-            assertTrue(((MongoException) e.getCause()).getCode() == 20);
+            assertEquals("This MongoDB deployment does not support retryable writes. "
+                    + "Please add retryWrites=false to your connection string.", e.getMessage());
+            assertEquals(20, ((MongoException) e.getCause()).getCode());
             assertTrue(e.getCause().getMessage().contains("Transaction numbers"));
             exceptionFound = true;
         }
@@ -104,9 +104,9 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         try {
             collection.findOneAndDelete(Document.parse("{x: 1}"));
         } catch (MongoClientException e) {
-            assertTrue(e.getMessage().equals("This MongoDB deployment does not support retryable writes. "
-                    + "Please add retryWrites=false to your connection string."));
-            assertTrue(((MongoException) e.getCause()).getCode() == 20);
+            assertEquals("This MongoDB deployment does not support retryable writes. "
+                    + "Please add retryWrites=false to your connection string.", e.getMessage());
+            assertEquals(20, ((MongoException) e.getCause()).getCode());
             assertTrue(e.getCause().getMessage().contains("Transaction numbers"));
             exceptionFound = true;
         }

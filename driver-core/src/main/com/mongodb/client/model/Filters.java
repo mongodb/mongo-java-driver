@@ -36,10 +36,10 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -683,7 +683,7 @@ public final class Filters {
      */
     public static Bson geoWithinCenter(final String fieldName, final double x, final double y, final double radius) {
         BsonDocument center = new BsonDocument("$center",
-                                                      new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                      new BsonArray(asList(new BsonArray(asList(new BsonDouble(x),
                                                               new BsonDouble(y))),
                                                               new BsonDouble(radius))));
         return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, center);
@@ -705,7 +705,7 @@ public final class Filters {
      */
     public static Bson geoWithinCenterSphere(final String fieldName, final double x, final double y, final double radius) {
         BsonDocument centerSphere = new BsonDocument("$centerSphere",
-                                                            new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                            new BsonArray(asList(new BsonArray(asList(new BsonDouble(x),
                                                                     new BsonDouble(y))),
                                                                     new BsonDouble(radius))));
         return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, centerSphere);
@@ -872,7 +872,7 @@ public final class Filters {
 
     private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
                                                  @Nullable final Double minDistance, final String operator) {
-        BsonDocument nearFilter = new BsonDocument(operator, new BsonArray(Arrays.asList(new BsonDouble(x), new BsonDouble(y))));
+        BsonDocument nearFilter = new BsonDocument(operator, new BsonArray(asList(new BsonDouble(x), new BsonDouble(y))));
         if (maxDistance != null) {
             nearFilter.append("$maxDistance", new BsonDouble(maxDistance));
         }
@@ -977,7 +977,7 @@ public final class Filters {
             if (!fieldName.equals(that.fieldName)) {
                 return false;
             }
-            return value != null ? value.equals(that.value) : that.value == null;
+            return Objects.equals(value, that.value);
         }
 
         @Override
@@ -1207,7 +1207,7 @@ public final class Filters {
             if (!fieldName.equals(that.fieldName)) {
                 return false;
             }
-            return value != null ? value.equals(that.value) : that.value == null;
+            return Objects.equals(value, that.value);
         }
 
         @Override
@@ -1355,7 +1355,7 @@ public final class Filters {
 
             GeometryOperatorFilter<?> that = (GeometryOperatorFilter<?>) o;
 
-            if (operatorName != null ? !operatorName.equals(that.operatorName) : that.operatorName != null) {
+            if (!Objects.equals(operatorName, that.operatorName)) {
                 return false;
             }
             if (!fieldName.equals(that.fieldName)) {
@@ -1364,10 +1364,10 @@ public final class Filters {
             if (!geometry.equals(that.geometry)) {
                 return false;
             }
-            if (maxDistance != null ? !maxDistance.equals(that.maxDistance) : that.maxDistance != null) {
+            if (!Objects.equals(maxDistance, that.maxDistance)) {
                 return false;
             }
-            return minDistance != null ? minDistance.equals(that.minDistance) : that.minDistance == null;
+            return Objects.equals(minDistance, that.minDistance);
         }
 
         @Override
@@ -1433,10 +1433,10 @@ public final class Filters {
 
             TextFilter that = (TextFilter) o;
 
-            if (search != null ? !search.equals(that.search) : that.search != null) {
+            if (!Objects.equals(search, that.search)) {
                 return false;
             }
-            return textSearchOptions != null ? textSearchOptions.equals(that.textSearchOptions) : that.textSearchOptions == null;
+            return Objects.equals(textSearchOptions, that.textSearchOptions);
         }
 
         @Override

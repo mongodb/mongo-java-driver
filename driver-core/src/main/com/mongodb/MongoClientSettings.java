@@ -851,7 +851,7 @@ public final class MongoClientSettings {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final MongoClientSettings that = (MongoClientSettings) o;
+        MongoClientSettings that = (MongoClientSettings) o;
         return retryWrites == that.retryWrites
                 && retryReads == that.retryReads
                 && heartbeatSocketTimeoutSetExplicitly == that.heartbeatSocketTimeoutSetExplicitly

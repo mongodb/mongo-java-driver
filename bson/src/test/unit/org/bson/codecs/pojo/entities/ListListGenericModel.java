@@ -46,7 +46,7 @@ public class ListListGenericModel<T> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ListListGenericModel<?> that = (ListListGenericModel<?>) o;
+        ListListGenericModel<?> that = (ListListGenericModel<?>) o;
         return Objects.equals(values, that.values);
     }
 

@@ -1123,7 +1123,7 @@ public class DBCollection {
                             .filter(wrapAllowNull(command.getQuery()))
                             .limit(command.getLimit())
                             .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
-                            .jsMode(jsMode == null ? false : jsMode)
+                            .jsMode(jsMode != null && jsMode)
                             .sort(wrapAllowNull(command.getSort()))
                             .verbose(command.isVerbose())
                             .collation(command.getCollation());
@@ -1161,7 +1161,7 @@ public class DBCollection {
                     .filter(wrapAllowNull(command.getQuery()))
                     .limit(command.getLimit())
                     .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
-                    .jsMode(jsMode == null ? false : jsMode)
+                    .jsMode(jsMode != null && jsMode)
                     .sort(wrapAllowNull(command.getSort()))
                     .verbose(command.isVerbose())
                     .action(action)
@@ -1943,7 +1943,7 @@ public class DBCollection {
      * @return the class
      */
     public Class getObjectClass() {
-        return objectFactory.getClassForPath(Collections.<String>emptyList());
+        return objectFactory.getClassForPath(Collections.emptyList());
     }
 
     /**

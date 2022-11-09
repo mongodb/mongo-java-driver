@@ -19,6 +19,8 @@ package com.mongodb.client.result;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
+import java.util.Objects;
+
 /**
  * The result of an update operation.  If the update was unacknowledged, then {@code wasAcknowledged} will return false and all other
  * methods will throw {@code UnsupportedOperationException}.
@@ -125,10 +127,10 @@ public abstract class UpdateResult {
             if (matchedCount != that.matchedCount) {
                 return false;
             }
-            if (modifiedCount != null ? !modifiedCount.equals(that.modifiedCount) : that.modifiedCount != null) {
+            if (!Objects.equals(modifiedCount, that.modifiedCount)) {
                 return false;
             }
-            if (upsertedId != null ? !upsertedId.equals(that.upsertedId) : that.upsertedId != null) {
+            if (!Objects.equals(upsertedId, that.upsertedId)) {
                 return false;
             }
 

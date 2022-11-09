@@ -19,6 +19,7 @@ package com.mongodb.client.model;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Arrays.asList;
 
@@ -75,10 +76,10 @@ public class Facet {
 
         Facet facet = (Facet) o;
 
-        if (name != null ? !name.equals(facet.name) : facet.name != null) {
+        if (!Objects.equals(name, facet.name)) {
             return false;
         }
-        return pipeline != null ? pipeline.equals(facet.pipeline) : facet.pipeline == null;
+        return Objects.equals(pipeline, facet.pipeline);
     }
 
     @Override

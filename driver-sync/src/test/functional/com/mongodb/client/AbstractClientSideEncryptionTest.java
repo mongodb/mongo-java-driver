@@ -181,7 +181,7 @@ public abstract class AbstractClientSideEncryptionTest {
         if (cryptOptions.containsKey("schemaMap")) {
             BsonDocument autoEncryptMapDocument = cryptOptions.getDocument("schemaMap");
             for (Map.Entry<String, BsonValue> entries : autoEncryptMapDocument.entrySet()) {
-                final BsonDocument autoEncryptOptionsDocument = entries.getValue().asDocument();
+                BsonDocument autoEncryptOptionsDocument = entries.getValue().asDocument();
                 namespaceToSchemaMap.put(entries.getKey(), autoEncryptOptionsDocument);
             }
         }

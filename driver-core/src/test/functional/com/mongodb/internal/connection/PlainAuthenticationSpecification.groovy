@@ -121,9 +121,9 @@ class PlainAuthenticationSpecification extends Specification {
 
     private static void openConnection(final InternalConnection connection, final boolean async) {
         if (async) {
-            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>()
             connection.openAsync(futureResultCallback)
-            futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS);
+            futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS)
         } else {
             connection.open()
         }

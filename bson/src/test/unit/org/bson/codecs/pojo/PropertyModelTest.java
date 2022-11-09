@@ -75,7 +75,7 @@ public final class PropertyModelTest {
         assertFalse(propertyModel.useDiscriminator());
     }
 
-    private static final List<Annotation> ANNOTATIONS = Collections.<Annotation>singletonList(
+    private static final List<Annotation> ANNOTATIONS = Collections.singletonList(
             new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {

@@ -354,7 +354,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                         binding.getSessionContext()), releasingCallback)) {
                                     return;
                                 }
-                                final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
+                                SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
                                 createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
                                         getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                         asyncTransformer(), connection, wrappedCallback);
@@ -471,7 +471,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return new CommandOperationHelper.CommandCreator() {
+        return new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 return getCommand(sessionContext, connectionDescription.getMaxWireVersion());

@@ -46,7 +46,7 @@ public class BenchmarkSuite {
     };
     private static final Codec<Document> DOCUMENT_CODEC = getDefaultCodecRegistry().get(DOCUMENT_CLASS);
 
-    private static final List<BenchmarkResultWriter> WRITERS = Arrays.<BenchmarkResultWriter>asList(
+    private static final List<BenchmarkResultWriter> WRITERS = Arrays.asList(
             new EvergreenBenchmarkResultWriter());
 
     public static void main(String[] args) throws Exception {

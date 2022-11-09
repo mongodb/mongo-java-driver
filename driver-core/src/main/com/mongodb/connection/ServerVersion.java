@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,7 +36,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
      * Creates a server version which will compare as less than all other valid versions
      */
     public ServerVersion() {
-        this.versionList = Collections.unmodifiableList(Arrays.asList(0, 0, 0));
+        this.versionList = Collections.unmodifiableList(asList(0, 0, 0));
     }
 
     /**

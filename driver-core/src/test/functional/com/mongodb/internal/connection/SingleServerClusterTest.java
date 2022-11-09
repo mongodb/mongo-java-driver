@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoCompressor;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -28,8 +27,8 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
-import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
@@ -73,7 +72,7 @@ public class SingleServerClusterTest {
                         streamFactory, streamFactory, getCredential(),
 
                         null, null, null,
-                        Collections.<MongoCompressor>emptyList(), getServerApi()));
+                        Collections.emptyList(), getServerApi()));
     }
 
     @After

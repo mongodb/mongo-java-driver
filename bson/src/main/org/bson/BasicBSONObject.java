@@ -98,7 +98,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * @return if the field exists
      */
     public boolean containsField(final String field) {
-        return super.containsKey(field);
+        return containsKey(field);
     }
 
     /**

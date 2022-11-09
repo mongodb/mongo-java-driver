@@ -27,15 +27,15 @@ import java.util.concurrent.atomic.LongAdder;
 /** A decorating {@link BufferAllocator} that keeps statistics. */
 public class TrackingAllocator implements BufferAllocator {
 
-  private BufferAllocator impl;
+  private final BufferAllocator impl;
 
-  private LongAdder bytesAllocatedAdder = new LongAdder();
-  private LongAdder bytesDeallocatedAdder = new LongAdder();
-  private AtomicLong currentAllocationSize = new AtomicLong();
-  private LongAccumulator maxAllocationSizeAcc = new LongAccumulator(Math::max, 0);
+  private final LongAdder bytesAllocatedAdder = new LongAdder();
+  private final LongAdder bytesDeallocatedAdder = new LongAdder();
+  private final AtomicLong currentAllocationSize = new AtomicLong();
+  private final LongAccumulator maxAllocationSizeAcc = new LongAccumulator(Math::max, 0);
 
-  private LongAdder buffersAllocatedAdder = new LongAdder();
-  private LongAdder buffersDeallocatedAdder = new LongAdder();
+  private final LongAdder buffersAllocatedAdder = new LongAdder();
+  private final LongAdder buffersDeallocatedAdder = new LongAdder();
 
   public TrackingAllocator(BufferAllocator impl) {
     this.impl = impl;

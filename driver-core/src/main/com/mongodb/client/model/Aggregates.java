@@ -19,11 +19,11 @@ package com.mongodb.client.model;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.densify.DensifyOptions;
 import com.mongodb.client.model.densify.DensifyRange;
-import com.mongodb.client.model.fill.FillOutputField;
 import com.mongodb.client.model.fill.FillOptions;
+import com.mongodb.client.model.fill.FillOutputField;
 import com.mongodb.client.model.geojson.Point;
-import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchCollector;
+import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -37,16 +37,15 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
-import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
@@ -934,7 +933,7 @@ public final class Aggregates {
      * @since 4.8
      */
     public static Bson unset(final String... fields) {
-        return unset(Arrays.asList(fields));
+        return unset(asList(fields));
     }
 
     /**
@@ -1060,10 +1059,10 @@ public final class Aggregates {
 
             SimplePipelineStage that = (SimplePipelineStage) o;
 
-            if (name != null ? !name.equals(that.name) : that.name != null) {
+            if (!Objects.equals(name, that.name)) {
                 return false;
             }
-            return value != null ? value.equals(that.value) : that.value == null;
+            return Objects.equals(value, that.value);
         }
 
         @Override
@@ -1133,10 +1132,10 @@ public final class Aggregates {
 
             BucketStage<?, ?> that = (BucketStage<?, ?>) o;
 
-            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+            if (!Objects.equals(groupBy, that.groupBy)) {
                 return false;
             }
-            if (boundaries != null ? !boundaries.equals(that.boundaries) : that.boundaries != null) {
+            if (!Objects.equals(boundaries, that.boundaries)) {
                 return false;
             }
             return options.equals(that.options);
@@ -1212,7 +1211,7 @@ public final class Aggregates {
             if (buckets != that.buckets) {
                 return false;
             }
-            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+            if (!Objects.equals(groupBy, that.groupBy)) {
                 return false;
             }
             return options.equals(that.options);
@@ -1297,16 +1296,16 @@ public final class Aggregates {
 
             LookupStage<?> that = (LookupStage<?>) o;
 
-            if (from != null ? !from.equals(that.from) : that.from != null) {
+            if (!Objects.equals(from, that.from)) {
                 return false;
             }
-            if (let != null ? !let.equals(that.let) : that.let != null) {
+            if (!Objects.equals(let, that.let)) {
                 return false;
             }
-            if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) {
+            if (!Objects.equals(pipeline, that.pipeline)) {
                 return false;
             }
-            return as != null ? as.equals(that.as) : that.as == null;
+            return Objects.equals(as, that.as);
         }
 
         @Override
@@ -1393,22 +1392,22 @@ public final class Aggregates {
 
             GraphLookupStage<?> that = (GraphLookupStage<?>) o;
 
-            if (from != null ? !from.equals(that.from) : that.from != null) {
+            if (!Objects.equals(from, that.from)) {
                 return false;
             }
-            if (startWith != null ? !startWith.equals(that.startWith) : that.startWith != null) {
+            if (!Objects.equals(startWith, that.startWith)) {
                 return false;
             }
-            if (connectFromField != null ? !connectFromField.equals(that.connectFromField) : that.connectFromField != null) {
+            if (!Objects.equals(connectFromField, that.connectFromField)) {
                 return false;
             }
-            if (connectToField != null ? !connectToField.equals(that.connectToField) : that.connectToField != null) {
+            if (!Objects.equals(connectToField, that.connectToField)) {
                 return false;
             }
-            if (as != null ? !as.equals(that.as) : that.as != null) {
+            if (!Objects.equals(as, that.as)) {
                 return false;
             }
-            return options != null ? options.equals(that.options) : that.options == null;
+            return Objects.equals(options, that.options);
         }
 
         @Override
@@ -1478,10 +1477,10 @@ public final class Aggregates {
 
             GroupStage<?> that = (GroupStage<?>) o;
 
-            if (id != null ? !id.equals(that.id) : that.id != null) {
+            if (!Objects.equals(id, that.id)) {
                 return false;
             }
-            return fieldAccumulators != null ? fieldAccumulators.equals(that.fieldAccumulators) : that.fieldAccumulators == null;
+            return Objects.equals(fieldAccumulators, that.fieldAccumulators);
         }
 
         @Override
@@ -1533,7 +1532,7 @@ public final class Aggregates {
 
             SortByCountStage<?> that = (SortByCountStage<?>) o;
 
-            return filter != null ? filter.equals(that.filter) : that.filter == null;
+            return Objects.equals(filter, that.filter);
         }
 
         @Override
@@ -1588,7 +1587,7 @@ public final class Aggregates {
 
             FacetStage that = (FacetStage) o;
 
-            return facets != null ? facets.equals(that.facets) : that.facets == null;
+            return Objects.equals(facets, that.facets);
         }
 
         @Override
@@ -1707,7 +1706,7 @@ public final class Aggregates {
 
             ReplaceStage<?> that = (ReplaceStage<?>) o;
 
-            return value != null ? value.equals(that.value) : that.value == null;
+            return Objects.equals(value, that.value);
         }
 
         @Override
@@ -1898,7 +1897,7 @@ public final class Aggregates {
             if (!collection.equals(that.collection)) {
                 return false;
             }
-            return pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null;
+            return !Objects.equals(pipeline, that.pipeline);
         }
 
         @Override
@@ -1967,7 +1966,7 @@ public final class Aggregates {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final SetWindowFieldsStage<?> that = (SetWindowFieldsStage<?>) o;
+            SetWindowFieldsStage<?> that = (SetWindowFieldsStage<?>) o;
             return Objects.equals(partitionBy, that.partitionBy) && Objects.equals(sortBy, that.sortBy) && output.equals(that.output);
         }
 
@@ -2029,7 +2028,7 @@ public final class Aggregates {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final SearchStage that = (SearchStage) o;
+            SearchStage that = (SearchStage) o;
             return name.equals(that.name)
                     && operatorOrCollector.equals(that.operatorOrCollector)
                     && Objects.equals(options, that.options);

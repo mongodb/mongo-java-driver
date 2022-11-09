@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public class UpperBoundsModel<T extends Number> {
     private T myGenericField;
 
@@ -45,7 +47,7 @@ public class UpperBoundsModel<T extends Number> {
 
         UpperBoundsModel<?> that = (UpperBoundsModel<?>) o;
 
-        if (myGenericField != null ? !myGenericField.equals(that.myGenericField) : that.myGenericField != null) {
+        if (!Objects.equals(myGenericField, that.myGenericField)) {
             return false;
         }
 

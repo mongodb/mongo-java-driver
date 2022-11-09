@@ -204,7 +204,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    final AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor =
+                    AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor =
                             (AsyncAggregateResponseBatchCursor<RawBsonDocument>) result;
                     withAsyncReadConnection(binding, new AsyncCallableWithSource() {
                         @Override

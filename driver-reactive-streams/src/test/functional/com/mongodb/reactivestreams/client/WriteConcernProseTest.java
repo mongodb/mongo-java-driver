@@ -36,7 +36,6 @@ import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -61,7 +60,7 @@ public class WriteConcernProseTest extends DatabaseTestCase {
             insertOneDocument();
         } catch (MongoWriteConcernException e) {
             assertEquals(e.getWriteConcernError().getCode(), 100);
-            assertTrue(e.getWriteConcernError().getCodeName().equals("UnsatisfiableWriteConcern"));
+            assertEquals("UnsatisfiableWriteConcern", e.getWriteConcernError().getCodeName());
             assertEquals(e.getWriteConcernError().getDetails(), new BsonDocument("writeConcern",
                     new BsonDocument("w", new BsonInt32(2))
                             .append("wtimeout", new BsonInt32(0))

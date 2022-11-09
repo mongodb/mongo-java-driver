@@ -104,8 +104,8 @@ class ProvidersCodecRegistrySpecification extends Specification {
                           new Nested('George', new Top('Joe', null, null)))
         def writer = new BsonBinaryWriter(new BasicOutputBuffer())
         topCodec.encode(writer, top, EncoderContext.builder().build())
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writer.getBsonOutput().pipe(os);
+        ByteArrayOutputStream os = new ByteArrayOutputStream()
+        writer.getBsonOutput().pipe(os)
         writer.close()
 
         then:
@@ -172,7 +172,7 @@ class ProvidersCodecRegistrySpecification extends Specification {
 
     def 'should parameterize codec'() {
         given:
-        def registry = new ProvidersCodecRegistry([fromCodecs(new CollectionCodec()), new ValueCodecProvider()]);
+        def registry = new ProvidersCodecRegistry([fromCodecs(new CollectionCodec()), new ValueCodecProvider()])
 
         when:
         def codec = registry.get(Collection, [Integer])
@@ -190,7 +190,7 @@ class ProvidersCodecRegistrySpecification extends Specification {
 
     def 'should parameterize codec with cycles'() {
         given:
-        def registry = new ProvidersCodecRegistry([fromCodecs(new CollectionCodec()), new ValueCodecProvider()]);
+        def registry = new ProvidersCodecRegistry([fromCodecs(new CollectionCodec()), new ValueCodecProvider()])
 
         when:
         def codec = registry.get(Collection, [Holder.getField('c').getGenericType()])
@@ -267,7 +267,7 @@ class SingleCodecProvider implements CodecProvider {
     }
 
     @Override
-    def <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+    <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (clazz == codec.getEncoderClass()) {
             return codec
         }
@@ -289,7 +289,7 @@ class ClassModelCodecProvider implements CodecProvider {
 
     @Override
     @SuppressWarnings('ReturnNullFromCatchBlock')
-    def <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+    <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (!supportedClasses.contains(clazz)) {
             null
         } else if (clazz == Top) {
@@ -368,7 +368,7 @@ class TopCodec implements Codec<Top> {
             nested = codecForNested.decode(reader, decoderContext)
         }
         reader.readEndDocument()
-        new Top(name, other, nested);
+        new Top(name, other, nested)
     }
 }
 
@@ -412,7 +412,7 @@ class NestedCodec implements Codec<Nested> {
             top = codecForTop.decode(reader, decoderContext)
         }
         reader.readEndDocument()
-        new Nested(name, top);
+        new Nested(name, top)
     }
 }
 

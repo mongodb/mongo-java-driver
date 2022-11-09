@@ -252,7 +252,7 @@ final class MongoClientDelegate {
             return context == null ? IgnorableRequestContext.INSTANCE : context;
         }
 
-        private void labelException(final @Nullable ClientSession session, final MongoException e) {
+        private void labelException(@Nullable final ClientSession session, final MongoException e) {
             if (session != null && session.hasActiveTransaction()
                     && (e instanceof MongoSocketException || e instanceof MongoTimeoutException
                     || (e instanceof MongoQueryException && e.getCode() == 91))
@@ -261,7 +261,7 @@ final class MongoClientDelegate {
             }
         }
 
-        private void clearTransactionContextOnTransientTransactionError(final @Nullable ClientSession session, final MongoException e) {
+        private void clearTransactionContextOnTransientTransactionError(@Nullable final ClientSession session, final MongoException e) {
             if (session != null && e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
                 session.clearTransactionContext();
             }
@@ -289,7 +289,7 @@ final class MongoClientDelegate {
                 session = clientSessionFromOperation;
             } else {
                 session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build(), ReadConcern.DEFAULT,
-                        WriteConcern.ACKNOWLEDGED, ReadPreference.primary());
+                        WriteConcern.ACKNOWLEDGED, primary());
             }
             return session;
         }

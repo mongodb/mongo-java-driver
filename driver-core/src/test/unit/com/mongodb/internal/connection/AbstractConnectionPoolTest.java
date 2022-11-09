@@ -216,7 +216,7 @@ public abstract class AbstractConnectionPoolTest {
     public void shouldPassAllOutcomes() throws Exception {
         try {
             for (BsonValue cur : definition.getArray("operations")) {
-                final BsonDocument operation = cur.asDocument();
+                BsonDocument operation = cur.asDocument();
                 String name = operation.getString("name").getValue();
 
                 if (name.equals("start")) {
@@ -375,7 +375,7 @@ public abstract class AbstractConnectionPoolTest {
         if (expectedEvent.isString(addressKey)) {
             String expectedAddress = expectedEvent.getString(addressKey).getValue();
             if (!expectedAddress.equals(ANY_STRING)) {
-                assertEquals(format("Address does not match (expected event is %s)", expectedEvent.toString()),
+                assertEquals(format("Address does not match (expected event is %s)", expectedEvent),
                         new ServerAddress(expectedAddress), actualAddress);
             }
         } else if (expectedEvent.containsKey(addressKey)) {
@@ -392,7 +392,7 @@ public abstract class AbstractConnectionPoolTest {
             if (expectedConnectionId != ANY_INT) {
                 assertEquals(format(
                         "Connection id does not match (expected event is %s; actual local value before adjustment is %s)",
-                        expectedEvent.toString(), actualConnectionIdLocalValue),
+                                expectedEvent, actualConnectionIdLocalValue),
                         expectedConnectionId, adjustedConnectionIdLocalValue);
             }
         }

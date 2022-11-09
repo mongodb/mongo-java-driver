@@ -132,7 +132,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     @Override
     public List<ByteBuf> getByteBuffers() {
         ensureOpen();
-        return Arrays.<ByteBuf>asList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, position).duplicate().order(LITTLE_ENDIAN)));
+        return Arrays.asList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, position).duplicate().order(LITTLE_ENDIAN)));
     }
 
     @Override

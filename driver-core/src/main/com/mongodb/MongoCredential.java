@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.AuthenticationMechanism.MONGODB_AWS;
@@ -53,7 +54,7 @@ public final class MongoCredential {
      *
      * @mongodb.driver.manual core/authentication/#kerberos-authentication GSSAPI
      */
-    public static final String GSSAPI_MECHANISM = AuthenticationMechanism.GSSAPI.getMechanismName();
+    public static final String GSSAPI_MECHANISM = GSSAPI.getMechanismName();
 
     /**
      * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
@@ -61,7 +62,7 @@ public final class MongoCredential {
      * @since 2.12
      * @mongodb.driver.manual core/authentication/#ldap-proxy-authority-authentication PLAIN
      */
-    public static final String PLAIN_MECHANISM = AuthenticationMechanism.PLAIN.getMechanismName();
+    public static final String PLAIN_MECHANISM = PLAIN.getMechanismName();
 
     /**
      * The MongoDB X.509
@@ -69,7 +70,7 @@ public final class MongoCredential {
      * @since 2.12
      * @mongodb.driver.manual core/authentication/#x-509-certificate-authentication X-509
      */
-    public static final String MONGODB_X509_MECHANISM = AuthenticationMechanism.MONGODB_X509.getMechanismName();
+    public static final String MONGODB_X509_MECHANISM = MONGODB_X509.getMechanismName();
 
     /**
      * The SCRAM-SHA-1 Mechanism.
@@ -78,7 +79,7 @@ public final class MongoCredential {
      * @mongodb.server.release 3.0
      * @mongodb.driver.manual core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1
      */
-    public static final String SCRAM_SHA_1_MECHANISM = AuthenticationMechanism.SCRAM_SHA_1.getMechanismName();
+    public static final String SCRAM_SHA_1_MECHANISM = SCRAM_SHA_1.getMechanismName();
 
     /**
      * The SCRAM-SHA-256 Mechanism.
@@ -87,7 +88,7 @@ public final class MongoCredential {
      * @mongodb.server.release 4.0
      * @mongodb.driver.manual core/authentication/#authentication-scram-sha-256 SCRAM-SHA-256
      */
-    public static final String SCRAM_SHA_256_MECHANISM = AuthenticationMechanism.SCRAM_SHA_256.getMechanismName();
+    public static final String SCRAM_SHA_256_MECHANISM = SCRAM_SHA_256.getMechanismName();
 
     /**
      * Mechanism property key for overriding the service name for GSSAPI authentication.
@@ -364,7 +365,7 @@ public final class MongoCredential {
      */
     MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
                     @Nullable final char[] password) {
-        this(mechanism, userName, source, password, Collections.<String, Object>emptyMap());
+        this(mechanism, userName, source, password, Collections.emptyMap());
     }
 
     MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
@@ -513,7 +514,7 @@ public final class MongoCredential {
         if (!source.equals(that.source)) {
             return false;
         }
-        if (userName != null ? !userName.equals(that.userName) : that.userName != null) {
+        if (!Objects.equals(userName, that.userName)) {
             return false;
         }
         if (!mechanismProperties.equals(that.mechanismProperties)) {

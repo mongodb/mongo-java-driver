@@ -38,10 +38,10 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
 import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -122,7 +122,7 @@ public class InternalStreamConnection implements InternalConnection {
     private final List<MongoCompressor> compressorList;
     private final CommandListener commandListener;
     private volatile Compressor sendCompressor;
-    private volatile Map<Byte, Compressor> compressorMap;
+    private final Map<Byte, Compressor> compressorMap;
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
     private int generation = NOT_INITIALIZED_GENERATION;
@@ -301,7 +301,7 @@ public class InternalStreamConnection implements InternalConnection {
         // All but the first call is a no-op
         if (!isClosed.getAndSet(true)) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Closing connection %s", getId()));
+                LOGGER.debug(format("Closing connection %s", getId()));
             }
             if (stream != null) {
                 stream.close();
@@ -620,7 +620,7 @@ public class InternalStreamConnection implements InternalConnection {
         }
 
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(String.format("Start receiving response on %s", getId()));
+            LOGGER.trace(format("Start receiving response on %s", getId()));
         }
         readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
             @Override

@@ -88,8 +88,8 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void testThreadInterrupted() throws InterruptedException {
-        final ChangeStreamWatcher watcher = new ChangeStreamWatcher(collection.watch().cursor());
-        final Thread t = new Thread(watcher);
+        ChangeStreamWatcher watcher = new ChangeStreamWatcher(collection.watch().cursor());
+        Thread t = new Thread(watcher);
         t.start();
         t.interrupt();
         t.join();

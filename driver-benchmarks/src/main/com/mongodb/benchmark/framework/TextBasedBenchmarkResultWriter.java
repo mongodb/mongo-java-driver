@@ -21,8 +21,6 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.lang.String.format;
-
 public class TextBasedBenchmarkResultWriter implements BenchmarkResultWriter {
 
     public static final double ONE_MEGABYTE = 1000000.0;   // Intentionally in base 10
@@ -61,14 +59,14 @@ public class TextBasedBenchmarkResultWriter implements BenchmarkResultWriter {
 
         for (int percentile : percentiles) {
             double secondsPerIteration = benchmarkResult.getElapsedTimeNanosAtPercentile(percentile) / ONE_BILLION;
-            printStream.println(format("%dth percentile: %.3f sec/iteration", percentile, secondsPerIteration));
+            printStream.printf("%dth percentile: %.3f sec/iteration%n", percentile, secondsPerIteration);
         }
 
         if (includeMegabytes) {
             printStream.println();
             for (int percentile : percentiles) {
                 double secondsPerIteration = benchmarkResult.getElapsedTimeNanosAtPercentile(percentile) / ONE_BILLION;
-                printStream.println(format("%dth percentile: %.3f MB/sec", percentile, megabytesPerIteration / secondsPerIteration));
+                printStream.printf("%dth percentile: %.3f MB/sec%n", percentile, megabytesPerIteration / secondsPerIteration);
             }
         }
 
@@ -76,7 +74,7 @@ public class TextBasedBenchmarkResultWriter implements BenchmarkResultWriter {
             printStream.println();
             for (int i = 0; i < benchmarkResult.getElapsedTimeNanosList().size(); i++) {
                 double secondsPerIteration = benchmarkResult.getElapsedTimeNanosList().get(i) / ONE_BILLION;
-                printStream.println(format("%d: %.3f sec/iteration", i, secondsPerIteration));
+                printStream.printf("%d: %.3f sec/iteration%n", i, secondsPerIteration);
             }
         }
 

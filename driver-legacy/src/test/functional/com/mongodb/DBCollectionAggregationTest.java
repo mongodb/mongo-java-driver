@@ -16,11 +16,9 @@
 
 package com.mongodb;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +61,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
             .drop();
-        Assert.assertEquals(0, database.getCollection(aggCollection)
+        assertEquals(0, database.getCollection(aggCollection)
                                        .count());
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
@@ -101,7 +99,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         DBObject group = new BasicDBObject().append("_id", "$name")
             .append("docsPerName", new BasicDBObject("$sum", 1))
             .append("countPerName", new BasicDBObject("$sum", "$count"));
-        return Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
+        return asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
     }
 
     @Test

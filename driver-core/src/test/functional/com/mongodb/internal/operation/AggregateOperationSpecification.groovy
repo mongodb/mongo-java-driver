@@ -384,7 +384,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         cleanup:
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
                 .execute(getBinding())
-        profileCollectionHelper.drop();
+        profileCollectionHelper.drop()
 
         where:
         async << [true, false]

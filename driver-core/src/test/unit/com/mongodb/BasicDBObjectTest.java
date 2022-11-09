@@ -25,7 +25,6 @@ import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Date;
@@ -100,54 +99,54 @@ public class BasicDBObjectTest {
 
     @Test
     public void testGetDate() {
-        final Date date = new Date();
+        Date date = new Date();
         BasicDBObject doc = new BasicDBObject("foo", date);
-        assertTrue(doc.getDate("foo").equals(date));
+        assertEquals(doc.getDate("foo"), date);
     }
 
     @Test
     public void testGetDateWithDefault() {
-        final Date date = new Date();
+        Date date = new Date();
         BasicDBObject doc = new BasicDBObject("foo", date);
-        assertTrue(doc.getDate("foo", new Date()).equals(date));
-        assertTrue(doc.getDate("bar", date).equals(date));
+        assertEquals(doc.getDate("foo", new Date()), date);
+        assertEquals(doc.getDate("bar", date), date);
     }
 
     @Test
     public void testGetObjectId() {
-        final ObjectId objId = ObjectId.get();
+        ObjectId objId = ObjectId.get();
         BasicDBObject doc = new BasicDBObject("foo", objId);
-        assertTrue(doc.getObjectId("foo").equals(objId));
+        assertEquals(doc.getObjectId("foo"), objId);
     }
 
     @Test
     public void testGetObjectIdWithDefault() {
-        final ObjectId objId = ObjectId.get();
+        ObjectId objId = ObjectId.get();
         BasicDBObject doc = new BasicDBObject("foo", objId);
-        assertTrue(doc.getObjectId("foo", ObjectId.get()).equals(objId));
-        assertTrue(doc.getObjectId("bar", objId).equals(objId));
+        assertEquals(doc.getObjectId("foo", ObjectId.get()), objId);
+        assertEquals(doc.getObjectId("bar", objId), objId);
     }
 
     @Test
     public void testGetLongWithDefault() {
         final long test = 100;
         BasicDBObject doc = new BasicDBObject("foo", test);
-        assertTrue(doc.getLong("foo", 0L) == test);
-        assertTrue(doc.getLong("bar", 0L) == 0L);
+        assertEquals(test, doc.getLong("foo", 0L));
+        assertEquals(0L, doc.getLong("bar", 0L));
     }
 
     @Test
     public void testGetDoubleWithDefault() {
         BasicDBObject doc = new BasicDBObject("foo", Double.MAX_VALUE);
-        assertTrue(doc.getDouble("foo", (double) 0) == Double.MAX_VALUE);
-        assertTrue(doc.getDouble("bar", Double.MIN_VALUE) == Double.MIN_VALUE);
+        assertEquals(Double.MAX_VALUE, doc.getDouble("foo", 0), 0.0);
+        assertEquals(Double.MIN_VALUE, doc.getDouble("bar", Double.MIN_VALUE), 0.0);
     }
 
     @Test
     public void testGetStringWithDefault() {
         BasicDBObject doc = new BasicDBObject("foo", "badmf");
-        assertTrue(doc.getString("foo", "ID").equals("badmf"));
-        assertTrue(doc.getString("bar", "DEFAULT").equals("DEFAULT"));
+        assertEquals("badmf", doc.getString("foo", "ID"));
+        assertEquals("DEFAULT", doc.getString("bar", "DEFAULT"));
     }
 
     @Test
@@ -156,7 +155,7 @@ public class BasicDBObjectTest {
         assertTrue(b.isEmpty());
         b.append("a", 1);
         assertFalse(b.isEmpty());
-        Assert.assertEquals(b.get(), new BasicDBObject("a", 1));
+        assertEquals(b.get(), new BasicDBObject("a", 1));
     }
 
     @Test
@@ -165,7 +164,7 @@ public class BasicDBObjectTest {
         b.add("a", 1);
         b.push("b").append("c", 2).pop();
         DBObject a = b.get();
-        Assert.assertEquals(a, new BasicDBObject("a", 1).append("b", new BasicDBObject("c", 2)));
+        assertEquals(a, new BasicDBObject("a", 1).append("b", new BasicDBObject("c", 2)));
     }
 
     @Test
@@ -178,7 +177,7 @@ public class BasicDBObjectTest {
         b.push("z");
         b.append("b", 3);
 
-        Assert.assertEquals(b.get(),
+        assertEquals(b.get(),
                 new BasicDBObject("x", 1).append("y", new BasicDBObject("a", 2)).append("z", new BasicDBObject("b", 3)));
     }
 

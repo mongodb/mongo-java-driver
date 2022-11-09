@@ -107,7 +107,7 @@ public class ServerDescriptionTest {
         TopologyVersion topologyVersion = new TopologyVersion(new ObjectId(), 42);
         ServerDescription serverDescription = builder()
                                               .address(new ServerAddress("localhost:27018"))
-                                              .type(ServerType.REPLICA_SET_PRIMARY)
+                                              .type(REPLICA_SET_PRIMARY)
                                               .tagSet(new TagSet(new Tag("dc", "ny")))
                                               .setName("test")
                                               .maxDocumentSize(100)

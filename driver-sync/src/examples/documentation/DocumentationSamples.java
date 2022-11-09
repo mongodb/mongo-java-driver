@@ -23,7 +23,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Field;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Variable;
@@ -705,8 +704,8 @@ public final class DocumentationSamples extends DatabaseTestCase {
     public void testWatch() throws InterruptedException {
         assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(3, 6));
 
-        final MongoCollection<Document> inventory = collection;
-        final AtomicBoolean stop = new AtomicBoolean(false);
+        MongoCollection<Document> inventory = collection;
+        AtomicBoolean stop = new AtomicBoolean(false);
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -784,7 +783,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
         // Start Index Example 2
         collection.createIndex(Indexes.ascending("cuisine", "name"),
-                new IndexOptions().partialFilterExpression(Filters.gt("rating", 5)));
+                new IndexOptions().partialFilterExpression(gt("rating", 5)));
         // End Index Example 2
     }
 

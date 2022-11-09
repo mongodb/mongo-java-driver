@@ -18,15 +18,14 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.event.ServerDescriptionChangedEvent;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -74,7 +73,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     AbstractMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(clusterId, settings, serverFactory);
-        isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.MULTIPLE);
+        isTrue("connection mode is multiple", settings.getMode() == MULTIPLE);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
     }

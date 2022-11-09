@@ -45,7 +45,7 @@ public class ReadConcernDocumentTest extends TestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
-        final boolean valid = definition.getBoolean("valid", BsonBoolean.TRUE).getValue();
+        boolean valid = definition.getBoolean("valid", BsonBoolean.TRUE).getValue();
         try {
             ReadConcern readConcern = getReadConcern(definition.getDocument("readConcern"));
             ReadConcern expectedReadConcern = getReadConcern(definition.getDocument("readConcernDocument"));

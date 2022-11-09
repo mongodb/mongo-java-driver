@@ -66,7 +66,7 @@ class StringRangeSetSpecification extends Specification {
 
     def 'set should be ordered string representations of the range'() {
         given:
-        def size = 2000;
+        def size = 2000
         def expectedKeys = []
         for (def i : (0..<size)) {
             expectedKeys.add(i.toString())

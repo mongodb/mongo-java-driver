@@ -135,7 +135,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                         ACKNOWLEDGED)
-        execute(operation, async);
+        execute(operation, async)
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 3
@@ -150,7 +150,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                         [new BsonDocument('$merge', new BsonDocument('into', new BsonString(aggregateCollectionNamespace.collectionName)))])
-        execute(operation, async);
+        execute(operation, async)
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 3
@@ -166,7 +166,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                                                     new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                         ACKNOWLEDGED)
-        execute(operation, async);
+        execute(operation, async)
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
@@ -186,7 +186,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         enableMaxTimeFailPoint()
 
         when:
-        execute(operation, async);
+        execute(operation, async)
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -229,7 +229,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         when:
         def operation = new AggregateToCollectionOperation(getNamespace(), [BsonDocument.parse('{$out: "collectionOut"}')],
                 ACKNOWLEDGED)
-        execute(operation, async);
+        execute(operation, async)
 
         then:
         thrown(MongoCommandException)
@@ -332,7 +332,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         cleanup:
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
                 .execute(getBinding())
-        profileCollectionHelper.drop();
+        profileCollectionHelper.drop()
 
         where:
         async << [true, false]

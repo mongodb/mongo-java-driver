@@ -88,7 +88,7 @@ public class AuthConnectionStringTest extends TestCase {
         try {
             connectionString = new ConnectionString(input);
         } catch (Throwable t) {
-            assertTrue(String.format("Connection string '%s' should not have throw an exception: %s", input, t.toString()), false);
+            fail(String.format("Connection string '%s' should not have throw an exception: %s", input, t));
         }
 
         MongoCredential credential = connectionString.getCredential();
@@ -114,9 +114,9 @@ public class AuthConnectionStringTest extends TestCase {
             assertNull(String.format("%s should be null", key), actual);
         } else if (expected.isString()) {
             String expectedString = expected.asString().getValue();
-            assertTrue(String.format("%s should be %s but was %s", key, actual, expectedString), actual.equals(expectedString));
+            assertEquals(String.format("%s should be %s but was %s", key, actual, expectedString), actual, expectedString);
         } else {
-            assertTrue(String.format("%s should be %s but was %s", key, actual, expected), false);
+            fail(String.format("%s should be %s but was %s", key, actual, expected));
         }
     }
 
