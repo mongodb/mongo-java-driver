@@ -21,6 +21,7 @@ import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
+import org.bson.BsonDecimal128;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
@@ -29,7 +30,9 @@ import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
+import org.bson.types.Decimal128;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +75,10 @@ public final class Expressions {
     }
     public static NumberExpression of(final double of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
+    }
+    public static NumberExpression of(@NonNull final BigDecimal of) {
+        Assertions.notNull("BigDecimal", of);
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(new Decimal128(of))));
     }
     public static DateExpression of(@NonNull final Instant of) {
         Assertions.notNull("Instant", of);

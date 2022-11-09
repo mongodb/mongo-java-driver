@@ -21,8 +21,6 @@ package com.mongodb.client.model.expressions;
  */
 public interface NumberExpression extends Expression {
 
-    // TODO this must not return <T extends NumberExpression> T
-    // since it allows: IntegerEx result = oneNum.multiply(oneInt)
     NumberExpression multiply(NumberExpression n);
 
     default NumberExpression multiply(final double multiply) {

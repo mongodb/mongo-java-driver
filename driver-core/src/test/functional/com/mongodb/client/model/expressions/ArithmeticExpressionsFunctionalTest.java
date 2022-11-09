@@ -16,12 +16,17 @@
 
 package com.mongodb.client.model.expressions;
 
+import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SuppressWarnings("ConstantConditions")
 class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#arithmetic-expression-operators
 
@@ -30,13 +35,15 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
         assertExpression(1, of(1), "1");
         assertExpression(1L, of(1L));
         assertExpression(1.0, of(1.0));
+        assertExpression(BigDecimal.valueOf(1.0), of(BigDecimal.valueOf(1.0)));
+        assertThrows(IllegalArgumentException.class, () -> of((BigDecimal) null));
 
         // expression equality differs from bson equality
         assertExpression(true, of(1L).eq(of(1.0)));
         assertExpression(true, of(1L).eq(of(1)));
 
         // bson equality; underlying type is preserved
-        // this is not defined by the API, but tested for clarity
+        // this behaviour is not defined by the API, but tested for clarity
         assertEquals(toBsonValue(1), evaluate(of(1)));
         assertEquals(toBsonValue(1L), evaluate(of(1L)));
         assertEquals(toBsonValue(1.0), evaluate(of(1.0)));
@@ -89,8 +96,6 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
         // convenience
         assertExpression(0.5, of(1.0).divide(2.0));
         assertExpression(0.5, of(1).divide(2.0));
-        // TODO these convenience methods are all for doubles, so while they
-        // TODO allow longs and ints, they do not carry that through to the server:
         assertExpression(0.5, of(1).divide(2L));
         assertExpression(0.5, of(1).divide(2));
     }
