@@ -36,7 +36,9 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
         assertExpression(1L, of(1L));
         assertExpression(1.0, of(1.0));
         assertExpression(BigDecimal.valueOf(1.0), of(BigDecimal.valueOf(1.0)));
+        assertExpression(Decimal128.parse("1.0"), of(Decimal128.parse("1.0")));
         assertThrows(IllegalArgumentException.class, () -> of((BigDecimal) null));
+        assertThrows(IllegalArgumentException.class, () -> of((Decimal128) null));
 
         // expression equality differs from bson equality
         assertExpression(true, of(1L).eq(of(1.0)));
@@ -91,13 +93,29 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 0.5,
                 of(1).divide(of(2)),
                 "{'$divide': [1, 2]}");
-        // divide always returns a Number, so the method is not on IntegerExpression
+
+        // however, there are differences in evaluation between numbers
+        // represented using Decimal128 and double:
+        assertExpression(
+                2.5242187499999997,
+                of(3.231).divide(of(1.28)));
+        assertExpression(
+                Decimal128.parse("2.52421875"),
+                of(Decimal128.parse("3.231")).divide(of(Decimal128.parse("1.28"))));
+        assertExpression(
+                Decimal128.parse("2.52421875"),
+                of(Decimal128.parse("3.231")).divide(of(1.28)));
+        assertExpression(
+                Decimal128.parse("2.52421875"),
+                of(3.231).divide(of(Decimal128.parse("1.28"))));
 
         // convenience
         assertExpression(0.5, of(1.0).divide(2.0));
         assertExpression(0.5, of(1).divide(2.0));
         assertExpression(0.5, of(1).divide(2L));
         assertExpression(0.5, of(1).divide(2));
+
+        // divide always returns a Number, so the method is not on IntegerExpression
     }
 
     @Test

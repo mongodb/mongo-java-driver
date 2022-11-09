@@ -80,6 +80,10 @@ public final class Expressions {
         Assertions.notNull("BigDecimal", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(new Decimal128(of))));
     }
+    public static NumberExpression of(final Decimal128 of) {
+        Assertions.notNull("Decimal128", of);
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
+    }
     public static DateExpression of(@NonNull final Instant of) {
         Assertions.notNull("Instant", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
