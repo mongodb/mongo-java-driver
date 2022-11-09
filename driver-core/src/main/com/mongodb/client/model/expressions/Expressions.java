@@ -16,6 +16,10 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.client.model.expressions.MqlExpression.MqlArrayWrappingExpression;
+import com.mongodb.client.model.expressions.MqlExpression.MqlBooleanWrappingExpression;
+import com.mongodb.client.model.expressions.MqlExpression.MqlIntegerWrappingExpression;
+import com.mongodb.client.model.expressions.MqlExpression.MqlStringWrappingExpression;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonInt32;
@@ -41,7 +45,7 @@ public final class Expressions {
      */
     public static BooleanExpression of(final boolean of) {
         // we intentionally disallow ofBoolean(null)
-        return new MqlExpression<>((codecRegistry) -> new BsonBoolean(of));
+        return new MqlBooleanWrappingExpression<>(new MqlExpression<>((codecRegistry) -> new BsonBoolean(of)));
     }
 
     /**
@@ -52,7 +56,7 @@ public final class Expressions {
      * @return the integer expression
      */
     public static IntegerExpression of(final int of) {
-        return new MqlExpression<>((codecRegistry) -> new BsonInt32(of));
+        return new MqlIntegerWrappingExpression<>(new MqlExpression<>((codecRegistry) -> new BsonInt32(of)));
     }
 
     /**
@@ -63,7 +67,7 @@ public final class Expressions {
      * @return the string expression
      */
     public static StringExpression of(final String of) {
-        return new MqlExpression<>((codecRegistry) -> new BsonString(of));
+        return new MqlStringWrappingExpression<>(new MqlExpression<>((codecRegistry) -> new BsonString(of)));
     }
 
     /**
@@ -78,7 +82,7 @@ public final class Expressions {
         for (boolean b : array) {
             result.add(new BsonBoolean(b));
         }
-        return new MqlExpression<>((cr) -> new BsonArray(result));
+        return new MqlArrayWrappingExpression<>(new MqlExpression<>((cr) -> new BsonArray(result)));
     }
 
 }

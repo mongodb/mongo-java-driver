@@ -29,6 +29,84 @@ final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
         StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
 
+    static class MqlWrappingExpression<T extends Expression> implements Expression {
+        private final MqlExpression<T> wrapped;
+
+        private MqlWrappingExpression(final MqlExpression<T> wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        public MqlExpression<T> getWrapped() {
+            return wrapped;
+        }
+    }
+
+    static class MqlBooleanWrappingExpression<T extends Expression> extends MqlWrappingExpression<T> implements BooleanExpression {
+        MqlBooleanWrappingExpression(final MqlExpression<T> wrapped) {
+            super(wrapped);
+        }
+
+        @Override
+        public BooleanExpression not() {
+            return getWrapped().not();
+        }
+
+        @Override
+        public BooleanExpression or(final BooleanExpression or) {
+            return getWrapped().or(or);
+        }
+
+        @Override
+        public BooleanExpression and(final BooleanExpression and) {
+            return getWrapped().and(and);
+        }
+
+        @Override
+        public <R extends Expression> R cond(final R left, final R right) {
+            return getWrapped().cond(left, right);
+        }
+    }
+
+    static class MqlNumberWrappingExpression<T extends Expression> extends MqlWrappingExpression<T> implements NumberExpression {
+        MqlNumberWrappingExpression(final MqlExpression<T> wrapped) {
+            super(wrapped);
+        }
+    }
+
+    static class MqlIntegerWrappingExpression<T extends Expression> extends MqlWrappingExpression<T> implements IntegerExpression {
+        MqlIntegerWrappingExpression(final MqlExpression<T> wrapped) {
+            super(wrapped);
+        }
+    }
+
+    static class MqlStringWrappingExpression<T extends Expression> extends MqlWrappingExpression<T> implements StringExpression {
+        MqlStringWrappingExpression(final MqlExpression<T> wrapped) {
+            super(wrapped);
+        }
+    }
+
+    static class MqlArrayWrappingExpression<T extends Expression> extends MqlWrappingExpression<T> implements ArrayExpression<T> {
+        MqlArrayWrappingExpression(final MqlExpression<T> wrapped) {
+            super(wrapped);
+        }
+
+        @Override
+        public ArrayExpression<T> filter(final Function<? super T, ? extends BooleanExpression> cond) {
+            return getWrapped().filter(cond);
+        }
+
+        @Override
+        public <R extends Expression> ArrayExpression<R> map(final Function<? super T, ? extends R> in) {
+            return getWrapped().map(in);
+        }
+
+        @Override
+        public T reduce(final T initialValue, final BinaryOperator<T> in) {
+            return getWrapped().reduce(initialValue, in);
+        }
+    }
+
+
     private final Function<CodecRegistry, BsonValue> fn;
 
     MqlExpression(final Function<CodecRegistry, BsonValue> fn) {
@@ -76,7 +154,11 @@ final class MqlExpression<T extends Expression>
      * the only implementation of Expression and all subclasses, so this will
      * not mis-cast an expression as anything else.
      */
+    @SuppressWarnings("rawtypes")
     private static BsonValue extractBsonValue(final CodecRegistry cr, final Expression expression) {
+        if (expression instanceof MqlExpression.MqlWrappingExpression) {
+            return ((MqlWrappingExpression) expression).getWrapped().toBsonValue(cr);
+        }
         return ((MqlExpression<?>) expression).toBsonValue(cr);
     }
 
@@ -97,55 +179,106 @@ final class MqlExpression<T extends Expression>
         return newMqlExpression((cr) -> new BsonString(variable));
     }
 
-    /** @see BooleanExpression */
+    /**
+     * @see BooleanExpression
+     */
 
     @Override
     public BooleanExpression not() {
-        return new MqlExpression<>(ast("$not"));
+        return new MqlBooleanWrappingExpression<>(new MqlExpression<>(ast("$not")));
     }
 
     @Override
     public BooleanExpression or(final BooleanExpression or) {
-        return new MqlExpression<>(ast("$or", or));
+        return new MqlBooleanWrappingExpression<>(new MqlExpression<>(ast("$or", or)));
     }
 
     @Override
     public BooleanExpression and(final BooleanExpression and) {
-        return new MqlExpression<>(ast("$and", and));
+        return new MqlBooleanWrappingExpression<>(new MqlExpression<>(ast("$and", and)));
     }
 
     @Override
     public <R extends Expression> R cond(final R left, final R right) {
-        return newMqlExpression(ast("$cond", left, right));
+        return wrap(left, right, new MqlExpression<>(ast("$cond", left, right)));
     }
 
-
-    /** @see ArrayExpression */
+    /**
+     * @see ArrayExpression
+     */
 
     @Override
     public <R extends Expression> ArrayExpression<R> map(final Function<? super T, ? extends R> in) {
         T varThis = variable("$$this");
-        return new MqlExpression<>((cr) -> astDoc("$map", new BsonDocument()
+        return new MqlArrayWrappingExpression<>(new MqlExpression<>((cr) -> astDoc("$map", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
-                .append("in", extractBsonValue(cr, in.apply(varThis)))).apply(cr));
+                .append("in", extractBsonValue(cr, in.apply(varThis)))).apply(cr)));
     }
 
     @Override
     public ArrayExpression<T> filter(final Function<? super T, ? extends BooleanExpression> cond) {
         T varThis = variable("$$this");
-        return new MqlExpression<T>((cr) -> astDoc("$filter", new BsonDocument()
+        return new MqlArrayWrappingExpression<>(new MqlExpression<>((cr) -> astDoc("$filter", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
-                .append("cond", extractBsonValue(cr, cond.apply(varThis)))).apply(cr));
+                .append("cond", extractBsonValue(cr, cond.apply(varThis)))).apply(cr)));
     }
 
     @Override
     public T reduce(final T initialValue, final BinaryOperator<T> in) {
         T varThis = variable("$$this");
         T varValue = variable("$$value");
-        return newMqlExpression((cr) -> astDoc("$reduce", new BsonDocument()
-                .append("input", this.toBsonValue(cr))
-                .append("initialValue", extractBsonValue(cr, initialValue))
-                .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))).apply(cr));
+        MqlExpression<T> mqlExpression = new MqlExpression<>((cr) -> {
+            Function<CodecRegistry, BsonValue> ast = astDoc("$reduce", new BsonDocument()
+                    .append("input", this.toBsonValue(cr))
+                    .append("initialValue", extractBsonValue(cr, initialValue))
+                    .append("in", extractBsonValue(cr, in.apply(varThis, varValue))));
+            return ast.apply(cr);
+        });
+        // NOTE: saved by the presence of initialValue
+        return wrap(initialValue, mqlExpression);
     }
 
+    // NOTE: we're forced to reimplement the parameterized type system here in code
+
+    @SuppressWarnings("unchecked")
+    private static <R extends Expression> R wrap(R left, R right, MqlExpression<Expression> wrapped) {
+        if (left instanceof IntegerExpression && right instanceof IntegerExpression) {
+            return (R) new MqlIntegerWrappingExpression<>(wrapped);
+        }
+        if (left instanceof NumberExpression && right instanceof NumberExpression) {
+            return (R) new MqlNumberWrappingExpression<>(wrapped);
+        }
+        if (left instanceof BooleanExpression && right instanceof BooleanExpression) {
+            return (R) new MqlNumberWrappingExpression<>(wrapped);
+        }
+        if (left instanceof StringExpression && right instanceof StringExpression) {
+            return (R) new MqlStringWrappingExpression<>(wrapped);
+        }
+        if (left instanceof ArrayExpression && right instanceof ArrayExpression) {
+            return (R) new MqlArrayWrappingExpression<>(wrapped);
+        }
+
+        return (R) new MqlWrappingExpression<>(wrapped);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <R extends Expression> R wrap(R expressionInstance, MqlExpression<R> wrapped) {
+        if (expressionInstance instanceof IntegerExpression) {
+            return (R) new MqlIntegerWrappingExpression<>(wrapped);
+        }
+        if (expressionInstance instanceof NumberExpression) {
+            return (R) new MqlNumberWrappingExpression<>(wrapped);
+        }
+        if (expressionInstance instanceof BooleanExpression) {
+            return (R) new MqlNumberWrappingExpression<>(wrapped);
+        }
+        if (expressionInstance instanceof StringExpression) {
+            return (R) new MqlStringWrappingExpression<>(wrapped);
+        }
+        if (expressionInstance instanceof ArrayExpression) {
+            return (R) new MqlArrayWrappingExpression<>(wrapped);
+        }
+
+        return (R) new MqlWrappingExpression<>(wrapped);
+    }
 }

@@ -18,6 +18,7 @@ package com.mongodb.client.model.expressions;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.client.model.expressions.MqlExpression.MqlWrappingExpression;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
@@ -47,6 +48,9 @@ public final class ExpressionCodecProvider implements CodecProvider {
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (MqlExpression.class.equals(clazz)) {
             return (Codec<T>) new MqlExpressionCodec(registry);
+        }
+        if (MqlWrappingExpression.class.isAssignableFrom(clazz)) {
+            return (Codec<T>) new MqlWrappingExpressionCodec(registry);
         }
         return null;
     }

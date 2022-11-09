@@ -56,7 +56,8 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
     protected void assertExpression(final Object expectedResult, final Expression expression, final String expectedMql) {
         assertEval(expectedResult, expression);
 
-        BsonValue expressionValue = ((MqlExpression<?>) expression).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+        BsonValue expressionValue =
+                ((MqlExpression.MqlWrappingExpression<?>) expression).getWrapped().toBsonValue(fromProviders(new BsonValueCodecProvider()));
         BsonValue bsonValue = new BsonDocumentFragmentCodec().readValue(
                 new JsonReader(expectedMql),
                 DecoderContext.builder().build());
