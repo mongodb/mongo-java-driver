@@ -37,16 +37,6 @@ import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class QueryOperationHelper {
-    static BsonDocument sanitizeExplainResult(BsonDocument document) {
-        document.remove('ok')
-        document.remove('millis')
-        document.remove('executionStats')
-        document.remove('serverInfo')
-        document.remove('executionTimeMillis')
-        document.remove('operationTime')
-        document.remove('$clusterTime')
-        document
-    }
 
     static BsonDocument getKeyPattern(BsonDocument explainPlan) {
         BsonDocument winningPlan = explainPlan.getDocument('queryPlanner').getDocument('winningPlan')
@@ -87,7 +77,7 @@ class QueryOperationHelper {
                 if (e.getErrorCode() == 43) {
                     throw new MongoCursorNotFoundException(serverCursor.getId(), e.getResponse(), serverCursor.getAddress())
                 } else {
-                    throw new MongoQueryException(e.getResponse(), e.getServerAddress());
+                    throw new MongoQueryException(e.getResponse(), e.getServerAddress())
                 }
             }
         }
