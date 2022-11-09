@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
+import static com.mongodb.client.model.expressions.Expressions.of;
+
 /**
  * Expresses a string value.
  */
@@ -25,13 +27,21 @@ public interface StringExpression extends Expression {
 
     StringExpression toUpper();
 
-    Expression concat(StringExpression concat);
+    StringExpression concat(StringExpression concat);
 
-    Expression strLen();
+    IntegerExpression strLen();
 
-    Expression strLenBytes();
+    IntegerExpression strLenBytes();
 
-    Expression substr(int start, int length);
+    StringExpression substr(IntegerExpression start, IntegerExpression length);
 
-    Expression substrBytes(int start, int length);
+    default StringExpression substr(int start, int length) {
+        return this.substr(of(start), of(length));
+    }
+
+    StringExpression substrBytes(IntegerExpression start, IntegerExpression length);
+
+    default StringExpression substrBytes(int start, int length) {
+        return this.substrBytes(of(start), of(length));
+    }
 }

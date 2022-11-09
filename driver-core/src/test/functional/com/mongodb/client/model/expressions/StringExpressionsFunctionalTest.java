@@ -28,15 +28,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#string-expression-operators
 
-    private final String sushi = "\u5BFF\u53F8";
     private final String jalapeno = "jalape\u00F1o";
+    private final String sushi = "\u5BFF\u53F8";
+    private final String fish = "\uD83D\uDC1F";
 
     @Test
     public void literalsTest() {
         assertExpression("", of(""), "''");
         assertExpression("abc", of("abc"), "'abc'");
         assertThrows(IllegalArgumentException.class, () -> of((String) null));
-        assertExpression(sushi, of(sushi), "'" + sushi + "'");
+        assertExpression(fish, of(fish), "'" + fish + "'");
     }
 
     @Test
@@ -69,21 +70,24 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
     @Test
     public void strLenTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/strLenCP/ (?)
-        // TODO naming: just strLen, lengthCP, lengthCodePoints, stringLengthInCodePoints?...
         assertExpression(
-                "abc".length(),
+                "abc".codePointCount(0, 3),
                 of("abc").strLen(),
                 "{'$strLenCP': 'abc'}");
 
         // unicode
         assertExpression(
-                jalapeno.length(),
+                jalapeno.codePointCount(0, jalapeno.length()),
                 of(jalapeno).strLen(),
                 "{'$strLenCP': '" + jalapeno + "'}");
         assertExpression(
-                sushi.length(),
+                sushi.codePointCount(0, sushi.length()),
                 of(sushi).strLen(),
                 "{'$strLenCP': '" + sushi + "'}");
+        assertExpression(
+                fish.codePointCount(0, fish.length()),
+                of(fish).strLen(),
+                "{'$strLenCP': '" + fish + "'}");
     }
 
     @Test
@@ -103,35 +107,40 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
                 sushi.getBytes(StandardCharsets.UTF_8).length,
                 of(sushi).strLenBytes(),
                 "{'$strLenBytes': '" + sushi + "'}");
+        assertExpression(
+                fish.getBytes(StandardCharsets.UTF_8).length,
+                of(fish).strLenBytes(),
+                "{'$strLenBytes': '" + fish + "'}");
 
         // comparison
-        assertExpression(2, of(sushi).strLen());
-        assertExpression(6, of(sushi).strLenBytes());
         assertExpression(8, of(jalapeno).strLen());
         assertExpression(9, of(jalapeno).strLenBytes());
+        assertExpression(2, of(sushi).strLen());
+        assertExpression(6, of(sushi).strLenBytes());
+        assertExpression(1, of(fish).strLen());
+        assertExpression(4, of(fish).strLenBytes());
     }
 
     @Test
     public void substrTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substr/
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substrBytes/ (?)
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substrCP/ (?)
         // substr is deprecated, an alias for bytes
-        // TODO here, it is an alias for code-points
         assertExpression(
                 "abc".substring(1, 1 + 1),
-                of("abc").substr(1, 1),
+                of("abc").substr(of(1), of(1)),
                 "{'$substrCP': ['abc', 1, 1]}");
 
         // unicode
         assertExpression(
                 jalapeno.substring(5, 5 + 3),
-                of(jalapeno).substr(5, 3),
+                of(jalapeno).substr(of(5), of(3)),
                 "{'$substrCP': ['" + jalapeno + "', 5, 3]}");
         assertExpression(
                 "e\u00F1o",
-                of(jalapeno).substr(5, 3));
+                of(jalapeno).substr(of(5), of(3)));
 
+        // bounds; convenience
         assertExpression("abc", of("abc").substr(0, 99));
         assertExpression("ab", of("abc").substr(0, 2));
         assertExpression("b", of("abc").substr(1, 1));
@@ -143,14 +152,17 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substrBytes/ (?)
         assertExpression(
                 "b",
-                of("abc").substrBytes(1, 1),
+                of("abc").substrBytes(of(1), of(1)),
                 "{'$substrBytes': ['abc', 1, 1]}");
 
         // unicode
-        byte[] bytes = Arrays.copyOfRange(sushi.getBytes(), 0, 3);
+        byte[] bytes = Arrays.copyOfRange(sushi.getBytes(StandardCharsets.UTF_8), 0, 3);
         String expected = new String(bytes, StandardCharsets.UTF_8);
         assertExpression(expected,
-                of(sushi).substrBytes(0, 3));
-        // "starting index is a UTF-8 continuation byte" if from 1 length 1
+                of(sushi).substrBytes(of(0), of(3)));
+        // server returns "starting index is a UTF-8 continuation byte" error when substrBytes(1, 1)
+
+        // convenience
+        assertExpression("b", of("abc").substrBytes(1, 1));
     }
 }

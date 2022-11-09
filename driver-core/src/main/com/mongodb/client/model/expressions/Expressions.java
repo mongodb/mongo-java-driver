@@ -32,7 +32,6 @@ import org.bson.conversions.Bson;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,9 +83,7 @@ public final class Expressions {
      * @return the string expression
      */
     public static StringExpression of(final String of) {
-        if (of == null) {
-            throw new IllegalArgumentException("string cannot be null");
-        }
+        Assertions.notNull("String", of);
         return new MqlExpression<>((codecRegistry) -> new BsonString(of));
     }
 

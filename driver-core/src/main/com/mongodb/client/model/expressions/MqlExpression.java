@@ -25,8 +25,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
-import static com.mongodb.client.model.expressions.Expressions.of;
-
 final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
         StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
@@ -206,17 +204,17 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public Expression strLenBytes() {
+    public IntegerExpression strLenBytes() {
         return new MqlExpression<>(ast("$strLenBytes"));
     }
 
     @Override
-    public Expression substr(final int start, final int length) {
-        return new MqlExpression<>(ast("$substrCP", of(start), of(length)));
+    public StringExpression substr(final IntegerExpression start, final IntegerExpression length) {
+        return new MqlExpression<>(ast("$substrCP", start, length));
     }
 
     @Override
-    public Expression substrBytes(final int start, final int length) {
-        return new MqlExpression<>(ast("$substrBytes", of(start), of(length)));
+    public StringExpression substrBytes(final IntegerExpression start, final IntegerExpression length) {
+        return new MqlExpression<>(ast("$substrBytes", start, length));
     }
 }
