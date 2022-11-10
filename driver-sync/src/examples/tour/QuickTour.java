@@ -145,12 +145,7 @@ public class QuickTour {
         System.out.println(myDoc.toJson());
 
         // now use a range query to get a larger subset
-        Consumer<Document> printBlock = new Consumer<Document>() {
-            @Override
-            public void accept(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
+        Consumer<Document> printBlock = document -> System.out.println(document.toJson());
         collection.find(gt("i", 50)).forEach(printBlock);
 
         // filter where; 50 < i <= 100

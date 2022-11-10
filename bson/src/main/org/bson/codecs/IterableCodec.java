@@ -70,12 +70,7 @@ public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresenta
                           final UuidRepresentation uuidRepresentation) {
         this.registry = notNull("registry", registry);
         this.bsonTypeCodecMap = bsonTypeCodecMap;
-        this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
-            @Override
-            public Object transform(final Object objectToTransform) {
-                return objectToTransform;
-            }
-        };
+        this.valueTransformer = valueTransformer != null ? valueTransformer : objectToTransform -> objectToTransform;
         this.uuidRepresentation = uuidRepresentation;
     }
 

@@ -90,15 +90,12 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                                     final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
         long startTime = System.nanoTime();
         executeCommandAsync("admin", createHelloCommand(authenticator, internalConnection), clusterConnectionMode, serverApi,
-                internalConnection, new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument helloResult, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t instanceof MongoException ? mapHelloException((MongoException) t) : t);
-                        } else {
-                            setSpeculativeAuthenticateResponse(helloResult);
-                            callback.onResult(createInitializationDescription(helloResult, internalConnection, startTime), null);
-                        }
+                internalConnection, (helloResult, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, t instanceof MongoException ? mapHelloException((MongoException) t) : t);
+                    } else {
+                        setSpeculativeAuthenticateResponse(helloResult);
+                        callback.onResult(createInitializationDescription(helloResult, internalConnection, startTime), null);
                     }
                 });
     }
@@ -112,14 +109,11 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             completeConnectionDescriptionInitializationAsync(internalConnection, description, callback);
         } else {
             authenticator.authenticateAsync(internalConnection, description.getConnectionDescription(),
-                    new SingleResultCallback<Void>() {
-                        @Override
-                        public void onResult(final Void result1, final Throwable t1) {
-                            if (t1 != null) {
-                                callback.onResult(null, t1);
-                            } else {
-                                completeConnectionDescriptionInitializationAsync(internalConnection, description, callback);
-                            }
+                    (result1, t1) -> {
+                        if (t1 != null) {
+                            callback.onResult(null, t1);
+                        } else {
+                            completeConnectionDescriptionInitializationAsync(internalConnection, description, callback);
                         }
                     });
         }
@@ -230,14 +224,11 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
         executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
                 internalConnection,
-                new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(description, null);
-                        } else {
-                            callback.onResult(applyGetLastErrorResult(result, description), null);
-                        }
+                (result, t) -> {
+                    if (t != null) {
+                        callback.onResult(description, null);
+                    } else {
+                        callback.onResult(applyGetLastErrorResult(result, description), null);
                     }
                 });
     }

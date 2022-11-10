@@ -17,7 +17,6 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
-import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
@@ -225,12 +224,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private MongoIterable<String> createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
         return createListCollectionsIterable(clientSession, BsonDocument.class, true)
-                .map(new Function<BsonDocument, String>() {
-                    @Override
-                    public String apply(final BsonDocument result) {
-                        return result.getString("name").getValue();
-                    }
-                });
+                .map(result -> result.getString("name").getValue());
     }
 
     @Override

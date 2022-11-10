@@ -22,10 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -99,42 +95,33 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                try {
-                    executeCommand(binding, namespace.getDatabaseName(), getCommand(), connection,
-                            writeConcernErrorTransformer());
-                } catch (MongoCommandException e) {
-                    rethrowIfNotNamespaceError(e);
-                }
-                return null;
+        return withConnection(binding, connection -> {
+            try {
+                executeCommand(binding, namespace.getDatabaseName(), getCommand(), connection,
+                        writeConcernErrorTransformer());
+            } catch (MongoCommandException e) {
+                rethrowIfNotNamespaceError(e);
             }
+            return null;
         });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
-                    executeCommandAsync(binding, namespace.getDatabaseName(), getCommand(),
-                            connection, writeConcernErrorWriteTransformer(), new SingleResultCallback<Void>() {
-                                @Override
-                                public void onResult(final Void result, final Throwable t) {
-                                    if (t != null && !isNamespaceError(t)) {
-                                        releasingCallback.onResult(null, t);
-                                    } else {
-                                        releasingCallback.onResult(result, null);
-                                    }
-                                }
-                            });
-                }
+        withAsyncConnection(binding, (connection, t) -> {
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else {
+                SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
+                executeCommandAsync(binding, namespace.getDatabaseName(), getCommand(),
+                        connection, writeConcernErrorWriteTransformer(), (result, t1) -> {
+                            if (t1 != null && !isNamespaceError(t1)) {
+                                releasingCallback.onResult(null, t1);
+                            } else {
+                                releasingCallback.onResult(result, null);
+                            }
+                        });
             }
         });
     }

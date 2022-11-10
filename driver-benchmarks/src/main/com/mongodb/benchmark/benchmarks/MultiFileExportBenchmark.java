@@ -122,37 +122,31 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable exportJsonFile(final int fileId, final CountDownLatch latch) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                List<RawBsonDocument> documents = collection.find(new BsonDocument("fileId", new BsonInt32(fileId)))
-                        .batchSize(5000)
-                        .into(new ArrayList<>(5000));
-                fileWritingService.submit(writeJsonFile(fileId, documents, latch));
-            }
+        return () -> {
+            List<RawBsonDocument> documents = collection.find(new BsonDocument("fileId", new BsonInt32(fileId)))
+                    .batchSize(5000)
+                    .into(new ArrayList<>(5000));
+            fileWritingService.submit(writeJsonFile(fileId, documents, latch));
         };
     }
 
     private Runnable writeJsonFile(final int fileId, final List<RawBsonDocument> documents, final CountDownLatch latch) {
-        return new Runnable() {
-            @Override
-            public void run() {
+        return () -> {
+            try {
+                Writer writer = new OutputStreamWriter(
+                        new FileOutputStream(new File(tempDirectory, String.format("%03d", fileId) + ".txt")), StandardCharsets.UTF_8);
                 try {
-                    Writer writer = new OutputStreamWriter(
-                            new FileOutputStream(new File(tempDirectory, String.format("%03d", fileId) + ".txt")), StandardCharsets.UTF_8);
-                    try {
-                        RawBsonDocumentCodec codec = new RawBsonDocumentCodec();
-                        for (RawBsonDocument cur : documents) {
-                            codec.encode(new JsonWriter(writer), cur, EncoderContext.builder().build());
-                            writer.write('\n');
-                        }
-                    } finally {
-                        writer.close();
+                    RawBsonDocumentCodec codec = new RawBsonDocumentCodec();
+                    for (RawBsonDocument cur : documents) {
+                        codec.encode(new JsonWriter(writer), cur, EncoderContext.builder().build());
+                        writer.write('\n');
                     }
-                    latch.countDown();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                } finally {
+                    writer.close();
                 }
+                latch.countDown();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         };
     }
@@ -164,32 +158,29 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
 
         for (int i = 0; i < 100; i++) {
             int fileId = i;
-            importService.submit(new Runnable() {
-                @Override
-                public void run() {
+            importService.submit(() -> {
+                try {
+                    String resourcePath = "parallel/ldjson_multi/ldjson" + String.format("%03d", fileId) + ".txt";
+                    BufferedReader reader = new BufferedReader(readFromRelativePath(resourcePath), 1024 * 64);
                     try {
-                        String resourcePath = "parallel/ldjson_multi/ldjson" + String.format("%03d", fileId) + ".txt";
-                        BufferedReader reader = new BufferedReader(readFromRelativePath(resourcePath), 1024 * 64);
-                        try {
-                            String json;
-                            List<BsonDocument> documents = new ArrayList<>(1000);
-                            while ((json = reader.readLine()) != null) {
-                                BsonDocument document = new BsonDocumentCodec().decode(new JsonReader(json),
-                                        DecoderContext.builder().build());
-                                document.put("fileId", new BsonInt32(fileId));
-                                documents.add(document);
-                            }
-                            database.getCollection(COLLECTION_NAME, BsonDocument.class).insertMany(documents,
-                                    new InsertManyOptions().ordered(false));
-                            latch.countDown();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } finally {
-                            reader.close();
+                        String json;
+                        List<BsonDocument> documents = new ArrayList<>(1000);
+                        while ((json = reader.readLine()) != null) {
+                            BsonDocument document = new BsonDocumentCodec().decode(new JsonReader(json),
+                                    DecoderContext.builder().build());
+                            document.put("fileId", new BsonInt32(fileId));
+                            documents.add(document);
                         }
+                        database.getCollection(COLLECTION_NAME, BsonDocument.class).insertMany(documents,
+                                new InsertManyOptions().ordered(false));
+                        latch.countDown();
                     } catch (IOException e) {
-                         throw new RuntimeException(e);
+                        throw new RuntimeException(e);
+                    } finally {
+                        reader.close();
                     }
+                } catch (IOException e) {
+                     throw new RuntimeException(e);
                 }
             });
         }

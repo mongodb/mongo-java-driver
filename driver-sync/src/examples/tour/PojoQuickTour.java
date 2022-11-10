@@ -94,12 +94,7 @@ public class PojoQuickTour {
 
         System.out.println();
         // lets get all the documents in the collection and print them out
-        Consumer<Person> printBlock = new Consumer<Person>() {
-            @Override
-            public void accept(final Person person) {
-                System.out.println(person);
-            }
-        };
+        Consumer<Person> printBlock = person -> System.out.println(person);
 
         collection.find().forEach(printBlock);
 

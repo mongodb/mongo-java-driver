@@ -677,12 +677,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
                 final RequestContext requestContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, new SingleResultCallback<T>() {
-                @Override
-                public void onResult(final T result, final Throwable t) {
-                    callback.onResult(result, t);
-                }
-            });
+            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, (result, t) -> callback.onResult(result, t));
         }
 
         @Override
@@ -694,23 +689,13 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendMessageAsync(byteBuffers, lastRequestId, new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    callback.onResult(null, t);
-                }
-            });
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, (result, t) -> callback.onResult(null, t));
         }
 
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.receiveMessageAsync(responseTo, new SingleResultCallback<ResponseBuffers>() {
-                @Override
-                public void onResult(final ResponseBuffers result, final Throwable t) {
-                    callback.onResult(result, t);
-                }
-            });
+            wrapped.receiveMessageAsync(responseTo, (result, t) -> callback.onResult(result, t));
         }
 
         @Override

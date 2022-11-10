@@ -1035,16 +1035,13 @@ public class DBCollection {
                                .collation(options.getCollation())
                                .retryReads(retryReads);
             }
-        }.map(new Function<BsonValue, Object>() {
-            @Override
-            public Object apply(final BsonValue bsonValue) {
-                if (bsonValue == null) {
-                    return null;
-                }
-                BsonDocument document = new BsonDocument("value", bsonValue);
-                DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document), DecoderContext.builder().build());
-                return obj.get("value");
+        }.map(bsonValue -> {
+            if (bsonValue == null) {
+                return null;
             }
+            BsonDocument document = new BsonDocument("value", bsonValue);
+            DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+            return obj.get("value");
         }).into(new ArrayList<>());
     }
 

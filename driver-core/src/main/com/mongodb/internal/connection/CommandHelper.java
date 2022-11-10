@@ -69,16 +69,13 @@ public final class CommandHelper {
                                     final SingleResultCallback<BsonDocument> callback) {
         internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
                 new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            callback.onResult(result, null);
-                        }
+                NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, (result, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        callback.onResult(result, null);
                     }
-        });
+                });
     }
 
     static boolean isCommandOk(final BsonDocument response) {

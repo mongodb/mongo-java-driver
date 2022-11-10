@@ -646,22 +646,19 @@ public final class ClusterFixture {
             callback.onResult(null, null);
             return;
         }
-        batchCursor.next(new SingleResultCallback<List<T>>() {
-            @Override
-            public void onResult(final List<T> results, final Throwable t) {
-                if (t != null || results == null) {
-                    batchCursor.close();
-                    callback.onResult(null, t);
-                } else {
-                    try {
-                        for (T result : results) {
-                            block.apply(result);
-                        }
-                        loopCursor(batchCursor, block, callback);
-                    } catch (Throwable tr) {
-                        batchCursor.close();
-                        callback.onResult(null, tr);
+        batchCursor.next((results, t) -> {
+            if (t != null || results == null) {
+                batchCursor.close();
+                callback.onResult(null, t);
+            } else {
+                try {
+                    for (T result : results) {
+                        block.apply(result);
                     }
+                    loopCursor(batchCursor, block, callback);
+                } catch (Throwable tr) {
+                    batchCursor.close();
+                    callback.onResult(null, tr);
                 }
             }
         });
@@ -670,12 +667,7 @@ public final class ClusterFixture {
     public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) throws Throwable {
         List<T> results = new ArrayList<>();
         FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
-        loopCursor(batchCursor, new Block<T>() {
-            @Override
-            public void apply(final T t) {
-                results.add(t);
-            }
-        }, futureResultCallback);
+        loopCursor(batchCursor, t -> results.add(t), futureResultCallback);
         futureResultCallback.get(TIMEOUT, SECONDS);
         return results;
     }

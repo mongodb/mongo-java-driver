@@ -105,12 +105,7 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
         this.registry = notNull("registry", registry);
         this.bsonTypeCodecMap = bsonTypeCodecMap;
         this.idGenerator = idGenerator;
-        this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
-            @Override
-            public Object transform(final Object value) {
-                return value;
-            }
-        };
+        this.valueTransformer = valueTransformer != null ? valueTransformer : value -> value;
         this.uuidRepresentation = uuidRepresentation;
     }
 

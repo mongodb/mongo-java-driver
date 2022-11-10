@@ -22,18 +22,12 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.async.function.RetryState;
-import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.session.SessionContext;
@@ -364,20 +358,17 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private static <T> SingleResultCallback<T> exceptionTransformingCallback(final SingleResultCallback<T> callback) {
-        return new SingleResultCallback<T>() {
-            @Override
-            public void onResult(final T result, final Throwable t) {
-                if (t != null) {
-                    if (t instanceof MongoCommandException) {
-                        MongoCommandException commandException = (MongoCommandException) t;
-                        callback.onResult(result,
-                                new MongoQueryException(commandException.getResponse(), commandException.getServerAddress()));
-                    } else {
-                        callback.onResult(result, t);
-                    }
+        return (result, t) -> {
+            if (t != null) {
+                if (t instanceof MongoCommandException) {
+                    MongoCommandException commandException = (MongoCommandException) t;
+                    callback.onResult(result,
+                            new MongoQueryException(commandException.getResponse(), commandException.getServerAddress()));
                 } else {
-                    callback.onResult(result, null);
+                    callback.onResult(result, t);
                 }
+            } else {
+                callback.onResult(result, null);
             }
         };
     }
@@ -471,12 +462,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
-            }
-        };
+        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
     }
 
     private boolean isTailableCursor() {
@@ -488,15 +474,11 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>> transformer() {
-        return new CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>>() {
-            @Override
-            public AggregateResponseBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source,
-                                                         final Connection connection) {
-                QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
-                        connection.getDescription().getServerAddress());
-                return new QueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection,
-                        result);
-            }
+        return (result, source, connection) -> {
+            QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
+                    connection.getDescription().getServerAddress());
+            return new QueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection,
+                    result);
         };
     }
 
@@ -505,15 +487,11 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return new CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>>() {
-            @Override
-            public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
-                                             final AsyncConnection connection) {
-                QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
-                        connection.getDescription().getServerAddress());
-                return new AsyncQueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
-                        connection, result);
-            }
+        return (result, source, connection) -> {
+            QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
+                    connection.getDescription().getServerAddress());
+            return new AsyncQueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
+                    connection, result);
         };
     }
 }

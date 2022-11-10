@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.DBRef;
-import com.mongodb.Function;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -110,18 +109,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // when
         List<String> listOfStringObjectIds = collection.find(new Document("i", 1))
-                                                       .map(new Function<Concrete, ObjectId>() {
-                                                           @Override
-                                                           public ObjectId apply(final Concrete concrete) {
-                                                               return concrete.getId();
-                                                           }
-                                                       })
-                                                       .map(new Function<ObjectId, String>() {
-                                                           @Override
-                                                           public String apply(final ObjectId objectId) {
-                                                               return objectId.toString();
-                                                           }
-                                                       }).into(new ArrayList<>());
+                                                       .map(concrete -> concrete.getId())
+                                                       .map(objectId -> objectId.toString()).into(new ArrayList<>());
 
         // then
         assertThat(listOfStringObjectIds.size(), is(1));
@@ -129,12 +118,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         // when
         List<ObjectId> listOfObjectIds = collection.find(new Document("i", 1))
-                                                   .map(new Function<Concrete, ObjectId>() {
-                                                       @Override
-                                                       public ObjectId apply(final Concrete concrete) {
-                                                           return concrete.getId();
-                                                       }
-                                                   })
+                                                   .map(concrete -> concrete.getId())
                                                    .into(new ArrayList<>());
 
         // then

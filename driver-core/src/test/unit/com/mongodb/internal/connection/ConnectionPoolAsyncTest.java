@@ -22,7 +22,6 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
@@ -47,42 +46,33 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
         String name = operation.getString("name").getValue();
         if (name.equals("checkOut")) {
             FutureResultCallback<InternalConnection> callback = new FutureResultCallback<>();
-            return new Callable<Exception>() {
-                @Override
-                public Exception call() {
-                    try {
-                        getPool().getAsync(new SingleResultCallback<InternalConnection>() {
-                            @Override
-                            public void onResult(final InternalConnection connection, final Throwable t) {
-                                if (t != null) {
-                                    callback.onResult(null, t);
-                                } else {
-                                    if (operation.containsKey("label")) {
-                                        getConnectionMap().put(operation.getString("label").getValue(), connection);
-                                    }
-                                    callback.onResult(connection, null);
-                                }
+            return () -> {
+                try {
+                    getPool().getAsync((connection, t) -> {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            if (operation.containsKey("label")) {
+                                getConnectionMap().put(operation.getString("label").getValue(), connection);
                             }
-                        });
-                        callback.get();
-                        return null;
-                    } catch (Exception e) {
-                        LOGGER.error("", e);
-                        return e;
-                    }
+                            callback.onResult(connection, null);
+                        }
+                    });
+                    callback.get();
+                    return null;
+                } catch (Exception e) {
+                    LOGGER.error("", e);
+                    return e;
                 }
             };
         } else if (name.equals("checkIn")) {
-            return new Callable<Exception>() {
-                @Override
-                public Exception call() {
-                    try {
-                        InternalConnection connection = getConnectionMap().get(operation.getString("connection").getValue());
-                        connection.close();
-                        return null;
-                    } catch (Exception e) {
-                        return e;
-                    }
+            return () -> {
+                try {
+                    InternalConnection connection = getConnectionMap().get(operation.getString("connection").getValue());
+                    connection.close();
+                    return null;
+                } catch (Exception e) {
+                    return e;
                 }
             };
         } else {

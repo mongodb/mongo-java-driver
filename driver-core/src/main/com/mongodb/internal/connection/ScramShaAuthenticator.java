@@ -376,28 +376,22 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
     }
 
-    private static final AuthenticationHashGenerator DEFAULT_AUTHENTICATION_HASH_GENERATOR =  new AuthenticationHashGenerator() {
-        @Override
-        public String generate(final MongoCredential credential) {
-            char[] password = credential.getPassword();
-            if (password == null) {
-                throw new IllegalArgumentException("Password must not be null");
-            }
-            return new String(password);
+    private static final AuthenticationHashGenerator DEFAULT_AUTHENTICATION_HASH_GENERATOR = credential -> {
+        char[] password = credential.getPassword();
+        if (password == null) {
+            throw new IllegalArgumentException("Password must not be null");
         }
+        return new String(password);
     };
 
-    private static final AuthenticationHashGenerator LEGACY_AUTHENTICATION_HASH_GENERATOR =  new AuthenticationHashGenerator() {
-        @Override
-        public String generate(final MongoCredential credential) {
-            // Username and password must not be modified going into the hash.
-            String username = credential.getUserName();
-            char[] password = credential.getPassword();
-            if (username == null || password == null) {
-                throw new IllegalArgumentException("Username and password must not be null");
-            }
-            return createAuthenticationHash(username, password);
+    private static final AuthenticationHashGenerator LEGACY_AUTHENTICATION_HASH_GENERATOR = credential -> {
+        // Username and password must not be modified going into the hash.
+        String username = credential.getUserName();
+        char[] password = credential.getPassword();
+        if (username == null || password == null) {
+            throw new IllegalArgumentException("Username and password must not be null");
         }
+        return createAuthenticationHash(username, password);
     };
 
     private static AuthenticationHashGenerator getAuthenicationHashGenerator(final AuthenticationMechanism authenticationMechanism) {

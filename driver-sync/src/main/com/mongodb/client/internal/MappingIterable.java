@@ -56,22 +56,12 @@ class MappingIterable<U, V> implements MongoIterable<V> {
 
     @Override
     public void forEach(final Consumer<? super V> block) {
-        iterable.forEach(new Consumer<U>() {
-            @Override
-            public void accept(final U document) {
-                block.accept(mapper.apply(document));
-            }
-        });
+        iterable.forEach(document -> block.accept(mapper.apply(document)));
     }
 
     @Override
     public <A extends Collection<? super V>> A into(final A target) {
-        forEach(new Consumer<V>() {
-            @Override
-            public void accept(final V v) {
-                target.add(v);
-            }
-        });
+        forEach(v -> target.add(v));
         return target;
     }
 

@@ -126,23 +126,20 @@ public class DBCursorOldTest extends DatabaseTestCase {
                               .cursorType(CursorType.Tailable);
 
         CountDownLatch latch = new CountDownLatch(1);
-        Callable<Integer> callable = new Callable<Integer>() {
-            @Override
-            public Integer call() throws Exception {
-                // the following call will block on the last hasNext
-                int i = 0;
-                while (cur.hasNext()) {
-                    DBObject obj = cur.next();
-                    i++;
-                    if (i == 10) {
-                        latch.countDown();
-                    } else if (i > 10) {
-                        return (Integer) obj.get("x");
-                    }
+        Callable<Integer> callable = () -> {
+            // the following call will block on the last hasNext
+            int i = 0;
+            while (cur.hasNext()) {
+                DBObject obj = cur.next();
+                i++;
+                if (i == 10) {
+                    latch.countDown();
+                } else if (i > 10) {
+                    return (Integer) obj.get("x");
                 }
-
-                return null;
             }
+
+            return null;
         };
 
         ExecutorService es = Executors.newSingleThreadExecutor();
@@ -171,22 +168,19 @@ public class DBCursorOldTest extends DatabaseTestCase {
                               .cursorType(CursorType.Tailable);
 
         CountDownLatch latch = new CountDownLatch(1);
-        Callable<Integer> callable = new Callable<Integer>() {
-            @Override
-            public Integer call() {
-                // the following call will block on the last hasNext
-                int i = 0;
-                while (i < 11) {
-                    DBObject obj = cur.next();
-                    i++;
-                    if (i == 10) {
-                        latch.countDown();
-                    } else if (i > 10) {
-                        return (Integer) obj.get("x");
-                    }
+        Callable<Integer> callable = () -> {
+            // the following call will block on the last hasNext
+            int i = 0;
+            while (i < 11) {
+                DBObject obj = cur.next();
+                i++;
+                if (i == 10) {
+                    latch.countDown();
+                } else if (i > 10) {
+                    return (Integer) obj.get("x");
                 }
-                return null;
             }
+            return null;
         };
 
         ExecutorService es = Executors.newSingleThreadExecutor();

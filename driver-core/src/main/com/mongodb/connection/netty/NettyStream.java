@@ -249,14 +249,11 @@ final class NettyStream implements Stream {
             composite.addComponent(true, ((NettyByteBuf) cur).asByteBuf());
         }
 
-        channel.writeAndFlush(composite).addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(final ChannelFuture future) throws Exception {
-                if (!future.isSuccess()) {
-                    handler.failed(future.cause());
-                } else {
-                    handler.completed(null);
-                }
+        channel.writeAndFlush(composite).addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+                handler.failed(future.cause());
+            } else {
+                handler.completed(null);
             }
         });
     }
@@ -505,12 +502,7 @@ final class NettyStream implements Stream {
                         channelFuture.channel().close();
                     } else {
                         channel = channelFuture.channel();
-                        channel.closeFuture().addListener(new ChannelFutureListener() {
-                            @Override
-                            public void operationComplete(final ChannelFuture future) {
-                                handleReadResponse(null, new IOException("The connection to the server was closed"));
-                            }
-                        });
+                        channel.closeFuture().addListener((ChannelFutureListener) future1 -> handleReadResponse(null, new IOException("The connection to the server was closed")));
                     }
                     handler.completed(null);
                 } else {

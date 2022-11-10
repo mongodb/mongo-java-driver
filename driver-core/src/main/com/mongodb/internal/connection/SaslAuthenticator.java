@@ -38,7 +38,6 @@ import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
-import java.security.PrivilegedAction;
 
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_KEY;
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY;
@@ -56,41 +55,38 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
-        doAsSubject(new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
-                throwIfSaslClientIsNull(saslClient);
-                try {
-                    BsonDocument responseDocument = getNextSaslResponse(saslClient, connection);
-                    BsonInt32 conversationId = responseDocument.getInt32("conversationId");
+        doAsSubject(() -> {
+            SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+            throwIfSaslClientIsNull(saslClient);
+            try {
+                BsonDocument responseDocument = getNextSaslResponse(saslClient, connection);
+                BsonInt32 conversationId = responseDocument.getInt32("conversationId");
 
-                    while (!(responseDocument.getBoolean("done")).getValue()) {
-                        byte[] response = saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+                while (!(responseDocument.getBoolean("done")).getValue()) {
+                    byte[] response = saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
 
-                        if (response == null) {
-                            throw new MongoSecurityException(getMongoCredential(),
-                                    "SASL protocol error: no client response to challenge for credential "
-                                            + getMongoCredential());
-                        }
-
-                        responseDocument = sendSaslContinue(conversationId, response, connection);
+                    if (response == null) {
+                        throw new MongoSecurityException(getMongoCredential(),
+                                "SASL protocol error: no client response to challenge for credential "
+                                        + getMongoCredential());
                     }
-                    if (!saslClient.isComplete()) {
-                        saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
-                        if (!saslClient.isComplete()) {
-                            throw new MongoSecurityException(getMongoCredential(),
-                                    "SASL protocol error: server completed challenges before client completed responses "
-                                            + getMongoCredential());
-                        }
-                    }
-                } catch (Exception e) {
-                    throw wrapException(e);
-                } finally {
-                    disposeOfSaslClient(saslClient);
+
+                    responseDocument = sendSaslContinue(conversationId, response, connection);
                 }
-                return null;
+                if (!saslClient.isComplete()) {
+                    saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+                    if (!saslClient.isComplete()) {
+                        throw new MongoSecurityException(getMongoCredential(),
+                                "SASL protocol error: server completed challenges before client completed responses "
+                                        + getMongoCredential());
+                    }
+                }
+            } catch (Exception e) {
+                throw wrapException(e);
+            } finally {
+                disposeOfSaslClient(saslClient);
             }
+            return null;
         });
     }
 
@@ -98,14 +94,11 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
         try {
-            doAsSubject(new PrivilegedAction<Void>() {
-                @Override
-                public Void run() {
-                    SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
-                    throwIfSaslClientIsNull(saslClient);
-                    getNextSaslResponseAsync(saslClient, connection, callback);
-                    return null;
-                }
+            doAsSubject(() -> {
+                SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+                throwIfSaslClientIsNull(saslClient);
+                getNextSaslResponseAsync(saslClient, connection, callback);
+                return null;
             });
         } catch (Throwable t) {
             callback.onResult(null, t);
@@ -147,16 +140,13 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         try {
             if (response == null) {
                 byte[] serverResponse = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
-                sendSaslStartAsync(serverResponse, connection, new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument result, final Throwable t) {
-                        if (t != null) {
-                            errHandlingCallback.onResult(null, wrapException(t));
-                        } else if (result.getBoolean("done").getValue()) {
-                            verifySaslClientComplete(saslClient, result, errHandlingCallback);
-                        } else {
-                            new Continuator(saslClient, result, connection, errHandlingCallback).start();
-                        }
+                sendSaslStartAsync(serverResponse, connection, (result, t) -> {
+                    if (t != null) {
+                        errHandlingCallback.onResult(null, wrapException(t));
+                    } else if (result.getBoolean("done").getValue()) {
+                        verifySaslClientComplete(saslClient, result, errHandlingCallback);
+                    } else {
+                        new Continuator(saslClient, result, connection, errHandlingCallback).start();
                     }
                 });
             } else if (response.getBoolean("done").getValue()) {
@@ -319,17 +309,14 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
         private void continueConversation(final BsonDocument result) {
             try {
-                doAsSubject(new PrivilegedAction<Void>() {
-                    @Override
-                    public Void run() {
-                        try {
-                            sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
-                                    saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection, Continuator.this);
-                        } catch (SaslException e) {
-                            throw wrapException(e);
-                        }
-                        return null;
+                doAsSubject(() -> {
+                    try {
+                        sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
+                                saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection, Continuator.this);
+                    } catch (SaslException e) {
+                        throw wrapException(e);
                     }
+                    return null;
                 });
 
             } catch (Throwable t) {

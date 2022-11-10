@@ -16,14 +16,12 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ServerSettings;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -98,12 +96,7 @@ public abstract class AbstractRetryableWritesTest {
         if (clientOptions.containsKey("retryWrites")) {
             builder.retryWrites(clientOptions.getBoolean("retryWrites").getValue());
         }
-        builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
-            @Override
-            public void apply(final ServerSettings.Builder builder) {
-                builder.heartbeatFrequency(5, TimeUnit.MILLISECONDS);
-            }
-        });
+        builder.applyToServerSettings(builder1 -> builder1.heartbeatFrequency(5, TimeUnit.MILLISECONDS));
 
         mongoClient = createMongoClient(builder.build());
 

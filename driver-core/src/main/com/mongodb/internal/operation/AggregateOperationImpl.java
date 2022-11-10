@@ -19,16 +19,11 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
@@ -203,12 +198,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return getCommand(sessionContext, connectionDescription.getMaxWireVersion());
-            }
-        };
+        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
     }
 
     BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
@@ -249,26 +239,18 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     private CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>> transformer() {
-        return new CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>>() {
-            @Override
-            public AggregateResponseBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source,
-                                                         final Connection connection) {
-                QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new QueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, comment,
-                        source, connection, result);
-            }
+        return (result, source, connection) -> {
+            QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
+            return new QueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, comment,
+                    source, connection, result);
         };
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return new CommandOperationHelper.CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>>() {
-            @Override
-            public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
-                                             final AsyncConnection connection) {
-                QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new AsyncQueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
-                        comment, source, connection, result);
-            }
+        return (result, source, connection) -> {
+            QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
+            return new AsyncQueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
+                    comment, source, connection, result);
         };
     }
 
@@ -281,24 +263,16 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     private static AggregateTarget defaultAggregateTarget(final AggregationLevel aggregationLevel, final String collectionName) {
-        return new AggregateTarget() {
-            @Override
-            public BsonValue create() {
-                if (aggregationLevel == AggregationLevel.DATABASE) {
-                    return new BsonInt32(1);
-                } else {
-                    return new BsonString(collectionName);
-                }
+        return () -> {
+            if (aggregationLevel == AggregationLevel.DATABASE) {
+                return new BsonInt32(1);
+            } else {
+                return new BsonString(collectionName);
             }
         };
     }
 
     private static PipelineCreator defaultPipelineCreator(final List<BsonDocument> pipeline) {
-        return new PipelineCreator() {
-            @Override
-            public BsonArray create() {
-                return new BsonArray(pipeline);
-            }
-        };
+        return () -> new BsonArray(pipeline);
     }
 }

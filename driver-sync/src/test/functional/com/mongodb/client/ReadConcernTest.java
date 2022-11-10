@@ -16,9 +16,7 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ReadConcern;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
@@ -50,12 +48,7 @@ public class ReadConcernTest {
         commandListener = new TestCommandListener();
         mongoClient = MongoClients.create(getMongoClientSettingsBuilder()
                 .addCommandListener(commandListener)
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(5, TimeUnit.SECONDS);
-                    }
-                })
+                .applyToSocketSettings(builder -> builder.readTimeout(5, TimeUnit.SECONDS))
                 .build());
     }
 

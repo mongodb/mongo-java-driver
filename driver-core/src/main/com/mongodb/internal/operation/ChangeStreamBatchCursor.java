@@ -20,7 +20,6 @@ import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
-import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
 import com.mongodb.lang.Nullable;
@@ -66,29 +65,23 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public boolean hasNext() {
-        return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, Boolean>() {
-            @Override
-            public Boolean apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                try {
-                    return queryBatchCursor.hasNext();
-                } finally {
-                    cachePostBatchResumeToken(queryBatchCursor);
-                }
+        return resumeableOperation(queryBatchCursor -> {
+            try {
+                return queryBatchCursor.hasNext();
+            } finally {
+                cachePostBatchResumeToken(queryBatchCursor);
             }
         });
     }
 
     @Override
     public List<T> next() {
-        return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, List<T>>() {
-            @Override
-            public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                try {
-                    return convertAndProduceLastId(queryBatchCursor.next(), changeStreamOperation.getDecoder(),
-                            lastId -> resumeToken = lastId);
-                } finally {
-                    cachePostBatchResumeToken(queryBatchCursor);
-                }
+        return resumeableOperation(queryBatchCursor -> {
+            try {
+                return convertAndProduceLastId(queryBatchCursor.next(), changeStreamOperation.getDecoder(),
+                        lastId -> resumeToken = lastId);
+            } finally {
+                cachePostBatchResumeToken(queryBatchCursor);
             }
         });
     }
@@ -100,15 +93,12 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public List<T> tryNext() {
-        return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, List<T>>() {
-            @Override
-            public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                try {
-                    return convertAndProduceLastId(queryBatchCursor.tryNext(), changeStreamOperation.getDecoder(),
-                            lastId -> resumeToken = lastId);
-                } finally {
-                    cachePostBatchResumeToken(queryBatchCursor);
-                }
+        return resumeableOperation(queryBatchCursor -> {
+            try {
+                return convertAndProduceLastId(queryBatchCursor.tryNext(), changeStreamOperation.getDecoder(),
+                        lastId -> resumeToken = lastId);
+            } finally {
+                cachePostBatchResumeToken(queryBatchCursor);
             }
         });
     }
@@ -205,12 +195,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             }
             wrapped.close();
 
-            withReadConnectionSource(binding, new CallableWithSource<Void>() {
-                @Override
-                public Void call(final ConnectionSource source) {
-                    changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
-                    return null;
-                }
+            withReadConnectionSource(binding, (CallableWithSource<Void>) source -> {
+                changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
+                return null;
             });
             wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
             binding.release(); // release the new change stream batch cursor's reference to the binding

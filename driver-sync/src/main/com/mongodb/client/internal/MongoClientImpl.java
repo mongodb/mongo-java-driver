@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
-import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
@@ -245,12 +244,7 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
-        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
-            @Override
-            public String apply(final BsonDocument result) {
-                return result.getString("name").getValue();
-            }
-        });
+        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(result -> result.getString("name").getValue());
     }
 
     public ServerSessionPool getServerSessionPool() {

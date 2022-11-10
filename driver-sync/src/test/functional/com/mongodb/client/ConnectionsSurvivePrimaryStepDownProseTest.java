@@ -16,14 +16,12 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.Document;
@@ -59,12 +57,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(4, 0));
         connectionPoolListener = new TestConnectionPoolListener();
         MongoClientSettings settings = MongoClientSettings.builder(getMongoClientSettings()).retryWrites(false)
-                .applyToConnectionPoolSettings(new Block<ConnectionPoolSettings.Builder>() {
-                    @Override
-                    public void apply(final ConnectionPoolSettings.Builder builder) {
-                        builder.addConnectionPoolListener(connectionPoolListener);
-                    }
-                }).build();
+                .applyToConnectionPoolSettings(builder -> builder.addConnectionPoolListener(connectionPoolListener)).build();
 
         collectionHelper = new CollectionHelper<>(new DocumentCodec(),
                 new MongoNamespace(getDefaultDatabaseName(), COLLECTION_NAME));

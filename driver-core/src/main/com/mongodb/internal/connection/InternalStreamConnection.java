@@ -487,49 +487,43 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> void sendCommandMessageAsync(final int messageId, final Decoder<T> decoder, final SessionContext sessionContext,
                                              final SingleResultCallback<T> callback, final ByteBufferBsonOutput bsonOutput,
                                              final CommandEventSender commandEventSender, final boolean responseExpected) {
-        sendMessageAsync(bsonOutput.getByteBuffers(), messageId, new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                bsonOutput.close();
-                if (t != null) {
-                    commandEventSender.sendFailedEvent(t);
-                    callback.onResult(null, t);
-                } else if (!responseExpected) {
-                    commandEventSender.sendSucceededEventForOneWayCommand();
-                    callback.onResult(null, null);
-                } else {
-                    readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
-                        @Override
-                        public void onResult(final ResponseBuffers responseBuffers, final Throwable t) {
-                            if (t != null) {
-                                commandEventSender.sendFailedEvent(t);
-                                callback.onResult(null, t);
-                                return;
-                            }
-                            try {
-                                updateSessionContext(sessionContext, responseBuffers);
-                                boolean commandOk =
-                                        isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
-                                responseBuffers.reset();
-                                if (!commandOk) {
-                                    MongoException commandFailureException = getCommandFailureException(
-                                            responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
-                                            description.getServerAddress());
-                                    commandEventSender.sendFailedEvent(commandFailureException);
-                                    throw commandFailureException;
-                                }
-                                commandEventSender.sendSucceededEvent(responseBuffers);
-
-                                T result = getCommandResult(decoder, responseBuffers, messageId);
-                                callback.onResult(result, null);
-                            } catch (Throwable localThrowable) {
-                                callback.onResult(null, localThrowable);
-                            } finally {
-                                responseBuffers.close();
-                            }
+        sendMessageAsync(bsonOutput.getByteBuffers(), messageId, (result, t) -> {
+            bsonOutput.close();
+            if (t != null) {
+                commandEventSender.sendFailedEvent(t);
+                callback.onResult(null, t);
+            } else if (!responseExpected) {
+                commandEventSender.sendSucceededEventForOneWayCommand();
+                callback.onResult(null, null);
+            } else {
+                readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback((responseBuffers, t1) -> {
+                    if (t1 != null) {
+                        commandEventSender.sendFailedEvent(t1);
+                        callback.onResult(null, t1);
+                        return;
+                    }
+                    try {
+                        updateSessionContext(sessionContext, responseBuffers);
+                        boolean commandOk =
+                                isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+                        responseBuffers.reset();
+                        if (!commandOk) {
+                            MongoException commandFailureException = getCommandFailureException(
+                                    responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
+                                    description.getServerAddress());
+                            commandEventSender.sendFailedEvent(commandFailureException);
+                            throw commandFailureException;
                         }
-                    }));
-                }
+                        commandEventSender.sendSucceededEvent(responseBuffers);
+
+                        T result1 = getCommandResult(decoder, responseBuffers, messageId);
+                        callback.onResult(result1, null);
+                    } catch (Throwable localThrowable) {
+                        callback.onResult(null, localThrowable);
+                    } finally {
+                        responseBuffers.close();
+                    }
+                }));
             }
         });
     }
@@ -622,15 +616,12 @@ public class InternalStreamConnection implements InternalConnection {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Start receiving response on %s", getId()));
         }
-        readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
-            @Override
-            public void onResult(final ResponseBuffers result, final Throwable t) {
-                if (t != null) {
-                    close();
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(result, null);
-                }
+        readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback((result, t) -> {
+            if (t != null) {
+                close();
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(result, null);
             }
         }));
     }

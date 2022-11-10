@@ -137,12 +137,7 @@ public final class ConventionsTest {
                 .discriminatorKey("_cls")
                 .discriminator("Simples")
                 .conventions(singletonList(CLASS_AND_PROPERTY_CONVENTION))
-                .instanceCreatorFactory(new InstanceCreatorFactory<SimpleModel>() {
-                    @Override
-                    public InstanceCreator<SimpleModel> create() {
-                        return null;
-                    }
-                });
+                .instanceCreatorFactory(() -> null);
 
         PropertyModelBuilder<Integer> propertyModelBuilder = (PropertyModelBuilder<Integer>) builder.getProperty("integerField");
         propertyModelBuilder.writeName("id")

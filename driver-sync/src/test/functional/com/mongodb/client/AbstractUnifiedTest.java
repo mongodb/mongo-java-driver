@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -32,11 +31,8 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -210,14 +206,11 @@ public abstract class AbstractUnifiedTest {
                         setDirectConnection(clusterSettingsBuilder);
                     }
                 })
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(clientOptions.getInt32(
-                                "socketTimeoutMS", new BsonInt32(toIntExact(SECONDS.toMillis(5)))).getValue(), MILLISECONDS);
-                        if (clientOptions.containsKey("connectTimeoutMS")) {
-                            builder.connectTimeout(clientOptions.getNumber("connectTimeoutMS").intValue(), MILLISECONDS);
-                        }
+                .applyToSocketSettings(builder13 -> {
+                    builder13.readTimeout(clientOptions.getInt32(
+                            "socketTimeoutMS", new BsonInt32(toIntExact(SECONDS.toMillis(5)))).getValue(), MILLISECONDS);
+                    if (clientOptions.containsKey("connectTimeoutMS")) {
+                        builder13.connectTimeout(clientOptions.getNumber("connectTimeoutMS").intValue(), MILLISECONDS);
                     }
                 })
                 .writeConcern(getWriteConcern(clientOptions))
@@ -231,21 +224,13 @@ public abstract class AbstractUnifiedTest {
                         poolSettingsBuilder.minSize(clientOptions.getInt32("minPoolSize").getValue());
                     }
                 })
-                .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                    @Override
-                    public void apply(final ServerSettings.Builder builder) {
-                        builder.heartbeatFrequency(50, MILLISECONDS);
-                        builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, MILLISECONDS);
-                        builder.addServerListener(serverListener);
-                    }
+                .applyToServerSettings(builder12 -> {
+                    builder12.heartbeatFrequency(50, MILLISECONDS);
+                    builder12.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, MILLISECONDS);
+                    builder12.addServerListener(serverListener);
                 });
         if (clientOptions.containsKey("heartbeatFrequencyMS")) {
-            builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
-                @Override
-                public void apply(final ServerSettings.Builder builder) {
-                    builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), MILLISECONDS);
-                }
-            });
+            builder.applyToServerSettings(builder1 -> builder1.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), MILLISECONDS));
         }
         if (clientOptions.containsKey("appname")) {
             builder.applicationName(clientOptions.getString("appname").getValue());
@@ -354,12 +339,7 @@ public abstract class AbstractUnifiedTest {
     private void runDistinctOnHost(final String host) {
         MongoClient client = MongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
-                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                    @Override
-                    public void apply(final ClusterSettings.Builder builder) {
-                        builder.hosts(singletonList(new ServerAddress(host)));
-                    }
-                }).build());
+                .applyToClusterSettings(builder -> builder.hosts(singletonList(new ServerAddress(host)))).build());
         client.getDatabase(databaseName).getCollection(collectionName).distinct("_id", BsonValue.class).into(new BsonArray());
         client.close();
     }
@@ -461,20 +441,14 @@ public abstract class AbstractUnifiedTest {
                         }
 
                         if (transactionOptions == null) {
-                            nonNullClientSession(clientSession).withTransaction(new TransactionBody<Object>() {
-                                @Override
-                                public Void execute() {
-                                    executeOperations(arguments.getDocument("callback").getArray("operations"), true);
-                                    return null;
-                                }
+                            nonNullClientSession(clientSession).withTransaction(() -> {
+                                executeOperations(arguments.getDocument("callback").getArray("operations"), true);
+                                return null;
                             });
                         } else {
-                            nonNullClientSession(clientSession).withTransaction(new TransactionBody<Object>() {
-                                @Override
-                                public Void execute() {
-                                    executeOperations(arguments.getDocument("callback").getArray("operations"), true);
-                                    return null;
-                                }
+                            nonNullClientSession(clientSession).withTransaction(() -> {
+                                executeOperations(arguments.getDocument("callback").getArray("operations"), true);
+                                return null;
                             }, transactionOptions);
                         }
                     } else if (operationName.equals("targetedFailPoint")) {
@@ -854,12 +828,7 @@ public abstract class AbstractUnifiedTest {
             if (clientSession.getPinnedServerAddress() != null) {
                 mongoClient = MongoClients.create(MongoClientSettings.builder()
                         .applyConnectionString(connectionString)
-                        .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                            @Override
-                            public void apply(final ClusterSettings.Builder builder) {
-                                builder.hosts(singletonList(clientSession.getPinnedServerAddress()));
-                            }
-                        }).build());
+                        .applyToClusterSettings(builder -> builder.hosts(singletonList(clientSession.getPinnedServerAddress()))).build());
 
                 adminDB = mongoClient.getDatabase("admin");
             } else {

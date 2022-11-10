@@ -468,15 +468,12 @@ final class OperationHelper {
 
     private static void withAsyncConnectionSourceCallableConnection(final AsyncConnectionSource source,
                                                                     final AsyncCallableWithConnection callable) {
-        source.getConnection(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection connection, final Throwable t) {
-                source.release();
-                if (t != null) {
-                    callable.call(null, t);
-                } else {
-                    callable.call(connection, null);
-                }
+        source.getConnection((connection, t) -> {
+            source.release();
+            if (t != null) {
+                callable.call(null, t);
+            } else {
+                callable.call(connection, null);
             }
         });
     }
@@ -486,12 +483,7 @@ final class OperationHelper {
     }
 
     private static void withAsyncConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
-        source.getConnection(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection result, final Throwable t) {
-                callable.call(source, result, t);
-            }
-        });
+        source.getConnection((result, t) -> callable.call(source, result, t));
     }
 
     private static class AsyncCallableWithConnectionAndSourceCallback implements SingleResultCallback<AsyncConnectionSource> {

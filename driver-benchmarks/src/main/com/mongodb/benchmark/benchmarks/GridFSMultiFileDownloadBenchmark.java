@@ -104,25 +104,19 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable exportFile(final CountDownLatch latch, final int fileId) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                UnsafeByteArrayOutputStream outputStream = new UnsafeByteArrayOutputStream(5242880);
-                bucket.downloadToStream(GridFSMultiFileDownloadBenchmark.this.getFileName(fileId), outputStream);
-                fileService.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            FileOutputStream fos = new FileOutputStream(new File(tempDirectory, String.format("%02d", fileId) + ".txt"));
-                            fos.write(outputStream.getByteArray());
-                            fos.close();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        latch.countDown();
-                    }
-                });
-            }
+        return () -> {
+            UnsafeByteArrayOutputStream outputStream = new UnsafeByteArrayOutputStream(5242880);
+            bucket.downloadToStream(GridFSMultiFileDownloadBenchmark.this.getFileName(fileId), outputStream);
+            fileService.submit(() -> {
+                try {
+                    FileOutputStream fos = new FileOutputStream(new File(tempDirectory, String.format("%02d", fileId) + ".txt"));
+                    fos.write(outputStream.getByteArray());
+                    fos.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                latch.countDown();
+            });
         };
     }
 
@@ -137,18 +131,15 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable importFile(final CountDownLatch latch, final int fileId) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String fileName = GridFSMultiFileDownloadBenchmark.this.getFileName(fileId);
-                    String resourcePath = "parallel/gridfs_multi/" + fileName;
-                    bucket.uploadFromStream(fileName, streamFromRelativePath(resourcePath),
-                            new GridFSUploadOptions().chunkSizeBytes(ONE_MB));
-                    latch.countDown();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+        return () -> {
+            try {
+                String fileName = GridFSMultiFileDownloadBenchmark.this.getFileName(fileId);
+                String resourcePath = "parallel/gridfs_multi/" + fileName;
+                bucket.uploadFromStream(fileName, streamFromRelativePath(resourcePath),
+                        new GridFSUploadOptions().chunkSizeBytes(ONE_MB));
+                latch.countDown();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         };
     }

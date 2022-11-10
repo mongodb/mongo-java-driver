@@ -16,7 +16,7 @@
 
 package com.mongodb.client.internal;
 
-    import com.mongodb.ClientSessionOptions;
+import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -45,7 +45,6 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
-import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.List;
@@ -143,12 +142,7 @@ final class MongoClientDelegate {
     private ClusterDescription getConnectedClusterDescription() {
         ClusterDescription clusterDescription = cluster.getDescription();
         if (getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()) {
-            cluster.selectServer(new ServerSelector() {
-                @Override
-                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                    return getServerDescriptionListToConsiderForSessionSupport(clusterDescription);
-                }
-            });
+            cluster.selectServer(clusterDescription1 -> getServerDescriptionListToConsiderForSessionSupport(clusterDescription1));
             clusterDescription = cluster.getDescription();
         }
         return clusterDescription;

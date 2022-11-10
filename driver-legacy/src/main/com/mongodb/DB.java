@@ -226,12 +226,7 @@ public class DB {
                         return new ListCollectionsOperation<>(name, commandCodec)
                                 .nameOnly(true);
                     }
-                }.map(new Function<DBObject, String>() {
-                            @Override
-                            public String apply(final DBObject result) {
-                                return (String) result.get("name");
-                            }
-                        }).into(new ArrayList<>());
+                }.map(result -> (String) result.get("name")).into(new ArrayList<>());
         Collections.sort(collectionNames);
         return new LinkedHashSet<>(collectionNames);
     }

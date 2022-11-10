@@ -236,15 +236,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         if (pinnedConnection != null)  {
             getMore(pinnedConnection.retain(), cursor, callback);
         } else {
-            connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
-                @Override
-                public void onResult(final AsyncConnection connection, final Throwable t) {
-                    if (t != null) {
-                        endOperationInProgress();
-                        callback.onResult(null, t);
-                    } else {
-                        getMore(connection, cursor, callback);
-                    }
+            connectionSource.getConnection((connection, t) -> {
+                if (t != null) {
+                    endOperationInProgress();
+                    callback.onResult(null, t);
+                } else {
+                    getMore(connection, cursor, callback);
                 }
             });
         }
@@ -280,14 +277,11 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
             if (pinnedConnection != null) {
                 killCursorAsynchronouslyAndReleaseConnectionAndSource(pinnedConnection, localCursor);
             } else {
-                connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
-                    @Override
-                    public void onResult(final AsyncConnection connection, final Throwable t) {
-                        if (t != null) {
-                            connectionSource.release();
-                        } else {
-                            killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
-                        }
+                connectionSource.getConnection((connection, t) -> {
+                    if (t != null) {
+                        connectionSource.release();
+                    } else {
+                        killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
                     }
                 });
             }
@@ -308,13 +302,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
         connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
                 ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                    connectionSource.getServerApi(), connectionSource.getRequestContext(), new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument result, final Throwable t) {
+                    connectionSource.getServerApi(), connectionSource.getRequestContext(), (result, t) -> {
                         connection.release();
                         connectionSource.release();
-                        }
-                    });
+                        });
     }
 
     private BsonDocument asKillCursorsCommandDocument(final ServerCursor localCursor) {

@@ -82,12 +82,7 @@ abstract class CodecTestCase {
     }
 
     public void roundTrip(final Document input, final Document expected) {
-        roundTrip(input, new Comparator<Document>() {
-            @Override
-            public void apply(final Document result) {
-                assertEquals("Codec Round Trip", expected, result);
-            }
-        });
+        roundTrip(input, result -> assertEquals("Codec Round Trip", expected, result));
     }
 
     <T> OutputBuffer encode(final Codec<T> codec, final T value) {

@@ -16,11 +16,9 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.connection.ServerSettings;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
@@ -93,17 +91,14 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
         CountDownLatch latch = new CountDownLatch(5);
         MongoClientSettings settings = getMongoClientSettingsBuilder()
-                                       .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                                           @Override
-                                           public void apply(final ServerSettings.Builder builder) {
-                                               builder.heartbeatFrequency(50, MILLISECONDS);
-                                               builder.addServerMonitorListener(new ServerMonitorListener() {
-                                                   @Override
-                                                   public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
-                                                       latch.countDown();
-                                                   }
-                                               });
-                                           }
+                                       .applyToServerSettings(builder -> {
+                                           builder.heartbeatFrequency(50, MILLISECONDS);
+                                           builder.addServerMonitorListener(new ServerMonitorListener() {
+                                               @Override
+                                               public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
+                                                   latch.countDown();
+                                               }
+                                           });
                                        }).build();
 
         try (MongoClient ignored = MongoClients.create(settings)) {
@@ -120,17 +115,14 @@ public class ServerDiscoveryAndMonitoringProseTests {
         List<ServerDescriptionChangedEvent> events = synchronizedList(new ArrayList<>());
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applicationName("streamingRttTest")
-                                       .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                                           @Override
-                                           public void apply(final ServerSettings.Builder builder) {
-                                               builder.heartbeatFrequency(50, MILLISECONDS);
-                                               builder.addServerListener(new ServerListener() {
-                                                   @Override
-                                                   public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-                                                       events.add(event);
-                                                   }
-                                               });
-                                           }
+                                       .applyToServerSettings(builder -> {
+                                           builder.heartbeatFrequency(50, MILLISECONDS);
+                                           builder.addServerListener(new ServerListener() {
+                                               @Override
+                                               public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
+                                                   events.add(event);
+                                               }
+                                           });
                                        }).build();
         try (MongoClient client = MongoClients.create(settings)) {
             client.getDatabase("admin").runCommand(new Document("ping", 1));

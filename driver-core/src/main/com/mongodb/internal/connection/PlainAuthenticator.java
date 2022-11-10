@@ -24,14 +24,11 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.lang.Nullable;
 
 import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
-import java.io.IOException;
 
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -59,19 +56,15 @@ class PlainAuthenticator extends SaslAuthenticator {
                                          DEFAULT_PROTOCOL,
                                          serverAddress.getHost(),
                                          null,
-                                         new CallbackHandler() {
-                                             @Override
-                                             public void handle(final Callback[] callbacks)
-                                                 throws IOException, UnsupportedCallbackException {
-                                                 for (final Callback callback : callbacks) {
-                                                     if (callback instanceof PasswordCallback) {
-                                                         ((PasswordCallback) callback).setPassword(credential.getPassword());
-                                                     } else if (callback instanceof NameCallback) {
-                                                         ((NameCallback) callback).setName(credential.getUserName());
-                                                     }
-                                                 }
-                                             }
-                                         });
+                    callbacks -> {
+                        for (final Callback callback : callbacks) {
+                            if (callback instanceof PasswordCallback) {
+                                ((PasswordCallback) callback).setPassword(credential.getPassword());
+                            } else if (callback instanceof NameCallback) {
+                                ((NameCallback) callback).setName(credential.getUserName());
+                            }
+                        }
+                    });
         } catch (SaslException e) {
             throw new MongoSecurityException(credential, "Exception initializing SASL client", e);
         }

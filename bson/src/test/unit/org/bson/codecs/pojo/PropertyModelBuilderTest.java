@@ -93,12 +93,7 @@ public final class PropertyModelBuilderTest {
                 }
             });
 
-    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = new PropertySerialization<Integer>() {
-        @Override
-        public boolean shouldSerialize(final Integer value) {
-            return false;
-        }
-    };
+    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = value -> false;
 
     private static final PropertyAccessor<Integer> FIELD_ACCESSOR = new PropertyAccessor<Integer>() {
         @Override

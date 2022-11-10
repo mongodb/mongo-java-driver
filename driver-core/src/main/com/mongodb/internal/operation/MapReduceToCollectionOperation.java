@@ -24,8 +24,6 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformerAsync;
 import org.bson.BsonBoolean;
@@ -45,8 +43,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeComma
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
@@ -256,29 +252,21 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
 
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<MapReduceStatistics>() {
-            @Override
-            public MapReduceStatistics call(final Connection connection) {
-                return executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                        connection, transformer());
-            }
-        });
+        return withConnection(binding, connection -> executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                connection, transformer()));
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<MapReduceStatistics> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    executeCommandAsync(binding, namespace.getDatabaseName(),
-                            getCommand(connection.getDescription()), connection, transformerAsync(),
-                            releasingCallback(errHandlingCallback, connection));
+        withAsyncConnection(binding, (connection, t) -> {
+            SingleResultCallback<MapReduceStatistics> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else {
+                executeCommandAsync(binding, namespace.getDatabaseName(),
+                        getCommand(connection.getDescription()), connection, transformerAsync(),
+                        releasingCallback(errHandlingCallback, connection));
 
-                }
             }
         });
     }
@@ -310,24 +298,18 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     }
 
     private CommandWriteTransformer<BsonDocument, MapReduceStatistics> transformer() {
-        return new CommandWriteTransformer<BsonDocument, MapReduceStatistics>() {
-            @Override
-            public MapReduceStatistics apply(final BsonDocument result, final Connection connection) {
-                throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                        connection.getDescription().getMaxWireVersion());
-                return MapReduceHelper.createStatistics(result);
-            }
+        return (result, connection) -> {
+            throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                    connection.getDescription().getMaxWireVersion());
+            return MapReduceHelper.createStatistics(result);
         };
     }
 
     private CommandWriteTransformerAsync<BsonDocument, MapReduceStatistics> transformerAsync() {
-        return new CommandWriteTransformerAsync<BsonDocument, MapReduceStatistics>() {
-            @Override
-            public MapReduceStatistics apply(final BsonDocument result, final AsyncConnection connection) {
-                throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                        connection.getDescription().getMaxWireVersion());
-                return MapReduceHelper.createStatistics(result);
-            }
+        return (result, connection) -> {
+            throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                    connection.getDescription().getMaxWireVersion());
+            return MapReduceHelper.createStatistics(result);
         };
     }
 

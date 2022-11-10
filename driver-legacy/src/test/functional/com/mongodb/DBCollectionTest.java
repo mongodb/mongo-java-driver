@@ -583,12 +583,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCompoundCodecWithCustomEncoderFactory() {
-        collection.setDBEncoderFactory(new DBEncoderFactory() {
-            @Override
-            public DBEncoder create() {
-                return new DefaultDBEncoder();
-            }
-        });
+        collection.setDBEncoderFactory(() -> new DefaultDBEncoder());
         assertThat(collection.getObjectCodec(), instanceOf(CompoundDBObjectCodec.class));
         CompoundDBObjectCodec codec = (CompoundDBObjectCodec) collection.getObjectCodec();
         assertThat(codec.getEncoder(), instanceOf(DBEncoderFactoryAdapter.class));
@@ -596,12 +591,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCompoundCodecWithCustomDecoderFactory() {
-        collection.setDBDecoderFactory(new DBDecoderFactory() {
-            @Override
-            public DBDecoder create() {
-                return new DefaultDBDecoder();
-            }
-        });
+        collection.setDBDecoderFactory(() -> new DefaultDBDecoder());
         assertThat(collection.getObjectCodec(), instanceOf(CompoundDBObjectCodec.class));
         CompoundDBObjectCodec codec = (CompoundDBObjectCodec) collection.getObjectCodec();
         assertThat(codec.getDecoder(), instanceOf(DBDecoderAdapter.class));

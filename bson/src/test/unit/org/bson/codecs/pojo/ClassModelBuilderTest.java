@@ -195,17 +195,9 @@ public final class ClassModelBuilderTest {
             });
 
     private static final List<Convention> TEST_CONVENTIONS = Collections.singletonList(
-            new Convention() {
-                @Override
-                public void apply(final ClassModelBuilder<?> builder) {
-                }
+            builder -> {
             });
 
     private static final InstanceCreatorFactory<SimpleGenericsModel> TEST_INSTANCE_CREATOR_FACTORY =
-            new InstanceCreatorFactory<SimpleGenericsModel>() {
-                @Override
-                public InstanceCreator<SimpleGenericsModel> create() {
-                    return null;
-                }
-            };
+            () -> null;
 }

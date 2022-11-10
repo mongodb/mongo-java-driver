@@ -66,14 +66,11 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
             try {
                 executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()),
                         getClusterConnectionMode(), getServerApi(), connection,
-                        new SingleResultCallback<BsonDocument>() {
-                            @Override
-                            public void onResult(final BsonDocument nonceResult, final Throwable t) {
-                                if (t != null) {
-                                    errHandlingCallback.onResult(null, translateThrowable(t));
-                                } else {
-                                    errHandlingCallback.onResult(null, null);
-                                }
+                        (nonceResult, t) -> {
+                            if (t != null) {
+                                errHandlingCallback.onResult(null, translateThrowable(t));
+                            } else {
+                                errHandlingCallback.onResult(null, null);
                             }
                         });
             } catch (Throwable t) {

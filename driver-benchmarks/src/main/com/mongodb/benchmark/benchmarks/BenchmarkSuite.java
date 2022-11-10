@@ -39,11 +39,7 @@ public class BenchmarkSuite {
     private static final int MAX_TIME_SECONDS = 300;
 
     private static final Class DOCUMENT_CLASS = Document.class;
-    private static final IdRemover<Document> ID_REMOVER = new IdRemover<Document>() {
-        public void removeId(final Document document) {
-            document.remove("_id");
-        }
-    };
+    private static final IdRemover<Document> ID_REMOVER = document -> document.remove("_id");
     private static final Codec<Document> DOCUMENT_CODEC = getDefaultCodecRegistry().get(DOCUMENT_CLASS);
 
     private static final List<BenchmarkResultWriter> WRITERS = Arrays.asList(

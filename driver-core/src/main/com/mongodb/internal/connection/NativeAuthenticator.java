@@ -63,29 +63,23 @@ class NativeAuthenticator extends Authenticator {
                            final SingleResultCallback<Void> callback) {
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         executeCommandAsync(getMongoCredential().getSource(), getNonceCommand(), getClusterConnectionMode(), getServerApi(), connection,
-                            new SingleResultCallback<BsonDocument>() {
-                                @Override
-                                public void onResult(final BsonDocument nonceResult, final Throwable t) {
-                                    if (t != null) {
-                                        errHandlingCallback.onResult(null, translateThrowable(t));
+                (nonceResult, t) -> {
+                    if (t != null) {
+                        errHandlingCallback.onResult(null, translateThrowable(t));
+                    } else {
+                        executeCommandAsync(getMongoCredential().getSource(),
+                                            getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
+                                                           ((BsonString) nonceResult.get("nonce")).getValue()),
+                                getClusterConnectionMode(), getServerApi(), connection,
+                                (result, t1) -> {
+                                    if (t1 != null) {
+                                        errHandlingCallback.onResult(null, translateThrowable(t1));
                                     } else {
-                                        executeCommandAsync(getMongoCredential().getSource(),
-                                                            getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
-                                                                           ((BsonString) nonceResult.get("nonce")).getValue()),
-                                                getClusterConnectionMode(), getServerApi(), connection,
-                                                            new SingleResultCallback<BsonDocument>() {
-                                                                @Override
-                                                                public void onResult(final BsonDocument result, final Throwable t) {
-                                                                    if (t != null) {
-                                                                        errHandlingCallback.onResult(null, translateThrowable(t));
-                                                                    } else {
-                                                                        errHandlingCallback.onResult(null, null);
-                                                                    }
-                                                                }
-                                                            });
+                                        errHandlingCallback.onResult(null, null);
                                     }
-                                }
-                            });
+                                });
+                    }
+                });
     }
 
     private Throwable translateThrowable(final Throwable t) {

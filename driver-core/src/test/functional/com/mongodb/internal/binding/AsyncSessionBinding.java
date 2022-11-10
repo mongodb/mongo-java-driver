@@ -44,14 +44,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
 
     @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getWriteConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
-            @Override
-            public void onResult(final AsyncConnectionSource result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
-                }
+        wrapped.getWriteConnectionSource((result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
             }
         });
     }
@@ -74,14 +71,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
 
     @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getReadConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
-            @Override
-            public void onResult(final AsyncConnectionSource result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
-                }
+        wrapped.getReadConnectionSource((result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
             }
         });
     }
@@ -90,14 +84,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     @Override
     public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
             final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, new SingleResultCallback<AsyncConnectionSource>() {
-            @Override
-            public void onResult(final AsyncConnectionSource result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
-                }
+        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, (result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
             }
         });
     }

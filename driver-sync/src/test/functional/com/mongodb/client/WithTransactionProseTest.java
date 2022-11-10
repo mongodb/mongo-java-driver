@@ -57,11 +57,8 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         final String exceptionMessage = "NotTransientOrUnknownError";
         ClientSession session = client.startSession();
         try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    throw new MongoException(exceptionMessage);
-                }
+            session.withTransaction((TransactionBody<Void>) () -> {
+                throw new MongoException(exceptionMessage);
             });
             // should not get here
             fail("Test should have thrown an exception.");
@@ -81,12 +78,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         ClientSession session = client.startSession();
         final String msg = "Inserted document";
         try {
-            String returnValueFromCallback = session.withTransaction(new TransactionBody<String>() {
-                @Override
-                public String execute() {
-                    collection.insertOne(Document.parse("{ _id : 1 }"));
-                    return msg;
-                }
+            String returnValueFromCallback = session.withTransaction(() -> {
+                collection.insertOne(Document.parse("{ _id : 1 }"));
+                return msg;
             });
             assertEquals(msg, returnValueFromCallback);
         } finally {
@@ -105,14 +99,11 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         ClientSession session = client.startSession();
         ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
         try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    MongoException e = new MongoException(112, errorMessage);
-                    e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
-                    throw e;
-                }
+            session.withTransaction((TransactionBody<Void>) () -> {
+            ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
+                MongoException e = new MongoException(112, errorMessage);
+                e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                throw e;
             });
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
@@ -137,13 +128,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         ClientSession session = client.startSession();
         ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
         try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    collection.insertOne(session, new Document("_id", 2));
-                    return null;
-                }
+            session.withTransaction((TransactionBody<Void>) () -> {
+                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
+                collection.insertOne(session, new Document("_id", 2));
+                return null;
             });
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
@@ -172,13 +160,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         ClientSession session = client.startSession();
         ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
         try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    collection.insertOne(session, Document.parse("{ _id : 1 }"));
-                    return null;
-                }
+            session.withTransaction((TransactionBody<Void>) () -> {
+                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
+                collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                return null;
             });
             fail("Test should have thrown an exception.");
         } catch (Exception e) {

@@ -20,7 +20,6 @@ import com.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -75,12 +74,7 @@ public final class TagSet implements Iterable<Tag> {
             }
         }
         ArrayList<Tag> copy = new ArrayList<>(tagList);
-        Collections.sort(copy, new Comparator<Tag>() {
-            @Override
-            public int compare(final Tag o1, final Tag o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
+        Collections.sort(copy, (o1, o2) -> o1.getName().compareTo(o2.getName()));
         this.wrapped = Collections.unmodifiableList(copy);
     }
 
