@@ -141,7 +141,7 @@ class CustomMatchers {
             return []
         }
         def fields = getFields(curClass.getSuperclass())
-        fields.addAll(curClass.declaredFields.findAll { !it.synthetic && !Modifier.isStatic(it.modifiers) })
+        fields.addAll(curClass.declaredFields.findAll { !it.synthetic && !Modifier.isStatic(it.modifiers) && !it.name.contains('$') })
         fields
     }
 
