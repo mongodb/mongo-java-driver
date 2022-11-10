@@ -44,4 +44,57 @@ import com.mongodb.annotations.Evolving;
 @Evolving
 public interface Expression {
 
+    /**
+     * Returns logical true if the value of this expression is equal to the
+     * value of the other expression. Otherwise, false.
+     *
+     * @param eq the other expression
+     * @return true if equal, false if not equal
+     */
+    BooleanExpression eq(Expression eq);
+
+    /**
+     * Returns logical true if the value of this expression is not equal to the
+     * value of the other expression. Otherwise, false.
+     *
+     * @param ne the other expression
+     * @return true if equal, false otherwise
+     */
+    BooleanExpression ne(Expression ne);
+
+    /**
+     * Returns logical true if the value of this expression is greater than the
+     * value of the other expression. Otherwise, false.
+     *
+     * @param gt the other expression
+     * @return true if greater than, false otherwise
+     */
+    BooleanExpression gt(Expression gt);
+
+    /**
+     * Returns logical true if the value of this expression is greater than or
+     * equal to the value of the other expression. Otherwise, false.
+     *
+     * @param gte the other expression
+     * @return true if greater than or equal to, false otherwise
+     */
+    BooleanExpression gte(Expression gte);
+
+    /**
+     * Returns logical true if the value of this expression is less than the
+     * value of the other expression. Otherwise, false.
+     *
+     * @param lt the other expression
+     * @return true if less than, false otherwise
+     */
+    BooleanExpression lt(Expression lt);
+
+    /**
+     * Returns logical true if the value of this expression is less than or
+     * equal to the value of the other expression. Otherwise, false.
+     *
+     * @param lte the other expression
+     * @return true if less than or equal to, false otherwise
+     */
+    BooleanExpression lte(Expression lte);
 }
