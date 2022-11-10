@@ -23,7 +23,6 @@ import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.ChangeStreamOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -35,7 +34,6 @@ import org.bson.codecs.Codec;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -169,27 +167,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
-        return new ChangeStreamOperation<>(getNamespace(), fullDocument, fullDocumentBeforeChange,
-                                           createBsonDocumentList(pipeline), codec, changeStreamLevel)
-                .batchSize(initialBatchSize)
-                .collation(collation)
-                .comment(comment)
-                .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
-                .resumeAfter(resumeToken)
-                .startAtOperationTime(startAtOperationTime)
-                .startAfter(startAfter)
-                .showExpandedEvents(showExpandedEvents)
-                .retryReads(getRetryReads());
-    }
-
-    private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
-        List<BsonDocument> aggregateList = new ArrayList<>(pipeline.size());
-        for (Bson obj : pipeline) {
-            if (obj == null) {
-                throw new IllegalArgumentException("pipeline can not contain a null value");
-            }
-            aggregateList.add(obj.toBsonDocument(BsonDocument.class, getCodecRegistry()));
-        }
-        return aggregateList;
+        return getOperations().changeStream(fullDocument, fullDocumentBeforeChange, pipeline, codec, changeStreamLevel, initialBatchSize,
+                collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 }
