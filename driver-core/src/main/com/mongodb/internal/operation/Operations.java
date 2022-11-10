@@ -649,6 +649,9 @@ final class Operations<TDocument> {
         }
         List<BsonDocument> bsonDocumentList = new ArrayList<>(bsonList.size());
         for (Bson cur : bsonList) {
+            if (cur == null) {
+                throw new IllegalArgumentException("All documents in the list must be non-null");
+            }
             bsonDocumentList.add(toBsonDocument(cur));
         }
         return bsonDocumentList;
