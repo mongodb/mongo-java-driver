@@ -16,14 +16,26 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.assertions.Assertions;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
+import org.bson.BsonDateTime;
+import org.bson.BsonDocument;
+import org.bson.BsonDouble;
 import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
 
 /**
  * Convenience methods related to {@link Expression}.
@@ -54,6 +66,15 @@ public final class Expressions {
     public static IntegerExpression of(final int of) {
         return new MqlExpression<>((codecRegistry) -> new BsonInt32(of));
     }
+    public static IntegerExpression of(final long of) {
+        return new MqlExpression<>((codecRegistry) -> new BsonInt64(of));
+    }
+    public static NumberExpression of(final double of) {
+        return new MqlExpression<>((codecRegistry) -> new BsonDouble(of));
+    }
+    public static DateExpression of(final Instant of) {
+        return new MqlExpression<>((codecRegistry) -> new BsonDateTime(of.toEpochMilli()));
+    }
 
     /**
      * Returns an expression having the same string value as the provided
@@ -81,4 +102,24 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new BsonArray(result));
     }
 
+
+    public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... ofIntegerArray) {
+        List<BsonValue> array = Arrays.stream(ofIntegerArray)
+                .mapToObj(BsonInt32::new)
+                .collect(Collectors.toList());
+        return new MqlExpression<>((cr) -> new BsonArray(array));
+    }
+
+    public static DocumentExpression ofDocument(final Bson document) {
+        Assertions.notNull("document", document);
+        // All documents are wrapped in a $literal. If we don't wrap, we need to
+        // check for empty documents and documents that are actually expressions
+        // (and need to be wrapped in $literal anyway). This would be brittle.
+        return new MqlExpression<>((cr) -> new BsonDocument("$literal",
+                document.toBsonDocument(BsonDocument.class, cr)));
+    }
+
+    public static <R extends Expression> R ofNull() {
+        return new MqlExpression<>((cr) -> new BsonNull()).assertImplementsAllExpressions();
+    }
 }
