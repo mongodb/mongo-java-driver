@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.operation;
+package com.mongodb;
 
-import com.mongodb.DuplicateKeyException;
-import com.mongodb.ErrorCategory;
-import com.mongodb.MongoBulkWriteException;
-import com.mongodb.MongoException;
-import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteConcernException;
-import com.mongodb.WriteConcernResult;
-import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.bulk.DeleteRequest;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.operation.MixedBulkWriteOperation;
+import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.bson.BsonValue;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
@@ -47,64 +44,64 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 
 
 /**
- * Abstract base class for write operations.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * Operation for bulk writes for the legacy API.
  */
-public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult> {
+final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcernResult> {
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
+    private final List<? extends WriteRequest> writeRequests;
+    private final WriteRequest.Type type;
     private final boolean ordered;
     private final boolean retryWrites;
     private Boolean bypassDocumentValidation;
-    private BsonValue comment;
 
-    public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                              final boolean retryWrites) {
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForInsert(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<InsertRequest> insertRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, insertRequests, INSERT);
+    }
+
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForUpdate(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> updateRequests) {
+        assertTrue(updateRequests.stream().allMatch(updateRequest -> updateRequest.getType() == UPDATE));
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, updateRequests, UPDATE);
+    }
+
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForReplace(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> replaceRequests) {
+        assertTrue(replaceRequests.stream().allMatch(updateRequest -> updateRequest.getType() == REPLACE));
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, replaceRequests, REPLACE);
+    }
+
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForDelete(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, deleteRequests, DELETE);
+    }
+
+    private LegacyMixedBulkWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+            final boolean retryWrites, final List<? extends WriteRequest> writeRequests, final WriteRequest.Type type) {
+        isTrueArgument("writeRequests not empty", !writeRequests.isEmpty());
+        this.writeRequests = notNull("writeRequests", writeRequests);
+        this.type = type;
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
     }
 
-    protected abstract List<? extends WriteRequest> getWriteRequests();
-
-    protected abstract WriteRequest.Type getType();
-
-    public MongoNamespace getNamespace() {
-        return namespace;
+    List<? extends WriteRequest> getWriteRequests() {
+        return writeRequests;
     }
 
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
-
-    public boolean isOrdered() {
-        return ordered;
-    }
-
-    public Boolean getBypassDocumentValidation() {
-        return bypassDocumentValidation;
-    }
-
-    public BaseWriteOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    LegacyMixedBulkWriteOperation bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
-        return this;
-    }
-
-    public BsonValue getComment() {
-        return comment;
-    }
-
-    public BaseWriteOperation comment(final BsonValue comment) {
-        this.comment = comment;
         return this;
     }
 
     @Override
     public WriteConcernResult execute(final WriteBinding binding) {
         try {
-            BulkWriteResult result = getMixedBulkOperation().execute(binding);
+            BulkWriteResult result = new MixedBulkWriteOperation(namespace, writeRequests, ordered, writeConcern, retryWrites)
+                    .bypassDocumentValidation(bypassDocumentValidation).execute(binding);
             if (result.wasAcknowledged()) {
                 return translateBulkWriteResult(result);
             } else {
@@ -113,33 +110,6 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
         } catch (MongoBulkWriteException e) {
             throw convertBulkWriteException(e);
         }
-    }
-
-    @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<WriteConcernResult> callback) {
-        getMixedBulkOperation().executeAsync(binding, new SingleResultCallback<BulkWriteResult>() {
-                    @Override
-                    public void onResult(final BulkWriteResult result, final Throwable t) {
-                        if (t != null) {
-                            if (t instanceof MongoBulkWriteException) {
-                                callback.onResult(null, convertBulkWriteException((MongoBulkWriteException) t));
-                            } else {
-                                callback.onResult(null, t);
-                            }
-                        } else if (result.wasAcknowledged()) {
-                            callback.onResult(translateBulkWriteResult(result), null);
-                        } else {
-                            callback.onResult(WriteConcernResult.unacknowledged(), null);
-                        }
-                    }
-                }
-        );
-    }
-
-    private MixedBulkWriteOperation getMixedBulkOperation() {
-        return new MixedBulkWriteOperation(namespace, getWriteRequests(), ordered, writeConcern, retryWrites)
-                .bypassDocumentValidation(bypassDocumentValidation)
-                .comment(comment);
     }
 
     private MongoException convertBulkWriteException(final MongoBulkWriteException e) {
@@ -182,11 +152,11 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     private void addBulkWriteResultToResponse(final BulkWriteResult bulkWriteResult, final BsonDocument response) {
         response.put("ok", new BsonInt32(1));
-        if (getType() == INSERT) {
+        if (type == INSERT) {
             response.put("n", new BsonInt32(0));
-        } else if (getType() == DELETE) {
+        } else if (type == DELETE) {
             response.put("n", new BsonInt32(bulkWriteResult.getDeletedCount()));
-        } else if (getType() == UPDATE || getType() == REPLACE) {
+        } else if (type == UPDATE || type == REPLACE) {
             response.put("n", new BsonInt32(bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size()));
             if (bulkWriteResult.getUpserts().isEmpty()) {
                 response.put("updatedExisting", BsonBoolean.TRUE);
@@ -204,26 +174,24 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     }
 
     private int getCount(final BulkWriteResult bulkWriteResult) {
-
-
         int count = 0;
-        if (getType() == UPDATE || getType() == REPLACE) {
+        if (type == UPDATE || type == REPLACE) {
             count = bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size();
-        } else if (getType() == DELETE) {
+        } else if (type == DELETE) {
             count = bulkWriteResult.getDeletedCount();
         }
         return count;
     }
 
     private boolean getUpdatedExisting(final BulkWriteResult bulkWriteResult) {
-        if (getType() == UPDATE) {
+        if (type == UPDATE || type == REPLACE) {
             return bulkWriteResult.getMatchedCount() > 0;
         }
         return false;
     }
 
+    @Nullable
     private BulkWriteError getLastError(final MongoBulkWriteException e) {
         return e.getWriteErrors().isEmpty() ? null : e.getWriteErrors().get(e.getWriteErrors().size() - 1);
-
     }
 }

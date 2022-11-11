@@ -16,10 +16,10 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.WriteConcernException
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import org.bson.BsonDocument
@@ -241,8 +241,8 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         getCollectionHelper().insertDocuments(BsonDocument.parse('{ level: 8}'))
 
         then:
-        WriteConcernException writeConcernException = thrown()
-        writeConcernException.getErrorCode() == 121
+        MongoBulkWriteException writeConcernException = thrown()
+        writeConcernException.getWriteErrors().get(0).getCode() == 121
 
         where:
         async << [true, false]

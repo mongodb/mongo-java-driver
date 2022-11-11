@@ -42,7 +42,6 @@ import com.mongodb.internal.operation.CreateIndexesOperation;
 import com.mongodb.internal.operation.DropCollectionOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.FindOperation;
-import com.mongodb.internal.operation.InsertOperation;
 import com.mongodb.internal.operation.ListIndexesOperation;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import org.bson.BsonArray;
@@ -191,7 +190,7 @@ public final class CollectionHelper<T> {
         for (BsonDocument document : documents) {
             insertRequests.add(new InsertRequest(document));
         }
-        new InsertOperation(namespace, true, writeConcern, false, insertRequests).execute(binding);
+        new MixedBulkWriteOperation(namespace, insertRequests, true, writeConcern, false).execute(binding);
     }
 
     public void insertDocuments(final Document... documents) {
