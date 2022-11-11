@@ -239,8 +239,8 @@ public final class AsyncOperations<TDocument> {
         return operations.bulkWrite(requests, options);
     }
 
-    public <TResult> AsyncReadOperation<TResult> runCommand(final Bson command, final Class<TResult> resultClass) {
-        return operations.runCommand(command, resultClass);
+    public <TResult> AsyncReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
+        return operations.commandRead(command, resultClass);
     }
 
     public AsyncWriteOperation<Void> dropDatabase() {

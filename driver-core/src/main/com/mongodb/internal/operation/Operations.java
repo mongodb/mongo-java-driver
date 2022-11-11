@@ -514,7 +514,7 @@ final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    <TResult> CommandReadOperation<TResult> runCommand(final Bson command, final Class<TResult> resultClass) {
+    <TResult> CommandReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
         notNull("command", command);
         notNull("resultClass", resultClass);
         return new CommandReadOperation<TResult>(namespace.getDatabaseName(), toBsonDocument(command), codecRegistry.get(resultClass));

@@ -216,8 +216,8 @@ public final class SyncOperations<TDocument> {
         return operations.bulkWrite(requests, options);
     }
 
-    public <TResult> ReadOperation<TResult> runCommand(final Bson command, final Class<TResult> resultClass) {
-        return operations.runCommand(command, resultClass);
+    public <TResult> ReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
+        return operations.commandRead(command, resultClass);
     }
 
     public WriteOperation<Void> dropDatabase() {

@@ -194,7 +194,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         if (clientSession != null && clientSession.hasActiveTransaction() && !readPreference.equals(ReadPreference.primary())) {
             throw new MongoClientException("Read preference in a transaction must be primary");
         }
-        return executor.execute(operations.runCommand(command, resultClass), readPreference, readConcern, clientSession);
+        return executor.execute(operations.commandRead(command, resultClass), readPreference, readConcern, clientSession);
     }
 
     @Override
