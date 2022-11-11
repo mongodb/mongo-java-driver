@@ -337,8 +337,8 @@ public class DBCollection {
 
     private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
                                final boolean continueOnError, @Nullable final Boolean bypassDocumentValidation) {
-        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), !continueOnError, writeConcern, retryWrites,
-                insertRequestList).bypassDocumentValidation(bypassDocumentValidation));
+        return executeWriteOperation(LegacyMixedBulkWriteOperation.createForInsert(getNamespace(), !continueOnError, writeConcern,
+                retryWrites, insertRequestList).bypassDocumentValidation(bypassDocumentValidation));
     }
 
     WriteResult executeWriteOperation(final LegacyMixedBulkWriteOperation operation) {
@@ -422,7 +422,7 @@ public class DBCollection {
         UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
                                                          Type.REPLACE).upsert(true);
 
-        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), false, writeConcern, retryWrites,
+        return executeWriteOperation(LegacyMixedBulkWriteOperation.createForUpdate(getNamespace(), false, writeConcern, retryWrites,
                 singletonList(replaceRequest)));
     }
 
@@ -574,7 +574,7 @@ public class DBCollection {
                                               .upsert(options.isUpsert()).multi(options.isMulti())
                                               .collation(options.getCollation())
                                               .arrayFilters(wrapAllowNull(options.getArrayFilters(), options.getEncoder()));
-        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), true, writeConcern, retryWrites,
+        return executeWriteOperation(LegacyMixedBulkWriteOperation.createForUpdate(getNamespace(), true, writeConcern, retryWrites,
                 singletonList(updateRequest)).bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
@@ -645,7 +645,7 @@ public class DBCollection {
         WriteConcern optionsWriteConcern = options.getWriteConcern();
         WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         DeleteRequest deleteRequest = new DeleteRequest(wrap(query, options.getEncoder())).collation(options.getCollation());
-        return executeWriteOperation(new LegacyMixedBulkWriteOperation(getNamespace(), false, writeConcern, retryWrites,
+        return executeWriteOperation(LegacyMixedBulkWriteOperation.createForDelete(getNamespace(), false, writeConcern, retryWrites,
                 singletonList(deleteRequest)));
     }
 

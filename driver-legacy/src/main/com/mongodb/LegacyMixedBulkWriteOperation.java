@@ -20,6 +20,9 @@ import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.bulk.DeleteRequest;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import com.mongodb.internal.operation.WriteOperation;
@@ -40,9 +43,9 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 
 
 /**
- * Abstract base class for legacy write operations.
+ * Operation for bulk writes for the legacy API.
  */
-class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcernResult> {
+final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcernResult> {
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final List<? extends WriteRequest> writeRequests;
@@ -51,7 +54,23 @@ class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcernResult
     private final boolean retryWrites;
     private Boolean bypassDocumentValidation;
 
-    LegacyMixedBulkWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+    static LegacyMixedBulkWriteOperation createForInsert(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<InsertRequest> writeRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, writeRequests);
+    }
+
+    static LegacyMixedBulkWriteOperation createForUpdate(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> writeRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, writeRequests);
+    }
+
+    static LegacyMixedBulkWriteOperation createForDelete(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<DeleteRequest> writeRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, writeRequests);
+    }
+
+
+    private LegacyMixedBulkWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
             final boolean retryWrites, final List<? extends WriteRequest> writeRequests) {
         this.writeRequests = notNull("writeRequests", writeRequests);
         isTrueArgument("writeRequests not empty", !writeRequests.isEmpty());
