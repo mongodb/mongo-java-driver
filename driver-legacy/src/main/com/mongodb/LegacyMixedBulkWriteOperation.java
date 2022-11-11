@@ -57,32 +57,31 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForInsert(final MongoNamespace namespace, final boolean ordered,
             final WriteConcern writeConcern, final boolean retryWrites, final List<InsertRequest> insertRequests) {
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, insertRequests);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, insertRequests, INSERT);
     }
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForUpdate(final MongoNamespace namespace, final boolean ordered,
             final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> updateRequests) {
         assertTrue(updateRequests.stream().allMatch(updateRequest -> updateRequest.getType() == UPDATE));
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, updateRequests);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, updateRequests, UPDATE);
     }
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForReplace(final MongoNamespace namespace, final boolean ordered,
             final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> replaceRequests) {
         assertTrue(replaceRequests.stream().allMatch(updateRequest -> updateRequest.getType() == REPLACE));
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, replaceRequests);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, replaceRequests, REPLACE);
     }
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForDelete(final MongoNamespace namespace, final boolean ordered,
             final WriteConcern writeConcern, final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, deleteRequests);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, deleteRequests, DELETE);
     }
 
-
     private LegacyMixedBulkWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-            final boolean retryWrites, final List<? extends WriteRequest> writeRequests) {
-        this.writeRequests = notNull("writeRequests", writeRequests);
+            final boolean retryWrites, final List<? extends WriteRequest> writeRequests, final WriteRequest.Type type) {
         isTrueArgument("writeRequests not empty", !writeRequests.isEmpty());
-        this.type = writeRequests.get(0).getType();
+        this.writeRequests = notNull("writeRequests", writeRequests);
+        this.type = type;
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
