@@ -167,15 +167,11 @@ class TestInternalConnection implements InternalConnection {
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
             final RequestContext requestContext) {
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
-        try {
+        try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, sessionContext);
             sendMessage(bsonOutput.getByteBuffers(), message.getId());
-        } finally {
-            bsonOutput.close();
         }
-        ResponseBuffers responseBuffers = receiveMessage(message.getId());
-        try {
+        try (ResponseBuffers responseBuffers = receiveMessage(message.getId())) {
             boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
             responseBuffers.reset();
             if (!commandOk) {
@@ -183,8 +179,6 @@ class TestInternalConnection implements InternalConnection {
                         description.getServerAddress());
             }
             return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
-        } finally {
-            responseBuffers.close();
         }
     }
 

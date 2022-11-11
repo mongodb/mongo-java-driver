@@ -190,14 +190,11 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     @Nullable
     @Override
     public ChangeStreamDocument<TResult> first() {
-        MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor = cursor();
-        try {
+        try (MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor = cursor()) {
             if (!cursor.hasNext()) {
                 return null;
             }
             return cursor.next();
-        } finally {
-            cursor.close();
         }
     }
 

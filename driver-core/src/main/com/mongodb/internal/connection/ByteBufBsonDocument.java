@@ -104,13 +104,11 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         StringWriter stringWriter = new StringWriter();
         JsonWriter jsonWriter = new JsonWriter(stringWriter, settings);
         ByteBuf duplicate = byteBuf.duplicate();
-        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(duplicate));
-        try {
+        try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(duplicate))) {
             jsonWriter.pipe(reader);
             return stringWriter.toString();
         } finally {
             duplicate.release();
-            reader.close();
         }
     }
 
@@ -121,8 +119,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
 
     <T> T findInDocument(final Finder<T> finder) {
         ByteBuf duplicateByteBuf = byteBuf.duplicate();
-        BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()));
-        try {
+        try (BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()))) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 T found = finder.find(bsonReader);
@@ -133,7 +130,6 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
             bsonReader.readEndDocument();
         } finally {
             duplicateByteBuf.release();
-            bsonReader.close();
         }
 
         return finder.notFound();
@@ -152,12 +148,10 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
 
     BsonDocument toBaseBsonDocument() {
         ByteBuf duplicateByteBuf = byteBuf.duplicate();
-        BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf));
-        try {
+        try (BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf))) {
             return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
         } finally {
             duplicateByteBuf.release();
-            bsonReader.close();
         }
     }
 

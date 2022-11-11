@@ -92,8 +92,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     private String getTruncatedJsonCommand() {
         StringWriter writer = new StringWriter();
 
-        BsonReader bsonReader = commandDocument.asBsonReader();
-        try {
+        try (BsonReader bsonReader = commandDocument.asBsonReader()) {
             JsonWriter jsonWriter = new JsonWriter(writer,
                     JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).maxLength(MAX_COMMAND_DOCUMENT_LENGTH_TO_LOG).build());
 
@@ -104,8 +103,6 @@ class LoggingCommandEventSender implements CommandEventSender {
             }
 
             return writer.toString();
-        } finally {
-            bsonReader.close();
         }
     }
 

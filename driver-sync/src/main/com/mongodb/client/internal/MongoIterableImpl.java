@@ -98,14 +98,11 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     @Nullable
     @Override
     public TResult first() {
-        MongoCursor<TResult> cursor = iterator();
-        try {
+        try (MongoCursor<TResult> cursor = iterator()) {
             if (!cursor.hasNext()) {
                 return null;
             }
             return cursor.next();
-        } finally {
-            cursor.close();
         }
     }
 

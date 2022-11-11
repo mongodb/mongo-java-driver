@@ -40,11 +40,8 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
     @Override
     public void encode(final BsonWriter writer, final RawBsonDocument value, final EncoderContext encoderContext) {
-        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(value.getByteBuffer()));
-        try {
+        try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(value.getByteBuffer()))) {
             writer.pipe(reader);
-        } finally {
-            reader.close();
         }
     }
 

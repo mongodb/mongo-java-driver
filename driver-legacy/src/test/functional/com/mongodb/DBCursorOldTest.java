@@ -202,16 +202,13 @@ public class DBCursorOldTest extends DatabaseTestCase {
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
         c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
-        DBCursor cur = c.find()
-                        .sort(new BasicDBObject("$natural", 1))
-                        .cursorType(CursorType.Tailable);
 
-        try {
+        try (DBCursor cur = c.find()
+                .sort(new BasicDBObject("$natural", 1))
+                .cursorType(CursorType.Tailable)) {
             cur.tryNext();
         } catch (IllegalArgumentException e) {
             fail();
-        } finally {
-            cur.close();
         }
     }
 
@@ -222,16 +219,13 @@ public class DBCursorOldTest extends DatabaseTestCase {
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
         c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
-        DBCursor cur = c.find()
-                        .sort(new BasicDBObject("$natural", 1))
-                        .cursorType(CursorType.TailableAwait);
 
-        try {
+        try (DBCursor cur = c.find()
+                .sort(new BasicDBObject("$natural", 1))
+                .cursorType(CursorType.TailableAwait)) {
             cur.tryNext();
         } catch (IllegalArgumentException e) {
             fail();
-        } finally {
-            cur.close();
         }
     }
 

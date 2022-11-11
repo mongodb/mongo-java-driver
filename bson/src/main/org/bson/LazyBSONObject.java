@@ -122,8 +122,7 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public boolean containsField(final String s) {
-        BsonBinaryReader reader = getBsonReader();
-        try {
+        try (BsonBinaryReader reader = getBsonReader()) {
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (reader.readName().equals(s)) {
@@ -132,8 +131,6 @@ public class LazyBSONObject implements BSONObject {
                     reader.skipValue();
                 }
             }
-        } finally {
-            reader.close();
         }
         return false;
     }
@@ -141,16 +138,13 @@ public class LazyBSONObject implements BSONObject {
     @Override
     public Set<String> keySet() {
         Set<String> keys = new LinkedHashSet<>();
-        BsonBinaryReader reader = getBsonReader();
-        try {
+        try (BsonBinaryReader reader = getBsonReader()) {
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 keys.add(reader.readName());
                 reader.skipValue();
             }
             reader.readEndDocument();
-        } finally {
-            reader.close();
         }
         return Collections.unmodifiableSet(keys);
     }
@@ -293,15 +287,12 @@ public class LazyBSONObject implements BSONObject {
      */
     public Set<Map.Entry<String, Object>> entrySet() {
         List<Map.Entry<String, Object>> entries = new ArrayList<>();
-        BsonBinaryReader reader = getBsonReader();
-        try {
+        try (BsonBinaryReader reader = getBsonReader()) {
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 entries.add(new AbstractMap.SimpleImmutableEntry<>(reader.readName(), readValue(reader)));
             }
             reader.readEndDocument();
-        } finally {
-            reader.close();
         }
         return new Set<Map.Entry<String, Object>>() {
             @Override

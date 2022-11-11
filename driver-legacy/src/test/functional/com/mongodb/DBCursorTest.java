@@ -215,11 +215,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testSkip() {
-        DBCursor cursor = collection.find().skip(2);
-        try {
+        try (DBCursor cursor = collection.find().skip(2)) {
             assertEquals(8, cursor.toArray().size());
-        } finally {
-            cursor.close();
         }
     }
 

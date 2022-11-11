@@ -39,17 +39,11 @@ class DBEncoderAdapter implements Encoder<DBObject> {
     //       over an array of ByteBuffer instances from a PooledByteBufferOutputBuffer
     @Override
     public void encode(final BsonWriter writer, final DBObject document, final EncoderContext encoderContext) {
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
-        try {
+        try (BasicOutputBuffer buffer = new BasicOutputBuffer()) {
             encoder.writeObject(buffer, document);
-            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(buffer.toByteArray()))));
-            try {
+            try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(buffer.toByteArray()))))) {
                 writer.pipe(reader);
-            } finally {
-                reader.close();
             }
-        } finally {
-            buffer.close();
         }
     }
 
