@@ -208,8 +208,7 @@ public final class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public Publisher<Void> createCollection(final String collectionName, final CreateCollectionOptions options) {
         return mongoOperationPublisher.createCollection(null,
-                                                        new MongoNamespace(getName(), notNull("collectionName", collectionName)),
-                                                        notNull("options", options));
+                notNull("collectionName", collectionName), notNull("options", options));
     }
 
     @Override
@@ -221,8 +220,7 @@ public final class MongoDatabaseImpl implements MongoDatabase {
     public Publisher<Void> createCollection(final ClientSession clientSession, final String collectionName,
                                             final CreateCollectionOptions options) {
         return mongoOperationPublisher.createCollection(notNull("clientSession", clientSession),
-                                                        new MongoNamespace(getName(), notNull("collectionName", collectionName)),
-                                                        notNull("options", options));
+                notNull("collectionName", collectionName), notNull("options", options));
     }
 
     @Override

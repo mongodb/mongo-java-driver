@@ -25,7 +25,9 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateIndexOptions;
+import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
@@ -209,21 +211,37 @@ public final class SyncOperations<TDocument> {
         return operations.insertMany(documents, options);
     }
 
-    @SuppressWarnings("unchecked")
     public WriteOperation<BulkWriteResult> bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests,
                                                      final BulkWriteOptions options) {
         return operations.bulkWrite(requests, options);
     }
 
+    public <TResult> ReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
+        return operations.commandRead(command, resultClass);
+    }
+
+    public WriteOperation<Void> dropDatabase() {
+        return operations.dropDatabase();
+    }
+
+
+    public WriteOperation<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
+            final AutoEncryptionSettings autoEncryptionSettings) {
+        return operations.createCollection(collectionName, createCollectionOptions, autoEncryptionSettings);
+    }
 
     public WriteOperation<Void> dropCollection(final DropCollectionOptions dropCollectionOptions,
             final AutoEncryptionSettings autoEncryptionSettings) {
         return operations.dropCollection(dropCollectionOptions, autoEncryptionSettings);
     }
 
-    public WriteOperation<Void> renameCollection(final MongoNamespace newCollectionNamespace,
-                                                 final RenameCollectionOptions options) {
+    public WriteOperation<Void> renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions options) {
         return operations.renameCollection(newCollectionNamespace, options);
+    }
+
+    public WriteOperation<Void> createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
+            final CreateViewOptions createViewOptions) {
+        return operations.createView(viewName, viewOn, pipeline, createViewOptions);
     }
 
     public WriteOperation<Void> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions options) {

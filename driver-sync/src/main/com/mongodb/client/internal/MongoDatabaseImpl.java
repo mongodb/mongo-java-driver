@@ -30,17 +30,11 @@ import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
-import com.mongodb.client.model.IndexOptionDefaults;
-import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
-import com.mongodb.internal.operation.CommandReadOperation;
-import com.mongodb.internal.operation.CreateCollectionOperation;
-import com.mongodb.internal.operation.CreateViewOperation;
-import com.mongodb.internal.operation.DropDatabaseOperation;
+import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -48,12 +42,10 @@ import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -72,7 +64,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Nullable
     private final AutoEncryptionSettings autoEncryptionSettings;
     private final OperationExecutor executor;
-    private UuidRepresentation uuidRepresentation;
+    private final UuidRepresentation uuidRepresentation;
+    private final SyncOperations<BsonDocument> operations;
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                              final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
@@ -89,6 +82,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.executor = notNull("executor", executor);
+        this.operations = new SyncOperations<>(new MongoNamespace(name, COMMAND_COLLECTION_NAME), BsonDocument.class, readPreference,
+                codecRegistry, readConcern, writeConcern, retryWrites, retryReads);
     }
 
     @Override
@@ -199,8 +194,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         if (clientSession != null && clientSession.hasActiveTransaction() && !readPreference.equals(ReadPreference.primary())) {
             throw new MongoClientException("Read preference in a transaction must be primary");
         }
-        return executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
-                readPreference, readConcern, clientSession);
+        return executor.execute(operations.commandRead(command, resultClass), readPreference, readConcern, clientSession);
     }
 
     @Override
@@ -215,7 +209,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession) {
-        executor.execute(new DropDatabaseOperation(name, getWriteConcern()), readConcern, clientSession);
+        executor.execute(operations.dropDatabase(), readConcern, clientSession);
     }
 
     @Override
@@ -291,50 +285,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions createCollectionOptions) {
-
-        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
-                .collation(createCollectionOptions.getCollation())
-                .capped(createCollectionOptions.isCapped())
-                .sizeInBytes(createCollectionOptions.getSizeInBytes())
-                .maxDocuments(createCollectionOptions.getMaxDocuments())
-                .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()))
-                .expireAfter(createCollectionOptions.getExpireAfter(TimeUnit.SECONDS))
-                .timeSeriesOptions(createCollectionOptions.getTimeSeriesOptions())
-                .changeStreamPreAndPostImagesOptions(createCollectionOptions.getChangeStreamPreAndPostImagesOptions());
-
-        ClusteredIndexOptions clusteredIndexOptions = createCollectionOptions.getClusteredIndexOptions();
-        if (clusteredIndexOptions != null) {
-            operation.clusteredIndexKey(toBsonDocument(clusteredIndexOptions.getKey()));
-            operation.clusteredIndexUnique(clusteredIndexOptions.isUnique());
-            operation.clusteredIndexName(clusteredIndexOptions.getName());
-        }
-
-        Bson encryptedFields = createCollectionOptions.getEncryptedFields();
-        operation.encryptedFields(toBsonDocument(encryptedFields));
-        if (encryptedFields == null && autoEncryptionSettings != null) {
-            Map<String, BsonDocument> encryptedFieldsMap = autoEncryptionSettings.getEncryptedFieldsMap();
-            if (encryptedFieldsMap != null) {
-                operation.encryptedFields(encryptedFieldsMap.getOrDefault(name + "." + collectionName, null));
-            }
-        }
-
-        IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
-        Bson storageEngine = indexOptionDefaults.getStorageEngine();
-        if (storageEngine != null) {
-            operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(storageEngine)));
-        }
-        ValidationOptions validationOptions = createCollectionOptions.getValidationOptions();
-        Bson validator = validationOptions.getValidator();
-        if (validator != null) {
-            operation.validator(toBsonDocument(validator));
-        }
-        if (validationOptions.getValidationLevel() != null) {
-            operation.validationLevel(validationOptions.getValidationLevel());
-        }
-        if (validationOptions.getValidationAction() != null) {
-            operation.validationAction(validationOptions.getValidationAction());
-        }
-        executor.execute(operation, readConcern, clientSession);
+        executor.execute(operations.createCollection(collectionName, createCollectionOptions, autoEncryptionSettings), readConcern,
+                clientSession);
     }
 
     @Override
@@ -442,25 +394,6 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,
                                    final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
         notNull("createViewOptions", createViewOptions);
-        executor.execute(new CreateViewOperation(name, viewName, viewOn, createBsonDocumentList(pipeline), writeConcern)
-                        .collation(createViewOptions.getCollation()),
-                readConcern, clientSession);
-    }
-
-    private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
-        notNull("pipeline", pipeline);
-        List<BsonDocument> bsonDocumentPipeline = new ArrayList<BsonDocument>(pipeline.size());
-        for (Bson obj : pipeline) {
-            if (obj == null) {
-                throw new IllegalArgumentException("pipeline can not contain a null value");
-            }
-            bsonDocumentPipeline.add(obj.toBsonDocument(BsonDocument.class, codecRegistry));
-        }
-        return bsonDocumentPipeline;
-    }
-
-    @Nullable
-    private BsonDocument toBsonDocument(@Nullable final Bson document) {
-        return document == null ? null : document.toBsonDocument(BsonDocument.class, codecRegistry);
+        executor.execute(operations.createView(viewName, viewOn, pipeline, createViewOptions), readConcern, clientSession);
     }
 }
