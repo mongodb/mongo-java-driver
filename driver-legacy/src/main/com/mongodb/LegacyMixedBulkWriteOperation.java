@@ -34,6 +34,7 @@ import org.bson.BsonString;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
@@ -54,19 +55,26 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     private final boolean retryWrites;
     private Boolean bypassDocumentValidation;
 
-    static LegacyMixedBulkWriteOperation createForInsert(final MongoNamespace namespace, final boolean ordered,
-            final WriteConcern writeConcern, final boolean retryWrites, final List<InsertRequest> writeRequests) {
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, writeRequests);
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForInsert(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<InsertRequest> insertRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, insertRequests);
     }
 
-    static LegacyMixedBulkWriteOperation createForUpdate(final MongoNamespace namespace, final boolean ordered,
-            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> writeRequests) {
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, writeRequests);
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForUpdate(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> updateRequests) {
+        assertTrue(updateRequests.stream().allMatch(updateRequest -> updateRequest.getType() == UPDATE));
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, updateRequests);
     }
 
-    static LegacyMixedBulkWriteOperation createForDelete(final MongoNamespace namespace, final boolean ordered,
-            final WriteConcern writeConcern, final boolean retryWrites, final List<DeleteRequest> writeRequests) {
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, writeRequests);
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForReplace(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> replaceRequests) {
+        assertTrue(replaceRequests.stream().allMatch(updateRequest -> updateRequest.getType() == REPLACE));
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, replaceRequests);
+    }
+
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForDelete(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, deleteRequests);
     }
 
 
