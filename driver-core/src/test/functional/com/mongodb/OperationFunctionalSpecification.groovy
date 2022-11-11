@@ -49,7 +49,7 @@ import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.operation.AsyncReadOperation
 import com.mongodb.internal.operation.AsyncWriteOperation
-import com.mongodb.internal.operation.InsertOperation
+import com.mongodb.internal.operation.MixedBulkWriteOperation
 import com.mongodb.internal.operation.ReadOperation
 import com.mongodb.internal.operation.WriteOperation
 import com.mongodb.internal.session.SessionContext
@@ -108,12 +108,13 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, [new InsertRequest(new BsonDocument())]).execute(binding)
+        new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true, ACKNOWLEDGED, false).execute(binding)
         binding.release()
     }
 
     void acknowledgeWrite(final AsyncSingleConnectionBinding binding) {
-        executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, [new InsertRequest(new BsonDocument())]), binding)
+        executeAsync(new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true, ACKNOWLEDGED, false),
+                binding)
         binding.release()
     }
 
@@ -127,6 +128,10 @@ class OperationFunctionalSpecification extends Specification {
 
     CollectionHelper<Worker> getWorkerCollectionHelper() {
         new CollectionHelper<Worker>(new WorkerCodec(), getNamespace())
+    }
+
+    def execute(operation) {
+        execute(operation, false)
     }
 
     def execute(operation, boolean async) {

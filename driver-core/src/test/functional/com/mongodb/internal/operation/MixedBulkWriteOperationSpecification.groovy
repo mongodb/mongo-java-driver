@@ -641,8 +641,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         def result = execute(operation, binding)
-        execute(new InsertOperation(namespace, true, ACKNOWLEDGED, false,
-                [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))]), binding)
+        execute(new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))], true, ACKNOWLEDGED,
+                false,), binding)
 
         then:
         !result.wasAcknowledged()
