@@ -25,7 +25,9 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateIndexOptions;
+import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
@@ -237,6 +239,19 @@ public final class AsyncOperations<TDocument> {
         return operations.bulkWrite(requests, options);
     }
 
+    public <TResult> AsyncReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
+        return operations.commandRead(command, resultClass);
+    }
+
+    public AsyncWriteOperation<Void> dropDatabase() {
+        return operations.dropDatabase();
+    }
+
+    public AsyncWriteOperation<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
+            final AutoEncryptionSettings autoEncryptionSettings) {
+        return operations.createCollection(collectionName, createCollectionOptions, autoEncryptionSettings);
+    }
+
 
     public AsyncWriteOperation<Void> dropCollection(final DropCollectionOptions dropCollectionOptions,
             final AutoEncryptionSettings autoEncryptionSettings) {
@@ -246,6 +261,11 @@ public final class AsyncOperations<TDocument> {
     public AsyncWriteOperation<Void> renameCollection(final MongoNamespace newCollectionNamespace,
             final RenameCollectionOptions options) {
         return operations.renameCollection(newCollectionNamespace, options);
+    }
+
+    public AsyncWriteOperation<Void> createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
+            final CreateViewOptions createViewOptions) {
+        return operations.createView(viewName, viewOn, pipeline, createViewOptions);
     }
 
     public AsyncWriteOperation<Void> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions options) {

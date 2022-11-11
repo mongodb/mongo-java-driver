@@ -30,7 +30,6 @@ import com.mongodb.WriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.model.BulkWriteOptions;
-import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateIndexOptions;
@@ -43,14 +42,12 @@ import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
-import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
@@ -61,10 +58,6 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
-import com.mongodb.internal.operation.CommandReadOperation;
-import com.mongodb.internal.operation.CreateCollectionOperation;
-import com.mongodb.internal.operation.CreateViewOperation;
-import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.IndexHelper;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -80,14 +73,11 @@ import reactor.core.publisher.MonoSink;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 /**
@@ -225,73 +215,18 @@ public final class MongoOperationPublisher<T> {
     }
 
     Publisher<Void> dropDatabase(@Nullable final ClientSession clientSession) {
-        return createWriteOperationMono(() -> new DropDatabaseOperation(getNamespace().getDatabaseName(), getWriteConcern()),
-                                        clientSession);
+        return createWriteOperationMono(operations::dropDatabase, clientSession);
     }
 
     Publisher<Void> createCollection(
-            @Nullable final ClientSession clientSession, final MongoNamespace namespace,
-            final CreateCollectionOptions options) {
-        return createWriteOperationMono(() -> {
-            CreateCollectionOperation operation =
-                    new CreateCollectionOperation(namespace.getDatabaseName(), namespace.getCollectionName(), getWriteConcern())
-                            .capped(options.isCapped())
-                            .sizeInBytes(options.getSizeInBytes())
-                            .maxDocuments(options.getMaxDocuments())
-                            .storageEngineOptions(toBsonDocument(options.getStorageEngineOptions()))
-                            .collation(options.getCollation())
-                            .expireAfter(options.getExpireAfter(TimeUnit.SECONDS))
-                            .timeSeriesOptions(options.getTimeSeriesOptions())
-                            .changeStreamPreAndPostImagesOptions(options.getChangeStreamPreAndPostImagesOptions());
-
-            ClusteredIndexOptions clusteredIndexOptions = options.getClusteredIndexOptions();
-            if (clusteredIndexOptions != null) {
-                operation.clusteredIndexKey(toBsonDocument(clusteredIndexOptions.getKey()));
-                operation.clusteredIndexUnique(clusteredIndexOptions.isUnique());
-                operation.clusteredIndexName(clusteredIndexOptions.getName());
-            }
-
-            Bson encryptedFields = options.getEncryptedFields();
-            operation.encryptedFields(toBsonDocument(encryptedFields));
-            if (encryptedFields == null && autoEncryptionSettings != null) {
-                Map<String, BsonDocument> encryptedFieldsMap = autoEncryptionSettings.getEncryptedFieldsMap();
-                if (encryptedFieldsMap != null) {
-                    operation.encryptedFields(encryptedFieldsMap.getOrDefault(namespace.getFullName(), null));
-                }
-            }
-
-            IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
-            Bson storageEngine = indexOptionDefaults.getStorageEngine();
-            if (storageEngine != null) {
-                operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(storageEngine)));
-            }
-            ValidationOptions validationOptions = options.getValidationOptions();
-            Bson validator = validationOptions.getValidator();
-            if (validator != null) {
-                operation.validator(toBsonDocument(validator));
-            }
-            if (validationOptions.getValidationLevel() != null) {
-                operation.validationLevel(validationOptions.getValidationLevel());
-            }
-            if (validationOptions.getValidationAction() != null) {
-                operation.validationAction(validationOptions.getValidationAction());
-            }
-            return operation;
-        }, clientSession);
+            @Nullable final ClientSession clientSession, final String collectionName, final CreateCollectionOptions options) {
+        return createWriteOperationMono(() -> operations.createCollection(collectionName, options, autoEncryptionSettings), clientSession);
     }
 
     Publisher<Void> createView(
             @Nullable final ClientSession clientSession, final String viewName, final String viewOn,
             final List<? extends Bson> pipeline, final CreateViewOptions options) {
-        List<BsonDocument> bsonDocumentPipeline = createBsonDocumentList(notNull("pipeline", pipeline));
-        return createWriteOperationMono(
-                () -> new CreateViewOperation(getNamespace().getDatabaseName(),
-                                              notNull("viewName", viewName),
-                                              notNull("viewOn", viewOn),
-                                              bsonDocumentPipeline,
-                                              getWriteConcern())
-                        .collation(notNull("options", options).getCollation()),
-                clientSession);
+        return createWriteOperationMono(() -> operations.createView(viewName, viewOn, pipeline, options), clientSession);
     }
 
     public <R> Publisher<R> runCommand(
@@ -301,10 +236,7 @@ public final class MongoOperationPublisher<T> {
             return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
         }
         return createReadOperationMono(
-                () -> new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                                                 toBsonDocument(notNull("command", command)),
-                                                 getCodecRegistry().get(notNull("clazz", clazz))),
-                clientSession, notNull("readPreference", readPreference));
+                () -> operations.commandRead(command, clazz), clientSession, notNull("readPreference", readPreference));
     }
 
 
@@ -560,13 +492,6 @@ public final class MongoOperationPublisher<T> {
         }
     };
 
-    private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
-        if (pipeline.contains(null)) {
-            throw new IllegalArgumentException("pipeline can not contain a null value");
-        }
-        return pipeline.stream().map(this::toBsonDocument).collect(toList());
-    }
-
     public static <T> SingleResultCallback<T> sinkToCallback(final MonoSink<T> sink) {
         return (result, t) -> {
             if (t != null) {
@@ -577,11 +502,6 @@ public final class MongoOperationPublisher<T> {
                 sink.success(result);
             }
         };
-    }
-
-    @Nullable
-    private BsonDocument toBsonDocument(@Nullable final Bson document) {
-        return document == null ? null : document.toBsonDocument(BsonDocument.class, getCodecRegistry());
     }
 }
 

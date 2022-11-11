@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -157,27 +156,23 @@ public class MongoDatabaseImplTest extends TestHelper {
                   ),
                   () -> {
                       Publisher<Void> expected = mongoOperationPublisher
-                              .createCollection(null, new MongoNamespace(database.getName(), collectionName),
-                                                new CreateCollectionOptions());
+                              .createCollection(null, collectionName, new CreateCollectionOptions());
                       assertPublisherIsTheSameAs(expected, database.createCollection(collectionName), "Default");
                   },
                   () -> {
                       CreateCollectionOptions options = new CreateCollectionOptions().sizeInBytes(500).capped(true);
-                      Publisher<Void> expected = mongoOperationPublisher
-                              .createCollection(null, new MongoNamespace(database.getName(), collectionName), options);
+                      Publisher<Void> expected = mongoOperationPublisher.createCollection(null, collectionName, options);
                       assertPublisherIsTheSameAs(expected, database.createCollection(collectionName, options), "With options");
                   },
                   () -> {
-                      Publisher<Void> expected = mongoOperationPublisher
-                              .createCollection(clientSession, new MongoNamespace(database.getName(), collectionName),
-                                                new CreateCollectionOptions());
+                      Publisher<Void> expected = mongoOperationPublisher.createCollection(clientSession, collectionName,
+                              new CreateCollectionOptions());
                       assertPublisherIsTheSameAs(expected, database.createCollection(clientSession, collectionName),
                                                  "With client session");
                   },
                   () -> {
                       CreateCollectionOptions options = new CreateCollectionOptions().sizeInBytes(500).capped(true);
-                      Publisher<Void> expected = mongoOperationPublisher
-                              .createCollection(clientSession, new MongoNamespace(database.getName(), collectionName), options);
+                      Publisher<Void> expected = mongoOperationPublisher.createCollection(clientSession, collectionName, options);
                       assertPublisherIsTheSameAs(expected, database.createCollection(clientSession, collectionName, options),
                                                  "With client session & options");
                   }

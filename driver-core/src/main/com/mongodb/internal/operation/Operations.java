@@ -22,9 +22,12 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateIndexOptions;
+import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
@@ -35,6 +38,7 @@ import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
+import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.InsertOneOptions;
@@ -45,6 +49,7 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
@@ -509,6 +514,64 @@ final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
+    <TResult> CommandReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
+        notNull("command", command);
+        notNull("resultClass", resultClass);
+        return new CommandReadOperation<TResult>(namespace.getDatabaseName(), toBsonDocument(command), codecRegistry.get(resultClass));
+    }
+
+
+    DropDatabaseOperation dropDatabase() {
+        return new DropDatabaseOperation(namespace.getDatabaseName(), getWriteConcern());
+    }
+
+
+    CreateCollectionOperation createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
+            final AutoEncryptionSettings autoEncryptionSettings) {
+        CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName, writeConcern)
+                .collation(createCollectionOptions.getCollation())
+                .capped(createCollectionOptions.isCapped())
+                .sizeInBytes(createCollectionOptions.getSizeInBytes())
+                .maxDocuments(createCollectionOptions.getMaxDocuments())
+                .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()))
+                .expireAfter(createCollectionOptions.getExpireAfter(TimeUnit.SECONDS))
+                .timeSeriesOptions(createCollectionOptions.getTimeSeriesOptions())
+                .changeStreamPreAndPostImagesOptions(createCollectionOptions.getChangeStreamPreAndPostImagesOptions());
+
+        ClusteredIndexOptions clusteredIndexOptions = createCollectionOptions.getClusteredIndexOptions();
+        if (clusteredIndexOptions != null) {
+            operation.clusteredIndexKey(toBsonDocument(clusteredIndexOptions.getKey()));
+            operation.clusteredIndexUnique(clusteredIndexOptions.isUnique());
+            operation.clusteredIndexName(clusteredIndexOptions.getName());
+        }
+
+        Bson encryptedFields = createCollectionOptions.getEncryptedFields();
+        operation.encryptedFields(toBsonDocument(encryptedFields));
+        if (encryptedFields == null && autoEncryptionSettings != null) {
+            Map<String, BsonDocument> encryptedFieldsMap = autoEncryptionSettings.getEncryptedFieldsMap();
+            if (encryptedFieldsMap != null) {
+                operation.encryptedFields(encryptedFieldsMap.getOrDefault(namespace.getDatabaseName() + "." + collectionName, null));
+            }
+        }
+
+        IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
+        Bson storageEngine = indexOptionDefaults.getStorageEngine();
+        if (storageEngine != null) {
+            operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(storageEngine)));
+        }
+        ValidationOptions validationOptions = createCollectionOptions.getValidationOptions();
+        Bson validator = validationOptions.getValidator();
+        if (validator != null) {
+            operation.validator(toBsonDocument(validator));
+        }
+        if (validationOptions.getValidationLevel() != null) {
+            operation.validationLevel(validationOptions.getValidationLevel());
+        }
+        if (validationOptions.getValidationAction() != null) {
+            operation.validationAction(validationOptions.getValidationAction());
+        }
+        return operation;
+    }
 
     DropCollectionOperation dropCollection(
             final DropCollectionOptions dropCollectionOptions,
@@ -532,6 +595,13 @@ final class Operations<TDocument> {
                                                       final RenameCollectionOptions renameCollectionOptions) {
         return new RenameCollectionOperation(namespace, newCollectionNamespace, writeConcern)
                 .dropTarget(renameCollectionOptions.isDropTarget());
+    }
+
+    CreateViewOperation createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
+            final CreateViewOptions createViewOptions) {
+        notNull("options", createViewOptions);
+        return new CreateViewOperation(namespace.getDatabaseName(), viewName, viewOn, toBsonDocumentList(pipeline), writeConcern)
+                .collation(createViewOptions.getCollation());
     }
 
     @SuppressWarnings("deprecation")
