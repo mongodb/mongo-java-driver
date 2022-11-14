@@ -74,11 +74,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     }
 
     Class<? extends DBObject> getClassForPath(final List<String> path) {
-        if (pathToClassMap.containsKey(path)) {
-            return pathToClassMap.get(path);
-        } else {
-            return BasicDBObject.class;
-        }
+        return pathToClassMap.getOrDefault(path, BasicDBObject.class);
     }
 
     private MongoInternalException createInternalException(final Class<? extends DBObject> aClass, final Throwable e) {
