@@ -1005,10 +1005,7 @@ public class JsonReader extends AbstractBsonReader {
             verifyToken(JsonTokenType.END_OBJECT);
 
             return new BsonBinary(type, data);
-        } catch (JsonParseException e) {
-            mark.reset();
-            return null;
-        } catch (NumberFormatException e) {
+        } catch (JsonParseException | NumberFormatException e) {
             mark.reset();
             return null;
         } finally {

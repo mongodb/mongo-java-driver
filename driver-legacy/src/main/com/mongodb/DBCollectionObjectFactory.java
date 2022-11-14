@@ -47,11 +47,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
         Class<? extends DBObject> aClass = getClassForPath(path);
         try {
             return aClass.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException e) {
-            throw createInternalException(aClass, e);
-        } catch (IllegalAccessException e) {
-            throw createInternalException(aClass, e);
-        } catch (NoSuchMethodException e) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             throw createInternalException(aClass, e);
         } catch (InvocationTargetException e) {
             throw createInternalException(aClass, e.getTargetException());
