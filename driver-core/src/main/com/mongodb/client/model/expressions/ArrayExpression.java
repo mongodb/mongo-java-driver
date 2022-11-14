@@ -65,10 +65,10 @@ public interface ArrayExpression<T extends Expression> extends Expression {
 
     IntegerExpression size();
 
-    T arrayElemAt(IntegerExpression i);
+    T elementAt(IntegerExpression i);
 
-    default T arrayElemAt(final int i) {
-        return this.arrayElemAt(of(i));
+    default T elementAt(final int i) {
+        return this.elementAt(of(i));
     }
 
     T first();
@@ -77,7 +77,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
 
     BooleanExpression contains(T contains);
 
-    ArrayExpression<T> concatArrays(ArrayExpression<T> array);
+    ArrayExpression<T> concat(ArrayExpression<T> array);
 
     ArrayExpression<T> slice(IntegerExpression start, IntegerExpression length);
 

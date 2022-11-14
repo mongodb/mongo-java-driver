@@ -163,24 +163,24 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
-    public void arrayElemAtTest() {
+    public void elementAtTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/arrayElemAt/
         assertExpression(
                 Arrays.asList(1, 2, 3).get(0),
-                array123.arrayElemAt((IntegerExpression) of(0.0)),
+                array123.elementAt((IntegerExpression) of(0.0)),
                 // MQL:
                 "{'$arrayElemAt': [[1, 2, 3], 0.0]}");
 
         assertExpression(
                 Arrays.asList(1, 2, 3).get(3 - 1),
-                array123.arrayElemAt(-1));
+                array123.elementAt(-1));
 
         assertExpression(
                 true,
-                ofRem().eq(array123.arrayElemAt(99)));
+                ofRem().eq(array123.elementAt(99)));
         assertExpression(
                 true,
-                ofRem().eq(array123.arrayElemAt(-99)));
+                ofRem().eq(array123.elementAt(-99)));
     }
 
     @Test
@@ -216,12 +216,12 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
-    public void concatArraysTest() {
+    public void concatTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/concatArrays/
         assertExpression(
                 Stream.concat(Stream.of(1, 2, 3), Stream.of(1, 2, 3))
                         .collect(Collectors.toList()),
-                array123.concatArrays(array123),
+                array123.concat(array123),
                 // MQL:
                 "{'$concatArrays': [[1, 2, 3], [1, 2, 3]]}");
     }

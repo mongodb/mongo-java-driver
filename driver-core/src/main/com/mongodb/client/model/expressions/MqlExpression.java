@@ -198,7 +198,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public T arrayElemAt(final IntegerExpression at) {
+    public T elementAt(final IntegerExpression at) {
         return new MqlExpression<>(ast("$arrayElemAt", at))
                 .assertImplementsAllExpressions();
     }
@@ -233,7 +233,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public ArrayExpression<T> concatArrays(final ArrayExpression<T> array) {
+    public ArrayExpression<T> concat(final ArrayExpression<T> array) {
         return new MqlExpression<>(ast("$concatArrays", array))
                 .assertImplementsAllExpressions();
     }
