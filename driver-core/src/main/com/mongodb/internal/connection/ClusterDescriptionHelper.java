@@ -23,6 +23,7 @@ import com.mongodb.connection.ServerDescription;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -38,13 +39,8 @@ public final class ClusterDescriptionHelper {
      * @return the set of server descriptions
      */
     public static Set<ServerDescription> getAll(final ClusterDescription clusterDescription) {
-        Set<ServerDescription> serverDescriptionSet = new TreeSet<>((o1, o2) -> {
-            int val = o1.getAddress().getHost().compareTo(o2.getAddress().getHost());
-            if (val != 0) {
-                return val;
-            }
-            return Integer.compare(o1.getAddress().getPort(), o2.getAddress().getPort());
-        });
+        Set<ServerDescription> serverDescriptionSet = new TreeSet<>(Comparator.comparing((ServerDescription o) ->
+                o.getAddress().getHost()).thenComparingInt(o -> o.getAddress().getPort()));
         serverDescriptionSet.addAll(clusterDescription.getServerDescriptions());
         return Collections.unmodifiableSet(serverDescriptionSet);
     }
