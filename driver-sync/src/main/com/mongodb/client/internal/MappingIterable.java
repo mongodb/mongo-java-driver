@@ -24,12 +24,15 @@ import com.mongodb.lang.Nullable;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-class MappingIterable<U, V> implements MongoIterable<V> {
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public class MappingIterable<U, V> implements MongoIterable<V> {
 
     private final MongoIterable<U> iterable;
     private final Function<U, V> mapper;
 
-    MappingIterable(final MongoIterable<U> iterable, final Function<U, V> mapper) {
+    public MappingIterable(final MongoIterable<U> iterable, final Function<U, V> mapper) {
         this.iterable = iterable;
         this.mapper = mapper;
     }

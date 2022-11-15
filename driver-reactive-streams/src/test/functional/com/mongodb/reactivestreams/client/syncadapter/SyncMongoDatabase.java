@@ -28,6 +28,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -159,7 +160,7 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public MongoIterable<String> listCollectionNames() {
-        throw new UnsupportedOperationException();
+        return listCollections(BsonDocument.class).map(result -> result.getString("name").getValue());
     }
 
     @Override
@@ -174,7 +175,8 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public MongoIterable<String> listCollectionNames(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listCollections(clientSession, BsonDocument.class).map(result -> result.getString("name").getValue());
+
     }
 
     @Override
