@@ -180,4 +180,41 @@ final class MqlExpression<T extends Expression>
                 .append("in", extractBsonValue(cr, in.apply(varThis, varValue)))).apply(cr));
     }
 
+
+    /** @see StringExpression */
+
+    @Override
+    public StringExpression toLower() {
+        return new MqlExpression<>(ast("$toLower"));
+    }
+
+    @Override
+    public StringExpression toUpper() {
+        return new MqlExpression<>(ast("$toUpper"));
+    }
+
+    @Override
+    public StringExpression concat(final StringExpression concat) {
+        return new MqlExpression<>(ast("$concat", concat));
+    }
+
+    @Override
+    public IntegerExpression strLen() {
+        return new MqlExpression<>(ast("$strLenCP"));
+    }
+
+    @Override
+    public IntegerExpression strLenBytes() {
+        return new MqlExpression<>(ast("$strLenBytes"));
+    }
+
+    @Override
+    public StringExpression substr(final IntegerExpression start, final IntegerExpression length) {
+        return new MqlExpression<>(ast("$substrCP", start, length));
+    }
+
+    @Override
+    public StringExpression substrBytes(final IntegerExpression start, final IntegerExpression length) {
+        return new MqlExpression<>(ast("$substrBytes", start, length));
+    }
 }
