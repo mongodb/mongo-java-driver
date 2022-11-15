@@ -18,6 +18,7 @@ package com.mongodb.client.model.expressions;
 
 import com.mongodb.client.model.Field;
 import com.mongodb.client.model.OperationTest;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
@@ -53,8 +54,16 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         getCollectionHelper().drop();
     }
 
-    protected void assertExpression(final Object expectedResult, final Expression expression, final String expectedMql) {
-        assertEval(expectedResult, expression);
+    protected void assertExpression(final Object expected, final Expression expression) {
+        assertExpression(expected, expression, null);
+    }
+
+    protected void assertExpression(@Nullable final Object expected, final Expression expression, @Nullable final String expectedMql) {
+        assertEval(expected, expression);
+
+        if (expectedMql == null) {
+            return;
+        }
 
         BsonValue expressionValue = ((MqlExpression<?>) expression).toBsonValue(fromProviders(new BsonValueCodecProvider()));
         BsonValue bsonValue = new BsonDocumentFragmentCodec().readValue(
@@ -63,9 +72,17 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         assertEquals(bsonValue, expressionValue, expressionValue.toString().replace("\"", "'"));
     }
 
-    private void assertEval(final Object expected, final Expression toEvaluate) {
+    private void assertEval(@Nullable final Object expected, final Expression toEvaluate) {
         BsonValue evaluated = evaluate(toEvaluate);
-        assertEquals(new Document("val", expected).toBsonDocument().get("val"), evaluated);
+        BsonValue expected1 = toBsonValue(expected);
+        assertEquals(expected1, evaluated);
+    }
+
+    protected BsonValue toBsonValue(@Nullable final Object value) {
+        if (value instanceof BsonValue) {
+            return (BsonValue) value;
+        }
+        return new Document("val", value).toBsonDocument().get("val");
     }
 
     protected BsonValue evaluate(final Expression toEvaluate) {
@@ -87,8 +104,7 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         } else {
             results = getCollectionHelper().aggregate(stages);
         }
-        BsonValue evaluated = results.get(0).get("val");
-        return evaluated;
+        return results.get(0).get("val");
     }
 
     private static class BsonDocumentFragmentCodec extends BsonDocumentCodec {
