@@ -1,4 +1,6 @@
 # .git-blame-ignore-revs
 # Scala spotless changes
 3c8c87b20c007dc73b7a50f848e5d1bfab781018
+# IntelliJ automated code cleanup
+d9aa6044e1a6b440bcb013c330497f2813484050
 
