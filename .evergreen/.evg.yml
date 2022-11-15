@@ -165,15 +165,6 @@ functions:
         script: |
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
 
-  "download crypt_shared":
-    - command: shell.exec
-      params:
-        background: true
-        script: |
-          ${PREPARE_SHELL}
-          /opt/mongodbtoolchain/v3/bin/python3 ${DRIVERS_TOOLS}/.evergreen/mongodl.py --component crypt_shared --version latest \
-          --only=lib/mongo_crypt_v1.so --out ${PROJECT_DIRECTORY}/crypt_shared/
-
   "run load-balancer":
     - command: shell.exec
       params:
@@ -240,7 +231,7 @@ functions:
           AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} \
           AZUREKMS_KEY_NAME=${testazurekms_keyname} \
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
-          CRYPT_SHARED_LIB_PATH="${PROJECT_DIRECTORY}/crypt_shared/lib/mongo_crypt_v1.so" \
+          CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" \
           .evergreen/run-tests.sh
 
   "run load-balancer tests":
@@ -808,7 +799,6 @@ tasks:
       commands:
         - func: "start-kms-kmip-server"
         - func: "bootstrap mongo-orchestration"
-        - func: "download crypt_shared"
         - func: "run tests"
 
     - name: load-balancer-test
@@ -843,7 +833,6 @@ tasks:
         - func: "bootstrap mongo-orchestration"
           vars:
             ORCHESTRATION_FILE: "versioned-api-testing.json"
-        - func: "download crypt_shared"
         - func: "run tests"
 
     - name: "plain-auth-test"
