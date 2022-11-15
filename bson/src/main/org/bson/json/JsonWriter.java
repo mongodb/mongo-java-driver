@@ -132,23 +132,19 @@ public class JsonWriter extends AbstractBsonWriter {
     @Override
     protected void doWriteDBPointer(final BsonDbPointer value) {
         if (settings.getOutputMode() == JsonMode.EXTENDED) {
-            ((Converter<BsonDbPointer>) (value1, writer) -> {
-                writer.writeStartObject();
-                writer.writeStartObject("$dbPointer");
-                writer.writeString("$ref", value1.getNamespace());
-                writer.writeName("$id");
-                doWriteObjectId(value1.getId());
-                writer.writeEndObject();
-                writer.writeEndObject();
-            }).convert(value, strictJsonWriter);
+            strictJsonWriter.writeStartObject();
+            strictJsonWriter.writeStartObject("$dbPointer");
+            strictJsonWriter.writeString("$ref", value.getNamespace());
+            strictJsonWriter.writeName("$id");
+            doWriteObjectId(value.getId());
+            strictJsonWriter.writeEndObject();
+            strictJsonWriter.writeEndObject();
         } else {
-            ((Converter<BsonDbPointer>) (value1, writer) -> {
-                writer.writeStartObject();
-                writer.writeString("$ref", value1.getNamespace());
-                writer.writeName("$id");
-                doWriteObjectId(value1.getId());
-                writer.writeEndObject();
-            }).convert(value, strictJsonWriter);
+            strictJsonWriter.writeStartObject();
+            strictJsonWriter.writeString("$ref", value.getNamespace());
+            strictJsonWriter.writeName("$id");
+            doWriteObjectId(value.getId());
+            strictJsonWriter.writeEndObject();
         }
     }
 
