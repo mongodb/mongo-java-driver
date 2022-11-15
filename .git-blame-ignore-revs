@@ -1,6 +1,8 @@
 # .git-blame-ignore-revs
 # Checkstyle fixes
 94780bc8b72c62d9bc09beaa9ac62b942debab5f
+# Copyright fixes
+0aa2ec20d5215c0ac727602dd2cd891c22c69ba8
 # Scala spotless changes
 fd21430c967571ed172259cc4100f291257a9a01
 # IntelliJ automated code cleanup
