@@ -9,7 +9,7 @@
         "sharded",
         "load-balanced"
       ],
-      "auth": true
+      "auth": false
     }
   ],
   "createEntities": [
