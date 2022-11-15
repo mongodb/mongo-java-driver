@@ -38,6 +38,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
@@ -169,6 +170,31 @@ final class UnifiedCrudHelper {
                 : client.listDatabases(session, BsonDocument.class);
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "session":
+                    break;
+                case "filter":
+                    iterable.filter(cur.getValue().asDocument());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
+    OperationResult executeListDatabaseNames(final BsonDocument operation) {
+        MongoClient client = entities.getClient(operation.getString("object").getValue());
+
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        ClientSession session = getSession(arguments);
+        MongoIterable<String> iterable = session == null
+                ? client.listDatabaseNames()
+                : client.listDatabaseNames(session);
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             //noinspection SwitchStatementWithTooFewBranches
             switch (cur.getKey()) {
                 case "session":
@@ -179,7 +205,7 @@ final class UnifiedCrudHelper {
         }
 
         return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+                new BsonArray(iterable.into(new ArrayList<>()).stream().map(BsonString::new).collect(toList())));
     }
 
     OperationResult executeListCollections(final BsonDocument operation) {
@@ -209,7 +235,51 @@ final class UnifiedCrudHelper {
                 new BsonArray(iterable.into(new ArrayList<>())));
     }
 
+    OperationResult executeListCollectionNames(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+
+        BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
+        MongoIterable<String> iterable = session == null
+                ? database.listCollectionNames()
+                : database.listCollectionNames(session);
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "session":
+                    break;
+                case "filter":
+                    BsonDocument filter = cur.getValue().asDocument();
+                    if (!filter.isEmpty()) {
+                       throw new UnsupportedOperationException("The driver does not support filtering of collection names");
+                    }
+                    break;
+                case "batchSize":
+                    iterable.batchSize(cur.getValue().asNumber().intValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>()).stream().map(BsonString::new).collect(toList())));
+    }
+
     OperationResult executeListIndexes(final BsonDocument operation) {
+        ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
+
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
+    OperationResult executeListIndexNames(final BsonDocument operation) {
+        ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
+
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>()).stream().map(document -> document.getString("name")).collect(toList())));
+    }
+
+    private ListIndexesIterable<BsonDocument> createListIndexesIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
@@ -227,15 +297,18 @@ final class UnifiedCrudHelper {
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+        return iterable;
     }
 
     OperationResult executeFind(final BsonDocument operation) {
         FindIterable<BsonDocument> iterable = createFindIterable(operation);
         return resultOf(() ->
                 new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
+    OperationResult executeFindOne(final BsonDocument operation) {
+        FindIterable<BsonDocument> iterable = createFindIterable(operation);
+        return resultOf(iterable::first);
     }
 
     OperationResult createFindCursor(final BsonDocument operation) {

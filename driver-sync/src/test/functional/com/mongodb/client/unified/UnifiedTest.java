@@ -357,6 +357,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeAggregate(operation);
                 case "find":
                     return crudHelper.executeFind(operation);
+                case "findOne":
+                    return crudHelper.executeFindOne(operation);
                 case "distinct":
                     return crudHelper.executeDistinct(operation);
                 case "countDocuments":
@@ -371,10 +373,16 @@ public abstract class UnifiedTest {
                     return crudHelper.executeFindOneAndDelete(operation);
                 case "listDatabases":
                     return crudHelper.executeListDatabases(operation);
+                case "listDatabaseNames":
+                    return crudHelper.executeListDatabaseNames(operation);
                 case "listCollections":
                     return crudHelper.executeListCollections(operation);
+                case "listCollectionNames":
+                    return crudHelper.executeListCollectionNames(operation);
                 case "listIndexes":
                     return crudHelper.executeListIndexes(operation);
+                case "listIndexNames":
+                    return crudHelper.executeListIndexNames(operation);
                 case "dropCollection":
                     return crudHelper.executeDropCollection(operation);
                 case "createCollection":
