@@ -36,7 +36,7 @@ public final class ExpirableValue<T> {
     private final long deadline;
 
     public static <T> ExpirableValue<T> expired() {
-        return new ExpirableValue<>(null, Duration.ofSeconds(-1), System.nanoTime());
+        return new ExpirableValue<>(null, Duration.ZERO, System.nanoTime());
     }
 
     public static <T> ExpirableValue<T> expirable(final T value, final Duration lifetime) {
@@ -61,7 +61,7 @@ public final class ExpirableValue<T> {
 
     @VisibleForTesting(otherwise = PRIVATE)
     Optional<T> getValue(final long currentNanoTime) {
-        if (currentNanoTime - deadline > 0) {
+        if (currentNanoTime - deadline >= 0) {
             return Optional.empty();
         } else {
             return Optional.of(value);

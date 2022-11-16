@@ -41,6 +41,7 @@ class ExpirableValueTest {
                 () -> assertThrows(AssertionError.class, () -> expirable(null, Duration.ofNanos(1))),
                 () -> assertThrows(AssertionError.class, () -> expirable(1, null)),
                 () -> assertFalse(expirable(1, Duration.ofNanos(-1)).getValue().isPresent()),
+                () -> assertFalse(expirable(1, Duration.ZERO).getValue().isPresent()),
                 () -> assertEquals(1, expirable(1, Duration.ofSeconds(1)).getValue().get()),
                 () -> {
                     ExpirableValue<Integer> expirableValue = expirable(1, Duration.ofNanos(1));
