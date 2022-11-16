@@ -28,6 +28,7 @@ import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonJavaScript;
@@ -112,7 +113,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return scope;
     }
 
-    public MapReduceWithInlineResultsOperation<T> scope(final BsonDocument scope) {
+    public MapReduceWithInlineResultsOperation<T> scope(@Nullable final BsonDocument scope) {
         this.scope = scope;
         return this;
     }
@@ -121,7 +122,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return filter;
     }
 
-    public MapReduceWithInlineResultsOperation<T> filter(final BsonDocument filter) {
+    public MapReduceWithInlineResultsOperation<T> filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
@@ -130,7 +131,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return sort;
     }
 
-    public MapReduceWithInlineResultsOperation<T> sort(final BsonDocument sort) {
+    public MapReduceWithInlineResultsOperation<T> sort(@Nullable final BsonDocument sort) {
         this.sort = sort;
         return this;
     }
@@ -166,7 +167,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return collation;
     }
 
-    public MapReduceWithInlineResultsOperation<T> collation(final Collation collation) {
+    public MapReduceWithInlineResultsOperation<T> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

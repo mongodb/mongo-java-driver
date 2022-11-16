@@ -58,7 +58,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     private final boolean checkSaslSupportedMechs;
     private final ServerApi serverApi;
 
-    public InternalStreamConnectionInitializer(final ClusterConnectionMode clusterConnectionMode, final Authenticator authenticator,
+    public InternalStreamConnectionInitializer(final ClusterConnectionMode clusterConnectionMode,
+                                               @Nullable final Authenticator authenticator,
                                                final BsonDocument clientMetadataDocument, final List<MongoCompressor> requestedCompressors,
                                                @Nullable final ServerApi serverApi) {
         this.clusterConnectionMode = clusterConnectionMode;

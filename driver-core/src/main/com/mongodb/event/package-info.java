@@ -17,4 +17,7 @@
 /**
  * This package contains cluster and connection event related classes
  */
+@NonNullApi
 package com.mongodb.event;
+
+import com.mongodb.lang.NonNullApi;

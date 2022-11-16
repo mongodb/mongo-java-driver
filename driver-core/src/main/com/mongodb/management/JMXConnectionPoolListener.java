@@ -25,6 +25,7 @@ import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.lang.Nullable;
 
 import javax.management.ObjectName;
 import java.util.List;
@@ -93,21 +94,25 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
                              ensureValidValue(serverId.getClusterId().getValue()),
                              ensureValidValue(serverId.getAddress().getHost()),
                              serverId.getAddress().getPort());
-        if (serverId.getClusterId().getDescription() != null) {
-            name = format("%s,description=%s", name, ensureValidValue(serverId.getClusterId().getDescription()));
+        String clusterDescription = serverId.getClusterId().getDescription();
+        if (clusterDescription != null) {
+            name = format("%s,description=%s", name, ensureValidValue(clusterDescription));
         }
         return name;
     }
 
     // for unit test
+    @Nullable
     ConnectionPoolStatisticsMBean getMBean(final ServerId serverId) {
         return getStatistics(serverId);
     }
 
+    @Nullable
     private ConnectionPoolStatistics getStatistics(final ConnectionId connectionId) {
         return getStatistics(connectionId.getServerId());
     }
 
+    @Nullable
     private ConnectionPoolStatistics getStatistics(final ServerId serverId) {
         return map.get(serverId);
     }
@@ -120,7 +125,7 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
         }
     }
 
-    private boolean containsQuotableCharacter(final String value) {
+    private boolean containsQuotableCharacter(@Nullable final String value) {
         if (value == null || value.length() == 0) {
             return false;
         }

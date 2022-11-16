@@ -47,6 +47,7 @@ import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
@@ -72,7 +73,7 @@ public final class SyncOperations<TDocument> {
         this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, retryReads);
     }
 
-    public SyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+    public SyncOperations(@Nullable final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
                           final boolean retryWrites, final boolean retryReads) {
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
@@ -111,7 +112,7 @@ public final class SyncOperations<TDocument> {
     public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
                                                                               final Class<TResult> resultClass,
                                                                               final long maxTimeMS, final long maxAwaitTimeMS,
-                                                                              final Integer batchSize,
+                                                                              @Nullable final Integer batchSize,
                                                                               final Collation collation, final Bson hint,
                                                                               final String hintString,
                                                                               final BsonValue comment,
@@ -226,12 +227,12 @@ public final class SyncOperations<TDocument> {
 
 
     public WriteOperation<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
-            final AutoEncryptionSettings autoEncryptionSettings) {
+            @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
         return operations.createCollection(collectionName, createCollectionOptions, autoEncryptionSettings);
     }
 
     public WriteOperation<Void> dropCollection(final DropCollectionOptions dropCollectionOptions,
-            final AutoEncryptionSettings autoEncryptionSettings) {
+            @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
         return operations.dropCollection(dropCollectionOptions, autoEncryptionSettings);
     }
 
@@ -258,7 +259,7 @@ public final class SyncOperations<TDocument> {
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                          final Bson filter, final boolean collectionNamesOnly,
-                                                                         final Integer batchSize, final long maxTimeMS,
+                                                                         @Nullable final Integer batchSize, final long maxTimeMS,
                                                                          final BsonValue comment) {
         return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS, comment);
     }
@@ -269,15 +270,15 @@ public final class SyncOperations<TDocument> {
         return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabases, comment);
     }
 
-    public <TResult> ReadOperation<BatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
+    public <TResult> ReadOperation<BatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, @Nullable final Integer batchSize,
                                                                      final long maxTimeMS, final BsonValue comment) {
         return operations.listIndexes(resultClass, batchSize, maxTimeMS, comment);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> changeStream(final FullDocument fullDocument,
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<? extends Bson> pipeline, final Decoder<TResult> decoder,
-            final ChangeStreamLevel changeStreamLevel, final Integer batchSize, final Collation collation, final BsonValue comment,
-            final long maxAwaitTimeMS, final BsonDocument resumeToken, final BsonTimestamp startAtOperationTime,
+            final ChangeStreamLevel changeStreamLevel, @Nullable final Integer batchSize, final Collation collation,
+            final BsonValue comment, final long maxAwaitTimeMS, final BsonDocument resumeToken, final BsonTimestamp startAtOperationTime,
             final BsonDocument startAfter, final boolean showExpandedEvents) {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, decoder, changeStreamLevel, batchSize,
                 collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);

@@ -129,19 +129,19 @@ public class BaseClientSessionImpl implements ClientSession {
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp newOperationTime) {
+    public void advanceOperationTime(@Nullable final BsonTimestamp newOperationTime) {
         isTrue("open", !closed);
         this.operationTime = greaterOf(newOperationTime);
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument newClusterTime) {
+    public void advanceClusterTime(@Nullable final BsonDocument newClusterTime) {
         isTrue("open", !closed);
         this.clusterTime = greaterOf(newClusterTime);
     }
 
     @Override
-    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
         isTrue("open", !closed);
         if (snapshotTimestamp != null) {
             if (this.snapshotTimestamp != null && !snapshotTimestamp.equals(this.snapshotTimestamp)) {
@@ -159,7 +159,7 @@ public class BaseClientSessionImpl implements ClientSession {
         return snapshotTimestamp;
     }
 
-    private BsonDocument greaterOf(final BsonDocument newClusterTime) {
+    private BsonDocument greaterOf(@Nullable final BsonDocument newClusterTime) {
         if (newClusterTime == null) {
             return clusterTime;
         } else if (clusterTime == null) {
@@ -170,7 +170,7 @@ public class BaseClientSessionImpl implements ClientSession {
         }
     }
 
-    private BsonTimestamp greaterOf(final BsonTimestamp newOperationTime) {
+    private BsonTimestamp greaterOf(@Nullable final BsonTimestamp newOperationTime) {
         if (newOperationTime == null) {
             return operationTime;
         } else if (operationTime == null) {

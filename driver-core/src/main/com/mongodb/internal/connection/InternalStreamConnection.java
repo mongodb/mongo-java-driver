@@ -43,6 +43,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -121,7 +122,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private final List<MongoCompressor> compressorList;
     private final CommandListener commandListener;
-    private volatile Compressor sendCompressor;
+    @Nullable private volatile Compressor sendCompressor;
     private final Map<Byte, Compressor> compressorMap;
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
@@ -204,13 +205,14 @@ public class InternalStreamConnection implements InternalConnection {
             stream = streamFactory.create(serverId.getAddress());
             stream.openAsync(new AsyncCompletionHandler<Void>() {
                 @Override
-                public void completed(final Void aVoid) {
+                public void completed(@Nullable final Void aVoid) {
                     connectionInitializer.startHandshakeAsync(InternalStreamConnection.this,
                             (initialResult, initialException) -> {
                                     if (initialException != null) {
                                         close();
                                         callback.onResult(null, initialException);
                                     } else {
+                                        assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
                                         connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
                                                 initialResult, (completedResult, completedException) ->  {
@@ -218,6 +220,7 @@ public class InternalStreamConnection implements InternalConnection {
                                                             close();
                                                             callback.onResult(null, completedException);
                                                         } else {
+                                                            assertNotNull(completedResult);
                                                             initAfterHandshakeFinish(completedResult);
                                                             callback.onResult(null, null);
                                                         }
@@ -268,6 +271,7 @@ public class InternalStreamConnection implements InternalConnection {
         return compressorMap;
     }
 
+    @Nullable
     private Compressor findSendCompressor(final ConnectionDescription description) {
         if (description.getCompressors().isEmpty()) {
             return null;
@@ -319,6 +323,7 @@ public class InternalStreamConnection implements InternalConnection {
         return isClosed.get();
     }
 
+    @Nullable
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
             final RequestContext requestContext) {
@@ -379,7 +384,9 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void sendCommandMessage(final CommandMessage message,
                                     final ByteBufferBsonOutput bsonOutput, final SessionContext sessionContext) {
-        if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+
+        Compressor localSendCompressor = sendCompressor;
+        if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
             try {
                 sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } finally {
@@ -389,7 +396,7 @@ public class InternalStreamConnection implements InternalConnection {
             List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
             ByteBufferBsonOutput compressedBsonOutput;
             try {
-                CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, sendCompressor,
+                CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
                         getMessageSettings(description));
                 compressedBsonOutput = new ByteBufferBsonOutput(this);
                 compressedMessage.encode(compressedBsonOutput, sessionContext);
@@ -454,14 +461,14 @@ public class InternalStreamConnection implements InternalConnection {
             message.encode(bsonOutput, sessionContext);
             CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput, requestContext);
             commandEventSender.sendStartedEvent();
-
-            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+            Compressor localSendCompressor = sendCompressor;
+            if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
                 sendCommandMessageAsync(message.getId(), decoder, sessionContext, callback, bsonOutput, commandEventSender,
                         message.isResponseExpected());
             } else {
                 List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
                 try {
-                    CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, sendCompressor,
+                    CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
                             getMessageSettings(description));
                     compressedMessage.encode(compressedBsonOutput, sessionContext);
                 } finally {
@@ -502,6 +509,7 @@ public class InternalStreamConnection implements InternalConnection {
                         callback.onResult(null, t1);
                         return;
                     }
+                    assertNotNull(responseBuffers);
                     try {
                         updateSessionContext(sessionContext, responseBuffers);
                         boolean commandOk =
@@ -588,7 +596,7 @@ public class InternalStreamConnection implements InternalConnection {
         try {
             stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
                 @Override
-                public void completed(final Void v) {
+                public void completed(@Nullable final Void v) {
                     callback.onResult(null, null);
                 }
 
@@ -635,7 +643,7 @@ public class InternalStreamConnection implements InternalConnection {
         try {
             stream.readAsync(numBytes, new AsyncCompletionHandler<ByteBuf>() {
                 @Override
-                public void completed(final ByteBuf buffer) {
+                public void completed(@Nullable final ByteBuf buffer) {
                     callback.onResult(buffer, null);
                 }
 
@@ -759,12 +767,13 @@ public class InternalStreamConnection implements InternalConnection {
         }
 
         @Override
-        public void onResult(final ByteBuf result, final Throwable t) {
+        public void onResult(@Nullable final ByteBuf result, @Nullable final Throwable t) {
             if (t != null) {
                 callback.onResult(null, t);
                 return;
             }
             try {
+                assertNotNull(result);
                 MessageHeader messageHeader = new MessageHeader(result, description.getMaxMessageSize());
                 readAsync(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, new MessageCallback(messageHeader));
             } catch (Throwable localThrowable) {
@@ -784,12 +793,13 @@ public class InternalStreamConnection implements InternalConnection {
             }
 
             @Override
-            public void onResult(final ByteBuf result, final Throwable t) {
+            public void onResult(@Nullable final ByteBuf result, @Nullable final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                     return;
                 }
                 boolean releaseResult = true;
+                assertNotNull(result);
                 try {
                     ReplyHeader replyHeader;
                     ByteBuf responseBuffer;

@@ -33,7 +33,6 @@ public interface ConnectionSource extends ReferenceCounted {
 
     ServerDescription getServerDescription();
 
-    @Nullable
     SessionContext getSessionContext();
 
     @Nullable

@@ -19,6 +19,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.CompletionHandler;
@@ -69,7 +71,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void read(
             ByteBuffer dst,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Integer, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Integer, ? super A> handler);
 
     /**
      * Reads a sequence of bytes from this channel into a subsequence of the
@@ -135,7 +137,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void read(
             ByteBuffer[] dsts, int offset, int length,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Long, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Long, ? super A> handler);
 
     /**
      * Writes a sequence of bytes to this channel from the given buffer.

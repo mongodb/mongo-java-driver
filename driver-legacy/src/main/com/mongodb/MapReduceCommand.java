@@ -419,7 +419,6 @@ public class MapReduceCommand {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    @Nullable
     public void setCollation(final Collation collation) {
         this.collation = collation;
     }

@@ -68,20 +68,22 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
         return wrapped.getDescription();
     }
 
+    @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
             @Nullable final ServerApi serverApi, final RequestContext requestContext) {
         return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
                 requestContext, true, null, null);
     }
 
+    @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
             @Nullable final ServerApi serverApi,
-            final RequestContext requestContext, final boolean responseExpected, final SplittablePayload payload,
-            final FieldNameValidator payloadFieldNameValidator) {
+            final RequestContext requestContext, final boolean responseExpected, @Nullable final SplittablePayload payload,
+            @Nullable final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
                         commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
                         requestContext),
@@ -90,19 +92,19 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
-                                 final SingleResultCallback<T> callback) {
+                                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                                 final SessionContext sessionContext, @Nullable final ServerApi serverApi,
+                                 final RequestContext requestContext, final SingleResultCallback<T> callback) {
         commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, requestContext,
                 true, null, null, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
-                                 final boolean responseExpected,
-                                 final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                                 final SessionContext sessionContext, @Nullable final ServerApi serverApi,
+                                 final RequestContext requestContext, final boolean responseExpected,
+                                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
                         commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
@@ -115,6 +117,7 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
         wrapped.markAsPinned(pinningMode);
     }
 
+    @Nullable
     private <T> T executeProtocol(final CommandProtocol<T> protocol, final SessionContext sessionContext) {
         return protocolExecutor.execute(protocol, this.wrapped, sessionContext);
     }

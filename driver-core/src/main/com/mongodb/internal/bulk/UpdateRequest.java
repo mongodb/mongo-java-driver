@@ -17,6 +17,7 @@
 package com.mongodb.internal.bulk;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
@@ -34,14 +35,14 @@ public final class UpdateRequest extends WriteRequest {
     private final BsonValue update;
     private final Type updateType;
     private final BsonDocument filter;
-    private boolean isMulti = true;
+    private boolean isMulti;
     private boolean isUpsert = false;
     private Collation collation;
     private List<BsonDocument> arrayFilters;
-    private Bson hint;
-    private String hintString;
+    @Nullable private Bson hint;
+    @Nullable private String hintString;
 
-    public UpdateRequest(final BsonDocument filter, final BsonValue update, final Type updateType) {
+    public UpdateRequest(final BsonDocument filter, @Nullable final BsonValue update, final Type updateType) {
         if (updateType != Type.UPDATE && updateType != Type.REPLACE) {
             throw new IllegalArgumentException("Update type must be UPDATE or REPLACE");
         }
@@ -89,38 +90,42 @@ public final class UpdateRequest extends WriteRequest {
         return this;
     }
 
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
 
-    public UpdateRequest collation(final Collation collation) {
+    public UpdateRequest collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
 
-    public UpdateRequest arrayFilters(final List<BsonDocument> arrayFilters) {
+    public UpdateRequest arrayFilters(@Nullable final List<BsonDocument> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
 
+    @Nullable
     public List<BsonDocument> getArrayFilters() {
         return arrayFilters;
     }
 
+    @Nullable
     public Bson getHint() {
         return hint;
     }
 
-    public UpdateRequest hint(final Bson hint) {
+    public UpdateRequest hint(@Nullable final Bson hint) {
         this.hint = hint;
         return this;
     }
 
+    @Nullable
     public String getHintString() {
         return hintString;
     }
 
-    public UpdateRequest hintString(final String hint) {
+    public UpdateRequest hintString(@Nullable final String hint) {
         this.hintString = hint;
         return this;
     }

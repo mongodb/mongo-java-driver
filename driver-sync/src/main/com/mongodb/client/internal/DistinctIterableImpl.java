@@ -96,7 +96,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public DistinctIterable<TResult> comment(final BsonValue comment) {
+    public DistinctIterable<TResult> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }

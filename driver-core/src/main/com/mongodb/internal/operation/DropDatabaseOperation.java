@@ -20,6 +20,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
@@ -49,7 +50,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
         this(databaseName, null);
     }
 
-    public DropDatabaseOperation(final String databaseName, final WriteConcern writeConcern) {
+    public DropDatabaseOperation(final String databaseName, @Nullable final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.writeConcern = writeConcern;
     }

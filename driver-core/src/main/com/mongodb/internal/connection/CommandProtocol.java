@@ -18,12 +18,14 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface CommandProtocol<T> {
 
+    @Nullable
     T execute(InternalConnection connection);
 
     void executeAsync(InternalConnection connection, SingleResultCallback<T> callback);

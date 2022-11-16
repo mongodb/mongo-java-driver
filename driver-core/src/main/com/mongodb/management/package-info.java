@@ -17,4 +17,7 @@
 /**
  * Contains classes for monitoring the server/driver via Java Management Extensions (JMX).
  */
+@NonNullApi
 package com.mongodb.management;
+
+import com.mongodb.lang.NonNullApi;

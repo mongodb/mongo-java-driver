@@ -90,7 +90,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         this(databaseName, collectionName, null);
     }
 
-    public CreateCollectionOperation(final String databaseName, final String collectionName, final WriteConcern writeConcern) {
+    public CreateCollectionOperation(final String databaseName, final String collectionName, @Nullable final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
         this.writeConcern = writeConcern;
@@ -144,7 +144,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return storageEngineOptions;
     }
 
-    public CreateCollectionOperation storageEngineOptions(final BsonDocument storageEngineOptions) {
+    public CreateCollectionOperation storageEngineOptions(@Nullable final BsonDocument storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;
         return this;
     }
@@ -153,7 +153,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return indexOptionDefaults;
     }
 
-    public CreateCollectionOperation indexOptionDefaults(final BsonDocument indexOptionDefaults) {
+    public CreateCollectionOperation indexOptionDefaults(@Nullable final BsonDocument indexOptionDefaults) {
         this.indexOptionDefaults = indexOptionDefaults;
         return this;
     }
@@ -162,7 +162,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return validator;
     }
 
-    public CreateCollectionOperation validator(final BsonDocument validator) {
+    public CreateCollectionOperation validator(@Nullable final BsonDocument validator) {
         this.validator = validator;
         return this;
     }
@@ -171,7 +171,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return validationLevel;
     }
 
-    public CreateCollectionOperation validationLevel(final ValidationLevel validationLevel) {
+    public CreateCollectionOperation validationLevel(@Nullable final ValidationLevel validationLevel) {
         this.validationLevel = validationLevel;
         return this;
     }
@@ -180,7 +180,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return validationAction;
     }
 
-    public CreateCollectionOperation validationAction(final ValidationAction validationAction) {
+    public CreateCollectionOperation validationAction(@Nullable final ValidationAction validationAction) {
         this.validationAction = validationAction;
         return this;
     }
@@ -189,7 +189,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return collation;
     }
 
-    public CreateCollectionOperation collation(final Collation collation) {
+    public CreateCollectionOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -210,7 +210,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
-    public CreateCollectionOperation clusteredIndexKey(final BsonDocument clusteredIndexKey) {
+    public CreateCollectionOperation clusteredIndexKey(@Nullable final BsonDocument clusteredIndexKey) {
         this.clusteredIndexKey = clusteredIndexKey;
         return this;
     }
@@ -224,7 +224,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         this.clusteredIndexName = clusteredIndexName;
         return this;
     }
-    public CreateCollectionOperation encryptedFields(final BsonDocument encryptedFields) {
+    public CreateCollectionOperation encryptedFields(@Nullable final BsonDocument encryptedFields) {
         this.encryptedFields = encryptedFields;
         return this;
     }
@@ -379,7 +379,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         }
 
         @Override
-        public void onResult(final Void result, final Throwable t) {
+        public void onResult(@Nullable final Void result, @Nullable final Throwable t) {
             if (t != null) {
                 finalCallback.onResult(null, t);
                 return;

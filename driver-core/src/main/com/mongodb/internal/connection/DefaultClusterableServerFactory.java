@@ -57,8 +57,8 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
             final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
             final InternalConnectionPoolSettings internalConnectionPoolSettings,
             final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
-            final MongoCredential credential, final CommandListener commandListener,
-            final String applicationName, final MongoDriverInformation mongoDriverInformation,
+            @Nullable final MongoCredential credential, @Nullable final CommandListener commandListener,
+            @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;

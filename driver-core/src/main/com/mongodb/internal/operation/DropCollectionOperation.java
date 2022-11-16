@@ -25,6 +25,7 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -69,7 +70,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         this(namespace, null);
     }
 
-    public DropCollectionOperation(final MongoNamespace namespace, final WriteConcern writeConcern) {
+    public DropCollectionOperation(final MongoNamespace namespace, @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = writeConcern;
     }
@@ -177,6 +178,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         return commandDocument;
     }
 
+    @Nullable
     private BsonDocument getEncryptedFields(final ReadWriteBinding readWriteBinding) {
         if (encryptedFields == null && autoEncryptedFields) {
             try (BatchCursor<BsonValue> cursor =  listCollectionOperation().execute(readWriteBinding)) {
@@ -207,7 +209,8 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             callback.onResult(encryptedFields, null);
         }
     }
-    private BsonDocument getCollectionEncryptedFields(final BsonDocument defaultEncryptedFields, final List<BsonValue> bsonValues) {
+    private BsonDocument getCollectionEncryptedFields(final BsonDocument defaultEncryptedFields,
+            @Nullable final List<BsonValue> bsonValues) {
         if (bsonValues != null && bsonValues.size() > 0) {
             return bsonValues.get(0).asDocument()
                     .getDocument("options", new BsonDocument())
@@ -242,7 +245,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         }
 
         @Override
-        public void onResult(final Void result, final Throwable t) {
+        public void onResult(@Nullable final Void result, @Nullable final Throwable t) {
             if (t != null && !isNamespaceError(t)) {
                 finalCallback.onResult(null, t);
                 return;

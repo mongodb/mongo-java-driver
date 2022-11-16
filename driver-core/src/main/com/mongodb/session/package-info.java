@@ -17,4 +17,7 @@
 /**
  * Contains classes related to sessions
  */
+@NonNullApi
 package com.mongodb.session;
+
+import com.mongodb.lang.NonNullApi;

@@ -63,7 +63,7 @@ public class CommitTransactionOperation extends TransactionOperation {
         this.alreadyCommitted = alreadyCommitted;
     }
 
-    public CommitTransactionOperation recoveryToken(final BsonDocument recoveryToken) {
+    public CommitTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {
         this.recoveryToken = recoveryToken;
         return this;
     }

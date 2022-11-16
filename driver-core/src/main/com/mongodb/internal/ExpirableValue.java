@@ -17,6 +17,7 @@
 package com.mongodb.internal;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.lang.Nullable;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -47,7 +48,7 @@ public final class ExpirableValue<T> {
         return new ExpirableValue<>(assertNotNull(value), assertNotNull(lifetime), startNanoTime);
     }
 
-    private ExpirableValue(final T value, final Duration lifetime, final long currentNanoTime) {
+    private ExpirableValue(@Nullable final T value, final Duration lifetime, final long currentNanoTime) {
         this.value = value;
         deadline = currentNanoTime + lifetime.toNanos();
     }

@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
@@ -58,7 +59,7 @@ public final class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public String getName() {
-        return mongoOperationPublisher.getNamespace().getDatabaseName();
+        return assertNotNull(mongoOperationPublisher.getNamespace()).getDatabaseName();
     }
 
     @Override

@@ -76,7 +76,7 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp operationTime) {
+    public void advanceOperationTime(@Nullable final BsonTimestamp operationTime) {
         wrapped.advanceOperationTime(operationTime);
     }
 
@@ -86,7 +86,7 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument clusterTime) {
+    public void advanceClusterTime(@Nullable final BsonDocument clusterTime) {
         wrapped.advanceClusterTime(clusterTime);
         clusterClock.advance(clusterTime);
     }
@@ -97,7 +97,7 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
-    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
         wrapped.setSnapshotTimestamp(snapshotTimestamp);
     }
 

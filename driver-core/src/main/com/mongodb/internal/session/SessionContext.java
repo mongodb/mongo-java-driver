@@ -64,6 +64,7 @@ public interface SessionContext {
      *
      * @return the current operation time, which may be null
      */
+    @Nullable
     BsonTimestamp getOperationTime();
 
     /**
@@ -71,13 +72,14 @@ public interface SessionContext {
      *
      * @param operationTime the new operation time
      */
-    void advanceOperationTime(BsonTimestamp operationTime);
+    void advanceOperationTime(@Nullable BsonTimestamp operationTime);
 
     /**
      * Gets the current cluster time for this session context.
      *
      * @return the cluster time, which may be null
      */
+    @Nullable
     BsonDocument getClusterTime();
 
     /**
@@ -85,11 +87,11 @@ public interface SessionContext {
      *
      * @param clusterTime the new cluster time
      */
-    void advanceClusterTime(BsonDocument clusterTime);
+    void advanceClusterTime(@Nullable BsonDocument clusterTime);
 
     boolean isSnapshot();
 
-    void setSnapshotTimestamp(BsonTimestamp snapshotTimestamp);
+    void setSnapshotTimestamp(@Nullable BsonTimestamp snapshotTimestamp);
 
     @Nullable
     BsonTimestamp getSnapshotTimestamp();

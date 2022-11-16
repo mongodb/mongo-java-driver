@@ -21,10 +21,12 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
@@ -56,7 +58,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace,
-                                     final WriteConcern writeConcern) {
+                                     @Nullable final WriteConcern writeConcern) {
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
         this.newNamespace = notNull("newNamespace", newNamespace);
         this.writeConcern = writeConcern;
@@ -87,7 +89,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
             } else {
-                executeCommandAsync(binding, "admin", getCommand(), connection,
+                executeCommandAsync(binding, "admin", getCommand(), assertNotNull(connection),
                         writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
             }
         });

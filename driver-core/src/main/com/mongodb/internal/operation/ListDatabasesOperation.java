@@ -73,7 +73,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         return this;
     }
 
-    public ListDatabasesOperation<T> filter(final BsonDocument filter) {
+    public ListDatabasesOperation<T> filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }

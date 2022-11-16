@@ -32,6 +32,7 @@ import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -48,7 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
-import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -97,7 +98,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
             final Decoder<T> decoder, final BsonValue comment, final AsyncConnectionSource connectionSource,
-            final AsyncConnection connection, final BsonDocument result) {
+            @Nullable final AsyncConnection connection, @Nullable final BsonDocument result) {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstBatch.getNamespace();
@@ -118,7 +119,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         firstBatchEmpty = firstBatch.getResults().isEmpty();
         if (cursor.get() != null) {
             this.connectionSource = notNull("connectionSource", connectionSource).retain();
-            assertTrue(connection != null);
+            assertNotNull(connection);
             if (limitReached()) {
                 killCursor(connection);
             } else {
@@ -241,7 +242,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                     endOperationInProgress();
                     callback.onResult(null, t);
                 } else {
-                    getMore(connection, cursor, callback);
+                    getMore(assertNotNull(connection), cursor, callback);
                 }
             });
         }
@@ -281,7 +282,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                     if (t != null) {
                         connectionSource.release();
                     } else {
-                        killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
+                        killCursorAsynchronouslyAndReleaseConnectionAndSource(assertNotNull(connection), localCursor);
                     }
                 });
             }
@@ -302,7 +303,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
         connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
                 ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                    connectionSource.getServerApi(), connectionSource.getRequestContext(), (result, t) -> {
+                connectionSource.getServerApi(), connectionSource.getRequestContext(), (result, t) -> {
                         connection.release();
                         connectionSource.release();
                         });
@@ -340,7 +341,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 callback.onResult(null, null);
             }
         } else if (result.getResults().isEmpty() && result.getCursor() != null) {
-            getMore(connection, result.getCursor(), callback);
+            getMore(connection, assertNotNull(result.getCursor()), callback);
         } else {
             count.addAndGet(result.getResults().size());
             if (limitReached()) {
@@ -380,7 +381,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         }
 
         @Override
-        public void onResult(final BsonDocument result, final Throwable t) {
+        public void onResult(@Nullable final BsonDocument result, @Nullable final Throwable t) {
             if (t != null) {
                 Throwable translatedException = t instanceof MongoCommandException
                         ? translateCommandException((MongoCommandException) t, cursor)
@@ -389,6 +390,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 endOperationInProgress();
                 callback.onResult(null, translatedException);
             } else {
+                assertNotNull(result);
                 QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(result.getDocument(CURSOR),
                         connection.getDescription().getServerAddress());
                 postBatchResumeToken = getPostBatchResumeTokenFromResponse(result);
@@ -397,10 +399,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
         }
     }
 
+    @Nullable
     ServerCursor getServerCursor() {
         return cursor.get();
     }
 
+    @Nullable
     private BsonDocument getPostBatchResumeTokenFromResponse(final BsonDocument result) {
         BsonDocument cursor = result.getDocument(CURSOR, null);
         if (cursor != null) {

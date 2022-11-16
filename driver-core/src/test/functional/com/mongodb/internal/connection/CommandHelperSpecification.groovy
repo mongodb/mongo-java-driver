@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.MongoCommandException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterConnectionMode
@@ -34,11 +33,11 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.LEGACY_HELLO
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
-import static com.mongodb.ClusterFixture.LEGACY_HELLO
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync
@@ -72,7 +71,7 @@ class CommandHelperSpecification extends Specification {
                 getServerApi(), connection)
 
         then:
-        1 * connection.sendAndReceive(_, _, _ as ClusterClockAdvancingSessionContext, _)
+        1 * connection.sendAndReceive(_, _, _ as ClusterClockAdvancingSessionContext, _) >> new BsonDocument()
     }
 
 

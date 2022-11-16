@@ -17,4 +17,8 @@
 /**
  * This package contains classes that manage binding to MongoDB servers for various operations.
  */
+
+@NonNullApi
 package com.mongodb.internal.binding;
+
+import com.mongodb.lang.NonNullApi;

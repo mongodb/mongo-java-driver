@@ -20,6 +20,7 @@ import com.mongodb.internal.bulk.WriteRequest;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 
@@ -200,7 +201,7 @@ public abstract class BulkWriteResult {
 
             @Override
             public int getModifiedCount() {
-                return modifiedCount;
+                return assertNotNull(modifiedCount);
             }
 
             @Override
@@ -230,7 +231,7 @@ public abstract class BulkWriteResult {
                 if (insertedCount != that.getInsertedCount()) {
                     return false;
                 }
-                if (modifiedCount != null && !modifiedCount.equals(that.getModifiedCount())) {
+                if (!modifiedCount.equals(that.getModifiedCount())) {
                     return false;
                 }
                 if (removedCount != that.getDeletedCount()) {
@@ -256,7 +257,7 @@ public abstract class BulkWriteResult {
                 result = 31 * result + insertedCount;
                 result = 31 * result + matchedCount;
                 result = 31 * result + removedCount;
-                result = 31 * result + (modifiedCount != null ? modifiedCount.hashCode() : 0);
+                result = 31 * result + modifiedCount.hashCode();
                 return result;
             }
 

@@ -17,6 +17,7 @@
 package com.mongodb.internal.bulk;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 
@@ -51,29 +52,32 @@ public final class DeleteRequest extends WriteRequest {
         return isMulti;
     }
 
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
 
-    public DeleteRequest collation(final Collation collation) {
+    public DeleteRequest collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
 
+    @Nullable
     public Bson getHint() {
         return hint;
     }
 
-    public DeleteRequest hint(final Bson hint) {
+    public DeleteRequest hint(@Nullable final Bson hint) {
         this.hint = hint;
         return this;
     }
 
+    @Nullable
     public String getHintString() {
         return hintString;
     }
 
-    public DeleteRequest hintString(final String hint) {
+    public DeleteRequest hintString(@Nullable final String hint) {
         this.hintString = hint;
         return this;
     }

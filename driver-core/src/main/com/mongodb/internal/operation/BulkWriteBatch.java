@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
@@ -124,7 +125,7 @@ public final class BulkWriteBatch {
     }
 
     private BulkWriteBatch(final MongoNamespace namespace, final ConnectionDescription connectionDescription,
-                           final boolean ordered, final WriteConcern writeConcern, final Boolean bypassDocumentValidation,
+                           final boolean ordered, final WriteConcern writeConcern, @Nullable final Boolean bypassDocumentValidation,
                            final boolean retryWrites, final BulkWriteBatchCombiner bulkWriteBatchCombiner,
                            final List<WriteRequestWithIndex> writeRequestsWithIndices, final SessionContext sessionContext,
                            @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
@@ -208,9 +209,9 @@ public final class BulkWriteBatch {
         this.command = command;
     }
 
-    void addResult(final BsonDocument result) {
+    void addResult(@Nullable final BsonDocument result) {
         if (writeConcern.isAcknowledged()) {
-            if (hasError(result)) {
+            if (hasError(assertNotNull(result))) {
                 MongoBulkWriteException bulkWriteException = getBulkWriteException(result);
                 bulkWriteBatchCombiner.addErrorResult(bulkWriteException, indexMap);
             } else {
@@ -243,6 +244,7 @@ public final class BulkWriteBatch {
         return bulkWriteBatchCombiner.hasErrors();
     }
 
+    @Nullable
     MongoBulkWriteException getError() {
         return bulkWriteBatchCombiner.getError();
     }
@@ -316,7 +318,7 @@ public final class BulkWriteBatch {
         return bulkWriteUpsertList;
     }
 
-    private Integer getModifiedCount(final BsonDocument result) {
+    private int getModifiedCount(final BsonDocument result) {
         return result.getNumber("nModified", new BsonInt32(0)).intValue();
     }
 
@@ -349,6 +351,7 @@ public final class BulkWriteBatch {
         return writeErrors;
     }
 
+    @Nullable
     private WriteConcernError getWriteConcernError(final BsonDocument result) {
         BsonDocument writeConcernErrorDocument = (BsonDocument) result.get("writeConcernError");
         if (writeConcernErrorDocument == null) {

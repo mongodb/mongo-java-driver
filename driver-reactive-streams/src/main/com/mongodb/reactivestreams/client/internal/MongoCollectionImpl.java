@@ -61,6 +61,7 @@ import org.reactivestreams.Publisher;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
@@ -73,7 +74,7 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public MongoNamespace getNamespace() {
-        return mongoOperationPublisher.getNamespace();
+        return assertNotNull(mongoOperationPublisher.getNamespace());
     }
 
     @Override

@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
@@ -41,7 +42,8 @@ public class QueryResult<T> {
      * @param cursorId      the cursor id
      * @param serverAddress the server address
      */
-    public QueryResult(final MongoNamespace namespace, final List<T> results, final long cursorId, final ServerAddress serverAddress) {
+    public QueryResult(@Nullable final MongoNamespace namespace, final List<T> results, final long cursorId,
+            final ServerAddress serverAddress) {
         this.namespace = namespace;
         this.results = results;
         this.cursorId = cursorId;
@@ -53,6 +55,7 @@ public class QueryResult<T> {
      *
      * @return the namespace
      */
+    @Nullable
     public MongoNamespace getNamespace() {
         return namespace;
     }
@@ -62,6 +65,7 @@ public class QueryResult<T> {
      *
      * @return the cursor, which may be null if it's been exhausted
      */
+    @Nullable
     public ServerCursor getCursor() {
         return cursorId == 0 ? null : new ServerCursor(cursorId, serverAddress);
     }
