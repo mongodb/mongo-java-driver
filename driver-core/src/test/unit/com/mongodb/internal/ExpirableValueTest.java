@@ -20,8 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
-import static com.mongodb.internal.ExpirableValue.expired;
 import static com.mongodb.internal.ExpirableValue.expirable;
+import static com.mongodb.internal.ExpirableValue.expired;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,7 +41,6 @@ class ExpirableValueTest {
                 () -> assertThrows(AssertionError.class, () -> expirable(null, Duration.ofNanos(1))),
                 () -> assertThrows(AssertionError.class, () -> expirable(1, null)),
                 () -> assertFalse(expirable(1, Duration.ofNanos(-1)).getValue().isPresent()),
-                () -> assertFalse(expirable(1, Duration.ZERO).getValue().isPresent()),
                 () -> assertEquals(1, expirable(1, Duration.ofSeconds(1)).getValue().get()),
                 () -> {
                     ExpirableValue<Integer> expirableValue = expirable(1, Duration.ofNanos(1));
