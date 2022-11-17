@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.event.CommandListener;
@@ -63,9 +64,9 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * See
@@ -233,7 +234,9 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         .append("writeConcernError", new BsonDocument()
                                 .append("code", new BsonInt32(91))
                                 .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError")
-                                        .map(BsonString::new).collect(Collectors.toList()))))
+                                        .map(BsonString::new).collect(Collectors.toList())))
+                                .append("errmsg", new BsonString(""))
+                        )
                         .append("failCommands", new BsonArray(singletonList(new BsonString("insert")))));
         try (MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
                 .retryWrites(true)
@@ -246,13 +249,14 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
             collection.drop();
-            try {
-                collection.insertOne(new Document());
-            } catch (MongoException e) {
-                assertEquals(e.getCode(), 91);
-                return;
-            }
-            fail("must not reach");
+            assertThrows(MongoWriteConcernException.class, () -> {
+                try {
+                    collection.insertOne(new Document());
+                } catch (MongoWriteConcernException e) {
+                    assertEquals(91, e.getCode());
+                    throw e;
+                }
+            });
         } finally {
             futureFailPointFromListener.thenAccept(FailPoint::close);
         }

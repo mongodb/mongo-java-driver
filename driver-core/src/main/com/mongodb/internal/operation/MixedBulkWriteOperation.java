@@ -180,32 +180,22 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             logRetryExecute(retryState);
             return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
-                int maxWireVersion = connectionDescription.getMaxWireVersion();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
-                retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true);
-                BulkWriteTracker bulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
-                        .orElseThrow(Assertions::fail);
+                retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                 SessionContext sessionContext = binding.getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
-                if (!retryState.isFirstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
-                        connectionDescription, sessionContext)) {
-                    RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
-                    retryState.breakAndThrowIfRetryAnd(() -> !(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException));
-                    bulkWriteTracker.batch().ifPresent(bulkWriteBatch -> {
-                        assertTrue(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException);
-                        bulkWriteBatch.addResult((BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult)
-                                .getResponse());
-                        BulkWriteTracker.attachNext(retryState, bulkWriteBatch);
-                    });
+                if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext),
+                        source.getServerDescription(), connectionDescription, sessionContext)) {
+                    handleMongoWriteConcernWithResponseException(retryState, true);
                 }
                 validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, writeConcern);
-                if (!bulkWriteTracker.batch().isPresent()) {
+                if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                     BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                             source.getServerDescription(), connectionDescription, ordered, writeConcern,
                             bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables));
                 }
                 logRetryExecute(retryState);
-                return executeBulkWriteBatch(retryState, binding, connection, maxWireVersion);
+                return executeBulkWriteBatch(retryState, binding, connection);
             });
         });
         try {
@@ -226,33 +216,22 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
                     (source, connection, releasingCallback) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
-                int maxWireVersion = connectionDescription.getMaxWireVersion();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
-                retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true);
-                BulkWriteTracker bulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
-                        .orElseThrow(Assertions::fail);
+                retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                 SessionContext sessionContext = binding.getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
-                if (!retryState.isFirstAttempt() && !isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(),
-                        connectionDescription, sessionContext)) {
-                    Throwable prospectiveFailedResult = retryState.exception().orElse(null);
-                    if (retryState.breakAndCompleteIfRetryAnd(() ->
-                            !(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException), releasingCallback)) {
-                        return;
-                    }
-                    bulkWriteTracker.batch().ifPresent(bulkWriteBatch -> {
-                        assertTrue(prospectiveFailedResult instanceof MongoWriteConcernWithResponseException);
-                        bulkWriteBatch.addResult((BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult)
-                                .getResponse());
-                        BulkWriteTracker.attachNext(retryState, bulkWriteBatch);
-                    });
+                if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext),
+                        source.getServerDescription(),
+                        connectionDescription, sessionContext)
+                        && handleMongoWriteConcernWithResponseExceptionAsync(retryState, releasingCallback)) {
+                    return;
                 }
                 if (validateWriteRequestsAndCompleteIfInvalid(connectionDescription, bypassDocumentValidation, writeRequests,
                         writeConcern, releasingCallback)) {
                     return;
                 }
                 try {
-                    if (!bulkWriteTracker.batch().isPresent()) {
+                    if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                         BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                 source.getServerDescription(), connectionDescription, ordered, writeConcern,
                                 bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables));
@@ -262,17 +241,17 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     return;
                 }
                 logRetryExecute(retryState);
-                executeBulkWriteBatchAsync(retryState, binding, connection, maxWireVersion, releasingCallback);
+                executeBulkWriteBatchAsync(retryState, binding, connection, releasingCallback);
             });
         }).whenComplete(binding::release);
         retryingBulkWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
     }
 
-    private BulkWriteResult executeBulkWriteBatch(final RetryState retryState, final WriteBinding binding, final Connection connection,
-            final int maxWireVersion) {
+    private BulkWriteResult executeBulkWriteBatch(final RetryState retryState, final WriteBinding binding, final Connection connection) {
         BulkWriteTracker currentBulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
                 .orElseThrow(Assertions::fail);
         BulkWriteBatch currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
+        int maxWireVersion = connection.getDescription().getMaxWireVersion();
         while (currentBatch.shouldProcessBatch()) {
             try {
                 BsonDocument result = executeCommand(connection, currentBatch, binding);
@@ -292,9 +271,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 currentBulkWriteTracker = BulkWriteTracker.attachNext(retryState, currentBatch);
                 currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
             } catch (MongoException exception) {
-                if (!(retryState.isFirstAttempt() || (exception instanceof MongoWriteConcernWithResponseException))) {
+                if (!retryState.isFirstAttempt() && !(exception instanceof MongoWriteConcernWithResponseException)) {
                     addRetryableWriteErrorLabel(exception, maxWireVersion);
                 }
+                handleMongoWriteConcernWithResponseException(retryState, false);
                 throw exception;
             }
         }
@@ -307,13 +287,14 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     }
 
     private void executeBulkWriteBatchAsync(final RetryState retryState, final AsyncWriteBinding binding, final AsyncConnection connection,
-            final int maxWireVersion, final SingleResultCallback<BulkWriteResult> callback) {
+            final SingleResultCallback<BulkWriteResult> callback) {
         LoopState loopState = new LoopState();
         AsyncCallbackRunnable loop = new AsyncCallbackLoop(loopState, iterationCallback -> {
             BulkWriteTracker currentBulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
                     .orElseThrow(Assertions::fail);
             loopState.attach(AttachmentKeys.bulkWriteTracker(), currentBulkWriteTracker, true);
             BulkWriteBatch currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
+            int maxWireVersion = connection.getDescription().getMaxWireVersion();
             if (loopState.breakAndCompleteIf(() -> !currentBatch.shouldProcessBatch(), iterationCallback)) {
                 return;
             }
@@ -340,8 +321,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 } else {
                     if (t instanceof MongoException) {
                         MongoException exception = (MongoException) t;
-                        if (!(retryState.isFirstAttempt() || (exception instanceof MongoWriteConcernWithResponseException))) {
+                        if (!retryState.isFirstAttempt() && !(exception instanceof MongoWriteConcernWithResponseException)) {
                             addRetryableWriteErrorLabel(exception, maxWireVersion);
+                        }
+                        if (handleMongoWriteConcernWithResponseExceptionAsync(retryState, null)) {
+                            return;
                         }
                     }
                     iterationCallback.onResult(null, t);
@@ -368,6 +352,41 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         });
     }
 
+    private void handleMongoWriteConcernWithResponseException(final RetryState retryState, final boolean breakAndThrowIfDifferent) {
+        if (!retryState.isFirstAttempt()) {
+            RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
+            boolean prospectiveResultIsWriteConcernException = prospectiveFailedResult instanceof MongoWriteConcernWithResponseException;
+            retryState.breakAndThrowIfRetryAnd(() -> breakAndThrowIfDifferent && !prospectiveResultIsWriteConcernException);
+            if (prospectiveResultIsWriteConcernException) {
+                retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail)
+                        .batch().ifPresent(bulkWriteBatch -> {
+                            bulkWriteBatch.addResult(
+                                    (BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult).getResponse());
+                            BulkWriteTracker.attachNext(retryState, bulkWriteBatch);
+                });
+            }
+        }
+    }
+
+    private boolean handleMongoWriteConcernWithResponseExceptionAsync(final RetryState retryState,
+            @Nullable final SingleResultCallback<BulkWriteResult> callback) {
+        if (!retryState.isFirstAttempt()) {
+            RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
+            boolean prospectiveResultIsWriteConcernException = prospectiveFailedResult instanceof MongoWriteConcernWithResponseException;
+            if (callback != null && retryState.breakAndCompleteIfRetryAnd(() -> !prospectiveResultIsWriteConcernException, callback)) {
+                return true;
+            }
+            if (prospectiveResultIsWriteConcernException) {
+                retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail)
+                        .batch().ifPresent(bulkWriteBatch -> {
+                            bulkWriteBatch.addResult(
+                                    (BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult).getResponse());
+                            BulkWriteTracker.attachNext(retryState, bulkWriteBatch);
+                });
+            }
+        }
+        return false;
+    }
 
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,

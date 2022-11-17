@@ -1151,16 +1151,16 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def originalException = new MongoSocketException('Some failure', new ServerAddress())
 
         when:
-        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0]],
-                [REPLICA_SET_PRIMARY, STANDALONE], originalException, async)
+        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0], [3, 6, 0]],
+                [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY, STANDALONE], originalException, async)
 
         then:
         Exception commandException = thrown()
         commandException == originalException
 
         when:
-        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0]],
-                [REPLICA_SET_PRIMARY], originalException, async, 1)
+        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0]],
+                [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY], originalException, async, 1)
 
         then:
         commandException = thrown()
