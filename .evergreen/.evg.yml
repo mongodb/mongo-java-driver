@@ -96,7 +96,11 @@ functions:
             # If this was a patch build, doing a fresh clone would not actually test the patch
             cp -R ${PROJECT_DIRECTORY}/ $DRIVERS_TOOLS
           else
-            git clone https://github.com/mongodb-labs/drivers-evergreen-tools.git $DRIVERS_TOOLS
+            # TODO update to master 
+            git clone https://github.com/rozza/drivers-evergreen-tools.git $DRIVERS_TOOLS
+            cd $DRIVERS_TOOLS 
+            git checkout DRIVERS-2497
+            cd -
           fi
           echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
 
@@ -353,10 +357,11 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-          . ./activate_venv.sh
+          . ./activate-authawsvenv.sh
           mongo aws_e2e_regular_aws.js
     - command: shell.exec
       type: test
@@ -379,10 +384,11 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-          . ./activate_venv.sh
+          . ./activate-authawsvenv.sh
           mongo aws_e2e_assume_role.js
     - command: shell.exec
       type: test
@@ -410,15 +416,17 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-          . ./activate_venv.sh
+          . ./activate-authawsvenv.sh
           mongo aws_e2e_ec2.js
     - command: shell.exec
       type: test
       params:
         working_dir: "src"
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           # Write an empty prepare_mongodb_aws so no auth environment variables are set.
@@ -430,10 +438,11 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-          . ./activate_venv.sh
+          . ./activate-authawsvenv.sh
           mongo aws_e2e_regular_aws.js
     - command: shell.exec
       type: test
@@ -459,10 +468,11 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-          . ./activate_venv.sh
+          . ./activate-authawsvenv.sh
           mongo aws_e2e_assume_role.js
     - command: shell.exec
       type: test
@@ -489,10 +499,11 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
-          . ./activate_venv.sh
+          . ./activate-authawsvenv.sh
           cat <<EOF > setup.js
           const mongo_binaries = "$MONGODB_BINARIES";
           const project_dir = "$PROJECT_DIRECTORY";
@@ -526,7 +537,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          CA_FILE="$DRIVERS_TOOLS/.evergreen/ocsp/${OCSP_ALGORITHM}/ca.pem" \
+          CA_FILE="${DRIVERS_TOOLS}/.evergreen/ocsp/${OCSP_ALGORITHM}/ca.pem" \
           OCSP_TLS_SHOULD_SUCCEED="${OCSP_TLS_SHOULD_SUCCEED}" \
           OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}" \
           JAVA_VERSION="${JAVA_VERSION}" \
@@ -535,16 +546,13 @@ functions:
   "run-valid-ocsp-server-ca-responder":
     - command: shell.exec
       params:
-        script: |
-          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          /opt/mongodbtoolchain/v3/bin/python3 -m venv ./venv
-          ./venv/bin/pip3 install -r ${DRIVERS_TOOLS}/.evergreen/ocsp/mock-ocsp-responder-requirements.txt
-    - command: shell.exec
-      params:
         background: true
+        shell: "bash"
         script: |
+          ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          nohup ./venv/bin/python3 ocsp_mock.py \
+          . ./activate-ocspvenv.sh
+          nohup python ocsp_mock.py \
           --ca_file ${OCSP_ALGORITHM}/ca.pem \
           --ocsp_responder_cert ${OCSP_ALGORITHM}/ca.crt \
           --ocsp_responder_key ${OCSP_ALGORITHM}/ca.key \
@@ -553,16 +561,13 @@ functions:
   "run-revoked-ocsp-server-ca-responder":
     - command: shell.exec
       params:
-        script: |
-          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          /opt/mongodbtoolchain/v3/bin/python3 -m venv ./venv
-          ./venv/bin/pip3 install -r ${DRIVERS_TOOLS}/.evergreen/ocsp/mock-ocsp-responder-requirements.txt
-    - command: shell.exec
-      params:
         background: true
+        shell: "bash"
         script: |
+          ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          nohup ./venv/bin/python3 ocsp_mock.py \
+          . ./activate-ocspvenv.sh
+          nohup python ocsp_mock.py \
           --ca_file ${OCSP_ALGORITHM}/ca.pem \
           --ocsp_responder_cert ${OCSP_ALGORITHM}/ca.crt \
           --ocsp_responder_key ${OCSP_ALGORITHM}/ca.key \
@@ -573,16 +578,13 @@ functions:
   "run-valid-ocsp-server-delegate-responder":
     - command: shell.exec
       params:
-        script: |
-          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          /opt/mongodbtoolchain/v3/bin/python3 -m venv ./venv
-          ./venv/bin/pip3 install -r ${DRIVERS_TOOLS}/.evergreen/ocsp/mock-ocsp-responder-requirements.txt
-    - command: shell.exec
-      params:
         background: true
+        shell: "bash"
         script: |
+          ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          nohup ./venv/bin/python3 ocsp_mock.py \
+          . ./activate-ocspvenv.sh
+          nohup python ocsp_mock.py \
           --ca_file ${OCSP_ALGORITHM}/ca.pem \
           --ocsp_responder_cert ${OCSP_ALGORITHM}/ocsp-responder.crt \
           --ocsp_responder_key ${OCSP_ALGORITHM}/ocsp-responder.key \
@@ -591,16 +593,13 @@ functions:
   "run-revoked-ocsp-server-delegate-responder":
     - command: shell.exec
       params:
-        script: |
-          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          /opt/mongodbtoolchain/v3/bin/python3 -m venv ./venv
-          ./venv/bin/pip3 install -r ${DRIVERS_TOOLS}/.evergreen/ocsp/mock-ocsp-responder-requirements.txt
-    - command: shell.exec
-      params:
         background: true
+        shell: "bash"
         script: |
+          ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/ocsp
-          nohup ./venv/bin/python3 ocsp_mock.py \
+          . ./activate-ocspvenv.sh
+          nohup python ocsp_mock.py \
           --ca_file ${OCSP_ALGORITHM}/ca.pem \
           --ocsp_responder_cert ${OCSP_ALGORITHM}/ocsp-responder.crt \
           --ocsp_responder_key ${OCSP_ALGORITHM}/ocsp-responder.key \
@@ -647,30 +646,24 @@ functions:
   start-kms-mock-server:
     - command: shell.exec
       params:
+        background: true
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/csfle
-          . ./activate_venv.sh
-    - command: shell.exec
-      params:
-        background: true
-        script: |
-          cd ${DRIVERS_TOOLS}/.evergreen/csfle
-          ./kmstlsvenv/bin/python3 -u kms_http_server.py -v --ca_file ../x509gen/ca.pem --cert_file ../x509gen/${CERT_FILE} --port 8000
+          . ./activate-kmstlsvenv.sh
+          python -u kms_http_server.py -v --ca_file ../x509gen/ca.pem --cert_file ../x509gen/${CERT_FILE} --port 8000
 
   start-kms-kmip-server:
     - command: shell.exec
       params:
+        background: true
+        shell: "bash"
         script: |
           ${PREPARE_SHELL}
           cd ${DRIVERS_TOOLS}/.evergreen/csfle
-          . ./activate_venv.sh
-    - command: shell.exec
-      params:
-        background: true
-        script: |
-          cd ${DRIVERS_TOOLS}/.evergreen/csfle
-          ./kmstlsvenv/bin/python3 -u kms_kmip_server.py
+          . ./activate-kmstlsvenv.sh
+          python -u kms_kmip_server.py
 
   "run-kms-tls-test":
     - command: shell.exec
