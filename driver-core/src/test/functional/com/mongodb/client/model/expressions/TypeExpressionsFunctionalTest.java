@@ -136,7 +136,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     public void asStringTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toString/
         // asString, since toString conflicts
-        assertExpression("false", of(false).asString());
+        assertExpression("false", of(false).asString(), "{'$toString': [false]}");
 
         assertExpression("1", of(1).asString());
         assertExpression("1", of(1L).asString());
@@ -160,7 +160,8 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         final Instant instant = Instant.parse("2007-12-03T10:15:30.005Z");
         assertExpression(
                 "2007-12-03T10:15:30.005Z",
-                of(instant).asString());
+                of(instant).asString(),
+                "{'$toString': [{'$date': '2007-12-03T10:15:30.005Z'}]}");
 
         // with parameters
         assertExpression(
@@ -205,7 +206,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     @Test
     public void parseIntegerTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/ (46 |15)
-        assertExpression(1234L, of("1234").parseInteger());
+        assertExpression(1234L, of("1234").parseInteger(), "{'$toLong': '1234'}");
         // TODO: note that this parses to long. Unclear how to dynamically choose int/long
     }
 
@@ -215,7 +216,8 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // TODO objectId has no type of its own, but this might be fine
         assertExpression(
                 new ObjectId("5ab9cbfa31c2ab715d42129e"),
-                of("5ab9cbfa31c2ab715d42129e").parseObjectId());
+                of("5ab9cbfa31c2ab715d42129e").parseObjectId(),
+                "{'$toObjectId': '5ab9cbfa31c2ab715d42129e'}");
     }
 
     // non-string
@@ -223,11 +225,16 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     @Test
     public void msToDateTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDate/ (36 |53)
-        assertExpression(Instant.ofEpochMilli(1234), of(1234L).msToDate());
+        assertExpression(
+                Instant.ofEpochMilli(1234),
+                of(1234L).msToDate(),
+                "{'$toDate': {'$numberLong': '1234'}}");
         // could be: millisecondsToDate / epochMsToDate
         // TODO does not accept plain integers; could convert to dec128?
         assertThrows(MongoCommandException.class, () ->
-                assertExpression(Instant.parse("2007-12-03T10:15:30.005Z"), of(1234).msToDate()));
+                assertExpression(
+                        Instant.parse("2007-12-03T10:15:30.005Z"),
+                        of(1234).msToDate(),
+                        "{'$toDate': 1234}"));
     }
-
 }
