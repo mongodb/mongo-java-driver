@@ -16,12 +16,14 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.MongoCommandException;
 import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,6 +35,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofDateArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNumberArray;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings({"ConstantConditions", "Convert2MethodRef"})
 class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -177,10 +180,14 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.elementAt((IntegerExpression) of(0.0)),
                 // MQL:
                 "{'$arrayElemAt': [[1, 2, 3], 0.0]}");
-
+        // negatives
         assertExpression(
                 Arrays.asList(1, 2, 3).get(3 - 1),
                 array123.elementAt(-1));
+        // underlying long
+        assertExpression(
+                2,
+                array123.elementAt(of(1L)));
 
         assertExpression(
                 true,
@@ -188,6 +195,15 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 true,
                 ofRem().eq(array123.elementAt(-99)));
+
+        assertExpression(
+                Optional.empty(),
+                array123.elementAt(-99));
+
+        // long values are considered entirely out of bounds; server error
+        assertThrows(MongoCommandException.class, () -> assertExpression(
+                Optional.empty(),
+                array123.elementAt(of(Long.MAX_VALUE))));
     }
 
     @Test
@@ -209,6 +225,12 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.last(),
                 // MQL:
                 "{'$last': [[1, 2, 3]]}");
+
+        assertExpression(
+                Optional.empty(),
+                ofIntegerArray().last(),
+                // MQL:
+                "{'$last': [[]]}");
     }
 
     @Test

@@ -97,4 +97,25 @@ public interface Expression {
      * @return true if less than or equal to, false otherwise
      */
     BooleanExpression lte(Expression lte);
+
+    /**
+     * also checks for nulls
+     * @param or
+     * @return
+     */
+    BooleanExpression isBooleanOr(BooleanExpression or);
+    NumberExpression isNumberOr(NumberExpression or);
+    StringExpression isStringOr(StringExpression or);
+    DateExpression isDateOr(DateExpression or);
+    ArrayExpression<Expression> isArrayOr(ArrayExpression<? extends Expression> or);
+    <T extends DocumentExpression> T isDocumentOr(T or);
+
+
+    /**
+     * server error if type cannot be converted to string (arrays, objects)
+     * TODO: should this be moved to non-array/obj types?
+     *
+     * @return
+     */
+    StringExpression asString();
 }

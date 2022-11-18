@@ -36,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.Aggregates.addFields;
@@ -54,7 +55,7 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         getCollectionHelper().drop();
     }
 
-    protected void assertExpression(final Object expected, final Expression expression) {
+    protected void assertExpression(@Nullable final Object expected, final Expression expression) {
         assertExpression(expected, expression, null);
     }
 
@@ -74,6 +75,10 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
 
     private void assertEval(@Nullable final Object expected, final Expression toEvaluate) {
         BsonValue evaluated = evaluate(toEvaluate);
+        if (expected == Optional.empty() && evaluated == null) {
+            // the "val" field was removed by "missing"
+            return;
+        }
         BsonValue expected1 = toBsonValue(expected);
         assertEquals(expected1, evaluated);
     }

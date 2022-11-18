@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+
 import static com.mongodb.client.model.expressions.Expressions.of;
 
 /**
@@ -35,13 +37,22 @@ public interface StringExpression extends Expression {
 
     StringExpression substr(IntegerExpression start, IntegerExpression length);
 
-    default StringExpression substr(int start, int length) {
+    default StringExpression substr(final int start, final int length) {
         return this.substr(of(start), of(length));
     }
 
     StringExpression substrBytes(IntegerExpression start, IntegerExpression length);
 
-    default StringExpression substrBytes(int start, int length) {
+    default StringExpression substrBytes(final int start, final int length) {
         return this.substrBytes(of(start), of(length));
     }
+
+    IntegerExpression parseInteger();
+
+    DateExpression parseDate();
+
+    DateExpression parseDate(StringExpression format, StringExpression timezone);
+
+    @Beta(Beta.Reason.CLIENT)
+    Expression parseObjectId();
 }

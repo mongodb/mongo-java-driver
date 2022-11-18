@@ -139,6 +139,17 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 of(2.0).add(of(2)),
                 "{'$add': [2.0, 2]}");
 
+        // overflow
+        assertExpression(
+                Integer.MAX_VALUE + 2L,
+                of(Integer.MAX_VALUE).add(of(2)));
+        assertExpression(
+                Long.MAX_VALUE + 2.0,
+                of(Long.MAX_VALUE).add(of(2)));
+        assertExpression(
+                Double.POSITIVE_INFINITY,
+                of(Double.MAX_VALUE).add(of(Double.MAX_VALUE)));
+
         // convenience
         assertExpression(3.0, of(1.0).add(2.0));
         assertExpression(3L, of(1).add(2L));
@@ -225,6 +236,13 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 600.0,
                 of(555.555).round(of(-2)),
                 "{'$round': [555.555, -2]} ");
+        // underlying type rounds to same underlying type
+        assertExpression(
+                5L,
+                of(5L).round());
+        assertExpression(
+                5.0,
+                of(5.0).round());
     }
 
     @Test

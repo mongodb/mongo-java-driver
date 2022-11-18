@@ -54,4 +54,6 @@ public interface NumberExpression extends Expression {
     NumberExpression round(IntegerExpression place);
 
     NumberExpression abs();
+
+    DateExpression msToDate();
 }
