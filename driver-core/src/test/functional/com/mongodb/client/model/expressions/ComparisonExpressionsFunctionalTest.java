@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#comparison-expression-operators
     // (Complete as of 6.0)
-    // Comparison expressions are part of the the generic Expression class.
+    // Comparison expressions are part of the generic Expression class.
 
     // https://www.mongodb.com/docs/manual/reference/bson-type-comparison-order/#std-label-bson-types-comparison-order
     private final List<Expression> sampleValues = Arrays.asList(

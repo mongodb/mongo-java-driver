@@ -137,6 +137,97 @@ final class MqlExpression<T extends Expression>
         return newMqlExpression(ast("$cond", left, right));
     }
 
+    /** @see DocumentExpression */
+
+    private Function<CodecRegistry, AstPlaceholder> getFieldInternal(final String fieldBoolean) {
+        return (cr) -> astDoc("$getField", new BsonDocument()
+                .append("input", this.fn.apply(cr).bsonValue)
+                .append("field", new BsonString(fieldBoolean)));
+    }
+
+    @Override
+    public BooleanExpression getBoolean(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public BooleanExpression getBoolean(final String field, final BooleanExpression orElse) {
+        return getBoolean(field).isBooleanOr(orElse);
+    }
+
+    @Override
+    public NumberExpression getNumber(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public NumberExpression getNumber(final String field, final NumberExpression orElse) {
+        return getNumber(field).isNumberOr(orElse);
+    }
+
+    @Override
+    public IntegerExpression getInteger(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+    @Override
+    public StringExpression getString(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public StringExpression getString(final String field, final StringExpression orElse) {
+        return getString(field).isStringOr(orElse);
+    }
+
+    @Override
+    public DateExpression getDate(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public DateExpression getDate(final String field, final DateExpression orElse) {
+        return getDate(field).isDateOr(orElse);
+    }
+
+    @Override
+    public DocumentExpression getDocument(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public DocumentExpression getDocument(final String field, final DocumentExpression orElse) {
+        return getDocument(field).isDocumentOr(orElse);
+    }
+
+    @Override
+    public <R extends Expression> ArrayExpression<R> getArray(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public <T1 extends Expression> ArrayExpression<T1> getArray(final String field, final ArrayExpression<T1> orElse) {
+        return getArray(field).isArrayOr(orElse);
+    }
+
+    @Override
+    public DocumentExpression merge(final DocumentExpression ofDoc) {
+        return new MqlExpression<>(ast("$mergeObjects", ofDoc));
+    }
+
+    @Override
+    public <R extends DocumentExpression> R setField(final String path, final Expression exp) {
+        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
+                .append("field", new BsonString(path))
+                .append("input", this.toBsonValue(cr))
+                .append("value", extractBsonValue(cr, exp))));
+    }
+
+    @Override
+    public DocumentExpression unsetField(final String path) {
+        return newMqlExpression((cr) -> astDoc("$unsetField", new BsonDocument()
+                .append("field", new BsonString(path))
+                .append("input", this.toBsonValue(cr))));
+    }
 
     /** @see Expression */
 
@@ -210,11 +301,17 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(astWrapped("$isArray"));
     }
 
-    @SuppressWarnings("unchecked") // TODO
+    /**
+     * checks if array (but cannot check type)
+     * user asserts array is of type R
+     *
+     * @param or
+     * @return
+     * @param <R>
+     */
     @Override
-    public ArrayExpression<Expression> isArrayOr(final ArrayExpression<? extends Expression> or) {
-        // TODO it seems that ArrEx<T> does not make sense here
-        return (ArrayExpression<Expression>) this.isArray().cond(this.assertImplementsAllExpressions(), or);
+    public <R extends Expression> ArrayExpression<R> isArrayOr(final ArrayExpression<R> or) {
+        return this.isArray().cond(this.assertImplementsAllExpressions(), or);
     }
 
     public BooleanExpression isDocument() {

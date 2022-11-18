@@ -17,6 +17,7 @@
 package com.mongodb.client.model.expressions;
 
 import com.mongodb.MongoCommandException;
+import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
@@ -79,13 +80,19 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 Arrays.asList(Instant.parse("2007-12-03T10:15:30.00Z")),
                 ofDateArray(Instant.parse("2007-12-03T10:15:30.00Z")),
                 "[{'$date': '2007-12-03T10:15:30.00Z'}]");
+
         // Document
-        // ...
+        ArrayExpression<DocumentExpression> documentArray = ofArray(
+                of(Document.parse("{a: 1}")),
+                of(Document.parse("{b: 2}")));
+        assertExpression(
+                Arrays.asList(Collections.emptyList(), Collections.emptyList()), documentArray,
+                "[[], []]");
 
         // Array
-        ArrayExpression<ArrayExpression<Expression>> arrays = ofArray(ofArray(), ofArray());
+        ArrayExpression<ArrayExpression<Expression>> arrayArray = ofArray(ofArray(), ofArray());
         assertExpression(
-                Arrays.asList(Collections.emptyList(), Collections.emptyList()), arrays,
+                Arrays.asList(Collections.emptyList(), Collections.emptyList()), arrayArray,
                 "[[], []]");
 
         // Mixed
