@@ -17,7 +17,6 @@
 package com.mongodb.client.model.expressions;
 
 import com.mongodb.assertions.Assertions;
-import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
@@ -76,15 +75,15 @@ public final class Expressions {
     public static NumberExpression of(final double of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
     }
-    public static NumberExpression of(@NonNull final BigDecimal of) {
+    public static NumberExpression of(final BigDecimal of) {
         Assertions.notNull("BigDecimal", of);
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(new Decimal128(of))));
+        return of(new Decimal128(of));
     }
     public static NumberExpression of(final Decimal128 of) {
         Assertions.notNull("Decimal128", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
     }
-    public static DateExpression of(@NonNull final Instant of) {
+    public static DateExpression of(final Instant of) {
         Assertions.notNull("Instant", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
     }
@@ -96,7 +95,7 @@ public final class Expressions {
      * @param of the string
      * @return the string expression
      */
-    public static StringExpression of(@NonNull final String of) {
+    public static StringExpression of(final String of) {
         Assertions.notNull("String", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
     }

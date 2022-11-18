@@ -20,6 +20,7 @@ import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -106,7 +107,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 Decimal128.parse("2.52421875"),
                 of(Decimal128.parse("3.231")).divide(of(1.28)));
         assertExpression(
-                Decimal128.parse("2.52421875"),
+                Decimal128.parse("2.524218750000"),
                 of(3.231).divide(of(Decimal128.parse("1.28"))));
 
         // convenience
@@ -195,7 +196,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 "{'$round': 5.5} ");
         NumberExpression actualNum = of(5.5).round(of(0));
         assertExpression(
-                6.0,
+                new BigDecimal("5.5").setScale(0, RoundingMode.HALF_EVEN).doubleValue(),
                 actualNum,
                 "{'$round': [5.5, 0]} ");
         // unlike Java, uses banker's rounding (half_even)
@@ -204,7 +205,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 of(2.5).round(),
                 "{'$round': 2.5} ");
         assertExpression(
-                -6.0,
+                new BigDecimal("-5.5").setScale(0, RoundingMode.HALF_EVEN).doubleValue(),
                 of(-5.5).round());
         // to place
         assertExpression(

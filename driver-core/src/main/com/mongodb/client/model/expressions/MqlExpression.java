@@ -48,8 +48,8 @@ final class MqlExpression<T extends Expression>
         return new AstPlaceholder(new BsonDocument(name, value));
     }
 
-    static class AstPlaceholder {
-        private BsonValue bsonValue;
+    final static class AstPlaceholder {
+        private final BsonValue bsonValue;
 
         AstPlaceholder(final BsonValue bsonValue) {
             this.bsonValue = bsonValue;
