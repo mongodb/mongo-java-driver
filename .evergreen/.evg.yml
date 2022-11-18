@@ -657,10 +657,16 @@ functions:
   start-kms-kmip-server:
     - command: shell.exec
       params:
-        background: true
         shell: "bash"
         script: |
           ${PREPARE_SHELL}
+          cd ${DRIVERS_TOOLS}/.evergreen/csfle
+          . ./activate-kmstlsvenv.sh
+    - command: shell.exec
+      params:
+        shell: "bash"
+        background: true
+        script: |
           cd ${DRIVERS_TOOLS}/.evergreen/csfle
           . ./activate-kmstlsvenv.sh
           python -u kms_kmip_server.py
