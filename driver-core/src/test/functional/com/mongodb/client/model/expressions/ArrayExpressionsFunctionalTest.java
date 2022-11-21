@@ -16,9 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,8 +63,8 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 ofNumberArray(1.0, 2.0, 3.0),
                 "[1.0, 2.0, 3.0]");
         assertExpression(
-                Arrays.asList(BigDecimal.valueOf(1.0)),
-                ofNumberArray(BigDecimal.valueOf(1.0)),
+                Arrays.asList(Decimal128.parse("1.0")),
+                ofNumberArray(Decimal128.parse("1.0")),
                 "[{'$numberDecimal': '1.0'}]");
         // String
         assertExpression(

@@ -106,7 +106,7 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
     }
 
-    public static ArrayExpression<IntegerExpression> ofNumberArray(final double... array) {
+    public static ArrayExpression<NumberExpression> ofNumberArray(final double... array) {
         List<BsonValue> list = Arrays.stream(array)
                 .mapToObj(BsonDouble::new)
                 .collect(Collectors.toList());
@@ -118,7 +118,7 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
     }
 
-    public static ArrayExpression<IntegerExpression> ofNumberArray(final Decimal128... array) {
+    public static ArrayExpression<NumberExpression> ofNumberArray(final Decimal128... array) {
         List<BsonValue> result = new ArrayList<>();
         for (Decimal128 e : array) {
             Assertions.notNull("elements of array", e);
