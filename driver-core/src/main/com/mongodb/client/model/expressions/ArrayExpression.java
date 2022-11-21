@@ -16,7 +16,6 @@
 
 package com.mongodb.client.model.expressions;
 
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
@@ -51,28 +50,48 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      */
     <R extends Expression> ArrayExpression<R> map(Function<? super T, ? extends R> in);
 
-    /**
-     * Performs a reduction on the elements of this array, using the provided
-     * identity value and an associative reducing function, and returns
-     * the reduced value. The initial value must be the identity value for the
-     * reducing function.
-     *
-     * @param initialValue the identity for the reducing function
-     * @param in the associative reducing function
-     * @return the reduced value
-     */
-    T reduce(T initialValue, BinaryOperator<T> in);
-
     IntegerExpression size();
 
+    BooleanExpression any(Function<T, BooleanExpression> map);
+
+    BooleanExpression all(Function<T, BooleanExpression> map);
+
+    NumberExpression sum(Function<T, NumberExpression> map);
+
+    NumberExpression multiply(Function<T, NumberExpression> map);
+
+    NumberExpression max(Function<T, NumberExpression> map, NumberExpression orElse);
+
+    NumberExpression min(Function<T, NumberExpression> map, NumberExpression orElse);
+
+    StringExpression join(Function<T, StringExpression> map);
+
+    <R extends Expression> ArrayExpression<R> concat(Function<T, ArrayExpression<R>> map);
+
+    <R extends Expression> ArrayExpression<R> union(Function<T, ArrayExpression<R>> map);
+
+    /**
+     * user asserts that i is in bounds for the array
+     *
+     * @param i
+     * @return
+     */
     T elementAt(IntegerExpression i);
 
     default T elementAt(final int i) {
         return this.elementAt(of(i));
     }
 
+    /**
+     * user asserts that array is not empty
+     * @return
+     */
     T first();
 
+    /**
+     * user asserts that array is not empty
+     * @return
+     */
     T last();
 
     BooleanExpression contains(T contains);

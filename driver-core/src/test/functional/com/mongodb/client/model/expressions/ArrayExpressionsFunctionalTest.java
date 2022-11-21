@@ -127,41 +127,128 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 "{'$map': {'input': [true, true, false], 'in': {'$not': '$$this'}}}");
     }
 
+    // https://www.mongodb.com/docs/manual/reference/operator/aggregation/reduce/
+    // reduce is implemented as each individual type of reduction (monoid)
+    // this prevents issues related to incorrect specification of identity values
+
     @Test
-    public void reduceTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/reduce/
+    public void reduceAnyTest() {
         assertExpression(
-                Stream.of(true, true, false)
-                        .reduce(false, (a, b) -> a || b),
-                arrayTTF.reduce(of(false), (a, b) -> a.or(b)),
-                // MQL:
-                "{'$reduce': {'input': [true, true, false], 'initialValue': false, 'in': {'$or': ['$$value', '$$this']}}}");
+                true,
+                arrayTTF.any(a -> a),
+                "{'$reduce': {'input': {'$map': {'input': [true, true, false], 'in': '$$this'}}, "
+                        + "'initialValue': false, 'in': {'$or': ['$$value', '$$this']}}}");
         assertExpression(
-                Stream.of(true, true, false)
-                        .reduce(true, (a, b) -> a && b),
-                arrayTTF.reduce(of(true), (a, b) -> a.and(b)),
-                // MQL:
-                "{'$reduce': {'input': [true, true, false], 'initialValue': true, 'in': {'$and': ['$$value', '$$this']}}}");
-        // empty array
+                false,
+                ofBooleanArray().any(a -> a));
+
         assertExpression(
-                Stream.<Boolean>empty().reduce(true, (a, b) -> a && b),
-                ofBooleanArray().reduce(of(true), (a, b) -> a.and(b)),
-                // MQL:
-                "{'$reduce': {'input': [], 'initialValue': true, 'in': {'$and': ['$$value', '$$this']}}}");
-        // constant result
+                true,
+                ofIntegerArray(1, 2, 3).any(a -> a.eq(of(3))));
         assertExpression(
-                Stream.of(true, true, false)
-                        .reduce(true, (a, b) -> true),
-                arrayTTF.reduce(of(true), (a, b) -> of(true)),
-                // MQL:
-                "{'$reduce': {'input': [true, true, false], 'initialValue': true, 'in': true}}");
-        // non-commutative
+                false,
+                ofIntegerArray(1, 2, 2).any(a -> a.eq(of(9))));
+    }
+
+    @Test
+    public void reduceAllTest() {
+        assertExpression(
+                false,
+                arrayTTF.all(a -> a),
+                "{'$reduce': {'input': {'$map': {'input': [true, true, false], 'in': '$$this'}}, "
+                        + "'initialValue': true, 'in': {'$and': ['$$value', '$$this']}}}");
+        assertExpression(
+                true,
+                ofBooleanArray().all(a -> a));
+
+        assertExpression(
+                true,
+                ofIntegerArray(1, 2, 3).all(a -> a.gt(of(0))));
+        assertExpression(
+                false,
+                ofIntegerArray(1, 2, 2).all(a -> a.eq(of(2))));
+    }
+
+    @Test
+    public void reduceSumTest() {
+        assertExpression(
+                6,
+                ofIntegerArray(1, 2, 3).sum(a -> a),
+                "{'$reduce': {'input': {'$map': {'input': [1, 2, 3], 'in': '$$this'}}, "
+                        + "'initialValue': 0, 'in': {'$add': ['$$value', '$$this']}}}");
+        // empty array:
+        assertExpression(
+                0,
+                ofIntegerArray().sum(a -> a));
+    }
+
+    @Test
+    public void reduceMaxTest() {
+        assertExpression(
+                3,
+                ofIntegerArray(1, 2, 3).max(a -> a, of(9)),
+                "{'$cond': [{'$isNumber': [{'$reduce': {'input': "
+                        + "{'$map': {'input': [1, 2, 3], 'in': '$$this'}}, "
+                        + "'initialValue': null, 'in': {'$max': ['$$value', '$$this']}}}]}, "
+                        + "{'$reduce': {'input': {'$map': {'input': [1, 2, 3], 'in': '$$this'}}, "
+                        + "'initialValue': null, 'in': {'$max': ['$$value', '$$this']}}}, 9]}");
+        assertExpression(
+                9,
+                ofIntegerArray().max(a -> a, of(9)));
+    }
+
+    @Test
+    public void reduceMinTest() {
+        assertExpression(
+                1,
+                ofIntegerArray(1, 2, 3).min(a -> a, of(9)),
+                "{'$cond': [{'$isNumber': [{'$reduce': {'input': "
+                        + "{'$map': {'input': [1, 2, 3], 'in': '$$this'}}, "
+                        + "'initialValue': null, 'in': {'$min': ['$$value', '$$this']}}}]}, "
+                        + "{'$reduce': {'input': {'$map': {'input': [1, 2, 3], 'in': '$$this'}}, "
+                        + "'initialValue': null, 'in': {'$min': ['$$value', '$$this']}}}, 9]}");
+        assertExpression(
+                9,
+                ofIntegerArray().min(a -> a, of(9)));
+    }
+
+    @Test
+    public void reduceJoinTest() {
         assertExpression(
                 "abc",
-                ofStringArray("a", "b", "c").reduce(of(""), (a, b) -> a.concat(b)),
-                // MQL:
-                "{'$reduce': {'input': ['a', 'b', 'c'], 'initialValue': '', 'in': {'$concat': ['$$value', '$$this']}}}");
+                ofStringArray("a", "b", "c").join(a -> a),
+                "{'$reduce': {'input': {'$map': {'input': ['a', 'b', 'c'], 'in': '$$this'}}, "
+                        + "'initialValue': '', 'in': {'$concat': ['$$value', '$$this']}}}");
+        assertExpression(
+                "",
+                ofStringArray().join(a -> a));
+    }
 
+    @Test
+    public void reduceConcatTest() {
+        assertExpression(
+                Arrays.asList(1, 2, 3, 4),
+                ofArray(ofIntegerArray(1, 2), ofIntegerArray(3, 4)).concat(v -> v),
+                "{'$reduce': {'input': {'$map': {'input': [[1, 2], [3, 4]], 'in': '$$this'}}, "
+                        + "'initialValue': [], "
+                        + "'in': {'$concatArrays': ['$$value', '$$this']}}} ");
+        // empty:
+        ArrayExpression<ArrayExpression<Expression>> expressionArrayExpression = ofArray();
+        assertExpression(
+                Collections.emptyList(),
+                expressionArrayExpression.concat(a -> a));
+    }
+
+    @Test
+    public void reduceUnionTest() {
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/ (40)
+        assertExpression(
+                Arrays.asList(1, 2, 3),
+                ofArray(ofIntegerArray(1, 2), ofIntegerArray(1, 3)).union(v -> v),
+                // MQL:
+                "{'$reduce': {'input': {'$map': {'input': [[1, 2], [1, 3]], 'in': '$$this'}}, "
+                        + "'initialValue': [], "
+                        + "'in': {'$setUnion': ['$$value', '$$this']}}}");
     }
 
     @Test
@@ -221,6 +308,12 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.first(),
                 // MQL:
                 "{'$first': [[1, 2, 3]]}");
+
+        assertExpression(
+                MISSING,
+                ofIntegerArray().first(),
+                // MQL:
+                "{'$first': [[]]}");
     }
 
     @Test
@@ -289,7 +382,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
-    public void setUnionTest() {
+    public void unionTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/
         assertExpression(
                 Arrays.asList(1, 2, 3),
@@ -309,5 +402,4 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 // MQL:
                 "{'$setUnion': [[1, 2, 1, 3, 3]]}");
     }
-
 }

@@ -27,6 +27,8 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.Expressions.ofArray;
+import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 
 final class MqlExpression<T extends Expression>
@@ -385,7 +387,6 @@ final class MqlExpression<T extends Expression>
                 .append("cond", extractBsonValue(cr, cond.apply(varThis)))));
     }
 
-    @Override
     public T reduce(final T initialValue, final BinaryOperator<T> in) {
         T varThis = variable("$$this");
         T varValue = variable("$$value");
@@ -393,6 +394,66 @@ final class MqlExpression<T extends Expression>
                 .append("input", this.toBsonValue(cr))
                 .append("initialValue", extractBsonValue(cr, initialValue))
                 .append("in", extractBsonValue(cr, in.apply(varValue, varThis)))));
+    }
+
+    private <R extends Expression> R reduceMap(
+            final Function<T, R> map,
+            final R initialValue,
+            final BinaryOperator<R> in) {
+        MqlExpression<R> map1 = (MqlExpression<R>) this.map(map);
+        return map1.reduce(initialValue, in);
+    }
+
+    @Override
+    public BooleanExpression any(final Function<T, BooleanExpression> map) {
+        return reduceMap(map, of(false), (a, b) -> a.or(b));
+    }
+
+    @Override
+    public BooleanExpression all(final Function<T, BooleanExpression> map) {
+        return reduceMap(map, of(true), (a, b) -> a.and(b));
+    }
+
+    @Override
+    public NumberExpression sum(final Function<T, NumberExpression> map) {
+        // no sum for IntegerExpression, both have same erasure
+        return reduceMap(map, of(0), (a, b) -> a.add(b));
+    }
+
+    @Override
+    public NumberExpression multiply(final Function<T, NumberExpression> map) {
+        return reduceMap(map, of(0), (a, b) -> a.multiply(b));
+    }
+
+    @Override
+    public NumberExpression max(final Function<T, NumberExpression> map, final NumberExpression orElse) {
+        return reduceMap(map,
+                        (NumberExpression) ofNull(),
+                        (a, b) -> a.max(b))
+                .isNumberOr(orElse);
+    }
+
+    @Override
+    public NumberExpression min(final Function<T, NumberExpression> map, final NumberExpression orElse) {
+        return reduceMap(map,
+                        (NumberExpression) ofNull(),
+                        (a, b) -> a.min(b))
+                .isNumberOr(orElse);
+    }
+
+    @Override
+    public StringExpression join(final Function<T, StringExpression> map) {
+        return reduceMap(map, of(""), (a, b) -> a.concat(b));
+    }
+
+    @Override
+    public <R extends Expression> ArrayExpression<R> concat(final Function<T, ArrayExpression<R>> map) {
+        return reduceMap(map, ofArray(), (a, b) -> a.concat(b));
+    }
+
+    @Override
+    public <R extends Expression> ArrayExpression<R> union(final Function<T, ArrayExpression<R>> map) {
+        return reduceMap(map, ofArray(), (a, b) -> a.union(b));
     }
 
     @Override
