@@ -459,12 +459,6 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public StringExpression dateToString() {
-        return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
-                .append("date", this.toBsonValue(cr))));
-    }
-
-    @Override
     public StringExpression asString(final StringExpression timezone, final StringExpression format) {
         return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
                 .append("date", this.toBsonValue(cr))

@@ -25,7 +25,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("ConstantConditions")
@@ -136,25 +135,4 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 "{'$millisecond': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
-    @Test
-    public void dateToStringTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
-        assertExpression(
-                instant.toString(),
-                date.asString(),
-                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}}}");
-        // with parameters
-        assertExpression(
-                utcDateTime.withZoneSameInstant(ZoneId.of("America/New_York")).format(ISO_LOCAL_DATE_TIME),
-                date.asString(of("America/New_York"), of("%Y-%m-%dT%H:%M:%S.%L")),
-                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
-                        + "'format': '%Y-%m-%dT%H:%M:%S.%L', "
-                        + "'timezone': 'America/New_York'}}");
-        assertExpression(
-                utcDateTime.withZoneSameInstant(ZoneId.of("+04:30")).format(ISO_LOCAL_DATE_TIME),
-                date.asString(of("+04:30"), of("%Y-%m-%dT%H:%M:%S.%L")),
-                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
-                        + "'format': '%Y-%m-%dT%H:%M:%S.%L', "
-                        + "'timezone': '+04:30'}}");
-    }
 }

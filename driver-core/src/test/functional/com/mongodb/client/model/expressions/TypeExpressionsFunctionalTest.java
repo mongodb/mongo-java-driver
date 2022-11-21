@@ -23,11 +23,15 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -166,41 +170,44 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // with parameters
         assertExpression(
                 "2007-12-03T05:15:30.005Z",
-                of(instant).asString(of("%Y-%m-%dT%H:%M:%S.%LZ"), of("America/New_York")),
+                of(instant).asString(of("America/New_York"), of("%Y-%m-%dT%H:%M:%S.%LZ")),
                 "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
                         + "'format': '%Y-%m-%dT%H:%M:%S.%LZ', "
                         + "'timezone': 'America/New_York'}}");
         assertExpression(
                 "2007-12-03T14:45:30.005Z",
-                of(instant).asString(of("%Y-%m-%dT%H:%M:%S.%LZ"), of("+04:30")),
+                of(instant).asString(of("+04:30"), of("%Y-%m-%dT%H:%M:%S.%LZ")),
                 "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
                         + "'format': '%Y-%m-%dT%H:%M:%S.%LZ', "
                         + "'timezone': '+04:30'}}");
     }
 
+
     // parse string
 
     @Test
-    public void parseDateTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateFromString/ (45 |69)
-        String stringDate = "2007-12-03T10:15:30.005Z";
-        final Instant instant = Instant.parse(stringDate);
+    public void dateToStringTest() {
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
+        Instant instant = Instant.parse("2007-12-03T10:15:30.005Z");
+        DateExpression date = of(instant);
+        ZonedDateTime utcDateTime = ZonedDateTime.ofInstant(instant, ZoneId.of(ZoneOffset.UTC.getId()));
         assertExpression(
-                instant,
-                of(stringDate).parseDate(),
-                "{'$dateFromString': {'dateString': '2007-12-03T10:15:30.005Z'}}");
-
+                instant.toString(),
+                date.asString(),
+                "{'$toString': [{'$date': '2007-12-03T10:15:30.005Z'}]}");
         // with parameters
         assertExpression(
-                instant,
-                of("2007-12-03T05:15:30.005Z").parseDate(of("%Y-%m-%dT%H:%M:%S.%LZ"), of("America/New_York")),
-                "{'$dateFromString': {'dateString': '2007-12-03T05:15:30.005Z', "
-                        + "'format': '%Y-%m-%dT%H:%M:%S.%LZ', 'timezone': 'America/New_York'}}");
+                utcDateTime.withZoneSameInstant(ZoneId.of("America/New_York")).format(ISO_LOCAL_DATE_TIME),
+                date.asString(of("America/New_York"), of("%Y-%m-%dT%H:%M:%S.%L")),
+                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
+                        + "'format': '%Y-%m-%dT%H:%M:%S.%L', "
+                        + "'timezone': 'America/New_York'}}");
         assertExpression(
-                instant,
-                of("2007-12-03T14:45:30.005Z").parseDate(of("%Y-%m-%dT%H:%M:%S.%LZ"), of("+04:30")),
-                "{'$dateFromString': {'dateString': '2007-12-03T14:45:30.005Z', "
-                        + "'format': '%Y-%m-%dT%H:%M:%S.%LZ', 'timezone': '+04:30'}}");
+                utcDateTime.withZoneSameInstant(ZoneId.of("+04:30")).format(ISO_LOCAL_DATE_TIME),
+                date.asString(of("+04:30"), of("%Y-%m-%dT%H:%M:%S.%L")),
+                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
+                        + "'format': '%Y-%m-%dT%H:%M:%S.%L', "
+                        + "'timezone': '+04:30'}}");
     }
 
     @Test
