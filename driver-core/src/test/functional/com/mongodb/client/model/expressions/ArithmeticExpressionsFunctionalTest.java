@@ -20,7 +20,6 @@ import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 
 import static com.mongodb.client.model.expressions.Expressions.numberToExpression;
@@ -38,9 +37,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
         assertExpression(1, of(1), "1");
         assertExpression(1L, of(1L));
         assertExpression(1.0, of(1.0));
-        assertExpression(BigDecimal.valueOf(1.0), of(BigDecimal.valueOf(1.0)));
         assertExpression(Decimal128.parse("1.0"), of(Decimal128.parse("1.0")));
-        assertThrows(IllegalArgumentException.class, () -> of((BigDecimal) null));
         assertThrows(IllegalArgumentException.class, () -> of((Decimal128) null));
 
         // expression equality differs from bson equality
@@ -59,10 +56,9 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
         assertExpression(1, numberToExpression(1));
         assertExpression(1L, numberToExpression(1L));
         assertExpression(1.0, numberToExpression(1.0));
-        assertExpression(BigDecimal.valueOf(1.0), numberToExpression(BigDecimal.valueOf(1.0)));
         assertExpression(Decimal128.parse("1.0"), numberToExpression(Decimal128.parse("1.0")));
         assertThrows(IllegalArgumentException.class,
-                () -> assertExpression("n/a", numberToExpression(BigInteger.valueOf(1))));
+                () -> assertExpression("n/a", numberToExpression(BigDecimal.valueOf(1))));
     }
 
     @Test

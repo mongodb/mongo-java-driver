@@ -31,7 +31,6 @@ import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.Decimal128;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,10 +73,6 @@ public final class Expressions {
     }
     public static NumberExpression of(final double of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
-    }
-    public static NumberExpression of(final BigDecimal of) {
-        Assertions.notNull("BigDecimal", of);
-        return of(new Decimal128(of));
     }
     public static NumberExpression of(final Decimal128 of) {
         Assertions.notNull("Decimal128", of);
@@ -146,10 +141,8 @@ public final class Expressions {
             return of((double) number);
         } else if (number instanceof Decimal128) {
             return of((Decimal128) number);
-        } else if (number instanceof BigDecimal) {
-            return of((BigDecimal) number);
         } else {
-            throw new IllegalArgumentException("Number must be an Integer, Long, Double, Decimal128, or BigDecimal");
+            throw new IllegalArgumentException("Number must be one of: Integer, Long, Double, Decimal128");
         }
     }
 }
