@@ -31,12 +31,13 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#date-expression-operators
 
     private final ZonedDateTime utcDateTime = ZonedDateTime.ofInstant(Instant.parse("2007-12-03T10:15:30.005Z"), ZoneId.of(ZoneOffset.UTC.getId()));
+    private final StringExpression utc = of("UTC");
+    private final DateExpression utcDateEx = of(utcDateTime.toInstant());
 
     @Test
     public void literalsTest() {
         assertExpression(
-                utcDateTime.toInstant(),
-                of(utcDateTime.toInstant()),
+                utcDateTime.toInstant(), utcDateEx,
                 "{'$date': '2007-12-03T10:15:30.005Z'}");
     }
 
@@ -45,8 +46,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/year/
         assertExpression(
                 utcDateTime.get(ChronoField.YEAR),
-                of(utcDateTime.toInstant()).year(),
-                "{'$year': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.year(utc),
+                "{'$year': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -54,8 +55,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/month/
         assertExpression(
                 utcDateTime.get(ChronoField.MONTH_OF_YEAR),
-                of(utcDateTime.toInstant()).month(),
-                "{'$month': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.month(utc),
+                "{'$month': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -63,8 +64,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dayOfMonth/
         assertExpression(
                 utcDateTime.get(ChronoField.DAY_OF_MONTH),
-                of(utcDateTime.toInstant()).dayOfMonth(),
-                "{'$dayOfMonth': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.dayOfMonth(utc),
+                "{'$dayOfMonth': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -72,8 +73,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dayOfWeek/
         assertExpression(
                 utcDateTime.get(ChronoField.DAY_OF_WEEK) + 1,
-                of(utcDateTime.toInstant()).dayOfWeek(),
-                "{'$dayOfWeek': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.dayOfWeek(utc),
+                "{'$dayOfWeek': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -81,8 +82,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dayOfYear/
         assertExpression(
                 utcDateTime.get(ChronoField.DAY_OF_YEAR),
-                of(utcDateTime.toInstant()).dayOfYear(),
-                "{'$dayOfYear': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.dayOfYear(utc),
+                "{'$dayOfYear': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -90,8 +91,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/hour/
         assertExpression(
                 utcDateTime.get(ChronoField.HOUR_OF_DAY),
-                of(utcDateTime.toInstant()).hour(),
-                "{'$hour': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.hour(utc),
+                "{'$hour': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -99,8 +100,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/minute/
         assertExpression(
                 utcDateTime.get(ChronoField.MINUTE_OF_HOUR),
-                of(utcDateTime.toInstant()).minute(),
-                "{'$minute': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.minute(utc),
+                "{'$minute': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -108,8 +109,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/second/
         assertExpression(
                 utcDateTime.get(ChronoField.SECOND_OF_MINUTE),
-                of(utcDateTime.toInstant()).second(),
-                "{'$second': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.second(utc),
+                "{'$second': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -117,8 +118,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/week/
         assertExpression(
                 48,
-                of(utcDateTime.toInstant()).week(),
-                "{'$week': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.week(utc),
+                "{'$week': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -126,8 +127,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/millisecond/
         assertExpression(
                 utcDateTime.get(ChronoField.MILLI_OF_SECOND),
-                of(utcDateTime.toInstant()).millisecond(),
-                "{'$millisecond': {'$date': '2007-12-03T10:15:30.005Z'}}");
+                utcDateEx.millisecond(utc),
+                "{'$millisecond': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, 'timezone': 'UTC'}}");
     }
 
     @Test
@@ -135,17 +136,17 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
         assertExpression(
                 utcDateTime.toInstant().toString(),
-                of(utcDateTime.toInstant()).dateToString());
+                utcDateEx.dateToString(utc));
         // with parameters
         assertExpression(
                 utcDateTime.withZoneSameInstant(ZoneId.of("America/New_York")).format(ISO_LOCAL_DATE_TIME),
-                of(utcDateTime.toInstant()).dateToString(of("%Y-%m-%dT%H:%M:%S.%L"), of("America/New_York")),
+                utcDateEx.dateToString(of("America/New_York"), of("%Y-%m-%dT%H:%M:%S.%L")),
                 "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
                         + "'format': '%Y-%m-%dT%H:%M:%S.%L', "
                         + "'timezone': 'America/New_York'}}");
         assertExpression(
                 utcDateTime.withZoneSameInstant(ZoneId.of("+04:30")).format(ISO_LOCAL_DATE_TIME),
-                of(utcDateTime.toInstant()).dateToString(of("%Y-%m-%dT%H:%M:%S.%L"), of("+04:30")),
+                utcDateEx.dateToString(of("+04:30"), of("%Y-%m-%dT%H:%M:%S.%L")),
                 "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
                         + "'format': '%Y-%m-%dT%H:%M:%S.%L', "
                         + "'timezone': '+04:30'}}");

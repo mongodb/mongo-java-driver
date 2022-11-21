@@ -334,64 +334,71 @@ final class MqlExpression<T extends Expression>
 
     /** @see DateExpression */
 
-    @Override
-    public IntegerExpression year() {
-        return new MqlExpression<>(ast("$year"));
+    private MqlExpression<Expression> usingTimezone(final String name, final StringExpression timezone) {
+        return new MqlExpression<>((cr) -> astDoc(name, new BsonDocument()
+                .append("date", this.toBsonValue(cr))
+                .append("timezone", extractBsonValue(cr, timezone))));
     }
 
     @Override
-    public IntegerExpression month() {
-        return new MqlExpression<>(ast("$month"));
+    public IntegerExpression year(final StringExpression timezone) {
+        return usingTimezone("$year", timezone);
     }
 
     @Override
-    public IntegerExpression dayOfMonth() {
-        return new MqlExpression<>(ast("$dayOfMonth"));
+    public IntegerExpression month(final StringExpression timezone) {
+        return usingTimezone("$month", timezone);
     }
 
     @Override
-    public IntegerExpression dayOfWeek() {
-        return new MqlExpression<>(ast("$dayOfWeek"));
+    public IntegerExpression dayOfMonth(final StringExpression timezone) {
+        return usingTimezone("$dayOfMonth", timezone);
     }
 
     @Override
-    public IntegerExpression dayOfYear() {
-        return new MqlExpression<>(ast("$dayOfYear"));
+    public IntegerExpression dayOfWeek(final StringExpression timezone) {
+        return usingTimezone("$dayOfWeek", timezone);
     }
 
     @Override
-    public IntegerExpression hour() {
-        return new MqlExpression<>(ast("$hour"));
+    public IntegerExpression dayOfYear(final StringExpression timezone) {
+        return usingTimezone("$dayOfYear", timezone);
     }
 
     @Override
-    public IntegerExpression minute() {
-        return new MqlExpression<>(ast("$minute"));
+    public IntegerExpression hour(final StringExpression timezone) {
+        return usingTimezone("$hour", timezone);
     }
 
     @Override
-    public IntegerExpression second() {
-        return new MqlExpression<>(ast("$second"));
+    public IntegerExpression minute(final StringExpression timezone) {
+        return usingTimezone("$minute", timezone);
     }
 
     @Override
-    public IntegerExpression week() {
-        return new MqlExpression<>(ast("$week"));
+    public IntegerExpression second(final StringExpression timezone) {
+        return usingTimezone("$second", timezone);
     }
 
     @Override
-    public IntegerExpression millisecond() {
-        return new MqlExpression<>(ast("$millisecond"));
+    public IntegerExpression week(final StringExpression timezone) {
+        return usingTimezone("$week", timezone);
     }
 
     @Override
-    public StringExpression dateToString() {
+    public IntegerExpression millisecond(final StringExpression timezone) {
+        return usingTimezone("$millisecond", timezone);
+    }
+
+    @Override
+    public StringExpression dateToString(final StringExpression timezone) {
         return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
-                .append("date", this.toBsonValue(cr))));
+                .append("date", this.toBsonValue(cr))
+                .append("timezone", extractBsonValue(cr, timezone))));
     }
 
     @Override
-    public StringExpression dateToString(final StringExpression format, final StringExpression timezone) {
+    public StringExpression dateToString(final StringExpression timezone, final StringExpression format) {
         return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
                 .append("date", this.toBsonValue(cr))
                 .append("format", extractBsonValue(cr, format))
