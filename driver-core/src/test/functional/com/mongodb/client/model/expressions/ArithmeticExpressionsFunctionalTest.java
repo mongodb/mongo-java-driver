@@ -78,6 +78,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
 
         // convenience
         assertExpression(2.0, of(1.0).multiply(2.0));
+        assertExpression(2L, of(1).multiply(2L));
         assertExpression(2, of(1).multiply(2));
     }
 
@@ -133,6 +134,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
 
         // convenience
         assertExpression(3.0, of(1.0).add(2.0));
+        assertExpression(3L, of(1).add(2L));
         assertExpression(3, of(1).add(2));
 
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/sum/

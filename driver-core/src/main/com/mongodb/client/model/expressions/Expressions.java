@@ -136,4 +136,20 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonNull()))
                 .assertImplementsAllExpressions();
     }
+
+    static NumberExpression numberToExpression(final Number number) {
+        if (number instanceof Integer) {
+            return of((int) number);
+        } else if (number instanceof Long) {
+            return of((long) number);
+        } else if (number instanceof Double) {
+            return of((double) number);
+        } else if (number instanceof Decimal128) {
+            return of((Decimal128) number);
+        } else if (number instanceof BigDecimal) {
+            return of((BigDecimal) number);
+        } else {
+            throw new IllegalArgumentException("Number must be an Integer, Long, Double, Decimal128, or BigDecimal");
+        }
+    }
 }
