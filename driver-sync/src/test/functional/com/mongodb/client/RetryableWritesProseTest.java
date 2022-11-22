@@ -251,13 +251,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             collection.drop();
             MongoWriteConcernException e = assertThrows(MongoWriteConcernException.class, () -> collection.insertOne(new Document()));
             assertEquals(91, e.getCode());
-                try {
-                    collection.insertOne(new Document());
-                } catch (MongoWriteConcernException e) {
-                    assertEquals(91, e.getCode());
-                    throw e;
-                }
-            });
         } finally {
             futureFailPointFromListener.thenAccept(FailPoint::close);
         }
