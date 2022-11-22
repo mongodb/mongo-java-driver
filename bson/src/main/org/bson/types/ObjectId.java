@@ -423,12 +423,12 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         for (int i = 0; i < b.length; i++) {
             char c1 = s.charAt(i * 2);
             char c2 = s.charAt(i * 2 + 1);
-            b[i] = hexCharToByte(c1) * 16 + hexCharToByte(c2)
+            b[i] = (byte) ((hexCharToInt(c1) << 4) + hexCharToInt(c2));
         }
         return b;
     }
 
-    private static byte hexCharToByte(char c) {
+    private static int hexCharToInt(final char c) {
         if (c >= '0' && c <= '9') {
             return c - 48;
         } else if (c >= 'a' && c <= 'f') {
