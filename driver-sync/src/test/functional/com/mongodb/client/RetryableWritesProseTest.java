@@ -249,7 +249,8 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
             collection.drop();
-            assertThrows(MongoWriteConcernException.class, () -> {
+            MongoWriteConcernException e = assertThrows(MongoWriteConcernException.class, () -> collection.insertOne(new Document()));
+            assertEquals(91, e.getCode());
                 try {
                     collection.insertOne(new Document());
                 } catch (MongoWriteConcernException e) {
