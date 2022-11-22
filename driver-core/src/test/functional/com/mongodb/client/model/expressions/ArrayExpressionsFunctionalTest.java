@@ -86,13 +86,15 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 of(Document.parse("{a: 1}")),
                 of(Document.parse("{b: 2}")));
         assertExpression(
-                Arrays.asList(Collections.emptyList(), Collections.emptyList()), documentArray,
-                "[[], []]");
+                Arrays.asList(Document.parse("{a: 1}"), Document.parse("{b: 2}")),
+                documentArray,
+                "[{'$literal': {'a': 1}}, {'$literal': {'b': 2}}]");
 
         // Array
         ArrayExpression<ArrayExpression<Expression>> arrayArray = ofArray(ofArray(), ofArray());
         assertExpression(
-                Arrays.asList(Collections.emptyList(), Collections.emptyList()), arrayArray,
+                Arrays.asList(Collections.emptyList(), Collections.emptyList()),
+                arrayArray,
                 "[[], []]");
 
         // Mixed

@@ -26,10 +26,8 @@ import java.time.Instant;
 import java.util.Arrays;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
-import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("ConstantConditions")
 class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -232,7 +230,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(
                 BsonDocument.parse("{a: null}"),
                 ofDoc("{a: 1}").merge(ofDoc("{a: null}")));
-        
+
         assertExpression(
                 BsonDocument.parse("{a: 1}"),
                 ofDoc("{a: null}").merge(ofDoc("{a: 1}")));
