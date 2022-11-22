@@ -136,7 +136,8 @@ class DateExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
         assertExpression(
                 utcDateTime.toInstant().toString(),
-                utcDateEx.dateToString(utc));
+                utcDateEx.dateToString(),
+                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}}}");
         // with parameters
         assertExpression(
                 utcDateTime.withZoneSameInstant(ZoneId.of("America/New_York")).format(ISO_LOCAL_DATE_TIME),

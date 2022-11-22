@@ -31,7 +31,7 @@ public interface DateExpression extends Expression {
     IntegerExpression week(StringExpression timezone);
     IntegerExpression millisecond(StringExpression timezone);
 
-    StringExpression dateToString(StringExpression timezone);
+    StringExpression dateToString();
     StringExpression dateToString(StringExpression timezone, StringExpression format);
 
 }
