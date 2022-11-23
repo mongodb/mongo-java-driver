@@ -32,7 +32,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 
 final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
-        StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
+        StringExpression, DateExpression, DocumentExpression, ArrayExpression<T>, MapExpression<T>, EntryExpression<T> {
 
     private final Function<CodecRegistry, AstPlaceholder> fn;
 
@@ -51,6 +51,32 @@ final class MqlExpression<T extends Expression>
 
     private AstPlaceholder astDoc(final String name, final BsonDocument value) {
         return new AstPlaceholder(new BsonDocument(name, value));
+    }
+
+    @Override
+    public StringExpression getKey() {
+        return new MqlExpression<>(getFieldInternal("k"));
+    }
+
+    @Override
+    public T getValue() {
+        return newMqlExpression(getFieldInternal("v"));
+    }
+
+    @Override
+    public EntryExpression<T> setValue(final T val) {
+        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
+                .append("field", new BsonString("v"))
+                .append("input", this.toBsonValue(cr))
+                .append("value", extractBsonValue(cr, val))));
+    }
+
+    @Override
+    public EntryExpression<T> setKey(final StringExpression key) {
+        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
+                .append("field", new BsonString("k"))
+                .append("input", this.toBsonValue(cr))
+                .append("value", extractBsonValue(cr, key))));
     }
 
     static final class AstPlaceholder {
@@ -95,7 +121,7 @@ final class MqlExpression<T extends Expression>
      * the only implementation of Expression and all subclasses, so this will
      * not mis-cast an expression as anything else.
      */
-    private static BsonValue extractBsonValue(final CodecRegistry cr, final Expression expression) {
+    static BsonValue extractBsonValue(final CodecRegistry cr, final Expression expression) {
         return ((MqlExpression<?>) expression).toBsonValue(cr);
     }
 
@@ -325,6 +351,11 @@ final class MqlExpression<T extends Expression>
 
     public BooleanExpression isArray() {
         return new MqlExpression<>(astWrapped("$isArray"));
+    }
+
+    public Expression ifNull(final Expression ifNull) {
+        return new MqlExpression<>(ast("$ifNull", ifNull, Expressions.ofNull()))
+                .assertImplementsAllExpressions();
     }
 
     /**
@@ -731,4 +762,51 @@ final class MqlExpression<T extends Expression>
     public StringExpression substrBytes(final IntegerExpression start, final IntegerExpression length) {
         return new MqlExpression<>(ast("$substrBytes", start, length));
     }
+
+    /** @see MapExpression
+     * @see EntryExpression */
+
+    @Override
+    public T get(final StringExpression key) {
+        return newMqlExpression((cr) -> astDoc("$getField", new BsonDocument()
+                .append("input", this.fn.apply(cr).bsonValue)
+                .append("field", extractBsonValue(cr, key))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get(final StringExpression key, final T orElse) {
+        return (T) ((MqlExpression<?>) get(key)).ifNull(orElse); // TODO unchecked
+    }
+
+    @Override
+    public MapExpression<T> set(final StringExpression key, final T value) {
+        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
+                .append("field", extractBsonValue(cr, key))
+                .append("input", this.toBsonValue(cr))
+                .append("value", extractBsonValue(cr, value))));
+    }
+
+    @Override
+    public MapExpression<T> unset(final StringExpression key) {
+        return newMqlExpression((cr) -> astDoc("$unsetField", new BsonDocument()
+                .append("field", extractBsonValue(cr, key))
+                .append("input", this.toBsonValue(cr))));
+    }
+
+    @Override
+    public MapExpression<T> mergee(final MapExpression<T> map) {
+        return new MqlExpression<>(ast("$mergeObjects", map));
+    }
+
+    @Override
+    public ArrayExpression<EntryExpression<T>> entrySet() {
+        return newMqlExpression(ast("$objectToArray"));
+    }
+
+    @Override
+    public <R extends Expression> MapExpression<R> buildMap(final Function<T, EntryExpression<R>> o) {
+        return newMqlExpression(astWrapped("$arrayToObject"));
+    }
+
 }
