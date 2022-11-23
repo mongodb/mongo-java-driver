@@ -420,12 +420,11 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         }
 
         byte[] b = new byte[OBJECT_ID_LENGTH];
-        int i = 0;
-        while (i < OBJECT_ID_LENGTH) {
-            char c1 = s.charAt(i);
-            char c2 = s.charAt(i + 1);
+        for (int i = 0; i < b.length; i++) {
+            int pos = i << 1;
+            char c1 = s.charAt(pos);
+            char c2 = s.charAt(pos + 1);
             b[i] = (byte) ((hexCharToInt(c1) << 4) + hexCharToInt(c2));
-            i += 2;
         }
         return b;
     }
