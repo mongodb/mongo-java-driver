@@ -61,6 +61,17 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
     );
 
     @Test
+    public void literalsTest() {
+        // special values
+        assertExpression(null, ofNull(), "null");
+        // the "missing" value is obtained via getField.
+        // the "$$REMOVE" value is intentionally not exposed. It is used internally.
+        // the "undefined" value is deprecated.
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/literal/
+        // $literal is intentionally not exposed. It is used internally.
+    }
+
+    @Test
     public void eqTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/eq/
         assertExpression(
