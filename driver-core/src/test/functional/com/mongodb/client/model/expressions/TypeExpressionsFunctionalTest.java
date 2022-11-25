@@ -18,8 +18,8 @@ package com.mongodb.client.model.expressions;
 
 import com.mongodb.MongoCommandException;
 import org.bson.BsonDocument;
+import org.bson.Document;
 import org.bson.types.Decimal128;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -40,8 +40,9 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/type/ (28 |40)
     // type is not implemented directly; instead, similar checks done via switch
 
-    // the direct "isT" (comparable to instanceof) are exposed via switch
-    // here, we expose isTypeOr. These would be used on an Expression of
+    // The direct "isT" (comparable to instanceof) methods, which one might
+    // expect to see on Expression, are exposed via switch.
+    // Here, we only expose isTypeOr. These would be used on an Expression of
     // an unknown type, or to provide default values in cases where a null
     // has intruded into the alleged type.
 
@@ -84,11 +85,10 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     public void isDateOrTest() {
         Instant date = Instant.parse("2007-12-03T10:15:30.005Z");
         assertExpression(
-                Instant.ofEpochMilli(1196676930005L),
+                date,
                 of(date).isDateOr(of(date.plusMillis(10))),
-                "{'$cond': [{'$in': [{'$type': {'$date': '2007-12-03T10:15:30.005Z'}}, "
-                        + "['date', 'timestamp']]}, {'$date': '2007-12-03T10:15:30.005Z'}, "
-                        + "{'$date': '2007-12-03T10:15:30.015Z'}]}");
+                "{'$cond': [{'$in': [{'$type': {'$date': '2007-12-03T10:15:30.005Z'}}, ['date']]}, "
+                        + "{'$date': '2007-12-03T10:15:30.005Z'}, {'$date': '2007-12-03T10:15:30.015Z'}]}");
         // non-date:
         assertExpression(date, ofIntegerArray(1).isDateOr(of(date)));
         assertExpression(date, ofNull().isDateOr(of(date)));
@@ -123,8 +123,11 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // Convert is not implemented: too dynamic, conversions should be explicit.
 
     /*
+    One might expect to see all conversions in $convert represented in this
+    API, but we expose only the useful ones.
+
     Useful conversions:
-    - anything-string: toString to a parsable type
+    - anything-string: toString to a parsable type (excludes doc, array)
     - string-parse-anything: every type should allow parsing to a string
       - presently excludes objects (docs) and arrays
       - includes formatted date strings
@@ -152,48 +155,24 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // this is equivalent to $dateToString
         assertExpression("1970-01-01T00:00:00.123Z", of(Instant.ofEpochMilli(123)).asString());
 
-        // TODO:
-//        assertExpression("[]", ofIntegerArray(1, 2).asString());
-//        assertExpression("[1, 2]", ofIntegerArray(1, 2).asString());
-//        assertExpression("{a: 1}", of(Document.parse("{a: 1}")).asString());
+        // Arrays and documents are not (yet) supported:
+        assertThrows(MongoCommandException.class, () ->
+                assertExpression("[]", ofIntegerArray(1, 2).asString()));
+        assertThrows(MongoCommandException.class, () ->
+                assertExpression("[1, 2]", ofIntegerArray(1, 2).asString()));
+        assertThrows(MongoCommandException.class, () ->
+                assertExpression("{a: 1}", of(Document.parse("{a: 1}")).asString()));
     }
 
     @Test
     public void dateAsStringTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
         final Instant instant = Instant.parse("2007-12-03T10:15:30.005Z");
-        assertExpression(
-                "2007-12-03T10:15:30.005Z",
-                of(instant).asString(),
-                "{'$toString': [{'$date': '2007-12-03T10:15:30.005Z'}]}");
-
-        // with parameters
-        assertExpression(
-                "2007-12-03T05:15:30.005Z",
-                of(instant).asString(of("America/New_York"), of("%Y-%m-%dT%H:%M:%S.%LZ")),
-                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
-                        + "'format': '%Y-%m-%dT%H:%M:%S.%LZ', "
-                        + "'timezone': 'America/New_York'}}");
-        assertExpression(
-                "2007-12-03T14:45:30.005Z",
-                of(instant).asString(of("+04:30"), of("%Y-%m-%dT%H:%M:%S.%LZ")),
-                "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
-                        + "'format': '%Y-%m-%dT%H:%M:%S.%LZ', "
-                        + "'timezone': '+04:30'}}");
-    }
-
-
-    // parse string
-
-    @Test
-    public void dateToStringTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
-        Instant instant = Instant.parse("2007-12-03T10:15:30.005Z");
         DateExpression date = of(instant);
         ZonedDateTime utcDateTime = ZonedDateTime.ofInstant(instant, ZoneId.of(ZoneOffset.UTC.getId()));
         assertExpression(
-                instant.toString(),
-                date.asString(),
+                "2007-12-03T10:15:30.005Z",
+                of(instant).asString(),
                 "{'$toString': [{'$date': '2007-12-03T10:15:30.005Z'}]}");
         // with parameters
         assertExpression(
@@ -208,6 +187,36 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 "{'$dateToString': {'date': {'$date': '2007-12-03T10:15:30.005Z'}, "
                         + "'format': '%Y-%m-%dT%H:%M:%S.%L', "
                         + "'timezone': '+04:30'}}");
+        // Olson Timezone Identifier is changed to UTC offset:
+        assertExpression(
+                "2007-12-03T05:15:30.005-0500",
+                of(instant).asString(of("America/New_York"), of("%Y-%m-%dT%H:%M:%S.%L%z")));
+    }
+
+    // parse string
+
+    @Test
+    public void parseDateTest() {
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
+        String dateString = "2007-12-03T10:15:30.005Z";
+        assertExpression(
+                Instant.parse(dateString),
+                of(dateString).parseDate(),
+                "{'$dateFromString': {'dateString': '2007-12-03T10:15:30.005Z'}}");
+
+
+        // throws: "cannot pass in a date/time string with GMT offset together with a timezone argument"
+        assertThrows(MongoCommandException.class, () ->
+                assertExpression( 1, of("2007-12-03T10:15:30.005+01:00")
+                        .parseDate(of("+01:00"), of("%Y-%m-%dT%H:%M:%S.%L%z"))
+                        .asString()));
+        // therefore, to parse date strings containing UTC offsets, we need:
+        assertExpression(
+                Instant.parse("2007-12-03T09:15:30.005Z"),
+                of("2007-12-03T10:15:30.005+01:00")
+                    .parseDate(of("%Y-%m-%dT%H:%M:%S.%L%z")),
+                "{'$dateFromString': {'dateString': '2007-12-03T10:15:30.005+01:00', "
+                        + "'format': '%Y-%m-%dT%H:%M:%S.%L%z'}}");
     }
 
     @Test
@@ -217,31 +226,20 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // TODO: note that this parses to long. Unclear how to dynamically choose int/long
     }
 
-    @Test
-    public void parseObjectIdTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toObjectId/ (39 |28)
-        // TODO objectId has no type of its own, but this might be fine
-        assertExpression(
-                new ObjectId("5ab9cbfa31c2ab715d42129e"),
-                of("5ab9cbfa31c2ab715d42129e").parseObjectId(),
-                "{'$toObjectId': '5ab9cbfa31c2ab715d42129e'}");
-    }
-
     // non-string
 
     @Test
-    public void msToDateTest() {
+    public void millisecondsToDateTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDate/ (36 |53)
         assertExpression(
                 Instant.ofEpochMilli(1234),
-                of(1234L).msToDate(),
+                of(1234L).millisecondsToDate(),
                 "{'$toDate': {'$numberLong': '1234'}}");
-        // could be: millisecondsToDate / epochMsToDate
-        // TODO does not accept plain integers; could convert to dec128?
+        // This does not accept plain integers:
         assertThrows(MongoCommandException.class, () ->
                 assertExpression(
                         Instant.parse("2007-12-03T10:15:30.005Z"),
-                        of(1234).msToDate(),
+                        of(1234).millisecondsToDate(),
                         "{'$toDate': 1234}"));
     }
 }

@@ -190,19 +190,16 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.elementAt(of(1L)));
 
         assertExpression(
-                true,
-                ofRem().eq(array123.elementAt(99)));
-        assertExpression(
-                true,
-                ofRem().eq(array123.elementAt(-99)));
+                MISSING,
+                array123.elementAt(99));
 
         assertExpression(
-                Optional.empty(),
+                MISSING,
                 array123.elementAt(-99));
 
         // long values are considered entirely out of bounds; server error
         assertThrows(MongoCommandException.class, () -> assertExpression(
-                Optional.empty(),
+                MISSING,
                 array123.elementAt(of(Long.MAX_VALUE))));
     }
 
@@ -227,7 +224,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 "{'$last': [[1, 2, 3]]}");
 
         assertExpression(
-                Optional.empty(),
+                MISSING,
                 ofIntegerArray().last(),
                 // MQL:
                 "{'$last': [[]]}");
@@ -250,9 +247,13 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Stream.concat(Stream.of(1, 2, 3), Stream.of(1, 2, 3))
                         .collect(Collectors.toList()),
-                array123.concat(array123),
+                ofIntegerArray(1, 2, 3).concat(ofIntegerArray(1, 2, 3)),
                 // MQL:
                 "{'$concatArrays': [[1, 2, 3], [1, 2, 3]]}");
+        // mixed types:
+        assertExpression(
+                Arrays.asList(1.0, 1, 2, 3),
+                ofNumberArray(1.0).concat(ofIntegerArray(1, 2, 3)));
     }
 
     @Test
@@ -286,6 +287,12 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.union(array123),
                 // MQL:
                 "{'$setUnion': [[1, 2, 3], [1, 2, 3]]}");
+
+        // mixed types:
+        assertExpression(
+                Arrays.asList(1, 2.0, 3),
+                // above is a set; in case of flakiness, below should `sort` (not implemented at time of test creation)
+                ofNumberArray(2.0).setUnion(ofIntegerArray(1, 2, 3)));
         // convenience
         assertExpression(
                 Arrays.asList(1, 2, 3),

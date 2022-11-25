@@ -198,7 +198,7 @@ final class MqlExpression<T extends Expression>
     }
 
     public BooleanExpression isDate() {
-        return ofStringArray("date", "timestamp").contains(new MqlExpression<>(ast("$type")));
+        return ofStringArray("date").contains(new MqlExpression<>(ast("$type")));
     }
 
     @Override
@@ -299,7 +299,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public ArrayExpression<T> concat(final ArrayExpression<T> array) {
+    public ArrayExpression<T> concat(final ArrayExpression<? extends T> array) {
         return new MqlExpression<>(ast("$concatArrays", array))
                 .assertImplementsAllExpressions();
     }
@@ -311,7 +311,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public ArrayExpression<T> union(final ArrayExpression<T> set) {
+    public ArrayExpression<T> union(final ArrayExpression<? extends T> set) {
         return new MqlExpression<>(ast("$setUnion", set))
                 .assertImplementsAllExpressions();
     }
@@ -371,7 +371,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public DateExpression msToDate() {
+    public DateExpression millisecondsToDate() {
         return newMqlExpression(ast("$toDate"));
     }
 
@@ -467,11 +467,18 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public DateExpression parseDate(final StringExpression format, final StringExpression timezone) {
+    public DateExpression parseDate(final StringExpression timezone, final StringExpression format) {
         return newMqlExpression((cr) -> astDoc("$dateFromString", new BsonDocument()
                 .append("dateString", this.toBsonValue(cr))
                 .append("format", extractBsonValue(cr, format))
                 .append("timezone", extractBsonValue(cr, timezone))));
+    }
+
+    @Override
+    public DateExpression parseDate(final StringExpression format) {
+        return newMqlExpression((cr) -> astDoc("$dateFromString", new BsonDocument()
+                .append("dateString", this.toBsonValue(cr))
+                .append("format", extractBsonValue(cr, format))));
     }
 
     @Override
@@ -515,10 +522,5 @@ final class MqlExpression<T extends Expression>
     @Override
     public StringExpression substrBytes(final IntegerExpression start, final IntegerExpression length) {
         return new MqlExpression<>(ast("$substrBytes", start, length));
-    }
-
-    @Override
-    public Expression parseObjectId() {
-        return newMqlExpression(ast("$toObjectId"));
     }
 }

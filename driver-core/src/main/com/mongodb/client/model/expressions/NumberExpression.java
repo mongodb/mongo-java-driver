@@ -55,5 +55,5 @@ public interface NumberExpression extends Expression {
 
     NumberExpression abs();
 
-    DateExpression msToDate();
+    DateExpression millisecondsToDate();
 }

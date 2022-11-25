@@ -51,8 +51,7 @@ public interface StringExpression extends Expression {
 
     DateExpression parseDate();
 
-    DateExpression parseDate(StringExpression format, StringExpression timezone);
+    DateExpression parseDate(StringExpression format);
 
-    @Beta(Beta.Reason.CLIENT)
-    Expression parseObjectId();
+    DateExpression parseDate(StringExpression timezone, StringExpression format);
 }
