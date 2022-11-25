@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,6 +33,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofDateArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNumberArray;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
+import static org.testng.internal.collections.Ints.asList;
 
 @SuppressWarnings({"ConstantConditions", "Convert2MethodRef"})
 class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -160,6 +162,11 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.size(),
                 // MQL:
                 "{'$size': [[1, 2, 3]]}");
+        assertExpression(
+                0,
+                ofIntegerArray().size(),
+                // MQL:
+                "{'$size': [[]]}");
     }
 
     @Test
@@ -167,6 +174,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/arrayElemAt/
         assertExpression(
                 Arrays.asList(1, 2, 3).get(0),
+                // 0.0 is a valid integer value
                 array123.elementAt((IntegerExpression) of(0.0)),
                 // MQL:
                 "{'$arrayElemAt': [[1, 2, 3], 0.0]}");
@@ -188,7 +196,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/first/
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/first-array-element/
         assertExpression(
-                Arrays.asList(1, 2, 3).get(0),
+                new LinkedList<>(asList(1, 2, 3)).getFirst(),
                 array123.first(),
                 // MQL:
                 "{'$first': [[1, 2, 3]]}");
@@ -198,7 +206,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     public void lastTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/last-array-element/
         assertExpression(
-                Arrays.asList(1, 2, 3).get(2),
+                new LinkedList<>(asList(1, 2, 3)).getLast(),
                 array123.last(),
                 // MQL:
                 "{'$last': [[1, 2, 3]]}");

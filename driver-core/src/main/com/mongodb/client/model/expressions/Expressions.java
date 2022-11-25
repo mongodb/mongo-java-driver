@@ -66,11 +66,12 @@ public final class Expressions {
      * @return the boolean array expression
      */
     public static ArrayExpression<BooleanExpression> ofBooleanArray(final boolean... array) {
-        List<BsonValue> result = new ArrayList<>();
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
         for (boolean b : array) {
-            result.add(new BsonBoolean(b));
+            list.add(new BsonBoolean(b));
         }
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
     }
 
     /**
@@ -85,9 +86,11 @@ public final class Expressions {
     }
 
     public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... array) {
-        List<BsonValue> list = Arrays.stream(array)
-                .mapToObj(BsonInt32::new)
-                .collect(Collectors.toList());
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
+        for (int i : array) {
+            list.add(new BsonInt32(i));
+        }
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
     }
 
@@ -96,9 +99,11 @@ public final class Expressions {
     }
 
     public static ArrayExpression<IntegerExpression> ofIntegerArray(final long... array) {
-        List<BsonValue> list = Arrays.stream(array)
-                .mapToObj(BsonInt64::new)
-                .collect(Collectors.toList());
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
+        for (long i : array) {
+            list.add(new BsonInt64(i));
+        }
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
     }
 
@@ -107,9 +112,11 @@ public final class Expressions {
     }
 
     public static ArrayExpression<NumberExpression> ofNumberArray(final double... array) {
-        List<BsonValue> list = Arrays.stream(array)
-                .mapToObj(BsonDouble::new)
-                .collect(Collectors.toList());
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
+        for (double n : array) {
+            list.add(new BsonDouble(n));
+        }
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
     }
 
@@ -119,6 +126,7 @@ public final class Expressions {
     }
 
     public static ArrayExpression<NumberExpression> ofNumberArray(final Decimal128... array) {
+        Assertions.notNull("array", array);
         List<BsonValue> result = new ArrayList<>();
         for (Decimal128 e : array) {
             Assertions.notNull("elements of array", e);
@@ -133,6 +141,7 @@ public final class Expressions {
     }
 
     public static ArrayExpression<DateExpression> ofDateArray(final Instant... array) {
+        Assertions.notNull("array", array);
         List<BsonValue> result = new ArrayList<>();
         for (Instant e : array) {
             Assertions.notNull("elements of array", e);
@@ -155,6 +164,7 @@ public final class Expressions {
 
 
     public static ArrayExpression<StringExpression> ofStringArray(final String... array) {
+        Assertions.notNull("array", array);
         List<BsonValue> result = new ArrayList<>();
         for (String e : array) {
             Assertions.notNull("elements of array", e);
@@ -167,10 +177,12 @@ public final class Expressions {
     public static <T extends Expression> ArrayExpression<T> ofArray(final T... array) {
         Assertions.notNull("array", array);
         return new MqlExpression<>((cr) -> {
-            List<BsonValue> array2 = Arrays.stream(array)
-                    .map(v -> ((MqlExpression<?>) v).toBsonValue(cr))
-                    .collect(Collectors.toList());
-            return new AstPlaceholder(new BsonArray(array2));
+            List<BsonValue> list = new ArrayList<>();
+            for (T v : array) {
+                Assertions.notNull("elements of array", v);
+                list.add(((MqlExpression<?>) v).toBsonValue(cr));
+            }
+            return new AstPlaceholder(new BsonArray(list));
         });
     }
 
@@ -189,6 +201,7 @@ public final class Expressions {
     }
 
     static NumberExpression numberToExpression(final Number number) {
+        Assertions.notNull("number", number);
         if (number instanceof Integer) {
             return of((int) number);
         } else if (number instanceof Long) {
