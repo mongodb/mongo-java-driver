@@ -233,7 +233,7 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public IntegerExpression parseInteger() {
-        return new MqlExpression<>(ast("$toLong")); // TODO
+        return new MqlExpression<>(ast("$toLong"));
     }
 
     /** @see ArrayExpression */

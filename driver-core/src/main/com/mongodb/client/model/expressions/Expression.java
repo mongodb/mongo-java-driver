@@ -113,7 +113,6 @@ public interface Expression {
 
     /**
      * server error if type cannot be converted to string (arrays, objects)
-     * TODO: should this be moved to non-array/obj types?
      *
      * @return
      */

@@ -223,7 +223,6 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     public void parseIntegerTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/ (46 |15)
         assertExpression(1234L, of("1234").parseInteger(), "{'$toLong': '1234'}");
-        // TODO: note that this parses to long. Unclear how to dynamically choose int/long
     }
 
     // non-string
