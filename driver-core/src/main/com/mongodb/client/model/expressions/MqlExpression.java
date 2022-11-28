@@ -245,7 +245,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public ArrayExpression<T> setUnion(final ArrayExpression<T> set) {
+    public ArrayExpression<T> union(final ArrayExpression<T> set) {
         return new MqlExpression<>(ast("$setUnion", set))
                 .assertImplementsAllExpressions();
     }

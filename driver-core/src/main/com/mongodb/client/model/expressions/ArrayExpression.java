@@ -85,7 +85,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
         return this.slice(of(start), of(length));
     }
 
-    ArrayExpression<T> setUnion(ArrayExpression<T> set);
+    ArrayExpression<T> union(ArrayExpression<T> set);
 
     ArrayExpression<T> distinct();
 }

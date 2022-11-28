@@ -33,7 +33,6 @@ import static com.mongodb.client.model.expressions.Expressions.ofDateArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNumberArray;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
-import static org.testng.internal.collections.Ints.asList;
 
 @SuppressWarnings({"ConstantConditions", "Convert2MethodRef"})
 class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -196,7 +195,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/first/
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/first-array-element/
         assertExpression(
-                new LinkedList<>(asList(1, 2, 3)).getFirst(),
+                new LinkedList<>(Arrays.asList(1, 2, 3)).getFirst(),
                 array123.first(),
                 // MQL:
                 "{'$first': [[1, 2, 3]]}");
@@ -206,7 +205,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     public void lastTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/last-array-element/
         assertExpression(
-                new LinkedList<>(asList(1, 2, 3)).getLast(),
+                new LinkedList<>(Arrays.asList(1, 2, 3)).getLast(),
                 array123.last(),
                 // MQL:
                 "{'$last': [[1, 2, 3]]}");
@@ -262,7 +261,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/ (40)
         assertExpression(
                 Arrays.asList(1, 2, 3),
-                array123.setUnion(array123),
+                array123.union(array123),
                 // MQL:
                 "{'$setUnion': [[1, 2, 3], [1, 2, 3]]}");
         // convenience
