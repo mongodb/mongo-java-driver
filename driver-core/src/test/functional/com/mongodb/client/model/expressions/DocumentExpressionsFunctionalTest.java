@@ -101,11 +101,11 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
     @Test
     public void getFieldOrTest() {
         // getInteger-Or lacks isInteger; isInteger lacks a way to allow doubles that are integers
-        //assertExpression(1.0, ofDoc("{a: 1.0}").getInteger("a", 99));
 
         // convenience
         assertExpression(true, ofDoc("{a: true}").getBoolean("a", false));
         assertExpression(1.0, ofDoc("{a: 1.0}").getNumber("a", 99));
+        assertExpression(1.0, ofDoc("{a: 1.0}").getNumber("a", Decimal128.parse("99")));
         assertExpression("A", ofDoc("{a: 'A'}").getString("a", "Z"));
         assertExpression(2007, ofDoc("{a: {'$date': '2007-12-03T10:15:30.005Z'}}")
                 .getDate("a", Instant.EPOCH).year(of("UTC")));
@@ -116,6 +116,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         // normal
         assertExpression(true, ofDoc("{a: true}").getBoolean("a", of(false)));
         assertExpression(1.0, ofDoc("{a: 1.0}").getNumber("a", of(99)));
+        assertExpression(1.0, ofDoc("{a: 1.0}").getInteger("a", of(99)));
         assertExpression("A", ofDoc("{a: 'A'}").getString("a", of("Z")));
         assertExpression(2007, ofDoc("{a: {'$date': '2007-12-03T10:15:30.005Z'}}")
                 .getDate("a", of(Instant.EPOCH)).year(of("UTC")));
@@ -125,6 +126,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
         // right branch (missing field)
         assertExpression(false, ofDoc("{}").getBoolean("a", false));
+        assertExpression(99, ofDoc("{}").getInteger("a", 99));
         assertExpression(99, ofDoc("{}").getNumber("a", 99));
         assertExpression(99L, ofDoc("{}").getNumber("a", 99L));
         assertExpression(99.0, ofDoc("{}").getNumber("a", 99.0));
@@ -135,6 +137,9 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(Arrays.asList(99, 88), ofDoc("{}").getArray("a", ofIntegerArray(99, 88)));
         assertExpression(Document.parse("{z: 99}"), ofDoc("{}")
                 .getDocument("a", Document.parse("{z: 99}")));
+
+        // int vs num
+        assertExpression(99, ofDoc("{a: 1.1}").getInteger("a", of(99)));
     }
 
     @Test

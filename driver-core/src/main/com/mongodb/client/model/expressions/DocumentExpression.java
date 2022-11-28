@@ -28,54 +28,65 @@ import static com.mongodb.client.model.expressions.Expressions.of;
  */
 public interface DocumentExpression extends Expression {
 
-    <R extends DocumentExpression> R setField(String path, Expression exp);
+    DocumentExpression setField(String path, Expression exp);
 
     DocumentExpression unsetField(String path);
 
 
     BooleanExpression getBoolean(String field);
 
-    BooleanExpression getBoolean(String field, BooleanExpression orElse);
+    BooleanExpression getBoolean(String field, BooleanExpression other);
 
-    default BooleanExpression getBoolean(final String field, final boolean orElse) {
-        return getBoolean(field, of(orElse));
+    default BooleanExpression getBoolean(final String field, final boolean other) {
+        return getBoolean(field, of(other));
     }
 
     NumberExpression getNumber(String field);
 
-    NumberExpression getNumber(String field, NumberExpression orElse);
+    NumberExpression getNumber(String field, NumberExpression other);
 
-    default NumberExpression getNumber(final String field, final Number orElse) {
-        return getNumber(field, Expressions.numberToExpression(orElse));
+    default NumberExpression getNumber(final String field, final Number other) {
+        return getNumber(field, Expressions.numberToExpression(other));
     }
 
     IntegerExpression getInteger(String field);
 
+    IntegerExpression getInteger(String field, IntegerExpression other);
+
+    default NumberExpression getInteger(final String field, final int other) {
+        return getInteger(field, (IntegerExpression) Expressions.numberToExpression(other));
+    }
+
+    default NumberExpression getInteger(final String field, final long other) {
+        return getInteger(field, (IntegerExpression) Expressions.numberToExpression(other));
+    }
+
+
     StringExpression getString(String field);
 
-    StringExpression getString(String field, StringExpression orElse);
+    StringExpression getString(String field, StringExpression other);
 
-    default StringExpression getString(final String field, final String orElse) {
-        return getString(field, of(orElse));
+    default StringExpression getString(final String field, final String other) {
+        return getString(field, of(other));
     }
 
     DateExpression getDate(String field);
-    DateExpression getDate(String field, DateExpression orElse);
+    DateExpression getDate(String field, DateExpression other);
 
-    default DateExpression getDate(final String field, final Instant orElse) {
-        return getDate(field, of(orElse));
+    default DateExpression getDate(final String field, final Instant other) {
+        return getDate(field, of(other));
     }
 
     DocumentExpression getDocument(String field);
-    DocumentExpression getDocument(String field, DocumentExpression orElse);
+    DocumentExpression getDocument(String field, DocumentExpression other);
 
-    default DocumentExpression getDocument(final String field, final Bson orElse) {
-        return getDocument(field, of(orElse));
+    default DocumentExpression getDocument(final String field, final Bson other) {
+        return getDocument(field, of(other));
     }
 
     <T extends Expression> ArrayExpression<T> getArray(String field);
 
-    <T extends Expression> ArrayExpression<T> getArray(String field, ArrayExpression<T> orElse);
+    <T extends Expression> ArrayExpression<T> getArray(String field, ArrayExpression<T> other);
 
-    DocumentExpression merge(DocumentExpression ofDoc);
+    DocumentExpression merge(DocumentExpression other);
 }

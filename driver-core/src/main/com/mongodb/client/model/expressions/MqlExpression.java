@@ -169,6 +169,12 @@ final class MqlExpression<T extends Expression>
     public IntegerExpression getInteger(final String field) {
         return new MqlExpression<>(getFieldInternal(field));
     }
+
+    @Override
+    public IntegerExpression getInteger(String field, IntegerExpression orElse) {
+        return getInteger(field).isIntegerOr(orElse);
+    }
+
     @Override
     public StringExpression getString(final String field) {
         return new MqlExpression<>(getFieldInternal(field));
@@ -210,12 +216,12 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public DocumentExpression merge(final DocumentExpression ofDoc) {
-        return new MqlExpression<>(ast("$mergeObjects", ofDoc));
+    public DocumentExpression merge(final DocumentExpression other) {
+        return new MqlExpression<>(ast("$mergeObjects", other));
     }
 
     @Override
-    public <R extends DocumentExpression> R setField(final String path, final Expression exp) {
+    public DocumentExpression setField(final String path, final Expression exp) {
         return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
                 .append("field", new BsonString(path))
                 .append("input", this.toBsonValue(cr))
@@ -266,8 +272,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public BooleanExpression isBooleanOr(final BooleanExpression or) {
-        return this.isBoolean().cond(this, or);
+    public BooleanExpression isBooleanOr(final BooleanExpression other) {
+        return this.isBoolean().cond(this, other);
     }
 
     public BooleanExpression isNumber() {
@@ -275,8 +281,17 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public NumberExpression isNumberOr(final NumberExpression or) {
-        return this.isNumber().cond(this, or);
+    public NumberExpression isNumberOr(final NumberExpression other) {
+        return this.isNumber().cond(this, other);
+    }
+
+    public BooleanExpression isInteger() {
+        return this.isNumber().cond(this.eq(this.round()), of(false));
+    }
+
+    @Override
+    public IntegerExpression isIntegerOr(IntegerExpression other) {
+        return this.isInteger().cond(this, other);
     }
 
     public BooleanExpression isString() {
@@ -284,8 +299,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public StringExpression isStringOr(final StringExpression or) {
-        return this.isString().cond(this, or);
+    public StringExpression isStringOr(final StringExpression other) {
+        return this.isString().cond(this, other);
     }
 
     public BooleanExpression isDate() {
@@ -293,8 +308,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public DateExpression isDateOr(final DateExpression or) {
-        return this.isDate().cond(this, or);
+    public DateExpression isDateOr(final DateExpression other) {
+        return this.isDate().cond(this, other);
     }
 
     public BooleanExpression isArray() {
@@ -305,13 +320,13 @@ final class MqlExpression<T extends Expression>
      * checks if array (but cannot check type)
      * user asserts array is of type R
      *
-     * @param or
+     * @param other
      * @return
      * @param <R>
      */
     @Override
-    public <R extends Expression> ArrayExpression<R> isArrayOr(final ArrayExpression<R> or) {
-        return this.isArray().cond(this.assertImplementsAllExpressions(), or);
+    public <R extends Expression> ArrayExpression<R> isArrayOr(final ArrayExpression<R> other) {
+        return this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
     public BooleanExpression isDocument() {
@@ -319,8 +334,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends DocumentExpression> R isDocumentOr(final R or) {
-        return this.isDocument().cond(this.assertImplementsAllExpressions(), or);
+    public <R extends DocumentExpression> R isDocumentOr(final R other) {
+        return this.isDocument().cond(this.assertImplementsAllExpressions(), other);
     }
 
     @Override
