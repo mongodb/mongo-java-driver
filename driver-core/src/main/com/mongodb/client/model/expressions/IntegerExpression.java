@@ -20,5 +20,26 @@ package com.mongodb.client.model.expressions;
  * Expresses an integer value.
  */
 public interface IntegerExpression extends NumberExpression {
+    IntegerExpression multiply(IntegerExpression i);
 
+    default IntegerExpression multiply(final int multiply) {
+        return this.multiply(Expressions.of(multiply));
+    }
+
+    IntegerExpression add(IntegerExpression i);
+
+    default IntegerExpression add(final int add) {
+        return this.add(Expressions.of(add));
+    }
+
+    IntegerExpression subtract(IntegerExpression i);
+
+    default IntegerExpression subtract(final int subtract) {
+        return this.subtract(Expressions.of(subtract));
+    }
+
+    IntegerExpression max(IntegerExpression i);
+    IntegerExpression min(IntegerExpression i);
+
+    IntegerExpression abs();
 }
