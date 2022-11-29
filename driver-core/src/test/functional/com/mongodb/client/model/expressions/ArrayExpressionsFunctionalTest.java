@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofBooleanArray;
 
-@SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions", "Convert2MethodRef"})
+@SuppressWarnings({"ConstantConditions", "Convert2MethodRef"})
 class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#array-expression-operators
     // (Incomplete)

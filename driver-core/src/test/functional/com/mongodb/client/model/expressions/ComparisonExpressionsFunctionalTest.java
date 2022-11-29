@@ -42,7 +42,8 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
 
     static <R extends Expression> R ofRem() {
         // $$REMOVE is intentionally not exposed to users
-        return new MqlExpression<>((cr) -> new BsonString("$$REMOVE")).assertImplementsAllExpressions();
+        return new MqlExpression<>((cr) -> new MqlExpression.AstPlaceholder(new BsonString("$$REMOVE")))
+                .assertImplementsAllExpressions();
     }
 
     // https://www.mongodb.com/docs/manual/reference/bson-type-comparison-order/#std-label-bson-types-comparison-order
