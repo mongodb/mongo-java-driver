@@ -171,7 +171,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public IntegerExpression getInteger(String field, IntegerExpression orElse) {
+    public IntegerExpression getInteger(final String field, final IntegerExpression orElse) {
         return getInteger(field).isIntegerOr(orElse);
     }
 
@@ -290,7 +290,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public IntegerExpression isIntegerOr(IntegerExpression other) {
+    public IntegerExpression isIntegerOr(final IntegerExpression other) {
         return this.isInteger().cond(this, other);
     }
 

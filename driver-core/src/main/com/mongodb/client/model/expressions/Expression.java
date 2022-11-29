@@ -100,7 +100,7 @@ public interface Expression {
 
     /**
      * also checks for nulls
-     * @param or
+     * @param other
      * @return
      */
     BooleanExpression isBooleanOr(BooleanExpression other);
