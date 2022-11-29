@@ -332,6 +332,77 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(ast("$min", i));
     }
 
+    /** @see DateExpression */
+
+    private MqlExpression<Expression> usingTimezone(final String name, final StringExpression timezone) {
+        return new MqlExpression<>((cr) -> astDoc(name, new BsonDocument()
+                .append("date", this.toBsonValue(cr))
+                .append("timezone", extractBsonValue(cr, timezone))));
+    }
+
+    @Override
+    public IntegerExpression year(final StringExpression timezone) {
+        return usingTimezone("$year", timezone);
+    }
+
+    @Override
+    public IntegerExpression month(final StringExpression timezone) {
+        return usingTimezone("$month", timezone);
+    }
+
+    @Override
+    public IntegerExpression dayOfMonth(final StringExpression timezone) {
+        return usingTimezone("$dayOfMonth", timezone);
+    }
+
+    @Override
+    public IntegerExpression dayOfWeek(final StringExpression timezone) {
+        return usingTimezone("$dayOfWeek", timezone);
+    }
+
+    @Override
+    public IntegerExpression dayOfYear(final StringExpression timezone) {
+        return usingTimezone("$dayOfYear", timezone);
+    }
+
+    @Override
+    public IntegerExpression hour(final StringExpression timezone) {
+        return usingTimezone("$hour", timezone);
+    }
+
+    @Override
+    public IntegerExpression minute(final StringExpression timezone) {
+        return usingTimezone("$minute", timezone);
+    }
+
+    @Override
+    public IntegerExpression second(final StringExpression timezone) {
+        return usingTimezone("$second", timezone);
+    }
+
+    @Override
+    public IntegerExpression week(final StringExpression timezone) {
+        return usingTimezone("$week", timezone);
+    }
+
+    @Override
+    public IntegerExpression millisecond(final StringExpression timezone) {
+        return usingTimezone("$millisecond", timezone);
+    }
+
+    @Override
+    public StringExpression dateToString() {
+        return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
+                .append("date", this.toBsonValue(cr))));
+    }
+
+    @Override
+    public StringExpression dateToString(final StringExpression timezone, final StringExpression format) {
+        return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
+                .append("date", this.toBsonValue(cr))
+                .append("format", extractBsonValue(cr, format))
+                .append("timezone", extractBsonValue(cr, timezone))));
+    }
 
     /** @see StringExpression */
 

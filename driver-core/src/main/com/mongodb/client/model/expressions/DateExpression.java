@@ -20,5 +20,18 @@ package com.mongodb.client.model.expressions;
  * Expresses a date value.
  */
 public interface DateExpression extends Expression {
+    IntegerExpression year(StringExpression timezone);
+    IntegerExpression month(StringExpression timezone);
+    IntegerExpression dayOfMonth(StringExpression timezone);
+    IntegerExpression dayOfWeek(StringExpression timezone);
+    IntegerExpression dayOfYear(StringExpression timezone);
+    IntegerExpression hour(StringExpression timezone);
+    IntegerExpression minute(StringExpression timezone);
+    IntegerExpression second(StringExpression timezone);
+    IntegerExpression week(StringExpression timezone);
+    IntegerExpression millisecond(StringExpression timezone);
+
+    StringExpression dateToString();
+    StringExpression dateToString(StringExpression timezone, StringExpression format);
 
 }
