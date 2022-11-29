@@ -108,7 +108,7 @@ public interface Expression {
     IntegerExpression isIntegerOr(IntegerExpression other);
     StringExpression isStringOr(StringExpression other);
     DateExpression isDateOr(DateExpression other);
-    <T extends Expression> ArrayExpression<T> isArrayOr(ArrayExpression<T> other);
+    <T extends Expression> ArrayExpression<T> isArrayOr(ArrayExpression<? extends T> other);
     <T extends DocumentExpression> T isDocumentOr(T other);
 
     StringExpression asString();

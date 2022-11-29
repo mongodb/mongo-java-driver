@@ -324,9 +324,10 @@ final class MqlExpression<T extends Expression>
      * @return
      * @param <R>
      */
+    @SuppressWarnings("unchecked")
     @Override
-    public <R extends Expression> ArrayExpression<R> isArrayOr(final ArrayExpression<R> other) {
-        return this.isArray().cond(this.assertImplementsAllExpressions(), other);
+    public <R extends Expression> ArrayExpression<R> isArrayOr(final ArrayExpression<? extends R> other) {
+        return (ArrayExpression<R>) this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
     public BooleanExpression isDocument() {

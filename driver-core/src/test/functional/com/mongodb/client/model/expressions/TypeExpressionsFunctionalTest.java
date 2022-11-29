@@ -29,6 +29,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.Expressions.ofBooleanArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -98,6 +99,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // non-array:
         assertExpression(Arrays.asList(1, 2), of(true).isArrayOr(ofIntegerArray(1, 2)));
         assertExpression(Arrays.asList(1, 2), ofNull().isArrayOr(ofIntegerArray(1, 2)));
+        ArrayExpression<NumberExpression> a = ofBooleanArray().isArrayOr(ofIntegerArray());
     }
 
     @Test
