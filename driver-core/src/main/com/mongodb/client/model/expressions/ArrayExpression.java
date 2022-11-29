@@ -50,25 +50,30 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      */
     <R extends Expression> ArrayExpression<R> map(Function<? super T, ? extends R> in);
 
+    ArrayExpression<T> sort();
+
     IntegerExpression size();
 
-    BooleanExpression any(Function<T, BooleanExpression> map);
+    BooleanExpression any(Function<T, BooleanExpression> mapper);
 
-    BooleanExpression all(Function<T, BooleanExpression> map);
+    BooleanExpression all(Function<T, BooleanExpression> mapper);
 
-    NumberExpression sum(Function<T, NumberExpression> map);
+    NumberExpression sum(Function<T, NumberExpression> mapper);
 
-    NumberExpression multiply(Function<T, NumberExpression> map);
+    NumberExpression multiply(Function<T, NumberExpression> mapper);
 
-    NumberExpression max(Function<T, NumberExpression> map, NumberExpression orElse);
+    <R extends Expression> R max(Function<T, R> mapper, R orElse);
 
-    NumberExpression min(Function<T, NumberExpression> map, NumberExpression orElse);
+    <R extends Expression> R min(Function<T, R> mapper, R orElse);
 
-    StringExpression join(Function<T, StringExpression> map);
+    <R extends Expression> ArrayExpression<R> maxN(IntegerExpression n, Function<? super T, ? extends R> mapper);
+    <R extends Expression> ArrayExpression<R> minN(IntegerExpression n, Function<? super T, ? extends R> mapper);
 
-    <R extends Expression> ArrayExpression<R> concat(Function<T, ArrayExpression<R>> map);
+    StringExpression join(Function<T, StringExpression> mapper);
 
-    <R extends Expression> ArrayExpression<R> union(Function<T, ArrayExpression<R>> map);
+    <R extends Expression> ArrayExpression<R> concat(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
+
+    <R extends Expression> ArrayExpression<R> union(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
 
     /**
      * user asserts that i is in bounds for the array

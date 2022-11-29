@@ -18,6 +18,7 @@ package com.mongodb.client.model.expressions;
 
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -27,8 +28,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
-import static com.mongodb.client.model.expressions.Expressions.ofArray;
-import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 
 final class MqlExpression<T extends Expression>
@@ -387,6 +386,13 @@ final class MqlExpression<T extends Expression>
                 .append("cond", extractBsonValue(cr, cond.apply(varThis)))));
     }
 
+    @Override
+    public ArrayExpression<T> sort() {
+        return new MqlExpression<>((cr) -> astDoc("$sortArray", new BsonDocument()
+                .append("input", this.toBsonValue(cr))
+                .append("sortBy", new BsonInt32(1))));
+    }
+
     public T reduce(final T initialValue, final BinaryOperator<T> in) {
         T varThis = variable("$$this");
         T varValue = variable("$$value");
@@ -397,63 +403,81 @@ final class MqlExpression<T extends Expression>
     }
 
     private <R extends Expression> R reduceMap(
-            final Function<T, R> map,
+            final Function<T, R> mapper,
             final R initialValue,
             final BinaryOperator<R> in) {
-        MqlExpression<R> map1 = (MqlExpression<R>) this.map(map);
-        return map1.reduce(initialValue, in);
+        MqlExpression<R> map = (MqlExpression<R>) this.map(mapper);
+        return map.reduce(initialValue, in);
     }
 
     @Override
-    public BooleanExpression any(final Function<T, BooleanExpression> map) {
-        return reduceMap(map, of(false), (a, b) -> a.or(b));
+    public BooleanExpression any(final Function<T, BooleanExpression> mapper) {
+        return reduceMap(mapper, of(false), (a, b) -> a.or(b));
     }
 
     @Override
-    public BooleanExpression all(final Function<T, BooleanExpression> map) {
-        return reduceMap(map, of(true), (a, b) -> a.and(b));
+    public BooleanExpression all(final Function<T, BooleanExpression> mapper) {
+        return reduceMap(mapper, of(true), (a, b) -> a.and(b));
     }
 
     @Override
-    public NumberExpression sum(final Function<T, NumberExpression> map) {
+    public NumberExpression sum(final Function<T, NumberExpression> mapper) {
         // no sum for IntegerExpression, both have same erasure
-        return reduceMap(map, of(0), (a, b) -> a.add(b));
+        return reduceMap(mapper, of(0), (a, b) -> a.add(b));
     }
 
     @Override
-    public NumberExpression multiply(final Function<T, NumberExpression> map) {
-        return reduceMap(map, of(0), (a, b) -> a.multiply(b));
+    public NumberExpression multiply(final Function<T, NumberExpression> mapper) {
+        return reduceMap(mapper, of(1), (a, b) -> a.multiply(b));
     }
 
     @Override
-    public NumberExpression max(final Function<T, NumberExpression> map, final NumberExpression orElse) {
-        return reduceMap(map,
-                        (NumberExpression) ofNull(),
-                        (a, b) -> a.max(b))
-                .isNumberOr(orElse);
+    public <R extends Expression> R max(final Function<T, R> mapper, final R orElse) {
+        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
+        return this.size().eq(of(0)).cond(orElse, results.maxN(of(1), v -> v).first());
+    }
+
+
+    @Override
+    public <R extends Expression> R min(final Function<T, R> mapper, final R orElse) {
+        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
+        return this.size().eq(of(0)).cond(orElse, results.minN(of(1), v -> v).first());
     }
 
     @Override
-    public NumberExpression min(final Function<T, NumberExpression> map, final NumberExpression orElse) {
-        return reduceMap(map,
-                        (NumberExpression) ofNull(),
-                        (a, b) -> a.min(b))
-                .isNumberOr(orElse);
+    public <R extends Expression> ArrayExpression<R> maxN(final IntegerExpression n, final Function<? super T, ? extends R> mapper) {
+        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
+        return newMqlExpression((CodecRegistry cr) -> astDoc("$maxN", new BsonDocument()
+                .append("input", extractBsonValue(cr, results))
+                .append("n", extractBsonValue(cr, n))));
     }
 
     @Override
-    public StringExpression join(final Function<T, StringExpression> map) {
-        return reduceMap(map, of(""), (a, b) -> a.concat(b));
+    public <R extends Expression> ArrayExpression<R> minN(final IntegerExpression n, final Function<? super T, ? extends R> mapper) {
+        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
+        return newMqlExpression((CodecRegistry cr) -> astDoc("$minN", new BsonDocument()
+                .append("input", extractBsonValue(cr, results))
+                .append("n", extractBsonValue(cr, n))));
     }
 
-    @Override
-    public <R extends Expression> ArrayExpression<R> concat(final Function<T, ArrayExpression<R>> map) {
-        return reduceMap(map, ofArray(), (a, b) -> a.concat(b));
-    }
 
     @Override
-    public <R extends Expression> ArrayExpression<R> union(final Function<T, ArrayExpression<R>> map) {
-        return reduceMap(map, ofArray(), (a, b) -> a.union(b));
+    public StringExpression join(final Function<T, StringExpression> mapper) {
+        return reduceMap(mapper, of(""), (a, b) -> a.concat(b));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R extends Expression> ArrayExpression<R> concat(final Function<? super T, ? extends ArrayExpression<? extends R>> mapper) {
+        MqlExpression<ArrayExpression<R>> map = (MqlExpression<ArrayExpression<R>>) this.map(mapper);
+        return map.reduce(Expressions.ofArray(), (a, b) -> a.concat(b));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R extends Expression> ArrayExpression<R> union(final Function<? super T, ? extends ArrayExpression<? extends R>> mapper) {
+        MqlExpression<ArrayExpression<R>> map = (MqlExpression<ArrayExpression<R>>) this.map(mapper);
+        return map.reduce(Expressions.ofArray(), (a, b) -> a.union(b));
     }
 
     @Override
