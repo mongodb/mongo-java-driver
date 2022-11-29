@@ -17,7 +17,6 @@
 package com.mongodb.client.model.expressions;
 
 import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.junit.jupiter.api.Test;
@@ -39,12 +38,6 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#comparison-expression-operators
     // (Complete as of 6.0)
     // Comparison expressions are part of the the generic Expression class.
-
-    static <R extends Expression> R ofRem() {
-        // $$REMOVE is intentionally not exposed to users
-        return new MqlExpression<>((cr) -> new MqlExpression.AstPlaceholder(new BsonString("$$REMOVE")))
-                .assertImplementsAllExpressions();
-    }
 
     // https://www.mongodb.com/docs/manual/reference/bson-type-comparison-order/#std-label-bson-types-comparison-order
     private final List<Expression> sampleValues = Arrays.asList(

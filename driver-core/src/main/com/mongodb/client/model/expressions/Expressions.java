@@ -59,6 +59,22 @@ public final class Expressions {
     }
 
     /**
+     * Returns an array expression containing the same boolean values as the
+     * provided array of booleans.
+     *
+     * @param array the array of booleans
+     * @return the boolean array expression
+     */
+    public static ArrayExpression<BooleanExpression> ofBooleanArray(final boolean... array) {
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
+        for (boolean b : array) {
+            list.add(new BsonBoolean(b));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+    }
+
+    /**
      * Returns an expression having the same integer value as the provided
      * int primitive.
      *
@@ -68,19 +84,70 @@ public final class Expressions {
     public static IntegerExpression of(final int of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt32(of)));
     }
+
+    public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... array) {
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
+        for (int i : array) {
+            list.add(new BsonInt32(i));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+    }
+
     public static IntegerExpression of(final long of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt64(of)));
     }
+
+    public static ArrayExpression<IntegerExpression> ofIntegerArray(final long... array) {
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
+        for (long i : array) {
+            list.add(new BsonInt64(i));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+    }
+
     public static NumberExpression of(final double of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
     }
+
+    public static ArrayExpression<NumberExpression> ofNumberArray(final double... array) {
+        Assertions.notNull("array", array);
+        List<BsonValue> list = new ArrayList<>();
+        for (double n : array) {
+            list.add(new BsonDouble(n));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+    }
+
     public static NumberExpression of(final Decimal128 of) {
         Assertions.notNull("Decimal128", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
     }
+
+    public static ArrayExpression<NumberExpression> ofNumberArray(final Decimal128... array) {
+        Assertions.notNull("array", array);
+        List<BsonValue> result = new ArrayList<>();
+        for (Decimal128 e : array) {
+            Assertions.notNull("elements of array", e);
+            result.add(new BsonDecimal128(e));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
+    }
+
     public static DateExpression of(final Instant of) {
         Assertions.notNull("Instant", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
+    }
+
+    public static ArrayExpression<DateExpression> ofDateArray(final Instant... array) {
+        Assertions.notNull("array", array);
+        List<BsonValue> result = new ArrayList<>();
+        for (Instant e : array) {
+            Assertions.notNull("elements of array", e);
+            result.add(new BsonDateTime(e.toEpochMilli()));
+        }
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
     /**
@@ -95,27 +162,28 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
     }
 
-    /**
-     * Returns an array expression containing the same boolean values as the
-     * provided array of booleans.
-     *
-     * @param array the array of booleans
-     * @return the boolean array expression
-     */
-    public static ArrayExpression<BooleanExpression> ofBooleanArray(final boolean... array) {
+
+    public static ArrayExpression<StringExpression> ofStringArray(final String... array) {
+        Assertions.notNull("array", array);
         List<BsonValue> result = new ArrayList<>();
-        for (boolean b : array) {
-            result.add(new BsonBoolean(b));
+        for (String e : array) {
+            Assertions.notNull("elements of array", e);
+            result.add(new BsonString(e));
         }
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
-
-    public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... ofIntegerArray) {
-        List<BsonValue> array = Arrays.stream(ofIntegerArray)
-                .mapToObj(BsonInt32::new)
-                .collect(Collectors.toList());
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(array)));
+    @SafeVarargs  // nothing is stored in the array
+    public static <T extends Expression> ArrayExpression<T> ofArray(final T... array) {
+        Assertions.notNull("array", array);
+        return new MqlExpression<>((cr) -> {
+            List<BsonValue> list = new ArrayList<>();
+            for (T v : array) {
+                Assertions.notNull("elements of array", v);
+                list.add(((MqlExpression<?>) v).toBsonValue(cr));
+            }
+            return new AstPlaceholder(new BsonArray(list));
+        });
     }
 
     public static DocumentExpression ofDocument(final Bson document) {
@@ -133,6 +201,7 @@ public final class Expressions {
     }
 
     static NumberExpression numberToExpression(final Number number) {
+        Assertions.notNull("number", number);
         if (number instanceof Integer) {
             return of((int) number);
         } else if (number instanceof Long) {
