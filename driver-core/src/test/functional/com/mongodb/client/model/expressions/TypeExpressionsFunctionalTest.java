@@ -207,7 +207,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
         // throws: "cannot pass in a date/time string with GMT offset together with a timezone argument"
         assertThrows(MongoCommandException.class, () ->
-                assertExpression( 1, of("2007-12-03T10:15:30.005+01:00")
+                assertExpression(1, of("2007-12-03T10:15:30.005+01:00")
                         .parseDate(of("+01:00"), of("%Y-%m-%dT%H:%M:%S.%L%z"))
                         .asString()));
         // therefore, to parse date strings containing UTC offsets, we need:

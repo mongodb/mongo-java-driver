@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model.expressions;
 
-import com.mongodb.annotations.Beta;
-
 import static com.mongodb.client.model.expressions.Expressions.of;
 
 /**

@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -292,7 +291,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2.0, 3),
                 // above is a set; in case of flakiness, below should `sort` (not implemented at time of test creation)
-                ofNumberArray(2.0).setUnion(ofIntegerArray(1, 2, 3)));
+                ofNumberArray(2.0).union(ofIntegerArray(1, 2, 3)));
         // convenience
         assertExpression(
                 Arrays.asList(1, 2, 3),
