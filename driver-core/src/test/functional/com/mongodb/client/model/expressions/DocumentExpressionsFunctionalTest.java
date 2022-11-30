@@ -100,8 +100,6 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
     @Test
     public void getFieldOrTest() {
-        // getInteger-Or lacks isInteger; isInteger lacks a way to allow doubles that are integers
-
         // convenience
         assertExpression(true, ofDoc("{a: true}").getBoolean("a", false));
         assertExpression(1.0, ofDoc("{a: 1.0}").getNumber("a", 99));
@@ -167,7 +165,6 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
     @Test
     public void setFieldTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setField/
-        // "setField" is "withField": nothing is modified, and a new copy is produced.
         // Placing a field based on a literal:
         assertExpression(
                 BsonDocument.parse("{a: 1, r: 2}"), // map.put("r", 2)

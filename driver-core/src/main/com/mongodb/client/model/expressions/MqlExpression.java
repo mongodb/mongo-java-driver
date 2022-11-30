@@ -146,73 +146,73 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public BooleanExpression getBoolean(final String field) {
-        return new MqlExpression<>(getFieldInternal(field));
+    public BooleanExpression getBoolean(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
     }
 
     @Override
-    public BooleanExpression getBoolean(final String field, final BooleanExpression orElse) {
-        return getBoolean(field).isBooleanOr(orElse);
+    public BooleanExpression getBoolean(final String fieldName, final BooleanExpression other) {
+        return getBoolean(fieldName).isBooleanOr(other);
     }
 
     @Override
-    public NumberExpression getNumber(final String field) {
-        return new MqlExpression<>(getFieldInternal(field));
+    public NumberExpression getNumber(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
     }
 
     @Override
-    public NumberExpression getNumber(final String field, final NumberExpression orElse) {
-        return getNumber(field).isNumberOr(orElse);
+    public NumberExpression getNumber(final String fieldName, final NumberExpression other) {
+        return getNumber(fieldName).isNumberOr(other);
     }
 
     @Override
-    public IntegerExpression getInteger(final String field) {
-        return new MqlExpression<>(getFieldInternal(field));
+    public IntegerExpression getInteger(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
     }
 
     @Override
-    public IntegerExpression getInteger(final String field, final IntegerExpression orElse) {
-        return getInteger(field).isIntegerOr(orElse);
+    public IntegerExpression getInteger(final String fieldName, final IntegerExpression other) {
+        return getInteger(fieldName).isIntegerOr(other);
     }
 
     @Override
-    public StringExpression getString(final String field) {
-        return new MqlExpression<>(getFieldInternal(field));
+    public StringExpression getString(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
     }
 
     @Override
-    public StringExpression getString(final String field, final StringExpression orElse) {
-        return getString(field).isStringOr(orElse);
+    public StringExpression getString(final String fieldName, final StringExpression other) {
+        return getString(fieldName).isStringOr(other);
     }
 
     @Override
-    public DateExpression getDate(final String field) {
-        return new MqlExpression<>(getFieldInternal(field));
+    public DateExpression getDate(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
     }
 
     @Override
-    public DateExpression getDate(final String field, final DateExpression orElse) {
-        return getDate(field).isDateOr(orElse);
+    public DateExpression getDate(final String fieldName, final DateExpression other) {
+        return getDate(fieldName).isDateOr(other);
     }
 
     @Override
-    public DocumentExpression getDocument(final String field) {
-        return new MqlExpression<>(getFieldInternal(field));
+    public DocumentExpression getDocument(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
     }
 
     @Override
-    public DocumentExpression getDocument(final String field, final DocumentExpression orElse) {
-        return getDocument(field).isDocumentOr(orElse);
+    public DocumentExpression getDocument(final String fieldName, final DocumentExpression other) {
+        return getDocument(fieldName).isDocumentOr(other);
     }
 
     @Override
-    public <R extends Expression> ArrayExpression<R> getArray(final String field) {
-        return new MqlExpression<>(getFieldInternal(field));
+    public <R extends Expression> ArrayExpression<R> getArray(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
     }
 
     @Override
-    public <T1 extends Expression> ArrayExpression<T1> getArray(final String field, final ArrayExpression<T1> orElse) {
-        return getArray(field).isArrayOr(orElse);
+    public <T1 extends Expression> ArrayExpression<T1> getArray(final String fieldName, final ArrayExpression<? extends T1> other) {
+        return getArray(fieldName).isArrayOr(other);
     }
 
     @Override
@@ -221,17 +221,17 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public DocumentExpression setField(final String path, final Expression exp) {
+    public DocumentExpression setField(final String fieldName, final Expression exp) {
         return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
-                .append("field", new BsonString(path))
+                .append("field", new BsonString(fieldName))
                 .append("input", this.toBsonValue(cr))
                 .append("value", extractBsonValue(cr, exp))));
     }
 
     @Override
-    public DocumentExpression unsetField(final String path) {
+    public DocumentExpression unsetField(final String fieldName) {
         return newMqlExpression((cr) -> astDoc("$unsetField", new BsonDocument()
-                .append("field", new BsonString(path))
+                .append("field", new BsonString(fieldName))
                 .append("input", this.toBsonValue(cr))));
     }
 

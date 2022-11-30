@@ -28,65 +28,65 @@ import static com.mongodb.client.model.expressions.Expressions.of;
  */
 public interface DocumentExpression extends Expression {
 
-    DocumentExpression setField(String path, Expression exp);
+    DocumentExpression setField(String fieldName, Expression exp);
 
-    DocumentExpression unsetField(String path);
+    DocumentExpression unsetField(String fieldName);
 
 
-    BooleanExpression getBoolean(String field);
+    BooleanExpression getBoolean(String fieldName);
 
-    BooleanExpression getBoolean(String field, BooleanExpression other);
+    BooleanExpression getBoolean(String fieldName, BooleanExpression other);
 
-    default BooleanExpression getBoolean(final String field, final boolean other) {
-        return getBoolean(field, of(other));
+    default BooleanExpression getBoolean(final String fieldName, final boolean other) {
+        return getBoolean(fieldName, of(other));
     }
 
-    NumberExpression getNumber(String field);
+    NumberExpression getNumber(String fieldName);
 
-    NumberExpression getNumber(String field, NumberExpression other);
+    NumberExpression getNumber(String fieldName, NumberExpression other);
 
-    default NumberExpression getNumber(final String field, final Number other) {
-        return getNumber(field, Expressions.numberToExpression(other));
+    default NumberExpression getNumber(final String fieldName, final Number other) {
+        return getNumber(fieldName, Expressions.numberToExpression(other));
     }
 
-    IntegerExpression getInteger(String field);
+    IntegerExpression getInteger(String fieldName);
 
-    IntegerExpression getInteger(String field, IntegerExpression other);
+    IntegerExpression getInteger(String fieldName, IntegerExpression other);
 
-    default NumberExpression getInteger(final String field, final int other) {
-        return getInteger(field, (IntegerExpression) Expressions.numberToExpression(other));
+    default IntegerExpression getInteger(final String fieldName, final int other) {
+        return getInteger(fieldName, of(other));
     }
 
-    default NumberExpression getInteger(final String field, final long other) {
-        return getInteger(field, (IntegerExpression) Expressions.numberToExpression(other));
+    default IntegerExpression getInteger(final String fieldName, final long other) {
+        return getInteger(fieldName, of(other));
     }
 
 
-    StringExpression getString(String field);
+    StringExpression getString(String fieldName);
 
-    StringExpression getString(String field, StringExpression other);
+    StringExpression getString(String fieldName, StringExpression other);
 
-    default StringExpression getString(final String field, final String other) {
-        return getString(field, of(other));
+    default StringExpression getString(final String fieldName, final String other) {
+        return getString(fieldName, of(other));
     }
 
-    DateExpression getDate(String field);
-    DateExpression getDate(String field, DateExpression other);
+    DateExpression getDate(String fieldName);
+    DateExpression getDate(String fieldName, DateExpression other);
 
-    default DateExpression getDate(final String field, final Instant other) {
-        return getDate(field, of(other));
+    default DateExpression getDate(final String fieldName, final Instant other) {
+        return getDate(fieldName, of(other));
     }
 
-    DocumentExpression getDocument(String field);
-    DocumentExpression getDocument(String field, DocumentExpression other);
+    DocumentExpression getDocument(String fieldName);
+    DocumentExpression getDocument(String fieldName, DocumentExpression other);
 
-    default DocumentExpression getDocument(final String field, final Bson other) {
-        return getDocument(field, of(other));
+    default DocumentExpression getDocument(final String fieldName, final Bson other) {
+        return getDocument(fieldName, of(other));
     }
 
-    <T extends Expression> ArrayExpression<T> getArray(String field);
+    <T extends Expression> ArrayExpression<T> getArray(String fieldName);
 
-    <T extends Expression> ArrayExpression<T> getArray(String field, ArrayExpression<T> other);
+    <T extends Expression> ArrayExpression<T> getArray(String fieldName, ArrayExpression<? extends T> other);
 
     DocumentExpression merge(DocumentExpression other);
 }

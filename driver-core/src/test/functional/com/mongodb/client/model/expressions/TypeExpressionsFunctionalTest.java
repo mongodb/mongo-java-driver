@@ -99,7 +99,6 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // non-array:
         assertExpression(Arrays.asList(1, 2), of(true).isArrayOr(ofIntegerArray(1, 2)));
         assertExpression(Arrays.asList(1, 2), ofNull().isArrayOr(ofIntegerArray(1, 2)));
-        ArrayExpression<NumberExpression> a = ofBooleanArray().isArrayOr(ofIntegerArray());
     }
 
     @Test
