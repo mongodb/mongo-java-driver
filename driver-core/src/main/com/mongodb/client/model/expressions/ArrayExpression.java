@@ -54,17 +54,17 @@ public interface ArrayExpression<T extends Expression> extends Expression {
 
     IntegerExpression size();
 
-    BooleanExpression any(Function<T, BooleanExpression> mapper);
+    BooleanExpression any(Function<T, BooleanExpression> predicate);
 
-    BooleanExpression all(Function<T, BooleanExpression> mapper);
+    BooleanExpression all(Function<T, BooleanExpression> predicate);
 
     NumberExpression sum(Function<T, NumberExpression> mapper);
 
     NumberExpression multiply(Function<T, NumberExpression> mapper);
 
-    <R extends Expression> R max(Function<T, R> mapper, R orElse);
+    <R extends Expression> R max(R other, Function<? super T, ? extends R> mapper);
 
-    <R extends Expression> R min(Function<T, R> mapper, R orElse);
+    <R extends Expression> R min(R other, Function<? super T, ? extends R> mapper);
 
     <R extends Expression> ArrayExpression<R> maxN(IntegerExpression n, Function<? super T, ? extends R> mapper);
     <R extends Expression> ArrayExpression<R> minN(IntegerExpression n, Function<? super T, ? extends R> mapper);

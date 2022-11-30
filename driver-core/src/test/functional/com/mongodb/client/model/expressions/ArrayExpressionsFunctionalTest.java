@@ -198,26 +198,26 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     public void reduceMaxTest() {
         assertExpression(
                 3,
-                ofIntegerArray(1, 2, 3).max(a -> a, of(9)),
+                ofIntegerArray(1, 2, 3).max(of(9), a -> a),
                 "{'$cond': [{'$eq': [{'$size': [[1, 2, 3]]}, 0]}, 9, "
                         + "{'$first': [{'$maxN': {'input': {'$map': {'input': {'$map': "
                         + "{'input': [1, 2, 3], 'in': '$$this'}}, 'in': '$$this'}}, 'n': 1}}]}]}");
         assertExpression(
                 9,
-                ofIntegerArray().max(a -> a, of(9)));
+                ofIntegerArray().max(of(9), a -> a));
     }
 
     @Test
     public void reduceMinTest() {
         assertExpression(
                 1,
-                ofIntegerArray(1, 2, 3).min(a -> a, of(9)),
+                ofIntegerArray(1, 2, 3).min(of(9), a -> a),
                 "{'$cond': [{'$eq': [{'$size': [[1, 2, 3]]}, 0]}, 9, "
                         + "{'$first': [{'$minN': {'input': {'$map': {'input': {'$map': "
                         + "{'input': [1, 2, 3], 'in': '$$this'}}, 'in': '$$this'}}, 'n': 1}}]}]}");
         assertExpression(
                 9,
-                ofIntegerArray().min(a -> a, of(9)));
+                ofIntegerArray().min(of(9), a -> a));
     }
 
     @Test

@@ -411,13 +411,13 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public BooleanExpression any(final Function<T, BooleanExpression> mapper) {
-        return reduceMap(mapper, of(false), (a, b) -> a.or(b));
+    public BooleanExpression any(final Function<T, BooleanExpression> predicate) {
+        return reduceMap(predicate, of(false), (a, b) -> a.or(b));
     }
 
     @Override
-    public BooleanExpression all(final Function<T, BooleanExpression> mapper) {
-        return reduceMap(mapper, of(true), (a, b) -> a.and(b));
+    public BooleanExpression all(final Function<T, BooleanExpression> predicate) {
+        return reduceMap(predicate, of(true), (a, b) -> a.and(b));
     }
 
     @Override
@@ -432,16 +432,16 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R max(final Function<T, R> mapper, final R orElse) {
+    public <R extends Expression> R max(final R other, final Function<? super T, ? extends R> mapper) {
         MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
-        return this.size().eq(of(0)).cond(orElse, results.maxN(of(1), v -> v).first());
+        return this.size().eq(of(0)).cond(other, results.maxN(of(1), v -> v).first());
     }
 
 
     @Override
-    public <R extends Expression> R min(final Function<T, R> mapper, final R orElse) {
+    public <R extends Expression> R min(final R other, final Function<? super T, ? extends R> mapper) {
         MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
-        return this.size().eq(of(0)).cond(orElse, results.minN(of(1), v -> v).first());
+        return this.size().eq(of(0)).cond(other, results.minN(of(1), v -> v).first());
     }
 
     @Override
