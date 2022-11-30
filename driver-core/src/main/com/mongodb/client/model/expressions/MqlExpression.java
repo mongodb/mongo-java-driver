@@ -146,6 +146,11 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
+    public Expression getField(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
     public BooleanExpression getBoolean(final String fieldName) {
         return new MqlExpression<>(getFieldInternal(fieldName));
     }

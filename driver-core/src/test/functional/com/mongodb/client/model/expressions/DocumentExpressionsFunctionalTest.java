@@ -71,7 +71,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         // these count as assertions by the user that the value is of the correct type
 
         assertExpression(1,
-                a1.getInteger("a"),
+                a1.getField("a"),
                 "{'$getField': {'input': {'$literal': {'a': 1}}, 'field': 'a'}}");
         assertExpression(2,
                 a1.getInteger("a").multiply(2),

@@ -32,6 +32,7 @@ public interface DocumentExpression extends Expression {
 
     DocumentExpression unsetField(String fieldName);
 
+    Expression getField(String fieldName);
 
     BooleanExpression getBoolean(String fieldName);
 
