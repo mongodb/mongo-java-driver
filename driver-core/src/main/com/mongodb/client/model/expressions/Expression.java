@@ -21,25 +21,11 @@ import com.mongodb.annotations.Evolving;
 import java.util.function.Function;
 
 /**
- * Expressions express values that may be represented in (or computations that
- * may be performed within) a MongoDB server. Each expression evaluates to some
- * value, much like any Java expression evaluates to some value. Expressions may
- * be thought of as boxed values. Evaluation of an expression will usually occur
- * on a MongoDB server.
- *
  * <p>Users should treat these interfaces as sealed, and must not implement any
- * expression interfaces.
+ * sub-interfaces.
  *
- * <p>Expressions are typed. It is possible to execute expressions against data
- * that is of the wrong type, such as by applying the "not" boolean expression
- * to a document field that is an integer, null, or missing. This API does not
- * define the output in such cases (though the output may be defined within the
- * execution context - the server - where the expression is evaluated). Users of
- * this API must mitigate any risk of applying an expression to some type where
- * resulting behaviour is not defined by this API (for example, by checking for
- * null, by ensuring that field types are correctly specified). Likewise, unless
- * otherwise specified, this API does not define the order of evaluation for all
- * arguments, and whether all arguments to some expression will be evaluated.
+ * TODO-END: 'cause an error', 'execution context', wrong types/unsafe operations
+ * TODO-END: types and how missing/null are not part of any type.
  *
  * @see Expressions
  */
@@ -47,78 +33,184 @@ import java.util.function.Function;
 public interface Expression {
 
     /**
-     * Returns logical true if the value of this expression is equal to the
-     * value of the other expression. Otherwise, false.
+     * Whether {@code this} value is equal to the {@code other} value.
      *
-     * @param eq the other expression
-     * @return true if equal, false if not equal
+     * @param other the other value.
+     * @return the resulting value.
      */
-    BooleanExpression eq(Expression eq);
+    BooleanExpression eq(Expression other);
 
     /**
-     * Returns logical true if the value of this expression is not equal to the
-     * value of the other expression. Otherwise, false.
+     * Whether {@code this} value is not equal to the {@code other} value.
      *
-     * @param ne the other expression
-     * @return true if equal, false otherwise
+     * @param other the other value.
+     * @return the resulting value.
      */
-    BooleanExpression ne(Expression ne);
+    BooleanExpression ne(Expression other);
 
     /**
-     * Returns logical true if the value of this expression is greater than the
-     * value of the other expression. Otherwise, false.
+     * Whether {@code this} value is greater than the {@code other} value.
      *
-     * @param gt the other expression
-     * @return true if greater than, false otherwise
+     * @param other the other value.
+     * @return the resulting value.
      */
-    BooleanExpression gt(Expression gt);
+    BooleanExpression gt(Expression other);
 
     /**
-     * Returns logical true if the value of this expression is greater than or
-     * equal to the value of the other expression. Otherwise, false.
+     * Whether {@code this} value is greater than or equal to the {@code other}
+     * value.
      *
-     * @param gte the other expression
-     * @return true if greater than or equal to, false otherwise
+     * @param other the other value.
+     * @return the resulting value.
      */
-    BooleanExpression gte(Expression gte);
+    BooleanExpression gte(Expression other);
 
     /**
-     * Returns logical true if the value of this expression is less than the
-     * value of the other expression. Otherwise, false.
+     * Whether {@code this} value is less than the {@code other} value.
      *
-     * @param lt the other expression
-     * @return true if less than, false otherwise
+     * @param other the other value.
+     * @return the resulting value.
      */
-    BooleanExpression lt(Expression lt);
+    BooleanExpression lt(Expression other);
 
     /**
-     * Returns logical true if the value of this expression is less than or
-     * equal to the value of the other expression. Otherwise, false.
+     * Whether {@code this} value is less than or equal to the {@code other}
+     * value.
      *
-     * @param lte the other expression
-     * @return true if less than or equal to, false otherwise
+     * @param other the other value.
+     * @return the resulting value.
      */
-    BooleanExpression lte(Expression lte);
+    BooleanExpression lte(Expression other);
 
     /**
-     * also checks for nulls
-     * @param other
-     * @return
+     * {@code this} value as a {@link BooleanExpression boolean} if
+     * {@code this} is a boolean, or the {@code other} boolean value if
+     * {@code this} is null, or is missing, or is of any other non-boolean type.
+     *
+     * @param other the other value.
+     * @return the resulting value.
      */
     BooleanExpression isBooleanOr(BooleanExpression other);
+
+    /**
+     * {@code this} value as a {@link NumberExpression number} if
+     * {@code this} is a number, or the {@code other} number value if
+     * {@code this} is null, or is missing, or is of any other non-number type.
+     *
+     * <p>Since integers are a subset of numbers, if a value is an integer,
+     * this does not imply that it is not a number, and vice-versa.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
     NumberExpression isNumberOr(NumberExpression other);
+
+    /**
+     * {@code this} value as an {@link IntegerExpression integer} if
+     * {@code this} is an integer, or the {@code other} integer value if
+     * {@code this} is null, or is missing, or is of any other non-integer type.
+     *
+     * <p>Since integers are a subset of numbers, if a value is an integer,
+     * this does not imply that it is not a number, and vice-versa.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
     IntegerExpression isIntegerOr(IntegerExpression other);
+
+    /**
+     * {@code this} value as a {@link BooleanExpression boolean} if
+     * {@code this} is a boolean, or the {@code other} boolean value if
+     * {@code this} is null, or is missing, or is of any other non-boolean type.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
     StringExpression isStringOr(StringExpression other);
+
+    /**
+     * {@code this} value as a {@link StringExpression string} if
+     * {@code this} is a string, or the {@code other} string value if
+     * {@code this} is null, or is missing, or is of any other non-string type.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
     DateExpression isDateOr(DateExpression other);
+
+
+    /**
+     * {@code this} value as a {@link ArrayExpression array} if
+     * {@code this} is an array, or the {@code other} array value if
+     * {@code this} is null, or is missing, or is of any other non-array type.
+     *
+     * <p>Warning: this operation does not guarantee type safety. While this
+     * operation is guaranteed to produce an array, the type of the elements of
+     * that array are not guaranteed by the API. The specification of a type by
+     * the user is an unchecked assertion that all elements are of that type,
+     * and that no element is null, is missing, or is of some other type. If the
+     * user cannot make such an assertion, some appropriate super-type should be
+     * chosen, and elements should be individually type-checked.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     * @param <T> the type of the elements of the resulting array.
+     */
     <T extends Expression> ArrayExpression<T> isArrayOr(ArrayExpression<? extends T> other);
+
+    // TODO-END doc after Map merged, "record" and "schema objects" are decided
     <T extends DocumentExpression> T isDocumentOr(T other);
 
     <T extends Expression> MapExpression<T> isMapOr(MapExpression<? extends T> other);
 
+    /**
+     * The {@link StringExpression string} value corresponding to this value.
+     *
+     * <p>This may "cause an error" if the type cannot be converted to string,
+     * as is the case with {@link ArrayExpression arrays},
+     * {@link DocumentExpression documents}, and {@link MapExpression maps}.
+     * TODO-END what about null/missing?
+     * TODO-END document vs record
+     * TODO-END "cause an error" above
+     *
+     *
+     * @see StringExpression#parseDate()
+     * @see StringExpression#parseInteger()
+     * TODO-END all the others? implement?
+     * @return the resulting value.
+     */
     StringExpression asString();
 
+    /**
+     * Applies the provided function to {@code this}.
+     *
+     * <p>Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * user-defined functions to use the chaining syntax. For example:
+     * {@code myInteger.apply(isEven)} (here, {@code isEven} is a function
+     * taking an {@link IntegerExpression integer} and yielding a
+     * {@link BooleanExpression boolean}).
+     *
+     * @param f the function to apply.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
     <R extends Expression> R passTo(Function<? super Expression, ? extends R> f);
-
-    <R extends Expression> R switchOn(Function<Branches<Expression>, ? extends BranchesTerminal<Expression, ? extends R>> on);
+    /**
+     * The value resulting from applying the provided switch mapping to
+     * {@code this} value.
+     *
+     * <p>Can be used to perform pattern matching on the type of {@code this}
+     * value, or to perform comparisons, or to perform any arbitrary check on
+     * {@code this} value.
+     *
+     * <p>The suggested convention is to use "{@code on}" as the name of the
+     * {@code mapping} parameter, for example:
+     * {@code myValue.switchOn(on -> on.isInteger(...)...)}.
+     *
+     * @param mapping the switch mapping.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
+    <R extends Expression> R switchOn(Function<Branches<Expression>, ? extends BranchesTerminal<Expression, ? extends R>> mapping);
 
 }
