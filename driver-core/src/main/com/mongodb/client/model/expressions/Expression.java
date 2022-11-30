@@ -109,12 +109,5 @@ public interface Expression {
     DateExpression isDateOr(DateExpression or);
     ArrayExpression<Expression> isArrayOr(ArrayExpression<? extends Expression> or);
     <T extends DocumentExpression> T isDocumentOr(T or);
-
-
-    /**
-     * server error if type cannot be converted to string (arrays, objects)
-     *
-     * @return
-     */
     StringExpression asString();
 }

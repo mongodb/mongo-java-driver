@@ -80,7 +80,7 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
     private void assertEval(@Nullable final Object expected, final Expression toEvaluate) {
         BsonValue evaluated = evaluate(toEvaluate);
         if (expected == MISSING && evaluated == null) {
-            // ig the "val" field was removed by "missing", then evaluated is null
+            // if the "val" field was removed by "missing", then evaluated is null
             return;
         }
         BsonValue expected1 = toBsonValue(expected);

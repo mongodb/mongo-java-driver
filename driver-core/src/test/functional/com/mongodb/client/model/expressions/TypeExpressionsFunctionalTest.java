@@ -37,14 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#type-expression-operators
 
-    // https://www.mongodb.com/docs/manual/reference/operator/aggregation/type/ (28 |40)
+    // https://www.mongodb.com/docs/manual/reference/operator/aggregation/type/
     // type is not implemented directly; instead, similar checks done via switch
-
-    // The direct "isT" (comparable to instanceof) methods, which one might
-    // expect to see on Expression, are exposed via switch.
-    // Here, we only expose isTypeOr. These would be used on an Expression of
-    // an unknown type, or to provide default values in cases where a null
-    // has intruded into the alleged type.
 
     @Test
     public void isBooleanOrTest() {
@@ -59,7 +53,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void isNumberOrTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/isNumber/ (99 |87)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/isNumber/
         assertExpression(1, of(1).isNumberOr(of(99)), "{'$cond': [{'$isNumber': [1]}, 1, 99]}");
         // other numeric values:
         assertExpression(1L, of(1L).isNumberOr(of(99)));
@@ -96,7 +90,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void isArrayOrTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/isArray/ (36 |47)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/isArray/
         assertExpression(
                 Arrays.asList(1, 2),
                 ofIntegerArray(1, 2).isArrayOr(ofIntegerArray(99)),
@@ -119,25 +113,8 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     // conversions
-    // https://www.mongodb.com/docs/manual/reference/operator/aggregation/convert/ (38 |40)
+    // https://www.mongodb.com/docs/manual/reference/operator/aggregation/convert/
     // Convert is not implemented: too dynamic, conversions should be explicit.
-
-    /*
-    One might expect to see all conversions in $convert represented in this
-    API, but we expose only the useful ones.
-
-    Useful conversions:
-    - anything-string: toString to a parsable type (excludes doc, array)
-    - string-parse-anything: every type should allow parsing to a string
-      - presently excludes objects (docs) and arrays
-      - includes formatted date strings
-    - milliseconds since epoch to date
-
-    Convert also defines many conversions that do not seem useful:
-    - boolean-number conversions: t/f to-from 1/0
-    - boolean-other (oid/str/date) - always true, broken for strings; pointless
-    - number-number - "underlying" json type is changed, possible exceptions?
-     */
 
     @Test
     public void asStringTest() {
@@ -221,7 +198,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void parseIntegerTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/ (46 |15)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/
         assertExpression(1234L, of("1234").parseInteger(), "{'$toLong': '1234'}");
     }
 
@@ -229,7 +206,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void millisecondsToDateTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDate/ (36 |53)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDate/
         assertExpression(
                 Instant.ofEpochMilli(1234),
                 of(1234L).millisecondsToDate(),

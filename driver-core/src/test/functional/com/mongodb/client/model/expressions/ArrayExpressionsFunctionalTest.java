@@ -280,7 +280,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void setUnionTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/ (40)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/
         assertExpression(
                 Arrays.asList(1, 2, 3),
                 array123.union(array123),

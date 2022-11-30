@@ -194,7 +194,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
 
     @Test
     public void minTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/min/ (63)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/min/
         IntegerExpression actual = of(-2).min(of(2));
         assertExpression(
                 Math.min(-2, 2),
@@ -247,7 +247,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
 
     @Test
     public void absTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/round/ (?)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/round/
         assertExpression(
                 Math.abs(-2.0),
                 of(-2.0).abs(),
