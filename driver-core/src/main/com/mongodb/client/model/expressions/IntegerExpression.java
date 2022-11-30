@@ -19,31 +19,97 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * Expresses an integer value.
+ * An integer value. Integers are a subset of {@link NumberExpression numbers},
+ * and so, for example, the integer 0 and the number 0 are the same value,
+ * and are equal.
  */
 public interface IntegerExpression extends NumberExpression {
-    IntegerExpression multiply(IntegerExpression i);
 
-    default IntegerExpression multiply(final int multiply) {
-        return this.multiply(Expressions.of(multiply));
+    /**
+     * The product of multiplying {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    IntegerExpression multiply(IntegerExpression other);
+
+    /**
+     * The product of multiplying {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    default IntegerExpression multiply(final int other) {
+        return this.multiply(Expressions.of(other));
     }
 
-    IntegerExpression add(IntegerExpression i);
+    /**
+     * The sum of adding {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    IntegerExpression add(IntegerExpression other);
 
-    default IntegerExpression add(final int add) {
-        return this.add(Expressions.of(add));
+    /**
+     * The sum of adding {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    default IntegerExpression add(final int other) {
+        return this.add(Expressions.of(other));
     }
 
-    IntegerExpression subtract(IntegerExpression i);
+    /**
+     * The result of subtracting the {@code other} value from {@code this}.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    IntegerExpression subtract(IntegerExpression other);
 
-    default IntegerExpression subtract(final int subtract) {
-        return this.subtract(Expressions.of(subtract));
+    /**
+     * The result of subtracting the {@code other} value from {@code this}.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    default IntegerExpression subtract(final int other) {
+        return this.subtract(Expressions.of(other));
     }
 
-    IntegerExpression max(IntegerExpression i);
-    IntegerExpression min(IntegerExpression i);
+    /**
+     * The larger value of {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    IntegerExpression max(IntegerExpression other);
 
+    /**
+     * The smaller value of {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    IntegerExpression min(IntegerExpression other);
+
+    /**
+     * The absolute value of {@code this} value.
+     *
+     * @return the resulting value.
+     */
     IntegerExpression abs();
+
+    /**
+     * The {@link DateExpression date} corresponding to {@code this} value
+     * when taken to be the number of milliseconds since the Unix epoch.
+     *
+     * @return the resulting value.
+     */
+    DateExpression millisecondsToDate();
+    // TODO-END rename integer.utcMillisecondsToDate -- date.asUtcMilliseconds
 
     <R extends Expression> R passIntegerTo(Function<? super IntegerExpression, ? extends R> f);
     <R extends Expression> R switchIntegerOn(Function<Branches<IntegerExpression>, ? extends BranchesTerminal<IntegerExpression, ? extends R>> on);
