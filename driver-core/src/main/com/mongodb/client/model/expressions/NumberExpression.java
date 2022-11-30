@@ -19,45 +19,127 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * Expresses a numeric value.
+ * A number value. {@link IntegerExpression Integers} are a subset of numbers,
+ * and so, for example, the integer 0 and the number 0 are the same value,
+ * and are equal.
  */
 public interface NumberExpression extends Expression {
 
-    NumberExpression multiply(NumberExpression n);
+    /**
+     * The product of multiplying {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    NumberExpression multiply(NumberExpression other);
 
-    default NumberExpression multiply(final Number multiply) {
-        return this.multiply(Expressions.numberToExpression(multiply));
+    /**
+     * The product of multiplying {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    default NumberExpression multiply(final Number other) {
+        return this.multiply(Expressions.numberToExpression(other));
     }
 
-    NumberExpression divide(NumberExpression n);
+    /**
+     * The result of dividing {@code this} value by the {@code other} value.
+     * This is not integer division: dividing {@code 1} by {@code 2} will yield
+     * {@code 0.5}.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    NumberExpression divide(NumberExpression other);
 
-    default NumberExpression divide(final Number divide) {
-        return this.divide(Expressions.numberToExpression(divide));
+    /**
+     * The result of dividing {@code this} value by the {@code other} value.
+     * This is not integer division: dividing {@code 1} by {@code 2} will yield
+     * {@code 0.5}.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    default NumberExpression divide(final Number other) {
+        return this.divide(Expressions.numberToExpression(other));
     }
 
-    NumberExpression add(NumberExpression n);
+    /**
+     * The sum of adding {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    NumberExpression add(NumberExpression other);
 
-    default NumberExpression add(final Number add) {
-        return this.add(Expressions.numberToExpression(add));
+    /**
+     * The sum of adding {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    default NumberExpression add(final Number other) {
+        return this.add(Expressions.numberToExpression(other));
     }
 
-    NumberExpression subtract(NumberExpression n);
+    /**
+     * The result of subtracting the {@code other} value from {@code this}.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    NumberExpression subtract(NumberExpression other);
 
-    default NumberExpression subtract(final Number subtract) {
-        return this.subtract(Expressions.numberToExpression(subtract));
+    /**
+     * The result of subtracting the {@code other} value from {@code this}.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    default NumberExpression subtract(final Number other) {
+        return this.subtract(Expressions.numberToExpression(other));
     }
 
-    NumberExpression max(NumberExpression n);
+    /**
+     * The larger value of {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    NumberExpression max(NumberExpression other);
 
-    NumberExpression min(NumberExpression n);
+    /**
+     * The smaller value of {@code this} and the {@code other} value.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
+    NumberExpression min(NumberExpression other);
 
+    /**
+     * The integer result of rounding {@code this} to the nearest even value.
+     *
+     * @return the resulting value.
+     */
     IntegerExpression round();
 
+    /**
+     * The result of rounding {@code this} to the nearest even {@code place}.
+     *
+     * @param place the decimal place to round to, from -20 to 100, exclusive.
+     *              Positive values specify the place to the right of the
+     *              decimal point, while negative values, to the left.
+     * @return the resulting value.
+     */
     NumberExpression round(IntegerExpression place);
 
+    /**
+     * The absolute value of {@code this} value.
+     *
+     * @return the resulting value.
+     */
     NumberExpression abs();
-
-    DateExpression millisecondsToDate();
 
     <R extends Expression> R passNumberTo(Function<? super NumberExpression, ? extends R> f);
     <R extends Expression> R switchNumberOn(Function<Branches<NumberExpression>, ? extends BranchesTerminal<NumberExpression, ? extends R>> on);
