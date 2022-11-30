@@ -19,20 +19,113 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * Expresses a date value.
+ * An instantaneous date and time. Tracks a UTC datetime, the number of
+ * milliseconds since the Unix epoch. Does not track the timezone.
  */
 public interface DateExpression extends Expression {
+
+    /**
+     * The year of {@code this} date as determined by the provided
+     * {@code timezone}.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression year(StringExpression timezone);
+
+    /**
+     * The month of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 1 and 12.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression month(StringExpression timezone);
+
+    /**
+     * The day of the month of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 1 and 31.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression dayOfMonth(StringExpression timezone);
+
+    /**
+     * The day of the week of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 1 (Sunday) and 7 (Saturday).
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression dayOfWeek(StringExpression timezone);
+
+    /**
+     * The day of the year of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 1 and 366.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression dayOfYear(StringExpression timezone);
+
+    /**
+     * The hour of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 0 and 23.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression hour(StringExpression timezone);
+
+    /**
+     * The minute of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 0 and 59.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression minute(StringExpression timezone);
+
+    /**
+     * The second of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 0 and 59, and 60 in the case
+     * of a leap second.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression second(StringExpression timezone);
+
+    /**
+     * The week of the year of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 0 and 53.
+     *
+     * <p>Weeks begin on Sundays, and week 1 begins with the first Sunday of the
+     * year. Days preceding the first Sunday of the year are in week 0.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression week(StringExpression timezone);
+
+    /**
+     * The millisecond part of {@code this} date as determined by the provided
+     * {@code timezone}, as an integer between 0 and 999.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @return the resulting value.
+     */
     IntegerExpression millisecond(StringExpression timezone);
 
+    /**
+     * The string representation of {@code this} date as determined by the
+     * provided {@code timezone}, and formatted according to the {@code format}.
+     *
+     * @param timezone the UTC Offset or Olson Timezone Identifier.
+     * @param format the format specifier. TODO-END what standard is this?
+     * @return the resulting value.
+     */
     StringExpression asString(StringExpression timezone, StringExpression format);
 
     <R extends Expression> R passDateTo(Function<? super DateExpression, ? extends R> f);

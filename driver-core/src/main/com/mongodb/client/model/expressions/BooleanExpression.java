@@ -19,44 +19,41 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * Expresses a boolean value.
+ * A logical boolean value, either true or false.
  */
 public interface BooleanExpression extends Expression {
 
     /**
-     * Returns logical true if this expression evaluates to logical false.
-     * Returns logical false if this expression evaluates to logical true.
+     * The logical negation of {@code this} value.
      *
-     * @return True if false; false if true.
+     * @return the resulting value.
      */
     BooleanExpression not();
 
     /**
-     * Returns logical true if this or the other expression evaluates to logical
-     * true. Returns logical false if both evaluate to logical false.
+     * The logical conjunction of {@code this} and the {@code other} value.
      *
-     * @param or the other boolean expression.
-     * @return True if either true, false if both false.
+     * @param other the other boolean value.
+     * @return the resulting value.
      */
-    BooleanExpression or(BooleanExpression or);
+    BooleanExpression or(BooleanExpression other);
 
     /**
-     * Returns logical true if both this and the other expression evaluate to
-     * logical true. Returns logical false if either evaluate to logical false.
+     * The logical disjunction of {@code this} and the {@code other} value.
      *
-     * @param and the other boolean expression.
-     * @return true if both true, false if either false.
+     * @param other the other boolean value.
+     * @return the resulting value.
      */
-    BooleanExpression and(BooleanExpression and);
+    BooleanExpression and(BooleanExpression other);
+    // TODO-END check the evaluation semantics of and/or
 
     /**
-     * If this expression evaluates to logical true, returns the result of the
-     * evaluated left branch expression. If this evaluates to logical false,
-     * returns the result of the evaluated right branch expression.
+     * The {@code left} branch when {@code this} is true,
+     * and the {@code right} branch otherwise.
      *
-     * @param left the left branch expression
-     * @param right the right branch expression
-     * @return left if true, right if false.
+     * @param left the left branch.
+     * @param right the right branch.
+     * @return the resulting value.
      * @param <T> The type of the resulting expression.
      */
     <T extends Expression> T cond(T left, T right);

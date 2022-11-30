@@ -145,13 +145,13 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public BooleanExpression or(final BooleanExpression or) {
-        return new MqlExpression<>(ast("$or", or));
+    public BooleanExpression or(final BooleanExpression other) {
+        return new MqlExpression<>(ast("$or", other));
     }
 
     @Override
-    public BooleanExpression and(final BooleanExpression and) {
-        return new MqlExpression<>(ast("$and", and));
+    public BooleanExpression and(final BooleanExpression other) {
+        return new MqlExpression<>(ast("$and", other));
     }
 
     @Override
@@ -392,33 +392,33 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public BooleanExpression eq(final Expression eq) {
-        return new MqlExpression<>(ast("$eq", eq));
+    public BooleanExpression eq(final Expression other) {
+        return new MqlExpression<>(ast("$eq", other));
     }
 
     @Override
-    public BooleanExpression ne(final Expression ne) {
-        return new MqlExpression<>(ast("$ne", ne));
+    public BooleanExpression ne(final Expression other) {
+        return new MqlExpression<>(ast("$ne", other));
     }
 
     @Override
-    public BooleanExpression gt(final Expression gt) {
-        return new MqlExpression<>(ast("$gt", gt));
+    public BooleanExpression gt(final Expression other) {
+        return new MqlExpression<>(ast("$gt", other));
     }
 
     @Override
-    public BooleanExpression gte(final Expression gte) {
-        return new MqlExpression<>(ast("$gte", gte));
+    public BooleanExpression gte(final Expression other) {
+        return new MqlExpression<>(ast("$gte", other));
     }
 
     @Override
-    public BooleanExpression lt(final Expression lt) {
-        return new MqlExpression<>(ast("$lt", lt));
+    public BooleanExpression lt(final Expression other) {
+        return new MqlExpression<>(ast("$lt", other));
     }
 
     @Override
-    public BooleanExpression lte(final Expression lte) {
-        return new MqlExpression<>(ast("$lte", lte));
+    public BooleanExpression lte(final Expression other) {
+        return new MqlExpression<>(ast("$lte", other));
     }
 
     public BooleanExpression isBoolean() {
@@ -551,11 +551,11 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public ArrayExpression<T> filter(final Function<? super T, ? extends BooleanExpression> cond) {
+    public ArrayExpression<T> filter(final Function<? super T, ? extends BooleanExpression> predicate) {
         T varThis = variable("$$this");
         return new MqlExpression<>((cr) -> astDoc("$filter", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
-                .append("cond", extractBsonValue(cr, cond.apply(varThis)))));
+                .append("cond", extractBsonValue(cr, predicate.apply(varThis)))));
     }
 
     public ArrayExpression<T> sort() {
@@ -721,13 +721,13 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public NumberExpression max(final NumberExpression n) {
-        return new MqlExpression<>(ast("$max", n));
+    public NumberExpression max(final NumberExpression other) {
+        return new MqlExpression<>(ast("$max", other));
     }
 
     @Override
-    public NumberExpression min(final NumberExpression n) {
-        return new MqlExpression<>(ast("$min", n));
+    public NumberExpression min(final NumberExpression other) {
+        return new MqlExpression<>(ast("$min", other));
     }
 
     @Override
@@ -741,8 +741,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public IntegerExpression multiply(final IntegerExpression i) {
-        return new MqlExpression<>(ast("$multiply", i));
+    public IntegerExpression multiply(final IntegerExpression other) {
+        return new MqlExpression<>(ast("$multiply", other));
     }
 
     @Override
@@ -761,8 +761,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public IntegerExpression add(final IntegerExpression i) {
-        return new MqlExpression<>(ast("$add", i));
+    public IntegerExpression add(final IntegerExpression other) {
+        return new MqlExpression<>(ast("$add", other));
     }
 
     @Override
