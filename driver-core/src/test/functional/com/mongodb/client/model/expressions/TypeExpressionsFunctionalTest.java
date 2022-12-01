@@ -202,6 +202,19 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(1234L, of("1234").parseInteger(), "{'$toLong': '1234'}");
     }
 
+    @Test
+    public void parseNumberTest() {
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/
+        assertExpression(
+                Decimal128.parse("1234.200"),
+                of("1234.200").parseNumber(),
+                "{'$toDecimal': '1234.200'}");
+
+        assertExpression(
+                true,
+                of("1234").parseInteger().eq(of("1234").parseNumber()));
+    }
+
     // non-string
 
     @Test

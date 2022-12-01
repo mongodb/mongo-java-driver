@@ -236,6 +236,11 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(ast("$toLong"));
     }
 
+    @Override
+    public NumberExpression parseNumber() {
+        return new MqlExpression<>(ast("$toDecimal"));
+    }
+
     /** @see ArrayExpression */
 
     @Override
