@@ -139,10 +139,15 @@ final class MqlExpression<T extends Expression>
 
     /** @see DocumentExpression */
 
-    private Function<CodecRegistry, AstPlaceholder> getFieldInternal(final String fieldBoolean) {
-        return (cr) -> astDoc("$getField", new BsonDocument()
-                .append("input", this.fn.apply(cr).bsonValue)
-                .append("field", new BsonString(fieldBoolean)));
+    private Function<CodecRegistry, AstPlaceholder> getFieldInternal(final String fieldName) {
+        return (cr) -> {
+            BsonValue value = fieldName.startsWith("$")
+                    ? new BsonDocument("$literal", new BsonString(fieldName))
+                    : new BsonString(fieldName);
+            return astDoc("$getField", new BsonDocument()
+                    .append("input", this.fn.apply(cr).bsonValue)
+                    .append("field", value));
+        };
     }
 
     @Override
@@ -216,7 +221,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <T1 extends Expression> ArrayExpression<T1> getArray(final String fieldName, final ArrayExpression<? extends T1> other) {
+    public <R extends Expression> ArrayExpression<R> getArray(final String fieldName, final ArrayExpression<? extends R> other) {
         return getArray(fieldName).isArrayOr(other);
     }
 

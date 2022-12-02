@@ -17,6 +17,7 @@
 package com.mongodb.client.model.expressions;
 
 import org.bson.conversions.Bson;
+import org.bson.types.Decimal128;
 
 import java.time.Instant;
 
@@ -46,7 +47,11 @@ public interface DocumentExpression extends Expression {
 
     NumberExpression getNumber(String fieldName, NumberExpression other);
 
-    default NumberExpression getNumber(final String fieldName, final Number other) {
+    default NumberExpression getNumber(final String fieldName, final double other) {
+        return getNumber(fieldName, Expressions.numberToExpression(other));
+    }
+
+    default NumberExpression getNumber(final String fieldName, final Decimal128 other) {
         return getNumber(fieldName, Expressions.numberToExpression(other));
     }
 

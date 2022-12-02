@@ -96,6 +96,16 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
                 .getDate("a").month(of("UTC")));
         assertExpression(3, ofDoc("{a: [3, 2]}").getArray("a").first());
         assertExpression(2, ofDoc("{a: {b: 2}}").getDocument("a").getInteger("b"));
+
+        // field names, not paths
+        DocumentExpression doc = ofDoc("{a: {b: 2}, 'a.b': 3, 'a$b': 4, '$a.b': 5}");
+        assertExpression(2, doc.getDocument("a").getInteger("b"));
+        assertExpression(3, doc.getInteger("a.b"));
+        assertExpression(4, doc.getInteger("a$b"));
+        assertExpression(5,
+                doc.getInteger("$a.b"),
+                "{'$getField': {'input': {'$literal': {'a': {'b': 2}, 'a.b': 3, 'a$b': 4, '$a.b': 5}}, "
+                        + "'field': {'$literal': '$a.b'}}}");
     }
 
     @Test
