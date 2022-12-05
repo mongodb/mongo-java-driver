@@ -19,9 +19,10 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * A number value. {@link IntegerExpression Integers} are a subset of numbers,
- * and so, for example, the integer 0 and the number 0 are the same value,
- * and are equal.
+ * A number {@linkplain Expression value} in the context of the MongoDB Query
+ * Language (MQL). {@linkplain IntegerExpression Integers} are a subset of
+ * numbers, and so, for example, the integer 0 and the number 0 are
+ * {@linkplain #eq(Expression) equal}.
  */
 public interface NumberExpression extends Expression {
 
@@ -44,9 +45,9 @@ public interface NumberExpression extends Expression {
     }
 
     /**
-     * The result of dividing {@code this} value by the {@code other} value.
-     * This is not integer division: dividing {@code 1} by {@code 2} will yield
-     * {@code 0.5}.
+     * The quotient of dividing {@code this} value by the {@code other} value.
+     * This is not integer division: dividing {@code 1} by {@code 2} will
+     * always yield {@code 0.5}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -54,9 +55,9 @@ public interface NumberExpression extends Expression {
     NumberExpression divide(NumberExpression other);
 
     /**
-     * The result of dividing {@code this} value by the {@code other} value.
-     * This is not integer division: dividing {@code 1} by {@code 2} will yield
-     * {@code 0.5}.
+     * The quotient of dividing {@code this} value by the {@code other} value.
+     * This is not integer division: dividing {@code 1} by {@code 2} will
+     * always yield {@code 0.5}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -84,7 +85,7 @@ public interface NumberExpression extends Expression {
     }
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -92,7 +93,7 @@ public interface NumberExpression extends Expression {
     NumberExpression subtract(NumberExpression other);
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -102,7 +103,8 @@ public interface NumberExpression extends Expression {
     }
 
     /**
-     * The larger value of {@code this} and the {@code other} value.
+     * The {@linkplain #gt(Expression) larger} value of {@code this}
+     * and the {@code other} value.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -110,7 +112,8 @@ public interface NumberExpression extends Expression {
     NumberExpression max(NumberExpression other);
 
     /**
-     * The smaller value of {@code this} and the {@code other} value.
+     * The {@linkplain #lt(Expression) smaller} value of {@code this}
+     * and the {@code other} value.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -125,7 +128,8 @@ public interface NumberExpression extends Expression {
     IntegerExpression round();
 
     /**
-     * The result of rounding {@code this} to the nearest even {@code place}.
+     * The result of rounding {@code this} to {@code place} decimal places
+     * using the "half to even" approach.
      *
      * @param place the decimal place to round to, from -20 to 100, exclusive.
      *              Positive values specify the place to the right of the
@@ -141,6 +145,25 @@ public interface NumberExpression extends Expression {
      */
     NumberExpression abs();
 
+    /**
+     * The result of passing {@code this} value to the provided function.
+     * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * user-defined functions to use the chaining syntax.
+     *
+     * @see Expression#passTo
+     * @param f the function to apply.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
     <R extends Expression> R passNumberTo(Function<? super NumberExpression, ? extends R> f);
-    <R extends Expression> R switchNumberOn(Function<Branches<NumberExpression>, ? extends BranchesTerminal<NumberExpression, ? extends R>> on);
+
+    /**
+     * The result of applying the provided switch mapping to {@code this} value.
+     *
+     * @see Expression#switchOn
+     * @param mapping the switch mapping.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
+    <R extends Expression> R switchNumberOn(Function<Branches<NumberExpression>, ? extends BranchesTerminal<NumberExpression, ? extends R>> mapping);
 }

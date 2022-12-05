@@ -152,7 +152,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 map,
                 ofMap(map).isMapOr(ofMap(BsonDocument.parse("{b: 2}"))),
-                "{'$cond': [{'$eq': [{'$type': {'$literal': {'a': 1}}}, 'object']}, "
+                "{'$cond': [{'$eq': [{'$type': [{'$literal': {'a': 1}}]}, 'object']}, "
                         + "{'$literal': {'a': 1}}, {'$literal': {'b': 2}}]}");
         // non-map:
         assertExpression(map, ofIntegerArray(1).isMapOr(ofMap(map)));
