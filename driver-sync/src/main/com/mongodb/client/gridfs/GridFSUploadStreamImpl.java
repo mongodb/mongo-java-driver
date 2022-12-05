@@ -138,12 +138,14 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     @Override
     public void close() {
-        withLock(closeLock, () -> {
-            if (closed) {
-                return;
-            }
+        boolean alreadyClosed = withLock(closeLock, () -> {
+            boolean prevClosed = closed;
             closed = true;
+            return prevClosed;
         });
+        if (alreadyClosed) {
+            return;
+        }
         writeChunk();
         GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
                 metadata);

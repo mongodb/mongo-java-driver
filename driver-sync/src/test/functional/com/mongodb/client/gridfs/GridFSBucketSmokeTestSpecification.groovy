@@ -84,6 +84,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
             def outputStream = gridFSBucket.openUploadStream('myFile')
             outputStream.write(contentBytes)
             outputStream.close()
+            outputStream.close() // check for close idempotency
             fileId = outputStream.getObjectId()
         }
 
