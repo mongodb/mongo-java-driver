@@ -18,6 +18,19 @@ package com.mongodb.client.model.expressions;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 
+/**
+ * A map entry {@linkplain Expression value} in the context
+ * of the MongoDB Query Language (MQL). An entry has a
+ * {@linkplain StringExpression string} key and some
+ * {@linkplain Expression value}. Entries are used with
+ * {@linkplain MapExpression maps}.
+ *
+ * Entries are {@linkplain Expression#isDocumentOr document-like} and
+ * {@linkplain Expression#isMapOr map-like}, unless the method returning the
+ * entry specifies otherwise.
+ *
+ * @param <T> The type of the value
+ */
 public interface EntryExpression<T extends Expression> extends Expression {
     StringExpression getKey();
 

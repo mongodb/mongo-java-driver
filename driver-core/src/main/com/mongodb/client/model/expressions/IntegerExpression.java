@@ -19,9 +19,10 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * An integer value. Integers are a subset of {@link NumberExpression numbers},
- * and so, for example, the integer 0 and the number 0 are the same value,
- * and are equal.
+ * An integer {@linkplain Expression value} in the context of the MongoDB Query
+ * Language (MQL). Integers are a subset of {@linkplain NumberExpression numbers},
+ * and so, for example, the integer 0 and the number 0 are
+ * {@linkplain #eq(Expression) equal}.
  */
 public interface IntegerExpression extends NumberExpression {
 
@@ -62,7 +63,7 @@ public interface IntegerExpression extends NumberExpression {
     }
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -70,7 +71,7 @@ public interface IntegerExpression extends NumberExpression {
     IntegerExpression subtract(IntegerExpression other);
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -80,7 +81,8 @@ public interface IntegerExpression extends NumberExpression {
     }
 
     /**
-     * The larger value of {@code this} and the {@code other} value.
+     * The {@linkplain #gt(Expression) larger} value of {@code this}
+     * and the {@code other} value.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -88,7 +90,8 @@ public interface IntegerExpression extends NumberExpression {
     IntegerExpression max(IntegerExpression other);
 
     /**
-     * The smaller value of {@code this} and the {@code other} value.
+     * The {@linkplain #lt(Expression) smaller} value of {@code this}
+     * and the {@code other} value.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -103,14 +106,32 @@ public interface IntegerExpression extends NumberExpression {
     IntegerExpression abs();
 
     /**
-     * The {@link DateExpression date} corresponding to {@code this} value
+     * The {@linkplain DateExpression date} corresponding to {@code this} value
      * when taken to be the number of milliseconds since the Unix epoch.
      *
      * @return the resulting value.
      */
     DateExpression millisecondsToDate();
-    // TODO-END rename integer.utcMillisecondsToDate -- date.asUtcMilliseconds
 
+    /**
+     * The result of passing {@code this} value to the provided function.
+     * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * user-defined functions to use the chaining syntax.
+     *
+     * @see Expression#passTo
+     * @param f the function to apply.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
     <R extends Expression> R passIntegerTo(Function<? super IntegerExpression, ? extends R> f);
-    <R extends Expression> R switchIntegerOn(Function<Branches<IntegerExpression>, ? extends BranchesTerminal<IntegerExpression, ? extends R>> on);
+
+    /**
+     * The result of applying the provided switch mapping to {@code this} value.
+     *
+     * @see Expression#switchOn
+     * @param mapping the switch mapping.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
+    <R extends Expression> R switchIntegerOn(Function<Branches<IntegerExpression>, ? extends BranchesTerminal<IntegerExpression, ? extends R>> mapping);
 }

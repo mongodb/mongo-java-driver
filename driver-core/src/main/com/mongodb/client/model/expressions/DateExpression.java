@@ -19,8 +19,11 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * An instantaneous date and time. Tracks a UTC datetime, the number of
- * milliseconds since the Unix epoch. Does not track the timezone.
+ * A UTC date-time {@linkplain Expression value} in the context
+ * of the MongoDB Query Language (MQL). Tracks the number of
+ * milliseconds since the Unix epoch, and does not track the timezone.
+ *
+ * @mongodb.driver.manual reference/operator/aggregation/dateToString/ Format Specifiers, UTC Offset, and Olson Timezone Identifier
  */
 public interface DateExpression extends Expression {
 
@@ -123,11 +126,30 @@ public interface DateExpression extends Expression {
      * provided {@code timezone}, and formatted according to the {@code format}.
      *
      * @param timezone the UTC Offset or Olson Timezone Identifier.
-     * @param format the format specifier. TODO-END what standard is this?
+     * @param format the format specifier.
      * @return the resulting value.
      */
     StringExpression asString(StringExpression timezone, StringExpression format);
 
+    /**
+     * The result of passing {@code this} value to the provided function.
+     * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * user-defined functions to use the chaining syntax.
+     *
+     * @see Expression#passTo
+     * @param f the function to apply.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
     <R extends Expression> R passDateTo(Function<? super DateExpression, ? extends R> f);
-    <R extends Expression> R switchDateOn(Function<Branches<DateExpression>, ? extends BranchesTerminal<DateExpression, ? extends R>> on);
+
+    /**
+     * The result of applying the provided switch mapping to {@code this} value.
+     *
+     * @see Expression#switchOn
+     * @param mapping the switch mapping.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
+    <R extends Expression> R switchDateOn(Function<Branches<DateExpression>, ? extends BranchesTerminal<DateExpression, ? extends R>> mapping);
 }
