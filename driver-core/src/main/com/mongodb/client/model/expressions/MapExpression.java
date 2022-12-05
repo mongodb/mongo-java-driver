@@ -60,6 +60,25 @@ public interface MapExpression<T extends Expression> extends Expression {
 
     <R extends DocumentExpression> R asDocument();
 
+    /**
+     * The result of passing {@code this} value to the provided function.
+     * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * user-defined functions to use the chaining syntax.
+     *
+     * @see Expression#passTo
+     * @param f the function to apply.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
     <R extends Expression> R passMapTo(Function<? super MapExpression<T>, ? extends R> f);
-    <R extends Expression> R switchMapOn(Function<Branches<MapExpression<T>>, ? extends BranchesTerminal<MapExpression<T>, ? extends R>> on);
+
+    /**
+     * The result of applying the provided switch mapping to {@code this} value.
+     *
+     * @see Expression#switchOn
+     * @param mapping the switch mapping.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
+    <R extends Expression> R switchMapOn(Function<Branches<MapExpression<T>>, ? extends BranchesTerminal<MapExpression<T>, ? extends R>> mapping);
 }

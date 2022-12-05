@@ -19,7 +19,8 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * A logical boolean value, either true or false.
+ * A boolean {@linkplain Expression value} in the context of the
+ * MongoDB Query Language (MQL).
  */
 public interface BooleanExpression extends Expression {
 
@@ -45,20 +46,37 @@ public interface BooleanExpression extends Expression {
      * @return the resulting value.
      */
     BooleanExpression and(BooleanExpression other);
-    // TODO-END check the evaluation semantics of and/or
 
     /**
-     * The {@code left} branch when {@code this} is true,
-     * and the {@code right} branch otherwise.
+     * The {@code ifTrue} value when {@code this} is true,
+     * and the {@code ifFalse} value otherwise.
      *
-     * @param left the left branch.
-     * @param right the right branch.
+     * @param ifTrue the ifTrue value.
+     * @param ifFalse the ifFalse value.
      * @return the resulting value.
      * @param <T> The type of the resulting expression.
      */
-    <T extends Expression> T cond(T left, T right);
+    <T extends Expression> T cond(T ifTrue, T ifFalse);
 
+    /**
+     * The result of passing {@code this} value to the provided function.
+     * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * user-defined functions to use the chaining syntax.
+     *
+     * @see Expression#passTo
+     * @param f the function to apply.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
     <R extends Expression> R passBooleanTo(Function<? super BooleanExpression, ? extends R> f);
 
-    <R extends Expression> R switchBooleanOn(Function<Branches<BooleanExpression>, ? extends BranchesTerminal<BooleanExpression, ? extends R>> on);
+    /**
+     * The result of applying the provided switch mapping to {@code this} value.
+     *
+     * @see Expression#switchOn
+     * @param mapping the switch mapping.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
+    <R extends Expression> R switchBooleanOn(Function<Branches<BooleanExpression>, ? extends BranchesTerminal<BooleanExpression, ? extends R>> mapping);
 }

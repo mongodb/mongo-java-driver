@@ -155,8 +155,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R cond(final R left, final R right) {
-        return newMqlExpression(ast("$cond", left, right));
+    public <R extends Expression> R cond(final R ifTrue, final R ifFalse) {
+        return newMqlExpression(ast("$cond", ifTrue, ifFalse));
     }
 
     /** @see DocumentExpression */
@@ -504,7 +504,7 @@ final class MqlExpression<T extends Expression>
     }
 
     BooleanExpression isDocumentOrMap() {
-        return new MqlExpression<>(ast("$type")).eq(of("object"));
+        return new MqlExpression<>(astWrapped("$type")).eq(of("object"));
     }
 
     @Override
