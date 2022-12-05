@@ -26,6 +26,7 @@ import java.util.function.Function;
  *
  * TODO-END: 'cause an error', 'execution context', wrong types/unsafe operations
  * TODO-END: types and how missing/null are not part of any type.
+ * TODO-END: behaviour of equals
  *
  * @see Expressions
  */
@@ -33,7 +34,17 @@ import java.util.function.Function;
 public interface Expression {
 
     /**
+     * The method {@link Expression#eq} should be used to compare values for
+     * equality.
+     */
+    @Deprecated // TODO-END (?) <p>Marked deprecated to prevent erroneous use.
+    @Override
+    boolean equals(Object other);
+
+    /**
      * Whether {@code this} value is equal to the {@code other} value.
+     *
+     * <p>The result does not correlate with {@link Expression#equals(Object)}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -97,9 +108,6 @@ public interface Expression {
      * {@code this} is a number, or the {@code other} number value if
      * {@code this} is null, or is missing, or is of any other non-number type.
      *
-     * <p>Since integers are a subset of numbers, if a value is an integer,
-     * this does not imply that it is not a number, and vice-versa.
-     *
      * @param other the other value.
      * @return the resulting value.
      */
@@ -110,18 +118,15 @@ public interface Expression {
      * {@code this} is an integer, or the {@code other} integer value if
      * {@code this} is null, or is missing, or is of any other non-integer type.
      *
-     * <p>Since integers are a subset of numbers, if a value is an integer,
-     * this does not imply that it is not a number, and vice-versa.
-     *
      * @param other the other value.
      * @return the resulting value.
      */
     IntegerExpression isIntegerOr(IntegerExpression other);
 
     /**
-     * {@code this} value as a {@link BooleanExpression boolean} if
-     * {@code this} is a boolean, or the {@code other} boolean value if
-     * {@code this} is null, or is missing, or is of any other non-boolean type.
+     * {@code this} value as a {@link StringExpression string} if
+     * {@code this} is a string, or the {@code other} string value if
+     * {@code this} is null, or is missing, or is of any other non-string type.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -129,9 +134,9 @@ public interface Expression {
     StringExpression isStringOr(StringExpression other);
 
     /**
-     * {@code this} value as a {@link StringExpression string} if
-     * {@code this} is a string, or the {@code other} string value if
-     * {@code this} is null, or is missing, or is of any other non-string type.
+     * {@code this} value as a {@link DateExpression boolean} if
+     * {@code this} is a date, or the {@code other} date value if
+     * {@code this} is null, or is missing, or is of any other non-date type.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -150,7 +155,7 @@ public interface Expression {
      * the user is an unchecked assertion that all elements are of that type,
      * and that no element is null, is missing, or is of some other type. If the
      * user cannot make such an assertion, some appropriate super-type should be
-     * chosen, and elements should be individually type-checked.
+     * chosen, and if necessary elements should be individually type-checked.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -164,7 +169,7 @@ public interface Expression {
     <T extends Expression> MapExpression<T> isMapOr(MapExpression<? extends T> other);
 
     /**
-     * The {@link StringExpression string} value corresponding to this value.
+     * The {@link StringExpression string} representation of {@code this} value.
      *
      * <p>This may "cause an error" if the type cannot be converted to string,
      * as is the case with {@link ArrayExpression arrays},
@@ -182,13 +187,10 @@ public interface Expression {
     StringExpression asString();
 
     /**
-     * Applies the provided function to {@code this}.
+     * Applies the provided function to {@code this} value.
      *
      * <p>Equivalent to {@code f.apply(this)}, and allows lambdas and static,
-     * user-defined functions to use the chaining syntax. For example:
-     * {@code myInteger.apply(isEven)} (here, {@code isEven} is a function
-     * taking an {@link IntegerExpression integer} and yielding a
-     * {@link BooleanExpression boolean}).
+     * user-defined functions to use the chaining syntax.
      *
      * @param f the function to apply.
      * @return the resulting value.
