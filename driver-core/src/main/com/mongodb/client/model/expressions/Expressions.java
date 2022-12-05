@@ -39,31 +39,25 @@ import static com.mongodb.client.model.expressions.MqlExpression.AstPlaceholder;
 import static com.mongodb.client.model.expressions.MqlExpression.extractBsonValue;
 
 /**
- * Convenience methods related to {@link Expression}.
+ * Convenience methods related to {@link Expression}, used primarily to
+ * produce values in the context of the MongoDB Query Language (MQL).
  */
 public final class Expressions {
 
     private Expressions() {}
 
     /**
-     * Returns an expression having the same boolean value as the provided
-     * boolean primitive.
+     * Returns a {@linkplain BooleanExpression boolean} value corresponding to
+     * the provided {@code boolean} primitive.
      *
-     * @param of the boolean primitive
-     * @return the boolean expression
+     * @param of the {@code boolean} primitive.
+     * @return the resulting value.
      */
     public static BooleanExpression of(final boolean of) {
         // we intentionally disallow ofBoolean(null)
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonBoolean(of)));
     }
 
-    /**
-     * Returns an array expression containing the same boolean values as the
-     * provided array of booleans.
-     *
-     * @param array the array of booleans
-     * @return the boolean array expression
-     */
     public static ArrayExpression<BooleanExpression> ofBooleanArray(final boolean... array) {
         Assertions.notNull("array", array);
         List<BsonValue> list = new ArrayList<>();
@@ -74,11 +68,11 @@ public final class Expressions {
     }
 
     /**
-     * Returns an expression having the same integer value as the provided
-     * int primitive.
+     * Returns an {@linkplain IntegerExpression integer} value corresponding to
+     * the provided {@code int} primitive.
      *
-     * @param of the int primitive
-     * @return the integer expression
+     * @param of the {@code int} primitive.
+     * @return the resulting value.
      */
     public static IntegerExpression of(final int of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt32(of)));
@@ -93,6 +87,13 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
     }
 
+    /**
+     * Returns an {@linkplain IntegerExpression integer} value corresponding to
+     * the provided {@code long} primitive.
+     *
+     * @param of the {@code long} primitive.
+     * @return the resulting value.
+     */
     public static IntegerExpression of(final long of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt64(of)));
     }
@@ -106,6 +107,13 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
     }
 
+    /**
+     * Returns a {@linkplain NumberExpression number} value corresponding to
+     * the provided {@code double} primitive.
+     *
+     * @param of the {@code double} primitive.
+     * @return the resulting value.
+     */
     public static NumberExpression of(final double of) {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
     }
@@ -119,6 +127,13 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
     }
 
+    /**
+     * Returns a {@linkplain NumberExpression number} value corresponding to
+     * the provided {@link Decimal128}
+     *
+     * @param of the {@link Decimal128}.
+     * @return the resulting value.
+     */
     public static NumberExpression of(final Decimal128 of) {
         Assertions.notNull("Decimal128", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
@@ -134,6 +149,14 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
+
+    /**
+     * Returns a {@linkplain DateExpression date and time} value corresponding to
+     * the provided {@link Instant}.
+     *
+     * @param of the {@link Instant}.
+     * @return the resulting value.
+     */
     public static DateExpression of(final Instant of) {
         Assertions.notNull("Instant", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
@@ -150,17 +173,16 @@ public final class Expressions {
     }
 
     /**
-     * Returns an expression having the same string value as the provided
-     * string.
+     * Returns an {@linkplain StringExpression string} value corresponding to
+     * the provided {@link String}.
      *
-     * @param of the string
-     * @return the string expression
+     * @param of the {@link String}.
+     * @return the resulting value.
      */
     public static StringExpression of(final String of) {
         Assertions.notNull("String", of);
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
     }
-
 
     public static ArrayExpression<StringExpression> ofStringArray(final String... array) {
         Assertions.notNull("array", array);
@@ -172,16 +194,48 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
+    /**
+     * Returns a reference to the "current"
+     * {@linkplain DocumentExpression document} value.
+     * The "current" value is the top-level document currently being processed
+     * in the aggregation pipeline stage.
+     *
+     * @return a reference to the current value
+     */
     public static DocumentExpression current() {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
                 .assertImplementsAllExpressions();
     }
 
+    /**
+     * Returns a reference to the "current"
+     * value as a {@linkplain MapExpression map} value.
+     * The "current" value is the top-level document currently being processed
+     * in the aggregation pipeline stage.
+     *
+     * <p>Warning: The type of the values of the resulting map are not
+     * enforced by the API. The specification of a type by the user is an
+     * unchecked assertion that all map values are of that type.
+     * If the map contains multiple types (such as both nulls and integers)
+     * then a super-type encompassing all types must be chosen, and
+     * if necessary the elements should be individually type-checked when used.
+     *
+     * @return a reference to the current value as a map.
+     * @param <R> the type of the map's values.
+     */
     public static <R extends Expression> MapExpression<R> currentAsMap() {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
                 .assertImplementsAllExpressions();
     }
 
+    /**
+     * Returns an {@linkplain DocumentExpression array} value, containing the
+     * {@linkplain Expression values} provided.
+     *
+     * @param array the {@linkplain Expression values}.
+     * @return the resulting value.
+     * @param <T> the type of the array elements.
+     */
     @SafeVarargs  // nothing is stored in the array
     public static <T extends Expression> ArrayExpression<T> ofArray(final T... array) {
         Assertions.notNull("array", array);
@@ -195,6 +249,14 @@ public final class Expressions {
         });
     }
 
+    /**
+     * Returns an {@linkplain EntryExpression entry} value.
+     *
+     * @param k the key.
+     * @param v the value.
+     * @return the resulting value.
+     * @param <T> the type of the key.
+     */
     public static <T extends Expression> EntryExpression<T> ofEntry(final StringExpression k, final T v) {
         Assertions.notNull("k", k);
         Assertions.notNull("v", v);
@@ -211,11 +273,19 @@ public final class Expressions {
     }
 
     /**
-     * user asserts type of values is T
+     * Returns a {@linkplain MapExpression map} value corresponding to the
+     * provided {@link Bson Bson document}.
      *
-     * @param map
-     * @return
-     * @param <T>
+     * <p>Warning: The type of the values of the resulting map are not
+     * enforced by the API. The specification of a type by the user is an
+     * unchecked assertion that all map values are of that type.
+     * If the map contains multiple types (such as both nulls and integers)
+     * then a super-type encompassing all types must be chosen, and
+     * if necessary the elements should be individually type-checked when used.
+     *
+     * @param map the map as a {@link Bson Bson document}.
+     * @return the resulting map value.
+     * @param <T> the type of the resulting map's values.
      */
     public static <T extends Expression> MapExpression<T> ofMap(final Bson map) {
         Assertions.notNull("map", map);
@@ -223,6 +293,13 @@ public final class Expressions {
                 map.toBsonDocument(BsonDocument.class, cr))));
     }
 
+    /**
+     * Returns a {@linkplain DocumentExpression document} value corresponding to the
+     * provided {@link Bson Bson document}.
+     *
+     * @param document the {@linkplain Bson BSON document}.
+     * @return the resulting value.
+     */
     public static DocumentExpression of(final Bson document) {
         Assertions.notNull("document", document);
         // All documents are wrapped in a $literal. If we don't wrap, we need to
@@ -232,6 +309,21 @@ public final class Expressions {
                 document.toBsonDocument(BsonDocument.class, cr))));
     }
 
+    /**
+     * The null value in the context of the MongoDB Query Language (MQL).
+     *
+     * <p>The null value is not part of, and cannot be used as if it were part
+     * of, any explicit type (except the root type {@link Expression} itself).
+     * It has no explicit type of its own.
+     *
+     * <p>Instead of checking that a value is null, users should generally
+     * check that a value is of their expected type, via methods such as
+     * {@link Expression#isNumberOr(NumberExpression)}. Where the null value
+     * must be checked explicitly, users may use {@link Branches#isNull} within
+     * {@link Expression#switchOn}.
+     *
+     * @return the null value
+     */
     public static Expression ofNull() {
         // There is no specific expression type corresponding to Null,
         // and Null is not a value in any other expression type.
