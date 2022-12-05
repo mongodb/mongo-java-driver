@@ -44,7 +44,7 @@ public interface MapExpression<T extends Expression> extends Expression {
         return unset(of(key));
     }
 
-    MapExpression<T> mergee(MapExpression<T> map);
+    MapExpression<T> merge(MapExpression<T> map);
 
     ArrayExpression<EntryExpression<T>> entrySet();
 }

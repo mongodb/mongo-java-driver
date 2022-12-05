@@ -89,7 +89,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/arrayToObject/ (48)
         assertExpression(
                 Document.parse("{'keyA': 1}"),
-                ofArray(ofEntry("keyA", of(1))).buildMap(v -> v),
+                ofArray(ofEntry("keyA", of(1))).asMap(v -> v),
                 "{'$arrayToObject': [[{'$literal': {'k': 'keyA', 'v': 1}}]]}");
     }
 
@@ -116,7 +116,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 mapA1B2
                         .entrySet()
                         .map(v -> v.setValue(v.getValue().add(1)))
-                        .buildMap(v -> v));
+                        .asMap(v -> v));
     }
 
     @Test
@@ -124,7 +124,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Document.parse("{'keyA': 9, 'keyB': 2, 'keyC': 3}"),
                 ofMap(Document.parse("{keyA: 1, keyB: 2}"))
-                        .mergee(ofMap(Document.parse("{keyA: 9, keyC: 3}"))),
+                        .merge(ofMap(Document.parse("{keyA: 9, keyC: 3}"))),
                 "{'$mergeObjects': [{'$literal': {'keyA': 1, 'keyB': 2}}, "
                         + "{'$literal': {'keyA': 9, 'keyC': 3}}]}");
     }

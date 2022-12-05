@@ -795,7 +795,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public MapExpression<T> mergee(final MapExpression<T> map) {
+    public MapExpression<T> merge(final MapExpression<T> map) {
         return new MqlExpression<>(ast("$mergeObjects", map));
     }
 
@@ -805,7 +805,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> MapExpression<R> buildMap(final Function<T, EntryExpression<R>> o) {
+    public <R extends Expression> MapExpression<R> asMap(final Function<T, EntryExpression<R>> o) {
         return newMqlExpression(astWrapped("$arrayToObject"));
     }
 
