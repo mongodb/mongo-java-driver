@@ -48,11 +48,11 @@ public interface DocumentExpression extends Expression {
     NumberExpression getNumber(String fieldName, NumberExpression other);
 
     default NumberExpression getNumber(final String fieldName, final double other) {
-        return getNumber(fieldName, Expressions.numberToExpression(other));
+        return getNumber(fieldName, of(other));
     }
 
     default NumberExpression getNumber(final String fieldName, final Decimal128 other) {
-        return getNumber(fieldName, Expressions.numberToExpression(other));
+        return getNumber(fieldName, of(other));
     }
 
     IntegerExpression getInteger(String fieldName);
