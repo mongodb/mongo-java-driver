@@ -17,6 +17,7 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
+import com.mongodb.lang.Nullable;
 
 /**
  * An interface to describe the completion of an asynchronous function, which may be represented as {@link AsyncCallbackFunction}.
@@ -32,5 +33,5 @@ public interface SingleResultCallback<T> {
      * @throws RuntimeException Never.
      * @throws Error Never, on the best effort basis.
      */
-    void onResult(T result, Throwable t);
+    void onResult(@Nullable T result, @Nullable Throwable t);
 }

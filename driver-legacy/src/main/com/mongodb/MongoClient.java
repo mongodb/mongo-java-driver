@@ -26,8 +26,6 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -35,6 +33,8 @@ import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.SingleServerBinding;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -245,8 +245,12 @@ public class MongoClient implements Closeable {
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();
-        LOGGER.info(format("MongoClient with metadata %s created with settings %s",
-                createClientMetadataDocument(settings.getApplicationName(), wrappedMongoDriverInformation).toJson(), settings));
+        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+        if (clientMetadataDocument == null) {
+            LOGGER.info(format("MongoClient created with settings %s", settings));
+        } else {
+            LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
+        }
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {

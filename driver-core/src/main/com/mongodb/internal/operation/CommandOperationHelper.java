@@ -58,6 +58,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -80,6 +81,7 @@ final class CommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
+        @Nullable
         R apply(T t, ConnectionSource source, Connection connection);
     }
 
@@ -91,6 +93,7 @@ final class CommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
+        @Nullable
         R apply(T t, Connection connection);
     }
 
@@ -102,6 +105,7 @@ final class CommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
+        @Nullable
         R apply(T t, AsyncConnection connection);
     }
 
@@ -113,6 +117,7 @@ final class CommandOperationHelper {
          * @param t the input object
          * @return the function result
          */
+        @Nullable
         R apply(T t, AsyncConnectionSource source, AsyncConnection connection);
     }
 
@@ -218,6 +223,7 @@ final class CommandOperationHelper {
         return read.get();
     }
 
+    @Nullable
     static <D, T> T createReadCommandAndExecute(
             final RetryState retryState,
             final ReadBinding binding,
@@ -230,8 +236,9 @@ final class CommandOperationHelper {
         BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
         logRetryExecute(retryState);
-        return transformer.apply(connection.command(database, command, new NoOpFieldNameValidator(), source.getReadPreference(), decoder,
-                binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext()), source, connection);
+        return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
+                source.getReadPreference(), decoder, binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext())),
+                source, connection);
     }
 
     /* Write Binding Helpers */
@@ -240,16 +247,18 @@ final class CommandOperationHelper {
     static <D, T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
                                    final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
         return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection) ->
-            transformer.apply(
+            transformer.apply(assertNotNull(
                     connection.command(database, command, new NoOpFieldNameValidator(), primary(), decoder, source.getSessionContext(),
-                            source.getServerApi(), binding.getRequestContext()), connection));
+                            source.getServerApi(), binding.getRequestContext())), connection));
     }
 
+    @Nullable
     static <T> T executeCommand(final WriteBinding binding, final String database, final BsonDocument command,
                                 final Connection connection, final CommandWriteTransformer<BsonDocument, T> transformer) {
         notNull("binding", binding);
-        return transformer.apply(connection.command(database, command, new NoOpFieldNameValidator(), primary(), new BsonDocumentCodec(),
-                        binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext()), connection);
+        return transformer.apply(assertNotNull(
+                connection.command(database, command, new NoOpFieldNameValidator(), primary(), new BsonDocumentCodec(),
+                        binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext())), connection);
     }
 
     /* Async Read Binding Helpers */
@@ -382,7 +391,7 @@ final class CommandOperationHelper {
     static <T, R> R executeRetryableWrite(
             final WriteBinding binding,
             final String database,
-            final ReadPreference readPreference,
+            @Nullable final ReadPreference readPreference,
             final FieldNameValidator fieldNameValidator,
             final Decoder<T> commandResultDecoder,
             final CommandCreator commandCreator,
@@ -432,7 +441,7 @@ final class CommandOperationHelper {
     static <T, R> void executeRetryableWriteAsync(
             final AsyncWriteBinding binding,
             final String database,
-            final ReadPreference readPreference,
+            @Nullable final ReadPreference readPreference,
             final FieldNameValidator fieldNameValidator,
             final Decoder<T> commandResultDecoder,
             final CommandCreator commandCreator,
@@ -516,7 +525,8 @@ final class CommandOperationHelper {
         rethrowIfNotNamespaceError(e, null);
     }
 
-    static <T> T rethrowIfNotNamespaceError(final MongoCommandException e, final T defaultValue) {
+    @Nullable
+    static <T> T rethrowIfNotNamespaceError(final MongoCommandException e, @Nullable final T defaultValue) {
         if (!isNamespaceError(e)) {
             throw e;
         }

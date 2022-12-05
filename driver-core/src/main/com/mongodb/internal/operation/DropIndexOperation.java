@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -63,14 +64,14 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
         this(namespace, keys, null);
     }
 
-    public DropIndexOperation(final MongoNamespace namespace, final String indexName, final WriteConcern writeConcern) {
+    public DropIndexOperation(final MongoNamespace namespace, final String indexName, @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.indexName = notNull("indexName", indexName);
         this.indexKeys = null;
         this.writeConcern = writeConcern;
     }
 
-    public DropIndexOperation(final MongoNamespace namespace, final BsonDocument indexKeys, final WriteConcern writeConcern) {
+    public DropIndexOperation(final MongoNamespace namespace, final BsonDocument indexKeys, @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.indexKeys = notNull("indexKeys", indexKeys);
         this.indexName = null;

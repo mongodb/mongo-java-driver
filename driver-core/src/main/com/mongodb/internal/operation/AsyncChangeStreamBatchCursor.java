@@ -21,6 +21,7 @@ import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.RawBsonDocument;
@@ -55,7 +56,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     AsyncChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                                  final AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped,
                                  final AsyncReadBinding binding,
-                                 final BsonDocument resumeToken,
+                                 @Nullable final BsonDocument resumeToken,
                                  final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.wrapped = new AtomicReference<>(assertNotNull(wrapped));

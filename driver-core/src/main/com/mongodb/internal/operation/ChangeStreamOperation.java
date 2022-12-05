@@ -27,6 +27,7 @@ import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -119,7 +120,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return wrapped.getBatchSize();
     }
 
-    public ChangeStreamOperation<T> batchSize(final Integer batchSize) {
+    public ChangeStreamOperation<T> batchSize(@Nullable final Integer batchSize) {
         wrapped.batchSize(batchSize);
         return this;
     }
@@ -206,13 +207,14 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                                 setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
                                         cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
                     }
-                    source.release();
+                    source.release(); // TODO: can this be null?
                 });
             }
         });
     }
 
-    private BsonDocument setChangeStreamOptions(final BsonDocument postBatchResumeToken, final BsonTimestamp operationTime,
+    @Nullable
+    private BsonDocument setChangeStreamOptions(@Nullable final BsonDocument postBatchResumeToken, final BsonTimestamp operationTime,
                                                 final int maxWireVersion, final boolean firstBatchEmpty) {
         BsonDocument resumeToken = null;
         if (startAfter != null) {
@@ -225,7 +227,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return resumeToken;
     }
 
-    public void setChangeStreamOptionsForResume(final BsonDocument resumeToken, final int maxWireVersion) {
+    public void setChangeStreamOptionsForResume(@Nullable final BsonDocument resumeToken, final int maxWireVersion) {
         startAfter = null;
         if (resumeToken != null) {
             startAtOperationTime = null;

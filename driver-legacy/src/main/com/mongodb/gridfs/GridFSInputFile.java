@@ -19,6 +19,7 @@ package com.mongodb.gridfs;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
@@ -55,7 +56,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param filename             Name of the file to be created.
      * @param closeStreamOnPersist indicate the passed in input stream should be closed once the data chunk persisted
      */
-    protected GridFSInputFile(final GridFS gridFS, final InputStream inputStream, final String filename,
+    protected GridFSInputFile(final GridFS gridFS, @Nullable final InputStream inputStream, @Nullable final String filename,
                               final boolean closeStreamOnPersist) {
         this.fs = gridFS;
         this.inputStream = inputStream;
@@ -75,7 +76,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param inputStream Stream used for reading data from.
      * @param filename    Name of the file to be created.
      */
-    protected GridFSInputFile(final GridFS gridFS, final InputStream inputStream, final String filename) {
+    protected GridFSInputFile(final GridFS gridFS, @Nullable final InputStream inputStream, @Nullable final String filename) {
         this(gridFS, inputStream, filename, false);
     }
 

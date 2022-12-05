@@ -29,6 +29,7 @@ import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannel;
 import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannelGroup;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
+import static java.util.Optional.ofNullable;
 
 /**
  * A {@code StreamFactoryFactory} that supports TLS/SSL.  The implementation supports asynchronous usage.
@@ -257,7 +259,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
         private SSLContext getSslContext() {
             try {
-                return (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
+                return ofNullable(sslSettings.getContext()).orElse(SSLContext.getDefault());
             } catch (NoSuchAlgorithmException e) {
                 throw new MongoClientException("Unable to create default SSLContext", e);
             }
@@ -288,14 +290,14 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
             }
 
             @Override
-            public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, final A attach,
+            public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, @Nullable final A attach,
                                  final CompletionHandler<Integer, ? super A> handler) {
                 wrapped.read(dst, timeout, unit, attach, handler);
             }
 
             @Override
             public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, final long timeout, final TimeUnit unit,
-                                 final A attach, final CompletionHandler<Long, ? super A> handler) {
+                                 @Nullable final A attach, final CompletionHandler<Long, ? super A> handler) {
                 wrapped.read(dsts, offset, length, timeout, unit, attach, handler);
             }
 

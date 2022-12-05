@@ -27,6 +27,7 @@ import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -72,7 +73,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return filter;
     }
 
-    public DistinctOperation<T> filter(final BsonDocument filter) {
+    public DistinctOperation<T> filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
@@ -101,7 +102,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return collation;
     }
 
-    public DistinctOperation<T> collation(final Collation collation) {
+    public DistinctOperation<T> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

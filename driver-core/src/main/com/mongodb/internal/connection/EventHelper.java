@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
 
@@ -54,8 +55,8 @@ final class EventHelper {
      * Determine whether the two server descriptions are effectively equivalent for the purpose of server event
      * generation, according to the equality rules enumerated in the Server Discovery and Monitoring specification.
      */
-    static boolean wouldDescriptionsGenerateEquivalentEvents(final ServerDescription current,
-                                                             final ServerDescription previous) {
+    static boolean wouldDescriptionsGenerateEquivalentEvents(@Nullable final ServerDescription current,
+                                                             @Nullable final ServerDescription previous) {
         if (current == previous) {
             return true;
         }
@@ -117,7 +118,7 @@ final class EventHelper {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private static boolean exceptionsEquals(final Throwable current, final Throwable previous) {
+    private static boolean exceptionsEquals(@Nullable final Throwable current, @Nullable final Throwable previous) {
         if (current == null || previous == null) {
             return current == previous;
         }

@@ -48,6 +48,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
@@ -208,7 +209,7 @@ class DefaultServerMonitor implements ServerMonitor {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
                         if (shouldStreamResponses(currentServerDescription)) {
-                            helloDocument.append("topologyVersion", currentServerDescription.getTopologyVersion().asDocument());
+                            helloDocument.append("topologyVersion", assertNotNull(currentServerDescription.getTopologyVersion()).asDocument());
                             helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                         }
 
@@ -269,7 +270,7 @@ class DefaultServerMonitor implements ServerMonitor {
             if (shouldLogStageChange(previousServerDescription, currentServerDescription)) {
                 if (currentServerDescription.getException() != null) {
                     LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverId.getAddress()),
-                            currentServerDescription.getException());
+                            assertNotNull(currentServerDescription.getException()));
                 } else {
                     LOGGER.info(format("Monitor thread successfully connected to server with description %s", currentServerDescription));
                 }
@@ -325,8 +326,9 @@ class DefaultServerMonitor implements ServerMonitor {
         if (!previous.getAddress().equals(current.getAddress())) {
             return true;
         }
-        if (previous.getCanonicalAddress() != null
-                ? !previous.getCanonicalAddress().equals(current.getCanonicalAddress()) : current.getCanonicalAddress() != null) {
+        String previousCanonicalAddress = previous.getCanonicalAddress();
+        if (previousCanonicalAddress != null
+                ? !previousCanonicalAddress.equals(current.getCanonicalAddress()) : current.getCanonicalAddress() != null) {
             return true;
         }
         if (!previous.getHosts().equals(current.getHosts())) {
@@ -338,10 +340,12 @@ class DefaultServerMonitor implements ServerMonitor {
         if (!previous.getPassives().equals(current.getPassives())) {
             return true;
         }
-        if (previous.getPrimary() != null ? !previous.getPrimary().equals(current.getPrimary()) : current.getPrimary() != null) {
+        String previousPrimary = previous.getPrimary();
+        if (previousPrimary != null ? !previousPrimary.equals(current.getPrimary()) : current.getPrimary() != null) {
             return true;
         }
-        if (previous.getSetName() != null ? !previous.getSetName().equals(current.getSetName()) : current.getSetName() != null) {
+        String previousSetName = previous.getSetName();
+        if (previousSetName != null ? !previousSetName.equals(current.getSetName()) : current.getSetName() != null) {
             return true;
         }
         if (previous.getState() != current.getState()) {

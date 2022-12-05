@@ -42,6 +42,7 @@ import java.util.Random;
 
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
 import static java.lang.String.format;
 
@@ -58,7 +59,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
 
     ScramShaAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
             @Nullable final ServerApi serverApi) {
-        this(credential, new DefaultRandomStringGenerator(), getAuthenicationHashGenerator(credential.getAuthenticationMechanism()),
+        this(credential, new DefaultRandomStringGenerator(),
+                getAuthenicationHashGenerator(assertNotNull(credential.getAuthenticationMechanism())),
                 clusterConnectionMode, serverApi);
     }
 
@@ -112,7 +114,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    public void setSpeculativeAuthenticateResponse(final BsonDocument response) {
+    public void setSpeculativeAuthenticateResponse(@Nullable final BsonDocument response) {
         if (response == null) {
             speculativeSaslClient = null;
         } else {
@@ -139,7 +141,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             this.credential = credential;
             this.randomStringGenerator = randomStringGenerator;
             this.authenticationHashGenerator = authenticationHashGenerator;
-            if (credential.getAuthenticationMechanism().equals(SCRAM_SHA_1)) {
+            if (assertNotNull(credential.getAuthenticationMechanism()).equals(SCRAM_SHA_1)) {
                 hAlgorithm = "SHA-1";
                 hmacAlgorithm = "HmacSHA1";
             } else {
@@ -149,7 +151,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
 
         public String getMechanismName() {
-            return credential.getAuthenticationMechanism().getMechanismName();
+            return assertNotNull(credential.getAuthenticationMechanism()).getMechanismName();
         }
 
         public boolean hasInitialResponse() {

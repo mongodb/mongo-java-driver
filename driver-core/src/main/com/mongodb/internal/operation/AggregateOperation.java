@@ -61,7 +61,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return wrapped.getAllowDiskUse();
     }
 
-    public AggregateOperation<T> allowDiskUse(final Boolean allowDiskUse) {
+    public AggregateOperation<T> allowDiskUse(@Nullable final Boolean allowDiskUse) {
         wrapped.allowDiskUse(allowDiskUse);
         return this;
     }
@@ -70,7 +70,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return wrapped.getBatchSize();
     }
 
-    public AggregateOperation<T> batchSize(final Integer batchSize) {
+    public AggregateOperation<T> batchSize(@Nullable final Integer batchSize) {
         wrapped.batchSize(batchSize);
         return this;
     }
@@ -97,7 +97,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return wrapped.getCollation();
     }
 
-    public AggregateOperation<T> collation(final Collation collation) {
+    public AggregateOperation<T> collation(@Nullable final Collation collation) {
         wrapped.collation(collation);
         return this;
     }
@@ -111,7 +111,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return this;
     }
 
-    public AggregateOperation<T> let(final BsonDocument variables) {
+    public AggregateOperation<T> let(@Nullable final BsonDocument variables) {
         wrapped.let(variables);
         return this;
     }
@@ -125,6 +125,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return wrapped.getRetryReads();
     }
 
+    @Nullable
     public BsonDocument getHint() {
         BsonValue hint = wrapped.getHint();
         if (hint == null) {
@@ -136,11 +137,12 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return hint.asDocument();
     }
 
+    @Nullable
     public BsonValue getHintBsonValue() {
         return wrapped.getHint();
     }
 
-    public AggregateOperation<T> hint(final BsonValue hint) {
+    public AggregateOperation<T> hint(@Nullable final BsonValue hint) {
         wrapped.hint(hint);
         return this;
     }

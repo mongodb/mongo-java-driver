@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -39,11 +40,11 @@ public class ClusterClock {
         return withLock(lock, () -> clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null);
     }
 
-    public void advance(final BsonDocument other) {
+    public void advance(@Nullable final BsonDocument other) {
         withLock(lock, () -> this.clusterTime = greaterOf(other));
     }
 
-    public BsonDocument greaterOf(final BsonDocument other) {
+    public BsonDocument greaterOf(@Nullable final BsonDocument other) {
         return withLock(lock, () -> {
             if (other == null) {
                 return clusterTime;

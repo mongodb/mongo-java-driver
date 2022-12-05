@@ -24,6 +24,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -46,14 +47,15 @@ public interface AsyncConnection extends ReferenceCounted {
      */
     ConnectionDescription getDescription();
 
-    <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
-            Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext,
-            SingleResultCallback<T> callback);
+    <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator,
+            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
+            @Nullable ServerApi serverApi, RequestContext requestContext, SingleResultCallback<T> callback);
 
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
-                          ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
-                          ServerApi serverApi, RequestContext requestContext, boolean responseExpected, SplittablePayload payload,
-                          FieldNameValidator payloadFieldNameValidator, SingleResultCallback<T> callback);
+                          @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
+                          @Nullable ServerApi serverApi, RequestContext requestContext, boolean responseExpected,
+                          @Nullable SplittablePayload payload, @Nullable FieldNameValidator payloadFieldNameValidator,
+                          SingleResultCallback<T> callback);
 
     void markAsPinned(Connection.PinningMode pinningMode);
 }

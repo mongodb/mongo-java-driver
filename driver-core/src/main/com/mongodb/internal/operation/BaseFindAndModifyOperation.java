@@ -111,7 +111,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return filter;
     }
 
-    public BaseFindAndModifyOperation<T> filter(final BsonDocument filter) {
+    public BaseFindAndModifyOperation<T> filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
@@ -120,7 +120,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return projection;
     }
 
-    public BaseFindAndModifyOperation<T> projection(final BsonDocument projection) {
+    public BaseFindAndModifyOperation<T> projection(@Nullable final BsonDocument projection) {
         this.projection = projection;
         return this;
     }
@@ -140,11 +140,12 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return sort;
     }
 
-    public BaseFindAndModifyOperation<T> sort(final BsonDocument sort) {
+    public BaseFindAndModifyOperation<T> sort(@Nullable final BsonDocument sort) {
         this.sort = sort;
         return this;
     }
 
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -169,7 +170,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return this;
     }
 
-    public BaseFindAndModifyOperation<T> collation(final Collation collation) {
+    public BaseFindAndModifyOperation<T> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -178,7 +179,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return comment;
     }
 
-    public BaseFindAndModifyOperation<T> comment(final BsonValue comment) {
+    public BaseFindAndModifyOperation<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }
@@ -187,7 +188,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return variables;
     }
 
-    public BaseFindAndModifyOperation<T> let(final BsonDocument variables) {
+    public BaseFindAndModifyOperation<T> let(@Nullable final BsonDocument variables) {
         this.variables = variables;
         return this;
     }

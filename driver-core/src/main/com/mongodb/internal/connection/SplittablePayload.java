@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT;
@@ -226,26 +227,26 @@ public final class SplittablePayload {
                 }
 
                 if (update.isMulti()) {
-                    writer.writeBoolean("multi", update.isMulti());
+                    writer.writeBoolean("multi", true);
                 }
                 if (update.isUpsert()) {
-                    writer.writeBoolean("upsert", update.isUpsert());
+                    writer.writeBoolean("upsert", true);
                 }
                 if (update.getCollation() != null) {
                     writer.writeName("collation");
-                    BsonDocument collation = update.getCollation().asDocument();
+                    BsonDocument collation = assertNotNull(update.getCollation()).asDocument();
                     getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
                 }
                 if (update.getArrayFilters() != null) {
                     writer.writeStartArray("arrayFilters");
-                    for (BsonDocument cur: update.getArrayFilters()) {
+                    for (BsonDocument cur: assertNotNull(update.getArrayFilters())) {
                         getCodec(cur).encode(writer, cur, EncoderContext.builder().build());
                     }
                     writer.writeEndArray();
                 }
                 if (update.getHint() != null) {
                     writer.writeName("hint");
-                    BsonDocument hint = update.getHint().toBsonDocument(BsonDocument.class, null);
+                    BsonDocument hint = assertNotNull(update.getHint()).toBsonDocument(BsonDocument.class, null);
                     getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
                 } else if (update.getHintString() != null) {
                     writer.writeString("hint", update.getHintString());
@@ -259,12 +260,12 @@ public final class SplittablePayload {
                 writer.writeInt32("limit", deleteRequest.isMulti() ? 0 : 1);
                 if (deleteRequest.getCollation() != null) {
                     writer.writeName("collation");
-                    BsonDocument collation = deleteRequest.getCollation().asDocument();
+                    BsonDocument collation = assertNotNull(deleteRequest.getCollation()).asDocument();
                     getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
                 }
                 if (deleteRequest.getHint() != null) {
                     writer.writeName("hint");
-                    BsonDocument hint = deleteRequest.getHint().toBsonDocument(BsonDocument.class, null);
+                    BsonDocument hint = assertNotNull(deleteRequest.getHint()).toBsonDocument(BsonDocument.class, null);
                     getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
                 } else if (deleteRequest.getHintString() != null) {
                     writer.writeString("hint", deleteRequest.getHintString());

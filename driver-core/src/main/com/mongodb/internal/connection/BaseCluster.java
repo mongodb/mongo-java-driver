@@ -448,7 +448,7 @@ abstract class BaseCluster implements Cluster {
             this.callback = callback;
         }
 
-        void onResult(final ServerTuple serverTuple, final Throwable t) {
+        void onResult(@Nullable final ServerTuple serverTuple, @Nullable final Throwable t) {
             try {
                 callback.onResult(serverTuple, t);
             } catch (Throwable tr) {

@@ -22,6 +22,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
@@ -92,6 +93,7 @@ public interface InternalConnection extends BufferProvider {
      * @param sessionContext the session context
      * @param requestContext the request context
      */
+    @Nullable
     <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext, RequestContext requestContext);
 
     <T> void send(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);

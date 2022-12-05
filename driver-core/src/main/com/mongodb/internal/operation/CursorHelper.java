@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
@@ -49,7 +50,7 @@ final class CursorHelper {
         return numberToReturn;
     }
 
-    static BsonDocument getCursorDocumentFromBatchSize(final Integer batchSize) {
+    static BsonDocument getCursorDocumentFromBatchSize(@Nullable final Integer batchSize) {
         return batchSize == null ? new BsonDocument() : new BsonDocument("batchSize", new BsonInt32(batchSize));
     }
 

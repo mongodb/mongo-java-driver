@@ -28,11 +28,11 @@ import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -99,18 +99,19 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder,
-            final BsonValue comment, final ConnectionSource connectionSource) {
+            @Nullable final BsonValue comment, @Nullable final ConnectionSource connectionSource) {
         this(firstQueryResult, limit, batchSize, 0, decoder, comment, connectionSource, null, null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
-            final Decoder<T> decoder, final BsonValue comment, final ConnectionSource connectionSource, final Connection connection) {
+            final Decoder<T> decoder, @Nullable final BsonValue comment, @Nullable final ConnectionSource connectionSource,
+            @Nullable final Connection connection) {
         this(firstQueryResult, limit, batchSize, maxTimeMS, decoder, comment, connectionSource, connection, null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
-            final Decoder<T> decoder, final BsonValue comment, final ConnectionSource connectionSource, final Connection connection,
-            final BsonDocument result) {
+            final Decoder<T> decoder, @Nullable final BsonValue comment, @Nullable final ConnectionSource connectionSource,
+            @Nullable final Connection connection, @Nullable final BsonDocument result) {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstQueryResult.getNamespace();
@@ -215,6 +216,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         resourceManager.close();
     }
 
+    @Nullable
     @Override
     public List<T> tryNext() {
         return resourceManager.execute(MESSAGE_IF_CLOSED_AS_CURSOR, () -> {
@@ -340,6 +342,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return Math.abs(limit) != 0 && count >= Math.abs(limit);
     }
 
+    @Nullable
     private BsonDocument getPostBatchResumeTokenFromResponse(final BsonDocument result) {
         BsonDocument cursor = result.getDocument(CURSOR, null);
         if (cursor != null) {
@@ -563,7 +566,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             }
         }
 
-        @Nullable
         SessionContext sessionContext() {
             return assertNotNull(connectionSource).getSessionContext();
         }
@@ -593,7 +595,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         }
 
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor,
-                @Nullable final SessionContext sessionContext, final RequestContext requestContext, @Nullable final ServerApi serverApi,
+                final SessionContext sessionContext, final RequestContext requestContext, @Nullable final ServerApi serverApi,
                 final Connection connection) {
             connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(namespace, serverCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, serverApi,

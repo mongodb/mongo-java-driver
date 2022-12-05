@@ -58,7 +58,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return filter;
     }
 
-    public CountDocumentsOperation filter(final BsonDocument filter) {
+    public CountDocumentsOperation filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
@@ -76,7 +76,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return hint;
     }
 
-    public CountDocumentsOperation hint(final BsonValue hint) {
+    public CountDocumentsOperation hint(@Nullable final BsonValue hint) {
         this.hint = hint;
         return this;
     }
@@ -114,7 +114,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return collation;
     }
 
-    public CountDocumentsOperation collation(final Collation collation) {
+    public CountDocumentsOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

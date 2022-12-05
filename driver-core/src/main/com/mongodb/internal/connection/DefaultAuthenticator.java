@@ -30,6 +30,7 @@ import org.bson.BsonString;
 
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotZero;
 import static java.lang.String.format;
@@ -78,6 +79,7 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
         return ((SpeculativeAuthenticator) delegate).createSpeculativeAuthenticateCommand(connection);
     }
 
+    @Nullable
     @Override
     public BsonDocument getSpeculativeAuthenticateResponse() {
         if (delegate != null) {
@@ -118,7 +120,7 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
         } else if (t instanceof MongoException && ((MongoException) t).getCode() == USER_NOT_FOUND_CODE) {
             return new MongoSecurityException(getMongoCredential(), format("Exception authenticating %s", getMongoCredential()), t);
         } else {
-            return MongoException.fromThrowable(t);
+            return assertNotNull(MongoException.fromThrowable(t));
         }
     }
 }

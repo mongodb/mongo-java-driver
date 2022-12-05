@@ -26,6 +26,7 @@ import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.connection.TopologyVersion;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -119,6 +120,7 @@ public final class DescriptionHelper {
         return helloResult.getInt32("maxWireVersion", new BsonInt32(getDefaultMaxWireVersion())).getValue();
     }
 
+    @Nullable
     private static Date getLastWriteDate(final BsonDocument helloResult) {
         if (!helloResult.containsKey("lastWrite")) {
             return null;
@@ -126,19 +128,23 @@ public final class DescriptionHelper {
         return new Date(helloResult.getDocument("lastWrite").getDateTime("lastWriteDate").getValue());
     }
 
+    @Nullable
     private static ObjectId getElectionId(final BsonDocument helloResult) {
         return helloResult.containsKey("electionId") ? helloResult.getObjectId("electionId").getValue() : null;
     }
 
+    @Nullable
     private static Integer getSetVersion(final BsonDocument helloResult) {
         return helloResult.containsKey("setVersion") ? helloResult.getNumber("setVersion").intValue() : null;
     }
 
+    @Nullable
     private static TopologyVersion getTopologyVersion(final BsonDocument helloResult) {
         return helloResult.containsKey("topologyVersion") && helloResult.get("topologyVersion").isDocument()
                 ? new TopologyVersion(helloResult.getDocument("topologyVersion")) : null;
     }
 
+    @Nullable
     private static ObjectId getServiceId(final BsonDocument helloResult) {
         return helloResult.containsKey("serviceId") && helloResult.get("serviceId").isObjectId()
                 ? helloResult.getObjectId("serviceId").getValue() : null;
@@ -156,11 +162,13 @@ public final class DescriptionHelper {
         return helloResult.getInt32("maxWriteBatchSize", new BsonInt32(getDefaultMaxWriteBatchSize())).getValue();
     }
 
+    @Nullable
     private static Integer getLogicalSessionTimeoutMinutes(final BsonDocument helloResult) {
         return helloResult.isNumber("logicalSessionTimeoutMinutes")
                        ? helloResult.getNumber("logicalSessionTimeoutMinutes").intValue() : null;
     }
 
+    @Nullable
     private static String getString(final BsonDocument response, final String key) {
         if (response.containsKey(key)) {
             return response.getString(key).getValue();
@@ -169,7 +177,7 @@ public final class DescriptionHelper {
         }
     }
 
-    private static Set<String> listToSet(final BsonArray array) {
+    private static Set<String> listToSet(@Nullable final BsonArray array) {
         if (array == null || array.isEmpty()) {
             return Collections.emptySet();
         } else {

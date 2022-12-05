@@ -79,6 +79,7 @@ public final class Iterables {
         }
 
         @Override
+        @Nullable
         public T next() {
             return firstNotConsumed() ? consumeFirst() : moreIterator().next();
         }
@@ -88,6 +89,7 @@ public final class Iterables {
         }
 
         @SuppressWarnings("unchecked")
+        @Nullable
         private T consumeFirst() {
             T result = first;
             first = (T) NONE;

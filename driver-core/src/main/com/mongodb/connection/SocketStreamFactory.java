@@ -22,12 +22,14 @@ import com.mongodb.UnixServerAddress;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.connection.SocketStream;
 import com.mongodb.internal.connection.UnixSocketChannelStream;
+import com.mongodb.lang.Nullable;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * Factory for creating instances of {@code SocketStream}.
@@ -57,7 +59,7 @@ public class SocketStreamFactory implements StreamFactory {
      * @param sslSettings   the SSL for connecting to a MongoDB server
      * @param socketFactory a SocketFactory for creating connections to servers.
      */
-    public SocketStreamFactory(final SocketSettings settings, final SslSettings sslSettings, final SocketFactory socketFactory) {
+    public SocketStreamFactory(final SocketSettings settings, final SslSettings sslSettings, @Nullable final SocketFactory socketFactory) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.socketFactory = socketFactory;
@@ -85,7 +87,7 @@ public class SocketStreamFactory implements StreamFactory {
 
     private SSLContext getSslContext() {
         try {
-            return (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
+            return ofNullable(sslSettings.getContext()).orElse(SSLContext.getDefault());
         } catch (NoSuchAlgorithmException e) {
             throw new MongoClientException("Unable to create default SSLContext", e);
         }

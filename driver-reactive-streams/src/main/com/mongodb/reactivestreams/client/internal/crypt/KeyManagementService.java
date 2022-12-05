@@ -28,6 +28,7 @@ import com.mongodb.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import reactor.core.publisher.Mono;
@@ -74,7 +75,7 @@ class KeyManagementService implements Closeable {
             Stream stream = streamFactory.create(serverAddress);
             stream.openAsync(new AsyncCompletionHandler<Void>() {
                 @Override
-                public void completed(final Void ignored) {
+                public void completed(@Nullable final Void ignored) {
                     streamWrite(stream, keyDecryptor, sink);
                 }
 
@@ -91,7 +92,7 @@ class KeyManagementService implements Closeable {
         List<ByteBuf> byteBufs = singletonList(new ByteBufNIO(keyDecryptor.getMessage()));
         stream.writeAsync(byteBufs, new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed(final Void aVoid) {
+            public void completed(@Nullable final Void aVoid) {
                 streamRead(stream, keyDecryptor, sink);
             }
 

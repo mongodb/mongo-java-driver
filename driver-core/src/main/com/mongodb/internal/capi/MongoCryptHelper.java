@@ -139,7 +139,7 @@ public final class MongoCryptHelper {
         return bsonKmsProviders;
     }
 
-    private static BsonDocument toBsonDocument(final Map<String, Object> optionsMap) {
+    private static BsonDocument toBsonDocument(@Nullable final Map<String, Object> optionsMap) {
         if (optionsMap == null) {
             return new BsonDocument();
         }
@@ -173,7 +173,7 @@ public final class MongoCryptHelper {
         return spawnArgs;
     }
 
-    public static MongoClientSettings createMongocryptdClientSettings(final String connectionString) {
+    public static MongoClientSettings createMongocryptdClientSettings(@Nullable final String connectionString) {
 
         return MongoClientSettings.builder()
                 .applyToClusterSettings(builder -> builder.serverSelectionTimeout(10, TimeUnit.SECONDS))

@@ -123,6 +123,7 @@ public class ServerDescription {
      *
      * @return the host name and port that this replica set member is configured with.
      */
+    @Nullable
     public String getCanonicalAddress() {
         return canonicalAddress;
     }
@@ -228,7 +229,7 @@ public class ServerDescription {
          *
          * @return this
          */
-        public Builder canonicalAddress(final String canonicalAddress) {
+        public Builder canonicalAddress(@Nullable final String canonicalAddress) {
             this.canonicalAddress = canonicalAddress;
             return this;
         }
@@ -251,7 +252,7 @@ public class ServerDescription {
          *              hidden, passive, nor arbiters.
          * @return this
          */
-        public Builder hosts(final Set<String> hosts) {
+        public Builder hosts(@Nullable final Set<String> hosts) {
             this.hosts = hosts == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(hosts));
             return this;
         }
@@ -263,7 +264,7 @@ public class ServerDescription {
          *                 priority of 0.
          * @return this
          */
-        public Builder passives(final Set<String> passives) {
+        public Builder passives(@Nullable final Set<String> passives) {
             this.passives = passives == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(passives));
             return this;
         }
@@ -275,7 +276,7 @@ public class ServerDescription {
          *                 arbiters.
          * @return this
          */
-        public Builder arbiters(final Set<String> arbiters) {
+        public Builder arbiters(@Nullable final Set<String> arbiters) {
             this.arbiters = arbiters == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(arbiters));
             return this;
         }
@@ -286,7 +287,7 @@ public class ServerDescription {
          * @param primary A string in the format of "[hostname]:[port]" listing the current primary member of the replica set.
          * @return this
          */
-        public Builder primary(final String primary) {
+        public Builder primary(@Nullable final String primary) {
             this.primary = primary;
             return this;
         }
@@ -308,7 +309,7 @@ public class ServerDescription {
          * @param tagSet a TagSet with all the tags for this server.
          * @return this
          */
-        public Builder tagSet(final TagSet tagSet) {
+        public Builder tagSet(@Nullable final TagSet tagSet) {
             this.tagSet = tagSet == null ? new TagSet() : tagSet;
             return this;
         }
@@ -331,7 +332,7 @@ public class ServerDescription {
          * @param setName the name of the replica set
          * @return this
          */
-        public Builder setName(final String setName) {
+        public Builder setName(@Nullable final String setName) {
             this.setName = setName;
             return this;
         }
@@ -386,7 +387,7 @@ public class ServerDescription {
          * @param electionId the electionId
          * @return this
          */
-        public Builder electionId(final ObjectId electionId) {
+        public Builder electionId(@Nullable final ObjectId electionId) {
             this.electionId = electionId;
             return this;
         }
@@ -397,7 +398,7 @@ public class ServerDescription {
          * @param setVersion the set version
          * @return this
          */
-        public Builder setVersion(final Integer setVersion) {
+        public Builder setVersion(@Nullable final Integer setVersion) {
             this.setVersion = setVersion;
             return this;
         }
@@ -410,7 +411,7 @@ public class ServerDescription {
          * @since 4.1
          * @mongodb.server.release 4.4
          */
-        public Builder topologyVersion(final TopologyVersion topologyVersion) {
+        public Builder topologyVersion(@Nullable final TopologyVersion topologyVersion) {
             this.topologyVersion = topologyVersion;
             return this;
         }
@@ -660,6 +661,7 @@ public class ServerDescription {
      *
      * @return A string in the format of "[hostname]:[port]" listing the current primary member of the replica set.
      */
+    @Nullable
     public String getPrimary() {
         return primary;
     }
@@ -727,6 +729,7 @@ public class ServerDescription {
      * @since 4.1
      * @mongodb.server.release 4.4
      */
+    @Nullable
     public TopologyVersion getTopologyVersion() {
         return topologyVersion;
     }
@@ -779,6 +782,7 @@ public class ServerDescription {
      *
      * @return the name of the replica set
      */
+    @Nullable
     public String getSetName() {
         return setName;
     }

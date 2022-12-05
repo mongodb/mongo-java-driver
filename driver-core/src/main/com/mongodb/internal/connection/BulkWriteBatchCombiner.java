@@ -24,6 +24,7 @@ import com.mongodb.bulk.BulkWriteInsert;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -159,17 +160,22 @@ public class BulkWriteBatchCombiner {
      * Gets the combined errors as an exception
      * @return the bulk write exception, or null if there were no errors
      */
+    @Nullable
     public MongoBulkWriteException getError() {
         if (!hasErrors()) {
             return null;
         }
+        return getErrorNonNullable();
+    }
+
+    private MongoBulkWriteException getErrorNonNullable() {
         return new MongoBulkWriteException(createResult(), new ArrayList<>(writeErrors),
                 writeConcernErrors.isEmpty() ? null : writeConcernErrors.get(writeConcernErrors.size() - 1),
                 serverAddress, errorLabels);
     }
 
     @SuppressWarnings("deprecation")
-    private void mergeWriteConcernError(final WriteConcernError writeConcernError) {
+    private void mergeWriteConcernError(@Nullable final WriteConcernError writeConcernError) {
         if (writeConcernError != null) {
             if (writeConcernErrors.isEmpty()) {
                 writeConcernErrors.add(writeConcernError);
@@ -189,7 +195,7 @@ public class BulkWriteBatchCombiner {
 
     private void throwOnError() {
         if (hasErrors()) {
-            throw getError();
+            throw getErrorNonNullable();
         }
     }
 

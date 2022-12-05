@@ -28,15 +28,16 @@ import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -89,7 +90,7 @@ public class LoadBalancedServer implements ClusterableServer {
     }
 
 
-    private void invalidate(final Throwable t, final ObjectId serviceId, final int generation) {
+    private void invalidate(final Throwable t, @Nullable final ObjectId serviceId, final int generation) {
         if (!isClosed()) {
             if (t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException)) {
                 if (serviceId != null) {

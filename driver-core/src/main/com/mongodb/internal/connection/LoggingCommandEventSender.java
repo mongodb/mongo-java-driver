@@ -21,6 +21,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonReader;
@@ -32,6 +33,7 @@ import org.bson.json.JsonWriterSettings;
 import java.io.StringWriter;
 import java.util.Set;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandSucceededEvent;
@@ -41,7 +43,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     private static final int MAX_COMMAND_DOCUMENT_LENGTH_TO_LOG = 1000;
 
     private final ConnectionDescription description;
-    private final CommandListener commandListener;
+    @Nullable private final CommandListener commandListener;
     private final RequestContext requestContext;
     private final Logger logger;
     private final long startTimeNanos;
@@ -52,7 +54,7 @@ class LoggingCommandEventSender implements CommandEventSender {
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
             final ConnectionDescription description,
-            final CommandListener commandListener, final RequestContext requestContext, final CommandMessage message,
+            @Nullable final CommandListener commandListener, final RequestContext requestContext, final CommandMessage message,
             final ByteBufferBsonOutput bsonOutput, final Logger logger) {
         this.description = description;
         this.commandListener = commandListener;
@@ -82,7 +84,7 @@ class LoggingCommandEventSender implements CommandEventSender {
                     ? new BsonDocument() : commandDocument;
 
             sendCommandStartedEvent(message, message.getNamespace().getDatabaseName(),
-                    commandName, commandDocumentForEvent, description, commandListener, requestContext);
+                    commandName, commandDocumentForEvent, description, assertNotNull(commandListener), requestContext);
         }
         // the buffer underlying the command document may be released after the started event, so set to null to ensure it's not used
         // when sending the failed or succeeded event
