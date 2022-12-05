@@ -100,12 +100,12 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         return bypassDocumentValidation;
     }
 
-    public FindAndUpdateOperation<T> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public FindAndUpdateOperation<T> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
-    public FindAndUpdateOperation<T> arrayFilters(final List<BsonDocument> arrayFilters) {
+    public FindAndUpdateOperation<T> arrayFilters(@Nullable final List<BsonDocument> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
@@ -115,13 +115,13 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndUpdateOperation<T> filter(final BsonDocument filter) {
+    public FindAndUpdateOperation<T> filter(@Nullable final BsonDocument filter) {
         super.filter(filter);
         return this;
     }
 
     @Override
-    public FindAndUpdateOperation<T> projection(final BsonDocument projection) {
+    public FindAndUpdateOperation<T> projection(@Nullable final BsonDocument projection) {
         super.projection(projection);
         return this;
     }
@@ -133,7 +133,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndUpdateOperation<T> sort(final BsonDocument sort) {
+    public FindAndUpdateOperation<T> sort(@Nullable final BsonDocument sort) {
         super.sort(sort);
         return this;
     }
@@ -151,19 +151,19 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndUpdateOperation<T> collation(final Collation collation) {
+    public FindAndUpdateOperation<T> collation(@Nullable final Collation collation) {
         super.collation(collation);
         return this;
     }
 
     @Override
-    public FindAndUpdateOperation<T> comment(final BsonValue comment) {
+    public FindAndUpdateOperation<T> comment(@Nullable final BsonValue comment) {
         super.comment(comment);
         return this;
     }
 
     @Override
-    public FindAndUpdateOperation<T> let(final BsonDocument variables) {
+    public FindAndUpdateOperation<T> let(@Nullable final BsonDocument variables) {
         super.let(variables);
         return this;
     }

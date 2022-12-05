@@ -15,6 +15,10 @@
  */
 
 /**
- * This package contains logging classes
+ * This package contains classes that manage binding to MongoDB servers for various operations.
  */
+
+@NonNullApi
 package com.mongodb.internal.diagnostics.logging;
+
+import com.mongodb.lang.NonNullApi;

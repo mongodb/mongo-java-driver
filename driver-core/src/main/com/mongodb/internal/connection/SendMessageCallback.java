@@ -17,8 +17,9 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.RequestContext;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 import org.bson.io.OutputBuffer;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -53,7 +54,7 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
     }
 
     @Override
-    public void onResult(final Void result, final Throwable t) {
+    public void onResult(@Nullable final Void result, @Nullable final Throwable t) {
         buffer.close();
         if (t != null) {
             if (commandListener != null){

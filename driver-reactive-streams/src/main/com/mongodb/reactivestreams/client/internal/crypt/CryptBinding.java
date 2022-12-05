@@ -70,7 +70,6 @@ public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
     }
 
     @Override
-    @Nullable
     public RequestContext getRequestContext() {
         return wrapped.getRequestContext();
     }

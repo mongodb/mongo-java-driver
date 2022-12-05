@@ -71,8 +71,8 @@ public class ClusterDescription {
      */
     public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
                               final List<ServerDescription> serverDescriptions,
-                              final ClusterSettings clusterSettings,
-                              final ServerSettings serverSettings) {
+                              @Nullable final ClusterSettings clusterSettings,
+                              @Nullable final ServerSettings serverSettings) {
         this(connectionMode, type, null, serverDescriptions, clusterSettings, serverSettings);
     }
 
@@ -88,10 +88,10 @@ public class ClusterDescription {
      * @since 3.10
      */
     public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
-                              final MongoException srvResolutionException,
+                              @Nullable final MongoException srvResolutionException,
                               final List<ServerDescription> serverDescriptions,
-                              final ClusterSettings clusterSettings,
-                              final ServerSettings serverSettings) {
+                              @Nullable final ClusterSettings clusterSettings,
+                              @Nullable final ServerSettings serverSettings) {
         notNull("all", serverDescriptions);
         this.connectionMode = notNull("connectionMode", connectionMode);
         this.type = notNull("type", type);
@@ -322,6 +322,7 @@ public class ClusterDescription {
         }
     }
 
+    @Nullable
     private Integer calculateLogicalSessionTimeoutMinutes() {
         Integer retVal = null;
 

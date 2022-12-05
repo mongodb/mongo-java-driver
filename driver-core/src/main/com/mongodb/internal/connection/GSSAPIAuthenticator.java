@@ -44,6 +44,7 @@ import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.MongoCredential.CANONICALIZE_HOST_NAME_KEY;
 import static com.mongodb.MongoCredential.JAVA_SASL_CLIENT_PROPERTIES_KEY;
 import static com.mongodb.MongoCredential.SERVICE_NAME_KEY;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
 class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final String GSSAPI_MECHANISM_NAME = "GSSAPI";
@@ -73,7 +74,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
             if (saslClientProperties == null) {
                 saslClientProperties = new HashMap<>();
                 saslClientProperties.put(Sasl.MAX_BUFFER, "0");
-                saslClientProperties.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
+                saslClientProperties.put(Sasl.CREDENTIALS, getGSSCredential(assertNotNull(credential.getUserName())));
             }
 
             SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI.getMechanismName()}, credential.getUserName(),

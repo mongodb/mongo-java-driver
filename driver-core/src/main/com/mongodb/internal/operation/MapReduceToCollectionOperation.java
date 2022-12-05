@@ -26,6 +26,7 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformerAsync;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
@@ -35,6 +36,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -91,8 +93,8 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     }
 
     public MapReduceToCollectionOperation(final MongoNamespace namespace, final BsonJavaScript mapFunction,
-                                          final BsonJavaScript reduceFunction, final String collectionName,
-                                          final WriteConcern writeConcern) {
+                                          final BsonJavaScript reduceFunction, @Nullable final String collectionName,
+                                          @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -133,7 +135,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return scope;
     }
 
-    public MapReduceToCollectionOperation scope(final BsonDocument scope) {
+    public MapReduceToCollectionOperation scope(@Nullable final BsonDocument scope) {
         this.scope = scope;
         return this;
     }
@@ -142,7 +144,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return filter;
     }
 
-    public MapReduceToCollectionOperation filter(final BsonDocument filter) {
+    public MapReduceToCollectionOperation filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
@@ -151,7 +153,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return sort;
     }
 
-    public MapReduceToCollectionOperation sort(final BsonDocument sort) {
+    public MapReduceToCollectionOperation sort(@Nullable final BsonDocument sort) {
         this.sort = sort;
         return this;
     }
@@ -205,11 +207,12 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return this;
     }
 
+    @Nullable
     public String getDatabaseName() {
         return databaseName;
     }
 
-    public MapReduceToCollectionOperation databaseName(final String databaseName) {
+    public MapReduceToCollectionOperation databaseName(@Nullable final String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
@@ -236,7 +239,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return bypassDocumentValidation;
     }
 
-    public MapReduceToCollectionOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public MapReduceToCollectionOperation bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -245,15 +248,15 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return collation;
     }
 
-    public MapReduceToCollectionOperation collation(final Collation collation) {
+    public MapReduceToCollectionOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
 
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                connection, transformer()));
+        return withConnection(binding, connection -> assertNotNull(executeCommand(binding, namespace.getDatabaseName(),
+                getCommand(connection.getDescription()), connection, transformer())));
     }
 
     @Override
@@ -313,7 +316,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         };
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
+    private BsonDocument getCommand(@Nullable final ConnectionDescription description) {
         BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
         if (description != null && !serverIsAtLeastVersionFourDotFour(description)) {
             putIfTrue(outputDocument, "sharded", isSharded());

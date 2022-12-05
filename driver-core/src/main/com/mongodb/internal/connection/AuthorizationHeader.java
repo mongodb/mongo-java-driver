@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
@@ -213,7 +215,7 @@ final class AuthorizationHeader {
             return this;
         }
 
-        Builder setSessionToken(final String sessionToken) {
+        Builder setSessionToken(@Nullable final String sessionToken) {
             this.sessionToken = sessionToken;
             return this;
         }

@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal.gridfs;
 
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
 import org.bson.conversions.Bson;
@@ -44,7 +45,7 @@ public final class GridFSFindPublisherImpl implements GridFSFindPublisher {
     }
 
     @Override
-    public GridFSFindPublisher sort(final Bson sort) {
+    public GridFSFindPublisher sort(@Nullable final Bson sort) {
         wrapped.sort(sort);
         return this;
     }
@@ -62,7 +63,7 @@ public final class GridFSFindPublisherImpl implements GridFSFindPublisher {
     }
 
     @Override
-    public GridFSFindPublisher filter(final Bson filter) {
+    public GridFSFindPublisher filter(@Nullable final Bson filter) {
         wrapped.filter(filter);
         return this;
     }
@@ -80,7 +81,7 @@ public final class GridFSFindPublisherImpl implements GridFSFindPublisher {
     }
 
     @Override
-    public GridFSFindPublisher collation(final Collation collation) {
+    public GridFSFindPublisher collation(@Nullable final Collation collation) {
         wrapped.collation(collation);
         return this;
     }

@@ -44,13 +44,13 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndDeleteOperation<T> filter(final BsonDocument filter) {
+    public FindAndDeleteOperation<T> filter(@Nullable final BsonDocument filter) {
         super.filter(filter);
         return this;
     }
 
     @Override
-    public FindAndDeleteOperation<T> projection(final BsonDocument projection) {
+    public FindAndDeleteOperation<T> projection(@Nullable final BsonDocument projection) {
         super.projection(projection);
         return this;
     }
@@ -62,7 +62,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndDeleteOperation<T> sort(final BsonDocument sort) {
+    public FindAndDeleteOperation<T> sort(@Nullable final BsonDocument sort) {
         super.sort(sort);
         return this;
     }
@@ -80,19 +80,19 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndDeleteOperation<T> collation(final Collation collation) {
+    public FindAndDeleteOperation<T> collation(@Nullable final Collation collation) {
         super.collation(collation);
         return this;
     }
 
     @Override
-    public FindAndDeleteOperation<T> comment(final BsonValue comment) {
+    public FindAndDeleteOperation<T> comment(@Nullable final BsonValue comment) {
         super.comment(comment);
         return this;
     }
 
     @Override
-    public FindAndDeleteOperation<T> let(final BsonDocument variables) {
+    public FindAndDeleteOperation<T> let(@Nullable final BsonDocument variables) {
         super.let(variables);
         return this;
     }

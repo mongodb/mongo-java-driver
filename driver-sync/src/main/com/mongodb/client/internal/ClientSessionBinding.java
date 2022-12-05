@@ -34,6 +34,7 @@ import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
+import static org.bson.assertions.Assertions.assertNotNull;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -138,7 +139,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
             transactionContext.release();  // The session is responsible for retaining a reference to the context
         } else {
-            source = wrapped.getConnectionSource(session.getPinnedServerAddress());
+            source = wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()));
         }
         return source;
     }
@@ -242,7 +243,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         @Override
         public ReadConcern getReadConcern() {
             if (clientSession.hasActiveTransaction()) {
-                return clientSession.getTransactionOptions().getReadConcern();
+                return assertNotNull(clientSession.getTransactionOptions().getReadConcern());
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {

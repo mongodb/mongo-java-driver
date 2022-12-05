@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -76,7 +77,7 @@ public final class CompositeServerSelector implements ServerSelector {
                                                                   clusterDescription.getServerSettings());
         }
 
-        return choices;
+        return assertNotNull(choices);
     }
 
     @Override

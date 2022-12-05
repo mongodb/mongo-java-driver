@@ -123,7 +123,8 @@ class DefaultServer implements ClusterableServer {
                 }
             } else {
                 callback.onResult(AsyncOperationCountTrackingConnection.decorate(DefaultServer.this,
-                        connectionFactory.createAsync(result, new DefaultServerProtocolExecutor(), clusterConnectionMode)), null);
+                        connectionFactory.createAsync(assertNotNull(result), new DefaultServerProtocolExecutor(), clusterConnectionMode)),
+                        null);
             }
         });
     }
@@ -282,17 +283,17 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi, final RequestContext requestContext) {
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+                @Nullable final ServerApi serverApi, final RequestContext requestContext) {
             return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
                     requestContext);
         }
 
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
-                final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator) {
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+                @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+                @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
             return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
                     serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator);
         }
@@ -345,17 +346,17 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi, final RequestContext requestContext, final SingleResultCallback<T> callback) {
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+                @Nullable final ServerApi serverApi, final RequestContext requestContext, final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
                     requestContext, callback);
         }
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
-                final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+                @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+                @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                 final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
                     serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator, callback);

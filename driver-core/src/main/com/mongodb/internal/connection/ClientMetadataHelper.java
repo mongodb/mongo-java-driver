@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.internal.build.MongoDriverVersion;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -101,16 +102,20 @@ public final class ClientMetadataHelper {
         return false;
     }
 
-    static BsonDocument createClientMetadataDocument(final String applicationName) {
+    @Nullable
+    static BsonDocument createClientMetadataDocument(@Nullable final String applicationName) {
         return createClientMetadataDocument(applicationName, null);
     }
 
-    public static BsonDocument createClientMetadataDocument(final String applicationName,
-                                                            final MongoDriverInformation mongoDriverInformation) {
+    @Nullable
+    public static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
+                                                            @Nullable final MongoDriverInformation mongoDriverInformation) {
         return createClientMetadataDocument(applicationName, mongoDriverInformation, CLIENT_METADATA_DOCUMENT);
     }
 
-    static BsonDocument createClientMetadataDocument(final String applicationName, final MongoDriverInformation mongoDriverInformation,
+    @Nullable
+    static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
+                                                     @Nullable final MongoDriverInformation mongoDriverInformation,
                                                      final BsonDocument templateDocument) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
@@ -152,7 +157,8 @@ public final class ClientMetadataHelper {
         return document;
     }
 
-    private static BsonDocument addDriverInformation(final MongoDriverInformation mongoDriverInformation, final BsonDocument document) {
+    private static BsonDocument addDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation,
+                                                     final BsonDocument document) {
         MongoDriverInformation driverInformation = getDriverInformation(mongoDriverInformation);
         BsonDocument driverMetadataDocument = new BsonDocument(DRIVER_NAME_FIELD, listToBsonString(driverInformation.getDriverNames()))
                 .append(DRIVER_VERSION_FIELD, listToBsonString(driverInformation.getDriverVersions()));
@@ -167,7 +173,7 @@ public final class ClientMetadataHelper {
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
 
-    static MongoDriverInformation getDriverInformation(final MongoDriverInformation mongoDriverInformation) {
+    static MongoDriverInformation getDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
         MongoDriverInformation.Builder builder = mongoDriverInformation != null ? MongoDriverInformation.builder(mongoDriverInformation)
                 : MongoDriverInformation.builder();
         return builder

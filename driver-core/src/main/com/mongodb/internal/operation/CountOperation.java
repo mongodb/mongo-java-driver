@@ -25,6 +25,7 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -119,7 +120,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         return collation;
     }
 
-    public CountOperation collation(final Collation collation) {
+    public CountOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

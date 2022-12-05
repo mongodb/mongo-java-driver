@@ -81,19 +81,19 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
         return bypassDocumentValidation;
     }
 
-    public FindAndReplaceOperation<T> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public FindAndReplaceOperation<T> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public FindAndReplaceOperation<T> filter(final BsonDocument filter) {
+    public FindAndReplaceOperation<T> filter(@Nullable final BsonDocument filter) {
         super.filter(filter);
         return this;
     }
 
     @Override
-    public FindAndReplaceOperation<T> projection(final BsonDocument projection) {
+    public FindAndReplaceOperation<T> projection(@Nullable final BsonDocument projection) {
         super.projection(projection);
         return this;
     }
@@ -105,7 +105,7 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndReplaceOperation<T> sort(final BsonDocument sort) {
+    public FindAndReplaceOperation<T> sort(@Nullable final BsonDocument sort) {
         super.sort(sort);
         return this;
     }
@@ -123,19 +123,19 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndReplaceOperation<T> collation(final Collation collation) {
+    public FindAndReplaceOperation<T> collation(@Nullable final Collation collation) {
         super.collation(collation);
         return this;
     }
 
     @Override
-    public FindAndReplaceOperation<T> comment(final BsonValue comment) {
+    public FindAndReplaceOperation<T> comment(@Nullable final BsonValue comment) {
         super.comment(comment);
         return this;
     }
 
     @Override
-    public FindAndReplaceOperation<T> let(final BsonDocument variables) {
+    public FindAndReplaceOperation<T> let(@Nullable final BsonDocument variables) {
         super.let(variables);
         return this;
     }

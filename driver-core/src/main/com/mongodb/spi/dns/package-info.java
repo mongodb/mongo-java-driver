@@ -24,5 +24,7 @@
  * @see java.util.ServiceLoader
  * @since 4.6
  */
-
+@NonNullApi
 package com.mongodb.spi.dns;
+
+import com.mongodb.lang.NonNullApi;

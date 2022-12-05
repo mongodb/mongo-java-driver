@@ -30,6 +30,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.IndexRequest;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -74,7 +76,8 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         this(namespace, requests, null);
     }
 
-    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests, final WriteConcern writeConcern) {
+    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests,
+            @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
@@ -116,7 +119,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return commitQuorum;
     }
 
-    public CreateIndexesOperation commitQuorum(final CreateIndexCommitQuorum commitQuorum) {
+    public CreateIndexesOperation commitQuorum(@Nullable final CreateIndexCommitQuorum commitQuorum) {
         this.commitQuorum = commitQuorum;
         return this;
     }
@@ -168,52 +171,52 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             index.append("sparse", BsonBoolean.TRUE);
         }
         if (request.getExpireAfter(TimeUnit.SECONDS) != null) {
-            index.append("expireAfterSeconds", new BsonInt64(request.getExpireAfter(TimeUnit.SECONDS)));
+            index.append("expireAfterSeconds", new BsonInt64(assertNotNull(request.getExpireAfter(TimeUnit.SECONDS))));
         }
         if (request.getVersion() != null) {
-            index.append("v", new BsonInt32(request.getVersion()));
+            index.append("v", new BsonInt32(assertNotNull(request.getVersion())));
         }
         if (request.getWeights() != null) {
-            index.append("weights", request.getWeights());
+            index.append("weights", assertNotNull(request.getWeights()));
         }
         if (request.getDefaultLanguage() != null) {
-            index.append("default_language", new BsonString(request.getDefaultLanguage()));
+            index.append("default_language", new BsonString(assertNotNull(request.getDefaultLanguage())));
         }
         if (request.getLanguageOverride() != null) {
-            index.append("language_override", new BsonString(request.getLanguageOverride()));
+            index.append("language_override", new BsonString(assertNotNull(request.getLanguageOverride())));
         }
         if (request.getTextVersion() != null) {
-            index.append("textIndexVersion", new BsonInt32(request.getTextVersion()));
+            index.append("textIndexVersion", new BsonInt32(assertNotNull(request.getTextVersion())));
         }
         if (request.getSphereVersion() != null) {
-            index.append("2dsphereIndexVersion", new BsonInt32(request.getSphereVersion()));
+            index.append("2dsphereIndexVersion", new BsonInt32(assertNotNull(request.getSphereVersion())));
         }
         if (request.getBits() != null) {
-            index.append("bits", new BsonInt32(request.getBits()));
+            index.append("bits", new BsonInt32(assertNotNull(request.getBits())));
         }
         if (request.getMin() != null) {
-            index.append("min", new BsonDouble(request.getMin()));
+            index.append("min", new BsonDouble(assertNotNull(request.getMin())));
         }
         if (request.getMax() != null) {
-            index.append("max", new BsonDouble(request.getMax()));
+            index.append("max", new BsonDouble(assertNotNull(request.getMax())));
         }
         if (request.getBucketSize() != null) {
-            index.append("bucketSize", new BsonDouble(request.getBucketSize()));
+            index.append("bucketSize", new BsonDouble(assertNotNull(request.getBucketSize())));
         }
         if (request.getDropDups()) {
             index.append("dropDups", BsonBoolean.TRUE);
         }
         if (request.getStorageEngine() != null) {
-            index.append("storageEngine", request.getStorageEngine());
+            index.append("storageEngine", assertNotNull(request.getStorageEngine()));
         }
         if (request.getPartialFilterExpression() != null) {
-            index.append("partialFilterExpression", request.getPartialFilterExpression());
+            index.append("partialFilterExpression", assertNotNull(request.getPartialFilterExpression()));
         }
         if (request.getCollation() != null) {
-            index.append("collation", request.getCollation().asDocument());
+            index.append("collation", assertNotNull(request.getCollation().asDocument()));
         }
         if (request.getWildcardProjection() != null) {
-            index.append("wildcardProjection", request.getWildcardProjection());
+            index.append("wildcardProjection", assertNotNull(request.getWildcardProjection()));
         }
         if (request.isHidden()) {
             index.append("hidden", BsonBoolean.TRUE);
@@ -241,7 +244,8 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return command;
     }
 
-    private MongoException translateException(final Throwable t) {
+    @Nullable
+    private MongoException translateException(@Nullable final Throwable t) {
         return (t instanceof MongoCommandException) ? checkForDuplicateKeyError((MongoCommandException) t)
                                                       : MongoException.fromThrowable(t);
     }

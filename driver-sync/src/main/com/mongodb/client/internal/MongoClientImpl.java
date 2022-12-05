@@ -86,8 +86,12 @@ public final class MongoClientImpl implements MongoClient {
                 withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
                 (SynchronousContextProvider) settings.getContextProvider());
-        LOGGER.info(format("MongoClient with metadata %s created with settings %s",
-                createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation).toJson(), settings));
+        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+        if (clientMetadataDocument == null) {
+            LOGGER.info(format("MongoClient created with settings %s", settings));
+        } else {
+            LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
+        }
     }
 
     @Override

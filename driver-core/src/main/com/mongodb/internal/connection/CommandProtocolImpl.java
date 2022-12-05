@@ -23,6 +23,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -46,9 +47,9 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final ServerApi serverApi;
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
-            final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-            final ClusterConnectionMode clusterConnectionMode, final ServerApi serverApi, final RequestContext requestContext) {
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
+            @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+            final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi, final RequestContext requestContext) {
         notNull("database", database);
         this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
@@ -66,6 +67,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
                 payload == null || payloadFieldNameValidator != null);
     }
 
+    @Nullable
     @Override
     public T execute(final InternalConnection connection) {
         return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext, requestContext);

@@ -34,6 +34,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
@@ -85,7 +86,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
             return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
                     CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), transformer(), retryReads);
         } catch (MongoCommandException e) {
-            return rethrowIfNotNamespaceError(e, 0L);
+            return assertNotNull(rethrowIfNotNamespaceError(e, 0L));
         }
     }
 

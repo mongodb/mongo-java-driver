@@ -62,6 +62,7 @@ public final class TransactionContext<C extends ReferenceCounted> extends Abstra
     }
 
     @SuppressWarnings("unchecked")
+    @Nullable
     public static <C extends TransactionContext<? extends ReferenceCounted>> C get(final ClientSession session) {
         return (C) session.getTransactionContext();
     }

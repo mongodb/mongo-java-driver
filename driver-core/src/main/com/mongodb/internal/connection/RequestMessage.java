@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonDocument;
@@ -87,7 +88,8 @@ abstract class RequestMessage {
         this(collectionName, opCode, REQUEST_ID.getAndIncrement(), settings);
     }
 
-    private RequestMessage(final String collectionName, final OpCode opCode, final int requestId, final MessageSettings settings) {
+    private RequestMessage(@Nullable final String collectionName, final OpCode opCode, final int requestId,
+                           final MessageSettings settings) {
         this.collectionName = collectionName;
         this.settings = settings;
         id = requestId;
@@ -167,7 +169,7 @@ abstract class RequestMessage {
     protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, SessionContext sessionContext);
 
     protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                               final FieldNameValidator validator, final List<BsonElement> extraElements) {
+                               final FieldNameValidator validator, @Nullable final List<BsonElement> extraElements) {
         addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
                 settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, extraElements);
     }
@@ -199,7 +201,7 @@ abstract class RequestMessage {
 
     private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
                                  final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize,
-                                 final List<BsonElement> extraElements) {
+                                 @Nullable final List<BsonElement> extraElements) {
         BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(maxDocumentSize),
                 bsonOutput, validator);
         BsonWriter bsonWriter = extraElements == null

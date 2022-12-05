@@ -114,7 +114,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return bypassDocumentValidation;
     }
 
-    public MixedBulkWriteOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public MixedBulkWriteOperation bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -123,12 +123,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return comment;
     }
 
-    public MixedBulkWriteOperation comment(final BsonValue comment) {
+    public MixedBulkWriteOperation comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }
 
-    public MixedBulkWriteOperation let(final BsonDocument variables) {
+    public MixedBulkWriteOperation let(@Nullable final BsonDocument variables) {
         this.variables = variables;
         return this;
     }
@@ -388,6 +388,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return false;
     }
 
+    @Nullable
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
                 null, batch.getDecoder(), binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),

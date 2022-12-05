@@ -598,7 +598,7 @@ class DefaultConnectionPool implements ConnectionPool {
                     LOGGER.trace(format("Pooled connection %s to server %s failed to open", getId(this), serverId));
                 }
                 if (wrapped.getDescription().getServiceId() != null) {
-                    invalidate(wrapped.getDescription().getServiceId(), wrapped.getGeneration());
+                    invalidate(assertNotNull(wrapped.getDescription().getServiceId()), wrapped.getGeneration());
                 }
                 pool.release(wrapped, true);
             }

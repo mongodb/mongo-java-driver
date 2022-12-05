@@ -18,4 +18,7 @@
  * Contains the classes for supporting MongoDB's specification for storing very large files, GridFS.
  * @mongodb.driver.manual core/gridfs/ GridFS
  */
+@NonNullApi
 package com.mongodb.gridfs;
+
+import com.mongodb.lang.NonNullApi;

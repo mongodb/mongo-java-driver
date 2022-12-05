@@ -37,6 +37,7 @@ import reactor.core.publisher.MonoSink;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -143,7 +144,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             commitInProgress = true;
 
             return executor.execute(
-                    new CommitTransactionOperation(transactionOptions.getWriteConcern(), alreadyCommitted)
+                    new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()), alreadyCommitted)
                             .recoveryToken(getRecoveryToken())
                             .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
                     readConcern, this)
@@ -175,7 +176,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
             }
             return executor.execute(
-                    new AbortTransactionOperation(transactionOptions.getWriteConcern())
+                    new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
                             .recoveryToken(getRecoveryToken()),
                     readConcern, this)
                     .onErrorResume(Throwable.class, (e) -> Mono.empty())

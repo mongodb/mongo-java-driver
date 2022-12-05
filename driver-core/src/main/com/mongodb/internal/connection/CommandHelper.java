@@ -33,6 +33,7 @@ import java.util.Locale;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -93,13 +94,13 @@ public final class CommandHelper {
     }
 
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
-                                               final ClusterClock clusterClock,
+                                               @Nullable final ClusterClock clusterClock,
                                                final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi,
                                                final InternalConnection internalConnection) {
         SessionContext sessionContext = clusterClock == null ? NoOpSessionContext.INSTANCE
                 : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
-        return internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
-                new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE);
+        return assertNotNull(internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection,
+                        clusterConnectionMode, serverApi), new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE));
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,

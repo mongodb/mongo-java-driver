@@ -29,6 +29,7 @@ import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -104,7 +105,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return allowDiskUse;
     }
 
-    AggregateOperationImpl<T> allowDiskUse(final Boolean allowDiskUse) {
+    AggregateOperationImpl<T> allowDiskUse(@Nullable final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
     }
@@ -113,7 +114,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return batchSize;
     }
 
-    AggregateOperationImpl<T> batchSize(final Integer batchSize) {
+    AggregateOperationImpl<T> batchSize(@Nullable final Integer batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -146,7 +147,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return collation;
     }
 
-    AggregateOperationImpl<T> collation(final Collation collation) {
+    AggregateOperationImpl<T> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -160,7 +161,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
-    AggregateOperationImpl<T> let(final BsonDocument variables) {
+    AggregateOperationImpl<T> let(@Nullable final BsonDocument variables) {
         this.variables = variables;
         return this;
     }
@@ -174,11 +175,12 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return retryReads;
     }
 
+    @Nullable
     BsonValue getHint() {
         return hint;
     }
 
-    AggregateOperationImpl<T> hint(final BsonValue hint) {
+    AggregateOperationImpl<T> hint(@Nullable final BsonValue hint) {
         isTrueArgument("BsonString or BsonDocument", hint == null || hint.isDocument() || hint.isString());
         this.hint = hint;
         return this;

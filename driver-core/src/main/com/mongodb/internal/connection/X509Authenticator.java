@@ -94,7 +94,7 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
         return speculativeAuthenticateResponse;
     }
 
-    private BsonDocument getAuthCommand(final String userName) {
+    private BsonDocument getAuthCommand(@Nullable final String userName) {
         BsonDocument cmd = new BsonDocument();
 
         cmd.put("authenticate", new BsonInt32(1));

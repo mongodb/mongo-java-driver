@@ -21,10 +21,10 @@ import com.mongodb.MongoWriteConcernException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.AsyncWriteBinding
@@ -33,8 +33,8 @@ import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.internal.session.SessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -46,8 +46,8 @@ import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead
 import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWrite
 import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWriteAsync
@@ -140,7 +140,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, primary(), decoder, _, null, _)
+        1 * connection.command(dbName, command, _, primary(), decoder, _, null, _) >> new BsonDocument()
         1 * connection.release()
     }
 
@@ -266,7 +266,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, readPreference, decoder, _, null, _)
+        1 * connection.command(dbName, command, _, readPreference, decoder, _, null, _) >> new BsonDocument()
         1 * connection.release()
 
         where:

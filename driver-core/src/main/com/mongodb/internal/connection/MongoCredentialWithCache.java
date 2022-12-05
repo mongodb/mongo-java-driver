@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,7 +36,7 @@ public class MongoCredentialWithCache {
         this(credential, null);
     }
 
-    public MongoCredentialWithCache(final MongoCredential credential, final Cache cache) {
+    public MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
         this.credential = credential;
         this.cache = cache != null ? cache : new Cache();
     }
@@ -44,6 +45,7 @@ public class MongoCredentialWithCache {
         return new MongoCredentialWithCache(credential.withMechanism(mechanism), cache);
     }
 
+    @Nullable
     public AuthenticationMechanism getAuthenticationMechanism() {
         return credential.getAuthenticationMechanism();
     }
@@ -52,6 +54,7 @@ public class MongoCredentialWithCache {
         return credential;
     }
 
+    @Nullable
     public <T> T getFromCache(final Object key, final Class<T> clazz) {
         return clazz.cast(cache.get(key));
     }

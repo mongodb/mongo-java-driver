@@ -21,6 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -117,7 +118,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
      * @param collation the collation, which may be null
      * @return this
      */
-    public CreateViewOperation collation(final Collation collation) {
+    public CreateViewOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

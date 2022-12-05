@@ -91,6 +91,7 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
      * @return the next batch if available or null.
      * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
      */
+    @Nullable
     List<T> tryNext();
 
     @Nullable

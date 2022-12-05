@@ -93,7 +93,8 @@ public class ConnectionDescription {
      */
     public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
-                                 final int maxMessageSize, final List<String> compressors, final BsonArray saslSupportedMechanisms) {
+                                 final int maxMessageSize, final List<String> compressors,
+                                 @Nullable final BsonArray saslSupportedMechanisms) {
         this(null, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors,
                 saslSupportedMechanisms);
     }
@@ -114,7 +115,8 @@ public class ConnectionDescription {
      */
     public ConnectionDescription(@Nullable final ObjectId serviceId, final ConnectionId connectionId, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
-                                 final int maxMessageSize, final List<String> compressors, final BsonArray saslSupportedMechanisms) {
+                                 final int maxMessageSize, final List<String> compressors,
+                                 @Nullable final BsonArray saslSupportedMechanisms) {
         this.serviceId = serviceId;
         this.connectionId = connectionId;
         this.serverType = serverType;
@@ -241,6 +243,7 @@ public class ConnectionDescription {
      * @return the supported SASL mechanisms.
      * @since 4.1
      */
+    @Nullable
     public BsonArray getSaslSupportedMechanisms() {
         return saslSupportedMechanisms;
     }

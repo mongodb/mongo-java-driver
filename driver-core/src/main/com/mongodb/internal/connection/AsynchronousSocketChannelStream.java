@@ -21,6 +21,7 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -141,14 +142,14 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         }
 
         @Override
-        public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, final A attach,
+        public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, @Nullable final A attach,
                              final CompletionHandler<Integer, ? super A> handler) {
             channel.read(dst, timeout, unit, attach, handler);
         }
 
         @Override
         public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, final long timeout, final TimeUnit unit,
-                             final A attach, final CompletionHandler<Long, ? super A> handler) {
+                             @Nullable final A attach, final CompletionHandler<Long, ? super A> handler) {
             channel.read(dsts, offset, length, timeout, unit, attach, handler);
         }
 

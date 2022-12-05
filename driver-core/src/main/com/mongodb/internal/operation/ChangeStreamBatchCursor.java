@@ -49,7 +49,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final AggregateResponseBatchCursor<RawBsonDocument> wrapped,
                             final ReadBinding binding,
-                            final BsonDocument resumeToken,
+                            @Nullable final BsonDocument resumeToken,
                             final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.binding = binding.retain();

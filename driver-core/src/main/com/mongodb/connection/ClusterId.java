@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.Objects;
@@ -47,7 +48,7 @@ public final class ClusterId {
      *
      * @param description the user defined description of the MongoClient
      */
-    public ClusterId(final String description) {
+    public ClusterId(@Nullable final String description) {
         this.value = new ObjectId().toHexString();
         this.description = description;
     }
@@ -72,6 +73,7 @@ public final class ClusterId {
      *
      * @return the user defined description of the MongoClient
      */
+    @Nullable
     public String getDescription() {
         return description;
     }

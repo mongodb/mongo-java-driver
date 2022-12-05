@@ -20,6 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -30,7 +31,7 @@ class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
     private volatile Throwable error;
 
     @Override
-    public void completed(final T result) {
+    public void completed(@Nullable final T result) {
         this.result = result;
         latch.countDown();
     }

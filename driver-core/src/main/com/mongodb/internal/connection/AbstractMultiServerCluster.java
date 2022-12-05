@@ -26,6 +26,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -82,6 +83,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         return clusterType;
     }
 
+    @Nullable
     MongoException getSrvResolutionException() {
         return null;
     }
@@ -302,7 +304,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
      * Implements the same contract as {@link Comparable#compareTo(Object)}, except that a null value is always considers less-than any
      * other value (except null, which it considers as equal-to).
      */
-    private static <T extends Comparable<T>> int nullSafeCompareTo(final T first, final T second) {
+    private static <T extends Comparable<T>> int nullSafeCompareTo(@Nullable final T first, @Nullable final T second) {
         if (first == null) {
             return second == null ? 0 : -1;
         }
@@ -312,7 +314,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         return first.compareTo(second);
     }
 
-    private static <T extends Comparable<T>> T nullSafeMax(final T first, final T second) {
+    @Nullable
+    private static <T extends Comparable<T>> T nullSafeMax(@Nullable final T first, @Nullable final T second) {
         if (first == null) {
             return second;
         }

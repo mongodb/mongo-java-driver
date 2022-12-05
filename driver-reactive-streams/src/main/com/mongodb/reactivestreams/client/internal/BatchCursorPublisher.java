@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
@@ -70,7 +71,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     MongoNamespace getNamespace() {
-        return mongoOperationPublisher.getNamespace();
+        return assertNotNull(mongoOperationPublisher.getNamespace());
     }
 
     ReadPreference getReadPreference() {

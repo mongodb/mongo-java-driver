@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
 import org.bson.BsonValue;
@@ -28,6 +29,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -62,7 +65,7 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
 
     @Override
     public boolean isEmpty() {
-        return findInDocument(new Finder<Boolean>() {
+        return assertNotNull(findInDocument(new Finder<Boolean>() {
             @Override
             public Boolean find(final BsonReader bsonReader) {
                 return false;
@@ -72,15 +75,16 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
             public Boolean notFound() {
                 return true;
             }
-        });
+        }));
     }
 
     @Override
     public int size() {
-        return findInDocument(new Finder<Integer>() {
+        return assertNotNull(findInDocument(new Finder<Integer>() {
             private int size;
 
             @Override
+            @Nullable
             public Integer find(final BsonReader bsonReader) {
                 size++;
                 bsonReader.readName();
@@ -92,7 +96,7 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
             public Integer notFound() {
                 return size;
             }
-        });
+        }));
     }
 
     @Override
@@ -154,12 +158,10 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
         return containsValue != null ? containsValue : false;
     }
 
+    @Nullable
     @Override
     public BsonValue get(final Object key) {
-        if (key == null) {
-            throw new IllegalArgumentException("key can not be null");
-        }
-
+        notNull("key", key);
         return findInDocument(new Finder<BsonValue>() {
             @Override
             public BsonValue find(final BsonReader bsonReader) {
@@ -170,6 +172,7 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
                 return null;
             }
 
+            @Nullable
             @Override
             public BsonValue notFound() {
                 return null;
@@ -178,12 +181,13 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
     }
 
     /**
-     * Gets the first key in this document, or null if the document is empty.
+     * Gets the first key in this document.
      *
-     * @return the first key in this document, or null if the document is empty
+     * @return the first key in this document
+     * @throws java.util.NoSuchElementException if the document is empty
      */
     public String getFirstKey() {
-        return findInDocument(new Finder<String>() {
+        return assertNotNull(findInDocument(new Finder<String>() {
             @Override
             public String find(final BsonReader bsonReader) {
                 return bsonReader.readName();
@@ -193,15 +197,17 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
             public String notFound() {
                 throw new NoSuchElementException();
             }
-        });
+        }));
     }
 
     interface Finder<T> {
+        @Nullable
         T find(BsonReader bsonReader);
+        @Nullable
         T notFound();
     }
 
-    abstract <T> T findInDocument(Finder<T> finder);
+    @Nullable abstract <T> T findInDocument(Finder<T> finder);
 
     //AbstractBsonReader getBsonReader();
 

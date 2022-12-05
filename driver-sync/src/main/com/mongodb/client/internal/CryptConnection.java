@@ -84,9 +84,10 @@ class CryptConnection implements Connection {
         return wrapped.getDescription();
     }
 
+    @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
             @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
             @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
 
@@ -111,6 +112,10 @@ class CryptConnection implements Connection {
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
                 new RawBsonDocumentCodec(), sessionContext, serverApi, requestContext, responseExpected, null, null);
 
+        if (encryptedResponse == null) {
+            return null;
+        }
+
         RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse);
 
         BsonBinaryReader reader = new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO());
@@ -118,9 +123,10 @@ class CryptConnection implements Connection {
         return commandResultDecoder.decode(reader, DecoderContext.builder().build());
     }
 
+    @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
             @Nullable final ServerApi serverApi, final RequestContext requestContext) {
         return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
                 requestContext, true, null, null);

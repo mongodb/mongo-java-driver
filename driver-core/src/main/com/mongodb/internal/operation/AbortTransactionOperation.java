@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 /**
@@ -32,7 +33,7 @@ public class AbortTransactionOperation extends TransactionOperation {
         super(writeConcern);
     }
 
-    public AbortTransactionOperation recoveryToken(final BsonDocument recoveryToken) {
+    public AbortTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {
         this.recoveryToken = recoveryToken;
         return this;
     }

@@ -21,6 +21,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformer;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformerAsync;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -39,6 +40,7 @@ final class FindAndModifyHelper {
         return (result, connection) -> transformDocument(result, connection.getDescription().getServerAddress());
     }
 
+    @Nullable
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
             MongoWriteConcernException writeConcernException = new MongoWriteConcernException(

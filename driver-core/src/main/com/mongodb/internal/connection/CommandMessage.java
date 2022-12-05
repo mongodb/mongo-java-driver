@@ -40,7 +40,6 @@ import java.util.List;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
@@ -85,7 +84,7 @@ public final class CommandMessage extends RequestMessage {
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
-                   final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
                 payloadFieldNameValidator, clusterConnectionMode, serverApi);
@@ -94,7 +93,7 @@ public final class CommandMessage extends RequestMessage {
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
-                   final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.namespace = namespace;
@@ -136,7 +135,6 @@ public final class CommandMessage extends RequestMessage {
     }
 
     boolean isResponseExpected() {
-        isTrue("The message must be encoded before determining if a response is expected", getEncodingMetadata() != null);
         return !useOpMsg() || requireOpMsgResponse();
     }
 

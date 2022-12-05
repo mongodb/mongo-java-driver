@@ -115,7 +115,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return filter;
     }
 
-    public FindOperation<T> filter(final BsonDocument filter) {
+    public FindOperation<T> filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
@@ -142,7 +142,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return projection;
     }
 
-    public FindOperation<T> projection(final BsonDocument projection) {
+    public FindOperation<T> projection(@Nullable final BsonDocument projection) {
         this.projection = projection;
         return this;
     }
@@ -184,7 +184,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return sort;
     }
 
-    public FindOperation<T> sort(final BsonDocument sort) {
+    public FindOperation<T> sort(@Nullable final BsonDocument sort) {
         this.sort = sort;
         return this;
     }
@@ -229,7 +229,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return collation;
     }
 
-    public FindOperation<T> collation(final Collation collation) {
+    public FindOperation<T> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -238,7 +238,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return comment;
     }
 
-    public FindOperation<T> comment(final BsonValue comment) {
+    public FindOperation<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }
@@ -247,7 +247,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return hint;
     }
 
-    public FindOperation<T> hint(final BsonValue hint) {
+    public FindOperation<T> hint(@Nullable final BsonValue hint) {
         this.hint = hint;
         return this;
     }
@@ -256,7 +256,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return variables;
     }
 
-    public FindOperation<T> let(final BsonDocument variables) {
+    public FindOperation<T> let(@Nullable final BsonDocument variables) {
         this.variables = variables;
         return this;
     }
@@ -265,7 +265,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return max;
     }
 
-    public FindOperation<T> max(final BsonDocument max) {
+    public FindOperation<T> max(@Nullable final BsonDocument max) {
         this.max = max;
         return this;
     }
@@ -274,7 +274,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return min;
     }
 
-    public FindOperation<T> min(final BsonDocument min) {
+    public FindOperation<T> min(@Nullable final BsonDocument min) {
         this.min = min;
         return this;
     }

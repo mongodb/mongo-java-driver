@@ -17,6 +17,7 @@
 package com.mongodb.internal.bulk;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
@@ -83,11 +84,12 @@ public class IndexRequest {
         return this;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
 
-    public IndexRequest name(final String name) {
+    public IndexRequest name(@Nullable final String name) {
         this.name = name;
         return this;
     }
@@ -101,6 +103,7 @@ public class IndexRequest {
         return this;
     }
 
+    @Nullable
     public Long getExpireAfter(final TimeUnit timeUnit) {
         if (expireAfterSeconds == null) {
             return null;
@@ -108,7 +111,7 @@ public class IndexRequest {
         return timeUnit.convert(expireAfterSeconds, TimeUnit.SECONDS);
     }
 
-    public IndexRequest expireAfter(final Long expireAfter, final TimeUnit timeUnit) {
+    public IndexRequest expireAfter(@Nullable final Long expireAfter, final TimeUnit timeUnit) {
         if (expireAfter == null) {
             this.expireAfterSeconds = null;
         } else {
@@ -117,47 +120,52 @@ public class IndexRequest {
         return this;
     }
 
+    @Nullable
     public Integer getVersion() {
         return this.version;
     }
 
-    public IndexRequest version(final Integer version) {
+    public IndexRequest version(@Nullable final Integer version) {
         this.version = version;
         return this;
     }
 
+    @Nullable
     public BsonDocument getWeights() {
         return weights;
     }
 
-    public IndexRequest weights(final BsonDocument weights) {
+    public IndexRequest weights(@Nullable final BsonDocument weights) {
         this.weights = weights;
         return this;
     }
 
+    @Nullable
     public String getDefaultLanguage() {
         return defaultLanguage;
     }
 
-    public IndexRequest defaultLanguage(final String defaultLanguage) {
+    public IndexRequest defaultLanguage(@Nullable final String defaultLanguage) {
         this.defaultLanguage = defaultLanguage;
         return this;
     }
 
+    @Nullable
     public String getLanguageOverride() {
         return languageOverride;
     }
 
-    public IndexRequest languageOverride(final String languageOverride) {
+    public IndexRequest languageOverride(@Nullable final String languageOverride) {
         this.languageOverride = languageOverride;
         return this;
     }
 
+    @Nullable
     public Integer getTextVersion() {
         return textVersion;
     }
 
-    public IndexRequest textVersion(final Integer textVersion) {
+    public IndexRequest textVersion(@Nullable final Integer textVersion) {
         if (textVersion != null) {
             isTrueArgument("textVersion must be 1, 2 or 3", VALID_TEXT_INDEX_VERSIONS.contains(textVersion));
         }
@@ -165,11 +173,12 @@ public class IndexRequest {
         return this;
     }
 
+    @Nullable
     public Integer getSphereVersion() {
         return sphereVersion;
     }
 
-    public IndexRequest sphereVersion(final Integer sphereVersion) {
+    public IndexRequest sphereVersion(@Nullable final Integer sphereVersion) {
         if (sphereVersion != null) {
             isTrueArgument("sphereIndexVersion must be 1, 2 or 3", VALID_SPHERE_INDEX_VERSIONS.contains(sphereVersion));
         }
@@ -177,40 +186,44 @@ public class IndexRequest {
         return this;
     }
 
+    @Nullable
     public Integer getBits() {
         return bits;
     }
 
-    public IndexRequest bits(final Integer bits) {
+    public IndexRequest bits(@Nullable final Integer bits) {
         this.bits = bits;
         return this;
     }
 
+    @Nullable
     public Double getMin() {
         return min;
     }
 
-    public IndexRequest min(final Double min) {
+    public IndexRequest min(@Nullable final Double min) {
         this.min = min;
         return this;
     }
 
+    @Nullable
     public Double getMax() {
         return max;
     }
 
-    public IndexRequest max(final Double max) {
+    public IndexRequest max(@Nullable final Double max) {
         this.max = max;
         return this;
     }
 
     @Deprecated
+    @Nullable
     public Double getBucketSize() {
         return bucketSize;
     }
 
     @Deprecated
-    public IndexRequest bucketSize(final Double bucketSize) {
+    public IndexRequest bucketSize(@Nullable final Double bucketSize) {
         this.bucketSize = bucketSize;
         return this;
     }
@@ -224,38 +237,42 @@ public class IndexRequest {
         return this;
     }
 
+    @Nullable
     public BsonDocument getStorageEngine() {
         return storageEngine;
     }
 
-    public IndexRequest storageEngine(final BsonDocument storageEngineOptions) {
+    public IndexRequest storageEngine(@Nullable final BsonDocument storageEngineOptions) {
         this.storageEngine = storageEngineOptions;
         return this;
     }
 
+    @Nullable
     public BsonDocument getPartialFilterExpression() {
         return partialFilterExpression;
     }
 
-    public IndexRequest partialFilterExpression(final BsonDocument partialFilterExpression) {
+    public IndexRequest partialFilterExpression(@Nullable final BsonDocument partialFilterExpression) {
         this.partialFilterExpression = partialFilterExpression;
         return this;
     }
 
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
 
-    public IndexRequest collation(final Collation collation) {
+    public IndexRequest collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
 
+    @Nullable
     public BsonDocument getWildcardProjection() {
         return wildcardProjection;
     }
 
-    public IndexRequest wildcardProjection(final BsonDocument wildcardProjection) {
+    public IndexRequest wildcardProjection(@Nullable final BsonDocument wildcardProjection) {
         this.wildcardProjection = wildcardProjection;
         return this;
     }

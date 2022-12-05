@@ -17,6 +17,7 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -41,7 +42,7 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
     }
 
     @Override
-    public void onResult(final T result, final Throwable t) {
+    public void onResult(@Nullable final T result, @Nullable final Throwable t) {
         try {
             wrapped.onResult(result, t);
         } catch (Throwable e) {

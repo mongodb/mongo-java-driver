@@ -18,6 +18,7 @@ package com.mongodb.internal.authentication;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +37,7 @@ final class HttpHelper {
     }
 
     @NonNull
-    public static String getHttpContents(final String method, final String endpoint, final Map<String, String> headers) {
+    public static String getHttpContents(final String method, final String endpoint, @Nullable final Map<String, String> headers) {
         StringBuilder content = new StringBuilder();
         HttpURLConnection conn = null;
         try {

@@ -17,9 +17,10 @@
 package com.mongodb.internal.authentication;
 
 import com.mongodb.AwsCredential;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.lang.Nullable;
 
 import java.util.function.Supplier;
 
@@ -91,6 +92,7 @@ public final class AwsCredentialHelper {
         awsCredentialSupplier = new AwsSdkV2CredentialSupplier();
     }
 
+    @Nullable
     public static AwsCredential obtainFromEnvironment() {
         return awsCredentialSupplier.get();
     }

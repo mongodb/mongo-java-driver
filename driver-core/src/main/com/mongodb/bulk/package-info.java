@@ -17,4 +17,7 @@
 /**
  * Contains classes for representing the result of a bulk write operation.
  */
+@NonNullApi
 package com.mongodb.bulk;
+
+import com.mongodb.lang.NonNullApi;

@@ -24,6 +24,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
@@ -79,6 +80,7 @@ public final class EventListenerHelper {
         return new ServerMonitorListenerMulticaster(serverMonitorListeners);
     }
 
+    @Nullable
     public static CommandListener getCommandListener(final List<CommandListener> commandListeners) {
         switch (commandListeners.size()) {
             case 0:

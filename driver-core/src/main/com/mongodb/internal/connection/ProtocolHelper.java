@@ -26,13 +26,13 @@ import com.mongodb.MongoQueryException;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -45,7 +45,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.io.BsonOutput;
 import org.bson.io.ByteBufferBsonInput;
 
 import java.util.List;
@@ -83,6 +82,7 @@ public final class ProtocolHelper {
         }
     }
 
+    @Nullable
     static MongoException createSpecialWriteConcernException(final ResponseBuffers responseBuffers, final ServerAddress serverAddress) {
         BsonValue writeConcernError = getField(createBsonReader(responseBuffers), "writeConcernError");
         if (writeConcernError == null) {
@@ -92,10 +92,12 @@ public final class ProtocolHelper {
         }
     }
 
+    @Nullable
     static BsonTimestamp getOperationTime(final ResponseBuffers responseBuffers) {
         return getFieldValueAsTimestamp(responseBuffers, "operationTime");
     }
 
+    @Nullable
     static BsonDocument getClusterTime(final ResponseBuffers responseBuffers) {
         return getFieldValueAsDocument(responseBuffers, "$clusterTime");
     }
@@ -112,11 +114,13 @@ public final class ProtocolHelper {
         return null;
     }
 
+    @Nullable
     static BsonDocument getRecoveryToken(final ResponseBuffers responseBuffers) {
         return getFieldValueAsDocument(responseBuffers, "recoveryToken");
     }
 
     @SuppressWarnings("SameParameterValue")
+    @Nullable
     private static BsonTimestamp getFieldValueAsTimestamp(final ResponseBuffers responseBuffers, final String fieldName) {
         BsonValue value = getFieldValue(responseBuffers, fieldName);
         if (value == null) {
@@ -125,6 +129,7 @@ public final class ProtocolHelper {
         return value.asTimestamp();
     }
 
+    @Nullable
     private static BsonDocument getFieldValueAsDocument(final ResponseBuffers responseBuffers, final String fieldName) {
         BsonValue value = getFieldValue(responseBuffers, fieldName);
         if (value == null) {
@@ -133,6 +138,7 @@ public final class ProtocolHelper {
         return value.asDocument();
     }
 
+    @Nullable
     private static BsonValue getFieldValue(final ResponseBuffers responseBuffers, final String fieldName) {
         try {
             return getField(createBsonReader(responseBuffers), fieldName);
@@ -145,7 +151,7 @@ public final class ProtocolHelper {
         return new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer()));
     }
 
-
+    @Nullable
     private static BsonValue getField(final BsonReader bsonReader, final String fieldName) {
         bsonReader.readStartDocument();
         while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
@@ -160,6 +166,7 @@ public final class ProtocolHelper {
     }
 
     @SuppressWarnings("SameParameterValue")
+    @Nullable
     private static BsonValue getNestedFieldValue(final ResponseBuffers responseBuffers, final String topLevelFieldName,
                                                  final String nestedFieldName) {
         try {
@@ -178,7 +185,7 @@ public final class ProtocolHelper {
         }
     }
 
-    private static boolean isCommandOk(final BsonValue okValue) {
+    private static boolean isCommandOk(@Nullable final BsonValue okValue) {
         if (okValue == null) {
             return false;
         } else if (okValue.isBoolean()) {
@@ -224,30 +231,13 @@ public final class ProtocolHelper {
                 .build();
     }
 
-    static void encodeMessage(final RequestMessage message, final BsonOutput bsonOutput) {
-        try {
-            message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
-        } catch (Exception | Error e) {
-            bsonOutput.close();
-            throw e;
-        }
-    }
-
-    static RequestMessage.EncodingMetadata encodeMessageWithMetadata(final RequestMessage message, final BsonOutput bsonOutput) {
-        try {
-            message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
-            return message.getEncodingMetadata();
-        } catch (Exception | Error e) {
-            bsonOutput.close();
-            throw e;
-        }
-    }
-
     private static final List<Integer> NOT_PRIMARY_CODES = asList(10107, 13435, 10058);
     private static final List<String> NOT_PRIMARY_MESSAGES = singletonList("not master");
     private static final List<Integer> RECOVERING_CODES = asList(11600, 11602, 13436, 189, 91);
     private static final List<String> RECOVERING_MESSAGES = asList("not master or secondary", "node is recovering");
-    public static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
+
+    @Nullable
+    public static MongoException createSpecialException(@Nullable final BsonDocument response, final ServerAddress serverAddress,
                                                         final String errorMessageFieldName) {
         if (response == null) {
             return null;
@@ -326,6 +316,7 @@ public final class ProtocolHelper {
         }
     }
 
+    @Nullable
     private static RequestContext getRequestContextForEvent(final RequestContext requestContext) {
         return requestContext == IgnorableRequestContext.INSTANCE ? null : requestContext;
     }

@@ -223,7 +223,7 @@ public final class ClusterSettings {
          * @param requiredReplicaSetName the required replica set name.
          * @return this
          */
-        public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
+        public Builder requiredReplicaSetName(@Nullable final String requiredReplicaSetName) {
             this.requiredReplicaSetName = requiredReplicaSetName;
             return this;
         }
@@ -328,9 +328,13 @@ public final class ClusterSettings {
             } else if (connectionString.isSrvProtocol()) {
                 mode(ClusterConnectionMode.MULTIPLE);
                 srvHost(connectionString.getHosts().get(0));
-                srvMaxHosts(connectionString.getSrvMaxHosts());
-                if (connectionString.getSrvServiceName() != null) {
-                    srvServiceName(connectionString.getSrvServiceName());
+                Integer srvMaxHosts = connectionString.getSrvMaxHosts();
+                if (srvMaxHosts != null) {
+                    srvMaxHosts(srvMaxHosts);
+                }
+                String srvServiceName = connectionString.getSrvServiceName();
+                if (srvServiceName != null) {
+                    srvServiceName(srvServiceName);
                 }
             } else if ((directConnection != null && directConnection)
                     || (directConnection == null && connectionString.getHosts().size() == 1

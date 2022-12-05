@@ -35,6 +35,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonTimestamp;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 
@@ -121,7 +122,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                 wrapped.getWriteConnectionSource(connectionSourceCallback);
             }
         } else {
-            wrapped.getConnectionSource(session.getPinnedServerAddress(), new WrappingCallback(callback));
+            wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()), new WrappingCallback(callback));
         }
     }
 
@@ -266,7 +267,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         }
 
         @Override
-        public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
             clientSession.setSnapshotTimestamp(snapshotTimestamp);
         }
 
@@ -284,7 +285,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         @Override
         public ReadConcern getReadConcern() {
             if (clientSession.hasActiveTransaction()) {
-                return clientSession.getTransactionOptions().getReadConcern();
+                return assertNotNull(clientSession.getTransactionOptions().getReadConcern());
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
@@ -301,11 +302,11 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         }
 
         @Override
-        public void onResult(final AsyncConnectionSource result, final Throwable t) {
+        public void onResult(@Nullable final AsyncConnectionSource result, @Nullable final Throwable t) {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
+                callback.onResult(new SessionBindingAsyncConnectionSource(assertNotNull(result)), null);
             }
         }
     }

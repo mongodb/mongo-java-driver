@@ -23,6 +23,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -46,12 +47,15 @@ public interface Connection extends ReferenceCounted {
      */
     ConnectionDescription getDescription();
 
-    <T> T command(String database, BsonDocument command, FieldNameValidator fieldNameValidator, ReadPreference readPreference,
-            Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext);
+    @Nullable
+    <T> T command(String database, BsonDocument command, FieldNameValidator fieldNameValidator, @Nullable ReadPreference readPreference,
+            Decoder<T> commandResultDecoder, SessionContext sessionContext, @Nullable ServerApi serverApi, RequestContext requestContext);
 
-    <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator, ReadPreference readPreference,
-            Decoder<T> commandResultDecoder, SessionContext sessionContext, ServerApi serverApi, RequestContext requestContext,
-            boolean responseExpected, SplittablePayload payload, FieldNameValidator payloadFieldNameValidator);
+    @Nullable
+    <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
+            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
+            @Nullable ServerApi serverApi, RequestContext requestContext, boolean responseExpected, @Nullable SplittablePayload payload,
+            @Nullable FieldNameValidator payloadFieldNameValidator);
 
 
     enum PinningMode {

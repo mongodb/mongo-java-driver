@@ -64,9 +64,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -328,7 +330,7 @@ final class NettyStream implements Stream {
         return false;
     }
 
-    private void handleReadResponse(final io.netty.buffer.ByteBuf buffer, final Throwable t) {
+    private void handleReadResponse(@Nullable final io.netty.buffer.ByteBuf buffer, @Nullable final Throwable t) {
         PendingReader localPendingReader = null;
         synchronized (this) {
             if (buffer != null) {
@@ -394,7 +396,7 @@ final class NettyStream implements Stream {
         if (sslContext == null) {
             SSLContext sslContext;
             try {
-                sslContext = (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
+                sslContext = ofNullable(sslSettings.getContext()).orElse(SSLContext.getDefault());
             } catch (NoSuchAlgorithmException e) {
                 throw new MongoClientException("Unable to create standard SSLContext", e);
             }
@@ -452,7 +454,7 @@ final class NettyStream implements Stream {
         }
 
         @Override
-        public void completed(final T t) {
+        public void completed(@Nullable final T t) {
             this.t = t;
             latch.countDown();
         }
@@ -532,12 +534,12 @@ final class NettyStream implements Stream {
         }
     }
 
+    @Nullable
     private static ScheduledFuture<?> scheduleReadTimeout(@Nullable final ReadTimeoutTask readTimeoutTask, final long timeoutMillis) {
         if (timeoutMillis == NO_SCHEDULE_TIME) {
             return null;
         } else {
-            //assert readTimeoutTask != null : "readTimeoutTask must be initialized if read timeouts are enabled";
-            return readTimeoutTask.schedule(timeoutMillis);
+            return assertNotNull(readTimeoutTask).schedule(timeoutMillis);
         }
     }
 

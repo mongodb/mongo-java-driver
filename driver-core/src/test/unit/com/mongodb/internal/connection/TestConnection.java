@@ -22,6 +22,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -60,32 +61,32 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            final ServerApi serverApi, final RequestContext requestContext) {
+            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected, final SplittablePayload payload,
-            final FieldNameValidator payloadFieldNameValidator) {
+            @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+            @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
-            final SingleResultCallback<T> callback) {
+                                 final SessionContext sessionContext, @Nullable final ServerApi serverApi,
+                                 final RequestContext requestContext, final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final ServerApi serverApi, final RequestContext requestContext,
-            final boolean responseExpected,
-                                 final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                                 final SessionContext sessionContext, final @Nullable ServerApi serverApi,
+                                 final RequestContext requestContext, final boolean responseExpected,
+                                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
     }

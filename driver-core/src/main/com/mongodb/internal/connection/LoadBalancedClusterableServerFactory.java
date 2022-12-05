@@ -29,6 +29,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.inject.EmptyProvider;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
@@ -53,10 +54,10 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     public LoadBalancedClusterableServerFactory(final ServerSettings serverSettings,
                                                 final ConnectionPoolSettings connectionPoolSettings,
                                                 final InternalConnectionPoolSettings internalConnectionPoolSettings,
-                                                final StreamFactory streamFactory, final MongoCredential credential,
-                                                final CommandListener commandListener,
-                                                final String applicationName, final MongoDriverInformation mongoDriverInformation,
-                                                final List<MongoCompressor> compressorList, final ServerApi serverApi) {
+                                                final StreamFactory streamFactory, @Nullable final MongoCredential credential,
+                                                @Nullable final CommandListener commandListener,
+                                                @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
+                                                final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;

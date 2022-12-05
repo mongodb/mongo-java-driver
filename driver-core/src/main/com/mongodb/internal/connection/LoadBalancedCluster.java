@@ -30,14 +30,14 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -51,6 +51,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -101,7 +102,8 @@ final class LoadBalancedCluster implements Cluster {
             initializationCompleted = true;
         } else {
             notNull("dnsSrvRecordMonitorFactory", dnsSrvRecordMonitorFactory);
-            dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(settings.getSrvHost(), settings.getSrvServiceName(), new DnsSrvRecordInitializer() {
+            dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(assertNotNull(settings.getSrvHost()), settings.getSrvServiceName(),
+                    new DnsSrvRecordInitializer() {
 
                 @Override
                 public void initialize(final Collection<ServerAddress> hosts) {
@@ -186,7 +188,7 @@ final class LoadBalancedCluster implements Cluster {
     public ClusterableServer getServer(final ServerAddress serverAddress) {
         isTrue("open", !isClosed());
         waitForSrv();
-        return server;
+        return assertNotNull(server);
     }
 
     @Override
@@ -208,7 +210,7 @@ final class LoadBalancedCluster implements Cluster {
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
-        return new ServerTuple(server, description.getServerDescriptions().get(0));
+        return new ServerTuple(assertNotNull(server), description.getServerDescriptions().get(0));
     }
 
 
@@ -297,7 +299,7 @@ final class LoadBalancedCluster implements Cluster {
         if (srvRecordResolvedToMultipleHosts) {
             serverSelectionRequest.onError(createResolvedToMultipleHostsException());
         } else {
-            serverSelectionRequest.onSuccess(new ServerTuple(server, description.getServerDescriptions().get(0)));
+            serverSelectionRequest.onSuccess(new ServerTuple(assertNotNull(server), description.getServerDescriptions().get(0)));
         }
     }
 

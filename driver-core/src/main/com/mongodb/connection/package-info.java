@@ -17,4 +17,7 @@
 /**
  * Contains classes that manage connecting to MongoDB servers.
  */
+@NonNullApi
 package com.mongodb.connection;
+
+import com.mongodb.lang.NonNullApi;

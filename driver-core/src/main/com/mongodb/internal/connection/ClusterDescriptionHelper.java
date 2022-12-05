@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +52,7 @@ public final class ClusterDescriptionHelper {
      * @param serverAddress the ServerAddress for a server in this cluster
      * @return the ServerDescription for this server
      */
+    @Nullable
     public static ServerDescription getByServerAddress(final ClusterDescription clusterDescription, final ServerAddress serverAddress) {
         for (final ServerDescription cur : clusterDescription.getServerDescriptions()) {
             if (cur.isOk() && cur.getAddress().equals(serverAddress)) {

@@ -69,7 +69,7 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp operationTime) {
+    public void advanceOperationTime(@Nullable final BsonTimestamp operationTime) {
         clientSession.advanceOperationTime(operationTime);
     }
 
@@ -79,7 +79,7 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument clusterTime) {
+    public void advanceClusterTime(@Nullable final BsonDocument clusterTime) {
         clientSession.advanceClusterTime(clusterTime);
     }
 
@@ -90,7 +90,7 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
         clientSession.setSnapshotTimestamp(snapshotTimestamp);
     }
 

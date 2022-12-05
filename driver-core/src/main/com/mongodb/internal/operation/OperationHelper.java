@@ -46,6 +46,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonValue;
@@ -78,18 +79,18 @@ final class OperationHelper {
     }
 
     interface AsyncCallableWithConnection {
-        void call(AsyncConnection connection, Throwable t);
+        void call(@Nullable AsyncConnection connection, @Nullable Throwable t);
     }
 
     interface AsyncCallableWithSource {
-        void call(AsyncConnectionSource source, Throwable t);
+        void call(@Nullable AsyncConnectionSource source, @Nullable Throwable t);
     }
 
     interface AsyncCallableWithConnectionAndSource {
-        void call(AsyncConnectionSource source, AsyncConnection connection, Throwable t);
+        void call(@Nullable AsyncConnectionSource source, @Nullable AsyncConnection connection, @Nullable Throwable t);
     }
 
-    static void validateCollationAndWriteConcern(final Collation collation, final WriteConcern writeConcern) {
+    static void validateCollationAndWriteConcern(@Nullable final Collation collation, final WriteConcern writeConcern) {
         if (collation != null && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Specifying collation with an unacknowledged WriteConcern is not supported");
         }
@@ -193,7 +194,8 @@ final class OperationHelper {
         }
     }
 
-    static void checkBypassDocumentValidationIsSupported(final Boolean bypassDocumentValidation, final WriteConcern writeConcern) {
+    static void checkBypassDocumentValidationIsSupported(@Nullable final Boolean bypassDocumentValidation,
+            final WriteConcern writeConcern) {
         if (bypassDocumentValidation != null && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern is not supported");
         }
@@ -303,7 +305,7 @@ final class OperationHelper {
         }
 
         @Override
-        public void onResult(final T result, final Throwable t) {
+        public void onResult(@Nullable final T result, @Nullable  final Throwable t) {
             for (ReferenceCounted cur : referenceCounted) {
                 if (cur != null) {
                     cur.release();
@@ -429,6 +431,7 @@ final class OperationHelper {
                 }
                 errorHandlingCallback.onResult(null, supplierException);
             } else {
+                assertNotNull(resource);
                 AsyncCallbackSupplier<R> curriedFunction = clbk -> function.apply(resource, clbk);
                 curriedFunction.whenComplete(resource::release)
                         .get(errorHandlingCallback);
@@ -442,11 +445,11 @@ final class OperationHelper {
             this.callable = callable;
         }
         @Override
-        public void onResult(final AsyncConnectionSource source, final Throwable t) {
+        public void onResult(@Nullable final AsyncConnectionSource source, @Nullable final Throwable t) {
             if (t != null) {
                 callable.call(null, t);
             } else {
-                withAsyncConnectionSourceCallableConnection(source, callable);
+                withAsyncConnectionSourceCallableConnection(assertNotNull(source), callable);
             }
         }
     }
@@ -457,11 +460,11 @@ final class OperationHelper {
             this.callable = callable;
         }
         @Override
-        public void onResult(final AsyncConnectionSource source, final Throwable t) {
+        public void onResult(@Nullable final AsyncConnectionSource source, @Nullable final Throwable t) {
             if (t != null) {
                 callable.call(null, t);
             } else {
-                withAsyncConnectionSource(source, callable);
+                withAsyncConnectionSource(assertNotNull(source), callable);
             }
         }
     }
@@ -494,11 +497,11 @@ final class OperationHelper {
         }
 
         @Override
-        public void onResult(final AsyncConnectionSource source, final Throwable t) {
+        public void onResult(@Nullable final AsyncConnectionSource source, @Nullable final Throwable t) {
             if (t != null) {
                 callable.call(null, null, t);
             } else {
-                withAsyncConnectionSource(source, callable);
+                withAsyncConnectionSource(assertNotNull(source), callable);
             }
         }
     }

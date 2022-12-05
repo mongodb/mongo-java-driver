@@ -190,7 +190,7 @@ public final class LoopState {
         private final Object value;
         private final boolean autoRemove;
 
-        AttachmentValueContainer(final Object value, final boolean autoRemove) {
+        AttachmentValueContainer(@Nullable final Object value, final boolean autoRemove) {
             this.value = value;
             this.autoRemove = autoRemove;
         }

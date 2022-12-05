@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
 import java.util.Objects;
@@ -180,6 +181,7 @@ public class SslSettings {
      * @since 3.5
      * @see SSLContext#getDefault()
      */
+    @Nullable
     public SSLContext getContext() {
         return context;
     }

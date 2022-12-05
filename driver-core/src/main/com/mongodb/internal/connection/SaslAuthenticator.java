@@ -41,6 +41,7 @@ import javax.security.sasl.SaslException;
 
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_KEY;
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
@@ -112,7 +113,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     protected void appendSaslStartOptions(final BsonDocument saslStartCommand) {
     }
 
-    private void throwIfSaslClientIsNull(final SaslClient saslClient) {
+    private void throwIfSaslClientIsNull(@Nullable final SaslClient saslClient) {
         if (saslClient == null) {
             throw new MongoSecurityException(getMongoCredential(),
                     String.format("This JDK does not support the %s SASL mechanism", getMechanismName()));
@@ -143,7 +144,10 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 sendSaslStartAsync(serverResponse, connection, (result, t) -> {
                     if (t != null) {
                         errHandlingCallback.onResult(null, wrapException(t));
-                    } else if (result.getBoolean("done").getValue()) {
+                        return;
+                    }
+                    assertNotNull(result);
+                    if (result.getBoolean("done").getValue()) {
                         verifySaslClientComplete(saslClient, result, errHandlingCallback);
                     } else {
                         new Continuator(saslClient, result, connection, errHandlingCallback).start();
@@ -214,7 +218,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         return () -> null;
     }
 
-    private BsonDocument sendSaslStart(final byte[] outToken, final InternalConnection connection) {
+    private BsonDocument sendSaslStart(@Nullable final byte[] outToken, final InternalConnection connection) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
         return executeCommand(getMongoCredential().getSource(), startDocument, getClusterConnectionMode(), getServerApi(), connection);
@@ -225,7 +229,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 getClusterConnectionMode(), getServerApi(), connection);
     }
 
-    private void sendSaslStartAsync(final byte[] outToken, final InternalConnection connection,
+    private void sendSaslStartAsync(@Nullable final byte[] outToken, final InternalConnection connection,
                                     final SingleResultCallback<BsonDocument> callback) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
@@ -239,7 +243,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 getClusterConnectionMode(), getServerApi(), connection, callback);
     }
 
-    protected BsonDocument createSaslStartCommandDocument(final byte[] outToken) {
+    protected BsonDocument createSaslStartCommandDocument(@Nullable final byte[] outToken) {
         return new BsonDocument("saslStart", new BsonInt32(1)).append("mechanism", new BsonString(getMechanismName()))
                 .append("payload", new BsonBinary(outToken != null ? outToken : new byte[0]));
     }
@@ -291,11 +295,14 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         }
 
         @Override
-        public void onResult(final BsonDocument result, final Throwable t) {
+        public void onResult(@Nullable final BsonDocument result, @Nullable final Throwable t) {
             if (t != null) {
                 callback.onResult(null, wrapException(t));
                 disposeOfSaslClient(saslClient);
-            } else if (result.getBoolean("done").getValue()) {
+                return;
+            }
+            assertNotNull(result);
+            if (result.getBoolean("done").getValue()) {
                 verifySaslClientComplete(saslClient, result, callback);
                 disposeOfSaslClient(saslClient);
             } else {

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
@@ -117,6 +118,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         return new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()));
     }
 
+    @Nullable
     <T> T findInDocument(final Finder<T> finder) {
         ByteBuf duplicateByteBuf = byteBuf.duplicate();
         try (BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()))) {

@@ -17,4 +17,7 @@
 /**
  * This package contains netty specific classes
  */
+@NonNullApi
 package com.mongodb.connection.netty;
+
+import com.mongodb.lang.NonNullApi;

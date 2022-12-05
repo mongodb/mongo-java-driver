@@ -35,6 +35,7 @@ import com.mongodb.internal.session.ServerSessionPool;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -144,7 +145,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 commitInProgress = true;
-                delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern(),
+                delegate.getOperationExecutor().execute(new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()),
                         transactionState == TransactionState.COMMITTED)
                                 .recoveryToken(getRecoveryToken())
                                 .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
@@ -176,11 +177,11 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
-                delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern())
+                delegate.getOperationExecutor().execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
                                 .recoveryToken(getRecoveryToken()),
                         readConcern, this);
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             // ignore exceptions from abort
         } finally {
             clearTransactionContext();

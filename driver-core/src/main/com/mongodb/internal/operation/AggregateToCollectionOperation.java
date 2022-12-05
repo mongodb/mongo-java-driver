@@ -25,6 +25,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -89,7 +90,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     }
 
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
-                                          final ReadConcern readConcern, final WriteConcern writeConcern,
+                                          @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern,
                                           final AggregationLevel aggregationLevel) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
@@ -116,7 +117,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         return allowDiskUse;
     }
 
-    public AggregateToCollectionOperation allowDiskUse(final Boolean allowDiskUse) {
+    public AggregateToCollectionOperation allowDiskUse(@Nullable final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
     }
@@ -136,7 +137,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         return bypassDocumentValidation;
     }
 
-    public AggregateToCollectionOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public AggregateToCollectionOperation bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -145,7 +146,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         return collation;
     }
 
-    public AggregateToCollectionOperation collation(final Collation collation) {
+    public AggregateToCollectionOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -154,7 +155,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         return comment;
     }
 
-    public AggregateToCollectionOperation let(final BsonDocument variables) {
+    public AggregateToCollectionOperation let(@Nullable final BsonDocument variables) {
         this.variables = variables;
         return this;
     }
@@ -168,7 +169,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         return hint;
     }
 
-    public AggregateToCollectionOperation hint(final BsonValue hint) {
+    public AggregateToCollectionOperation hint(@Nullable final BsonValue hint) {
         this.hint = hint;
         return this;
     }

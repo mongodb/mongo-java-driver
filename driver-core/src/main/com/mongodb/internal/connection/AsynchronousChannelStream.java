@@ -25,6 +25,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.Stream;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
@@ -87,7 +88,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         Iterator<ByteBuf> iter = buffers.iterator();
         pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed(final Void t) {
+            public void completed(@Nullable final Void t) {
                 if (iter.hasNext()) {
                     pipeOneBuffer(byteChannel, iter.next(), this);
                 } else {
@@ -190,7 +191,7 @@ public abstract class AsynchronousChannelStream implements Stream {
                                final AsyncCompletionHandler<Void> outerHandler) {
         byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed(final Void t) {
+            public void completed(@Nullable final Void t) {
                 if (byteBuffer.hasRemaining()) {
                     byteChannel.write(byteBuffer.asNIO(), this);
                 } else {
@@ -289,7 +290,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         private volatile Throwable error;
 
         @Override
-        public void completed(final T result) {
+        public void completed(@Nullable final T result) {
             this.result = result;
             latch.countDown();
         }

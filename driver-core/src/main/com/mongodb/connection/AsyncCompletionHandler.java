@@ -16,6 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * Completion handler for asynchronous I/O.
  *
@@ -28,7 +30,7 @@ public interface AsyncCompletionHandler<T> {
      *
      * @param t the result of the completed operation
      */
-    void completed(T t);
+    void completed(@Nullable T t);
 
     /**
      * Invoked when an operation fails.

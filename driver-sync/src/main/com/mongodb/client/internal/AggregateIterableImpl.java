@@ -161,7 +161,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public AggregateIterable<TResult> hintString(final String hint) {
+    public AggregateIterable<TResult> hintString(@Nullable final String hint) {
         this.hintString = hint;
         return this;
     }

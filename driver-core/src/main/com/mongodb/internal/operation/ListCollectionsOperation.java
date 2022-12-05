@@ -90,7 +90,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return nameOnly;
     }
 
-    public ListCollectionsOperation<T> filter(final BsonDocument filter) {
+    public ListCollectionsOperation<T> filter(@Nullable final BsonDocument filter) {
         this.filter = filter;
         return this;
     }

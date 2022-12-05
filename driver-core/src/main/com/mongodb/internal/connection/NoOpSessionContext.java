@@ -69,22 +69,24 @@ public class NoOpSessionContext implements SessionContext {
         return false;
     }
 
+    @Nullable
     @Override
     public BsonTimestamp getOperationTime() {
         return null;
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp operationTime) {
+    public void advanceOperationTime(@Nullable final BsonTimestamp operationTime) {
     }
 
+    @Nullable
     @Override
     public BsonDocument getClusterTime() {
         return null;
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument clusterTime) {
+    public void advanceClusterTime(@Nullable final BsonDocument clusterTime) {
     }
 
     @Override
@@ -93,7 +95,7 @@ public class NoOpSessionContext implements SessionContext {
     }
 
     @Override
-    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
     }
 
     @Override

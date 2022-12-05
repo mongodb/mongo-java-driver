@@ -28,6 +28,7 @@ import org.bson.BsonDocument;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 
@@ -42,10 +43,10 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final MongoCredentialWithCache credential;
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode, final StreamFactory streamFactory,
-                                    final MongoCredentialWithCache credential,
-                                    final String applicationName, final MongoDriverInformation mongoDriverInformation,
+                                    @Nullable final MongoCredentialWithCache credential,
+                                    @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
                                     final List<MongoCompressor> compressorList,
-                                    final CommandListener commandListener, @Nullable final ServerApi serverApi) {
+                                    @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.compressorList = notNull("compressorList", compressorList);
@@ -68,7 +69,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
             return new DefaultAuthenticator(credential, clusterConnectionMode, serverApi);
         }
 
-        switch (credential.getAuthenticationMechanism()) {
+        switch (assertNotNull(credential.getAuthenticationMechanism())) {
             case GSSAPI:
                 return new GSSAPIAuthenticator(credential, clusterConnectionMode, serverApi);
             case PLAIN:

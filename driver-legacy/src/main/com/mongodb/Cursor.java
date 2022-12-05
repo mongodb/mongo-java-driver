@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.io.Closeable;
 import java.util.Iterator;
 
@@ -51,8 +53,9 @@ public interface Cursor extends Iterator<DBObject>, Closeable {
      * Gets the address of the server that data is pulled from. Note that this information may not be available until hasNext() or
      * next() is called.
      *
-     * @return the address of the server that data is pulled from
+     * @return the address of the server that data is pulled from, or null if a cursor is no longer established
      */
+    @Nullable
     ServerAddress getServerAddress();
 
     /**

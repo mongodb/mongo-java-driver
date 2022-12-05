@@ -22,10 +22,10 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -35,6 +35,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypts;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -105,8 +106,12 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getAutoEncryptionSettings(),
                                                                      this.executor);
         this.closed = new AtomicBoolean();
-        LOGGER.info(format("MongoClient with metadata %s created with settings %s",
-                createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation).toJson(), settings));
+        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+        if (clientMetadataDocument == null) {
+            LOGGER.info(format("MongoClient created with settings %s", settings));
+        } else {
+            LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
+        }
     }
 
     Cluster getCluster() {

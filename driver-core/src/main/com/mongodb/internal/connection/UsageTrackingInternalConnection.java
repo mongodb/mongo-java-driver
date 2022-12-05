@@ -29,6 +29,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 /**
@@ -55,7 +56,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;
         if (getDescription().getServiceId() != null) {
-            serviceStateManager.addConnection(getDescription().getServiceId());
+            serviceStateManager.addConnection(assertNotNull(getDescription().getServiceId()));
         }
     }
 
@@ -81,7 +82,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
             wrapped.close();
         } finally {
             if (openedAt != Long.MAX_VALUE && getDescription().getServiceId() != null) {
-                serviceStateManager.removeConnection(getDescription().getServiceId());
+                serviceStateManager.removeConnection(assertNotNull(getDescription().getServiceId()));
             }
         }
     }
