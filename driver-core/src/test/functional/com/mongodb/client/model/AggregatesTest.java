@@ -185,4 +185,24 @@ public class AggregatesTest extends OperationTest {
         List<BsonDocument> bsonDocuments = Arrays.asList(BsonDocument.parse("{a: 1, b: 2}"));
         assertPipeline("{$documents: [{a: 1, b: 2}]}", Aggregates.documents(bsonDocuments));
     }
+
+    @Test
+    public void testDocumentsLookup() {
+        assumeTrue(serverVersionAtLeast(5, 1));
+
+        getCollectionHelper().insertDocuments("[{_id: 1, a: 8}, {_id: 2, a: 9}]");
+
+        Bson docstage = Aggregates.documents(asList(Document.parse("{a: 5}")));
+        Bson stage = Aggregates.lookup("ignored", Arrays.asList(docstage), "added");
+        assertPipeline(
+                "{'$lookup': {'from': 'ignored', 'pipeline': [{'$documents': [{'a': 5}]}], 'as': 'added'}}",
+                stage);
+
+        List<Bson> pipeline = Arrays.asList(stage);
+        getCollectionHelper().aggregate(pipeline);
+
+        assertEquals(
+                parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
+                getCollectionHelper().aggregate(pipeline));
+    }
 }

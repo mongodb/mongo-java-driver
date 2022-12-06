@@ -324,7 +324,10 @@ object Aggregates {
     JAggregates.lookup(from, localField, foreignField, as)
 
   /**
-   * Creates a `\$lookup` pipeline stage, joining the current collection with the one specified in from using the given pipeline
+   * Creates a `\$lookup` pipeline stage, joining the current collection with
+   * the one specified in from using the given pipeline. If the first stage in
+   * the pipeline is a `\$documents` stage, then the "from" collection is
+   * overridden (and therefore ignored).
    *
    * @param from     the name of the collection in the same database to perform the join with.
    * @param pipeline the pipeline to run on the joined collection.
@@ -338,7 +341,10 @@ object Aggregates {
     JAggregates.lookup(from, pipeline.asJava, as)
 
   /**
-   * Creates a `\$lookup` pipeline stage, joining the current collection with the one specified in from using the given pipeline
+   * Creates a `\$lookup` pipeline stage, joining the current collection with
+   * the one specified in from using the given pipeline. If the first stage in
+   * the pipeline is a `\$documents` stage, then the "from" collection is
+   * overridden (and therefore ignored).
    *
    * @param from     the name of the collection in the same database to perform the join with.
    * @param let      the variables to use in the pipeline field stages.

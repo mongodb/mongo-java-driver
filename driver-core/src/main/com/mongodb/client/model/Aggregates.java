@@ -299,7 +299,10 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * one specified in from using the given pipeline. If the first stage in the
+     * pipeline is a {@link Aggregates#documents(List) $documents} stage, then
+     * the {@code from} collection is overridden (and therefore ignored).
      *
      * @param from          the name of the collection in the same database to perform the join with.
      * @param pipeline      the pipeline to run on the joined collection.
@@ -315,7 +318,10 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * one specified in from using the given pipeline. If the first stage in the
+     * pipeline is a {@link Aggregates#documents(List) $documents} stage, then
+     * the {@code from} collection is overridden (and therefore ignored).
      *
      * @param <TExpression> the Variable value expression type
      * @param from          the name of the collection in the same database to perform the join with.
