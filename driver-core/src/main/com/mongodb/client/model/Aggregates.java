@@ -928,7 +928,7 @@ public final class Aggregates {
      *
      * @param fields the fields to exclude. May use dot notation.
      * @return the $unset pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $unset
+     * @mongodb.driver.manual reference/operator/aggregation/unset/ $unset
      * @mongodb.server.release 4.2
      * @since 4.8
      */
@@ -941,7 +941,7 @@ public final class Aggregates {
      *
      * @param fields the fields to exclude. May use dot notation.
      * @return the $unset pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $unset
+     * @mongodb.driver.manual reference/operator/aggregation/unset/ $unset
      * @mongodb.server.release 4.2
      * @since 4.8
      */
@@ -962,7 +962,7 @@ public final class Aggregates {
      *                      To specify a field within an embedded document, use dot notation.
      * @param options {@link GeoNearOptions}
      * @return the $geoNear pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
+     * @mongodb.driver.manual reference/operator/aggregation/geoNear/ $geoNear
      * @since 4.8
      */
     public static Bson geoNear(
@@ -1012,13 +1012,40 @@ public final class Aggregates {
      * @param distanceField The output field that contains the calculated distance.
      *                      To specify a field within an embedded document, use dot notation.
      * @return the $geoNear pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
+     * @mongodb.driver.manual reference/operator/aggregation/geoNear/ $geoNear
      * @since 4.8
      */
     public static Bson geoNear(
             final Point near,
             final String distanceField) {
         return geoNear(near, distanceField, geoNearOptions());
+    }
+
+    /**
+     * Creates a $documents pipeline stage.
+     *
+     * @param documents the documents.
+     * @return the $documents pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/documents/ $documents
+     * @mongodb.server.release 5.1
+     * @since 4.9
+     */
+    public static Bson documents(final List<? extends Bson> documents) {
+        notNull("documents", documents);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartArray("$documents");
+                for (Bson bson : documents) {
+                    BuildersHelper.encodeValue(writer, bson, codecRegistry);
+                }
+                writer.writeEndArray();
+                writer.writeEndDocument();
+                return writer.getDocument();
+            }
+        };
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,

@@ -21,6 +21,7 @@ import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -159,5 +160,29 @@ public class AggregatesTest extends OperationTest {
                 + "      }\n"
                 + "   }\n"
                 + "}]");
+    }
+
+    @Test
+    public void testDocuments() {
+        assumeTrue(serverVersionAtLeast(5, 1));
+        Bson stage = Aggregates.documents(asList(
+                Document.parse("{a: 1, b: {$add: [1, 1]} }"),
+                BsonDocument.parse("{a: 3, b: 4}")));
+        assertPipeline(
+                "{$documents: [{a: 1, b: {$add: [1, 1]}}, {a: 3, b: 4}]}",
+                stage);
+
+        List<Bson> pipeline = Arrays.asList(stage);
+        getCollectionHelper().aggregateDb(pipeline);
+
+        assertEquals(
+                parseToList("[{a: 1, b: 2}, {a: 3, b: 4}]"),
+                getCollectionHelper().aggregateDb(pipeline));
+
+        // accepts lists of Documents and BsonDocuments
+        List<BsonDocument> documents = Arrays.asList(BsonDocument.parse("{a: 1, b: 2}"));
+        assertPipeline("{$documents: [{a: 1, b: 2}]}", Aggregates.documents(documents));
+        List<BsonDocument> bsonDocuments = Arrays.asList(BsonDocument.parse("{a: 1, b: 2}"));
+        assertPipeline("{$documents: [{a: 1, b: 2}]}", Aggregates.documents(bsonDocuments));
     }
 }

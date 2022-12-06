@@ -746,4 +746,14 @@ object Aggregates {
    */
   def geoNear(near: Point, distanceField: String): Bson =
     JAggregates.geoNear(near, distanceField)
+
+  /**
+   * Creates a `\$documents` pipeline stage.
+   *
+   * @param documents the documents.
+   * @return the `\$documents` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/documents/ \$documents]]
+   * @since 4.9
+   */
+  def documents(documents: Bson*): Bson = JAggregates.documents(documents.asJava)
 }
