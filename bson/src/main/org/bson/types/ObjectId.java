@@ -415,9 +415,8 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     private static byte[] parseHexString(final String s) {
-        if (!isValid(s)) {
-            throw new IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [" + s + "]");
-        }
+        notNull("hexString", s);
+        isTrueArgument("hexString has 24 characters", s.length() == 24);
 
         byte[] b = new byte[OBJECT_ID_LENGTH];
         for (int i = 0; i < b.length; i++) {
