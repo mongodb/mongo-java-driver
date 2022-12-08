@@ -202,7 +202,7 @@ public class AggregatesTest extends OperationTest {
                 getCollectionHelper().aggregate(Arrays.asList(lookupStage)));
 
         // null variant
-        Bson lookupStageNull = Aggregates.lookup(null, Arrays.asList(documentsStage), "added");
+        Bson lookupStageNull = Aggregates.lookup(Arrays.asList(documentsStage), "added");
         assertPipeline(
                 "{'$lookup': {'pipeline': [{'$documents': [{'a': 5}]}], 'as': 'added'}}",
                 lookupStageNull);

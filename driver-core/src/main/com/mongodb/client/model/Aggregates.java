@@ -313,7 +313,6 @@ public final class Aggregates {
      * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
      * @mongodb.server.release 3.6
      * @since 3.7
-     *
      */
     public static Bson lookup(@Nullable final String from, final List<? extends Bson> pipeline, final String as) {
         return lookup(from, null, pipeline, as);
@@ -334,12 +333,48 @@ public final class Aggregates {
      * @param as            the name of the new array field to add to the input documents.
      * @return the $lookup pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
-     * @mongodb.server.release 3.6
-     * @since 3.7
+     * @mongodb.server.release 5.1
+     * @since 4.9
      */
     public static <TExpression> Bson lookup(@Nullable final String from, @Nullable final List<Variable<TExpression>> let,
                                             final List<? extends Bson> pipeline, final String as) {
        return new LookupStage<>(from, let, pipeline, as);
+    }
+
+    /**
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * {@link Aggregates#documents(List) $documents} stage, which must be the
+     * first stage in the pipeline. This method will fail if the first pipeline
+     * stage is not a {@link Aggregates#documents(List) $documents} stage.
+     *
+     * @param pipeline      the pipeline to run on the joined collection.
+     * @param as            the name of the new array field to add to the input documents.
+     * @return the $lookup pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
+     * @mongodb.server.release 5.1
+     * @since 4.9
+     */
+    public static Bson lookup(final List<? extends Bson> pipeline, final String as) {
+        return lookup(null, null, pipeline, as);
+    }
+
+    /**
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * {@link Aggregates#documents(List) $documents} stage, which must be the
+     * first stage in the pipeline. This method will fail if the first pipeline
+     * stage is not a {@link Aggregates#documents(List) $documents} stage.
+     *
+     * @param <TExpression> the Variable value expression type
+     * @param pipeline      the pipeline to run on the joined collection.
+     * @param as            the name of the new array field to add to the input documents.
+     * @return the $lookup pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
+     * @mongodb.server.release 3.6
+     * @since 3.7
+     */
+    public static <TExpression> Bson lookup(@Nullable final List<Variable<TExpression>> let,
+                                            final List<? extends Bson> pipeline, final String as) {
+        return new LookupStage<>(null, let, pipeline, as);
     }
 
     /**
