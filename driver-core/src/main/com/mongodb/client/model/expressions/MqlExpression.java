@@ -284,8 +284,111 @@ final class MqlExpression<T extends Expression>
     /** @see Expression */
 
     @Override
-    public <Q extends Expression, R extends Expression> R apply(final Function<Q, R> f) {
+    public <R extends Expression> R passTo(final Function<? super Expression, R> f) {
         return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchOn(final Function<Branches, ? extends BranchesTerminal<? super Expression, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passBooleanTo(final Function<? super BooleanExpression, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchBooleanOn(final Function<Branches, ? extends BranchesTerminal<? super BooleanExpression, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passIntegerTo(final Function<? super IntegerExpression, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchIntegerOn(final Function<Branches, ? extends BranchesTerminal<? super IntegerExpression, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passNumberTo(final Function<? super NumberExpression, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchNumberOn(final Function<Branches, ? extends BranchesTerminal<? super NumberExpression, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passStringTo(final Function<? super StringExpression, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchStringOn(final Function<Branches, ? extends BranchesTerminal<? super StringExpression, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passDateTo(final Function<? super DateExpression, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchDateOn(final Function<Branches, ? extends BranchesTerminal<? super DateExpression, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passArrayTo(final Function<? super ArrayExpression<T>, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchArrayOn(final Function<Branches, ? extends BranchesTerminal<? super ArrayExpression<T>, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passMapTo(final Function<? super MapExpression<T>, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchMapOn(final Function<Branches, ? extends BranchesTerminal<? super MapExpression<T>, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    @Override
+    public <R extends Expression> R passDocumentTo(final Function<? super DocumentExpression, R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchDocumentOn(final Function<Branches, ? extends BranchesTerminal<? super DocumentExpression, R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    }
+
+    private <T0 extends Expression, R0 extends Expression> R0 switchMapInternal(
+            final T0 value, final BranchesTerminal<T0, R0> construct) {
+        return newMqlExpression((cr) -> {
+            BsonArray branches = new BsonArray();
+            for (Function<T0, SwitchCase<R0>> fn : construct.getBranches()) {
+                SwitchCase<R0> result = fn.apply(value);
+                branches.add(new BsonDocument()
+                        .append("case", extractBsonValue(cr, result.getCaseValue()))
+                        .append("then", extractBsonValue(cr, result.getThenValue())));
+            }
+            BsonDocument switchBson = new BsonDocument().append("branches", branches);
+            if (construct.getDefaults() != null) {
+                switchBson = switchBson.append("default", extractBsonValue(cr, construct.getDefaults().apply(value)));
+            }
+            return astDoc("$switch", switchBson);
+        });
     }
 
     @Override
@@ -415,32 +518,6 @@ final class MqlExpression<T extends Expression>
                 .append("input", this.fn.apply(cr).bsonValue)
                 .append("onError", extractBsonValue(cr, other))
                 .append("to", new BsonString(to)));
-    }
-
-    @Override
-    public <T0 extends Expression, R0 extends Expression> R0 switchMap(
-            final Function<Branches, BranchesTerminal<T0, R0>> switchMap) {
-        T0 value = this.assertImplementsAllExpressions();
-        BranchesTerminal<T0, R0> construct = switchMap.apply(new Branches());
-        return switchMapInternal(value, construct);
-    }
-
-    private <T0 extends Expression, R0 extends Expression> R0 switchMapInternal(
-            final T0 value, final BranchesTerminal<T0, R0> construct) {
-        return newMqlExpression((cr) -> {
-            BsonArray branches = new BsonArray();
-            for (Function<T0, SwitchCase<R0>> fn : construct.getBranches()) {
-                SwitchCase<R0> result = fn.apply(value);
-                branches.add(new BsonDocument()
-                        .append("case", extractBsonValue(cr, result.getCaseValue()))
-                        .append("then", extractBsonValue(cr, result.getThenValue())));
-            }
-            BsonDocument switchBson = new BsonDocument().append("branches", branches);
-            if (construct.getDefaults() != null) {
-                switchBson = switchBson.append("default", extractBsonValue(cr, construct.getDefaults().apply(value)));
-            }
-            return astDoc("$switch", switchBson);
-        });
     }
 
     @Override

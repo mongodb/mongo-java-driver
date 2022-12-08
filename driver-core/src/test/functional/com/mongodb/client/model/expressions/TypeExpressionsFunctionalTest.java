@@ -46,7 +46,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 true,
                 of(true).isBooleanOr(of(false)),
-                "{'$cond': [{'$eq': [{'$type': true}, 'bool']}, true, false]}");
+                "{'$cond': [{'$eq': [{'$type': [true]}, 'bool']}, true, false]}");
         // non-boolean:
         assertExpression(false, ofIntegerArray(1).isBooleanOr(of(false)));
         assertExpression(false, ofNull().isBooleanOr(of(false)));
@@ -70,7 +70,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 "abc",
                 of("abc").isStringOr(of("or")),
-                "{'$cond': [{'$eq': [{'$type': 'abc'}, 'string']}, 'abc', 'or']}");
+                "{'$cond': [{'$eq': [{'$type': ['abc']}, 'string']}, 'abc', 'or']}");
         // non-string:
         assertExpression("or", ofIntegerArray(1).isStringOr(of("or")));
         assertExpression("or", ofNull().isStringOr(of("or")));
@@ -82,7 +82,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 date,
                 of(date).isDateOr(of(date.plusMillis(10))),
-                "{'$cond': [{'$in': [{'$type': {'$date': '2007-12-03T10:15:30.005Z'}}, ['date']]}, "
+                "{'$cond': [{'$in': [{'$type': [{'$date': '2007-12-03T10:15:30.005Z'}]}, ['date']]}, "
                         + "{'$date': '2007-12-03T10:15:30.005Z'}, {'$date': '2007-12-03T10:15:30.015Z'}]}");
         // non-date:
         assertExpression(date, ofIntegerArray(1).isDateOr(of(date)));
@@ -107,7 +107,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 doc,
                 of(doc).isDocumentOr(of(BsonDocument.parse("{b: 2}"))),
-                "{'$cond': [{'$eq': [{'$type': {'$literal': {'a': 1}}}, 'object']}, "
+                "{'$cond': [{'$eq': [{'$type': [{'$literal': {'a': 1}}]}, 'object']}, "
                         + "{'$literal': {'a': 1}}, {'$literal': {'b': 2}}]}");
         // non-document:
         assertExpression(doc, ofIntegerArray(1).isDocumentOr(of(doc)));

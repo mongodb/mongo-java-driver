@@ -30,48 +30,69 @@ import static com.mongodb.client.model.expressions.Expressions.ofNull;
 class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
-    public void applyTest() {
-        Function<IntegerExpression, IntegerExpression> decrement = (e) -> e.subtract(of(1));
+    public void passToTest() {
+        Function<IntegerExpression, IntegerExpression> intDecrement = (e) -> e.subtract(of(1));
+        Function<NumberExpression, NumberExpression> numDecrement = (e) -> e.subtract(of(1));
+
         // "nested functional" function application:
         assertExpression(
                 2 - 1,
-                decrement.apply(of(2)),
+                intDecrement.apply(of(2)),
                 "{'$subtract': [2, 1]}");
-        // "chained" function application:
+        // "chained" function application produces the same MQL:
         assertExpression(
-                2 - 1, // = 0
-                of(2).apply(decrement),
+                2 - 1,
+                of(2).passIntegerTo(intDecrement),
                 "{'$subtract': [2, 1]}");
-        // the parameters are reversed, compared to Java's function.apply
+
+        // variations
+        assertExpression(
+                2 - 1,
+                of(2).passIntegerTo(numDecrement));
+        assertExpression(
+                2 - 1,
+                of(2).passNumberTo(numDecrement));
+
+        // all types
+        Function<Expression, StringExpression> test = on -> of("A");
+        assertExpression("A", of(true).passTo(test));
+        assertExpression("A", of(false).passBooleanTo(test));
+        assertExpression("A", of(0).passIntegerTo(test));
+        assertExpression("A", of(0).passNumberTo(test));
+        assertExpression("A", of("").passStringTo(test));
+        assertExpression("A", of(Instant.ofEpochMilli(123)).passDateTo(test));
+        assertExpression("A", ofIntegerArray(1, 2).passArrayTo(test));
+        assertExpression("A", of(Document.parse("{_id: 'a'}")).passDocumentTo(test));
+        assertExpression("A", ofMap(Document.parse("{_id: 'a'}")).passMapTo(test));
     }
 
     @Test
     public void switchTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/switch/
-        assertExpression("a", of(0).switchMap(on -> on.is(v -> v.eq(of(0)), v -> of("a"))));
-        assertExpression("a", of(0).switchMap(on -> on.isNumber(v -> of("a"))));
-        assertExpression("a", of(0).switchMap(on -> on.lte(of(9), v -> of("a"))));
+        assertExpression("a", of(0).switchOn(on -> on.is(v -> v.eq(of(0)), v -> of("a"))));
+        assertExpression("a", of(0).switchOn(on -> on.isNumber(v -> of("a"))));
+        assertExpression("a", of(0).switchOn(on -> on.lte(of(9), v -> of("a"))));
 
         // test branches
         Function<IntegerExpression, BooleanExpression> isOver10 = v -> v.subtract(10).gt(of(0));
         Function<IntegerExpression, StringExpression> s = e -> e
-                .switchMap((Branches on) -> on
+                .switchIntegerOn((Branches on) -> on
                         .eq(of(0), v -> of("A"))
                         .lt(of(10), v -> of("B"))
                         .is(isOver10, v -> of("C"))
                         .defaults(v -> of("D")))
                 .toLower();
 
-        assertExpression("a", of(0).apply(s));
-        assertExpression("b", of(9).apply(s));
-        assertExpression("b", of(-9).apply(s));
-        assertExpression("c", of(11).apply(s));
-        assertExpression("d", of(10).apply(s));
+        assertExpression("a", of(0).passIntegerTo(s));
+        assertExpression("b", of(9).passIntegerTo(s));
+        assertExpression("b", of(-9).passIntegerTo(s));
+        assertExpression("c", of(11).passIntegerTo(s));
+        assertExpression("d", of(10).passIntegerTo(s));
     }
 
     @Test
     public void switchTypesTest() {
-        Function<IntegerExpression, StringExpression> label = expr -> expr.switchMap(on -> on
+        Function<Expression, StringExpression> label = expr -> expr.switchOn(on -> on
                 .isBoolean(v -> v.asString().concat(of(" - bool")))
                 .isNumber(v -> v.asString().concat(of(" - number")))
                 .isString(v -> v.asString().concat(of(" - string")))
@@ -81,124 +102,142 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                 .isNull(v -> of("null - null"))
                 .defaults(v -> of("default"))
                 ).toLower();
-        assertExpression("true - bool", of(true).apply(label));
-        assertExpression("false - bool", of(false).apply(label));
-        assertExpression("1 - number", of(1).apply(label));
-        assertExpression("1 - number", of(1.0).apply(label));
-        assertExpression("abc - string", of("abc").apply(label));
-        assertExpression("1970-01-01t00:00:00.123z - date", of(Instant.ofEpochMilli(123)).apply(label));
-        assertExpression("3 - array", ofIntegerArray(1, 2).apply(label));
-        assertExpression("a - document", of(Document.parse("{_id: 'a'}")).apply(label));
-        assertExpression("null - null", ofNull().apply(label));
+        assertExpression("true - bool", of(true).passTo(label));
+        assertExpression("false - bool", of(false).passBooleanTo(label));
+        assertExpression("1 - number", of(1).passIntegerTo(label));
+        assertExpression("1 - number", of(1.0).passNumberTo(label));
+        assertExpression("abc - string", of("abc").passStringTo(label));
+        assertExpression("1970-01-01t00:00:00.123z - date", of(Instant.ofEpochMilli(123)).passDateTo(label));
+        assertExpression("3 - array", ofIntegerArray(1, 2).passArrayTo(label));
+        assertExpression("a - document", of(Document.parse("{_id: 'a'}")).passDocumentTo(label));
+        // maps are considered documents
+        assertExpression("a - document", ofMap(Document.parse("{_id: 'a'}")).passMapTo(label));
+        assertExpression("null - null", ofNull().passTo(label));
+        // maps via isMap:
         assertExpression(
                 "ab - map",
-                ofMap(Document.parse("{a: 1, b: 2}")).switchMap(on -> on
+                ofMap(Document.parse("{a: 1, b: 2}")).switchOn(on -> on
                         .isMap((MapExpression<StringExpression> v) -> v.entrySet()
                                 .join(e -> e.getKey()).concat(of(" - map")))));
     }
 
     @Test
+    public void switchTestVariants() {
+        Function<Branches, BranchesTerminal<Expression, StringExpression>> test
+                = on -> on.is(v -> of(true), v -> of("A"));
+        assertExpression("A", of(true).switchOn(test));
+        assertExpression("A", of(false).switchBooleanOn(test));
+        assertExpression("A", of(0).switchIntegerOn(test));
+        assertExpression("A", of(0).switchNumberOn(test));
+        assertExpression("A", of("").switchStringOn(test));
+        assertExpression("A", of(Instant.ofEpochMilli(123)).switchDateOn(test));
+        assertExpression("A", ofIntegerArray(1, 2).switchArrayOn(test));
+        assertExpression("A", of(Document.parse("{_id: 'a'}")).switchDocumentOn(test));
+        assertExpression("A", ofMap(Document.parse("{_id: 'a'}")).switchMapOn(test));
+    }
+
+    @Test
     public void switchTestInitial() {
         assertExpression("A",
-                of(0).switchMap(on -> on.is(v -> v.gt(of(-1)), v -> of("A"))),
+                of(0).switchOn(on -> on.is(v -> v.gt(of(-1)), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$gt': [0, -1]}, 'then': 'A'}]}}");
         // eq lt lte
         assertExpression("A",
-                of(0).switchMap(on -> on.eq(of(0), v -> of("A"))),
+                of(0).switchOn(on -> on.eq(of(0), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [0, 0]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(0).switchMap(on -> on.lt(of(1), v -> of("A"))),
+                of(0).switchOn(on -> on.lt(of(1), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$lt': [0, 1]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(0).switchMap(on -> on.lte(of(0), v -> of("A"))),
+                of(0).switchOn(on -> on.lte(of(0), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$lte': [0, 0]}, 'then': 'A'}]}}");
         // is type
         assertExpression("A",
-                of(true).switchMap(on -> on.isBoolean(v -> of("A"))),
+                of(true).switchOn(on -> on.isBoolean(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': [true]}, 'bool']}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(1).switchMap(on -> on.isNumber(v -> of("A"))),
+                of(1).switchOn(on -> on.isNumber(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$isNumber': [1]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of("x").switchMap(on -> on.isString(v -> of("A"))),
+                of("x").switchOn(on -> on.isString(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': ['x']}, 'string']}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(Instant.ofEpochMilli(123)).switchMap(on -> on.isDate(v -> of("A"))),
+                of(Instant.ofEpochMilli(123)).switchOn(on -> on.isDate(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$in': [{'$type': "
-                        + "[{'$date': '1970-01-01T00:00:00.123Z'}]}, ['date', 'timestamp']]}, 'then': 'A'}]}}");
+                        + "[{'$date': '1970-01-01T00:00:00.123Z'}]}, ['date']]}, 'then': 'A'}]}}");
         assertExpression("A",
-                ofIntegerArray(0).switchMap(on -> on.isArray(v -> of("A"))),
+                ofIntegerArray(0).switchOn(on -> on.isArray(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$isArray': [[0]]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(Document.parse("{}")).switchMap(on -> on.isDocument(v -> of("A"))),
+                of(Document.parse("{}")).switchOn(on -> on.isDocument(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': "
                         + "[{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
-                ofMap(Document.parse("{}")).switchMap(on -> on.isMap(v -> of("A"))),
+                ofMap(Document.parse("{}")).switchOn(on -> on.isMap(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': "
                         + "[{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
-                ofNull().switchMap(on -> on.isNull(v -> of("A"))),
+                ofNull().switchOn(on -> on.isNull(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [null, null]}, 'then': 'A'}]}}");
     }
 
     @Test
     public void switchTestPartial() {
         assertExpression("A",
-                of(0).switchMap(on -> on.isNull(v -> of("X")).is(v -> v.gt(of(-1)), v -> of("A"))),
+                of(0).switchOn(on -> on.isNull(v -> of("X")).is(v -> v.gt(of(-1)), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [0, null]}, 'then': 'X'}, "
                         + "{'case': {'$gt': [0, -1]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(0).switchMap(on -> on.isNull(v -> of("X")).defaults(v -> of("A"))),
+                of(0).switchOn(on -> on.isNull(v -> of("X")).defaults(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [0, null]}, 'then': 'X'}], "
                         + "'default': 'A'}}");
         // eq lt lte
         assertExpression("A",
-                of(0).switchMap(on -> on.isNull(v -> of("X")).eq(of(0), v -> of("A"))),
+                of(0).switchOn(on -> on.isNull(v -> of("X")).eq(of(0), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [0, null]}, 'then': 'X'}, "
                         + "{'case': {'$eq': [0, 0]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(0).switchMap(on -> on.isNull(v -> of("X")).lt(of(1), v -> of("A"))),
+                of(0).switchOn(on -> on.isNull(v -> of("X")).lt(of(1), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [0, null]}, 'then': 'X'}, "
                         + "{'case': {'$lt': [0, 1]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(0).switchMap(on -> on.isNull(v -> of("X")).lte(of(0), v -> of("A"))),
+                of(0).switchOn(on -> on.isNull(v -> of("X")).lte(of(0), v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [0, null]}, 'then': 'X'}, "
                         + "{'case': {'$lte': [0, 0]}, 'then': 'A'}]}}");
         // is type
         assertExpression("A",
-                of(true).switchMap(on -> on.isNull(v -> of("X")).isBoolean(v -> of("A"))),
+                of(true).switchOn(on -> on.isNull(v -> of("X")).isBoolean(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [true, null]}, 'then': 'X'}, "
                         + "{'case': {'$eq': [{'$type': [true]}, 'bool']}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(1).switchMap(on -> on.isNull(v -> of("X")).isNumber(v -> of("A"))),
+                of(1).switchOn(on -> on.isNull(v -> of("X")).isNumber(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [1, null]}, 'then': 'X'}, "
                         + "{'case': {'$isNumber': [1]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of("x").switchMap(on -> on.isNull(v -> of("X")).isString(v -> of("A"))),
+                of("x").switchOn(on -> on.isNull(v -> of("X")).isString(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': ['x', null]}, 'then': 'X'}, "
                         + "{'case': {'$eq': [{'$type': ['x']}, 'string']}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(Instant.ofEpochMilli(123)).switchMap(on -> on.isNull(v -> of("X")).isDate(v -> of("A"))),
+                of(Instant.ofEpochMilli(123)).switchOn(on -> on.isNull(v -> of("X")).isDate(v -> of("A"))),
                 "{'$switch': {'branches': ["
                         + "{'case': {'$eq': [{'$date': '1970-01-01T00:00:00.123Z'}, null]}, 'then': 'X'}, "
                         + "{'case': {'$in': [{'$type': [{'$date': '1970-01-01T00:00:00.123Z'}]}, "
-                        + "['date', 'timestamp']]}, 'then': 'A'}]}}");
+                        + "['date']]}, 'then': 'A'}]}}");
         assertExpression("A",
-                ofIntegerArray(0).switchMap(on -> on.isNull(v -> of("X")).isArray(v -> of("A"))),
+                ofIntegerArray(0).switchOn(on -> on.isNull(v -> of("X")).isArray(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [[0], null]}, 'then': 'X'}, "
                         + "{'case': {'$isArray': [[0]]}, 'then': 'A'}]}}");
         assertExpression("A",
-                of(Document.parse("{}")).switchMap(on -> on.isNull(v -> of("X")).isDocument(v -> of("A"))),
+                of(Document.parse("{}")).switchOn(on -> on.isNull(v -> of("X")).isDocument(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$literal': {}}, null]}, 'then': 'X'}, "
                         + "{'case': {'$eq': [{'$type': [{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
-                ofMap(Document.parse("{}")).switchMap(on -> on.isNull(v -> of("X")).isMap(v -> of("A"))),
+                ofMap(Document.parse("{}")).switchOn(on -> on.isNull(v -> of("X")).isMap(v -> of("A"))),
                 " {'$switch': {'branches': ["
                         + "{'case': {'$eq': [{'$literal': {}}, null]}, 'then': 'X'}, "
                         + "{'case': {'$eq': [{'$type': [{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
-                ofNull().switchMap(on -> on.isNumber(v -> of("X")).isNull(v -> of("A"))),
+                ofNull().switchOn(on -> on.isNumber(v -> of("X")).isNull(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$isNumber': [null]}, 'then': 'X'}, "
                         + "{'case': {'$eq': [null, null]}, 'then': 'A'}]}}");
     }

@@ -117,16 +117,8 @@ public interface Expression {
 
     StringExpression asString();
 
-    /**
-     * Applies the given function to this argument. Note that "apply" usually
-     * applies functions to arguments; here, the parameters are reversed.
-     *
-     * @param f
-     * @return
-     * @param <T>
-     * @param <R>
-     */
-    <T extends Expression, R extends Expression> R apply(Function<T, R> f);
+    <R extends Expression> R passTo(Function<? super Expression, R> f);
 
-    <T0 extends Expression, R0 extends Expression> R0 switchMap(Function<Branches, BranchesTerminal<T0, R0>> switchMap);
+    <R extends Expression> R switchOn(Function<Branches, ? extends BranchesTerminal<? super Expression, R>> on);
+
 }

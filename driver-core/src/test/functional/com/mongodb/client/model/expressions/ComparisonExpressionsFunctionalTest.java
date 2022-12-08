@@ -44,6 +44,7 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
             ofNull(),
             of(0),
             of(1),
+            of(2.0),
             of(""),
             of("str"),
             of(BsonDocument.parse("{}")),

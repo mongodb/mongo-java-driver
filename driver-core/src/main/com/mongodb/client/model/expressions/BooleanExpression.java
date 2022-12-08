@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
+import java.util.function.Function;
+
 /**
  * Expresses a boolean value.
  */
@@ -58,4 +60,8 @@ public interface BooleanExpression extends Expression {
      * @param <T> The type of the resulting expression.
      */
     <T extends Expression> T cond(T left, T right);
+
+    <R extends Expression> R passBooleanTo(Function<? super BooleanExpression, R> f);
+
+    <R extends Expression> R switchBooleanOn(Function<Branches, ? extends BranchesTerminal<? super BooleanExpression, R>> on);
 }
