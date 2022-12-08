@@ -111,5 +111,7 @@ public interface Expression {
     <T extends Expression> ArrayExpression<T> isArrayOr(ArrayExpression<? extends T> other);
     <T extends DocumentExpression> T isDocumentOr(T other);
 
+    <T extends Expression> MapExpression<T> isMapOr(MapExpression<T> other);
+
     StringExpression asString();
 }

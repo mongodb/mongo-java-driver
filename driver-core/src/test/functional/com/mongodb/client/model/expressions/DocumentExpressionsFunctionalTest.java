@@ -27,6 +27,7 @@ import java.util.Arrays;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
+import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("ConstantConditions")
@@ -120,6 +121,8 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         // no convenience for arrays
         assertExpression(Document.parse("{b: 2}"), ofDoc("{a: {b: 2}}")
                 .getDocument("a", Document.parse("{z: 99}")));
+        assertExpression(Document.parse("{b: 2}"), ofDoc("{a: {b: 2}}")
+                .getMap("a", Document.parse("{z: 99}")));
 
         // normal
         assertExpression(true, ofDoc("{a: true}").getBoolean("a", of(false)));
@@ -131,6 +134,8 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(Arrays.asList(3, 2), ofDoc("{a: [3, 2]}").getArray("a", ofIntegerArray(99, 88)));
         assertExpression(Document.parse("{b: 2}"), ofDoc("{a: {b: 2}}")
                 .getDocument("a", of(Document.parse("{z: 99}"))));
+        assertExpression(Document.parse("{b: 2}"), ofDoc("{a: {b: 2}}")
+                .getMap("a", ofMap(Document.parse("{z: 99}"))));
 
         // right branch (missing field)
         assertExpression(false, ofDoc("{}").getBoolean("a", false));
@@ -145,6 +150,8 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(Arrays.asList(99, 88), ofDoc("{}").getArray("a", ofIntegerArray(99, 88)));
         assertExpression(Document.parse("{z: 99}"), ofDoc("{}")
                 .getDocument("a", Document.parse("{z: 99}")));
+        assertExpression(Document.parse("{z: 99}"), ofDoc("{}")
+                .getMap("a", Document.parse("{z: 99}")));
 
         // int vs num
         assertExpression(99, ofDoc("{a: 1.1}").getInteger("a", of(99)));

@@ -30,6 +30,7 @@ import java.util.Arrays;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
+import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -103,13 +104,44 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     @Test
     public void isDocumentOrTest() {
         BsonDocument doc = BsonDocument.parse("{a: 1}");
-        assertExpression(doc,
+        assertExpression(
+                doc,
                 of(doc).isDocumentOr(of(BsonDocument.parse("{b: 2}"))),
                 "{'$cond': [{'$eq': [{'$type': {'$literal': {'a': 1}}}, 'object']}, "
                         + "{'$literal': {'a': 1}}, {'$literal': {'b': 2}}]}");
         // non-document:
         assertExpression(doc, ofIntegerArray(1).isDocumentOr(of(doc)));
         assertExpression(doc, ofNull().isDocumentOr(of(doc)));
+
+        // maps are documents
+        assertExpression(doc, ofMap(doc).isDocumentOr(of(BsonDocument.parse("{x: 9}"))));
+
+        // conversion between maps and documents
+        MapExpression<IntegerExpression> first = ofMap(doc);
+        DocumentExpression second = first.isDocumentOr(of(BsonDocument.parse("{}")));
+        MapExpression<IntegerExpression> third = second.isMapOr(ofMap(BsonDocument.parse("{}")));
+        assertExpression(
+                true,
+                first.eq(second));
+        assertExpression(
+                true,
+                second.eq(third));
+    }
+
+    @Test
+    public void isMapOrTest() {
+        BsonDocument map = BsonDocument.parse("{a: 1}");
+        assertExpression(
+                map,
+                ofMap(map).isMapOr(ofMap(BsonDocument.parse("{b: 2}"))),
+                "{'$cond': [{'$eq': [{'$type': {'$literal': {'a': 1}}}, 'object']}, "
+                        + "{'$literal': {'a': 1}}, {'$literal': {'b': 2}}]}");
+        // non-map:
+        assertExpression(map, ofIntegerArray(1).isMapOr(ofMap(map)));
+        assertExpression(map, ofNull().isMapOr(ofMap(map)));
+
+        // documents are maps
+        assertExpression(map, of(map).isMapOr(ofMap(BsonDocument.parse("{x: 9}"))));
     }
 
     // conversions

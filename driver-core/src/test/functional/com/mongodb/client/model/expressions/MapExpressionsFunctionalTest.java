@@ -117,6 +117,16 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                         .entrySet()
                         .map(v -> v.setValue(v.getValue().add(1)))
                         .asMap(v -> v));
+
+        // via getMap
+        DocumentExpression doc = of(Document.parse("{ instock: { warehouse1: 2500, warehouse2: 500 } }"));
+        assertExpression(
+                Arrays.asList(
+                        Document.parse("{'k': 'warehouse1', 'v': 2500}"),
+                        Document.parse("{'k': 'warehouse2', 'v': 500}")),
+                doc.getMap("instock").entrySet(),
+                "{'$objectToArray': {'$getField': {'input': {'$literal': "
+                        + "{'instock': {'warehouse1': 2500, 'warehouse2': 500}}}, 'field': 'instock'}}}");
     }
 
     @Test

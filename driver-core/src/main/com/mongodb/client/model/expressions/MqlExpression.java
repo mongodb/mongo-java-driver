@@ -238,6 +238,16 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
+    public <R extends Expression> MapExpression<R> getMap(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public <R extends Expression> MapExpression<R> getMap(final String field, final MapExpression<R> other) {
+        return getMap(field).isMapOr(other);
+    }
+
+    @Override
     public DocumentExpression getDocument(final String fieldName, final DocumentExpression other) {
         return getDocument(fieldName).isDocumentOr(other);
     }
@@ -379,6 +389,15 @@ final class MqlExpression<T extends Expression>
     @Override
     public <R extends DocumentExpression> R isDocumentOr(final R other) {
         return this.isDocument().cond(this.assertImplementsAllExpressions(), other);
+    }
+
+    public BooleanExpression isMap() {
+        return new MqlExpression<>(ast("$type")).eq(of("object"));
+    }
+
+    @Override
+    public <R extends Expression> MapExpression<R> isMapOr(final MapExpression<R> other) {
+        return this.isMap().cond(this.assertImplementsAllExpressions(), other);
     }
 
     @Override
