@@ -191,18 +191,23 @@ public class AggregatesTest extends OperationTest {
         assumeTrue(serverVersionAtLeast(5, 1));
 
         getCollectionHelper().insertDocuments("[{_id: 1, a: 8}, {_id: 2, a: 9}]");
+        Bson documentsStage = Aggregates.documents(asList(Document.parse("{a: 5}")));
 
-        Bson docstage = Aggregates.documents(asList(Document.parse("{a: 5}")));
-        Bson stage = Aggregates.lookup("ignored", Arrays.asList(docstage), "added");
+        Bson lookupStage = Aggregates.lookup("ignored", Arrays.asList(documentsStage), "added");
         assertPipeline(
                 "{'$lookup': {'from': 'ignored', 'pipeline': [{'$documents': [{'a': 5}]}], 'as': 'added'}}",
-                stage);
-
-        List<Bson> pipeline = Arrays.asList(stage);
-        getCollectionHelper().aggregate(pipeline);
-
+                lookupStage);
         assertEquals(
                 parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
-                getCollectionHelper().aggregate(pipeline));
+                getCollectionHelper().aggregate(Arrays.asList(lookupStage)));
+
+        // null variant
+        Bson lookupStageNull = Aggregates.lookup(null, Arrays.asList(documentsStage), "added");
+        assertPipeline(
+                "{'$lookup': {'pipeline': [{'$documents': [{'a': 5}]}], 'as': 'added'}}",
+                lookupStageNull);
+        assertEquals(
+                parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
+                getCollectionHelper().aggregate(Arrays.asList(lookupStageNull)));
     }
 }
