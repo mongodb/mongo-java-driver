@@ -45,10 +45,6 @@ public interface StringExpression extends Expression {
         return this.substrBytes(of(start), of(length));
     }
 
-    /**
-     * parses to an underlying int64
-     * @return
-     */
     IntegerExpression parseInteger();
 
     NumberExpression parseNumber();

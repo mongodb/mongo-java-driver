@@ -231,14 +231,23 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(astWrapped("$toString"));
     }
 
+    private Function<CodecRegistry, AstPlaceholder> convertInternal(String to, Expression orElse) {
+        return (cr) -> astDoc("$convert", new BsonDocument()
+                .append("input", this.fn.apply(cr).bsonValue)
+                .append("onError", extractBsonValue(cr, orElse))
+                .append("to", new BsonString(to)));
+    }
+
     @Override
     public IntegerExpression parseInteger() {
-        return new MqlExpression<>(ast("$toLong"));
+        Expression asLong = new MqlExpression<>(ast("$toLong"));
+        return new MqlExpression<>(convertInternal("int", asLong));
     }
 
     @Override
     public NumberExpression parseNumber() {
-        return new MqlExpression<>(ast("$toDecimal"));
+        Expression asDecimal = new MqlExpression<>(ast("$toDecimal"));
+        return new MqlExpression<>(convertInternal("double", asDecimal));
     }
 
     /** @see ArrayExpression */

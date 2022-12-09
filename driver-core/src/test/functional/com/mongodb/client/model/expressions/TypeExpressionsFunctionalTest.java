@@ -22,6 +22,7 @@ import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -199,20 +200,52 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     @Test
     public void parseIntegerTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/
-        assertExpression(1234L, of("1234").parseInteger(), "{'$toLong': '1234'}");
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toLong/
+        assertExpression(
+                1234,
+                of("1234").parseInteger(),
+                "{'$convert': {'input': '1234', 'onError': {'$toLong': '1234'}, 'to': 'int'}}");
+
+        int intVal = 2_000_000_000;
+        long longVal = 4_000_000_000L;
+        assertExpression(
+                intVal,
+                of(intVal + "").parseInteger());
+        assertExpression(
+                longVal,
+                of(longVal + "").parseInteger());
     }
 
     @Test
     public void parseNumberTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDouble/
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDecimal/
         assertExpression(
-                Decimal128.parse("1234.200"),
+                1234.2,
                 of("1234.200").parseNumber(),
-                "{'$toDecimal': '1234.200'}");
-
+                "{'$convert': {'input': '1234.200', 'onError': {'$toDecimal': '1234.200'}, 'to': 'double'}}");
+        assertExpression(
+                1234.0,
+                of("1234").parseNumber());
         assertExpression(
                 true,
-                of("1234").parseInteger().eq(of("1234").parseNumber()));
+                of("1234").parseInteger().eq(
+                        of("1234").parseNumber()));
+
+        double doubleVal = 2.5;
+        Decimal128 decimalVal = Decimal128.parse("2.5999999999999999");
+        Decimal128 decimalVal2 = new Decimal128(BigDecimal.valueOf(Double.MAX_VALUE).multiply(BigDecimal.TEN));
+        assertExpression(
+                doubleVal,
+                of(doubleVal + "").parseNumber());
+        // some small decimals are readable as doubles, but rounded:
+        assertExpression(
+                2.6,
+                of(decimalVal + "").parseNumber());
+        // decimals exceeding max double are read as decimals:
+        assertExpression(
+                decimalVal2,
+                of(decimalVal2 + "").parseNumber());
     }
 
     // non-string
