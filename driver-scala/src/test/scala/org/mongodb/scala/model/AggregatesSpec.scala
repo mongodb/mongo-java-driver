@@ -805,4 +805,15 @@ class AggregatesSpec extends BaseSpec {
                  |}""".stripMargin)
     )
   }
+
+  it should "render $documents" in {
+    toBson(
+      Aggregates.documents(
+        org.mongodb.scala.bson.BsonDocument("""{a: 1, b: {$add: [1, 1]} }"""),
+        Document("""{a: 3, b: 4}""")
+      )
+    ) should equal(
+      Document("""{$documents: [{a: 1, b: {$add: [1, 1]}}, {a: 3, b: 4}]}""")
+    )
+  }
 }
