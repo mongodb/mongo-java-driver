@@ -324,9 +324,14 @@ object Aggregates {
     JAggregates.lookup(from, localField, foreignField, as)
 
   /**
-   * Creates a `\$lookup` pipeline stage, joining the current collection with the one specified in from using the given pipeline
+   * Creates a `\$lookup` pipeline stage, joining the current collection with
+   * the one specified in from using the given pipeline. If the first stage in
+   * the pipeline is a `\$documents` stage, then the "from" collection is
+   * ignored.
    *
-   * @param from     the name of the collection in the same database to perform the join with.
+   * @param from     the name of the collection in the same database to
+   *                 perform the join with. May be null if the
+   *                 first pipeline stage is `\$documents`.
    * @param pipeline the pipeline to run on the joined collection.
    * @param as       the name of the new array field to add to the input documents.
    * @return         the `\$lookup` pipeline stage:
@@ -338,9 +343,14 @@ object Aggregates {
     JAggregates.lookup(from, pipeline.asJava, as)
 
   /**
-   * Creates a `\$lookup` pipeline stage, joining the current collection with the one specified in from using the given pipeline
+   * Creates a `\$lookup` pipeline stage, joining the current collection with
+   * the one specified in from using the given pipeline. If the first stage in
+   * the pipeline is a `\$documents` stage, then the "from" collection is
+   * ignored.
    *
-   * @param from     the name of the collection in the same database to perform the join with.
+   * @param from     the name of the collection in the same database to
+   *                 perform the join with. May be null if the
+   *                 first pipeline stage is `\$documents`.
    * @param let      the variables to use in the pipeline field stages.
    * @param pipeline the pipeline to run on the joined collection.
    * @param as       the name of the new array field to add to the input documents.
@@ -746,4 +756,14 @@ object Aggregates {
    */
   def geoNear(near: Point, distanceField: String): Bson =
     JAggregates.geoNear(near, distanceField)
+
+  /**
+   * Creates a `\$documents` pipeline stage.
+   *
+   * @param documents the documents.
+   * @return the `\$documents` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/documents/ \$documents]]
+   * @since 4.9
+   */
+  def documents(documents: Bson*): Bson = JAggregates.documents(documents.asJava)
 }

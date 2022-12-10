@@ -299,9 +299,14 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * one specified in from using the given pipeline. If the first stage in the
+     * pipeline is a {@link Aggregates#documents(List) $documents} stage, then
+     * the {@code from} collection is ignored.
      *
-     * @param from          the name of the collection in the same database to perform the join with.
+     * @param from          the name of the collection in the same database to
+     *                      perform the join with. May be {$code null} if the
+     *                      first pipeline stage is $documents.
      * @param pipeline      the pipeline to run on the joined collection.
      * @param as            the name of the new array field to add to the input documents.
      * @return the $lookup pipeline stage
@@ -310,15 +315,20 @@ public final class Aggregates {
      * @since 3.7
      *
      */
-    public static Bson lookup(final String from, final List<? extends Bson> pipeline, final String as) {
+    public static Bson lookup(@Nullable final String from, final List<? extends Bson> pipeline, final String as) {
         return lookup(from, null, pipeline, as);
     }
 
     /**
-     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * one specified in from using the given pipeline. If the first stage in the
+     * pipeline is a {@link Aggregates#documents(List) $documents} stage, then
+     * the {@code from} collection is ignored.
      *
      * @param <TExpression> the Variable value expression type
-     * @param from          the name of the collection in the same database to perform the join with.
+     * @param from          the name of the collection in the same database to
+     *                      perform the join with. May be {$code null} if the
+     *                      first pipeline stage is $documents.
      * @param let           the variables to use in the pipeline field stages.
      * @param pipeline      the pipeline to run on the joined collection.
      * @param as            the name of the new array field to add to the input documents.
@@ -327,7 +337,7 @@ public final class Aggregates {
      * @mongodb.server.release 3.6
      * @since 3.7
      */
-    public static <TExpression> Bson lookup(final String from, @Nullable final List<Variable<TExpression>> let,
+    public static <TExpression> Bson lookup(@Nullable final String from, @Nullable final List<Variable<TExpression>> let,
                                             final List<? extends Bson> pipeline, final String as) {
        return new LookupStage<>(from, let, pipeline, as);
     }
@@ -928,7 +938,7 @@ public final class Aggregates {
      *
      * @param fields the fields to exclude. May use dot notation.
      * @return the $unset pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $unset
+     * @mongodb.driver.manual reference/operator/aggregation/unset/ $unset
      * @mongodb.server.release 4.2
      * @since 4.8
      */
@@ -941,7 +951,7 @@ public final class Aggregates {
      *
      * @param fields the fields to exclude. May use dot notation.
      * @return the $unset pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $unset
+     * @mongodb.driver.manual reference/operator/aggregation/unset/ $unset
      * @mongodb.server.release 4.2
      * @since 4.8
      */
@@ -962,7 +972,7 @@ public final class Aggregates {
      *                      To specify a field within an embedded document, use dot notation.
      * @param options {@link GeoNearOptions}
      * @return the $geoNear pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
+     * @mongodb.driver.manual reference/operator/aggregation/geoNear/ $geoNear
      * @since 4.8
      */
     public static Bson geoNear(
@@ -1012,13 +1022,40 @@ public final class Aggregates {
      * @param distanceField The output field that contains the calculated distance.
      *                      To specify a field within an embedded document, use dot notation.
      * @return the $geoNear pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/project/ $geoNear
+     * @mongodb.driver.manual reference/operator/aggregation/geoNear/ $geoNear
      * @since 4.8
      */
     public static Bson geoNear(
             final Point near,
             final String distanceField) {
         return geoNear(near, distanceField, geoNearOptions());
+    }
+
+    /**
+     * Creates a $documents pipeline stage.
+     *
+     * @param documents the documents.
+     * @return the $documents pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/documents/ $documents
+     * @mongodb.server.release 5.1
+     * @since 4.9
+     */
+    public static Bson documents(final List<? extends Bson> documents) {
+        notNull("documents", documents);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartArray("$documents");
+                for (Bson bson : documents) {
+                    BuildersHelper.encodeValue(writer, bson, codecRegistry);
+                }
+                writer.writeEndArray();
+                writer.writeEndDocument();
+                return writer.getDocument();
+            }
+        };
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,
@@ -1242,8 +1279,11 @@ public final class Aggregates {
         private final List<? extends Bson> pipeline;
         private final String as;
 
-        private LookupStage(final String from, @Nullable final List<Variable<TExpression>> let, final List<? extends Bson> pipeline,
-                            final String as) {
+        private LookupStage(
+                @Nullable final String from,
+                @Nullable final List<Variable<TExpression>> let,
+                final List<? extends Bson> pipeline,
+                final String as) {
             this.from = from;
             this.let = let;
             this.pipeline = pipeline;
@@ -1258,7 +1298,9 @@ public final class Aggregates {
 
             writer.writeStartDocument("$lookup");
 
-            writer.writeString("from", from);
+            if (from != null) {
+                writer.writeString("from", from);
+            }
 
             if (let != null) {
                 writer.writeStartDocument("let");

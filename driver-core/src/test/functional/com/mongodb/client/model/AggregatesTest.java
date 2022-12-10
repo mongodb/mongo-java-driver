@@ -21,6 +21,7 @@ import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -159,5 +160,54 @@ public class AggregatesTest extends OperationTest {
                 + "      }\n"
                 + "   }\n"
                 + "}]");
+    }
+
+    @Test
+    public void testDocuments() {
+        assumeTrue(serverVersionAtLeast(5, 1));
+        Bson stage = Aggregates.documents(asList(
+                Document.parse("{a: 1, b: {$add: [1, 1]} }"),
+                BsonDocument.parse("{a: 3, b: 4}")));
+        assertPipeline(
+                "{$documents: [{a: 1, b: {$add: [1, 1]}}, {a: 3, b: 4}]}",
+                stage);
+
+        List<Bson> pipeline = Arrays.asList(stage);
+        getCollectionHelper().aggregateDb(pipeline);
+
+        assertEquals(
+                parseToList("[{a: 1, b: 2}, {a: 3, b: 4}]"),
+                getCollectionHelper().aggregateDb(pipeline));
+
+        // accepts lists of Documents and BsonDocuments
+        List<BsonDocument> documents = Arrays.asList(BsonDocument.parse("{a: 1, b: 2}"));
+        assertPipeline("{$documents: [{a: 1, b: 2}]}", Aggregates.documents(documents));
+        List<BsonDocument> bsonDocuments = Arrays.asList(BsonDocument.parse("{a: 1, b: 2}"));
+        assertPipeline("{$documents: [{a: 1, b: 2}]}", Aggregates.documents(bsonDocuments));
+    }
+
+    @Test
+    public void testDocumentsLookup() {
+        assumeTrue(serverVersionAtLeast(5, 1));
+
+        getCollectionHelper().insertDocuments("[{_id: 1, a: 8}, {_id: 2, a: 9}]");
+        Bson documentsStage = Aggregates.documents(asList(Document.parse("{a: 5}")));
+
+        Bson lookupStage = Aggregates.lookup("ignored", Arrays.asList(documentsStage), "added");
+        assertPipeline(
+                "{'$lookup': {'from': 'ignored', 'pipeline': [{'$documents': [{'a': 5}]}], 'as': 'added'}}",
+                lookupStage);
+        assertEquals(
+                parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
+                getCollectionHelper().aggregate(Arrays.asList(lookupStage)));
+
+        // null variant
+        Bson lookupStageNull = Aggregates.lookup(null, Arrays.asList(documentsStage), "added");
+        assertPipeline(
+                "{'$lookup': {'pipeline': [{'$documents': [{'a': 5}]}], 'as': 'added'}}",
+                lookupStageNull);
+        assertEquals(
+                parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
+                getCollectionHelper().aggregate(Arrays.asList(lookupStageNull)));
     }
 }
