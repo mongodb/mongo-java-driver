@@ -244,12 +244,6 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(convertInternal("int", asLong));
     }
 
-    @Override
-    public NumberExpression parseNumber() {
-        Expression asDecimal = new MqlExpression<>(ast("$toDecimal"));
-        return new MqlExpression<>(convertInternal("double", asDecimal));
-    }
-
     /** @see ArrayExpression */
 
     @Override

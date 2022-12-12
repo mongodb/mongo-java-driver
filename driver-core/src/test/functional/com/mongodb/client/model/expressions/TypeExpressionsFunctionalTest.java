@@ -216,38 +216,6 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 of(longVal + "").parseInteger());
     }
 
-    @Test
-    public void parseNumberTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDouble/
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDecimal/
-        assertExpression(
-                1234.2,
-                of("1234.200").parseNumber(),
-                "{'$convert': {'input': '1234.200', 'onError': {'$toDecimal': '1234.200'}, 'to': 'double'}}");
-        assertExpression(
-                1234.0,
-                of("1234").parseNumber());
-        assertExpression(
-                true,
-                of("1234").parseInteger().eq(
-                        of("1234").parseNumber()));
-
-        double doubleVal = 2.5;
-        Decimal128 decimalVal = Decimal128.parse("2.5999999999999999");
-        Decimal128 decimalVal2 = new Decimal128(BigDecimal.valueOf(Double.MAX_VALUE).multiply(BigDecimal.TEN));
-        assertExpression(
-                doubleVal,
-                of(doubleVal + "").parseNumber());
-        // some small decimals are readable as doubles, but rounded:
-        assertExpression(
-                2.6,
-                of(decimalVal + "").parseNumber());
-        // decimals exceeding max double are read as decimals:
-        assertExpression(
-                decimalVal2,
-                of(decimalVal2 + "").parseNumber());
-    }
-
     // non-string
 
     @Test

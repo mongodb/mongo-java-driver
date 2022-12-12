@@ -47,8 +47,6 @@ public interface StringExpression extends Expression {
 
     IntegerExpression parseInteger();
 
-    NumberExpression parseNumber();
-
     DateExpression parseDate();
 
     DateExpression parseDate(StringExpression format);
