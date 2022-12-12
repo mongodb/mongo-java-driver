@@ -231,7 +231,7 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(astWrapped("$toString"));
     }
 
-    private Function<CodecRegistry, AstPlaceholder> convertInternal(String to, Expression orElse) {
+    private Function<CodecRegistry, AstPlaceholder> convertInternal(final String to, final Expression orElse) {
         return (cr) -> astDoc("$convert", new BsonDocument()
                 .append("input", this.fn.apply(cr).bsonValue)
                 .append("onError", extractBsonValue(cr, orElse))
