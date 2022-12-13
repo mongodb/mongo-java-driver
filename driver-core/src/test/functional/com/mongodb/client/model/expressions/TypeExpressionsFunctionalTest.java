@@ -29,7 +29,6 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
-import static com.mongodb.client.model.expressions.Expressions.ofBooleanArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
