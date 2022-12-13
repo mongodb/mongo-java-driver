@@ -415,15 +415,28 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     private static byte[] parseHexString(final String s) {
-        if (!isValid(s)) {
-            throw new IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [" + s + "]");
-        }
+        notNull("hexString", s);
+        isTrueArgument("hexString has 24 characters", s.length() == 24);
 
         byte[] b = new byte[OBJECT_ID_LENGTH];
         for (int i = 0; i < b.length; i++) {
-            b[i] = (byte) Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+            int pos = i << 1;
+            char c1 = s.charAt(pos);
+            char c2 = s.charAt(pos + 1);
+            b[i] = (byte) ((hexCharToInt(c1) << 4) + hexCharToInt(c2));
         }
         return b;
+    }
+
+    private static int hexCharToInt(final char c) {
+        if (c >= '0' && c <= '9') {
+            return c - 48;
+        } else if (c >= 'a' && c <= 'f') {
+            return c - 87;
+        } else if (c >= 'A' && c <= 'F') {
+            return c - 55;
+        }
+        throw new IllegalArgumentException("invalid hexadecimal character: [" + c + "]");
     }
 
     private static int dateToTimestampSeconds(final Date time) {
