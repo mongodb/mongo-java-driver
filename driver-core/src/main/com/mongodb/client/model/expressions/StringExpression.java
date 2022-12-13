@@ -35,13 +35,21 @@ public interface StringExpression extends Expression {
 
     StringExpression substr(IntegerExpression start, IntegerExpression length);
 
-    default StringExpression substr(int start, int length) {
+    default StringExpression substr(final int start, final int length) {
         return this.substr(of(start), of(length));
     }
 
     StringExpression substrBytes(IntegerExpression start, IntegerExpression length);
 
-    default StringExpression substrBytes(int start, int length) {
+    default StringExpression substrBytes(final int start, final int length) {
         return this.substrBytes(of(start), of(length));
     }
+
+    IntegerExpression parseInteger();
+
+    DateExpression parseDate();
+
+    DateExpression parseDate(StringExpression format);
+
+    DateExpression parseDate(StringExpression timezone, StringExpression format);
 }

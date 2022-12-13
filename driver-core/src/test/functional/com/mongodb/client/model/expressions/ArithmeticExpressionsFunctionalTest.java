@@ -89,15 +89,27 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
         assertExpression(2, of(1).multiply(2));
     }
 
+    @SuppressWarnings("PointlessArithmeticExpression")
     @Test
     public void divideTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/divide/
         assertExpression(
+                2.0 / 1.0,
+                of(2.0).divide(of(1.0)),
+                "{'$divide': [2.0, 1.0]}");
+
+        // division always converts to a double:
+        assertExpression(
+                2.0, // not: 2 / 1
+                of(2).divide(of(1)),
+                "{'$divide': [2, 1]}");
+
+        // this means that unlike Java's 1/2==0, dividing any underlying
+        // BSON number type always yields an equal result:
+        assertExpression(
                 1.0 / 2.0,
                 of(1.0).divide(of(2.0)),
                 "{'$divide': [1.0, 2.0]}");
-        // unlike Java's 1/2==0, dividing any type of numbers always yields an
-        // equal result, in this case represented using a double.
         assertExpression(
                 0.5,
                 of(1).divide(of(2)),
@@ -117,6 +129,11 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
         assertExpression(
                 Decimal128.parse("2.524218750000"),
                 of(3.231).divide(of(Decimal128.parse("1.28"))));
+        // this is not simply because the Java literal used has no corresponding
+        // double value - it is the same value as-written:
+        assertEquals("3.231", "" + 3.231);
+        assertEquals("1.28", "" + 1.28);
+
 
         // convenience
         assertExpression(0.5, of(1.0).divide(2.0));
@@ -138,6 +155,17 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 2.0 + 2,
                 of(2.0).add(of(2)),
                 "{'$add': [2.0, 2]}");
+
+        // overflows into a supported underlying type
+        assertExpression(
+                Integer.MAX_VALUE + 2L,
+                of(Integer.MAX_VALUE).add(of(2)));
+        assertExpression(
+                Long.MAX_VALUE + 2.0,
+                of(Long.MAX_VALUE).add(of(2)));
+        assertExpression(
+                Double.POSITIVE_INFINITY,
+                of(Double.MAX_VALUE).add(of(Double.MAX_VALUE)));
 
         // convenience
         assertExpression(3.0, of(1.0).add(2.0));
@@ -183,7 +211,7 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
 
     @Test
     public void minTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/min/ (63)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/min/
         IntegerExpression actual = of(-2).min(of(2));
         assertExpression(
                 Math.min(-2, 2),
@@ -225,11 +253,21 @@ class ArithmeticExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 600.0,
                 of(555.555).round(of(-2)),
                 "{'$round': [555.555, -2]} ");
+        // underlying type rounds to same underlying type
+        assertExpression(
+                5L,
+                of(5L).round());
+        assertExpression(
+                5.0,
+                of(5.0).round());
+        assertExpression(
+                Decimal128.parse("1234"),
+                of(Decimal128.parse("1234.2")).round());
     }
 
     @Test
     public void absTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/round/ (?)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/round/
         assertExpression(
                 Math.abs(-2.0),
                 of(-2.0).abs(),

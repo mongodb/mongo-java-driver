@@ -77,7 +77,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
 
     BooleanExpression contains(T contains);
 
-    ArrayExpression<T> concat(ArrayExpression<T> array);
+    ArrayExpression<T> concat(ArrayExpression<? extends T> array);
 
     ArrayExpression<T> slice(IntegerExpression start, IntegerExpression length);
 
@@ -85,7 +85,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
         return this.slice(of(start), of(length));
     }
 
-    ArrayExpression<T> union(ArrayExpression<T> set);
+    ArrayExpression<T> union(ArrayExpression<? extends T> set);
 
     ArrayExpression<T> distinct();
 }

@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.MongoCommandException;
 import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofDateArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNumberArray;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings({"ConstantConditions", "Convert2MethodRef"})
 class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -177,17 +179,27 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.elementAt((IntegerExpression) of(0.0)),
                 // MQL:
                 "{'$arrayElemAt': [[1, 2, 3], 0.0]}");
-
+        // negatives
         assertExpression(
                 Arrays.asList(1, 2, 3).get(3 - 1),
                 array123.elementAt(-1));
+        // underlying long
+        assertExpression(
+                2,
+                array123.elementAt(of(1L)));
 
         assertExpression(
-                true,
-                ofRem().eq(array123.elementAt(99)));
+                MISSING,
+                array123.elementAt(99));
+
         assertExpression(
-                true,
-                ofRem().eq(array123.elementAt(-99)));
+                MISSING,
+                array123.elementAt(-99));
+
+        // long values are considered entirely out of bounds; server error
+        assertThrows(MongoCommandException.class, () -> assertExpression(
+                MISSING,
+                array123.elementAt(of(Long.MAX_VALUE))));
     }
 
     @Test
@@ -209,6 +221,12 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 array123.last(),
                 // MQL:
                 "{'$last': [[1, 2, 3]]}");
+
+        assertExpression(
+                MISSING,
+                ofIntegerArray().last(),
+                // MQL:
+                "{'$last': [[]]}");
     }
 
     @Test
@@ -228,9 +246,13 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Stream.concat(Stream.of(1, 2, 3), Stream.of(1, 2, 3))
                         .collect(Collectors.toList()),
-                array123.concat(array123),
+                ofIntegerArray(1, 2, 3).concat(ofIntegerArray(1, 2, 3)),
                 // MQL:
                 "{'$concatArrays': [[1, 2, 3], [1, 2, 3]]}");
+        // mixed types:
+        assertExpression(
+                Arrays.asList(1.0, 1, 2, 3),
+                ofNumberArray(1.0).concat(ofIntegerArray(1, 2, 3)));
     }
 
     @Test
@@ -258,12 +280,18 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void setUnionTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/ (40)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/
         assertExpression(
                 Arrays.asList(1, 2, 3),
                 array123.union(array123),
                 // MQL:
                 "{'$setUnion': [[1, 2, 3], [1, 2, 3]]}");
+
+        // mixed types:
+        assertExpression(
+                Arrays.asList(1, 2.0, 3),
+                // above is a set; in case of flakiness, below should `sort` (not implemented at time of test creation)
+                ofNumberArray(2.0).union(ofIntegerArray(1, 2, 3)));
         // convenience
         assertExpression(
                 Arrays.asList(1, 2, 3),
