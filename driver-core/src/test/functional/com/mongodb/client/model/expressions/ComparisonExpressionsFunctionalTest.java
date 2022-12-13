@@ -27,7 +27,6 @@ import java.util.List;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofBooleanArray;
-import static com.mongodb.client.model.expressions.Expressions.ofDocument;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -47,12 +46,12 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
             of(1),
             of(""),
             of("str"),
-            ofDocument(BsonDocument.parse("{}")),
-            ofDocument(BsonDocument.parse("{a: 1}")),
-            ofDocument(BsonDocument.parse("{a: 2}")),
-            ofDocument(BsonDocument.parse("{a: 2, b: 1}")),
-            ofDocument(BsonDocument.parse("{b: 1, a: 2}")),
-            ofDocument(BsonDocument.parse("{'':''}")),
+            of(BsonDocument.parse("{}")),
+            of(BsonDocument.parse("{a: 1}")),
+            of(BsonDocument.parse("{a: 2}")),
+            of(BsonDocument.parse("{a: 2, b: 1}")),
+            of(BsonDocument.parse("{b: 1, a: 2}")),
+            of(BsonDocument.parse("{'':''}")),
             ofIntegerArray(0),
             ofIntegerArray(1),
             ofBooleanArray(true),
@@ -70,7 +69,7 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
                 "{'$eq': [1, 2]}");
         assertExpression(
                 false,
-                ofDocument(BsonDocument.parse("{}")).eq(ofIntegerArray()),
+                of(BsonDocument.parse("{}")).eq(ofIntegerArray()),
                 "{'$eq': [{'$literal': {}}, []]}");
 
         // numbers are equal, even though of different types

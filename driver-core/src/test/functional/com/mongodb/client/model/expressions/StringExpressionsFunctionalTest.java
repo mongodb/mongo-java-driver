@@ -60,7 +60,7 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
 
     @Test
     public void toUpperTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toUpper/ (?)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toUpper/
         assertExpression(
                 "abc".toUpperCase(),
                 of("abc").toUpper(),
@@ -69,7 +69,7 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
 
     @Test
     public void strLenTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/strLenCP/ (?)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/strLenCP/
         assertExpression(
                 "abc".codePointCount(0, 3),
                 of("abc").strLen(),
@@ -92,7 +92,7 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
 
     @Test
     public void strLenBytesTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/strLenBytes/ (?)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/strLenBytes/
         assertExpression(
                 "abc".getBytes(StandardCharsets.UTF_8).length,
                 of("abc").strLenBytes(),
@@ -124,7 +124,7 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
     @Test
     public void substrTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substr/
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substrCP/ (?)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substrCP/
         // substr is deprecated, an alias for bytes
         assertExpression(
                 "abc".substring(1, 1 + 1),
@@ -149,7 +149,7 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
 
     @Test
     public void substrBytesTest() {
-        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substrBytes/ (?)
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/substrBytes/
         assertExpression(
                 "b",
                 of("abc").substrBytes(of(1), of(1)),
