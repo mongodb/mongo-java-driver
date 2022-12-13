@@ -44,6 +44,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
 
+    /**
+     * Java stand-in for the "missing" value.
+     */
+    public static final Object MISSING = new Object();
+
     @BeforeEach
     public void setUp() {
         getCollectionHelper().drop();
@@ -54,7 +59,7 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         getCollectionHelper().drop();
     }
 
-    protected void assertExpression(final Object expected, final Expression expression) {
+    protected void assertExpression(@Nullable final Object expected, final Expression expression) {
         assertExpression(expected, expression, null);
     }
 
@@ -74,6 +79,10 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
 
     private void assertEval(@Nullable final Object expected, final Expression toEvaluate) {
         BsonValue evaluated = evaluate(toEvaluate);
+        if (expected == MISSING && evaluated == null) {
+            // if the "val" field was removed by "missing", then evaluated is null
+            return;
+        }
         BsonValue expected1 = toBsonValue(expected);
         assertEquals(expected1, evaluated);
     }
@@ -85,6 +94,7 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         return new Document("val", value).toBsonDocument().get("val");
     }
 
+    @Nullable
     protected BsonValue evaluate(final Expression toEvaluate) {
         Bson addFieldsStage = addFields(new Field<>("val", toEvaluate));
         List<Bson> stages = new ArrayList<>();

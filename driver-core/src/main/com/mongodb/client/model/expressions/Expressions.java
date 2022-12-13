@@ -184,7 +184,7 @@ public final class Expressions {
         });
     }
 
-    public static DocumentExpression ofDocument(final Bson document) {
+    public static DocumentExpression of(final Bson document) {
         Assertions.notNull("document", document);
         // All documents are wrapped in a $literal. If we don't wrap, we need to
         // check for empty documents and documents that are actually expressions
@@ -193,7 +193,9 @@ public final class Expressions {
                 document.toBsonDocument(BsonDocument.class, cr))));
     }
 
-    public static <R extends Expression> R ofNull() {
+    public static Expression ofNull() {
+        // There is no specific expression type corresponding to Null,
+        // and Null is not a value in any other expression type.
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonNull()))
                 .assertImplementsAllExpressions();
     }

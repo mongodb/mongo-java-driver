@@ -26,6 +26,9 @@ import java.util.Collections;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
+
 final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
         StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
@@ -59,6 +62,12 @@ final class MqlExpression<T extends Expression>
 
     private Function<CodecRegistry, AstPlaceholder> ast(final String name) {
         return (cr) -> new AstPlaceholder(new BsonDocument(name, this.toBsonValue(cr)));
+    }
+
+    // in cases where we must wrap the first argument in an array
+    private Function<CodecRegistry, AstPlaceholder> astWrapped(final String name) {
+        return (cr) -> new AstPlaceholder(new BsonDocument(name,
+                new BsonArray(Collections.singletonList(this.toBsonValue(cr)))));
     }
 
     private Function<CodecRegistry, AstPlaceholder> ast(final String name, final Expression param1) {
@@ -161,6 +170,80 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(ast("$lte", lte));
     }
 
+    public BooleanExpression isBoolean() {
+        return new MqlExpression<>(ast("$type")).eq(of("bool"));
+    }
+
+    @Override
+    public BooleanExpression isBooleanOr(final BooleanExpression or) {
+        return this.isBoolean().cond(this, or);
+    }
+
+    public BooleanExpression isNumber() {
+        return new MqlExpression<>(astWrapped("$isNumber"));
+    }
+
+    @Override
+    public NumberExpression isNumberOr(final NumberExpression or) {
+        return this.isNumber().cond(this, or);
+    }
+
+    public BooleanExpression isString() {
+        return new MqlExpression<>(ast("$type")).eq(of("string"));
+    }
+
+    @Override
+    public StringExpression isStringOr(final StringExpression or) {
+        return this.isString().cond(this, or);
+    }
+
+    public BooleanExpression isDate() {
+        return ofStringArray("date").contains(new MqlExpression<>(ast("$type")));
+    }
+
+    @Override
+    public DateExpression isDateOr(final DateExpression or) {
+        return this.isDate().cond(this, or);
+    }
+
+    public BooleanExpression isArray() {
+        return new MqlExpression<>(astWrapped("$isArray"));
+    }
+
+    @SuppressWarnings("unchecked") // TODO
+    @Override
+    public ArrayExpression<Expression> isArrayOr(final ArrayExpression<? extends Expression> or) {
+        // TODO it seems that ArrEx<T> does not make sense here
+        return (ArrayExpression<Expression>) this.isArray().cond(this.assertImplementsAllExpressions(), or);
+    }
+
+    public BooleanExpression isDocument() {
+        return new MqlExpression<>(ast("$type")).eq(of("object"));
+    }
+
+    @Override
+    public <R extends DocumentExpression> R isDocumentOr(final R or) {
+        return this.isDocument().cond(this.assertImplementsAllExpressions(), or);
+    }
+
+    @Override
+    public StringExpression asString() {
+        return new MqlExpression<>(astWrapped("$toString"));
+    }
+
+    private Function<CodecRegistry, AstPlaceholder> convertInternal(final String to, final Expression orElse) {
+        return (cr) -> astDoc("$convert", new BsonDocument()
+                .append("input", this.fn.apply(cr).bsonValue)
+                .append("onError", extractBsonValue(cr, orElse))
+                .append("to", new BsonString(to)));
+    }
+
+    @Override
+    public IntegerExpression parseInteger() {
+        Expression asLong = new MqlExpression<>(ast("$toLong"));
+        return new MqlExpression<>(convertInternal("int", asLong));
+    }
+
     /** @see ArrayExpression */
 
     @Override
@@ -191,10 +274,7 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public IntegerExpression size() {
-        return new MqlExpression<>(
-                (cr) -> new AstPlaceholder(new BsonDocument("$size",
-                        // must wrap the first argument in a list
-                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))));
+        return new MqlExpression<>(astWrapped("$size"));
     }
 
     @Override
@@ -205,19 +285,13 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public T first() {
-        return new MqlExpression<>(
-                (cr) -> new AstPlaceholder(new BsonDocument("$first",
-                        // must wrap the first argument in a list
-                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))))
+        return new MqlExpression<>(astWrapped("$first"))
                 .assertImplementsAllExpressions();
     }
 
     @Override
     public T last() {
-        return new MqlExpression<>(
-                (cr) -> new AstPlaceholder(new BsonDocument("$last",
-                        // must wrap the first argument in a list
-                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))))
+        return new MqlExpression<>(astWrapped("$last"))
                 .assertImplementsAllExpressions();
     }
 
@@ -233,7 +307,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public ArrayExpression<T> concat(final ArrayExpression<T> array) {
+    public ArrayExpression<T> concat(final ArrayExpression<? extends T> array) {
         return new MqlExpression<>(ast("$concatArrays", array))
                 .assertImplementsAllExpressions();
     }
@@ -245,17 +319,14 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public ArrayExpression<T> union(final ArrayExpression<T> set) {
+    public ArrayExpression<T> union(final ArrayExpression<? extends T> set) {
         return new MqlExpression<>(ast("$setUnion", set))
                 .assertImplementsAllExpressions();
     }
 
     @Override
     public ArrayExpression<T> distinct() {
-        return new MqlExpression<>(
-                (cr) -> new AstPlaceholder(new BsonDocument("$setUnion",
-                        // must wrap the first argument in a list
-                        new BsonArray(Collections.singletonList(this.toBsonValue(cr))))));
+        return new MqlExpression<>(astWrapped("$setUnion"));
     }
 
 
@@ -305,6 +376,11 @@ final class MqlExpression<T extends Expression>
     @Override
     public IntegerExpression abs() {
         return newMqlExpression(ast("$abs"));
+    }
+
+    @Override
+    public DateExpression millisecondsToDate() {
+        return newMqlExpression(ast("$toDate"));
     }
 
     @Override
@@ -391,17 +467,32 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public StringExpression dateToString() {
-        return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
-                .append("date", this.toBsonValue(cr))));
-    }
-
-    @Override
-    public StringExpression dateToString(final StringExpression timezone, final StringExpression format) {
+    public StringExpression asString(final StringExpression timezone, final StringExpression format) {
         return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
                 .append("date", this.toBsonValue(cr))
                 .append("format", extractBsonValue(cr, format))
                 .append("timezone", extractBsonValue(cr, timezone))));
+    }
+
+    @Override
+    public DateExpression parseDate(final StringExpression timezone, final StringExpression format) {
+        return newMqlExpression((cr) -> astDoc("$dateFromString", new BsonDocument()
+                .append("dateString", this.toBsonValue(cr))
+                .append("format", extractBsonValue(cr, format))
+                .append("timezone", extractBsonValue(cr, timezone))));
+    }
+
+    @Override
+    public DateExpression parseDate(final StringExpression format) {
+        return newMqlExpression((cr) -> astDoc("$dateFromString", new BsonDocument()
+                .append("dateString", this.toBsonValue(cr))
+                .append("format", extractBsonValue(cr, format))));
+    }
+
+    @Override
+    public DateExpression parseDate() {
+        return newMqlExpression((cr) -> astDoc("$dateFromString", new BsonDocument()
+                .append("dateString", this.toBsonValue(cr))));
     }
 
     /** @see StringExpression */
