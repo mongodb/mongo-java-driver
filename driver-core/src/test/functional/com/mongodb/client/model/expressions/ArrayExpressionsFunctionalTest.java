@@ -17,6 +17,7 @@
 package com.mongodb.client.model.expressions;
 
 import com.mongodb.MongoCommandException;
+import org.bson.Document;
 import org.bson.types.Decimal128;
 import org.junit.jupiter.api.Test;
 
@@ -79,13 +80,21 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 Arrays.asList(Instant.parse("2007-12-03T10:15:30.00Z")),
                 ofDateArray(Instant.parse("2007-12-03T10:15:30.00Z")),
                 "[{'$date': '2007-12-03T10:15:30.00Z'}]");
+
         // Document
-        // ...
+        ArrayExpression<DocumentExpression> documentArray = ofArray(
+                of(Document.parse("{a: 1}")),
+                of(Document.parse("{b: 2}")));
+        assertExpression(
+                Arrays.asList(Document.parse("{a: 1}"), Document.parse("{b: 2}")),
+                documentArray,
+                "[{'$literal': {'a': 1}}, {'$literal': {'b': 2}}]");
 
         // Array
-        ArrayExpression<ArrayExpression<Expression>> arrays = ofArray(ofArray(), ofArray());
+        ArrayExpression<ArrayExpression<Expression>> arrayArray = ofArray(ofArray(), ofArray());
         assertExpression(
-                Arrays.asList(Collections.emptyList(), Collections.emptyList()), arrays,
+                Arrays.asList(Collections.emptyList(), Collections.emptyList()),
+                arrayArray,
                 "[[], []]");
 
         // Mixed
@@ -176,9 +185,10 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2, 3).get(0),
                 // 0.0 is a valid integer value
-                array123.elementAt((IntegerExpression) of(0.0)),
+                array123.elementAt(of(0.0).isIntegerOr(of(-1))),
                 // MQL:
-                "{'$arrayElemAt': [[1, 2, 3], 0.0]}");
+                "{'$arrayElemAt': [[1, 2, 3], {'$cond': [{'$cond': "
+                        + "[{'$isNumber': [0.0]}, {'$eq': [0.0, {'$round': 0.0}]}, false]}, 0.0, -1]}]}");
         // negatives
         assertExpression(
                 Arrays.asList(1, 2, 3).get(3 - 1),
