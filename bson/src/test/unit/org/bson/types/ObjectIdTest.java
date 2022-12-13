@@ -27,10 +27,12 @@ import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -142,6 +144,10 @@ public class ObjectIdTest {
     public void testHexStringConstructor() {
         ObjectId id = new ObjectId();
         assertEquals(id, new ObjectId(id.toHexString()));
+        assertEquals(id, new ObjectId(id.toHexString().toUpperCase(Locale.US)));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId((String) null));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId(id.toHexString().substring(0, 23)));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId(id.toHexString().substring(0, 23) + '%'));
     }
 
     @Test
