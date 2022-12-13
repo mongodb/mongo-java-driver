@@ -40,6 +40,7 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.Aggregates.addFields;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.conversions.Bson.DEFAULT_CODEC_REGISTRY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
@@ -70,7 +71,8 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
             return;
         }
 
-        BsonValue expressionValue = ((MqlExpression<?>) expression).toBsonValue(fromProviders(new BsonValueCodecProvider()));
+        BsonValue expressionValue = ((MqlExpression<?>) expression).toBsonValue(
+                fromProviders(new BsonValueCodecProvider(), DEFAULT_CODEC_REGISTRY));
         BsonValue bsonValue = new BsonDocumentFragmentCodec().readValue(
                 new JsonReader(expectedMql),
                 DecoderContext.builder().build());

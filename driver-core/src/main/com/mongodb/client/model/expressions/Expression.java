@@ -100,14 +100,16 @@ public interface Expression {
 
     /**
      * also checks for nulls
-     * @param or
+     * @param other
      * @return
      */
-    BooleanExpression isBooleanOr(BooleanExpression or);
-    NumberExpression isNumberOr(NumberExpression or);
-    StringExpression isStringOr(StringExpression or);
-    DateExpression isDateOr(DateExpression or);
-    ArrayExpression<Expression> isArrayOr(ArrayExpression<? extends Expression> or);
-    <T extends DocumentExpression> T isDocumentOr(T or);
+    BooleanExpression isBooleanOr(BooleanExpression other);
+    NumberExpression isNumberOr(NumberExpression other);
+    IntegerExpression isIntegerOr(IntegerExpression other);
+    StringExpression isStringOr(StringExpression other);
+    DateExpression isDateOr(DateExpression other);
+    <T extends Expression> ArrayExpression<T> isArrayOr(ArrayExpression<? extends T> other);
+    <T extends DocumentExpression> T isDocumentOr(T other);
+
     StringExpression asString();
 }

@@ -137,6 +137,113 @@ final class MqlExpression<T extends Expression>
         return newMqlExpression(ast("$cond", left, right));
     }
 
+    /** @see DocumentExpression */
+
+    private Function<CodecRegistry, AstPlaceholder> getFieldInternal(final String fieldName) {
+        return (cr) -> {
+            BsonValue value = fieldName.startsWith("$")
+                    ? new BsonDocument("$literal", new BsonString(fieldName))
+                    : new BsonString(fieldName);
+            return astDoc("$getField", new BsonDocument()
+                    .append("input", this.fn.apply(cr).bsonValue)
+                    .append("field", value));
+        };
+    }
+
+    @Override
+    public Expression getField(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public BooleanExpression getBoolean(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public BooleanExpression getBoolean(final String fieldName, final BooleanExpression other) {
+        return getBoolean(fieldName).isBooleanOr(other);
+    }
+
+    @Override
+    public NumberExpression getNumber(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public NumberExpression getNumber(final String fieldName, final NumberExpression other) {
+        return getNumber(fieldName).isNumberOr(other);
+    }
+
+    @Override
+    public IntegerExpression getInteger(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public IntegerExpression getInteger(final String fieldName, final IntegerExpression other) {
+        return getInteger(fieldName).isIntegerOr(other);
+    }
+
+    @Override
+    public StringExpression getString(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public StringExpression getString(final String fieldName, final StringExpression other) {
+        return getString(fieldName).isStringOr(other);
+    }
+
+    @Override
+    public DateExpression getDate(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public DateExpression getDate(final String fieldName, final DateExpression other) {
+        return getDate(fieldName).isDateOr(other);
+    }
+
+    @Override
+    public DocumentExpression getDocument(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public DocumentExpression getDocument(final String fieldName, final DocumentExpression other) {
+        return getDocument(fieldName).isDocumentOr(other);
+    }
+
+    @Override
+    public <R extends Expression> ArrayExpression<R> getArray(final String fieldName) {
+        return new MqlExpression<>(getFieldInternal(fieldName));
+    }
+
+    @Override
+    public <R extends Expression> ArrayExpression<R> getArray(final String fieldName, final ArrayExpression<? extends R> other) {
+        return getArray(fieldName).isArrayOr(other);
+    }
+
+    @Override
+    public DocumentExpression merge(final DocumentExpression other) {
+        return new MqlExpression<>(ast("$mergeObjects", other));
+    }
+
+    @Override
+    public DocumentExpression setField(final String fieldName, final Expression exp) {
+        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
+                .append("field", new BsonString(fieldName))
+                .append("input", this.toBsonValue(cr))
+                .append("value", extractBsonValue(cr, exp))));
+    }
+
+    @Override
+    public DocumentExpression unsetField(final String fieldName) {
+        return newMqlExpression((cr) -> astDoc("$unsetField", new BsonDocument()
+                .append("field", new BsonString(fieldName))
+                .append("input", this.toBsonValue(cr))));
+    }
 
     /** @see Expression */
 
@@ -175,8 +282,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public BooleanExpression isBooleanOr(final BooleanExpression or) {
-        return this.isBoolean().cond(this, or);
+    public BooleanExpression isBooleanOr(final BooleanExpression other) {
+        return this.isBoolean().cond(this, other);
     }
 
     public BooleanExpression isNumber() {
@@ -184,8 +291,17 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public NumberExpression isNumberOr(final NumberExpression or) {
-        return this.isNumber().cond(this, or);
+    public NumberExpression isNumberOr(final NumberExpression other) {
+        return this.isNumber().cond(this, other);
+    }
+
+    public BooleanExpression isInteger() {
+        return this.isNumber().cond(this.eq(this.round()), of(false));
+    }
+
+    @Override
+    public IntegerExpression isIntegerOr(final IntegerExpression other) {
+        return this.isInteger().cond(this, other);
     }
 
     public BooleanExpression isString() {
@@ -193,8 +309,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public StringExpression isStringOr(final StringExpression or) {
-        return this.isString().cond(this, or);
+    public StringExpression isStringOr(final StringExpression other) {
+        return this.isString().cond(this, other);
     }
 
     public BooleanExpression isDate() {
@@ -202,19 +318,26 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public DateExpression isDateOr(final DateExpression or) {
-        return this.isDate().cond(this, or);
+    public DateExpression isDateOr(final DateExpression other) {
+        return this.isDate().cond(this, other);
     }
 
     public BooleanExpression isArray() {
         return new MqlExpression<>(astWrapped("$isArray"));
     }
 
-    @SuppressWarnings("unchecked") // TODO
+    /**
+     * checks if array (but cannot check type)
+     * user asserts array is of type R
+     *
+     * @param other
+     * @return
+     * @param <R>
+     */
+    @SuppressWarnings("unchecked")
     @Override
-    public ArrayExpression<Expression> isArrayOr(final ArrayExpression<? extends Expression> or) {
-        // TODO it seems that ArrEx<T> does not make sense here
-        return (ArrayExpression<Expression>) this.isArray().cond(this.assertImplementsAllExpressions(), or);
+    public <R extends Expression> ArrayExpression<R> isArrayOr(final ArrayExpression<? extends R> other) {
+        return (ArrayExpression<R>) this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
     public BooleanExpression isDocument() {
@@ -222,8 +345,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends DocumentExpression> R isDocumentOr(final R or) {
-        return this.isDocument().cond(this.assertImplementsAllExpressions(), or);
+    public <R extends DocumentExpression> R isDocumentOr(final R other) {
+        return this.isDocument().cond(this.assertImplementsAllExpressions(), other);
     }
 
     @Override

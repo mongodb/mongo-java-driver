@@ -16,10 +16,83 @@
 
 package com.mongodb.client.model.expressions;
 
+import org.bson.conversions.Bson;
+import org.bson.types.Decimal128;
+
+import java.time.Instant;
+
+import static com.mongodb.client.model.expressions.Expressions.of;
+
 /**
  * Expresses a document value. A document is an ordered set of fields, where the
  * key is a string value, mapping to a value of any other expression type.
  */
 public interface DocumentExpression extends Expression {
 
+    DocumentExpression setField(String fieldName, Expression exp);
+
+    DocumentExpression unsetField(String fieldName);
+
+    Expression getField(String fieldName);
+
+    BooleanExpression getBoolean(String fieldName);
+
+    BooleanExpression getBoolean(String fieldName, BooleanExpression other);
+
+    default BooleanExpression getBoolean(final String fieldName, final boolean other) {
+        return getBoolean(fieldName, of(other));
+    }
+
+    NumberExpression getNumber(String fieldName);
+
+    NumberExpression getNumber(String fieldName, NumberExpression other);
+
+    default NumberExpression getNumber(final String fieldName, final double other) {
+        return getNumber(fieldName, of(other));
+    }
+
+    default NumberExpression getNumber(final String fieldName, final Decimal128 other) {
+        return getNumber(fieldName, of(other));
+    }
+
+    IntegerExpression getInteger(String fieldName);
+
+    IntegerExpression getInteger(String fieldName, IntegerExpression other);
+
+    default IntegerExpression getInteger(final String fieldName, final int other) {
+        return getInteger(fieldName, of(other));
+    }
+
+    default IntegerExpression getInteger(final String fieldName, final long other) {
+        return getInteger(fieldName, of(other));
+    }
+
+
+    StringExpression getString(String fieldName);
+
+    StringExpression getString(String fieldName, StringExpression other);
+
+    default StringExpression getString(final String fieldName, final String other) {
+        return getString(fieldName, of(other));
+    }
+
+    DateExpression getDate(String fieldName);
+    DateExpression getDate(String fieldName, DateExpression other);
+
+    default DateExpression getDate(final String fieldName, final Instant other) {
+        return getDate(fieldName, of(other));
+    }
+
+    DocumentExpression getDocument(String fieldName);
+    DocumentExpression getDocument(String fieldName, DocumentExpression other);
+
+    default DocumentExpression getDocument(final String fieldName, final Bson other) {
+        return getDocument(fieldName, of(other));
+    }
+
+    <T extends Expression> ArrayExpression<T> getArray(String fieldName);
+
+    <T extends Expression> ArrayExpression<T> getArray(String fieldName, ArrayExpression<? extends T> other);
+
+    DocumentExpression merge(DocumentExpression other);
 }
