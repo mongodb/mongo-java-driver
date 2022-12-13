@@ -353,7 +353,13 @@ functions:
 
               "iam_auth_ec2_instance_account" : "${iam_auth_ec2_instance_account}",
               "iam_auth_ec2_instance_secret_access_key" : "${iam_auth_ec2_instance_secret_access_key}",
-              "iam_auth_ec2_instance_profile" : "${iam_auth_ec2_instance_profile}"
+              "iam_auth_ec2_instance_profile" : "${iam_auth_ec2_instance_profile}",
+
+              "iam_auth_assume_web_role_name": "${iam_auth_assume_web_role_name}",
+              "iam_web_identity_issuer": "${iam_web_identity_issuer}",
+              "iam_web_identity_rsa_key": "${iam_web_identity_rsa_key}",
+              "iam_web_identity_jwks_uri": "${iam_web_identity_jwks_uri}",
+              "iam_web_identity_token_file": "${iam_web_identity_token_file}"
           }
           EOF
 
@@ -433,6 +439,67 @@ functions:
           # Write an empty prepare_mongodb_aws so no auth environment variables are set.
           echo "" > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
           JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh
+
+  "run aws auth test with web identity credentials":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        shell: "bash"
+        script: |
+          ${PREPARE_SHELL}
+          cd ${DRIVERS_TOOLS}/.evergreen/auth_aws
+          . ./activate-authawsvenv.sh
+          mongo aws_e2e_web_identity.js
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        shell: "bash"
+        silent: true
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          cat <<'EOF' > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
+            export AWS_ROLE_ARN="${iam_auth_assume_web_role_name}"
+            export AWS_WEB_IDENTITY_TOKEN_FILE="${iam_web_identity_token_file}"
+          EOF
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        shell: "bash"
+        script: |
+          ${PREPARE_SHELL}
+          if [ "${AWS_CREDENTIAL_PROVIDER}" = "builtIn" ]; then
+             echo "Built-in AWS credential provider does not support the web identity auth test, skipping..."
+             exit 0
+          fi
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} ASSERT_NO_URI_CREDS=true .evergreen/run-mongodb-aws-test.sh
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        shell: "bash"
+        silent: true
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          cat <<'EOF' > "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
+            export AWS_ROLE_ARN="${iam_auth_assume_web_role_name}"
+            export AWS_WEB_IDENTITY_TOKEN_FILE="${iam_web_identity_token_file}"
+            export AWS_ROLE_SESSION_NAME="test"
+          EOF
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        shell: "bash"
+        script: |
+          ${PREPARE_SHELL}
+          if [ "${AWS_CREDENTIAL_PROVIDER}" = "builtIn" ]; then
+             echo "Built-in AWS credential provider does not support the web identity auth test, skipping..."
+             exit 0
+          fi
+          JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} ASSERT_NO_URI_CREDS=true .evergreen/run-mongodb-aws-test.sh
 
   "run aws auth test with aws credentials as environment variables":
     - command: shell.exec
@@ -899,6 +966,16 @@ tasks:
             TOPOLOGY: "server"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with aws EC2 credentials"
+
+    - name: "aws-auth-test-with-web-identity-credentials"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            AUTH: "auth"
+            ORCHESTRATION_FILE: "auth-aws.json"
+            TOPOLOGY: "server"
+        - func: "add aws auth variables to file"
+        - func: "run aws auth test with web identity credentials"
 
     - name: "aws-ECS-auth-test"
       commands:
@@ -1909,6 +1986,7 @@ buildvariants:
     - name: "aws-auth-test-with-aws-credentials-as-environment-variables"
     - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
     - name: "aws-auth-test-with-aws-EC2-credentials"
+    - name: "aws-auth-test-with-web-identity-credentials"
 
 - matrix_name: "aws-ecs-auth-test"
   matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0"], os: "ubuntu" }
