@@ -386,7 +386,6 @@ final class MqlExpression<T extends Expression>
                 .append("cond", extractBsonValue(cr, cond.apply(varThis)))));
     }
 
-    @Override
     public ArrayExpression<T> sort() {
         return new MqlExpression<>((cr) -> astDoc("$sortArray", new BsonDocument()
                 .append("input", this.toBsonValue(cr))
@@ -402,68 +401,61 @@ final class MqlExpression<T extends Expression>
                 .append("in", extractBsonValue(cr, in.apply(varValue, varThis)))));
     }
 
-    private <R extends Expression> R reduceMap(
-            final Function<T, R> mapper,
-            final R initialValue,
-            final BinaryOperator<R> in) {
-        MqlExpression<R> map = (MqlExpression<R>) this.map(mapper);
-        return map.reduce(initialValue, in);
+    @Override
+    public BooleanExpression any(final Function<? super T, BooleanExpression> predicate) {
+        MqlExpression<BooleanExpression> map = (MqlExpression<BooleanExpression>) this.map(predicate);
+        return map.reduce(of(false), (a, b) -> a.or(b));
     }
 
     @Override
-    public BooleanExpression any(final Function<T, BooleanExpression> predicate) {
-        return reduceMap(predicate, of(false), (a, b) -> a.or(b));
+    public BooleanExpression all(final Function<? super T, BooleanExpression> predicate) {
+        MqlExpression<BooleanExpression> map = (MqlExpression<BooleanExpression>) this.map(predicate);
+        return map.reduce(of(true), (a, b) -> a.and(b));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public NumberExpression sum(final Function<? super T, ? extends NumberExpression> mapper) {
+        // no sum that returns IntegerExpression, both have same erasure
+        MqlExpression<NumberExpression> map = (MqlExpression<NumberExpression>) this.map(mapper);
+        return map.reduce(of(0), (a, b) -> a.add(b));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public NumberExpression multiply(final Function<? super T, ? extends NumberExpression> mapper) {
+        MqlExpression<NumberExpression> map = (MqlExpression<NumberExpression>) this.map(mapper);
+        return map.reduce(of(0), (NumberExpression a, NumberExpression b) -> a.multiply(b));
     }
 
     @Override
-    public BooleanExpression all(final Function<T, BooleanExpression> predicate) {
-        return reduceMap(predicate, of(true), (a, b) -> a.and(b));
+    public T max(final T other) {
+        return this.size().eq(of(0)).cond(other, this.maxN(of(1)).first());
     }
 
     @Override
-    public NumberExpression sum(final Function<T, NumberExpression> mapper) {
-        // no sum for IntegerExpression, both have same erasure
-        return reduceMap(mapper, of(0), (a, b) -> a.add(b));
+    public T min(final T other) {
+        return this.size().eq(of(0)).cond(other, this.minN(of(1)).first());
     }
 
     @Override
-    public NumberExpression multiply(final Function<T, NumberExpression> mapper) {
-        return reduceMap(mapper, of(1), (a, b) -> a.multiply(b));
-    }
-
-    @Override
-    public <R extends Expression> R max(final R other, final Function<? super T, ? extends R> mapper) {
-        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
-        return this.size().eq(of(0)).cond(other, results.maxN(of(1), v -> v).first());
-    }
-
-
-    @Override
-    public <R extends Expression> R min(final R other, final Function<? super T, ? extends R> mapper) {
-        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
-        return this.size().eq(of(0)).cond(other, results.minN(of(1), v -> v).first());
-    }
-
-    @Override
-    public <R extends Expression> ArrayExpression<R> maxN(final IntegerExpression n, final Function<? super T, ? extends R> mapper) {
-        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
+    public ArrayExpression<T> maxN(final IntegerExpression n) {
         return newMqlExpression((CodecRegistry cr) -> astDoc("$maxN", new BsonDocument()
-                .append("input", extractBsonValue(cr, results))
+                .append("input", extractBsonValue(cr, this))
                 .append("n", extractBsonValue(cr, n))));
     }
 
     @Override
-    public <R extends Expression> ArrayExpression<R> minN(final IntegerExpression n, final Function<? super T, ? extends R> mapper) {
-        MqlExpression<R> results = (MqlExpression<R>) this.map(mapper);
+    public ArrayExpression<T> minN(final IntegerExpression n) {
         return newMqlExpression((CodecRegistry cr) -> astDoc("$minN", new BsonDocument()
-                .append("input", extractBsonValue(cr, results))
+                .append("input", extractBsonValue(cr, this))
                 .append("n", extractBsonValue(cr, n))));
     }
 
-
     @Override
-    public StringExpression join(final Function<T, StringExpression> mapper) {
-        return reduceMap(mapper, of(""), (a, b) -> a.concat(b));
+    public StringExpression join(final Function<? super T, StringExpression> mapper) {
+        MqlExpression<StringExpression> map = (MqlExpression<StringExpression>) this.map(mapper);
+        return map.reduce(of(""), (a, b) -> a.concat(b));
     }
 
     @SuppressWarnings("unchecked")

@@ -50,26 +50,24 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      */
     <R extends Expression> ArrayExpression<R> map(Function<? super T, ? extends R> in);
 
-    ArrayExpression<T> sort();
-
     IntegerExpression size();
 
-    BooleanExpression any(Function<T, BooleanExpression> predicate);
+    BooleanExpression any(Function<? super T, BooleanExpression> predicate);
 
-    BooleanExpression all(Function<T, BooleanExpression> predicate);
+    BooleanExpression all(Function<? super T, BooleanExpression> predicate);
 
-    NumberExpression sum(Function<T, NumberExpression> mapper);
+    NumberExpression sum(Function<? super T, ? extends NumberExpression> mapper);
 
-    NumberExpression multiply(Function<T, NumberExpression> mapper);
+    NumberExpression multiply(Function<? super T, ? extends NumberExpression> mapper);
 
-    <R extends Expression> R max(R other, Function<? super T, ? extends R> mapper);
+    T max(T other);
 
-    <R extends Expression> R min(R other, Function<? super T, ? extends R> mapper);
+    T min(T other);
 
-    <R extends Expression> ArrayExpression<R> maxN(IntegerExpression n, Function<? super T, ? extends R> mapper);
-    <R extends Expression> ArrayExpression<R> minN(IntegerExpression n, Function<? super T, ? extends R> mapper);
+    ArrayExpression<T> maxN(IntegerExpression n);
+    ArrayExpression<T> minN(IntegerExpression n);
 
-    StringExpression join(Function<T, StringExpression> mapper);
+    StringExpression join(Function<? super T, StringExpression> mapper);
 
     <R extends Expression> ArrayExpression<R> concat(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
 

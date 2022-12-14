@@ -131,12 +131,18 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     @Test
     public void sortTest() {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/sortArray/
+        ArrayExpression<IntegerExpression> integerExpressionArrayExpression = ofIntegerArray(3, 1, 2);
         assertExpression(
                 Stream.of(3, 1, 2)
-                        .sorted().collect(Collectors.toList()),
-                ofIntegerArray(3, 1, 2).sort(),
+                        .sorted().collect(Collectors.toList()), sort(integerExpressionArrayExpression),
                 // MQL:
                 "{'$sortArray': {'input': [3, 1, 2], 'sortBy': 1}}");
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArrayExpression<? extends NumberExpression> sort(final ArrayExpression<? extends NumberExpression> array) {
+        MqlExpression<? extends NumberExpression> mqlArray = (MqlExpression<? extends NumberExpression>) array;
+        return mqlArray.sort();
     }
 
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/reduce/
@@ -198,54 +204,54 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     public void reduceMaxTest() {
         assertExpression(
                 3,
-                ofIntegerArray(1, 2, 3).max(of(9), a -> a),
+                ofIntegerArray(1, 2, 3).max(of(9)),
                 "{'$cond': [{'$eq': [{'$size': [[1, 2, 3]]}, 0]}, 9, "
                         + "{'$first': [{'$maxN': {'input': {'$map': {'input': {'$map': "
                         + "{'input': [1, 2, 3], 'in': '$$this'}}, 'in': '$$this'}}, 'n': 1}}]}]}");
         assertExpression(
                 9,
-                ofIntegerArray().max(of(9), a -> a));
+                ofIntegerArray().max(of(9)));
     }
 
     @Test
     public void reduceMinTest() {
         assertExpression(
                 1,
-                ofIntegerArray(1, 2, 3).min(of(9), a -> a),
+                ofIntegerArray(1, 2, 3).min(of(9)),
                 "{'$cond': [{'$eq': [{'$size': [[1, 2, 3]]}, 0]}, 9, "
                         + "{'$first': [{'$minN': {'input': {'$map': {'input': {'$map': "
                         + "{'input': [1, 2, 3], 'in': '$$this'}}, 'in': '$$this'}}, 'n': 1}}]}]}");
         assertExpression(
                 9,
-                ofIntegerArray().min(of(9), a -> a));
+                ofIntegerArray().min(of(9)));
     }
 
     @Test
     public void reduceMaxNTest() {
         assertExpression(
                 Arrays.asList(3, 2),
-                ofIntegerArray(3, 1, 2).maxN(of(2), a -> a));
+                ofIntegerArray(3, 1, 2).maxN(of(2)));
         assertExpression(
                 Arrays.asList(),
-                ofIntegerArray().maxN(of(2), a -> a));
+                ofIntegerArray().maxN(of(2)));
         // N must be non-zero
         assertThrows(MongoCommandException.class, () -> assertExpression(
                 Arrays.asList(),
-                ofIntegerArray(3, 2, 1).maxN(of(0), a -> a)));
+                ofIntegerArray(3, 2, 1).maxN(of(0))));
     }
 
     @Test
     public void reduceMinNTest() {
         assertExpression(
                 Arrays.asList(1, 2),
-                ofIntegerArray(3, 1, 2).minN(of(2), a -> a));
+                ofIntegerArray(3, 1, 2).minN(of(2)));
         assertExpression(
                 Arrays.asList(),
-                ofIntegerArray().minN(of(2), a -> a));
+                ofIntegerArray().minN(of(2)));
         // N must be non-zero
         assertThrows(MongoCommandException.class, () -> assertExpression(
                 Arrays.asList(),
-                ofIntegerArray(3, 2, 1).minN(of(0), a -> a)));
+                ofIntegerArray(3, 2, 1).minN(of(0))));
     }
 
     @Test
@@ -280,7 +286,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/ (40)
         assertExpression(
                 Arrays.asList(1, 2, 3),
-                ofArray(ofIntegerArray(1, 2), ofIntegerArray(1, 3)).union(v -> v).sort(),
+                sort(ofArray(ofIntegerArray(1, 2), ofIntegerArray(1, 3)).union(v -> v)),
                 // MQL:
                 "{'$sortArray': {'input': {'$reduce': {'input': "
                         + "{'$map': {'input': [[1, 2], [1, 3]], 'in': '$$this'}}, "
@@ -429,20 +435,20 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/
         assertExpression(
                 Arrays.asList(1, 2, 3),
-                array123.union(array123).sort(),
+                sort(array123.union(array123)),
                 // MQL:
                 "{'$sortArray': {'input': {'$setUnion': [[1, 2, 3], [1, 2, 3]]}, 'sortBy': 1}}");
         // mixed types:
         assertExpression(
                 Arrays.asList(1, 2.0, 3),
-                ofNumberArray(2.0).union(ofIntegerArray(1, 2, 3)).sort());
+                sort(ofNumberArray(2.0).union(ofIntegerArray(1, 2, 3))));
     }
 
     @Test
     public void distinctTest() {
         assertExpression(
                 Arrays.asList(1, 2, 3),
-                ofIntegerArray(1, 2, 1, 3, 3).distinct().sort(),
+                sort(ofIntegerArray(1, 2, 1, 3, 3).distinct()),
                 "{'$sortArray': {'input': {'$setUnion': [[1, 2, 1, 3, 3]]}, 'sortBy': 1}}");
     }
 }
