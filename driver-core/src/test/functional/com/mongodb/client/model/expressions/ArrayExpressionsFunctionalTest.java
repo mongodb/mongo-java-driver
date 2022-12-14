@@ -206,8 +206,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 3,
                 ofIntegerArray(1, 2, 3).max(of(9)),
                 "{'$cond': [{'$eq': [{'$size': [[1, 2, 3]]}, 0]}, 9, "
-                        + "{'$first': [{'$maxN': {'input': {'$map': {'input': {'$map': "
-                        + "{'input': [1, 2, 3], 'in': '$$this'}}, 'in': '$$this'}}, 'n': 1}}]}]}");
+                        + "{'$first': [{'$maxN': {'input': [1, 2, 3], 'n': 1}}]}]}");
         assertExpression(
                 9,
                 ofIntegerArray().max(of(9)));
@@ -219,8 +218,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 1,
                 ofIntegerArray(1, 2, 3).min(of(9)),
                 "{'$cond': [{'$eq': [{'$size': [[1, 2, 3]]}, 0]}, 9, "
-                        + "{'$first': [{'$minN': {'input': {'$map': {'input': {'$map': "
-                        + "{'input': [1, 2, 3], 'in': '$$this'}}, 'in': '$$this'}}, 'n': 1}}]}]}");
+                        + "{'$first': [{'$minN': {'input': [1, 2, 3], 'n': 1}}]}]}");
         assertExpression(
                 9,
                 ofIntegerArray().min(of(9)));
