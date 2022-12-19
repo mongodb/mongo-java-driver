@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 import com.mongodb.Function;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.internal.MappingIterable;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.BatchCursorPublisher;
 import org.reactivestreams.Publisher;
@@ -56,7 +57,7 @@ class SyncMongoIterable<T> implements MongoIterable<T> {
 
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        throw new UnsupportedOperationException();
+        return new MappingIterable<>(this, mapper);
     }
 
     @Override

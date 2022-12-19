@@ -24,6 +24,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterDescription;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
@@ -137,12 +138,12 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public MongoIterable<String> listDatabaseNames() {
-        throw new UnsupportedOperationException();
+        return listDatabases(BsonDocument.class).nameOnly(true).map(result -> result.getString("name").getValue());
     }
 
     @Override
     public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listDatabases(clientSession, BsonDocument.class).nameOnly(true).map(result -> result.getString("name").getValue());
     }
 
     @Override
