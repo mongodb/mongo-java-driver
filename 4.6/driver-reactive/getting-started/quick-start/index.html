@@ -522,7 +522,11 @@ method to access a collection.</p>
 <p>To insert a single document into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/4.6/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)
 "><code>insertOne()</code></a> method.</p>
 
-<pre><code class="language-java">collection.insertOne(doc).subscribe(new OperationSubscriber&lt;InsertOneResult&gt;());
+<pre><code class="language-java">
+var subscriber = new OperationSubscriber&lt;InsertOneResult&gt;();
+collection.insertOne(doc).subscribe(subscriber);
+// Wait for the insertOne operation to complete
+subscriber.await();
 </code></pre>
 
 <div class="admonition note">
@@ -595,7 +599,11 @@ for (int i = 0; i &lt; 100; i++) {
 <a href="/mongo-java-driver/4.6/apidocs/mongodb-driver-reactivestreams/com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)
 "><code>insertMany()</code></a> method.</p>
 
-<pre><code class="language-java">collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;InsertManyResult&gt;());
+<pre><code class="language-java">
+var subscriber = new OperationSubscriber&lt;InsertManyResult&gt;();
+collection.insertMany(documents).subscribe(subscriber);
+// Wait for the insertMany operation to complete
+subscriber.await();
 </code></pre>
 
 <p>Here we block on the <code>Publisher</code> to finish so that when we call the next operation we know the data has been inserted into the database!</p>
