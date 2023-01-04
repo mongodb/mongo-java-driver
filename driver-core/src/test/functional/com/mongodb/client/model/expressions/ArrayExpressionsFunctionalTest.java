@@ -140,7 +140,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @SuppressWarnings("unchecked")
-    private ArrayExpression<? extends NumberExpression> sort(final ArrayExpression<? extends NumberExpression> array) {
+    private static ArrayExpression<? extends NumberExpression> sort(final ArrayExpression<? extends NumberExpression> array) {
         MqlExpression<? extends NumberExpression> mqlArray = (MqlExpression<? extends NumberExpression>) array;
         return mqlArray.sort();
     }
