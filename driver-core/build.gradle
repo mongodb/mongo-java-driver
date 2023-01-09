@@ -83,6 +83,8 @@ afterEvaluate {
             '!sun.nio.ch.*',  // Used by DirectBufferDeallocator only for java 8
             '!javax.annotation.*', // Brought in by com.google.code.findbugs:annotations
             'io.netty.*;resolution:=optional',
+            'com.amazonaws.*;resolution:=optional',
+            'software.amazon.awssdk.*;resolution:=optional',
             'org.xerial.snappy.*;resolution:=optional',
             'com.github.luben.zstd.*;resolution:=optional',
             'org.slf4j.*;resolution:=optional',
