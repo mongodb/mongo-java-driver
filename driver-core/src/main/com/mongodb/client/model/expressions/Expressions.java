@@ -185,20 +185,19 @@ public final class Expressions {
         });
     }
 
-    public static <T extends Expression> EntryExpression<T> ofEntry(final String k, final T v) {
+    public static <T extends Expression> EntryExpression<T> ofEntry(final StringExpression k, final T v) {
         Assertions.notNull("k", k);
         Assertions.notNull("v", v);
         return new MqlExpression<>((cr) -> {
             BsonDocument document = new BsonDocument();
-            document.put("k", new BsonString(k));
+            document.put("k", extractBsonValue(cr, k));
             document.put("v", extractBsonValue(cr, v));
-            return new AstPlaceholder(new BsonDocument("$literal",
-                    document.toBsonDocument(BsonDocument.class, cr)));
+            return new AstPlaceholder(document);
         });
     }
 
-    public static <T extends Expression> MapExpression<T> ofEmptyMap() {
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonDocument("$literal", new BsonDocument())));
+    public static <T extends Expression> MapExpression<T> ofMap() {
+        return ofMap(new BsonDocument());
     }
 
     /**

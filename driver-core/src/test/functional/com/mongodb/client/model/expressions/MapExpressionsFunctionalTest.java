@@ -26,10 +26,11 @@ import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static com.mongodb.client.model.expressions.Expressions.ofEntry;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
+import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 
 class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
-    private final MapExpression<IntegerExpression> mapKey123 = Expressions.<IntegerExpression>ofEmptyMap()
+    private final MapExpression<IntegerExpression> mapKey123 = Expressions.<IntegerExpression>ofMap()
             .set("key", of(123));
 
     private final MapExpression<IntegerExpression> mapA1B2 = ofMap(Document.parse("{keyA: 1, keyB: 2}"));
@@ -48,7 +49,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // entry
         assertExpression(
                 Document.parse("{k: 'keyA', v: 1}"),
-                ofEntry("keyA", of(1)));
+                ofEntry(of("keyA"), of(1)));
     }
 
     @Test
@@ -68,11 +69,15 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 BsonDocument.parse("{}"),
                 mapKey123.unset("key"));
+        // "other" parameter
+        assertExpression(
+                1,
+                ofMap(Document.parse("{ 'null': null }")).get("null", of(1)));
     }
 
     @Test
     public void getSetEntryTest() {
-        EntryExpression<IntegerExpression> entryA1 = ofEntry("keyA", of(1));
+        EntryExpression<IntegerExpression> entryA1 = ofEntry(of("keyA"), of(1));
         assertExpression(
                 Document.parse("{k: 'keyA', 'v': 33}"),
                 entryA1.setValue(of(33)));
@@ -89,8 +94,37 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/arrayToObject/ (48)
         assertExpression(
                 Document.parse("{'keyA': 1}"),
-                ofArray(ofEntry("keyA", of(1))).asMap(v -> v),
-                "{'$arrayToObject': [[{'$literal': {'k': 'keyA', 'v': 1}}]]}");
+                ofArray(ofEntry(of("keyA"), of(1))).asMap(v -> v),
+                "{'$arrayToObject': [{'$map': {'input': [{'k': 'keyA', 'v': 1}], 'in': '$$this'}}]}");
+
+        assertExpression(
+                Document.parse("{'keyA': 55}"),
+                ofArray(ofEntry(of("keyA"), of(1))).asMap(v -> v.setValue(of(55))),
+                "{'$arrayToObject': [{'$map': {'input': [{'k': 'keyA', 'v': 1}], "
+                        + "'in': {'$setField': {'field': 'v', 'input': '$$this', 'value': 55}}}}]}");
+
+        // using documents
+        assertExpression(
+                Document.parse("{ 'item' : 'abc123', 'qty' : 25 }"),
+                ofArray(
+                        of(Document.parse("{ 'k': 'item', 'v': 'abc123' }")),
+                        of(Document.parse("{ 'k': 'qty', 'v': 25 }")))
+                        .asMap(v -> ofEntry(v.getString("k"), v.getField("v")) ));
+        // using arrays
+        assertExpression(
+                Document.parse("{ 'item' : 'abc123', 'qty' : 25 }"),
+                ofArray(
+                        ofStringArray("item", "abc123"),
+                        ofArray(of("qty"), of(25)))
+                        .asMap(v -> ofEntry(v.elementAt(of(0)).asString(), v.elementAt(of(1)))));
+        // last listed value used
+        assertExpression(
+                Document.parse("{ 'item' : 'abc123' }"),
+                ofArray(
+                        Expressions.<StringExpression>ofMap(Document.parse("{ 'k': 'item', 'v': '123abc' }")),
+                        Expressions.<StringExpression>ofMap(Document.parse("{ 'k': 'item', 'v': 'abc123' }")))
+                        .asMap(v -> ofEntry(v.get("k"), v.get("v"))));
+
     }
 
     @Test
@@ -98,7 +132,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/objectToArray/ (23)
         assertExpression(
                 Arrays.asList(Document.parse("{'k': 'k1', 'v': 1}")),
-                Expressions.<IntegerExpression>ofEmptyMap().set("k1", of(1)).entrySet(),
+                Expressions.<IntegerExpression>ofMap().set("k1", of(1)).entrySet(),
                 "{'$objectToArray': {'$setField': "
                         + "{'field': 'k1', 'input': {'$literal': {}}, 'value': 1}}}");
 

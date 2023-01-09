@@ -64,19 +64,13 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public EntryExpression<T> setValue(final T val) {
-        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
-                .append("field", new BsonString("v"))
-                .append("input", this.toBsonValue(cr))
-                .append("value", extractBsonValue(cr, val))));
+    public EntryExpression<T> setValue(final T value) {
+        return setFieldInternal("v", value);
     }
 
     @Override
     public EntryExpression<T> setKey(final StringExpression key) {
-        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
-                .append("field", new BsonString("k"))
-                .append("input", this.toBsonValue(cr))
-                .append("value", extractBsonValue(cr, key))));
+        return setFieldInternal("k", key);
     }
 
     static final class AstPlaceholder {
@@ -243,7 +237,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> MapExpression<R> getMap(final String field, final MapExpression<R> other) {
+    public <R extends Expression> MapExpression<R> getMap(final String field, final MapExpression<? extends R> other) {
         return getMap(field).isMapOr(other);
     }
 
@@ -269,6 +263,10 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public DocumentExpression setField(final String fieldName, final Expression exp) {
+        return setFieldInternal(fieldName, exp);
+    }
+
+    private MqlExpression<T> setFieldInternal(final String fieldName, final Expression exp) {
         return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
                 .append("field", new BsonString(fieldName))
                 .append("input", this.toBsonValue(cr))
@@ -363,7 +361,7 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(astWrapped("$isArray"));
     }
 
-    public Expression ifNull(final Expression ifNull) {
+    private Expression ifNull(final Expression ifNull) {
         return new MqlExpression<>(ast("$ifNull", ifNull, Expressions.ofNull()))
                 .assertImplementsAllExpressions();
     }
@@ -382,22 +380,20 @@ final class MqlExpression<T extends Expression>
         return (ArrayExpression<R>) this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
-    public BooleanExpression isDocument() {
+    public BooleanExpression isDocumentOrMap() {
         return new MqlExpression<>(ast("$type")).eq(of("object"));
     }
 
     @Override
     public <R extends DocumentExpression> R isDocumentOr(final R other) {
-        return this.isDocument().cond(this.assertImplementsAllExpressions(), other);
+        return this.isDocumentOrMap().cond(this.assertImplementsAllExpressions(), other);
     }
 
-    public BooleanExpression isMap() {
-        return new MqlExpression<>(ast("$type")).eq(of("object"));
-    }
-
+    @SuppressWarnings("unchecked")
     @Override
-    public <R extends Expression> MapExpression<R> isMapOr(final MapExpression<R> other) {
-        return this.isMap().cond(this.assertImplementsAllExpressions(), other);
+    public <R extends Expression> MapExpression<R> isMapOr(final MapExpression<? extends R> other) {
+        MqlExpression<Expression> isMap = (MqlExpression<Expression>) this.isDocumentOrMap();
+        return newMqlExpression(isMap.ast("$cond", this.assertImplementsAllExpressions(), other));
     }
 
     @Override
@@ -794,8 +790,8 @@ final class MqlExpression<T extends Expression>
 
     @SuppressWarnings("unchecked")
     @Override
-    public T get(final StringExpression key, final T orElse) {
-        return (T) ((MqlExpression<?>) get(key)).ifNull(orElse); // TODO unchecked
+    public T get(final StringExpression key, final T other) {
+        return (T) ((MqlExpression<?>) get(key)).ifNull(other);
     }
 
     @Override
@@ -814,7 +810,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public MapExpression<T> merge(final MapExpression<T> map) {
+    public MapExpression<T> merge(final MapExpression<? extends T> map) {
         return new MqlExpression<>(ast("$mergeObjects", map));
     }
 
@@ -824,8 +820,9 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> MapExpression<R> asMap(final Function<T, EntryExpression<R>> o) {
-        return newMqlExpression(astWrapped("$arrayToObject"));
+    public <R extends Expression> MapExpression<R> asMap(final Function<T, EntryExpression<R>> mapper) {
+        MqlExpression<R> map = (MqlExpression<R>) this.map(mapper);
+        return newMqlExpression(map.astWrapped("$arrayToObject"));
     }
 
 }

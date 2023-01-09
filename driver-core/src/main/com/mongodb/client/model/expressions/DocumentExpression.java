@@ -87,7 +87,7 @@ public interface DocumentExpression extends Expression {
     }
 
     <T extends Expression> MapExpression<T> getMap(String fieldName);
-    <T extends Expression> MapExpression<T> getMap(String fieldName, MapExpression<T> other);
+    <T extends Expression> MapExpression<T> getMap(String fieldName, MapExpression<? extends T> other);
 
     default <T extends Expression> MapExpression<T> getMap(final String fieldName, final Bson other) {
         return getMap(fieldName, ofMap(other));

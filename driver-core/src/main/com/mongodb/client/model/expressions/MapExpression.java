@@ -28,8 +28,8 @@ public interface MapExpression<T extends Expression> extends Expression {
 
     T get(StringExpression key, T orElse);
 
-    default T get(final String key, final T orElse) {
-        return get(of(key), orElse);
+    default T get(final String key, final T other) {
+        return get(of(key), other);
     }
 
     MapExpression<T> set(StringExpression key, T value);
@@ -44,7 +44,7 @@ public interface MapExpression<T extends Expression> extends Expression {
         return unset(of(key));
     }
 
-    MapExpression<T> merge(MapExpression<T> map);
+    MapExpression<T> merge(MapExpression<? extends T> map);
 
     ArrayExpression<EntryExpression<T>> entrySet();
 }
