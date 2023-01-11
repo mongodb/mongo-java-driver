@@ -21,12 +21,68 @@ import com.mongodb.annotations.Evolving;
 import java.util.function.Function;
 
 /**
- * <p>Users should treat these interfaces as sealed, and must not implement any
- * sub-interfaces.
+ * A value in the context of the MongoDB Query Language (MQL).
  *
- * TODO-END: 'cause an error', 'execution context', wrong types/unsafe operations
- * TODO-END: types and how missing/null are not part of any type.
- * TODO-END: behaviour of equals
+ * <p>The API provided by this base type and its subtypes is the Java-native
+ * variant of MQL. It is used to query the MongoDB server, to perform remote
+ * computations, to store and retrieve data, or to otherwise work with data
+ * on a MongoDB server or compatible execution context.
+ *
+ * <p>The following is an example of usage within an aggregation pipeline. Here,
+ * the current document value is obtained and its "numberArray" field is
+ * filtered and summed, in a style similar to that of the Java Stream API:
+ *
+ * <pre>{@code
+ * AggregateIterable<Document> result = col.aggregate(Arrays.asList(
+ *     addFields(new Field<>("result", current()
+ *         .<MqlNumber>getArray("numberArray")
+ *         .filter(v -> v.gt(of(0)))
+ *         .sum(v -> v)))));
+ * }</pre>
+ *
+ * <p>Values are typically obtained via the current document and its fields, or
+ * specified via statically-imported methods on the {@link Expressions} class.
+ *
+ * <p>The null value is not part of, and cannot be used as if it were part of,
+ * any other type. It has no explicit type of its own. Instead of checking for
+ * null, users should check for their expected type, via methods such as
+ * {@link Expression#isNumberOr(NumberExpression)}. Where the null value must
+ * be checked explicitly, users may use {@link Branches#isNull} within
+ * {@link Expression#switchOn}.
+ *
+ * <p>There is no explicit "missing" or "undefined" value. Users may use
+ * {@link DocumentExpression#has}.
+ *
+ * <p>This type hierarchy differs from BSON in that it provides operations,
+ * while the BSON API does not, its numeric types are less granular, and it
+ * offers multiple abstractions of certain types (document, map, entry). It
+ * differs from Java types in that the operations available differ, and in that
+ * an implementation of this API may be used to be used to generate MQL in the
+ * form of BSON. (This API makes no guarantee regarding the BSON output produced
+ * by its implementation, which in any case may vary due to optimization or
+ * other factors.)
+ *
+ * <p>This API is a language binding in the sense that it exposes the operations
+ * available on the MongoDB server or compatible execution context, and the
+ * implied corresponding data types, through a Java API. The methods exposed
+ * through this API correspond to MQL operations, though this correspondence
+ * is not exact.
+ *
+ * <p>Some methods within the API constitute an assertion by the user that the
+ * data is of a certain type. For example, {@link DocumentExpression#getArray}}
+ * requires that the underlying field is both an array, and an array of some
+ * certain type. If the field is not an array in the underlying data, behaviour
+ * is undefined by this API (though behaviours may be defined by the execution
+ * context, users are strongly discouraged from relying on behaviour that is not
+ * part of this API).
+ *
+ * <p>As with the Java Stream API's terminal operations, corresponding Java
+ * values are not directly available, but must be obtained indirectly via the
+ * aggregation pipeline, or via find. Certain methods may cause an error, which
+ * will be produced through these "terminal operations".
+ *
+ * <p>Users should treat these interfaces as sealed, and should not create
+ * implementations.
  *
  * @see Expressions
  */
@@ -35,9 +91,8 @@ public interface Expression {
 
     /**
      * The method {@link Expression#eq} should be used to compare values for
-     * equality.
+     * equality. This method checks reference equality.
      */
-    @Deprecated // TODO-END (?) <p>Marked deprecated to prevent erroneous use.
     @Override
     boolean equals(Object other);
 
@@ -53,6 +108,8 @@ public interface Expression {
 
     /**
      * Whether {@code this} value is not equal to the {@code other} value.
+     *
+     * <p>The result does not correlate with {@link Expression#equals(Object)}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -94,7 +151,7 @@ public interface Expression {
     BooleanExpression lte(Expression other);
 
     /**
-     * {@code this} value as a {@link BooleanExpression boolean} if
+     * {@code this} value as a {@linkplain BooleanExpression boolean} if
      * {@code this} is a boolean, or the {@code other} boolean value if
      * {@code this} is null, or is missing, or is of any other non-boolean type.
      *
@@ -104,7 +161,7 @@ public interface Expression {
     BooleanExpression isBooleanOr(BooleanExpression other);
 
     /**
-     * {@code this} value as a {@link NumberExpression number} if
+     * {@code this} value as a {@linkplain NumberExpression number} if
      * {@code this} is a number, or the {@code other} number value if
      * {@code this} is null, or is missing, or is of any other non-number type.
      *
@@ -114,7 +171,7 @@ public interface Expression {
     NumberExpression isNumberOr(NumberExpression other);
 
     /**
-     * {@code this} value as an {@link IntegerExpression integer} if
+     * {@code this} value as an {@linkplain IntegerExpression integer} if
      * {@code this} is an integer, or the {@code other} integer value if
      * {@code this} is null, or is missing, or is of any other non-integer type.
      *
@@ -124,7 +181,7 @@ public interface Expression {
     IntegerExpression isIntegerOr(IntegerExpression other);
 
     /**
-     * {@code this} value as a {@link StringExpression string} if
+     * {@code this} value as a {@linkplain StringExpression string} if
      * {@code this} is a string, or the {@code other} string value if
      * {@code this} is null, or is missing, or is of any other non-string type.
      *
@@ -134,7 +191,7 @@ public interface Expression {
     StringExpression isStringOr(StringExpression other);
 
     /**
-     * {@code this} value as a {@link DateExpression boolean} if
+     * {@code this} value as a {@linkplain DateExpression boolean} if
      * {@code this} is a date, or the {@code other} date value if
      * {@code this} is null, or is missing, or is of any other non-date type.
      *
@@ -145,7 +202,7 @@ public interface Expression {
 
 
     /**
-     * {@code this} value as a {@link ArrayExpression array} if
+     * {@code this} value as a {@linkplain ArrayExpression array} if
      * {@code this} is an array, or the {@code other} array value if
      * {@code this} is null, or is missing, or is of any other non-array type.
      *
@@ -169,15 +226,16 @@ public interface Expression {
     <T extends Expression> MapExpression<T> isMapOr(MapExpression<? extends T> other);
 
     /**
-     * The {@link StringExpression string} representation of {@code this} value.
+     * The {@linkplain StringExpression string} representation of {@code this} value.
      *
-     * <p>This may "cause an error" if the type cannot be converted to string,
-     * as is the case with {@link ArrayExpression arrays},
-     * {@link DocumentExpression documents}, and {@link MapExpression maps}.
+     * <p>This may cause an error to be produced if the type cannot be converted
+     * to a {@linkplain StringExpression string}, as is the case with
+     * {@linkplain ArrayExpression arrays},
+     * {@linkplain DocumentExpression documents},
+     * {@linkplain MapExpression maps}, and
+     * {@linkplain EntryExpression entries}.
+     *
      * TODO-END what about null/missing?
-     * TODO-END document vs record
-     * TODO-END "cause an error" above
-     *
      *
      * @see StringExpression#parseDate()
      * @see StringExpression#parseInteger()

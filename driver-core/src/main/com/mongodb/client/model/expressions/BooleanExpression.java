@@ -19,7 +19,8 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * A logical boolean value, either true or false.
+ * A boolean {@linkplain Expression value} in the context of the
+ * MongoDB Query Language (MQL).
  */
 public interface BooleanExpression extends Expression {
 
@@ -51,8 +52,8 @@ public interface BooleanExpression extends Expression {
      * The {@code left} branch when {@code this} is true,
      * and the {@code right} branch otherwise.
      *
-     * @param left the left branch.
-     * @param right the right branch.
+     * @param left the left value.
+     * @param right the right value.
      * @return the resulting value.
      * @param <T> The type of the resulting expression.
      */

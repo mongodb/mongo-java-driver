@@ -19,9 +19,10 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * A number value. {@link IntegerExpression Integers} are a subset of numbers,
- * and so, for example, the integer 0 and the number 0 are the same value,
- * and are equal.
+ * A number {@linkplain Expression value} in the context of the MongoDB Query
+ * Language (MQL). {@linkplain IntegerExpression Integers} are a subset of
+ * numbers, and so, for example, the integer 0 and the number 0 are
+ * {@linkplain #eq(Expression) equal}.
  */
 public interface NumberExpression extends Expression {
 
@@ -102,7 +103,8 @@ public interface NumberExpression extends Expression {
     }
 
     /**
-     * The larger value of {@code this} and the {@code other} value.
+     * The {@linkplain #gt(Expression) larger} value of {@code this}
+     * and the {@code other} value.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -110,7 +112,8 @@ public interface NumberExpression extends Expression {
     NumberExpression max(NumberExpression other);
 
     /**
-     * The smaller value of {@code this} and the {@code other} value.
+     * The {@linkplain #lt(Expression) smaller} value of {@code this}
+     * and the {@code other} value.
      *
      * @param other the other value.
      * @return the resulting value.

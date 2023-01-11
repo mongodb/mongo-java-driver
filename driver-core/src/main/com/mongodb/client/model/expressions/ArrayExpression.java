@@ -21,35 +21,39 @@ import java.util.function.Function;
 import static com.mongodb.client.model.expressions.Expressions.of;
 
 /**
- * Expresses an array value. An array value is a finite, ordered collection of
- * elements of a certain type.
+ * An array {@link Expression value} in the context of the MongoDB Query
+ * Language (MQL). An array is a finite, ordered collection of elements of a
+ * certain type. It is also known as a finite mathematical sequence.
  *
- * @param <T> the type of the elements in the array
+ * @param <T> the type of the elements
  */
 public interface ArrayExpression<T extends Expression> extends Expression {
 
     /**
-     * Returns an array consisting of those elements in this array that match
-     * the given predicate condition. Evaluates each expression in this array
-     * according to the cond function. If cond evaluates to logical true, then
-     * the element is preserved; if cond evaluates to logical false, the element
-     * is omitted.
+     * An array consisting of only those elements in {@code this} array that
+     * match the provided predicate.
      *
-     * @param cond the function to apply to each element
-     * @return the new array
+     * @param predicate the predicate to apply to each element to determine if
+     *                  it should be included.
+     * @return the resulting array.
      */
     ArrayExpression<T> filter(Function<? super T, ? extends BooleanExpression> cond);
 
     /**
-     * Returns an array consisting of the results of applying the given function
-     * to the elements of this array.
+     * An array consisting of the results of applying the provided function to
+     * the elements of {@code this} array.
      *
-     * @param in the function to apply to each element
-     * @return the new array
-     * @param <R> the type contained in the resulting array
+     * @param in the function to apply to each element.
+     * @return the resulting array.
+     * @param <R> the type of the elements of the resulting array.
      */
     <R extends Expression> ArrayExpression<R> map(Function<? super T, ? extends R> in);
 
+    /**
+     * The size of {@code this} array.
+     *
+     * @return the size.
+     */
     IntegerExpression size();
 
     BooleanExpression any(Function<? super T, BooleanExpression> predicate);
