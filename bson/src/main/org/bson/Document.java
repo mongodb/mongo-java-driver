@@ -392,17 +392,17 @@ public class Document implements Map<String, Object>, Serializable, Bson {
     // A ClassCastException will be thrown if an element in the list is not of type T.
     @SuppressWarnings("unchecked")
     private <T> List<T> constructValuesList(final Object key, final Class<T> clazz, final List<T> defaultValue) {
-        List<?> value = get(key, List.class);
+        List<T> value = get(key, List.class);
         if (value == null) {
             return defaultValue;
         }
 
         for (Object item : value) {
-            if (!clazz.isAssignableFrom(item.getClass())) {
+            if (item != null && !clazz.isAssignableFrom(item.getClass())) {
                 throw new ClassCastException(format("List element cannot be cast to %s", clazz.getName()));
             }
         }
-        return (List<T>) value;
+        return value;
     }
 
     /**
