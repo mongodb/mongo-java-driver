@@ -69,6 +69,7 @@ class DocumentSpecification extends Specification {
         when:
         Document doc = Document.parse("{x: 1, y: ['two', 'three'], z: [{a: 'one'}, {b:2}], w: {a: ['One', 'Two']}}")
                 .append('numberList', [10, 20.5d, 30L])
+                .append('listWithNullElement', [10, null, 20])
         List<String> defaultList = ['a', 'b', 'c']
 
         then:
@@ -84,6 +85,9 @@ class DocumentSpecification extends Specification {
         doc.getList('numberList', Number).get(0) == 10
         doc.getList('numberList', Number).get(1) == 20.5d
         doc.getList('numberList', Number).get(2) == 30L
+        doc.getList('listWithNullElement', Number).get(0) == 10
+        doc.getList('listWithNullElement', Number).get(1) == null
+        doc.getList('listWithNullElement', Number).get(2) == 20
     }
 
     def 'should return null list when key is not found'() {
@@ -102,6 +106,7 @@ class DocumentSpecification extends Specification {
         then:
         doc.getList('a', String, defaultList) == defaultList
     }
+
 
     def 'should throw an exception when the list elements are not objects of the specified class'() {
         given:
