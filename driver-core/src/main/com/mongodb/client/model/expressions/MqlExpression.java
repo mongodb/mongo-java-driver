@@ -403,29 +403,29 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public BooleanExpression any(final Function<? super T, BooleanExpression> predicate) {
-        MqlExpression<BooleanExpression> map = (MqlExpression<BooleanExpression>) this.map(predicate);
-        return map.reduce(of(false), (a, b) -> a.or(b));
+        MqlExpression<BooleanExpression> array = (MqlExpression<BooleanExpression>) this.map(predicate);
+        return array.reduce(of(false), (a, b) -> a.or(b));
     }
 
     @Override
     public BooleanExpression all(final Function<? super T, BooleanExpression> predicate) {
-        MqlExpression<BooleanExpression> map = (MqlExpression<BooleanExpression>) this.map(predicate);
-        return map.reduce(of(true), (a, b) -> a.and(b));
+        MqlExpression<BooleanExpression> array = (MqlExpression<BooleanExpression>) this.map(predicate);
+        return array.reduce(of(true), (a, b) -> a.and(b));
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public NumberExpression sum(final Function<? super T, ? extends NumberExpression> mapper) {
         // no sum that returns IntegerExpression, both have same erasure
-        MqlExpression<NumberExpression> map = (MqlExpression<NumberExpression>) this.map(mapper);
-        return map.reduce(of(0), (a, b) -> a.add(b));
+        MqlExpression<NumberExpression> array = (MqlExpression<NumberExpression>) this.map(mapper);
+        return array.reduce(of(0), (a, b) -> a.add(b));
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public NumberExpression multiply(final Function<? super T, ? extends NumberExpression> mapper) {
-        MqlExpression<NumberExpression> map = (MqlExpression<NumberExpression>) this.map(mapper);
-        return map.reduce(of(0), (NumberExpression a, NumberExpression b) -> a.multiply(b));
+        MqlExpression<NumberExpression> array = (MqlExpression<NumberExpression>) this.map(mapper);
+        return array.reduce(of(0), (NumberExpression a, NumberExpression b) -> a.multiply(b));
     }
 
     @Override
@@ -454,22 +454,22 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public StringExpression join(final Function<? super T, StringExpression> mapper) {
-        MqlExpression<StringExpression> map = (MqlExpression<StringExpression>) this.map(mapper);
-        return map.reduce(of(""), (a, b) -> a.concat(b));
+        MqlExpression<StringExpression> array = (MqlExpression<StringExpression>) this.map(mapper);
+        return array.reduce(of(""), (a, b) -> a.concat(b));
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <R extends Expression> ArrayExpression<R> concat(final Function<? super T, ? extends ArrayExpression<? extends R>> mapper) {
-        MqlExpression<ArrayExpression<R>> map = (MqlExpression<ArrayExpression<R>>) this.map(mapper);
-        return map.reduce(Expressions.ofArray(), (a, b) -> a.concat(b));
+        MqlExpression<ArrayExpression<R>> array = (MqlExpression<ArrayExpression<R>>) this.map(mapper);
+        return array.reduce(Expressions.ofArray(), (a, b) -> a.concat(b));
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <R extends Expression> ArrayExpression<R> union(final Function<? super T, ? extends ArrayExpression<? extends R>> mapper) {
-        MqlExpression<ArrayExpression<R>> map = (MqlExpression<ArrayExpression<R>>) this.map(mapper);
-        return map.reduce(Expressions.ofArray(), (a, b) -> a.union(b));
+        MqlExpression<ArrayExpression<R>> array = (MqlExpression<ArrayExpression<R>>) this.map(mapper);
+        return array.reduce(Expressions.ofArray(), (a, b) -> a.union(b));
     }
 
     @Override
