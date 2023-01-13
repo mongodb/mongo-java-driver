@@ -63,7 +63,7 @@ public interface IntegerExpression extends NumberExpression {
     }
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -71,7 +71,7 @@ public interface IntegerExpression extends NumberExpression {
     IntegerExpression subtract(IntegerExpression other);
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.

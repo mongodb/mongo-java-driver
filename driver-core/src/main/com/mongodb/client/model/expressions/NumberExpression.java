@@ -45,9 +45,9 @@ public interface NumberExpression extends Expression {
     }
 
     /**
-     * The result of dividing {@code this} value by the {@code other} value.
-     * This is not integer division: dividing {@code 1} by {@code 2} will yield
-     * {@code 0.5}.
+     * The quotient of dividing {@code this} value by the {@code other} value.
+     * This is not integer division: dividing {@code 1} by {@code 2} will
+     * always yield {@code 0.5}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -55,9 +55,9 @@ public interface NumberExpression extends Expression {
     NumberExpression divide(NumberExpression other);
 
     /**
-     * The result of dividing {@code this} value by the {@code other} value.
-     * This is not integer division: dividing {@code 1} by {@code 2} will yield
-     * {@code 0.5}.
+     * The quotient of dividing {@code this} value by the {@code other} value.
+     * This is not integer division: dividing {@code 1} by {@code 2} will
+     * always yield {@code 0.5}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -85,7 +85,7 @@ public interface NumberExpression extends Expression {
     }
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -93,7 +93,7 @@ public interface NumberExpression extends Expression {
     NumberExpression subtract(NumberExpression other);
 
     /**
-     * The result of subtracting the {@code other} value from {@code this}.
+     * The difference of subtracting the {@code other} value from {@code this}.
      *
      * @param other the other value.
      * @return the resulting value.

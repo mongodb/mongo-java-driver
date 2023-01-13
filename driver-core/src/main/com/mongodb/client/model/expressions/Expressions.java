@@ -48,9 +48,9 @@ public final class Expressions {
 
     /**
      * Returns a {@linkplain BooleanExpression boolean} value corresponding to
-     * the provided boolean primitive.
+     * the provided {@code boolean} primitive.
      *
-     * @param of the boolean primitive.
+     * @param of the {@code boolean} primitive.
      * @return the resulting value.
      */
     public static BooleanExpression of(final boolean of) {
@@ -69,9 +69,9 @@ public final class Expressions {
 
     /**
      * Returns an {@linkplain IntegerExpression integer} value corresponding to
-     * the provided int primitive.
+     * the provided {@code int} primitive.
      *
-     * @param of the int primitive.
+     * @param of the {@code int} primitive.
      * @return the resulting value.
      */
     public static IntegerExpression of(final int of) {
@@ -89,9 +89,9 @@ public final class Expressions {
 
     /**
      * Returns an {@linkplain IntegerExpression integer} value corresponding to
-     * the provided long primitive.
+     * the provided {@code long} primitive.
      *
-     * @param of the long primitive.
+     * @param of the {@code long} primitive.
      * @return the resulting value.
      */
     public static IntegerExpression of(final long of) {
@@ -109,9 +109,9 @@ public final class Expressions {
 
     /**
      * Returns a {@linkplain NumberExpression number} value corresponding to
-     * the provided double primitive.
+     * the provided {@code double} primitive.
      *
-     * @param of the double primitive.
+     * @param of the {@code double} primitive.
      * @return the resulting value.
      */
     public static NumberExpression of(final double of) {
@@ -129,9 +129,9 @@ public final class Expressions {
 
     /**
      * Returns a {@linkplain NumberExpression number} value corresponding to
-     * the provided Decimal128.
+     * the provided {@link Decimal128}
      *
-     * @param of the Decimal128.
+     * @param of the {@link Decimal128}.
      * @return the resulting value.
      */
     public static NumberExpression of(final Decimal128 of) {
@@ -152,9 +152,9 @@ public final class Expressions {
 
     /**
      * Returns a {@linkplain DateExpression date and time} value corresponding to
-     * the provided Instant.
+     * the provided {@link Instant}.
      *
-     * @param of the instant.
+     * @param of the {@link Instant}.
      * @return the resulting value.
      */
     public static DateExpression of(final Instant of) {
@@ -174,9 +174,9 @@ public final class Expressions {
 
     /**
      * Returns an {@linkplain StringExpression string} value corresponding to
-     * the provided string.
+     * the provided {@link String}.
      *
-     * @param of the string.
+     * @param of the {@link String}.
      * @return the resulting value.
      */
     public static StringExpression of(final String of) {
@@ -195,9 +195,9 @@ public final class Expressions {
     }
 
     /**
-     * Returns the current or root {@linkplain DocumentExpression document} value,
-     * the top-level document, currently being processed in the aggregation
-     * pipeline stage.
+     * Returns the "current" {@linkplain DocumentExpression document} value.
+     * The "current" value is the top-level document currently being processed
+     * in the aggregation pipeline stage.
      *
      * @return the resulting value
      */
@@ -212,10 +212,23 @@ public final class Expressions {
     }
 
     /**
-     * Returns an {@linkplain DocumentExpression array} value, containing the
-     * values provided.
+     * Returns the "current" value as a {@linkplain MapExpression map} value.
+     * The "current" value is the top-level document currently being processed
+     * in the aggregation pipeline stage.
      *
-     * @param array the values provided.
+     * @return the resulting value
+     * @param <R> the type of the resulting value
+     */
+    public static <R extends DocumentExpression> MapExpression<R> currentAsMap() {
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
+                .assertImplementsAllExpressions();
+    }
+
+    /**
+     * Returns an {@linkplain DocumentExpression array} value, containing the
+     * {@linkplain Expression values} provided.
+     *
+     * @param array the {@linkplain Expression values}.
      * @return the resulting value.
      * @param <T> the type of the array elements.
      */
@@ -233,8 +246,10 @@ public final class Expressions {
     }
 
     /**
-     * Returns an {@linkplain EntryExpression entry} value. An entry is a key
-     * and a value, and is used with {@linkplain MapExpression maps}. An entry
+     * Returns an {@linkplain EntryExpression entry} value. An entry is a
+     * {@linkplain StringExpression string} key and some
+     * {@linkplain Expression value}. Entries are used with
+     * {@linkplain MapExpression maps}. An entry
      * value may be equal to a document value with a field "k" equal to the
      * entry's key and a field "v" equal to the entry's value.
      *
@@ -260,11 +275,11 @@ public final class Expressions {
 
     /**
      * Returns a {@linkplain MapExpression map} value corresponding to the
-     * provided BSON document. The user asserts that all values in the document
-     * are of type {@code T}.
+     * provided {@link Bson Bson document}. The user asserts that all values
+     * in the document are of type {@code T}.
      *
-     * @param map the map as BSON.
-     * @return the resulting value.
+     * @param map the map as a {@link Bson Bson document}.
+     * @return the resulting map value.
      * @param <T> the type of the resulting map's values.
      */
     public static <T extends Expression> MapExpression<T> ofMap(final Bson map) {
@@ -275,9 +290,9 @@ public final class Expressions {
 
     /**
      * Returns a {@linkplain DocumentExpression document} value corresponding to the
-     * provided BSON document.
+     * provided {@link Bson Bson document}.
      *
-     * @param document the document as BSON.
+     * @param document the {@link Bson Bson document}.
      * @return the resulting value.
      */
     public static DocumentExpression of(final Bson document) {

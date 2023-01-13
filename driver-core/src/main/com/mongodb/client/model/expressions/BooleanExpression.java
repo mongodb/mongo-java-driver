@@ -49,15 +49,15 @@ public interface BooleanExpression extends Expression {
     // TODO-END check the evaluation semantics of and/or
 
     /**
-     * The {@code left} branch when {@code this} is true,
-     * and the {@code right} branch otherwise.
+     * The {@code ifTrue} value when {@code this} is true,
+     * and the {@code ifFalse} value otherwise.
      *
-     * @param left the left value.
-     * @param right the right value.
+     * @param ifTrue the ifTrue value.
+     * @param ifFalse the ifFalse value.
      * @return the resulting value.
      * @param <T> The type of the resulting expression.
      */
-    <T extends Expression> T cond(T left, T right);
+    <T extends Expression> T cond(T ifTrue, T ifFalse);
 
     <R extends Expression> R passBooleanTo(Function<? super BooleanExpression, ? extends R> f);
 
