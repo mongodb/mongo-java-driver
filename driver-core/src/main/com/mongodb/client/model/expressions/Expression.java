@@ -117,8 +117,8 @@ public interface Expression {
 
     StringExpression asString();
 
-    <R extends Expression> R passTo(Function<? super Expression, R> f);
+    <R extends Expression> R passTo(Function<? super Expression, ? extends R> f);
 
-    <R extends Expression> R switchOn(Function<Branches, ? extends BranchesTerminal<? super Expression, R>> on);
+    <R extends Expression> R switchOn(Function<Branches, ? extends BranchesTerminal<? super Expression, ? extends R>> on);
 
 }

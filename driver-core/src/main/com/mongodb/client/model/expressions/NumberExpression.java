@@ -59,6 +59,6 @@ public interface NumberExpression extends Expression {
 
     DateExpression millisecondsToDate();
 
-    <R extends Expression> R passNumberTo(Function<? super NumberExpression, R> f);
-    <R extends Expression> R switchNumberOn(Function<Branches, ? extends BranchesTerminal<? super NumberExpression, R>> on);
+    <R extends Expression> R passNumberTo(Function<? super NumberExpression, ? extends R> f);
+    <R extends Expression> R switchNumberOn(Function<Branches, ? extends BranchesTerminal<? super NumberExpression, ? extends R>> on);
 }

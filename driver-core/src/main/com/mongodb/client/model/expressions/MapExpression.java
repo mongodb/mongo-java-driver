@@ -60,6 +60,6 @@ public interface MapExpression<T extends Expression> extends Expression {
 
     <R extends DocumentExpression> R asDocument();
 
-    <R extends Expression> R passMapTo(Function<? super MapExpression<T>, R> f);
-    <R extends Expression> R switchMapOn(Function<Branches, ? extends BranchesTerminal<? super MapExpression<T>, R>> on);
+    <R extends Expression> R passMapTo(Function<? super MapExpression<T>, ? extends R> f);
+    <R extends Expression> R switchMapOn(Function<Branches, ? extends BranchesTerminal<? super MapExpression<T>, ? extends R>> on);
 }

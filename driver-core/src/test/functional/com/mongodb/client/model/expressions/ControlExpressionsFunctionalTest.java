@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
@@ -76,7 +77,7 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
         // test branches
         Function<IntegerExpression, BooleanExpression> isOver10 = v -> v.subtract(10).gt(of(0));
         Function<IntegerExpression, StringExpression> s = e -> e
-                .switchIntegerOn((Branches on) -> on
+                .switchIntegerOn(on -> on
                         .eq(of(0), v -> of("A"))
                         .lt(of(10), v -> of("B"))
                         .is(isOver10, v -> of("C"))
@@ -115,10 +116,16 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
         assertExpression("null - null", ofNull().passTo(label));
         // maps via isMap:
         assertExpression(
-                "ab - map",
-                ofMap(Document.parse("{a: 1, b: 2}")).switchOn(on -> on
+                "12 - map",
+                ofMap(Document.parse("{a: '1', b: '2'}")).switchOn(on -> on
                         .isMap((MapExpression<StringExpression> v) -> v.entrySet()
-                                .join(e -> e.getKey()).concat(of(" - map")))));
+                                .join(e -> e.getValue()).concat(of(" - map")))));
+        // arrays via isArray, and tests signature:
+        assertExpression(
+                "ab - array",
+                ofArray(of("a"), of("b")).switchOn(on -> on
+                        .isArray((ArrayExpression<StringExpression> v) -> v
+                                .join(e -> e).concat(of(" - array")))));
     }
 
     @Test

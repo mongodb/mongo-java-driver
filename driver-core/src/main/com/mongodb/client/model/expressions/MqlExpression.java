@@ -284,93 +284,93 @@ final class MqlExpression<T extends Expression>
     /** @see Expression */
 
     @Override
-    public <R extends Expression> R passTo(final Function<? super Expression, R> f) {
+    public <R extends Expression> R passTo(final Function<? super Expression, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchOn(final Function<Branches, ? extends BranchesTerminal<? super Expression, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchOn(final Function<Branches, ? extends BranchesTerminal<? super Expression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passBooleanTo(final Function<? super BooleanExpression, R> f) {
+    public <R extends Expression> R passBooleanTo(final Function<? super BooleanExpression, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchBooleanOn(final Function<Branches, ? extends BranchesTerminal<? super BooleanExpression, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchBooleanOn(final Function<Branches, ? extends BranchesTerminal<? super BooleanExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passIntegerTo(final Function<? super IntegerExpression, R> f) {
+    public <R extends Expression> R passIntegerTo(final Function<? super IntegerExpression, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchIntegerOn(final Function<Branches, ? extends BranchesTerminal<? super IntegerExpression, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchIntegerOn(final Function<Branches, ? extends BranchesTerminal<? super IntegerExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passNumberTo(final Function<? super NumberExpression, R> f) {
+    public <R extends Expression> R passNumberTo(final Function<? super NumberExpression, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchNumberOn(final Function<Branches, ? extends BranchesTerminal<? super NumberExpression, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchNumberOn(final Function<Branches, ? extends BranchesTerminal<? super NumberExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passStringTo(final Function<? super StringExpression, R> f) {
+    public <R extends Expression> R passStringTo(final Function<? super StringExpression, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchStringOn(final Function<Branches, ? extends BranchesTerminal<? super StringExpression, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchStringOn(final Function<Branches, ? extends BranchesTerminal<? super StringExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passDateTo(final Function<? super DateExpression, R> f) {
+    public <R extends Expression> R passDateTo(final Function<? super DateExpression, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchDateOn(final Function<Branches, ? extends BranchesTerminal<? super DateExpression, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchDateOn(final Function<Branches, ? extends BranchesTerminal<? super DateExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passArrayTo(final Function<? super ArrayExpression<T>, R> f) {
+    public <R extends Expression> R passArrayTo(final Function<? super ArrayExpression<T>, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchArrayOn(final Function<Branches, ? extends BranchesTerminal<? super ArrayExpression<T>, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchArrayOn(final Function<Branches, ? extends BranchesTerminal<? super ArrayExpression<T>, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passMapTo(final Function<? super MapExpression<T>, R> f) {
+    public <R extends Expression> R passMapTo(final Function<? super MapExpression<T>, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchMapOn(final Function<Branches, ? extends BranchesTerminal<? super MapExpression<T>, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchMapOn(final Function<Branches, ? extends BranchesTerminal<? super MapExpression<T>, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     @Override
-    public <R extends Expression> R passDocumentTo(final Function<? super DocumentExpression, R> f) {
+    public <R extends Expression> R passDocumentTo(final Function<? super DocumentExpression, ? extends R> f) {
         return f.apply(this.assertImplementsAllExpressions());
     }
 
     @Override
-    public <R extends Expression> R switchDocumentOn(final Function<Branches, ? extends BranchesTerminal<? super DocumentExpression, R>> switchMap) {
-        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches()));
+    public <R extends Expression> R switchDocumentOn(final Function<Branches, ? extends BranchesTerminal<? super DocumentExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(Branches.EMPTY));
     }
 
     private <T0 extends Expression, R0 extends Expression> R0 switchMapInternal(
@@ -504,7 +504,7 @@ final class MqlExpression<T extends Expression>
         return newMqlExpression(isMap.ast("$cond", this.assertImplementsAllExpressions(), other));
     }
 
-    public BooleanExpression isNull() {
+    BooleanExpression isNull() {
         return this.eq(ofNull());
     }
 

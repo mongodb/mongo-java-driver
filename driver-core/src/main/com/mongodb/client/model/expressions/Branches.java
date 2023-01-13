@@ -22,11 +22,12 @@ import java.util.function.Function;
 
 public final class Branches {
 
-    Branches() {
-        // package-private
+    static final Branches EMPTY = new Branches();
+
+    private Branches() {
     }
 
-    private <T extends Expression, R extends Expression> BranchesIntermediary<T, R> with(final Function<T, SwitchCase<R>> switchCase) {
+    private static <T extends Expression, R extends Expression> BranchesIntermediary<T, R> with(final Function<T, SwitchCase<R>> switchCase) {
         List<Function<T, SwitchCase<R>>> v = new ArrayList<>();
         v.add(switchCase);
         return new BranchesIntermediary<>(v);
@@ -39,54 +40,56 @@ public final class Branches {
     // is fn
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> is(final Function<T, BooleanExpression> o, final Function<T, R> r) {
-        return this.with(value -> new SwitchCase<>(o.apply(value), r.apply(value)));
+        return with(value -> new SwitchCase<>(o.apply(value), r.apply(value)));
     }
 
     // eq lt lte
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> eq(final T v, final Function<T, R> r) {
-        return this.with(value -> new SwitchCase<>(value.eq(v), r.apply(value)));
+        return is(v::eq, r);
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> lt(final T v, final Function<T, R> r) {
-        return this.with(value -> new SwitchCase<>(value.lt(v), r.apply(value)));
+        return is(v::lt, r);
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> lte(final T v, final Function<T, R> r) {
-        return this.with(value -> new SwitchCase<>(value.lte(v), r.apply(value)));
+        return is(v::lte, r);
     }
 
     // is type
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isBoolean(final Function<BooleanExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isBoolean(), r.apply((BooleanExpression) value)));
+        return is(v -> mqlEx(v).isBoolean(), v -> r.apply((BooleanExpression) v));
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isNumber(final Function<NumberExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isNumber(), r.apply((NumberExpression) value)));
+        return is(v -> mqlEx(v).isNumber(), v -> r.apply((NumberExpression) v));
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isString(final Function<StringExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isString(), r.apply((StringExpression) value)));
+        return is(v -> mqlEx(v).isString(), v -> r.apply((StringExpression) v));
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isDate(final Function<DateExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isDate(), r.apply((DateExpression) value)));
+        return is(v -> mqlEx(v).isDate(), v -> r.apply((DateExpression) v));
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Expression, R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isArray(final Function<ArrayExpression<Q>, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isArray(), r.apply((ArrayExpression<Q>) value)));
+        return is(v -> mqlEx(v).isArray(), v -> r.apply((ArrayExpression<Q>) v));
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isDocument(final Function<DocumentExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isDocument(), r.apply((DocumentExpression) value)));
+        return is(v -> mqlEx(v).isDocument(), v -> r.apply((DocumentExpression) v));
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Expression, R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isMap(final Function<MapExpression<Q>, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isDocument(), r.apply((MapExpression<Q>) value)));
+        return is(v -> mqlEx(v).isMap(), v -> r.apply((MapExpression<Q>) v));
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isNull(final Function<Expression, R> isNull) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isNull(), isNull.apply(value)));
+    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isNull(final Function<Expression, R> r) {
+        return is(v -> mqlEx(v).isNull(), v -> r.apply(v));
     }
 }

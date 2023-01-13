@@ -61,7 +61,7 @@ public interface BooleanExpression extends Expression {
      */
     <T extends Expression> T cond(T left, T right);
 
-    <R extends Expression> R passBooleanTo(Function<? super BooleanExpression, R> f);
+    <R extends Expression> R passBooleanTo(Function<? super BooleanExpression, ? extends R> f);
 
-    <R extends Expression> R switchBooleanOn(Function<Branches, ? extends BranchesTerminal<? super BooleanExpression, R>> on);
+    <R extends Expression> R switchBooleanOn(Function<Branches, ? extends BranchesTerminal<? super BooleanExpression, ? extends R>> on);
 }

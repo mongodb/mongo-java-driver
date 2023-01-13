@@ -35,6 +35,6 @@ public interface DateExpression extends Expression {
 
     StringExpression asString(StringExpression timezone, StringExpression format);
 
-    <R extends Expression> R passDateTo(Function<? super DateExpression, R> f);
-    <R extends Expression> R switchDateOn(Function<Branches, ? extends BranchesTerminal<? super DateExpression, R>> on);
+    <R extends Expression> R passDateTo(Function<? super DateExpression, ? extends R> f);
+    <R extends Expression> R switchDateOn(Function<Branches, ? extends BranchesTerminal<? super DateExpression, ? extends R>> on);
 }

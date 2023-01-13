@@ -44,53 +44,54 @@ public final class BranchesIntermediary<T extends Expression, R extends Expressi
     // eq lt lte
 
     public BranchesIntermediary<T, R> eq(final T v, final Function<T, R> r) {
-        return this.with(value -> new SwitchCase<>(value.eq(v), r.apply(value)));
+        return is(v::eq, r);
     }
 
     public BranchesIntermediary<T, R> lt(final T v, final Function<T, R> r) {
-        return this.with(value -> new SwitchCase<>(value.lt(v), r.apply(value)));
+        return is(v::lt, r);
     }
 
     public BranchesIntermediary<T, R> lte(final T v, final Function<T, R> r) {
-        return this.with(value -> new SwitchCase<>(value.lte(v), r.apply(value)));
+        return is(v::lte, r);
     }
 
     // is type
 
     public BranchesIntermediary<T, R> isBoolean(final Function<BooleanExpression, R> r) {
-        return this.with(v -> new SwitchCase<>(mqlEx(v).isBoolean(), r.apply((BooleanExpression) v)));
+        return is(v -> mqlEx(v).isBoolean(), v -> r.apply((BooleanExpression) v));
     }
 
     public BranchesIntermediary<T, R> isNumber(final Function<NumberExpression, R> r) {
-        return this.with(v -> new SwitchCase<>(mqlEx(v).isNumber(), r.apply((NumberExpression) v)));
+        return is(v -> mqlEx(v).isNumber(), v -> r.apply((NumberExpression) v));
     }
 
-
     public BranchesIntermediary<T, R> isString(final Function<StringExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isString(), r.apply((StringExpression) value)));
+        return is(v -> mqlEx(v).isString(), v -> r.apply((StringExpression) v));
     }
 
     public BranchesIntermediary<T, R> isDate(final Function<DateExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isDate(), r.apply((DateExpression) value)));
+        return is(v -> mqlEx(v).isDate(), v -> r.apply((DateExpression) v));
     }
 
+    @SuppressWarnings("unchecked")
     public <Q extends Expression> BranchesIntermediary<T, R> isArray(final Function<ArrayExpression<Q>, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isArray(), r.apply((ArrayExpression<Q>) value)));
+        return is(v -> mqlEx(v).isArray(), v -> r.apply((ArrayExpression<Q>) v));
     }
 
     public BranchesIntermediary<T, R> isDocument(final Function<DocumentExpression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isDocument(), r.apply((DocumentExpression) value)));
+        return is(v -> mqlEx(v).isDocument(), v -> r.apply((DocumentExpression) v));
     }
 
+    @SuppressWarnings("unchecked")
     public <Q extends Expression> BranchesIntermediary<T, R> isMap(final Function<MapExpression<Q>, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isDocument(), r.apply((MapExpression<Q>) value)));
+        return is(v -> mqlEx(v).isMap(), v -> r.apply((MapExpression<Q>) v));
     }
 
     public BranchesIntermediary<T, R> isNull(final Function<Expression, R> r) {
-        return this.with(value -> new SwitchCase<>(mqlEx(value).isNull(), r.apply(value)));
+        return is(v -> mqlEx(v).isNull(), v -> r.apply(v));
     }
 
-    public BranchesTerminal<T, R> defaults(final Function<T, R> r) {
+    public BranchesTerminal<T, R> defaults(final Function<T, ? extends R> r) {
         return this.withDefault(value -> r.apply(value));
     }
 
