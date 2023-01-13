@@ -72,6 +72,7 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/switch/
         assertExpression("a", of(0).switchOn(on -> on.is(v -> v.eq(of(0)), v -> of("a"))));
         assertExpression("a", of(0).switchOn(on -> on.isNumber(v -> of("a"))));
+        assertExpression("a", of(0).switchOn(on -> on.eq(of(0), v -> of("a"))));
         assertExpression("a", of(0).switchOn(on -> on.lte(of(9), v -> of("a"))));
 
         // test branches
@@ -182,7 +183,7 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
         assertExpression("A",
                 ofMap(Document.parse("{}")).switchOn(on -> on.isMap(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': "
-                        + "[{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
+                        + "{'$literal': {}}}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
                 ofNull().switchOn(on -> on.isNull(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [null, null]}, 'then': 'A'}]}}");
@@ -242,7 +243,7 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                 ofMap(Document.parse("{}")).switchOn(on -> on.isNull(v -> of("X")).isMap(v -> of("A"))),
                 " {'$switch': {'branches': ["
                         + "{'case': {'$eq': [{'$literal': {}}, null]}, 'then': 'X'}, "
-                        + "{'case': {'$eq': [{'$type': [{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
+                        + "{'case': {'$eq': [{'$type': {'$literal': {}}}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
                 ofNull().switchOn(on -> on.isNumber(v -> of("X")).isNull(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$isNumber': [null]}, 'then': 'X'}, "

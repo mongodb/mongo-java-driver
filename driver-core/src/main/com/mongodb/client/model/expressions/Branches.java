@@ -46,15 +46,15 @@ public final class Branches {
     // eq lt lte
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> eq(final T v, final Function<? super T, ? extends R> r) {
-        return is(v::eq, r);
+        return is(value -> value.eq(v), r);
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> lt(final T v, final Function<? super T, ? extends R> r) {
-        return is(v::lt, r);
+        return is(value -> value.lt(v), r);
     }
 
     public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> lte(final T v, final Function<? super T, ? extends R> r) {
-        return is(v::lte, r);
+        return is(value -> value.lte(v), r);
     }
 
     // is type
