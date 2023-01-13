@@ -20,13 +20,15 @@ import static com.mongodb.client.model.expressions.Expressions.of;
 
 public interface MapExpression<T extends Expression> extends Expression {
 
+    // TODO-END doc "user asserts"
     T get(StringExpression key);
 
+    // TODO-END doc "user asserts"
     default T get(final String key) {
         return get(of(key));
     }
 
-    T get(StringExpression key, T orElse);
+    T get(StringExpression key, T other);
 
     default T get(final String key, final T other) {
         return get(of(key), other);
@@ -47,4 +49,6 @@ public interface MapExpression<T extends Expression> extends Expression {
     MapExpression<T> merge(MapExpression<? extends T> map);
 
     ArrayExpression<EntryExpression<T>> entrySet();
+
+    <R extends DocumentExpression> R asDocument();
 }

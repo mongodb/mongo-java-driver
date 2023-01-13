@@ -28,7 +28,9 @@ import java.util.Arrays;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("ConstantConditions")
 class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -253,5 +255,11 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(
                 BsonDocument.parse("{a: 1}"),
                 ofDoc("{a: null}").merge(ofDoc("{a: 1}")));
+    }
+
+    @Test
+    public void asMapTest() {
+        DocumentExpression d = ofDoc("{a: 1}");
+        assertSame(d, d.asMap());
     }
 }

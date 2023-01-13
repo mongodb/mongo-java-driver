@@ -380,7 +380,7 @@ final class MqlExpression<T extends Expression>
         return (ArrayExpression<R>) this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
-    public BooleanExpression isDocumentOrMap() {
+    private BooleanExpression isDocumentOrMap() {
         return new MqlExpression<>(ast("$type")).eq(of("object"));
     }
 
@@ -392,7 +392,7 @@ final class MqlExpression<T extends Expression>
     @SuppressWarnings("unchecked")
     @Override
     public <R extends Expression> MapExpression<R> isMapOr(final MapExpression<? extends R> other) {
-        MqlExpression<Expression> isMap = (MqlExpression<Expression>) this.isDocumentOrMap();
+        MqlExpression<?> isMap = (MqlExpression<?>) this.isDocumentOrMap();
         return newMqlExpression(isMap.ast("$cond", this.assertImplementsAllExpressions(), other));
     }
 
@@ -401,10 +401,10 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(astWrapped("$toString"));
     }
 
-    private Function<CodecRegistry, AstPlaceholder> convertInternal(final String to, final Expression orElse) {
+    private Function<CodecRegistry, AstPlaceholder> convertInternal(final String to, final Expression other) {
         return (cr) -> astDoc("$convert", new BsonDocument()
                 .append("input", this.fn.apply(cr).bsonValue)
-                .append("onError", extractBsonValue(cr, orElse))
+                .append("onError", extractBsonValue(cr, other))
                 .append("to", new BsonString(to)));
     }
 
@@ -820,9 +820,22 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> MapExpression<R> asMap(final Function<T, EntryExpression<R>> mapper) {
-        MqlExpression<R> map = (MqlExpression<R>) this.map(mapper);
-        return newMqlExpression(map.astWrapped("$arrayToObject"));
+    public <R extends Expression> MapExpression<R> asMap(
+            final Function<? super T, ? extends EntryExpression<? extends R>> mapper) {
+        @SuppressWarnings("unchecked")
+        MqlExpression<EntryExpression<? extends R>> array = (MqlExpression<EntryExpression<? extends R>>)this.map(mapper);
+        return newMqlExpression(array.astWrapped("$arrayToObject"));
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public MapExpression<Expression> asMap() {
+        return (MapExpression<Expression>) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R extends DocumentExpression> R asDocument() {
+        return (R) this;
+    }
 }

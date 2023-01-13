@@ -98,4 +98,6 @@ public interface DocumentExpression extends Expression {
     <T extends Expression> ArrayExpression<T> getArray(String fieldName, ArrayExpression<? extends T> other);
 
     DocumentExpression merge(DocumentExpression other);
+
+    MapExpression<Expression> asMap();
 }

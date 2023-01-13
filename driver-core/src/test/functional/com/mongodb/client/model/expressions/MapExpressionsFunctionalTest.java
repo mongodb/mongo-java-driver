@@ -27,6 +27,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static com.mongodb.client.model.expressions.Expressions.ofEntry;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
@@ -173,4 +174,9 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                         + "{'$literal': {'keyA': 9, 'keyC': 3}}]}");
     }
 
+    @Test
+    public void asDocumentTest() {
+        MapExpression<IntegerExpression> d = ofMap(BsonDocument.parse("{a: 1}"));
+        assertSame(d, d.asDocument());
+    }
 }
