@@ -65,6 +65,10 @@ public final class BranchesIntermediary<T extends Expression, R extends Expressi
         return is(v -> mqlEx(v).isNumber(), v -> r.apply((NumberExpression) v));
     }
 
+    public BranchesIntermediary<T, R> isInteger(final Function<IntegerExpression, ? extends R> r) {
+        return is(v -> mqlEx(v).isInteger(), v -> r.apply((IntegerExpression) v));
+    }
+
     public BranchesIntermediary<T, R> isString(final Function<StringExpression, ? extends R> r) {
         return is(v -> mqlEx(v).isString(), v -> r.apply((StringExpression) v));
     }

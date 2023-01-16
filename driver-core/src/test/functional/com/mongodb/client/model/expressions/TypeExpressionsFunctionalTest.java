@@ -66,6 +66,27 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
+    public void isIntegerOr() {
+        assertExpression(
+                1,
+                of(1).isIntegerOr(of(99)),
+                "{'$cond': [{'$and': [{'$isNumber': [1]}, {'$eq': [1, {'$round': 1}]}]}, 1, 99]}");
+        // other numeric values:
+        assertExpression(1L, of(1L).isIntegerOr(of(99)));
+        assertExpression(1.0, of(1.0).isIntegerOr(of(99)));
+        assertExpression(Decimal128.parse("1"), of(Decimal128.parse("1")).isIntegerOr(of(99)));
+        // non-numeric:
+        assertExpression(99, ofIntegerArray(1).isIntegerOr(of(99)));
+        assertExpression(99, ofNull().isIntegerOr(of(99)));
+
+        assertExpression(99,
+                of(BsonDocument.parse("{'a': 'str'}")).getField("a").isIntegerOr(of(99)));
+        // the following leads to "$round only supports numeric types, not string"
+        // because the literal type is known.
+        // assertExpression(99, of("str").isIntegerOr(of(99)));
+    }
+
+    @Test
     public void isStringOrTest() {
         assertExpression(
                 "abc",

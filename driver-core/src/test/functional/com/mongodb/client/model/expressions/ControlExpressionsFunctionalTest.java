@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.expressions;
 
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
@@ -96,18 +97,20 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
     public void switchTypesTest() {
         Function<Expression, StringExpression> label = expr -> expr.switchOn(on -> on
                 .isBoolean(v -> v.asString().concat(of(" - bool")))
-                .isNumber(v -> v.asString().concat(of(" - number")))
                 .isString(v -> v.asString().concat(of(" - string")))
                 .isDate(v -> v.asString().concat(of(" - date")))
                 .isArray((ArrayExpression<IntegerExpression> v) -> v.sum(a -> a).asString().concat(of(" - array")))
                 .isDocument(v -> v.getString("_id").concat(of(" - document")))
                 .isNull(v -> of("null - null"))
+                .isInteger(v -> v.asString().concat(of(" - integer")))
+                .isNumber(v -> v.asString().concat(of(" - number")))
                 .defaults(v -> of("default"))
                 ).toLower();
         assertExpression("true - bool", of(true).passTo(label));
         assertExpression("false - bool", of(false).passBooleanTo(label));
-        assertExpression("1 - number", of(1).passIntegerTo(label));
-        assertExpression("1 - number", of(1.0).passNumberTo(label));
+        assertExpression("1 - integer", of(1).passIntegerTo(label));
+        assertExpression("1 - integer", of(1.0).passNumberTo(label));
+        assertExpression("1.01 - number", of(1.01).passNumberTo(label));
         assertExpression("abc - string", of("abc").passStringTo(label));
         assertExpression("1970-01-01t00:00:00.123z - date", of(Instant.ofEpochMilli(123)).passDateTo(label));
         assertExpression("3 - array", ofIntegerArray(1, 2).passArrayTo(label));
@@ -167,6 +170,10 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                 of(1).switchOn(on -> on.isNumber(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$isNumber': [1]}, 'then': 'A'}]}}");
         assertExpression("A",
+                of(1).switchOn(on -> on.isInteger(v -> of("A"))),
+                "{'$switch': {'branches': [{'case': {'$and': [{'$isNumber': [1]}, " +
+                        "{'$eq': [1, {'$round': 1}]}]}, 'then': 'A'}]}}");
+        assertExpression("A",
                 of("x").switchOn(on -> on.isString(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': ['x']}, 'string']}, 'then': 'A'}]}}");
         assertExpression("A",
@@ -221,6 +228,10 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                 of(1).switchOn(on -> on.isNull(v -> of("X")).isNumber(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [1, null]}, 'then': 'X'}, "
                         + "{'case': {'$isNumber': [1]}, 'then': 'A'}]}}");
+        assertExpression("A",
+                of(1).switchOn(on -> on.isNull(v -> of("X")).isInteger(v -> of("A"))),
+                "{'$switch': {'branches': [{'case': {'$eq': [1, null]}, 'then': 'X'}, {'case': " +
+                        "{'$and': [{'$isNumber': [1]}, {'$eq': [1, {'$round': 1}]}]}, 'then': 'A'}]}}");
         assertExpression("A",
                 of("x").switchOn(on -> on.isNull(v -> of("X")).isString(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': ['x', null]}, 'then': 'X'}, "

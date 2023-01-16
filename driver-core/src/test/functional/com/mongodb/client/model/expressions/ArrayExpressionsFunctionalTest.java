@@ -321,8 +321,8 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 // 0.0 is a valid integer value
                 array123.elementAt(of(0.0).isIntegerOr(of(-1))),
                 // MQL:
-                "{'$arrayElemAt': [[1, 2, 3], {'$cond': [{'$cond': "
-                        + "[{'$isNumber': [0.0]}, {'$eq': [0.0, {'$round': 0.0}]}, false]}, 0.0, -1]}]}");
+                "{'$arrayElemAt': [[1, 2, 3], {'$cond': [{'$and': "
+                        + "[{'$isNumber': [0.0]}, {'$eq': [0.0, {'$round': 0.0}]}]}, 0.0, -1]}]}");
         // negatives
         assertExpression(
                 Arrays.asList(1, 2, 3).get(3 - 1),
