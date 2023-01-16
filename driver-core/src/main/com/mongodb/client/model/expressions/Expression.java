@@ -25,14 +25,18 @@ import java.util.function.Function;
  *
  * <p>The API provided by this base type and its subtypes is the Java-native
  * variant of MQL. It is used to query the MongoDB server, to perform remote
- * computations, to store and retrieve data, or to otherwise work with data
- * on a MongoDB server or compatible execution context.
+ * computations, to store and retrieve data, or to otherwise work with data on
+ * a MongoDB server or compatible execution context. Though the methods exposed
+ * through this API generally correspond to MQL operations, this correspondence
+ * is not exact.
  *
  * <p>The following is an example of usage within an aggregation pipeline. Here,
  * the current document value is obtained and its "numberArray" field is
  * filtered and summed, in a style similar to that of the Java Stream API:
  *
  * <pre>{@code
+ * import static com.mongodb.client.model.expressions.Expressions.current;
+ * MongoCollection<Document> col = ...;
  * AggregateIterable<Document> result = col.aggregate(Arrays.asList(
  *     addFields(new Field<>("result", current()
  *         .<MqlNumber>getArray("numberArray")
@@ -40,33 +44,30 @@ import java.util.function.Function;
  *         .sum(v -> v)))));
  * }</pre>
  *
- * <p>Values are typically obtained via the current document and its fields, or
- * specified via statically-imported methods on the {@link Expressions} class.
+ * <p>Values are typically initially obtained via the current document and its
+ * fields, or specified via statically-imported methods on the
+ * {@link Expressions} class.
+ *
+ * <p>As with the Java Stream API's terminal operations, corresponding Java
+ * values are not directly available, but must be obtained indirectly via the
+ * aggregation pipeline, or via find. Certain methods may cause an error, which
+ * will be produced through these "terminal operations".
  *
  * <p>The null value is not part of, and cannot be used as if it were part of,
- * any other type. It has no explicit type of its own. Instead of checking for
- * null, users should check for their expected type, via methods such as
- * {@link Expression#isNumberOr(NumberExpression)}. Where the null value must
- * be checked explicitly, users may use {@link Branches#isNull} within
- * {@link Expression#switchOn}.
+ * any other type. See {@link Expressions#ofNull} for more details.
  *
  * <p>There is no explicit "missing" or "undefined" value. Users may use
- * {@link DocumentExpression#has}.
+ * {@link MapExpression#has} or {@link DocumentExpression#has}.
  *
- * <p>This type hierarchy differs from BSON in that it provides operations,
- * while the BSON API does not, its numeric types are less granular, and it
- * offers multiple abstractions of certain types (document, map, entry). It
- * differs from Java types in that the operations available differ, and in that
- * an implementation of this API may be used to be used to generate MQL in the
- * form of BSON. (This API makes no guarantee regarding the BSON output produced
- * by its implementation, which in any case may vary due to optimization or
- * other factors.)
- *
- * <p>This API is a language binding in the sense that it exposes the operations
- * available on the MongoDB server or compatible execution context, and the
- * implied corresponding data types, through a Java API. The methods exposed
- * through this API correspond to MQL operations, though this correspondence
- * is not exact.
+ * <p>This type hierarchy differs from the {@linkplain org.bson} types in that
+ * they provide computational operations, the numeric types are less granular,
+ * and it offers multiple abstractions of certain types (document, map, entry).
+ * It differs from the corresponding Java types (such as {@code int},
+ * {@link String}, {@link java.util.Map) in that the operations
+ * available differ, and in that an implementation of this API may be used to
+ * produce MQL in the form of BSON. (This API makes no guarantee regarding the
+ * BSON output produced by its implementation, which in any case may vary due
+ * to optimization or other factors.)
  *
  * <p>Some methods within the API constitute an assertion by the user that the
  * data is of a certain type. For example, {@link DocumentExpression#getArray}}
@@ -76,10 +77,6 @@ import java.util.function.Function;
  * context, users are strongly discouraged from relying on behaviour that is not
  * part of this API).
  *
- * <p>As with the Java Stream API's terminal operations, corresponding Java
- * values are not directly available, but must be obtained indirectly via the
- * aggregation pipeline, or via find. Certain methods may cause an error, which
- * will be produced through these "terminal operations".
  *
  * <p>Users should treat these interfaces as sealed, and should not create
  * implementations.

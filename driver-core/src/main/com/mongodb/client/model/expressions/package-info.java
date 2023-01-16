@@ -18,6 +18,7 @@
  * API for MQL expressions.
  *
  * @see com.mongodb.client.model.expressions.Expression
+ * @see com.mongodb.client.model.expressions.Expressions
  */
 @NonNullApi
 package com.mongodb.client.model.expressions;

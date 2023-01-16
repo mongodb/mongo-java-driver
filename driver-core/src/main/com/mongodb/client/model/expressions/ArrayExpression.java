@@ -37,7 +37,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      *                  it should be included.
      * @return the resulting array.
      */
-    ArrayExpression<T> filter(Function<? super T, ? extends BooleanExpression> cond);
+    ArrayExpression<T> filter(Function<? super T, ? extends BooleanExpression> predicate);
 
     /**
      * An array consisting of the results of applying the provided function to

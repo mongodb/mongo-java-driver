@@ -19,9 +19,9 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 /**
- * An instantaneous date and time {@linkplain Expression value} in the context
- * of the MongoDB Query Language (MQL). Tracks a UTC datetime, the number of
- * milliseconds since the Unix epoch. Does not track the timezone.
+ * A UTC date-time {@linkplain Expression value} in the context
+ * of the MongoDB Query Language (MQL). Tracks the number of
+ * milliseconds since the Unix epoch, and does not track the timezone.
  */
 public interface DateExpression extends Expression {
 

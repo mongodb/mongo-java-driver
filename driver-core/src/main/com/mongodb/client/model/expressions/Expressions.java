@@ -195,31 +195,28 @@ public final class Expressions {
     }
 
     /**
-     * Returns the "current" {@linkplain DocumentExpression document} value.
+     * Returns a reference to the "current"
+     * {@linkplain DocumentExpression document} value.
      * The "current" value is the top-level document currently being processed
      * in the aggregation pipeline stage.
      *
-     * @return the resulting value
+     * @return a reference to the current value
      */
     public static DocumentExpression current() {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
                 .assertImplementsAllExpressions();
     }
 
-    public static <R extends Expression> MapExpression<R> currentAsMap() {
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
-                .assertImplementsAllExpressions();
-    }
-
     /**
-     * Returns the "current" value as a {@linkplain MapExpression map} value.
+     * Returns a reference to the "current"
+     * value as a {@linkplain MapExpression map} value.
      * The "current" value is the top-level document currently being processed
      * in the aggregation pipeline stage.
      *
-     * @return the resulting value
-     * @param <R> the type of the resulting value
+     * @return a reference to the current value as a map.
+     * @param <R> the type of the map's values.
      */
-    public static <R extends DocumentExpression> MapExpression<R> currentAsMap() {
+    public static <R extends Expression> MapExpression<R> currentAsMap() {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
                 .assertImplementsAllExpressions();
     }
@@ -246,12 +243,7 @@ public final class Expressions {
     }
 
     /**
-     * Returns an {@linkplain EntryExpression entry} value. An entry is a
-     * {@linkplain StringExpression string} key and some
-     * {@linkplain Expression value}. Entries are used with
-     * {@linkplain MapExpression maps}. An entry
-     * value may be equal to a document value with a field "k" equal to the
-     * entry's key and a field "v" equal to the entry's value.
+     * Returns an {@linkplain EntryExpression entry} value.
      *
      * @param k the key.
      * @param v the value.
@@ -292,7 +284,7 @@ public final class Expressions {
      * Returns a {@linkplain DocumentExpression document} value corresponding to the
      * provided {@link Bson Bson document}.
      *
-     * @param document the {@link Bson Bson document}.
+     * @param document the {@linkplain Bson BSON document}.
      * @return the resulting value.
      */
     public static DocumentExpression of(final Bson document) {
@@ -307,11 +299,13 @@ public final class Expressions {
     /**
      * The null value in the context of the MongoDB Query Language (MQL).
      *
-     * <p>The null value is not part of, and cannot be used as if it were part of,
-     * any other type. It has no explicit type of its own. Instead of checking for
-     * null, users should check for their expected type, via methods such as
-     * {@link Expression#isNumberOr(NumberExpression)}. Where the null value must
-     * be checked explicitly, users may use {@link Branches#isNull} within
+     * <p>The null value is not part of, and cannot be used as if it were part
+     * of, any other type. It has no explicit type of its own.
+     *
+     * <p>Instead of checking that a value is null, users should generally
+     * check that a value is of their expected type, via methods such as
+     * {@link Expression#isNumberOr(NumberExpression)}. Where the null value
+     * must be checked explicitly, users may use {@link Branches#isNull} within
      * {@link Expression#switchOn}.
      *
      * @return the null value
