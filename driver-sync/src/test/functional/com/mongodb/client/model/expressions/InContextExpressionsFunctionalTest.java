@@ -18,6 +18,7 @@ package com.mongodb.client.model.expressions;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -36,14 +37,13 @@ import java.util.List;
 import static com.mongodb.client.model.Accumulators.sum;
 import static com.mongodb.client.model.Aggregates.match;
 import static com.mongodb.client.model.Aggregates.project;
+import static com.mongodb.client.model.Filters.expr;
 import static com.mongodb.client.model.Projections.computed;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
 import static com.mongodb.client.model.Sorts.ascending;
-import static com.mongodb.client.model.expressions.Expressions.current;
-import static com.mongodb.client.model.expressions.Expressions.of;
-import static com.mongodb.client.model.expressions.Expressions.ofArray;
+import static com.mongodb.client.model.expressions.Expressions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -63,7 +63,7 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
         client.close();
     }
 
-    private String bsonToString(final Bson project) {
+    private static String bsonToString(final Bson project) {
         return project.toBsonDocument(Document.class, MongoClientSettings.getDefaultCodecRegistry()).toString().replaceAll("\"", "'");
     }
 
@@ -75,6 +75,23 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
     }
 
     @Test
+    public void findTest() {
+        col.insertMany(Arrays.asList(
+                Document.parse("{_id: 1, x: 0, y: 2}"),
+                Document.parse("{_id: 2, x: 0, y: 3}"),
+                Document.parse("{_id: 3, x: 1, y: 3}")));
+
+        FindIterable<Document> iterable = col.find(expr(
+                current().getInteger("x").eq(of(1))));
+        List<Document> results = new ArrayList<>();
+        iterable.forEach(r -> results.add(r));
+
+        assertEquals(
+                Arrays.asList(Document.parse("{_id: 3, x: 1, y: 3}")),
+                results);
+    }
+
+    @Test
     public void matchTest() {
         col.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}"),
@@ -82,7 +99,25 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
                 Document.parse("{_id: 3, x: 1, y: 3}")));
 
         List<Document> results = aggregate(
-                match(Filters.expr(current().getInteger("x").eq(of(1)))));
+                match(expr(current().getInteger("x").eq(of(1)))));
+
+        assertEquals(
+                Arrays.asList(Document.parse("{_id: 3, x: 1, y: 3}")),
+                results);
+    }
+
+    @Test
+    public void currentAsMapMatchTest() {
+        col.insertMany(Arrays.asList(
+                Document.parse("{_id: 1, x: 0, y: 2}"),
+                Document.parse("{_id: 2, x: 0, y: 3}"),
+                Document.parse("{_id: 3, x: 1, y: 3}")));
+
+        List<Document> results = aggregate(
+                match(expr(Expressions.<NumberExpression>currentAsMap()
+                        .entrySet()
+                        .map(e -> e.getValue())
+                        .sum(v -> v).eq(of(7)))));
 
         assertEquals(
                 Arrays.asList(Document.parse("{_id: 3, x: 1, y: 3}")),
@@ -131,8 +166,8 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
 
         // new, document
         Bson projectDocument = project(fields(computed("nested",
-                //BsonDocument.parse("{ x: {$max : ['$x', 4] }}")
-                of(new Document()).setField("x", current().getInteger("x").max(of(4)))
+                // the below is roughly: "{ x: {$max : ['$x', 4] }}"
+                of(Document.parse("{x: 9}")).setField("x", current().getInteger("x").max(of(4)))
         )));
         assertEquals(
                 Arrays.asList(Document.parse("{_id: 0, nested: { x: 4 } }")),
