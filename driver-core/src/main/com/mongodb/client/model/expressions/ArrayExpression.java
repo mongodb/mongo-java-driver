@@ -115,5 +115,5 @@ public interface ArrayExpression<T extends Expression> extends Expression {
 
     <R extends Expression> R passArrayTo(Function<? super ArrayExpression<T>, ? extends R> f);
 
-    <R extends Expression> R switchArrayOn(Function<Branches, ? extends BranchesTerminal<? super ArrayExpression<T>, ? extends R>> on);
+    <R extends Expression> R switchArrayOn(Function<Branches<ArrayExpression<T>>, ? extends BranchesTerminal<? super ArrayExpression<T>, ? extends R>> on);
 }

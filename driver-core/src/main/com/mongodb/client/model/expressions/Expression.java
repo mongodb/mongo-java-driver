@@ -119,6 +119,6 @@ public interface Expression {
 
     <R extends Expression> R passTo(Function<? super Expression, ? extends R> f);
 
-    <R extends Expression> R switchOn(Function<Branches, ? extends BranchesTerminal<? super Expression, ? extends R>> on);
+    <R extends Expression> R switchOn(Function<Branches<Expression>, ? extends BranchesTerminal<Expression, ? extends R>> on);
 
 }

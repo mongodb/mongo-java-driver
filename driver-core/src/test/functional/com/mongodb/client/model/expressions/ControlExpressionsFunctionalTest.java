@@ -16,7 +16,6 @@
 
 package com.mongodb.client.model.expressions;
 
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
@@ -94,6 +93,19 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
     }
 
     @Test
+    public void switchInferenceTest() {
+        // the following must compile:
+        assertExpression(
+                "b",
+                of(1).switchOn(on -> on
+                        .eq(of(0), v -> of("a"))
+                        .eq(of(1), v -> of("b"))
+                ));
+        // the "of(0)" must not cause a type inference of T being an integer,
+        // since switchOn expects an Expression.
+    }
+
+    @Test
     public void switchTypesTest() {
         Function<Expression, StringExpression> label = expr -> expr.switchOn(on -> on
                 .isBoolean(v -> v.asString().concat(of(" - bool")))
@@ -132,19 +144,21 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                                 .join(e -> e).concat(of(" - array")))));
     }
 
+    private <T extends Expression> BranchesIntermediary<T, StringExpression> branches(Branches<T> on) {
+        return on.is(v -> of(true), v -> of("A"));
+    }
+
     @Test
     public void switchTestVariants() {
-        Function<Branches, BranchesTerminal<Expression, StringExpression>> test
-                = on -> on.is(v -> of(true), v -> of("A"));
-        assertExpression("A", of(true).switchOn(test));
-        assertExpression("A", of(false).switchBooleanOn(test));
-        assertExpression("A", of(0).switchIntegerOn(test));
-        assertExpression("A", of(0).switchNumberOn(test));
-        assertExpression("A", of("").switchStringOn(test));
-        assertExpression("A", of(Instant.ofEpochMilli(123)).switchDateOn(test));
-        assertExpression("A", ofIntegerArray(1, 2).switchArrayOn(test));
-        assertExpression("A", of(Document.parse("{_id: 'a'}")).switchDocumentOn(test));
-        assertExpression("A", ofMap(Document.parse("{_id: 'a'}")).switchMapOn(test));
+        assertExpression("A", of(true).switchOn(this::branches));
+        assertExpression("A", of(false).switchBooleanOn(this::branches));
+        assertExpression("A", of(0).switchIntegerOn(this::branches));
+        assertExpression("A", of(0).switchNumberOn(this::branches));
+        assertExpression("A", of("").switchStringOn(this::branches));
+        assertExpression("A", of(Instant.ofEpochMilli(123)).switchDateOn(this::branches));
+        assertExpression("A", ofIntegerArray(1, 2).switchArrayOn(this::branches));
+        assertExpression("A", of(Document.parse("{_id: 'a'}")).switchDocumentOn(this::branches));
+        assertExpression("A", ofMap(Document.parse("{_id: 'a'}")).switchMapOn(this::branches));
     }
 
     @Test

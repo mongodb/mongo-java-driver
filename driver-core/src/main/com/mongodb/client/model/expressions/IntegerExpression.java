@@ -46,5 +46,5 @@ public interface IntegerExpression extends NumberExpression {
     IntegerExpression abs();
 
     <R extends Expression> R passIntegerTo(Function<? super IntegerExpression, ? extends R> f);
-    <R extends Expression> R switchIntegerOn(Function<Branches, ? extends BranchesTerminal<? super IntegerExpression, ? extends R>> on);
+    <R extends Expression> R switchIntegerOn(Function<Branches<IntegerExpression>, ? extends BranchesTerminal<? super IntegerExpression, ? extends R>> on);
 }

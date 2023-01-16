@@ -20,11 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public final class Branches {
-
-    static final Branches EMPTY = new Branches();
-
-    private Branches() {
+public final class Branches<T extends Expression> {
+    
+    Branches() {
     }
 
     private static <T extends Expression, R extends Expression> BranchesIntermediary<T, R> with(final Function<T, SwitchCase<R>> switchCase) {
@@ -45,55 +43,55 @@ public final class Branches {
 
     // eq lt lte
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> eq(final T v, final Function<? super T, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> eq(final T v, final Function<? super T, ? extends R> r) {
         return is(value -> value.eq(v), r);
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> lt(final T v, final Function<? super T, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> lt(final T v, final Function<? super T, ? extends R> r) {
         return is(value -> value.lt(v), r);
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> lte(final T v, final Function<? super T, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> lte(final T v, final Function<? super T, ? extends R> r) {
         return is(value -> value.lte(v), r);
     }
 
     // is type
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isBoolean(final Function<BooleanExpression, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> isBoolean(final Function<BooleanExpression, ? extends R> r) {
         return is(v -> mqlEx(v).isBoolean(), v -> r.apply((BooleanExpression) v));
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isNumber(final Function<NumberExpression, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> isNumber(final Function<NumberExpression, ? extends R> r) {
         return is(v -> mqlEx(v).isNumber(), v -> r.apply((NumberExpression) v));
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isInteger(final Function<IntegerExpression, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> isInteger(final Function<IntegerExpression, ? extends R> r) {
         return is(v -> mqlEx(v).isInteger(), v -> r.apply((IntegerExpression) v));
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isString(final Function<StringExpression, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> isString(final Function<StringExpression, ? extends R> r) {
         return is(v -> mqlEx(v).isString(), v -> r.apply((StringExpression) v));
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isDate(final Function<DateExpression, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> isDate(final Function<DateExpression, ? extends R> r) {
         return is(v -> mqlEx(v).isDate(), v -> r.apply((DateExpression) v));
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Expression, R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isArray(final Function<ArrayExpression<Q>, ? extends R> r) {
+    public <R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isArray(final Function<ArrayExpression<Q>, ? extends R> r) {
         return is(v -> mqlEx(v).isArray(), v -> r.apply((ArrayExpression<Q>) v));
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isDocument(final Function<DocumentExpression, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> isDocument(final Function<DocumentExpression, ? extends R> r) {
         return is(v -> mqlEx(v).isDocument(), v -> r.apply((DocumentExpression) v));
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Expression, R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isMap(final Function<MapExpression<Q>, ? extends R> r) {
+    public <R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isMap(final Function<MapExpression<Q>, ? extends R> r) {
         return is(v -> mqlEx(v).isMap(), v -> r.apply((MapExpression<Q>) v));
     }
 
-    public <T extends Expression, R extends Expression> BranchesIntermediary<T, R> isNull(final Function<Expression, ? extends R> r) {
+    public <R extends Expression> BranchesIntermediary<T, R> isNull(final Function<Expression, ? extends R> r) {
         return is(v -> mqlEx(v).isNull(), v -> r.apply(v));
     }
 }
