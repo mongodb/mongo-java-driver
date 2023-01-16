@@ -95,7 +95,7 @@ public final class BranchesIntermediary<T extends Expression, R extends Expressi
         return is(v -> mqlEx(v).isNull(), v -> r.apply(v));
     }
 
-    public BranchesTerminal<T, R> defaults(final Function<T, ? extends R> r) {
+    public BranchesTerminal<T, R> defaults(final Function<? super T, ? extends R> r) {
         return this.withDefault(value -> r.apply(value));
     }
 
