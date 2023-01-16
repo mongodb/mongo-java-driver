@@ -389,7 +389,6 @@ final class MqlExpression<T extends Expression>
         return this.isDocumentOrMap().cond(this.assertImplementsAllExpressions(), other);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <R extends Expression> MapExpression<R> isMapOr(final MapExpression<? extends R> other) {
         MqlExpression<?> isMap = (MqlExpression<?>) this.isDocumentOrMap();
