@@ -37,19 +37,21 @@ public class StructuredLogger {
 
     private static final Map<String, StructuredLoggingInterceptor> INTERCEPTORS = new HashMap<>();
 
+    @VisibleForTesting(otherwise = PRIVATE)
     public static void addInterceptor(final String applicationName, final StructuredLoggingInterceptor interceptor) {
         INTERCEPTORS.put(applicationName, interceptor);
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
     public static void removeInterceptor(final String applicationName) {
         INTERCEPTORS.remove(applicationName);
     }
 
-    public static boolean hasInterceptor(final ClusterId clusterId) {
+    private static boolean hasInterceptor(final ClusterId clusterId) {
         return INTERCEPTORS.containsKey(clusterId.getDescription());
     }
 
-    public static StructuredLoggingInterceptor getInterceptor(final ClusterId clusterId) {
+    private static StructuredLoggingInterceptor getInterceptor(final ClusterId clusterId) {
         return INTERCEPTORS.get(clusterId.getDescription());
     }
 
