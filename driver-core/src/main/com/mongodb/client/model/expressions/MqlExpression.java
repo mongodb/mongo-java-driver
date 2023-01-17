@@ -445,8 +445,19 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public IntegerExpression isIntegerOr(final IntegerExpression other) {
-        return this.isNumber().and(this.eq(this.round()))
-                .cond(this, other);
+        /*
+        The server does not evaluate both branches of and/or/cond unless needed.
+        However, the server has a pipeline optimization stage prior to
+        evaluation that does attempt to optimize both branches, and fails with
+        "Failed to optimize pipeline" when there is a problem arising from the
+        use of literals and typed expressions. Using "switch" avoids this,
+        otherwise we could just use:
+        this.isNumber().and(this.eq(this.round()))
+        */
+
+        return this.switchOn(on -> on
+                .isNumber(v -> (IntegerExpression) v.round().eq(v).cond(v, other))
+                .defaults(v -> other));
     }
 
     public BooleanExpression isString() {
