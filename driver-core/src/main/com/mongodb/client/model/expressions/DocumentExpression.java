@@ -103,5 +103,5 @@ public interface DocumentExpression extends Expression {
     MapExpression<Expression> asMap();
 
     <R extends Expression> R passDocumentTo(Function<? super DocumentExpression, ? extends R> f);
-    <R extends Expression> R switchDocumentOn(Function<Branches<DocumentExpression>, ? extends BranchesTerminal<? super DocumentExpression, ? extends R>> on);
+    <R extends Expression> R switchDocumentOn(Function<Branches<DocumentExpression>, ? extends BranchesTerminal<DocumentExpression, ? extends R>> on);
 }

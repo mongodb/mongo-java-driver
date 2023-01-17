@@ -299,7 +299,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchBooleanOn(final Function<Branches<BooleanExpression>, ? extends BranchesTerminal<? super BooleanExpression, ? extends R>> switchMap) {
+    public <R extends Expression> R switchBooleanOn(final Function<Branches<BooleanExpression>, ? extends BranchesTerminal<BooleanExpression, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
@@ -309,7 +309,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchIntegerOn(final Function<Branches<IntegerExpression>, ? extends BranchesTerminal<? super IntegerExpression, ? extends R>> switchMap) {
+    public <R extends Expression> R switchIntegerOn(final Function<Branches<IntegerExpression>, ? extends BranchesTerminal<IntegerExpression, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
@@ -319,7 +319,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchNumberOn(final Function<Branches<NumberExpression>, ? extends BranchesTerminal<? super NumberExpression, ? extends R>> switchMap) {
+    public <R extends Expression> R switchNumberOn(final Function<Branches<NumberExpression>, ? extends BranchesTerminal<NumberExpression, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
@@ -329,7 +329,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchStringOn(final Function<Branches<StringExpression>, ? extends BranchesTerminal<? super StringExpression, ? extends R>> switchMap) {
+    public <R extends Expression> R switchStringOn(final Function<Branches<StringExpression>, ? extends BranchesTerminal<StringExpression, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
@@ -339,7 +339,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchDateOn(final Function<Branches<DateExpression>, ? extends BranchesTerminal<? super DateExpression, ? extends R>> switchMap) {
+    public <R extends Expression> R switchDateOn(final Function<Branches<DateExpression>, ? extends BranchesTerminal<DateExpression, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
@@ -349,7 +349,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchArrayOn(final Function<Branches<ArrayExpression<T>>, ? extends BranchesTerminal<? super ArrayExpression<T>, ? extends R>> switchMap) {
+    public <R extends Expression> R switchArrayOn(final Function<Branches<ArrayExpression<T>>, ? extends BranchesTerminal<ArrayExpression<T>, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
@@ -359,7 +359,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchMapOn(final Function<Branches<MapExpression<T>>, ? extends BranchesTerminal<? super MapExpression<T>, ? extends R>> switchMap) {
+    public <R extends Expression> R switchMapOn(final Function<Branches<MapExpression<T>>, ? extends BranchesTerminal<MapExpression<T>, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
@@ -369,7 +369,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public <R extends Expression> R switchDocumentOn(final Function<Branches<DocumentExpression>, ? extends BranchesTerminal<? super DocumentExpression, ? extends R>> switchMap) {
+    public <R extends Expression> R switchDocumentOn(final Function<Branches<DocumentExpression>, ? extends BranchesTerminal<DocumentExpression, ? extends R>> switchMap) {
         return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
     }
 
