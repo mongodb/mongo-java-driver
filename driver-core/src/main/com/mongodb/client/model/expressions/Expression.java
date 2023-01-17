@@ -59,7 +59,7 @@ import java.util.function.Function;
  * See {@link Expressions#ofNull} for more details.
  *
  * <p>There is no explicit "missing" or "undefined" value. Users may use
- * {@link MapExpression#has} or {@link DocumentExpression#has}.
+ * {@link MapExpression#has}.
  *
  * <p>This type hierarchy differs from the {@linkplain org.bson} types in that
  * they provide computational operations, the numeric types are less granular,
