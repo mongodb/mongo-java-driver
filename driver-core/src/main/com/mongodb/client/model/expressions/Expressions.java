@@ -177,14 +177,6 @@ public final class Expressions {
                 .assertImplementsAllExpressions();
     }
 
-    /**
-     * Returns the "current" value as a {@linkplain MapExpression map} value.
-     * The "current" value is the top-level document currently being processed
-     * in the aggregation pipeline stage.
-     *
-     * @return the resulting value
-     * @param <R> the type of the resulting value
-     */
     public static <R extends Expression> MapExpression<R> currentAsMap() {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
                 .assertImplementsAllExpressions();
