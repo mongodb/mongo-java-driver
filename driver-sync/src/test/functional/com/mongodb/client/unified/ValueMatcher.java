@@ -75,7 +75,6 @@ final class ValueMatcher {
                         expected = expectedDocument.getString("$$matchesHexBytes");
                         break;
                     case "$$matchAsRoot":
-                        // TODO: figure out why no logic was needed here to get tests to pass
                         expected = expectedDocument.getDocument("$$matchAsRoot");
                         break;
                     default:
