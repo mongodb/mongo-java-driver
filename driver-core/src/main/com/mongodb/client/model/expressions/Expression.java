@@ -199,7 +199,6 @@ public interface Expression {
      */
     DateExpression isDateOr(DateExpression other);
 
-
     /**
      * {@code this} value as a {@linkplain ArrayExpression array} if
      * {@code this} is an array, or the {@code other} array value if
@@ -211,7 +210,7 @@ public interface Expression {
      * the user is an unchecked assertion that all elements are of that type,
      * and that no element is null, is missing, or is of some other type. If the
      * user cannot make such an assertion, some appropriate super-type should be
-     * chosen, and if necessary elements should be individually type-checked.
+     * chosen, and if necessary the elements should be individually type-checked.
      *
      * @param other the other value.
      * @return the resulting value.
@@ -219,9 +218,39 @@ public interface Expression {
      */
     <T extends Expression> ArrayExpression<T> isArrayOr(ArrayExpression<? extends T> other);
 
-    // TODO-END doc after Map merged, "record" and "schema objects" are decided
+    /**
+     * {@code this} value as a {@linkplain DocumentExpression document} if
+     * {@code this} is a document or document-like value (such as a
+     * {@linkplain MapExpression map} or
+     * {@linkplain EntryExpression entry})
+     * or the {@code other} document value if
+     * {@code this} is null, or is missing, or is of any other non-document type.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
     <T extends DocumentExpression> T isDocumentOr(T other);
 
+    /**
+     * {@code this} value as a {@linkplain MapExpression map} if
+     * {@code this} is a map or map-like value (such as a
+     * {@linkplain DocumentExpression document} or
+     * {@linkplain EntryExpression entry})
+     * or the {@code other} map value if
+     * {@code this} is null, or is missing, or is of any other non-map type.
+     *
+     * <p>Warning: this operation does not guarantee type safety. While this
+     * operation is guaranteed to produce a map, the type of the values of
+     * that array are not guaranteed by the API. The specification of a type by
+     * the user is an unchecked assertion that all values are of that type,
+     * and that no value is null of some other type. If the
+     * user cannot make such an assertion, some appropriate super-type should be
+     * chosen, and if necessary the values should be individually type-checked.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     * @param <T> the type of the values of the resulting map.
+     */
     <T extends Expression> MapExpression<T> isMapOr(MapExpression<? extends T> other);
 
     /**
@@ -231,32 +260,41 @@ public interface Expression {
      * to a {@linkplain StringExpression string}, as is the case with
      * {@linkplain ArrayExpression arrays},
      * {@linkplain DocumentExpression documents},
-     * {@linkplain MapExpression maps}, and
-     * {@linkplain EntryExpression entries}.
-     *
-     * TODO-END what about null/missing?
+     * {@linkplain MapExpression maps},
+     * {@linkplain EntryExpression entries}, and the
+     * {@linkplain Expressions#ofNull() null value}.
      *
      * @see StringExpression#parseDate()
      * @see StringExpression#parseInteger()
-     * TODO-END all the others? implement?
      * @return the resulting value.
      */
     StringExpression asString();
 
     /**
-     * Applies the provided function to {@code this} value.
-     *
-     * <p>Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * The result of passing {@code this} value to the provided function.
+     * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
      * user-defined functions to use the chaining syntax.
+     *
+     * <p>The appropriate type-based variant should be used when the type
+     * of {@code this} is known.
+     *
+     * @see BooleanExpression#passBooleanTo
+     * @see IntegerExpression#passIntegerTo
+     * @see NumberExpression#passNumberTo
+     * @see StringExpression#passStringTo
+     * @see DateExpression#passDateTo
+     * @see ArrayExpression#passArrayTo
+     * @see MapExpression#passMapTo
+     * @see DocumentExpression#passDocumentTo
      *
      * @param f the function to apply.
      * @return the resulting value.
      * @param <R> the type of the resulting value.
      */
     <R extends Expression> R passTo(Function<? super Expression, ? extends R> f);
+
     /**
-     * The value resulting from applying the provided switch mapping to
-     * {@code this} value.
+     * The result of applying the provided switch mapping to {@code this} value.
      *
      * <p>Can be used to perform pattern matching on the type of {@code this}
      * value, or to perform comparisons, or to perform any arbitrary check on
@@ -264,12 +302,29 @@ public interface Expression {
      *
      * <p>The suggested convention is to use "{@code on}" as the name of the
      * {@code mapping} parameter, for example:
-     * {@code myValue.switchOn(on -> on.isInteger(...)...)}.
+     *
+     * <pre>{@code
+     * myValue.switchOn(on -> on
+     *     .isInteger(...)
+     *     ...
+     *     .defaults(...))
+     * }</pre>
+     *
+     * <p>The appropriate type-based variant should be used when the type
+     * of {@code this} is known.
+     *
+     * @see BooleanExpression#switchBooleanOn
+     * @see IntegerExpression#switchIntegerOn
+     * @see NumberExpression#switchNumberOn
+     * @see StringExpression#switchStringOn
+     * @see DateExpression#switchDateOn
+     * @see ArrayExpression#switchArrayOn
+     * @see MapExpression#switchMapOn
+     * @see DocumentExpression#switchDocumentOn
      *
      * @param mapping the switch mapping.
      * @return the resulting value.
      * @param <R> the type of the resulting value.
      */
     <R extends Expression> R switchOn(Function<Branches<Expression>, ? extends BranchesTerminal<Expression, ? extends R>> mapping);
-
 }

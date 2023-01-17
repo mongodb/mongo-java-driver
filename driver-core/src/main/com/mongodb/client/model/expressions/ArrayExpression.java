@@ -117,7 +117,25 @@ public interface ArrayExpression<T extends Expression> extends Expression {
 
     ArrayExpression<T> distinct();
 
+    /**
+     * The result of passing {@code this} value to the provided function.
+     * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
+     * user-defined functions to use the chaining syntax.
+     *
+     * @see Expression#passTo
+     * @param f the function to apply.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
     <R extends Expression> R passArrayTo(Function<? super ArrayExpression<T>, ? extends R> f);
 
-    <R extends Expression> R switchArrayOn(Function<Branches<ArrayExpression<T>>, ? extends BranchesTerminal<ArrayExpression<T>, ? extends R>> on);
+    /**
+     * The result of applying the provided switch mapping to {@code this} value.
+     *
+     * @see Expression#switchOn
+     * @param mapping the switch mapping.
+     * @return the resulting value.
+     * @param <R> the type of the resulting value.
+     */
+    <R extends Expression> R switchArrayOn(Function<Branches<ArrayExpression<T>>, ? extends BranchesTerminal<ArrayExpression<T>, ? extends R>> mapping);
 }

@@ -24,8 +24,8 @@ import static com.mongodb.client.model.expressions.Expressions.of;
  * {@linkplain StringExpression string} key and some
  * {@linkplain Expression value}. Entries are used with
  * {@linkplain MapExpression maps}.
- * 
- * @param <T>
+ *
+ * @param <T> The type of the value
  */
 public interface EntryExpression<T extends Expression> extends Expression {
     StringExpression getKey();
