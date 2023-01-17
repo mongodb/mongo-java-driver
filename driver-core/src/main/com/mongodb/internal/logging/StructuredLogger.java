@@ -64,7 +64,7 @@ public class StructuredLogger {
         this.logger = logger;
     }
 
-    public boolean isDebugEnabled(final ClusterId clusterId) {
+    public boolean isDebugRequired(final ClusterId clusterId) {
         return logger.isDebugEnabled() || hasInterceptor(clusterId);
     }
 

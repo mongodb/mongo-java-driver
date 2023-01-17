@@ -208,7 +208,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     }
 
     private boolean loggingRequired() {
-        return logger.isDebugEnabled(getClusterId());
+        return logger.isDebugRequired(getClusterId());
     }
 
 
