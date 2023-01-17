@@ -395,11 +395,14 @@ abstract class ContextElement {
 
         @Override
         public String toString() {
-            // TODO: fix this up to be like the others
             return "Log Message Matching Context\n"
-                    + "client='" + client + '\''
-                    + ", expectedMessages=" + expectedMessages
-                    + ", actualMessages=" + actualMessages;
+                    + "   client='" + client + '\'' + "\n"
+                    + "   expectedMessages="
+                    + new BsonDocument("messages", expectedMessages).toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
+                    + "   actualMessages="
+                    + new BsonDocument("messages", new BsonArray(actualMessages.stream()
+                    .map(LogMatcher::asDocument).collect(Collectors.toList())))
+                    .toJson(JsonWriterSettings.builder().indent(true).build()) + "\n";
         }
     }
 

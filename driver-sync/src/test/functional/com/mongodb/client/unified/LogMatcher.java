@@ -56,7 +56,7 @@ final class LogMatcher {
         context.pop();
     }
 
-    private static BsonDocument asDocument(final StructuredLogMessage message) {
+     static BsonDocument asDocument(final StructuredLogMessage message) {
         BsonDocument document = new BsonDocument();
         document.put("component", new BsonString(message.getLoggerName().substring(message.getLoggerName().lastIndexOf(".") + 1)));
         document.put("level", new BsonString(message.getLevel()));
