@@ -128,7 +128,8 @@ public interface NumberExpression extends Expression {
     IntegerExpression round();
 
     /**
-     * The result of rounding {@code this} to the nearest even {@code place}.
+     * The result of rounding {@code this} to {@code place} decimal places
+     * using the "half to even" approach.
      *
      * @param place the decimal place to round to, from -20 to 100, exclusive.
      *              Positive values specify the place to the right of the

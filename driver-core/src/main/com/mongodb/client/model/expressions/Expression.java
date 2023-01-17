@@ -49,12 +49,14 @@ import java.util.function.Function;
  * {@link Expressions} class.
  *
  * <p>As with the Java Stream API's terminal operations, corresponding Java
- * values are not directly available, but must be obtained indirectly via the
- * aggregation pipeline, or via find. Certain methods may cause an error, which
- * will be produced through these "terminal operations".
+ * values are not directly available, but must be obtained indirectly via
+ * {@code MongoCollection.aggregate} or {@code MongoCollection.find}.
+ * Certain methods may cause an error, which will be produced
+ * through these "terminal operations".
  *
- * <p>The null value is not part of, and cannot be used as if it were part of,
- * any other type. See {@link Expressions#ofNull} for more details.
+ * <p>The null value is not part of, and cannot be used as if it were part
+ * of, any explicit type (except the root type {@link Expression} itself).
+ * See {@link Expressions#ofNull} for more details.
  *
  * <p>There is no explicit "missing" or "undefined" value. Users may use
  * {@link MapExpression#has} or {@link DocumentExpression#has}.

@@ -300,7 +300,8 @@ public final class Expressions {
      * The null value in the context of the MongoDB Query Language (MQL).
      *
      * <p>The null value is not part of, and cannot be used as if it were part
-     * of, any other type. It has no explicit type of its own.
+     * of, any explicit type (except the root type {@link Expression} itself).
+     * It has no explicit type of its own.
      *
      * <p>Instead of checking that a value is null, users should generally
      * check that a value is of their expected type, via methods such as
