@@ -77,6 +77,18 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
+    public void hasMapTest() {
+        assertExpression(
+                true,
+                mapKey123.has(of("key")),
+                "{'$ne': [{'$getField': {'input': {'$setField': {'field': 'key', 'input': " +
+                        "{'$literal': {}}, 'value': 123}}, 'field': 'key'}}, '$$REMOVE']}");
+        assertExpression(
+                false,
+                mapKey123.has("not_key"));
+    }
+
+    @Test
     public void getSetEntryTest() {
         EntryExpression<IntegerExpression> entryA1 = ofEntry(of("keyA"), of(1));
         assertExpression(

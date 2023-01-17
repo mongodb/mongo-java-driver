@@ -777,6 +777,17 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(ast("$substrBytes", start, length));
     }
 
+    @Override
+    public BooleanExpression has(StringExpression key) {
+        return get(key).ne(ofRem());
+    }
+
+    static <R extends Expression> R ofRem() {
+        // $$REMOVE is intentionally not exposed to users
+        return new MqlExpression<>((cr) -> new MqlExpression.AstPlaceholder(new BsonString("$$REMOVE")))
+                .assertImplementsAllExpressions();
+    }
+
     /** @see MapExpression
      * @see EntryExpression */
 

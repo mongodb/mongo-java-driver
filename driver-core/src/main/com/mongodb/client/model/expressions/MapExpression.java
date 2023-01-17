@@ -20,6 +20,12 @@ import static com.mongodb.client.model.expressions.Expressions.of;
 
 public interface MapExpression<T extends Expression> extends Expression {
 
+    BooleanExpression has(StringExpression key);
+
+    default BooleanExpression has(String key) {
+        return has(of(key));
+    }
+
     // TODO-END doc "user asserts"
     T get(StringExpression key);
 

@@ -126,11 +126,5 @@ public abstract class AbstractExpressionsFunctionalTest extends OperationTest {
         }
     }
 
-
-    static <R extends Expression> R ofRem() {
-        // $$REMOVE is intentionally not exposed to users
-        return new MqlExpression<>((cr) -> new MqlExpression.AstPlaceholder(new BsonString("$$REMOVE")))
-                .assertImplementsAllExpressions();
-    }
 }
 
