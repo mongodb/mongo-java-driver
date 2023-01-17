@@ -185,8 +185,8 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                 "{'$switch': {'branches': [{'case': {'$isNumber': [1]}, 'then': 'A'}]}}");
         assertExpression("A",
                 of(1).switchOn(on -> on.isInteger(v -> of("A"))),
-                "{'$switch': {'branches': [{'case': {'$and': [{'$isNumber': [1]}, " +
-                        "{'$eq': [1, {'$round': 1}]}]}, 'then': 'A'}]}}");
+                "{'$switch': {'branches': [{'case': {'$switch': {'branches': [{'case': {'$isNumber': [1]},"
+                        + "'then': {'$eq': [{'$round': 1}, 1]}}], 'default': false}}, 'then': 'A'}]}}");
         assertExpression("A",
                 of("x").switchOn(on -> on.isString(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': ['x']}, 'string']}, 'then': 'A'}]}}");
@@ -244,8 +244,9 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                         + "{'case': {'$isNumber': [1]}, 'then': 'A'}]}}");
         assertExpression("A",
                 of(1).switchOn(on -> on.isNull(v -> of("X")).isInteger(v -> of("A"))),
-                "{'$switch': {'branches': [{'case': {'$eq': [1, null]}, 'then': 'X'}, {'case': " +
-                        "{'$and': [{'$isNumber': [1]}, {'$eq': [1, {'$round': 1}]}]}, 'then': 'A'}]}}");
+                "{'$switch': {'branches': [{'case': {'$eq': [1, null]}, 'then': 'X'}, {'case': "
+                        + "{'$switch': {'branches': [{'case': {'$isNumber': [1]}, "
+                        + "'then': {'$eq': [{'$round': 1}, 1]}}], 'default': false}}, 'then': 'A'}]}}");
         assertExpression("A",
                 of("x").switchOn(on -> on.isNull(v -> of("X")).isString(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': ['x', null]}, 'then': 'X'}, "

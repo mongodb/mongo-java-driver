@@ -440,7 +440,9 @@ final class MqlExpression<T extends Expression>
     }
 
     public BooleanExpression isInteger() {
-        return this.isNumber().and(this.eq(this.round()));
+        return switchOn(on -> on
+                .isNumber(v -> v.round().eq(v))
+                .defaults(v -> of(false)));
     }
 
     @Override
