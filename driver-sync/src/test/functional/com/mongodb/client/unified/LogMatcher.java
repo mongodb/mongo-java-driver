@@ -49,7 +49,6 @@ final class LogMatcher {
 
         for (int i = 0; i < expectedMessages.size(); i++) {
             BsonDocument expectedMessageAsDocument = expectedMessages.get(i).asDocument().clone();
-            expectedMessageAsDocument.remove("failureIsRedacted");
             valueMatcher.assertValuesMatch(expectedMessageAsDocument, asDocument(actualMessages.get(i)));
         }
 
@@ -60,8 +59,9 @@ final class LogMatcher {
         BsonDocument document = new BsonDocument();
         document.put("component", new BsonString(message.getLoggerName().substring(message.getLoggerName().lastIndexOf(".") + 1)));
         document.put("level", new BsonString(message.getLevel()));
-        document.put("hasFailure", BsonBoolean.valueOf(message.getException() != null && exceptionIsUnredacted(message.getException())));
-
+        document.put("hasFailure", BsonBoolean.valueOf(message.getException() != null));
+        document.put("failureIsRedacted",
+                BsonBoolean.valueOf(message.getException() != null && exceptionIsRedacted(message.getException())));
         BsonDocument dataDocument = new BsonDocument();
         dataDocument.put("message", new BsonString(message.getMessageId()));
         if (message.getException() != null) {
@@ -75,8 +75,8 @@ final class LogMatcher {
         return document;
     }
 
-    private static boolean exceptionIsUnredacted(final Throwable exception) {
-        return exception instanceof MongoCommandException && !((MongoCommandException) exception).getResponse().isEmpty();
+    private static boolean exceptionIsRedacted(final Throwable exception) {
+        return exception instanceof MongoCommandException && ((MongoCommandException) exception).getResponse().isEmpty();
     }
 
     private static BsonValue asBsonValue(final Object value) {
