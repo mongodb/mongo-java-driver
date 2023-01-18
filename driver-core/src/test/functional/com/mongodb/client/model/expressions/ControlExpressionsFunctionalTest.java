@@ -109,13 +109,14 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
     public void switchTypesTest() {
         Function<Expression, StringExpression> label = expr -> expr.switchOn(on -> on
                 .isBoolean(v -> v.asString().concat(of(" - bool")))
+                // integer should be checked before string
+                .isInteger(v -> v.asString().concat(of(" - integer")))
+                .isNumber(v -> v.asString().concat(of(" - number")))
                 .isString(v -> v.asString().concat(of(" - string")))
                 .isDate(v -> v.asString().concat(of(" - date")))
                 .isArray((ArrayExpression<IntegerExpression> v) -> v.sum(a -> a).asString().concat(of(" - array")))
                 .isDocument(v -> v.getString("_id").concat(of(" - document")))
                 .isNull(v -> of("null - null"))
-                .isInteger(v -> v.asString().concat(of(" - integer")))
-                .isNumber(v -> v.asString().concat(of(" - number")))
                 .defaults(v -> of("default"))
                 ).toLower();
         assertExpression("true - bool", of(true).passTo(label));
