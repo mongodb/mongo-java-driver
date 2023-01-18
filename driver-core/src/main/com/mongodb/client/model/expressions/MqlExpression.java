@@ -503,7 +503,7 @@ final class MqlExpression<T extends Expression>
         return (ArrayExpression<R>) this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
-    private BooleanExpression isDocumentOrMap() {
+    BooleanExpression isDocumentOrMap() {
         return new MqlExpression<>(ast("$type")).eq(of("object"));
     }
 

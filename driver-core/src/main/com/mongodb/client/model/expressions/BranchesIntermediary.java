@@ -83,12 +83,12 @@ public final class BranchesIntermediary<T extends Expression, R extends Expressi
     }
 
     public BranchesIntermediary<T, R> isDocument(final Function<? super DocumentExpression, ? extends R> r) {
-        return is(v -> mqlEx(v).isDocument(), v -> r.apply((DocumentExpression) v));
+        return is(v -> mqlEx(v).isDocumentOrMap(), v -> r.apply((DocumentExpression) v));
     }
 
     @SuppressWarnings("unchecked")
     public <Q extends Expression> BranchesIntermediary<T, R> isMap(final Function<? super MapExpression<Q>, ? extends R> r) {
-        return is(v -> mqlEx(v).isMap(), v -> r.apply((MapExpression<Q>) v));
+        return is(v -> mqlEx(v).isDocumentOrMap(), v -> r.apply((MapExpression<Q>) v));
     }
 
     public BranchesIntermediary<T, R> isNull(final Function<? super Expression, ? extends R> r) {
