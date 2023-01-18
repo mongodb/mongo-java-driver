@@ -19,6 +19,7 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.PRESENT;
 
 public interface MapExpression<T extends Expression> extends Expression {
 
@@ -29,6 +30,7 @@ public interface MapExpression<T extends Expression> extends Expression {
     }
 
     // TODO-END doc "user asserts"
+    @MqlUnchecked(PRESENT)
     T get(StringExpression key);
 
     // TODO-END doc "user asserts"
