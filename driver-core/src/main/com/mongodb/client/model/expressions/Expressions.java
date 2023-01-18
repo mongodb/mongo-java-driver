@@ -172,7 +172,7 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
-    public static <R extends DocumentExpression> R current() {
+    public static DocumentExpression current() {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
                 .assertImplementsAllExpressions();
     }
