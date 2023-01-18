@@ -16,7 +16,6 @@
 
 package com.mongodb.client.model.expressions;
 
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
@@ -51,28 +50,51 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      */
     <R extends Expression> ArrayExpression<R> map(Function<? super T, ? extends R> in);
 
-    /**
-     * Performs a reduction on the elements of this array, using the provided
-     * identity value and an associative reducing function, and returns
-     * the reduced value. The initial value must be the identity value for the
-     * reducing function.
-     *
-     * @param initialValue the identity for the reducing function
-     * @param in the associative reducing function
-     * @return the reduced value
-     */
-    T reduce(T initialValue, BinaryOperator<T> in);
-
     IntegerExpression size();
 
+    BooleanExpression any(Function<? super T, BooleanExpression> predicate);
+
+    BooleanExpression all(Function<? super T, BooleanExpression> predicate);
+
+    NumberExpression sum(Function<? super T, ? extends NumberExpression> mapper);
+
+    NumberExpression multiply(Function<? super T, ? extends NumberExpression> mapper);
+
+    T max(T other);
+
+    T min(T other);
+
+    ArrayExpression<T> maxN(IntegerExpression n);
+    ArrayExpression<T> minN(IntegerExpression n);
+
+    StringExpression join(Function<? super T, StringExpression> mapper);
+
+    <R extends Expression> ArrayExpression<R> concat(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
+
+    <R extends Expression> ArrayExpression<R> union(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
+
+    /**
+     * user asserts that i is in bounds for the array
+     *
+     * @param i
+     * @return
+     */
     T elementAt(IntegerExpression i);
 
     default T elementAt(final int i) {
         return this.elementAt(of(i));
     }
 
+    /**
+     * user asserts that array is not empty
+     * @return
+     */
     T first();
 
+    /**
+     * user asserts that array is not empty
+     * @return
+     */
     T last();
 
     BooleanExpression contains(T contains);
