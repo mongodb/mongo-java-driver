@@ -81,8 +81,8 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 true,
                 mapKey123.has(of("key")),
-                "{'$ne': [{'$getField': {'input': {'$setField': {'field': 'key', 'input': " +
-                        "{'$literal': {}}, 'value': 123}}, 'field': 'key'}}, '$$REMOVE']}");
+                "{'$ne': [{'$getField': {'input': {'$setField': {'field': 'key', 'input': "
+                        + "{'$literal': {}}, 'value': 123}}, 'field': 'key'}}, '$$REMOVE']}");
         assertExpression(
                 false,
                 mapKey123.has("not_key"));
@@ -122,7 +122,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 ofArray(
                         of(Document.parse("{ 'k': 'item', 'v': 'abc123' }")),
                         of(Document.parse("{ 'k': 'qty', 'v': 25 }")))
-                        .asMap(v -> ofEntry(v.getString("k"), v.getField("v")) ));
+                        .asMap(v -> ofEntry(v.getString("k"), v.getField("v"))));
         // using arrays
         assertExpression(
                 Document.parse("{ 'item' : 'abc123', 'qty' : 25 }"),

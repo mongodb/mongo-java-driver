@@ -778,7 +778,7 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public BooleanExpression has(StringExpression key) {
+    public BooleanExpression has(final StringExpression key) {
         return get(key).ne(ofRem());
     }
 
@@ -833,7 +833,7 @@ final class MqlExpression<T extends Expression>
     public <R extends Expression> MapExpression<R> asMap(
             final Function<? super T, ? extends EntryExpression<? extends R>> mapper) {
         @SuppressWarnings("unchecked")
-        MqlExpression<EntryExpression<? extends R>> array = (MqlExpression<EntryExpression<? extends R>>)this.map(mapper);
+        MqlExpression<EntryExpression<? extends R>> array = (MqlExpression<EntryExpression<? extends R>>) this.map(mapper);
         return newMqlExpression(array.astWrapped("$arrayToObject"));
     }
 
