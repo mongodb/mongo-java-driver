@@ -19,6 +19,7 @@ package com.mongodb.client.model.expressions;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.PRESENT;
 
 /**
  * An array {@link Expression value} in the context of the MongoDB Query
@@ -85,6 +86,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * @param i
      * @return
      */
+    @MqlUnchecked(PRESENT)
     T elementAt(IntegerExpression i);
 
     default T elementAt(final int i) {
@@ -95,6 +97,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * user asserts that array is not empty
      * @return
      */
+    @MqlUnchecked(PRESENT)
     T first();
 
     /**

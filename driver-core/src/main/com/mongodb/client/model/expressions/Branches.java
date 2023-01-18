@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
+
 public final class Branches<T extends Expression> {
 
     Branches() {
@@ -78,7 +80,7 @@ public final class Branches<T extends Expression> {
     }
 
     @SuppressWarnings("unchecked")
-    public <R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isArray(final Function<? super ArrayExpression<Q>, ? extends R> r) {
+    public <R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isArray(final Function<? super ArrayExpression<@MqlUnchecked(TYPE_ARGUMENT) Q>, ? extends R> r) {
         return is(v -> mqlEx(v).isArray(), v -> r.apply((ArrayExpression<Q>) v));
     }
 
