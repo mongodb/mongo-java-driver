@@ -20,6 +20,8 @@ import com.mongodb.annotations.Evolving;
 
 import java.util.function.Function;
 
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
+
 /**
  * A value in the context of the MongoDB Query Language (MQL).
  *
@@ -215,7 +217,7 @@ public interface Expression {
      * @return the resulting value.
      * @param <T> the type of the elements of the resulting array.
      */
-    <T extends Expression> ArrayExpression<T> isArrayOr(ArrayExpression<? extends T> other);
+    <T extends Expression> ArrayExpression<@MqlUnchecked(TYPE_ARGUMENT) T> isArrayOr(ArrayExpression<? extends T> other);
 
     /**
      * {@code this} value as a {@linkplain DocumentExpression document} if

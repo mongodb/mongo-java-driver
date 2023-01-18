@@ -23,6 +23,8 @@ import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.PRESENT;
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE;
 
 /**
  * Expresses a document value. A document is an ordered set of fields, where the
@@ -34,8 +36,10 @@ public interface DocumentExpression extends Expression {
 
     DocumentExpression unsetField(String fieldName);
 
+    @MqlUnchecked(PRESENT)
     Expression getField(String fieldName);
 
+    @MqlUnchecked({PRESENT, TYPE})
     BooleanExpression getBoolean(String fieldName);
 
     BooleanExpression getBoolean(String fieldName, BooleanExpression other);
