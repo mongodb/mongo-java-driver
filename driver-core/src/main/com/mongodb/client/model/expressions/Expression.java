@@ -65,7 +65,7 @@ import java.util.function.Function;
  * they provide computational operations, the numeric types are less granular,
  * and it offers multiple abstractions of certain types (document, map, entry).
  * It differs from the corresponding Java types (such as {@code int},
- * {@link String}, {@link java.util.Map) in that the operations
+ * {@link String}, {@link java.util.Map}) in that the operations
  * available differ, and in that an implementation of this API may be used to
  * produce MQL in the form of BSON. (This API makes no guarantee regarding the
  * BSON output produced by its implementation, which in any case may vary due
