@@ -145,7 +145,7 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                                 .join(e -> e).concat(of(" - array")))));
     }
 
-    private <T extends Expression> BranchesIntermediary<T, StringExpression> branches(Branches<T> on) {
+    private <T extends Expression> BranchesIntermediary<T, StringExpression> branches(final Branches<T> on) {
         return on.is(v -> of(true), v -> of("A"));
     }
 
