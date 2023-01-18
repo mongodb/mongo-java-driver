@@ -23,7 +23,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterEach;
@@ -43,7 +42,9 @@ import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
 import static com.mongodb.client.model.Sorts.ascending;
-import static com.mongodb.client.model.expressions.Expressions.*;
+import static com.mongodb.client.model.expressions.Expressions.current;
+import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
