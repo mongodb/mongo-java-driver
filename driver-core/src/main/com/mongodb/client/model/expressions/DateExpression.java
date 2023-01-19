@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
+import java.util.function.Function;
+
 /**
  * Expresses a date value.
  */
@@ -33,4 +35,6 @@ public interface DateExpression extends Expression {
 
     StringExpression asString(StringExpression timezone, StringExpression format);
 
+    <R extends Expression> R passDateTo(Function<? super DateExpression, ? extends R> f);
+    <R extends Expression> R switchDateOn(Function<Branches<DateExpression>, ? extends BranchesTerminal<DateExpression, ? extends R>> on);
 }

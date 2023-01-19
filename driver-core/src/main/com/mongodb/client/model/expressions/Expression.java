@@ -18,6 +18,8 @@ package com.mongodb.client.model.expressions;
 
 import com.mongodb.annotations.Evolving;
 
+import java.util.function.Function;
+
 /**
  * Expressions express values that may be represented in (or computations that
  * may be performed within) a MongoDB server. Each expression evaluates to some
@@ -114,4 +116,9 @@ public interface Expression {
     <T extends Expression> MapExpression<T> isMapOr(MapExpression<? extends T> other);
 
     StringExpression asString();
+
+    <R extends Expression> R passTo(Function<? super Expression, ? extends R> f);
+
+    <R extends Expression> R switchOn(Function<Branches<Expression>, ? extends BranchesTerminal<Expression, ? extends R>> on);
+
 }
