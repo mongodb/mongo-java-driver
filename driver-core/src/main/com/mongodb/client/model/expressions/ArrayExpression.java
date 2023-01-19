@@ -112,4 +112,8 @@ public interface ArrayExpression<T extends Expression> extends Expression {
     ArrayExpression<T> union(ArrayExpression<? extends T> set);
 
     ArrayExpression<T> distinct();
+
+    <R extends Expression> R passArrayTo(Function<? super ArrayExpression<T>, ? extends R> f);
+
+    <R extends Expression> R switchArrayOn(Function<Branches<ArrayExpression<T>>, ? extends BranchesTerminal<ArrayExpression<T>, ? extends R>> on);
 }

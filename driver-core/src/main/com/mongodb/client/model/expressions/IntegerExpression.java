@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
+import java.util.function.Function;
+
 /**
  * Expresses an integer value.
  */
@@ -42,4 +44,7 @@ public interface IntegerExpression extends NumberExpression {
     IntegerExpression min(IntegerExpression i);
 
     IntegerExpression abs();
+
+    <R extends Expression> R passIntegerTo(Function<? super IntegerExpression, ? extends R> f);
+    <R extends Expression> R switchIntegerOn(Function<Branches<IntegerExpression>, ? extends BranchesTerminal<IntegerExpression, ? extends R>> on);
 }

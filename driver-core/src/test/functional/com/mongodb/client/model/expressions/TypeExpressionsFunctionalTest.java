@@ -46,7 +46,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 true,
                 of(true).isBooleanOr(of(false)),
-                "{'$cond': [{'$eq': [{'$type': true}, 'bool']}, true, false]}");
+                "{'$cond': [{'$eq': [{'$type': [true]}, 'bool']}, true, false]}");
         // non-boolean:
         assertExpression(false, ofIntegerArray(1).isBooleanOr(of(false)));
         assertExpression(false, ofNull().isBooleanOr(of(false)));
@@ -66,11 +66,29 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
+    public void isIntegerOr() {
+        assertExpression(
+                1,
+                of(1).isIntegerOr(of(99)),
+                "{'$switch': {'branches': [{'case': {'$isNumber': [1]}, 'then': "
+                        + "{'$cond': [{'$eq': [{'$round': 1}, 1]}, 1, 99]}}], 'default': 99}}"
+        );
+        // other numeric values:
+        assertExpression(1L, of(1L).isIntegerOr(of(99)));
+        assertExpression(1.0, of(1.0).isIntegerOr(of(99)));
+        assertExpression(Decimal128.parse("1"), of(Decimal128.parse("1")).isIntegerOr(of(99)));
+        // non-numeric:
+        assertExpression(99, ofIntegerArray(1).isIntegerOr(of(99)));
+        assertExpression(99, ofNull().isIntegerOr(of(99)));
+        assertExpression(99, of("str").isIntegerOr(of(99)));
+    }
+
+    @Test
     public void isStringOrTest() {
         assertExpression(
                 "abc",
                 of("abc").isStringOr(of("or")),
-                "{'$cond': [{'$eq': [{'$type': 'abc'}, 'string']}, 'abc', 'or']}");
+                "{'$cond': [{'$eq': [{'$type': ['abc']}, 'string']}, 'abc', 'or']}");
         // non-string:
         assertExpression("or", ofIntegerArray(1).isStringOr(of("or")));
         assertExpression("or", ofNull().isStringOr(of("or")));
@@ -82,7 +100,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 date,
                 of(date).isDateOr(of(date.plusMillis(10))),
-                "{'$cond': [{'$in': [{'$type': {'$date': '2007-12-03T10:15:30.005Z'}}, ['date']]}, "
+                "{'$cond': [{'$in': [{'$type': [{'$date': '2007-12-03T10:15:30.005Z'}]}, ['date']]}, "
                         + "{'$date': '2007-12-03T10:15:30.005Z'}, {'$date': '2007-12-03T10:15:30.015Z'}]}");
         // non-date:
         assertExpression(date, ofIntegerArray(1).isDateOr(of(date)));
@@ -107,7 +125,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 doc,
                 of(doc).isDocumentOr(of(BsonDocument.parse("{b: 2}"))),
-                "{'$cond': [{'$eq': [{'$type': {'$literal': {'a': 1}}}, 'object']}, "
+                "{'$cond': [{'$eq': [{'$type': [{'$literal': {'a': 1}}]}, 'object']}, "
                         + "{'$literal': {'a': 1}}, {'$literal': {'b': 2}}]}");
         // non-document:
         assertExpression(doc, ofIntegerArray(1).isDocumentOr(of(doc)));

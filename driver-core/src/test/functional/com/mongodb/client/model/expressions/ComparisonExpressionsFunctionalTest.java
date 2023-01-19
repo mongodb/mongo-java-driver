@@ -44,6 +44,7 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
             ofNull(),
             of(0),
             of(1),
+            of(2.0),
             of(""),
             of("str"),
             of(BsonDocument.parse("{}")),
@@ -59,6 +60,17 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
             of(true),
             of(Instant.now())
     );
+
+    @Test
+    public void literalsTest() {
+        // special values
+        assertExpression(null, ofNull(), "null");
+        // the "missing" value is obtained via getField.
+        // the "$$REMOVE" value is intentionally not exposed. It is used internally.
+        // the "undefined" value is deprecated.
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/literal/
+        // $literal is intentionally not exposed. It is used internally.
+    }
 
     @Test
     public void eqTest() {

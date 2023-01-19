@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
+import java.util.function.Function;
+
 /**
  * Expresses a numeric value.
  */
@@ -56,4 +58,7 @@ public interface NumberExpression extends Expression {
     NumberExpression abs();
 
     DateExpression millisecondsToDate();
+
+    <R extends Expression> R passNumberTo(Function<? super NumberExpression, ? extends R> f);
+    <R extends Expression> R switchNumberOn(Function<Branches<NumberExpression>, ? extends BranchesTerminal<NumberExpression, ? extends R>> on);
 }
