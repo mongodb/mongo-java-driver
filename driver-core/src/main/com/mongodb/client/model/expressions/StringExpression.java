@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
+import java.util.function.Function;
+
 import static com.mongodb.client.model.expressions.Expressions.of;
 
 /**
@@ -52,4 +54,7 @@ public interface StringExpression extends Expression {
     DateExpression parseDate(StringExpression format);
 
     DateExpression parseDate(StringExpression timezone, StringExpression format);
+
+    <R extends Expression> R passStringTo(Function<? super StringExpression, ? extends R> f);
+    <R extends Expression> R switchStringOn(Function<Branches<StringExpression>, ? extends BranchesTerminal<StringExpression, ? extends R>> on);
 }

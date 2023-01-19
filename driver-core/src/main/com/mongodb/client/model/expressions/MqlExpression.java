@@ -28,6 +28,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 
 final class MqlExpression<T extends Expression>
@@ -283,6 +284,114 @@ final class MqlExpression<T extends Expression>
     /** @see Expression */
 
     @Override
+    public <R extends Expression> R passTo(final Function<? super Expression, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchOn(final Function<Branches<Expression>, ? extends BranchesTerminal<Expression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passBooleanTo(final Function<? super BooleanExpression, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchBooleanOn(final Function<Branches<BooleanExpression>, ? extends BranchesTerminal<BooleanExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passIntegerTo(final Function<? super IntegerExpression, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchIntegerOn(final Function<Branches<IntegerExpression>, ? extends BranchesTerminal<IntegerExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passNumberTo(final Function<? super NumberExpression, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchNumberOn(final Function<Branches<NumberExpression>, ? extends BranchesTerminal<NumberExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passStringTo(final Function<? super StringExpression, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchStringOn(final Function<Branches<StringExpression>, ? extends BranchesTerminal<StringExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passDateTo(final Function<? super DateExpression, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchDateOn(final Function<Branches<DateExpression>, ? extends BranchesTerminal<DateExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passArrayTo(final Function<? super ArrayExpression<T>, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchArrayOn(final Function<Branches<ArrayExpression<T>>, ? extends BranchesTerminal<ArrayExpression<T>, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passMapTo(final Function<? super MapExpression<T>, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchMapOn(final Function<Branches<MapExpression<T>>, ? extends BranchesTerminal<MapExpression<T>, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    @Override
+    public <R extends Expression> R passDocumentTo(final Function<? super DocumentExpression, ? extends R> f) {
+        return f.apply(this.assertImplementsAllExpressions());
+    }
+
+    @Override
+    public <R extends Expression> R switchDocumentOn(final Function<Branches<DocumentExpression>, ? extends BranchesTerminal<DocumentExpression, ? extends R>> switchMap) {
+        return switchMapInternal(this.assertImplementsAllExpressions(), switchMap.apply(new Branches<>()));
+    }
+
+    private <T0 extends Expression, R0 extends Expression> R0 switchMapInternal(
+            final T0 value, final BranchesTerminal<T0, R0> construct) {
+        return newMqlExpression((cr) -> {
+            BsonArray branches = new BsonArray();
+            for (Function<T0, SwitchCase<R0>> fn : construct.getBranches()) {
+                SwitchCase<R0> result = fn.apply(value);
+                branches.add(new BsonDocument()
+                        .append("case", extractBsonValue(cr, result.getCaseValue()))
+                        .append("then", extractBsonValue(cr, result.getThenValue())));
+            }
+            BsonDocument switchBson = new BsonDocument().append("branches", branches);
+            if (construct.getDefaults() != null) {
+                switchBson = switchBson.append("default", extractBsonValue(cr, construct.getDefaults().apply(value)));
+            }
+            return astDoc("$switch", switchBson);
+        });
+    }
+
+    @Override
     public BooleanExpression eq(final Expression eq) {
         return new MqlExpression<>(ast("$eq", eq));
     }
@@ -313,7 +422,7 @@ final class MqlExpression<T extends Expression>
     }
 
     public BooleanExpression isBoolean() {
-        return new MqlExpression<>(ast("$type")).eq(of("bool"));
+        return new MqlExpression<>(astWrapped("$type")).eq(of("bool"));
     }
 
     @Override
@@ -331,16 +440,30 @@ final class MqlExpression<T extends Expression>
     }
 
     public BooleanExpression isInteger() {
-        return this.isNumber().cond(this.eq(this.round()), of(false));
+        return switchOn(on -> on
+                .isNumber(v -> v.round().eq(v))
+                .defaults(v -> of(false)));
     }
 
     @Override
     public IntegerExpression isIntegerOr(final IntegerExpression other) {
-        return this.isInteger().cond(this, other);
+        /*
+        The server does not evaluate both branches of and/or/cond unless needed.
+        However, the server has a pipeline optimization stage prior to
+        evaluation that does attempt to optimize both branches, and fails with
+        "Failed to optimize pipeline" when there is a problem arising from the
+        use of literals and typed expressions. Using "switch" avoids this,
+        otherwise we could just use:
+        this.isNumber().and(this.eq(this.round()))
+        */
+
+        return this.switchOn(on -> on
+                .isNumber(v -> (IntegerExpression) v.round().eq(v).cond(v, other))
+                .defaults(v -> other));
     }
 
     public BooleanExpression isString() {
-        return new MqlExpression<>(ast("$type")).eq(of("string"));
+        return new MqlExpression<>(astWrapped("$type")).eq(of("string"));
     }
 
     @Override
@@ -349,7 +472,7 @@ final class MqlExpression<T extends Expression>
     }
 
     public BooleanExpression isDate() {
-        return ofStringArray("date").contains(new MqlExpression<>(ast("$type")));
+        return ofStringArray("date").contains(new MqlExpression<>(astWrapped("$type")));
     }
 
     @Override
@@ -362,7 +485,7 @@ final class MqlExpression<T extends Expression>
     }
 
     private Expression ifNull(final Expression ifNull) {
-        return new MqlExpression<>(ast("$ifNull", ifNull, Expressions.ofNull()))
+        return new MqlExpression<>(ast("$ifNull", ifNull, ofNull()))
                 .assertImplementsAllExpressions();
     }
 
@@ -380,7 +503,7 @@ final class MqlExpression<T extends Expression>
         return (ArrayExpression<R>) this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
-    private BooleanExpression isDocumentOrMap() {
+    BooleanExpression isDocumentOrMap() {
         return new MqlExpression<>(ast("$type")).eq(of("object"));
     }
 
@@ -393,6 +516,10 @@ final class MqlExpression<T extends Expression>
     public <R extends Expression> MapExpression<R> isMapOr(final MapExpression<? extends R> other) {
         MqlExpression<?> isMap = (MqlExpression<?>) this.isDocumentOrMap();
         return newMqlExpression(isMap.ast("$cond", this.assertImplementsAllExpressions(), other));
+    }
+
+    BooleanExpression isNull() {
+        return this.eq(ofNull());
     }
 
     @Override
