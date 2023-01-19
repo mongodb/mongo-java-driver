@@ -172,6 +172,16 @@ public final class Expressions {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
 
+    public static DocumentExpression current() {
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
+                .assertImplementsAllExpressions();
+    }
+
+    public static <R extends Expression> MapExpression<R> currentAsMap() {
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
+                .assertImplementsAllExpressions();
+    }
+
     @SafeVarargs  // nothing is stored in the array
     public static <T extends Expression> ArrayExpression<T> ofArray(final T... array) {
         Assertions.notNull("array", array);
