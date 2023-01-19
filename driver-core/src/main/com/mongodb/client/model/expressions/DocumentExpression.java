@@ -21,6 +21,7 @@ import org.bson.conversions.Bson;
 import java.time.Instant;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
+import static com.mongodb.client.model.expressions.Expressions.ofMap;
 
 /**
  * Expresses a document value. A document is an ordered set of fields, where the
@@ -85,9 +86,18 @@ public interface DocumentExpression extends Expression {
         return getDocument(fieldName, of(other));
     }
 
+    <T extends Expression> MapExpression<T> getMap(String fieldName);
+    <T extends Expression> MapExpression<T> getMap(String fieldName, MapExpression<? extends T> other);
+
+    default <T extends Expression> MapExpression<T> getMap(final String fieldName, final Bson other) {
+        return getMap(fieldName, ofMap(other));
+    }
+
     <T extends Expression> ArrayExpression<T> getArray(String fieldName);
 
     <T extends Expression> ArrayExpression<T> getArray(String fieldName, ArrayExpression<? extends T> other);
 
     DocumentExpression merge(DocumentExpression other);
+
+    MapExpression<Expression> asMap();
 }

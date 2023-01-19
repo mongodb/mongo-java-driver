@@ -32,7 +32,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 
 final class MqlExpression<T extends Expression>
         implements Expression, BooleanExpression, IntegerExpression, NumberExpression,
-        StringExpression, DateExpression, DocumentExpression, ArrayExpression<T> {
+        StringExpression, DateExpression, DocumentExpression, ArrayExpression<T>, MapExpression<T>, EntryExpression<T> {
 
     private final Function<CodecRegistry, AstPlaceholder> fn;
 
@@ -51,6 +51,26 @@ final class MqlExpression<T extends Expression>
 
     private AstPlaceholder astDoc(final String name, final BsonDocument value) {
         return new AstPlaceholder(new BsonDocument(name, value));
+    }
+
+    @Override
+    public StringExpression getKey() {
+        return new MqlExpression<>(getFieldInternal("k"));
+    }
+
+    @Override
+    public T getValue() {
+        return newMqlExpression(getFieldInternal("v"));
+    }
+
+    @Override
+    public EntryExpression<T> setValue(final T value) {
+        return setFieldInternal("v", value);
+    }
+
+    @Override
+    public EntryExpression<T> setKey(final StringExpression key) {
+        return setFieldInternal("k", key);
     }
 
     static final class AstPlaceholder {
@@ -95,7 +115,7 @@ final class MqlExpression<T extends Expression>
      * the only implementation of Expression and all subclasses, so this will
      * not mis-cast an expression as anything else.
      */
-    private static BsonValue extractBsonValue(final CodecRegistry cr, final Expression expression) {
+    static BsonValue extractBsonValue(final CodecRegistry cr, final Expression expression) {
         return ((MqlExpression<?>) expression).toBsonValue(cr);
     }
 
@@ -212,6 +232,16 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
+    public <R extends Expression> MapExpression<R> getMap(final String field) {
+        return new MqlExpression<>(getFieldInternal(field));
+    }
+
+    @Override
+    public <R extends Expression> MapExpression<R> getMap(final String field, final MapExpression<? extends R> other) {
+        return getMap(field).isMapOr(other);
+    }
+
+    @Override
     public DocumentExpression getDocument(final String fieldName, final DocumentExpression other) {
         return getDocument(fieldName).isDocumentOr(other);
     }
@@ -233,6 +263,10 @@ final class MqlExpression<T extends Expression>
 
     @Override
     public DocumentExpression setField(final String fieldName, final Expression exp) {
+        return setFieldInternal(fieldName, exp);
+    }
+
+    private MqlExpression<T> setFieldInternal(final String fieldName, final Expression exp) {
         return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
                 .append("field", new BsonString(fieldName))
                 .append("input", this.toBsonValue(cr))
@@ -327,6 +361,11 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(astWrapped("$isArray"));
     }
 
+    private Expression ifNull(final Expression ifNull) {
+        return new MqlExpression<>(ast("$ifNull", ifNull, Expressions.ofNull()))
+                .assertImplementsAllExpressions();
+    }
+
     /**
      * checks if array (but cannot check type)
      * user asserts array is of type R
@@ -341,13 +380,19 @@ final class MqlExpression<T extends Expression>
         return (ArrayExpression<R>) this.isArray().cond(this.assertImplementsAllExpressions(), other);
     }
 
-    public BooleanExpression isDocument() {
+    private BooleanExpression isDocumentOrMap() {
         return new MqlExpression<>(ast("$type")).eq(of("object"));
     }
 
     @Override
     public <R extends DocumentExpression> R isDocumentOr(final R other) {
-        return this.isDocument().cond(this.assertImplementsAllExpressions(), other);
+        return this.isDocumentOrMap().cond(this.assertImplementsAllExpressions(), other);
+    }
+
+    @Override
+    public <R extends Expression> MapExpression<R> isMapOr(final MapExpression<? extends R> other) {
+        MqlExpression<?> isMap = (MqlExpression<?>) this.isDocumentOrMap();
+        return newMqlExpression(isMap.ast("$cond", this.assertImplementsAllExpressions(), other));
     }
 
     @Override
@@ -355,10 +400,10 @@ final class MqlExpression<T extends Expression>
         return new MqlExpression<>(astWrapped("$toString"));
     }
 
-    private Function<CodecRegistry, AstPlaceholder> convertInternal(final String to, final Expression orElse) {
+    private Function<CodecRegistry, AstPlaceholder> convertInternal(final String to, final Expression other) {
         return (cr) -> astDoc("$convert", new BsonDocument()
                 .append("input", this.fn.apply(cr).bsonValue)
-                .append("onError", extractBsonValue(cr, orElse))
+                .append("onError", extractBsonValue(cr, other))
                 .append("to", new BsonString(to)));
     }
 
@@ -730,5 +775,77 @@ final class MqlExpression<T extends Expression>
     @Override
     public StringExpression substrBytes(final IntegerExpression start, final IntegerExpression length) {
         return new MqlExpression<>(ast("$substrBytes", start, length));
+    }
+
+    @Override
+    public BooleanExpression has(final StringExpression key) {
+        return get(key).ne(ofRem());
+    }
+
+    static <R extends Expression> R ofRem() {
+        // $$REMOVE is intentionally not exposed to users
+        return new MqlExpression<>((cr) -> new MqlExpression.AstPlaceholder(new BsonString("$$REMOVE")))
+                .assertImplementsAllExpressions();
+    }
+
+    /** @see MapExpression
+     * @see EntryExpression */
+
+    @Override
+    public T get(final StringExpression key) {
+        return newMqlExpression((cr) -> astDoc("$getField", new BsonDocument()
+                .append("input", this.fn.apply(cr).bsonValue)
+                .append("field", extractBsonValue(cr, key))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get(final StringExpression key, final T other) {
+        return (T) ((MqlExpression<?>) get(key)).ifNull(other);
+    }
+
+    @Override
+    public MapExpression<T> set(final StringExpression key, final T value) {
+        return newMqlExpression((cr) -> astDoc("$setField", new BsonDocument()
+                .append("field", extractBsonValue(cr, key))
+                .append("input", this.toBsonValue(cr))
+                .append("value", extractBsonValue(cr, value))));
+    }
+
+    @Override
+    public MapExpression<T> unset(final StringExpression key) {
+        return newMqlExpression((cr) -> astDoc("$unsetField", new BsonDocument()
+                .append("field", extractBsonValue(cr, key))
+                .append("input", this.toBsonValue(cr))));
+    }
+
+    @Override
+    public MapExpression<T> merge(final MapExpression<? extends T> map) {
+        return new MqlExpression<>(ast("$mergeObjects", map));
+    }
+
+    @Override
+    public ArrayExpression<EntryExpression<T>> entrySet() {
+        return newMqlExpression(ast("$objectToArray"));
+    }
+
+    @Override
+    public <R extends Expression> MapExpression<R> asMap(
+            final Function<? super T, ? extends EntryExpression<? extends R>> mapper) {
+        @SuppressWarnings("unchecked")
+        MqlExpression<EntryExpression<? extends R>> array = (MqlExpression<EntryExpression<? extends R>>) this.map(mapper);
+        return newMqlExpression(array.astWrapped("$arrayToObject"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public MapExpression<Expression> asMap() {
+        return (MapExpression<Expression>) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <R extends DocumentExpression> R asDocument() {
+        return (R) this;
     }
 }

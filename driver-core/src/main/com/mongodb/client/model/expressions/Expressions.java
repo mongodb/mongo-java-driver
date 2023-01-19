@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.client.model.expressions.MqlExpression.AstPlaceholder;
+import static com.mongodb.client.model.expressions.MqlExpression.extractBsonValue;
 
 /**
  * Convenience methods related to {@link Expression}.
@@ -182,6 +183,34 @@ public final class Expressions {
             }
             return new AstPlaceholder(new BsonArray(list));
         });
+    }
+
+    public static <T extends Expression> EntryExpression<T> ofEntry(final StringExpression k, final T v) {
+        Assertions.notNull("k", k);
+        Assertions.notNull("v", v);
+        return new MqlExpression<>((cr) -> {
+            BsonDocument document = new BsonDocument();
+            document.put("k", extractBsonValue(cr, k));
+            document.put("v", extractBsonValue(cr, v));
+            return new AstPlaceholder(document);
+        });
+    }
+
+    public static <T extends Expression> MapExpression<T> ofMap() {
+        return ofMap(new BsonDocument());
+    }
+
+    /**
+     * user asserts type of values is T
+     *
+     * @param map
+     * @return
+     * @param <T>
+     */
+    public static <T extends Expression> MapExpression<T> ofMap(final Bson map) {
+        Assertions.notNull("map", map);
+        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonDocument("$literal",
+                map.toBsonDocument(BsonDocument.class, cr))));
     }
 
     public static DocumentExpression of(final Bson document) {

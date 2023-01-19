@@ -40,7 +40,7 @@ class ComparisonExpressionsFunctionalTest extends AbstractExpressionsFunctionalT
 
     // https://www.mongodb.com/docs/manual/reference/bson-type-comparison-order/#std-label-bson-types-comparison-order
     private final List<Expression> sampleValues = Arrays.asList(
-            ofRem(),
+            MqlExpression.ofRem(),
             ofNull(),
             of(0),
             of(1),
