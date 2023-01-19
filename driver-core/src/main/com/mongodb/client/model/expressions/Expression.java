@@ -58,8 +58,8 @@ import java.util.function.Function;
  * of, any explicit type (except the root type {@link Expression} itself).
  * See {@link Expressions#ofNull} for more details.
  *
- * <p>There is no explicit "missing" or "undefined" value. Users may use
- * {@link MapExpression#has}.
+ * <p>This API specifies no "missing" or "undefined" value. Users may use
+ * {@link MapExpression#has} to check whether a value is present.
  *
  * <p>This type hierarchy differs from the {@linkplain org.bson} types in that
  * they provide computational operations, the numeric types are less granular,
@@ -220,9 +220,9 @@ public interface Expression {
 
     /**
      * {@code this} value as a {@linkplain DocumentExpression document} if
-     * {@code this} is a document or document-like value (such as a
-     * {@linkplain MapExpression map} or
-     * {@linkplain EntryExpression entry})
+     * {@code this} is a document or document-like value (such as all
+     * {@linkplain MapExpression maps} and all
+     * {@linkplain EntryExpression entries} created using the present API)
      * or the {@code other} document value if
      * {@code this} is null, or is missing, or is of any other non-document type.
      *
@@ -233,9 +233,9 @@ public interface Expression {
 
     /**
      * {@code this} value as a {@linkplain MapExpression map} if
-     * {@code this} is a map or map-like value (such as a
-     * {@linkplain DocumentExpression document} or
-     * {@linkplain EntryExpression entry})
+     * {@code this} is a map or map-like value (such as all
+     * {@linkplain DocumentExpression documents} and all
+     * {@linkplain EntryExpression entries} created using the present API)
      * or the {@code other} map value if
      * {@code this} is null, or is missing, or is of any other non-map type.
      *
