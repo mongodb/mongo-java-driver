@@ -73,6 +73,8 @@ public interface ArrayExpression<T extends Expression> extends Expression {
 
     <R extends Expression> ArrayExpression<R> union(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
 
+    <R extends Expression> MapExpression<R> asMap(Function<? super T, ? extends EntryExpression<? extends R>> mapper);
+
     /**
      * user asserts that i is in bounds for the array
      *
