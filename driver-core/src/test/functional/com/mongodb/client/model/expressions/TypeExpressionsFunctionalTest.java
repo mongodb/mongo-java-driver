@@ -263,6 +263,24 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 longVal,
                 of(longVal + "").parseInteger());
+
+        // failures
+        assertThrows(MongoCommandException.class, () ->
+            assertExpression(
+                    "",
+                    of(BsonDocument.parse("{a:'1.5'}")).getString("a").parseInteger()));
+        assertThrows(MongoCommandException.class, () ->
+            assertExpression(
+                    "",
+                    of(BsonDocument.parse("{a:'not an integer'}")).getString("a").parseInteger()));
+        assertThrows(MongoCommandException.class, () ->
+            assertExpression(
+                    "",
+                    of("1.5").parseInteger()));
+        assertThrows(MongoCommandException.class, () ->
+            assertExpression(
+                    "",
+                    of("not an integer").parseInteger()));
     }
 
     // non-string

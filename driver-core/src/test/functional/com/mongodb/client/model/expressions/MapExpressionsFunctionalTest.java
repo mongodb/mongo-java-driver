@@ -77,15 +77,15 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
-    public void hasMapTest() {
+    public void hasTest() {
+        MapExpression<Expression> e = ofMap(BsonDocument.parse("{key: 1}"));
         assertExpression(
                 true,
-                mapKey123.has(of("key")),
-                "{'$ne': [{'$getField': {'input': {'$setField': {'field': 'key', 'input': "
-                        + "{'$literal': {}}, 'value': 123}}, 'field': 'key'}}, '$$REMOVE']}");
+                e.has(of("key")),
+                "{'$ne': [{'$getField': {'input': {'$literal': {'key': 1}}, 'field': 'key'}}, '$$REMOVE']}");
         assertExpression(
                 false,
-                mapKey123.has("not_key"));
+                e.has("not_key"));
     }
 
     @Test
