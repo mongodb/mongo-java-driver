@@ -130,6 +130,10 @@ class StringExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest 
                 "abc".substring(1, 1 + 1),
                 of("abc").substr(of(1), of(1)),
                 "{'$substrCP': ['abc', 1, 1]}");
+        assertExpression(
+                "bc",
+                of("abc").substr(of(1), of(100)),
+                "{'$substrCP': ['abc', 1, 100]}");
 
         // unicode
         assertExpression(

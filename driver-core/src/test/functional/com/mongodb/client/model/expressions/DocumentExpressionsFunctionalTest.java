@@ -261,4 +261,17 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         DocumentExpression d = ofDoc("{a: 1}");
         assertSame(d, d.asMap());
     }
+
+
+    @Test
+    public void hasTest() {
+        DocumentExpression d = ofDoc("{a: 1}");
+        assertExpression(
+                true,
+                d.has("a"),
+                "{'$ne': [{'$getField': {'input': {'$literal': {'a': 1}}, 'field': 'a'}}, '$$REMOVE']}");
+        assertExpression(
+                false,
+                d.has("not_a"));
+    }
 }

@@ -33,6 +33,15 @@ import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE;
 public interface DocumentExpression extends Expression {
 
     DocumentExpression setField(String fieldName, Expression exp);
+    /**
+     * True if {@code this} document has a field with the provided
+     * {@code fieldName}.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
+    BooleanExpression has(String fieldName);
+
 
     DocumentExpression unsetField(String fieldName);
 
