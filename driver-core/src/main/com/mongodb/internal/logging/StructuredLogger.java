@@ -31,7 +31,7 @@ import static java.lang.String.format;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class StructuredLogger {
+public final class StructuredLogger {
 
     private final Logger logger;
 

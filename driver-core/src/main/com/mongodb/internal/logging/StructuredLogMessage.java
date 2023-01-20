@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class StructuredLogMessage {
+public final class StructuredLogMessage {
 
     private final String loggerName;
     private final String level;
