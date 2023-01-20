@@ -20,7 +20,6 @@ import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.PRESENT;
-import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.NON_EMPTY;
 
 /**
  * An array {@link Expression value} in the context of the MongoDB Query
@@ -58,67 +57,267 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      */
     IntegerExpression size();
 
+    /**
+     * True if any value in {@code this} array satisfies the predicate.
+     *
+     * @param predicate the predicate.
+     * @return the resulting value.
+     */
     BooleanExpression any(Function<? super T, BooleanExpression> predicate);
 
+    /**
+     * True if all values in {@code this} array satisfy the predicate.
+     *
+     * @param predicate the predicate.
+     * @return the resulting value.
+     */
     BooleanExpression all(Function<? super T, BooleanExpression> predicate);
 
+    /**
+     * The sum of adding together all the values of {@code this} array,
+     * via the provided {@code mapper}. Returns 0 if the array is empty.
+     *
+     * <p>The mapper may be used to transform the values of {@code this} array
+     * into {@linkplain NumberExpression numbers}. If no transformation is
+     * necessary, then the identify function {@code array.sum(v -> v)} should
+     * be used.
+     *
+     * @param mapper the mapper function.
+     * @return the resulting value.
+     */
     NumberExpression sum(Function<? super T, ? extends NumberExpression> mapper);
 
+    /**
+     * The product of multiplying together all the values of {@code this} array,
+     * via the provided {@code mapper}. Returns 1 if the array is empty.
+     *
+     * <p>The mapper may be used to transform the values of {@code this} array
+     * into {@linkplain NumberExpression numbers}. If no transformation is
+     * necessary, then the identify function {@code array.multiply(v -> v)}
+     * should be used.
+     *
+     * @param mapper the mapper function.
+     * @return the resulting value.
+     */
     NumberExpression multiply(Function<? super T, ? extends NumberExpression> mapper);
 
+    /**
+     * The {@linkplain #gt(Expression) largest} value all the values of
+     * {@code this} array, or the {@code other} value if this array is empty.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
     T max(T other);
 
+    /**
+     * The {@linkplain #lt(Expression) smallest} value all the values of
+     * {@code this} array, or the {@code other} value if this array is empty.
+     *
+     * @param other the other value.
+     * @return the resulting value.
+     */
     T min(T other);
 
+    /**
+     * The {@linkplain #gt(Expression) largest} {@code n} elements of
+     * {@code this} array, or all elements if the array contains fewer than
+     * {@code n} elements.
+     *
+     * @param n the number of elements.
+     * @return the resulting value.
+     */
     ArrayExpression<T> maxN(IntegerExpression n);
+
+    /**
+     * The {@linkplain #lt(Expression) smallest} {@code n} elements of
+     * {@code this} array, or all elements if the array contains fewer than
+     * {@code n} elements.
+     *
+     * @param n the number of elements.
+     * @return the resulting value.
+     */
     ArrayExpression<T> minN(IntegerExpression n);
 
+    /**
+     * The string-concatenation of all the values of {@code this} array,
+     * via the provided {@code mapper}. Returns the empty string if the array
+     * is empty.
+     *
+     * <p>The mapper may be used to transform the values of {@code this} array
+     * into {@linkplain StringExpression strings}. If no transformation is
+     * necessary, then the identify function {@code array.join(v -> v)} should
+     * be used.
+     *
+     * @param mapper the mapper function.
+     * @return the resulting value.
+     */
     StringExpression join(Function<? super T, StringExpression> mapper);
 
+    /**
+     * The array-concatenation of all the array values of {@code this} array,
+     * via the provided {@code mapper}. Returns the empty array if the array
+     * is empty.
+     *
+     * <p>The mapper may be used to transform the values of {@code this} array
+     * into {@linkplain ArrayExpression arrays}. If no transformation is
+     * necessary, then the identify function {@code array.concat(v -> v)} should
+     * be used.
+     *
+     * @param mapper the mapper function.
+     * @return the resulting value.
+     * @param <R> the type of the elements of the array.
+     */
     <R extends Expression> ArrayExpression<R> concat(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
 
+    /**
+     * The set union of all the array values of {@code this} array,
+     * via the provided {@code mapper}. Returns the empty array if the array
+     * is empty.
+     *
+     * <p>The mapper may be used to transform the values of {@code this} array
+     * into {@linkplain ArrayExpression arrays}. If no transformation is
+     * necessary, then the identify function {@code array.union(v -> v)} should
+     * be used.
+     *
+     * @param mapper the mapper function.
+     * @return the resulting value.
+     * @param <R> the type of the elements of the array.
+     */
     <R extends Expression> ArrayExpression<R> union(Function<? super T, ? extends ArrayExpression<? extends R>> mapper);
 
+    /**
+     * The {@linkplain MapExpression map} value corresponding to the
+     * {@linkplain EntryExpression entry} values of {@code this} array,
+     * via the provided {@code mapper}. Returns the empty array if the array
+     * is empty.
+     *
+     * <p>The mapper may be used to transform the values of {@code this} array
+     * into {@linkplain EntryExpression entries}. If no transformation is
+     * necessary, then the identify function {@code array.union(v -> v)} should
+     * be used.
+     *
+     * @see MapExpression#entrySet()
+     * @param mapper the mapper function.
+     * @return the resulting value.
+     * @param <R> the type of the resulting map's values.
+     */
     <R extends Expression> MapExpression<R> asMap(Function<? super T, ? extends EntryExpression<? extends R>> mapper);
 
     /**
-     * user asserts that i is in bounds for the array
+     * Returns the element at the provided index {@code i} for
+     * {@code this} array.
      *
-     * @param i
-     * @return
+     * <p>Warning: The use of this method is an assertion that
+     * the index {@code i} is in bounds for the array.
+     * If the index is out of bounds for this array, then
+     * the behaviour of the API is not defined.
+     *
+     * @param i the index.
+     * @return the resulting value.
      */
     @MqlUnchecked(PRESENT)
     T elementAt(IntegerExpression i);
 
+    /**
+     * Returns the element at the provided index {@code i} for
+     * {@code this} array.
+     *
+     * <p>Warning: The use of this method is an assertion that
+     * the index {@code i} is in bounds for the array.
+     * If the index is out of bounds for this array, then
+     * the behaviour of the API is not defined.
+     *
+     * @param i the index.
+     * @return the resulting value.
+     */
+    @MqlUnchecked(PRESENT)
     default T elementAt(final int i) {
         return this.elementAt(of(i));
     }
 
     /**
-     * user asserts that array is not empty
-     * @return
+     * Returns the first element of {@code this} array.
+     *
+     * <p>Warning: The use of this method is an assertion that
+     * the array is not empty.
+     * If the array is empty then the behaviour of the API is not defined.
+     *
+     * @return the resulting value.
      */
-    @MqlUnchecked(NON_EMPTY)
+    @MqlUnchecked(PRESENT)
     T first();
 
     /**
-     * user asserts that array is not empty
-     * @return
+     * Returns the last element of {@code this} array.
+     *
+     * <p>Warning: The use of this method is an assertion that
+     * the array is not empty.
+     * If the array is empty then the behaviour of the API is not defined.
+     *
+     * @return the resulting value.
      */
     T last();
 
-    BooleanExpression contains(T contains);
+    /**
+     * True if {@code this} array contains a value that is
+     * {@linkplain #eq equal} to the provided {@code value}.
+     *
+     * @param value the value.
+     * @return the resulting value.
+     */
+    BooleanExpression contains(T value);
 
-    ArrayExpression<T> concat(ArrayExpression<? extends T> array);
+    /**
+     * The result of concatenating {@code this} array first with
+     * the {@code other} array ensuing.
+     *
+     * @param other the other array.
+     * @return the resulting array.
+     */
+    ArrayExpression<T> concat(ArrayExpression<? extends T> other);
 
+    /**
+     * The subarray of {@code this} array, from the {@code start} index
+     * inclusive, and continuing for the specified {@code length}, up to
+     * the end of the array.
+     *
+     * @param start start index
+     * @param length length
+     * @return the resulting value
+     */
     ArrayExpression<T> slice(IntegerExpression start, IntegerExpression length);
 
+    /**
+     * The subarray of {@code this} array, from the {@code start} index
+     * inclusive, and continuing for the specified {@code length}, or
+     * to the end of the array.
+     *
+     * @param start start index
+     * @param length length
+     * @return the resulting value
+     */
     default ArrayExpression<T> slice(final int start, final int length) {
         return this.slice(of(start), of(length));
     }
 
-    ArrayExpression<T> union(ArrayExpression<? extends T> set);
+    /**
+     * The set-union of {@code this} array and the {@code other} array ensuing,
+     * containing only the distinct values of both.
+     * No guarantee is made regarding order.
+     *
+     * @param other the other array.
+     * @return the resulting array.
+     */
+    ArrayExpression<T> union(ArrayExpression<? extends T> other);
 
+
+    /**
+     * An array containing only the distinct values of {@code this} array.
+     * No guarantee is made regarding order.
+     *
+     * @return the resulting value
+     */
     ArrayExpression<T> distinct();
 
     /**

@@ -21,6 +21,13 @@ import com.mongodb.lang.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * See {@link Branches}. This is the terminal branch, to which no additional
+ * checks may be added, since the default value has been specified.
+ *
+ * @param <T> the type of the values that may be checked.
+ * @param <R> the type of the value produced.
+ */
 public class BranchesTerminal<T extends Expression, R extends Expression> {
 
     private final List<Function<T, SwitchCase<R>>> branches;
@@ -32,16 +39,16 @@ public class BranchesTerminal<T extends Expression, R extends Expression> {
         this.defaults = defaults;
     }
 
-    protected BranchesTerminal<T, R> withDefault(final Function<T, R> defaults) {
+    BranchesTerminal<T, R> withDefault(final Function<T, R> defaults) {
         return new BranchesTerminal<>(branches, defaults);
     }
 
-    protected List<Function<T, SwitchCase<R>>> getBranches() {
+    List<Function<T, SwitchCase<R>>> getBranches() {
         return branches;
     }
 
     @Nullable
-    protected Function<T, R> getDefaults() {
+    Function<T, R> getDefaults() {
         return defaults;
     }
 }
