@@ -58,6 +58,14 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonBoolean(of)));
     }
 
+    /**
+     * Returns an {@linkplain ArrayExpression array} of
+     * {@linkplain BooleanExpression booleans} corresponding to
+     * the provided {@code boolean} primitives.
+     *
+     * @param array the array.
+     * @return the resulting value.
+     */
     public static ArrayExpression<BooleanExpression> ofBooleanArray(final boolean... array) {
         Assertions.notNull("array", array);
         List<BsonValue> list = new ArrayList<>();
@@ -78,6 +86,14 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt32(of)));
     }
 
+    /**
+     * Returns an {@linkplain ArrayExpression array} of
+     * {@linkplain IntegerExpression integers} corresponding to
+     * the provided {@code int} primitives.
+     *
+     * @param array the array.
+     * @return the resulting value.
+     */
     public static ArrayExpression<IntegerExpression> ofIntegerArray(final int... array) {
         Assertions.notNull("array", array);
         List<BsonValue> list = new ArrayList<>();
@@ -98,6 +114,14 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonInt64(of)));
     }
 
+    /**
+     * Returns an {@linkplain ArrayExpression array} of
+     * {@linkplain IntegerExpression integers} corresponding to
+     * the provided {@code long} primitives.
+     *
+     * @param array the array.
+     * @return the resulting value.
+     */
     public static ArrayExpression<IntegerExpression> ofIntegerArray(final long... array) {
         Assertions.notNull("array", array);
         List<BsonValue> list = new ArrayList<>();
@@ -118,6 +142,14 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDouble(of)));
     }
 
+    /**
+     * Returns an {@linkplain ArrayExpression array} of
+     * {@linkplain NumberExpression numbers} corresponding to
+     * the provided {@code double} primitives.
+     *
+     * @param array the array.
+     * @return the resulting value.
+     */
     public static ArrayExpression<NumberExpression> ofNumberArray(final double... array) {
         Assertions.notNull("array", array);
         List<BsonValue> list = new ArrayList<>();
@@ -129,7 +161,7 @@ public final class Expressions {
 
     /**
      * Returns a {@linkplain NumberExpression number} value corresponding to
-     * the provided {@link Decimal128}
+     * the provided {@link Decimal128}.
      *
      * @param of the {@link Decimal128}.
      * @return the resulting value.
@@ -139,6 +171,14 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDecimal128(of)));
     }
 
+    /**
+     * Returns an {@linkplain ArrayExpression array} of
+     * {@linkplain NumberExpression numbers} corresponding to
+     * the provided {@link Decimal128 Decimal128s}.
+     *
+     * @param array the array.
+     * @return the resulting value.
+     */
     public static ArrayExpression<NumberExpression> ofNumberArray(final Decimal128... array) {
         Assertions.notNull("array", array);
         List<BsonValue> result = new ArrayList<>();
@@ -148,7 +188,6 @@ public final class Expressions {
         }
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
     }
-
 
     /**
      * Returns a {@linkplain DateExpression date and time} value corresponding to
@@ -162,6 +201,14 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonDateTime(of.toEpochMilli())));
     }
 
+    /**
+     * Returns an {@linkplain ArrayExpression array} of
+     * {@linkplain DateExpression dates} corresponding to
+     * the provided {@link Instant Instants}.
+     *
+     * @param array the array.
+     * @return the resulting value.
+     */
     public static ArrayExpression<DateExpression> ofDateArray(final Instant... array) {
         Assertions.notNull("array", array);
         List<BsonValue> result = new ArrayList<>();
@@ -184,6 +231,14 @@ public final class Expressions {
         return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
     }
 
+    /**
+     * Returns an {@linkplain ArrayExpression array} of
+     * {@linkplain StringExpression strings} corresponding to
+     * the provided {@link String Strings}.
+     *
+     * @param array the array.
+     * @return the resulting value.
+     */
     public static ArrayExpression<StringExpression> ofStringArray(final String... array) {
         Assertions.notNull("array", array);
         List<BsonValue> result = new ArrayList<>();
@@ -268,6 +323,12 @@ public final class Expressions {
         });
     }
 
+    /**
+     * Returns an empty {@linkplain MapExpression map} value.
+     *
+     * @param <T> the type of the resulting map's values.
+     * @return the resulting map value.
+     */
     public static <T extends Expression> MapExpression<T> ofMap() {
         return ofMap(new BsonDocument());
     }
@@ -284,8 +345,8 @@ public final class Expressions {
      * if necessary the elements should be individually type-checked when used.
      *
      * @param map the map as a {@link Bson Bson document}.
-     * @return the resulting map value.
      * @param <T> the type of the resulting map's values.
+     * @return the resulting map value.
      */
     public static <T extends Expression> MapExpression<T> ofMap(final Bson map) {
         Assertions.notNull("map", map);
