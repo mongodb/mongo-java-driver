@@ -880,8 +880,8 @@ final class MqlExpression<T extends Expression>
     }
 
     @Override
-    public StringExpression concat(final StringExpression concat) {
-        return new MqlExpression<>(ast("$concat", concat));
+    public StringExpression concat(final StringExpression other) {
+        return new MqlExpression<>(ast("$concat", other));
     }
 
     @Override
@@ -972,8 +972,8 @@ final class MqlExpression<T extends Expression>
 
     @SuppressWarnings("unchecked")
     @Override
-    public MapExpression<Expression> asMap() {
-        return (MapExpression<Expression>) this;
+    public <Q extends Expression> MapExpression<Q> asMap() {
+        return (MapExpression<Q>) this;
     }
 
     @SuppressWarnings("unchecked")

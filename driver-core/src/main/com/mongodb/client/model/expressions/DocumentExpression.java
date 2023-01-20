@@ -25,6 +25,7 @@ import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.PRESENT;
 import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE;
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
 
 /**
  * Expresses a document value. A document is an ordered set of fields, where the
@@ -32,7 +33,6 @@ import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE;
  */
 public interface DocumentExpression extends Expression {
 
-    DocumentExpression setField(String fieldName, Expression exp);
     /**
      * True if {@code this} document has a field with the provided
      * {@code fieldName}.
@@ -42,78 +42,442 @@ public interface DocumentExpression extends Expression {
      */
     BooleanExpression has(String fieldName);
 
+    /**
+     * Returns a document with the same fields as {@code this} document, but
+     * with the {@code fieldName} field set to the specified {@code value}.
+     *
+     * <p>This does not affect the original document.
+     *
+     * <p>Warning: Users should take care to assign values, such that the types
+     * of those values correspond to the types of ensuing {@code get...}
+     * invocations, since this API has no way of verifying this correspondence.
+     *
+     * @param fieldName the name of the field.
+     * @param value the value.
+     * @return the resulting document.
+     */
+    DocumentExpression setField(String fieldName, Expression value);
 
+
+    /**
+     * Returns a document with the same fields as {@code this} document, but
+     * with the {@code fieldName} field set to the specified {@code value}.
+     *
+     * <p>This does not affect the original document.
+     *
+     * <p>Warning: Users should take care to assign values, such that the types
+     * of those values correspond to the types of ensuing {@code get...}
+     * invocations, since this API has no way of verifying this correspondence.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting document.
+     */
     DocumentExpression unsetField(String fieldName);
 
+    /**
+     * Returns the {@linkplain Expression} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Use of this method is an assertion that the field exists.
+     *
+     * <p>Warning: The type of the values of the resulting map are not
+     * enforced by the API. The specification of a type by the user is an
+     * unchecked assertion that all map values are of that type.
+     * If the map contains multiple types (such as both nulls and integers)
+     * then a super-type encompassing all types must be chosen, and
+     * if necessary the elements should be individually type-checked when used.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
     @MqlUnchecked(PRESENT)
     Expression getField(String fieldName);
 
+    /**
+     * Returns the {@linkplain BooleanExpression boolean} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
     @MqlUnchecked({PRESENT, TYPE})
     BooleanExpression getBoolean(String fieldName);
 
+    /**
+     * Returns the {@linkplain BooleanExpression boolean} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a boolean
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     BooleanExpression getBoolean(String fieldName, BooleanExpression other);
 
+    /**
+     * Returns the {@linkplain BooleanExpression boolean} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a boolean
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     default BooleanExpression getBoolean(final String fieldName, final boolean other) {
         return getBoolean(fieldName, of(other));
     }
 
+    /**
+     * Returns the {@linkplain NumberExpression number} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
+    @MqlUnchecked({PRESENT, TYPE})
     NumberExpression getNumber(String fieldName);
 
+    /**
+     * Returns the {@linkplain NumberExpression number} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a number
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     NumberExpression getNumber(String fieldName, NumberExpression other);
 
+    /**
+     * Returns the {@linkplain NumberExpression number} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a number
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     default NumberExpression getNumber(final String fieldName, final Number other) {
         return getNumber(fieldName, Expressions.numberToExpression(other));
     }
 
+    /**
+     * Returns the {@linkplain IntegerExpression integer} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
+    @MqlUnchecked({PRESENT, TYPE})
     IntegerExpression getInteger(String fieldName);
 
+    /**
+     * Returns the {@linkplain IntegerExpression integer} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not an integer
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     IntegerExpression getInteger(String fieldName, IntegerExpression other);
 
+    /**
+     * Returns the {@linkplain IntegerExpression integer} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not an integer
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     default IntegerExpression getInteger(final String fieldName, final int other) {
         return getInteger(fieldName, of(other));
     }
 
+    /**
+     * Returns the {@linkplain IntegerExpression integer} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not an integer
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     default IntegerExpression getInteger(final String fieldName, final long other) {
         return getInteger(fieldName, of(other));
     }
 
-
+    /**
+     * Returns the {@linkplain StringExpression string} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
+    @MqlUnchecked({PRESENT, TYPE})
     StringExpression getString(String fieldName);
 
+    /**
+     * Returns the {@linkplain StringExpression string} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a string
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     StringExpression getString(String fieldName, StringExpression other);
 
+    /**
+     * Returns the {@linkplain StringExpression string} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a string
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     default StringExpression getString(final String fieldName, final String other) {
         return getString(fieldName, of(other));
     }
 
+    /**
+     * Returns the {@linkplain DateExpression date} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
+    @MqlUnchecked({PRESENT, TYPE})
     DateExpression getDate(String fieldName);
+
+    /**
+     * Returns the {@linkplain DateExpression date} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a date
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     DateExpression getDate(String fieldName, DateExpression other);
 
+    /**
+     * Returns the {@linkplain DateExpression date} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a date
+     * or if the document {@linkplain #has} no such field.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     default DateExpression getDate(final String fieldName, final Instant other) {
         return getDate(fieldName, of(other));
     }
 
+    /**
+     * Returns the {@linkplain DocumentExpression document} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     */
+    @MqlUnchecked({PRESENT, TYPE})
     DocumentExpression getDocument(String fieldName);
+
+    /**
+     * Returns the {@linkplain DocumentExpression document} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a (child) document
+     * or if the document {@linkplain #has} no such field.
+     *
+     * <p>Note: Any field considered to be a document by this API
+     * will also be considered a map, and vice-versa.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     DocumentExpression getDocument(String fieldName, DocumentExpression other);
 
+    /**
+     * Returns the {@linkplain DocumentExpression document} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a (child) document
+     * or if the document {@linkplain #has} no such field.
+     *
+     * <p>Note: Any field considered to be a document by this API
+     * will also be considered a map, and vice-versa.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     */
     default DocumentExpression getDocument(final String fieldName, final Bson other) {
         return getDocument(fieldName, of(other));
     }
 
+    /**
+     * Returns the {@linkplain MapExpression map} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     * @param <T> the type.
+     */
+    @MqlUnchecked({PRESENT, TYPE, TYPE_ARGUMENT})
     <T extends Expression> MapExpression<T> getMap(String fieldName);
+
+    /**
+     * Returns the {@linkplain MapExpression map} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a map
+     * or if the document {@linkplain #has} no such field.
+     *
+     * <p>Note: Any field considered to be a document by this API
+     * will also be considered a map, and vice-versa.
+     *
+     * <p>Warning: The type argument of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the type argument is correct.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     * @param <T> the type.
+     */
+    @MqlUnchecked({TYPE_ARGUMENT})
     <T extends Expression> MapExpression<T> getMap(String fieldName, MapExpression<? extends T> other);
 
+    /**
+     * Returns the {@linkplain MapExpression map} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not a map
+     * or if the document {@linkplain #has} no such field.
+     *
+     * <p>Note: Any field considered to be a document by this API
+     * will also be considered a map, and vice-versa.
+     *
+     * <p>Warning: The type argument of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the type argument is correct.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     * @param <T> the type.
+     */
+    @MqlUnchecked({TYPE_ARGUMENT})
     default <T extends Expression> MapExpression<T> getMap(final String fieldName, final Bson other) {
         return getMap(fieldName, ofMap(other));
     }
 
+    /**
+     * Returns the {@linkplain ArrayExpression array} value of the field
+     * with the provided {@code fieldName}.
+     *
+     * <p>Warning: The type and presence of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the field is present and
+     * the field value is of the specified type.
+     *
+     * @param fieldName the name of the field.
+     * @return the resulting value.
+     * @param <T> the type.
+     */
+    @MqlUnchecked({PRESENT, TYPE, TYPE_ARGUMENT})
     <T extends Expression> ArrayExpression<T> getArray(String fieldName);
 
+    /**
+     * Returns the {@linkplain ArrayExpression array} value of the field
+     * with the provided {@code fieldName},
+     * or the {@code other} value if the field is not an array
+     * or if the document {@linkplain #has} no such field.
+     *
+     * <p>Warning: The type argument of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the type argument is correct.
+     *
+     * @param fieldName the name of the field.
+     * @param other the other value.
+     * @return the resulting value.
+     * @param <T> the type.
+     */
+    @MqlUnchecked({TYPE_ARGUMENT})
     <T extends Expression> ArrayExpression<T> getArray(String fieldName, ArrayExpression<? extends T> other);
 
+    /**
+     * Returns a document with the same fields as {@code this} document, but
+     * with any fields present in the {@code other} document overwritten with
+     * the fields of that other document. That is, fields from both this and the
+     * other document are merged, with the other document having priority.
+     *
+     * <p>This does not affect the original document.
+     *
+     * @param other the other document.
+     * @return the resulting value.
+     */
     DocumentExpression merge(DocumentExpression other);
 
-    MapExpression<Expression> asMap();
+    /**
+     * {@code this} document as a {@linkplain MapExpression map}.
+     *
+     * <p>Warning: The type argument of the resulting value is not
+     * enforced by the API. The use of this method is an
+     * unchecked assertion that the type argument is correct.
+     *
+     * @return the resulting value.
+     * @param <T> the type.
+     */
+
+    <T extends Expression> MapExpression<T> asMap();
 
     /**
      * The result of passing {@code this} value to the provided function.

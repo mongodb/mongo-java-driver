@@ -43,32 +43,35 @@ public @interface MqlUnchecked {
     enum Unchecked {
         /**
          * The API relies on the values it encounters being of the type
-         * implied/specified by or inferred from the user code.
-         * For example, {@link com.mongodb.client.model.expressions.DocumentExpression#getBoolean(String)}
+         * implied, specified by, or inferred from the user code.
+         *
+         * <p>For example, {@link DocumentExpression#getBoolean(String)}
          * relies on the values of the document field being of the
-         * {@linkplain com.mongodb.client.model.expressions.BooleanExpression boolean} type.
+         * {@linkplain BooleanExpression boolean} type.
          */
         TYPE,
         /**
          * The API checks the raw type, but relies on the type argument
-         * implied/specified by or inferred from the user code being correct.
-         * For example, {@link com.mongodb.client.model.expressions.Expression#isArrayOr(ArrayExpression)}
+         * implied, specified by, or inferred from user code.
+         *
+         * <p>For example, {@link Expression#isArrayOr(ArrayExpression)}
          * checks that the value is of the
-         * {@linkplain com.mongodb.client.model.expressions.ArrayExpression array} raw type,
-         * but relies on the elements of the array being of the type derived from the user code.
+         * {@linkplain ArrayExpression array} raw type,
+         * but relies on the elements of the array being of
+         * the type derived from the user code.
          *
          * <p>One may think of it as a more specific version of {@link #TYPE}.</p>
          */
         TYPE_ARGUMENT,
         /**
-         * The API relies on the array being non-empty.
-         * For example, {@link com.mongodb.client.model.expressions.ArrayExpression#first()}.
-         */
-        NON_EMPTY,
-        /**
-         * The API relies on the element identified by index, name, etc., being present in the
-         * {@linkplain com.mongodb.client.model.expressions.DocumentExpression document} involved.
-         * For example, {@link com.mongodb.client.model.expressions.DocumentExpression#getField(String)}.
+         * The presence of the specified value is not checked by the API.
+         * The use of the annotated method is an unchecked assertion that the
+         * specified (whether by index, name, key, position, or otherwise)
+         * element is present in the structure involved.
+         *
+         * <p>For example, {@link DocumentExpression#getField(String)} relies
+         * on the field being present, and {@link ArrayExpression#first} relies
+         * on the array being non-empty.
          */
         PRESENT,
     }

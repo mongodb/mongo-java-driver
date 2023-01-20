@@ -81,7 +81,6 @@ import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_A
  * context, users are strongly discouraged from relying on behaviour that is not
  * part of this API).
  *
- *
  * <p>Users should treat these interfaces as sealed, and should not create
  * implementations.
  *
@@ -228,6 +227,7 @@ public interface Expression {
      *
      * @param other the other value.
      * @return the resulting value.
+     * @param <T> the type.
      */
     <T extends DocumentExpression> T isDocumentOr(T other);
 
@@ -254,7 +254,7 @@ public interface Expression {
     /**
      * The {@linkplain StringExpression string} representation of {@code this} value.
      *
-     * <p>This may cause an error to be produced if the type cannot be converted
+     * <p>This will cause an error if the type cannot be converted
      * to a {@linkplain StringExpression string}, as is the case with
      * {@linkplain ArrayExpression arrays},
      * {@linkplain DocumentExpression documents},

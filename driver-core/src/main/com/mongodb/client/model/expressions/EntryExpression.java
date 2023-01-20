@@ -32,13 +32,46 @@ import static com.mongodb.client.model.expressions.Expressions.of;
  * @param <T> The type of the value
  */
 public interface EntryExpression<T extends Expression> extends Expression {
+
+    /**
+     * The key of {@code this} entry.
+     *
+     * @return the key.
+     */
     StringExpression getKey();
 
+    /**
+     * The value of {@code this} entry.
+     *
+     * @return the value.
+     */
     T getValue();
 
-    EntryExpression<T> setValue(T val);
+    /**
+     * An entry with the same key as {@code this} entry, and the
+     * specified {@code value}.
+     *
+     * @param value the value.
+     * @return the resulting entry.
+     */
+    EntryExpression<T> setValue(T value);
 
+    /**
+     * An entry with the same value as {@code this} entry, and the
+     * specified {@code key}.
+     *
+     * @param key the key.
+     * @return the resulting entry.
+     */
     EntryExpression<T> setKey(StringExpression key);
+
+    /**
+     * An entry with the same value as {@code this} entry, and the
+     * specified {@code key}.
+     *
+     * @param key the key.
+     * @return the resulting entry.
+     */
     default EntryExpression<T> setKey(final String key) {
         return setKey(of(key));
     }
