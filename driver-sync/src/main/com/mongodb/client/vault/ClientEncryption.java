@@ -16,6 +16,7 @@
 
 package com.mongodb.client.vault;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
@@ -76,6 +77,34 @@ public interface ClientEncryption extends Closeable {
      * @return the encrypted value, a BSON binary of subtype 6
      */
     BsonBinary encrypt(BsonValue value, EncryptOptions options);
+
+    /**
+     * Encrypts a Match Expression or Aggregate Expression to query a range index.
+     * <p>
+     * The expression is expected to be in one of the following forms:
+     *     <ul>
+     *     <li>A Match Expression of this form:
+     *       {@code {$and: [{<field>: {$gt: <value1>}}, {<field>: {$lt: <value2> }}]}}
+     *     </li>
+     *     <li>An Aggregate Expression of this form:
+     *       {@code {$and: [{$gt: [<fieldpath>, <value1>]}, {$lt: [<fieldpath>, <value2>]}] }}
+     *     </li>
+     *     </ul>
+     *     {@code $gt} may also be {@code $gte}. {@code $lt} may also be {@code $lte}.
+     *
+     * <p>Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
+     * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
+     *
+     * @param expression the Match Expression or Aggregate Expression
+     * @param options    the options
+     * @return the encrypted queryable range expression
+     * @since 4.9
+     * @mongodb.server.release 6.2
+     * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     * @mongodb.driver.manual reference/operator/aggregation/match/ $match
+     */
+    @Beta(Beta.Reason.SERVER)
+   BsonDocument encryptExpression(BsonDocument expression, EncryptOptions options);
 
     /**
      * Decrypt the given value.

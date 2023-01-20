@@ -16,11 +16,12 @@
 
 package org.mongodb.scala.vault
 
-import java.io.Closeable
+import com.mongodb.annotations.Beta
 
+import java.io.Closeable
 import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
 import org.bson.{ BsonBinary, BsonValue }
-import org.mongodb.scala.SingleObservable
+import org.mongodb.scala.{ Document, SingleObservable, ToSingleObservablePublisher }
 import org.mongodb.scala.model.vault.{ DataKeyOptions, EncryptOptions }
 
 /**
@@ -64,6 +65,35 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    */
   def encrypt(value: BsonValue, options: EncryptOptions): SingleObservable[BsonBinary] =
     wrapped.encrypt(value, options)
+
+  /**
+   * Encrypts a Match Expression or Aggregate Expression to query a range index.
+   *
+   * The expression is expected to be in one of the following forms:
+   *
+   * - A Match Expression of this form:
+   *   {{{ {$and: [{<field>: {$gt: <value1>}}, {<field>: {$lt: <value2> }}]}} }}}
+   * - An Aggregate Expression of this form:
+   *   {{{ {$and: [{$gt: [<fieldpath>, <value1>]}, {$lt: [<fieldpath>, <value2>]}] }} }}}
+   *
+   * `$gt` may also be `$gte`. `$lt` may also be `$lte`.
+   *
+   * Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
+   * **Note:** The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
+   *
+   * [[https://www.mongodb.com/docs/manual/core/queryable-encryption/ queryable encryption]]
+   *
+   * @note Requires MongoDB 6.2 or greater
+   * @param expression the Match Expression or Aggregate Expression
+   * @param options    the options
+   * @return a Publisher containing the queryable encrypted range expression
+   * @since 4.9
+   */
+  @Beta(Array(Beta.Reason.SERVER)) def encryptExpression(
+      expression: Document,
+      options: EncryptOptions
+  ): SingleObservable[Document] =
+    wrapped.encryptExpression(expression.toBsonDocument, options).map(d => Document(d))
 
   /**
    * Decrypt the given value.

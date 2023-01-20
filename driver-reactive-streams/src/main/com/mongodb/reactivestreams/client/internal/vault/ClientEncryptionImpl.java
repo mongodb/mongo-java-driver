@@ -99,6 +99,11 @@ public class ClientEncryptionImpl implements ClientEncryption {
     }
 
     @Override
+    public Publisher<BsonDocument> encryptExpression(final BsonDocument expression, final EncryptOptions options) {
+        return crypt.encryptExpression(expression, options);
+    }
+
+    @Override
     public Publisher<BsonValue> decrypt(final BsonBinary value) {
         return crypt.decryptExplicitly(value);
     }

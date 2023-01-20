@@ -16,8 +16,10 @@
 
 package org.mongodb.scala.model
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.vault.{ DataKeyOptions => JDataKeyOptions }
 import com.mongodb.client.model.vault.{ EncryptOptions => JEncryptOptions }
+import com.mongodb.client.model.vault.{ RangeOptions => JRangeOptions }
 
 /**
  * This package contains options classes for the key vault API
@@ -51,6 +53,18 @@ package object vault {
      * @param algorithm the encryption algorithm
      */
     def apply(algorithm: String): EncryptOptions = new JEncryptOptions(algorithm)
+  }
+
+  /**
+   * Range options specifies index options for a Queryable Encryption field supporting "rangePreview" queries.
+   *
+   * @since 4.9
+   */
+  @Beta(Array(Beta.Reason.SERVER))
+  type RangeOptions = JRangeOptions
+
+  object RangeOptions {
+    def apply(): RangeOptions = new JRangeOptions()
   }
 
 }

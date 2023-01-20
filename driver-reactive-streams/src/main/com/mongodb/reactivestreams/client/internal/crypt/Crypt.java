@@ -19,8 +19,10 @@ package com.mongodb.reactivestreams.client.internal.crypt;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.annotations.Beta;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.model.vault.RangeOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCrypt;
 import com.mongodb.crypt.capi.MongoCryptContext;
@@ -43,10 +45,13 @@ import reactor.core.publisher.MonoSink;
 
 import java.io.Closeable;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
+import static com.mongodb.internal.client.vault.EncryptOptionsHelper.asMongoExplicitEncryptOptions;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -170,28 +175,25 @@ public class Crypt implements Closeable {
         notNull("value", value);
         notNull("options", options);
 
-        return executeStateMachine(() -> {
-            MongoExplicitEncryptOptions.Builder encryptOptionsBuilder = MongoExplicitEncryptOptions.builder()
-                    .algorithm(options.getAlgorithm());
+        return executeStateMachine(() ->
+            mongoCrypt.createExplicitEncryptionContext(new BsonDocument("v", value), asMongoExplicitEncryptOptions(options))
+        ).map(result -> result.getBinary("v"));
+    }
 
-            if (options.getKeyId() != null) {
-                encryptOptionsBuilder.keyId(options.getKeyId());
-            }
-
-            if (options.getKeyAltName() != null) {
-                encryptOptionsBuilder.keyAltName(options.getKeyAltName());
-            }
-
-            if (options.getContentionFactor() != null) {
-                encryptOptionsBuilder.contentionFactor(options.getContentionFactor());
-            }
-
-            if (options.getQueryType() != null) {
-                encryptOptionsBuilder.queryType(options.getQueryType());
-            }
-
-            return mongoCrypt.createExplicitEncryptionContext(new BsonDocument("v", value), encryptOptionsBuilder.build());
-        }).map(result -> result.getBinary("v"));
+    /**
+     * Encrypts a Match Expression or Aggregate Expression to query a range index.
+     *
+     * @param expression the Match Expression or Aggregate Expression
+     * @param options    the options
+     * @return the encrypted expression
+     * @since 4.9
+     * @mongodb.server.release 6.2
+     */
+    @Beta(Beta.Reason.SERVER)
+    public Mono<BsonDocument> encryptExpression(final BsonDocument expression, final EncryptOptions options) {
+        return executeStateMachine(() ->
+                mongoCrypt.createEncryptExpressionContext(new BsonDocument("v", expression), asMongoExplicitEncryptOptions(options))
+        ).map(result -> result.getDocument("v"));
     }
 
     /**
@@ -245,7 +247,7 @@ public class Crypt implements Closeable {
         try {
             MongoCryptContext cryptContext = cryptContextSupplier.get();
             return Mono.<RawBsonDocument>create(sink -> executeStateMachineWithSink(cryptContext, databaseName, sink))
-                    .doOnError(MongoCryptException.class, this::wrapInClientException)
+                    .onErrorMap(this::wrapInClientException)
                     .doFinally(s -> cryptContext.close());
         } catch (MongoCryptException e) {
             return Mono.error(wrapInClientException(e));
