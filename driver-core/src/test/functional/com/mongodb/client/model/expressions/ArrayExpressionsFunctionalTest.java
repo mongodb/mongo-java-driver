@@ -201,6 +201,19 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     }
 
     @Test
+    public void reduceMultiplyTest() {
+        assertExpression(
+                6,
+                ofIntegerArray(1, 2, 3).multiply(a -> a),
+                "{'$reduce': {'input': {'$map': {'input': [1, 2, 3], 'in': '$$this'}}, "
+                        + "'initialValue': 1, 'in': {'$multiply': ['$$value', '$$this']}}}");
+        // empty array:
+        assertExpression(
+                1,
+                ofIntegerArray().multiply(a -> a));
+    }
+
+    @Test
     public void reduceMaxTest() {
         assertExpression(
                 3,

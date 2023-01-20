@@ -597,7 +597,7 @@ final class MqlExpression<T extends Expression>
     @Override
     public NumberExpression multiply(final Function<? super T, ? extends NumberExpression> mapper) {
         MqlExpression<NumberExpression> array = (MqlExpression<NumberExpression>) this.map(mapper);
-        return array.reduce(of(0), (NumberExpression a, NumberExpression b) -> a.multiply(b));
+        return array.reduce(of(1), (NumberExpression a, NumberExpression b) -> a.multiply(b));
     }
 
     @Override
@@ -907,6 +907,12 @@ final class MqlExpression<T extends Expression>
     @Override
     public BooleanExpression has(final StringExpression key) {
         return get(key).ne(ofRem());
+    }
+
+
+    @Override
+    public BooleanExpression has(final String fieldName) {
+        return this.has(of(fieldName));
     }
 
     static <R extends Expression> R ofRem() {
