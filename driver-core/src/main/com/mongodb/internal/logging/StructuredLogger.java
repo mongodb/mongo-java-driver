@@ -69,21 +69,21 @@ public final class StructuredLogger {
         return logger.isDebugEnabled() || getInterceptor(clusterId.getDescription()) != null;
     }
 
-    public void debug(final String message, final ClusterId clusterId, final String format, final Entry... entries) {
+    public void debug(final String messageId, final ClusterId clusterId, final String format, final Entry... entries) {
         StructuredLoggingInterceptor interceptor = getInterceptor(clusterId.getDescription());
         if (interceptor != null) {
-            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId, entries));
+            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", messageId, clusterId, entries));
         }
         if (logger.isDebugEnabled()) {
             logger.debug(format(format, Arrays.stream(entries).map(Entry::getValue).toArray()));
         }
     }
 
-    public void debug(final String message, final ClusterId clusterId, final Throwable exception, final String format,
+    public void debug(final String messageId, final ClusterId clusterId, final Throwable exception, final String format,
                       final Entry... entries) {
         StructuredLoggingInterceptor interceptor = getInterceptor(clusterId.getDescription());
         if (interceptor != null) {
-            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId, exception,
+            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", messageId, clusterId, exception,
                     entries));
         }
         if (logger.isDebugEnabled()) {
