@@ -21,9 +21,10 @@ import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogMessage.Entry;
+import com.mongodb.lang.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.lang.String.format;
@@ -33,26 +34,26 @@ import static java.lang.String.format;
  */
 public final class StructuredLogger {
 
+    private static final ConcurrentHashMap<String, StructuredLoggingInterceptor> INTERCEPTORS = new ConcurrentHashMap<>();
+
     private final Logger logger;
 
-    private static final Map<String, StructuredLoggingInterceptor> INTERCEPTORS = new HashMap<>();
-
     @VisibleForTesting(otherwise = PRIVATE)
-    public static void addInterceptor(final String applicationName, final StructuredLoggingInterceptor interceptor) {
-        INTERCEPTORS.put(applicationName, interceptor);
+    public static void addInterceptor(final String clusterDescription, final StructuredLoggingInterceptor interceptor) {
+        INTERCEPTORS.put(clusterDescription, interceptor);
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public static void removeInterceptor(final String applicationName) {
-        INTERCEPTORS.remove(applicationName);
+    public static void removeInterceptor(final String clusterDescription) {
+        INTERCEPTORS.remove(clusterDescription);
     }
 
-    private static boolean hasInterceptor(final ClusterId clusterId) {
-        return INTERCEPTORS.containsKey(clusterId.getDescription());
-    }
-
-    private static StructuredLoggingInterceptor getInterceptor(final ClusterId clusterId) {
-        return INTERCEPTORS.get(clusterId.getDescription());
+    @Nullable
+    private static StructuredLoggingInterceptor getInterceptor(@Nullable final String clusterDescription) {
+        if (clusterDescription == null) {
+            return null;
+        }
+        return INTERCEPTORS.get(clusterDescription);
     }
 
     public StructuredLogger(final String suffix) {
@@ -65,82 +66,28 @@ public final class StructuredLogger {
     }
 
     public boolean isDebugRequired(final ClusterId clusterId) {
-        return logger.isDebugEnabled() || hasInterceptor(clusterId);
+        return logger.isDebugEnabled() || getInterceptor(clusterId.getDescription()) != null;
     }
 
-    public void debug(final String message, final ClusterId clusterId, final String format,
-            final String k1, final Object v1,
-            final String k2, final Object v2,
-            final String k3, final Object v3,
-            final String k4, final Object v4,
-            final String k5, final Object v5,
-            final String k6, final Object v6,
-            final String k7, final Object v7,
-            final String k8, final Object v8) {
-        if (hasInterceptor(clusterId)) {
-            getInterceptor(clusterId).intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId,
-                    new Entry(k1, v1), new Entry(k2, v2), new Entry(k3, v3), new Entry(k4, v4), new Entry(k5, v5), new Entry(k6, v6),
-                    new Entry(k7, v7), new Entry(k8, v8)));
+    public void debug(final String message, final ClusterId clusterId, final String format, final Entry... entries) {
+        StructuredLoggingInterceptor interceptor = getInterceptor(clusterId.getDescription());
+        if (interceptor != null) {
+            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId, entries));
         }
         if (logger.isDebugEnabled()) {
-            logger.debug(format(format, v1, v2, v3, v4, v5, v6, v7, v8));
-        }
-    }
-
-    public void debug(final String message, final ClusterId clusterId, final String format,
-            final String k1, final Object v1,
-            final String k2, final Object v2,
-            final String k3, final Object v3,
-            final String k4, final Object v4,
-            final String k5, final Object v5,
-            final String k6, final Object v6,
-            final String k7, final Object v7,
-            final String k8, final Object v8,
-            final String k9, final Object v9) {
-        if (hasInterceptor(clusterId)) {
-            getInterceptor(clusterId).intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId,
-                    new Entry(k1, v1), new Entry(k2, v2), new Entry(k3, v3), new Entry(k4, v4), new Entry(k5, v5), new Entry(k6, v6),
-                    new Entry(k7, v7), new Entry(k8, v8), new Entry(k9, v9)));
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(format(format, v1, v2, v3, v4, v5, v6, v7, v8, v9));
+            logger.debug(format(format, Arrays.stream(entries).map(Entry::getValue).toArray()));
         }
     }
 
     public void debug(final String message, final ClusterId clusterId, final Throwable exception, final String format,
-            final String k1, final Object v1,
-            final String k2, final Object v2,
-            final String k3, final Object v3,
-            final String k4, final Object v4,
-            final String k5, final Object v5,
-            final String k6, final Object v6,
-            final String k7, final Object v7) {
-        if (hasInterceptor(clusterId)) {
-            getInterceptor(clusterId).intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId, exception,
-                    new Entry(k1, v1), new Entry(k2, v2), new Entry(k3, v3), new Entry(k4, v4), new Entry(k5, v5), new Entry(k6, v6),
-                    new Entry(k7, v7)));
+                      final Entry... entries) {
+        StructuredLoggingInterceptor interceptor = getInterceptor(clusterId.getDescription());
+        if (interceptor != null) {
+            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId, exception,
+                    entries));
         }
         if (logger.isDebugEnabled()) {
-            logger.debug(format(format, v1, v2, v3, v4, v5, v6, v7), exception);
-        }
-    }
-
-    public void debug(final String message, final ClusterId clusterId, final Throwable exception, final String format,
-            final String k1, final Object v1,
-            final String k2, final Object v2,
-            final String k3, final Object v3,
-            final String k4, final Object v4,
-            final String k5, final Object v5,
-            final String k6, final Object v6,
-            final String k7, final Object v7,
-            final String k8, final Object v8) {
-        if (hasInterceptor(clusterId)) {
-            getInterceptor(clusterId).intercept(new StructuredLogMessage(logger.getName(), "debug", message, clusterId, exception,
-                    new Entry(k1, v1), new Entry(k2, v2), new Entry(k3, v3), new Entry(k4, v4), new Entry(k5, v5), new Entry(k6, v6),
-                    new Entry(k7, v7), new Entry(k8, v8)));
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug(format(format, v1, v2, v3, v4, v5, v6, v7, v8), exception);
+            logger.debug(format(format, Arrays.stream(entries).map(Entry::getValue).toArray()), exception);
         }
     }
 }

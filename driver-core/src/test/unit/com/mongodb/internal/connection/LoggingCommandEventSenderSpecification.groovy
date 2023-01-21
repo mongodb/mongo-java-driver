@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandListener
@@ -86,7 +87,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
     def 'should log events'() {
         given:
-        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()))
+        def serverId = new ServerId(new ClusterId(), new ServerAddress())
+        def connectionDescription = new ConnectionDescription(serverId)
+                .withConnectionId(new ConnectionId(serverId, 42, 1000))
         def namespace = new MongoNamespace('test.driver')
         def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('ping', new BsonInt32(1))
@@ -139,7 +142,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
     def 'should log large command with ellipses'() {
         given:
-        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()))
+        def serverId = new ServerId(new ClusterId(), new ServerAddress())
+        def connectionDescription = new ConnectionDescription(serverId)
+                .withConnectionId(new ConnectionId(serverId, 42, 1000))
         def namespace = new MongoNamespace('test.driver')
         def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('fake', new BsonBinary(new byte[2048]))
@@ -167,7 +172,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
     def 'should log redacted command with ellipses'() {
         given:
-        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()))
+        def serverId = new ServerId(new ClusterId(), new ServerAddress())
+        def connectionDescription = new ConnectionDescription(serverId)
+                .withConnectionId(new ConnectionId(serverId, 42, 1000))
         def namespace = new MongoNamespace('test.driver')
         def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('createUser', new BsonString('private'))

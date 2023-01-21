@@ -21,6 +21,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.logging.StructuredLogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -30,8 +31,11 @@ import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
+import org.bson.types.ObjectId;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -72,33 +76,17 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendStartedEvent() {
         if (loggingRequired()) {
-            String commandString = redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument);
-            if (description.getServiceId() == null) {
-                logger.debug("Command started", getClusterId(),
-                        "Command \"%s\" started on database %s using a connection with driver-generated ID %d and server-generated ID %d "
-                                + "to %s:%s. The request ID is %s. Command: %s",
-                        "commandName", commandName,
-                        "databaseName", message.getNamespace().getDatabaseName(),
-                        "driverConnectionId", description.getConnectionId().getLocalValue(),
-                        "serverConnectionId", description.getConnectionId().getServerValue(),
-                        "serverHost", description.getServerAddress().getHost(),
-                        "serverPort", description.getServerAddress().getPort(),
-                        "requestId", message.getId(),
-                        "command", commandString);
-            } else {
-                logger.debug("Command started", getClusterId(),
-                        "Command \"%s\" started on database %s using a connection with driver-generated ID %d and server-generated ID %d "
-                                + "to %s:%s with service ID %s. The request ID is %s. Command: %s",
-                        "commandName", commandName,
-                        "databaseName", message.getNamespace().getDatabaseName(),
-                        "driverConnectionId", description.getConnectionId().getLocalValue(),
-                        "serverConnectionId", description.getConnectionId().getServerValue(),
-                        "serverHost", description.getServerAddress().getHost(),
-                        "serverPort", description.getServerAddress().getPort(),
-                        "serviceId", description.getServiceId(),
-                        "requestId", message.getId(),
-                        "command", commandString);
-            }
+            List<Entry> entries = new ArrayList<>();
+            StringBuilder builder = new StringBuilder("Command \"%s\" started on database %s");
+            entries.add(new Entry("commandName", commandName));
+            entries.add(new Entry("databaseName", message.getNamespace().getDatabaseName()));
+
+            appendCommonLogFragment(entries, builder);
+
+            builder.append(" Command: %s");
+            entries.add(new Entry("command", redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument)));
+
+            logger.debug("Command started", getClusterId(), builder.toString(), entries.toArray(new Entry[0]));
         }
 
         if (eventRequired()) {
@@ -113,6 +101,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         commandDocument = null;
     }
 
+
     @Override
     public void sendFailedEvent(final Throwable t) {
         Throwable commandEventException = t;
@@ -124,30 +113,14 @@ class LoggingCommandEventSender implements CommandEventSender {
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {
-            if (description.getServiceId() == null) {
-                logger.debug("Command failed", getClusterId(), commandEventException,
-                        "Command \"%s\" failed in %.2f ms using a connection with driver-generated ID %d and server-generated ID "
-                                + "%d to %s:%s. The request ID is %d.",
-                        "commandName", commandName,
-                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
-                        "driverConnectionId", description.getConnectionId().getLocalValue(),
-                        "serverConnectionId", description.getConnectionId().getServerValue(),
-                        "serverHost", description.getServerAddress().getHost(),
-                        "serverPort", description.getServerAddress().getPort(),
-                        "requestId", message.getId());
-            } else {
-                logger.debug("Command failed", getClusterId(), commandEventException,
-                        "Command \"%s\" failed in %.2f ms using a connection with driver-generated ID %d and server-generated ID "
-                                + "%d to %s:%s with service ID %s. The request ID is %d.",
-                        "commandName", commandName,
-                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
-                        "driverConnectionId", description.getConnectionId().getLocalValue(),
-                        "serverConnectionId", description.getConnectionId().getServerValue(),
-                        "serverHost", description.getServerAddress().getHost(),
-                        "serverPort", description.getServerAddress().getPort(),
-                        "serviceId", description.getServiceId(),
-                        "requestId", message.getId());
-            }
+            List<Entry> entries = new ArrayList<>();
+            StringBuilder builder = new StringBuilder("Command \"%s\" failed in %.2f ms");
+            entries.add(new Entry("commandName", commandName));
+            entries.add(new Entry("durationMS", elapsedTimeNanos / NANOS_PER_MILLI));
+
+            appendCommonLogFragment(entries, builder);
+
+            logger.debug("Command failed", getClusterId(), commandEventException, builder.toString(), entries.toArray(new Entry[0]));
         }
 
         if (eventRequired()) {
@@ -170,34 +143,19 @@ class LoggingCommandEventSender implements CommandEventSender {
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {
+            List<Entry> entries = new ArrayList<>();
+            StringBuilder builder = new StringBuilder("Command \"%s\" succeeded in %.2f ms");
+            entries.add(new Entry("commandName", commandName));
+            entries.add(new Entry("durationMS", elapsedTimeNanos / NANOS_PER_MILLI));
+
+            appendCommonLogFragment(entries, builder);
+
+            builder.append(" Command reply: %s");
             BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
             String replyString = redactionRequired ? "{}" : getTruncatedJsonCommand(responseDocumentForEvent);
-            if (description.getServiceId() == null) {
-                logger.debug("Command succeeded", getClusterId(),
-                        "Command \"%s\" succeeded in %.2f ms using a connection with driver-generated ID %d and server-generated ID %d to "
-                                + "%s:%s. The request ID is %d. Command reply: %s",
-                        "commandName", commandName,
-                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
-                        "driverConnectionId", description.getConnectionId().getLocalValue(),
-                        "serverConnectionId", description.getConnectionId().getServerValue(),
-                        "serverHost", description.getServerAddress().getHost(),
-                        "serverPort", description.getServerAddress().getPort(),
-                        "requestId", message.getId(),
-                        "reply", replyString);
-            } else {
-                logger.debug("Command succeeded", getClusterId(),
-                        "Command \"%s\" succeeded in %.2f ms using a connection with driver-generated ID %d and server-generated ID %d to "
-                                + " %s:%s with service ID %s. The request ID is %d. Command reply: %s",
-                        "commandName", commandName,
-                        "durationMS", elapsedTimeNanos / NANOS_PER_MILLI,
-                        "driverConnectionId", description.getConnectionId().getLocalValue(),
-                        "serverConnectionId", description.getConnectionId().getServerValue(),
-                        "serverHost", description.getServerAddress().getHost(),
-                        "serverPort", description.getServerAddress().getPort(),
-                        "serviceId", description.getServiceId(),
-                        "requestId", message.getId(),
-                        "reply", replyString);
-            }
+            entries.add(new Entry("reply", replyString));
+
+            logger.debug("Command succeeded", getClusterId(), builder.toString(), entries.toArray(new Entry[0]));
         }
 
         if (eventRequired()) {
@@ -218,6 +176,30 @@ class LoggingCommandEventSender implements CommandEventSender {
 
     private boolean eventRequired() {
         return commandListener != null;
+    }
+
+    private void appendCommonLogFragment(final List<Entry> entries, final StringBuilder builder) {
+        builder.append(" using a connection with driver-generated ID %d");
+        entries.add(new Entry("driverConnectionId", description.getConnectionId().getLocalValue()));
+
+        Integer connectionServerValue = description.getConnectionId().getServerValue();
+        if (connectionServerValue != null) {
+            builder.append(" and server-generated ID %d");
+            entries.add(new Entry("serverConnectionId", connectionServerValue));
+        }
+
+        builder.append(" to %s:%s");
+        entries.add(new Entry("serverHost", description.getServerAddress().getHost()));
+        entries.add(new Entry("serverPort", description.getServerAddress().getPort()));
+
+        ObjectId descriptionServiceId = description.getServiceId();
+        if (descriptionServiceId != null) {
+            builder.append(" with service ID %s");
+            entries.add(new Entry("serviceId", descriptionServiceId));
+        }
+
+        builder.append(". The request ID is %s.");
+        entries.add(new Entry("requestId", message.getId()));
     }
 
     private static String getTruncatedJsonCommand(final BsonDocument commandDocument) {

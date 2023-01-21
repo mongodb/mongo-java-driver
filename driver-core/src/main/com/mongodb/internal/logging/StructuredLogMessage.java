@@ -17,6 +17,7 @@
 package com.mongodb.internal.logging;
 
 import com.mongodb.connection.ClusterId;
+import com.mongodb.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +58,7 @@ public final class StructuredLogMessage {
     }
 
     public StructuredLogMessage(final String loggerName, final String level, final String messageId, final ClusterId clusterId,
-            final Throwable exception, final Entry... entries) {
+                                @Nullable final Throwable exception, final Entry... entries) {
         this.loggerName = loggerName;
         this.level = level;
         this.messageId = messageId;
@@ -82,6 +83,7 @@ public final class StructuredLogMessage {
         return clusterId;
     }
 
+    @Nullable
     public Throwable getException() {
         return exception;
     }
