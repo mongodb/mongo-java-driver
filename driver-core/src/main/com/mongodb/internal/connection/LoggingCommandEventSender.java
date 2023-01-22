@@ -21,6 +21,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.logging.StructuredLogMessage;
 import com.mongodb.internal.logging.StructuredLogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.lang.Nullable;
@@ -42,6 +43,8 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandSucceededEvent;
+import static com.mongodb.internal.logging.StructuredLogMessage.Component.COMMAND;
+import static com.mongodb.internal.logging.StructuredLogMessage.Level.DEBUG;
 
 class LoggingCommandEventSender implements CommandEventSender {
     private static final int MAX_COMMAND_DOCUMENT_LENGTH_TO_LOG = 1000;
@@ -86,7 +89,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             builder.append(" Command: %s");
             entries.add(new Entry("command", redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument)));
 
-            logger.debug("Command started", getClusterId(), builder.toString(), entries.toArray(new Entry[0]));
+            logger.log(new StructuredLogMessage(COMMAND, DEBUG, "Command started", getClusterId(), entries), builder.toString());
         }
 
         if (eventRequired()) {
@@ -120,7 +123,8 @@ class LoggingCommandEventSender implements CommandEventSender {
 
             appendCommonLogFragment(entries, builder);
 
-            logger.debug("Command failed", getClusterId(), commandEventException, builder.toString(), entries.toArray(new Entry[0]));
+            logger.log(new StructuredLogMessage(COMMAND, DEBUG, "Command failed", getClusterId(), commandEventException, entries),
+                    builder.toString());
         }
 
         if (eventRequired()) {
@@ -155,7 +159,8 @@ class LoggingCommandEventSender implements CommandEventSender {
             String replyString = redactionRequired ? "{}" : getTruncatedJsonCommand(responseDocumentForEvent);
             entries.add(new Entry("reply", replyString));
 
-            logger.debug("Command succeeded", getClusterId(), builder.toString(), entries.toArray(new Entry[0]));
+            logger.log(new StructuredLogMessage(COMMAND, DEBUG, "Command succeeded", getClusterId(), entries),
+                    builder.toString());
         }
 
         if (eventRequired()) {
@@ -166,7 +171,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     }
 
     private boolean loggingRequired() {
-        return logger.isDebugRequired(getClusterId());
+        return logger.isRequired(DEBUG, getClusterId());
     }
 
 

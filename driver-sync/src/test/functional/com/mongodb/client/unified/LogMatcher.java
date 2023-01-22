@@ -57,8 +57,8 @@ final class LogMatcher {
 
      static BsonDocument asDocument(final StructuredLogMessage message) {
         BsonDocument document = new BsonDocument();
-        document.put("component", new BsonString(message.getLoggerName().substring(message.getLoggerName().lastIndexOf(".") + 1)));
-        document.put("level", new BsonString(message.getLevel()));
+        document.put("component", new BsonString(message.getComponent().name().toLowerCase()));
+        document.put("level", new BsonString(message.getLevel().name().toLowerCase()));
         document.put("hasFailure", BsonBoolean.valueOf(message.getException() != null));
         document.put("failureIsRedacted",
                 BsonBoolean.valueOf(message.getException() != null && exceptionIsRedacted(message.getException())));

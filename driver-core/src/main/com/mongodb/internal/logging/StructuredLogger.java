@@ -21,9 +21,9 @@ import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogMessage.Entry;
+import com.mongodb.internal.logging.StructuredLogMessage.Level;
 import com.mongodb.lang.Nullable;
 
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
@@ -65,29 +65,39 @@ public final class StructuredLogger {
         this.logger = logger;
     }
 
-    public boolean isDebugRequired(final ClusterId clusterId) {
-        return logger.isDebugEnabled() || getInterceptor(clusterId.getDescription()) != null;
-    }
+    public boolean isRequired(final Level level, final ClusterId clusterId) {
+        if (getInterceptor(clusterId.getDescription()) != null) {
+            return true;
+        }
 
-    public void debug(final String messageId, final ClusterId clusterId, final String format, final Entry... entries) {
-        StructuredLoggingInterceptor interceptor = getInterceptor(clusterId.getDescription());
-        if (interceptor != null) {
-            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", messageId, clusterId, entries));
+        //noinspection SwitchStatementWithTooFewBranches
+        switch (level) {
+            case DEBUG:
+                return logger.isDebugEnabled();
+            default:
+                throw new UnsupportedOperationException();
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug(format(format, Arrays.stream(entries).map(Entry::getValue).toArray()));
-        }
-    }
+   }
 
-    public void debug(final String messageId, final ClusterId clusterId, final Throwable exception, final String format,
-                      final Entry... entries) {
-        StructuredLoggingInterceptor interceptor = getInterceptor(clusterId.getDescription());
+    public void log(final StructuredLogMessage message, final String format) {
+        StructuredLoggingInterceptor interceptor = getInterceptor(message.getClusterId().getDescription());
         if (interceptor != null) {
-            interceptor.intercept(new StructuredLogMessage(logger.getName(), "debug", messageId, clusterId, exception,
-                    entries));
+            interceptor.intercept(message);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug(format(format, Arrays.stream(entries).map(Entry::getValue).toArray()), exception);
+        //noinspection SwitchStatementWithTooFewBranches
+        switch (message.getLevel()) {
+            case DEBUG:
+                if (logger.isDebugEnabled()) {
+                    Throwable exception = message.getException();
+                    if (exception == null) {
+                        logger.debug(format(format, message.getEntries().stream().map(Entry::getValue).toArray()));
+                    } else {
+                        logger.debug(format(format, message.getEntries().stream().map(Entry::getValue).toArray()), exception);
+                    }
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException();
         }
     }
 }

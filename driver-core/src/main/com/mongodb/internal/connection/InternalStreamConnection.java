@@ -82,6 +82,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getOperationTime;
 import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
+import static com.mongodb.internal.logging.StructuredLogMessage.Level.DEBUG;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
@@ -851,7 +852,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final RequestContext requestContext) {
-        if (!isMonitoringConnection && opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isDebugRequired(getClusterId()))) {
+        if (!isMonitoringConnection && opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isRequired(DEBUG, getClusterId()))) {
             return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description,
                     commandListener, requestContext, message, bsonOutput, COMMAND_PROTOCOL_LOGGER);
         } else {

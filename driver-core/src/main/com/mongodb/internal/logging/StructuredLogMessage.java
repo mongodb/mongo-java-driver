@@ -19,7 +19,6 @@ package com.mongodb.internal.logging;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.lang.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -27,12 +26,20 @@ import java.util.List;
  */
 public final class StructuredLogMessage {
 
-    private final String loggerName;
-    private final String level;
+    private final Component component;
+    private final Level level;
     private final String messageId;
     private final ClusterId clusterId;
     private final Throwable exception;
     private final List<Entry> entries;
+
+    public enum Component {
+        COMMAND
+    }
+
+    public enum Level {
+        DEBUG
+    }
 
     public static final class Entry {
         private final String name;
@@ -52,26 +59,26 @@ public final class StructuredLogMessage {
         }
     }
 
-    public StructuredLogMessage(final String loggerName, final String level, final String messageId, final ClusterId clusterId,
-            final Entry... entries) {
-        this(loggerName, level, messageId, clusterId, null, entries);
+    public StructuredLogMessage(final Component component, final Level level, final String messageId, final ClusterId clusterId,
+            final List<Entry> entries) {
+        this(component, level, messageId, clusterId, null, entries);
     }
 
-    public StructuredLogMessage(final String loggerName, final String level, final String messageId, final ClusterId clusterId,
-                                @Nullable final Throwable exception, final Entry... entries) {
-        this.loggerName = loggerName;
+    public StructuredLogMessage(final Component component, final Level level, final String messageId, final ClusterId clusterId,
+                                @Nullable final Throwable exception, final List<Entry> entries) {
+        this.component = component;
         this.level = level;
         this.messageId = messageId;
         this.clusterId = clusterId;
         this.exception = exception;
-        this.entries = Arrays.asList(entries);
+        this.entries = entries;
     }
 
-    public String getLoggerName() {
-        return loggerName;
+    public Component getComponent() {
+        return component;
     }
 
-    public String getLevel() {
+    public Level getLevel() {
         return level;
     }
 
