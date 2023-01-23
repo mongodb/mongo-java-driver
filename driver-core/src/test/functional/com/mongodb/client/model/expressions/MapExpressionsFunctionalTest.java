@@ -22,12 +22,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static com.mongodb.client.model.expressions.Expressions.ofEntry;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
@@ -38,23 +40,25 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void literalsTest() {
-        // map
-        assertExpression(
-                Document.parse("{key: 123}"),
-                mapKey123,
-                "{'$setField': {'field': 'key', 'input': {'$literal': {}}, 'value': 123}}");
-        assertExpression(
-                Document.parse("{keyA: 1, keyB: 2}"),
-                ofMap(Document.parse("{keyA: 1, keyB: 2}")),
-                "{'$literal': {'keyA': 1, 'keyB': 2}}");
         // entry
         assertExpression(
                 Document.parse("{k: 'keyA', v: 1}"),
                 ofEntry(of("keyA"), of(1)));
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField (unset)
+        // map
+        assertExpression(
+                Document.parse("{keyA: 1, keyB: 2}"),
+                ofMap(Document.parse("{keyA: 1, keyB: 2}")),
+                "{'$literal': {'keyA': 1, 'keyB': 2}}");
+        assertExpression(
+                Document.parse("{key: 123}"),
+                mapKey123,
+                "{'$setField': {'field': 'key', 'input': {'$literal': {}}, 'value': 123}}");
     }
 
     @Test
     public void getSetMapTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         // get
         assertExpression(
                 123,
@@ -78,6 +82,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void hasTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField (unset)
         MapExpression<Expression> e = ofMap(BsonDocument.parse("{key: 1}"));
         assertExpression(
                 true,
@@ -90,6 +95,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void getSetEntryTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         EntryExpression<IntegerExpression> entryA1 = ofEntry(of("keyA"), of(1));
         assertExpression(
                 Document.parse("{k: 'keyA', 'v': 33}"),
@@ -110,6 +116,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 ofArray(ofEntry(of("keyA"), of(1))).asMap(v -> v),
                 "{'$arrayToObject': [{'$map': {'input': [{'k': 'keyA', 'v': 1}], 'in': '$$this'}}]}");
 
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         assertExpression(
                 Document.parse("{'keyA': 55}"),
                 ofArray(ofEntry(of("keyA"), of(1))).asMap(v -> v.setValue(of(55))),
@@ -142,6 +149,7 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void entrySetTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/objectToArray/ (23)
         assertExpression(
                 Arrays.asList(Document.parse("{'k': 'k1', 'v': 1}")),

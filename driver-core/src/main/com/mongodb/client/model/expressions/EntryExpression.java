@@ -36,6 +36,7 @@ public interface EntryExpression<T extends Expression> extends Expression {
     /**
      * The key of {@code this} entry.
      *
+     * @mongodb.server.release 5.0
      * @return the key.
      */
     StringExpression getKey();
@@ -43,6 +44,7 @@ public interface EntryExpression<T extends Expression> extends Expression {
     /**
      * The value of {@code this} entry.
      *
+     * @mongodb.server.release 5.0
      * @return the value.
      */
     T getValue();
@@ -51,6 +53,7 @@ public interface EntryExpression<T extends Expression> extends Expression {
      * An entry with the same key as {@code this} entry, and the
      * specified {@code value}.
      *
+     * @mongodb.server.release 5.0
      * @param value the value.
      * @return the resulting entry.
      */
@@ -60,6 +63,7 @@ public interface EntryExpression<T extends Expression> extends Expression {
      * An entry with the same value as {@code this} entry, and the
      * specified {@code key}.
      *
+     * @mongodb.server.release 5.0
      * @param key the key.
      * @return the resulting entry.
      */
@@ -69,6 +73,7 @@ public interface EntryExpression<T extends Expression> extends Expression {
      * An entry with the same value as {@code this} entry, and the
      * specified {@code key}.
      *
+     * @mongodb.server.release 5.0
      * @param key the key.
      * @return the resulting entry.
      */
