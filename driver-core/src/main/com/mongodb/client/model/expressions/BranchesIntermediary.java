@@ -116,6 +116,7 @@ public final class BranchesIntermediary<T extends Expression, R extends Expressi
      * {@linkplain Expression#isBooleanOr(BooleanExpression) being a boolean}
      * produces a value specified by the {@code mapping}.
      *
+     * @mongodb.server.release 4.4
      * @param mapping the mapping.
      * @return the appended sequence of checks.
      */
@@ -128,6 +129,7 @@ public final class BranchesIntermediary<T extends Expression, R extends Expressi
      * {@linkplain Expression#isIntegerOr(IntegerExpression) being an integer}
      * produces a value specified by the {@code mapping}.
      *
+     * @mongodb.server.release 4.4
      * @param mapping the mapping.
      * @return the appended sequence of checks.
      */

@@ -56,6 +56,7 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void isNumberOrTest() {
+        assumeTrue(serverVersionAtLeast(4, 4));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/isNumber/
         assertExpression(1, of(1).isNumberOr(of(99)), "{'$cond': [{'$isNumber': [1]}, 1, 99]}");
         // other numeric values:
