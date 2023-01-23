@@ -175,6 +175,7 @@ public interface Expression {
      * {@code this} is an integer, or the {@code other} integer value if
      * {@code this} is null, or is missing, or is of any other non-integer type.
      *
+     * @mongodb.server.release 5.2
      * @param other the other value.
      * @return the resulting value.
      */

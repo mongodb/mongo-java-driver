@@ -22,11 +22,13 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.function.Function;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
@@ -107,6 +109,8 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
 
     @Test
     public void switchTypesTest() {
+        // isIntegerOr relies on switch short-circuiting, which only happens after 5.2
+        assumeTrue(serverVersionAtLeast(5, 2));
         Function<Expression, StringExpression> label = expr -> expr.switchOn(on -> on
                 .isBoolean(v -> v.asString().concat(of(" - bool")))
                 // integer should be checked before string
