@@ -247,6 +247,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * the array is not empty.
      * If the array is empty then the behaviour of the API is not defined.
      *
+     * @mongodb.server.release 4.4
      * @return the resulting value.
      */
     @MqlUnchecked(PRESENT)
@@ -259,6 +260,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * the array is not empty.
      * If the array is empty then the behaviour of the API is not defined.
      *
+     * @mongodb.server.release 4.4
      * @return the resulting value.
      */
     T last();
