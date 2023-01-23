@@ -264,6 +264,7 @@ public interface Expression {
      * {@linkplain EntryExpression entries}, and the
      * {@linkplain Expressions#ofNull() null value}.
      *
+     * @mongodb.server.release 4.0
      * @see StringExpression#parseDate()
      * @see StringExpression#parseInteger()
      * @return the resulting value.
