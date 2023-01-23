@@ -504,7 +504,7 @@ final class MqlExpression<T extends Expression>
     }
 
     BooleanExpression isDocumentOrMap() {
-        return new MqlExpression<>(ast("$type")).eq(of("object"));
+        return new MqlExpression<>(astWrapped("$type")).eq(of("object"));
     }
 
     @Override

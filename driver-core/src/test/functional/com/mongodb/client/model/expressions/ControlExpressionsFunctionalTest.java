@@ -205,7 +205,7 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
         assertExpression("A",
                 ofMap(Document.parse("{}")).switchOn(on -> on.isMap(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [{'$type': "
-                        + "{'$literal': {}}}, 'object']}, 'then': 'A'}]}}");
+                        + "[{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
                 ofNull().switchOn(on -> on.isNull(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$eq': [null, null]}, 'then': 'A'}]}}");
@@ -268,9 +268,8 @@ class ControlExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest
                         + "{'case': {'$eq': [{'$type': [{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
                 ofMap(Document.parse("{}")).switchOn(on -> on.isNull(v -> of("X")).isMap(v -> of("A"))),
-                " {'$switch': {'branches': ["
-                        + "{'case': {'$eq': [{'$literal': {}}, null]}, 'then': 'X'}, "
-                        + "{'case': {'$eq': [{'$type': {'$literal': {}}}, 'object']}, 'then': 'A'}]}}");
+                "{'$switch': {'branches': [{'case': {'$eq': [{'$literal': {}}, null]}, 'then': 'X'}, "
+                        + "{'case': {'$eq': [{'$type': [{'$literal': {}}]}, 'object']}, 'then': 'A'}]}}");
         assertExpression("A",
                 ofNull().switchOn(on -> on.isNumber(v -> of("X")).isNull(v -> of("A"))),
                 "{'$switch': {'branches': [{'case': {'$isNumber': [null]}, 'then': 'X'}, "
