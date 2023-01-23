@@ -28,12 +28,14 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static com.mongodb.client.model.expressions.Expressions.ofNull;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#type-expression-operators
@@ -67,6 +69,8 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void isIntegerOr() {
+        // isIntegerOr relies on switch short-circuiting, which only happens after 5.2
+        assumeTrue(serverVersionAtLeast(5, 2));
         assertExpression(
                 1,
                 of(1).isIntegerOr(of(99)),

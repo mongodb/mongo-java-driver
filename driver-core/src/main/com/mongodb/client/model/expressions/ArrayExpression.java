@@ -105,6 +105,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * The {@linkplain #gt(Expression) largest} value all the values of
      * {@code this} array, or the {@code other} value if this array is empty.
      *
+     * @mongodb.server.release 5.2
      * @param other the other value.
      * @return the resulting value.
      */
@@ -114,6 +115,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * The {@linkplain #lt(Expression) smallest} value all the values of
      * {@code this} array, or the {@code other} value if this array is empty.
      *
+     * @mongodb.server.release 5.2
      * @param other the other value.
      * @return the resulting value.
      */
@@ -124,6 +126,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * {@code this} array, or all elements if the array contains fewer than
      * {@code n} elements.
      *
+     * @mongodb.server.release 5.2
      * @param n the number of elements.
      * @return the resulting value.
      */
@@ -134,6 +137,7 @@ public interface ArrayExpression<T extends Expression> extends Expression {
      * {@code this} array, or all elements if the array contains fewer than
      * {@code n} elements.
      *
+     * @mongodb.server.release 5.2
      * @param n the number of elements.
      * @return the resulting value.
      */
