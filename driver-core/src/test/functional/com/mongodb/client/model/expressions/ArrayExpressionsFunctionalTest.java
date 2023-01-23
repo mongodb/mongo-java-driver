@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static com.mongodb.client.model.expressions.Expressions.ofBooleanArray;
@@ -37,6 +38,7 @@ import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofNumberArray;
 import static com.mongodb.client.model.expressions.Expressions.ofStringArray;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SuppressWarnings({"Convert2MethodRef"})
 class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -141,6 +143,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @SuppressWarnings("unchecked")
     private static ArrayExpression<? extends NumberExpression> sort(final ArrayExpression<? extends NumberExpression> array) {
+        assumeTrue(serverVersionAtLeast(5, 2)); // due to sort
         MqlExpression<? extends NumberExpression> mqlArray = (MqlExpression<? extends NumberExpression>) array;
         return mqlArray.sort();
     }
@@ -215,6 +218,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void reduceMaxTest() {
+        assumeTrue(serverVersionAtLeast(5, 2));
         assertExpression(
                 3,
                 ofIntegerArray(1, 2, 3).max(of(9)),
@@ -227,6 +231,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void reduceMinTest() {
+        assumeTrue(serverVersionAtLeast(5, 2));
         assertExpression(
                 1,
                 ofIntegerArray(1, 2, 3).min(of(9)),
@@ -239,6 +244,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void reduceMaxNTest() {
+        assumeTrue(serverVersionAtLeast(5, 2));
         assertExpression(
                 Arrays.asList(3, 2),
                 ofIntegerArray(3, 1, 2).maxN(of(2)));
@@ -253,6 +259,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void reduceMinNTest() {
+        assumeTrue(serverVersionAtLeast(5, 2));
         assertExpression(
                 Arrays.asList(1, 2),
                 ofIntegerArray(3, 1, 2).minN(of(2)));
