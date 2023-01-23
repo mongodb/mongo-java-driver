@@ -16,6 +16,10 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
+import com.mongodb.assertions.Assertions;
+
 import java.util.function.Function;
 
 /**
@@ -23,7 +27,11 @@ import java.util.function.Function;
  * Language (MQL). {@linkplain IntegerExpression Integers} are a subset of
  * numbers, and so, for example, the integer 0 and the number 0 are
  * {@linkplain #eq(Expression) equal}.
+ *
+ * @since 4.9.0
  */
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface NumberExpression extends Expression {
 
     /**
@@ -41,6 +49,7 @@ public interface NumberExpression extends Expression {
      * @return the resulting value.
      */
     default NumberExpression multiply(final Number other) {
+        Assertions.notNull("other", other);
         return this.multiply(Expressions.numberToExpression(other));
     }
 
@@ -63,6 +72,7 @@ public interface NumberExpression extends Expression {
      * @return the resulting value.
      */
     default NumberExpression divide(final Number other) {
+        Assertions.notNull("other", other);
         return this.divide(Expressions.numberToExpression(other));
     }
 
@@ -81,6 +91,7 @@ public interface NumberExpression extends Expression {
      * @return the resulting value.
      */
     default NumberExpression add(final Number other) {
+        Assertions.notNull("other", other);
         return this.add(Expressions.numberToExpression(other));
     }
 
@@ -99,6 +110,7 @@ public interface NumberExpression extends Expression {
      * @return the resulting value.
      */
     default NumberExpression subtract(final Number other) {
+        Assertions.notNull("other", other);
         return this.subtract(Expressions.numberToExpression(other));
     }
 

@@ -252,6 +252,20 @@ class TypeExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                     .parseDate(of("%Y-%m-%dT%H:%M:%S.%L%z")),
                 "{'$dateFromString': {'dateString': '2007-12-03T10:15:30.005+01:00', "
                         + "'format': '%Y-%m-%dT%H:%M:%S.%L%z'}}");
+
+        // missing items:
+        assertExpression(
+                Instant.parse("2007-12-03T10:15:00.000Z"),
+                of("2007-12-03T10:15").parseDate(of("%Y-%m-%dT%H:%M")));
+        assertThrows(MongoCommandException.class, () -> assertExpression(
+                "an incomplete date/time string has been found, with elements missing",
+                of("-12-03T10:15").parseDate(of("-%m-%dT%H:%M")).asString()));
+        assertThrows(MongoCommandException.class, () -> assertExpression(
+                "an incomplete date/time string has been found, with elements missing",
+                of("2007--03T10:15").parseDate(of("%Y--%dT%H:%M")).asString()));
+        assertThrows(MongoCommandException.class, () -> assertExpression(
+                "an incomplete date/time string has been found, with elements missing",
+                of("").parseDate(of("")).asString()));
     }
 
     @Test

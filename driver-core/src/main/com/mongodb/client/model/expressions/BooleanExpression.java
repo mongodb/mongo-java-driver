@@ -16,12 +16,19 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
+
 import java.util.function.Function;
 
 /**
  * A boolean {@linkplain Expression value} in the context of the
  * MongoDB Query Language (MQL).
+ *
+ * @since 4.9.0
  */
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface BooleanExpression extends Expression {
 
     /**
