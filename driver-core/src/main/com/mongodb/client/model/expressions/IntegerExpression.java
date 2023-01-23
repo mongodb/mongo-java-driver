@@ -109,6 +109,7 @@ public interface IntegerExpression extends NumberExpression {
      * The {@linkplain DateExpression date} corresponding to {@code this} value
      * when taken to be the number of milliseconds since the Unix epoch.
      *
+     * @mongodb.server.release 4.0
      * @return the resulting value.
      */
     DateExpression millisecondsToDate();

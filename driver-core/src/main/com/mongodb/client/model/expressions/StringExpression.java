@@ -127,6 +127,7 @@ public interface StringExpression extends Expression {
      *
      * <p>This will cause an error if this string does not represent an integer.
      *
+     * @mongodb.server.release 4.0
      * @return the resulting value.
      */
     IntegerExpression parseInteger();
@@ -146,6 +147,7 @@ public interface StringExpression extends Expression {
      * Converts {@code this} string to a {@linkplain DateExpression date},
      * using the specified {@code format}.
      *
+     * @mongodb.server.release 4.0
      * @mongodb.driver.manual reference/operator/aggregation/dateToString/#std-label-format-specifiers Format Specifiers
      * @param format the format.
      * @return the resulting value.
