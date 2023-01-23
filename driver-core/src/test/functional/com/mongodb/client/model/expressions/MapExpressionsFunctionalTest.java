@@ -76,21 +76,27 @@ class MapExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 mapKey123.unset("key"));
         // "other" parameter
         assertExpression(
-                1,
+                null,
                 ofMap(Document.parse("{ 'null': null }")).get("null", of(1)));
     }
 
     @Test
     public void hasTest() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField (unset)
-        MapExpression<Expression> e = ofMap(BsonDocument.parse("{key: 1}"));
+        MapExpression<Expression> e = ofMap(BsonDocument.parse("{key: 1, null: null}"));
         assertExpression(
                 true,
                 e.has(of("key")),
-                "{'$ne': [{'$getField': {'input': {'$literal': {'key': 1}}, 'field': 'key'}}, '$$REMOVE']}");
+                "{'$ne': [{'$getField': {'input': {'$literal': {'key': 1, 'null': null}}, 'field': 'key'}}, '$$REMOVE']}");
         assertExpression(
                 false,
                 e.has("not_key"));
+        assertExpression(
+                true,
+                e.has("null"));
+        // consistency:
+        assertExpression(true, e.has("null"));
+        assertExpression(null, e.get("null", of(1)));
     }
 
     @Test

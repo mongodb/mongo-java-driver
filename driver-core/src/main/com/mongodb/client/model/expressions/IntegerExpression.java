@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
+
 import java.util.function.Function;
 
 /**
@@ -23,7 +26,11 @@ import java.util.function.Function;
  * Language (MQL). Integers are a subset of {@linkplain NumberExpression numbers},
  * and so, for example, the integer 0 and the number 0 are
  * {@linkplain #eq(Expression) equal}.
+ *
+ * @since 4.9.0
  */
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface IntegerExpression extends NumberExpression {
 
     /**

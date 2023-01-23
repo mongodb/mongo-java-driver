@@ -16,7 +16,8 @@
 
 package com.mongodb.client.model.expressions;
 
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
 
 import java.util.function.Function;
 
@@ -81,12 +82,14 @@ import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_A
  * context, users are strongly discouraged from relying on behaviour that is not
  * part of this API).
  *
- * <p>Users should treat these interfaces as sealed, and should not create
- * implementations.
+ * <p>This API should be treated as sealed:
+ * it must not be extended or implemented (unless explicitly allowed).
  *
  * @see Expressions
+ * @since 4.9.0
  */
-@Evolving
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface Expression {
 
     /**
@@ -222,7 +225,7 @@ public interface Expression {
 
     /**
      * {@code this} value as a {@linkplain DocumentExpression document} if
-     * {@code this} is a document or document-like value (see
+     * {@code this} is a document (or document-like value, see
      * {@link MapExpression} and {@link EntryExpression})
      * or the {@code other} document value if {@code this} is null,
      * or is missing, or is of any other non-document type.
@@ -235,7 +238,7 @@ public interface Expression {
 
     /**
      * {@code this} value as a {@linkplain MapExpression map} if
-     * {@code this} is a map or map-like value (see
+     * {@code this} is a map (or map-like value, see
      * {@link DocumentExpression} and {@link EntryExpression})
      * or the {@code other} map value if {@code this} is null,
      * or is missing, or is of any other non-map type.
@@ -251,7 +254,7 @@ public interface Expression {
      * @return the resulting value.
      * @param <T> the type of the values of the resulting map.
      */
-    <T extends Expression> MapExpression<T> isMapOr(MapExpression<? extends T> other);
+    <T extends Expression> MapExpression<T> isMapOr(MapExpression<@MqlUnchecked(TYPE_ARGUMENT) ? extends T> other);
 
     /**
      * The {@linkplain StringExpression string} representation of {@code this} value.

@@ -15,11 +15,12 @@
  */
 
 /**
- * API for MQL expressions.
- *
  * @see com.mongodb.client.model.expressions.Expression
  * @see com.mongodb.client.model.expressions.Expressions
+ * @since 4.9.0
  */
+@Beta(Beta.Reason.CLIENT)
 @NonNullApi
 package com.mongodb.client.model.expressions;
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.NonNullApi;

@@ -16,6 +16,10 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
+import com.mongodb.assertions.Assertions;
+
 import java.util.function.Function;
 
 import static com.mongodb.client.model.expressions.Expressions.of;
@@ -23,16 +27,19 @@ import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.PRESEN
 
 /**
  * A map {@link Expression value} in the context of the MongoDB Query
- * Language (MQL). An map is a finite, unordered a set of
- * {@link EntryExpression entries} of a certain type, such that no entry key
- * is repeated. It is a mapping from keys to values.
+ * Language (MQL). A map is a finite set of
+ * {@link EntryExpression entries} of a certain type.
+ * No entry key is repeated. It is a mapping from keys to values.
  *
- * @param <T> the type of the elements
+ * @param <T> the type of the entry values
+ * @since 4.9.0
  */
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface MapExpression<T extends Expression> extends Expression {
 
     /**
-     * True if {@code this} map has a value (including null) for
+     * Whether {@code this} map has a value (including null) for
      * the provided key.
      *
      * @param key the key.
@@ -41,7 +48,7 @@ public interface MapExpression<T extends Expression> extends Expression {
     BooleanExpression has(StringExpression key);
 
     /**
-     * True if {@code this} map has a value (including null) for
+     * Whether {@code this} map has a value (including null) for
      * the provided key.
      *
      * @param key the key.
@@ -74,13 +81,16 @@ public interface MapExpression<T extends Expression> extends Expression {
      * @param key the key.
      * @return the value.
      */
+    @MqlUnchecked(PRESENT)
     default T get(final String key) {
+        Assertions.notNull("key", key);
         return get(of(key));
     }
 
     /**
      * The value corresponding to the provided {@code key}, or the
-     * {@code other} value if an entry for the key is not present.
+     * {@code other} value if an entry for the key is not
+     * {@linkplain #has(StringExpression) present}.
      *
      * @param key the key.
      * @param other the other value.
@@ -90,13 +100,16 @@ public interface MapExpression<T extends Expression> extends Expression {
 
     /**
      * The value corresponding to the provided {@code key}, or the
-     * {@code other} value if an entry for the key is not present.
+     * {@code other} value if an entry for the key is not
+     * {@linkplain #has(StringExpression) present}.
      *
      * @param key the key.
      * @param other the other value.
      * @return the resulting value.
      */
     default T get(final String key, final T other) {
+        Assertions.notNull("key", key);
+        Assertions.notNull("other", other);
         return get(of(key), other);
     }
 
@@ -123,12 +136,15 @@ public interface MapExpression<T extends Expression> extends Expression {
      * @return the resulting value.
      */
     default MapExpression<T> set(final String key, final T value) {
+        Assertions.notNull("key", key);
+        Assertions.notNull("value", value);
         return set(of(key), value);
     }
 
     /**
-     * Returns a map with the same entries as {@code this} map, but with
-     * the specified {@code key} absent.
+     * Returns a map with the same entries as {@code this} map, but which
+     * {@linkplain #has(StringExpression) has} no entry with the specified
+     * {@code key}.
      *
      * <p>This does not affect the original map.
      *
@@ -138,8 +154,9 @@ public interface MapExpression<T extends Expression> extends Expression {
     MapExpression<T> unset(StringExpression key);
 
     /**
-     * Returns a map with the same entries as {@code this} map, but with
-     * the specified {@code key} absent.
+     * Returns a map with the same entries as {@code this} map, but which
+     * {@linkplain #has(StringExpression) has} no entry with the specified
+     * {@code key}.
      *
      * <p>This does not affect the original map.
      *
@@ -147,6 +164,7 @@ public interface MapExpression<T extends Expression> extends Expression {
      * @return the resulting value.
      */
     default MapExpression<T> unset(final String key) {
+        Assertions.notNull("key", key);
         return unset(of(key));
     }
 
@@ -165,6 +183,7 @@ public interface MapExpression<T extends Expression> extends Expression {
 
     /**
      * The {@linkplain EntryExpression entries} of this map as an array.
+     * No guarantee is made regarding order.
      *
      * @see ArrayExpression#asMap
      * @return the resulting value.

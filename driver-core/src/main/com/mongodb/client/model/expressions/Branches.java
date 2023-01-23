@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.assertions.Assertions;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -28,10 +31,12 @@ import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_A
  * to succeed will produce the value that it specifies. If no check succeeds,
  * then the operation
  * {@linkplain BranchesIntermediary#defaults(Function) defaults} to a default
- * value, or if none is specified, the operation causes an error.
+ * value, or if none is specified, the operation will cause an error.
  *
  * @param <T> the type of the values that may be checked.
+ * @since 4.9.0
  */
+@Beta(Beta.Reason.CLIENT)
 public final class Branches<T extends Expression> {
 
     Branches() {
@@ -59,6 +64,8 @@ public final class Branches<T extends Expression> {
      * @return the appended sequence of checks.
      */
     public <R extends Expression> BranchesIntermediary<T, R> is(final Function<? super T, BooleanExpression> predicate, final Function<? super T, ? extends R> mapping) {
+        Assertions.notNull("predicate", predicate);
+        Assertions.notNull("mapping", mapping);
         return with(value -> new SwitchCase<>(predicate.apply(value), mapping.apply(value)));
     }
 
@@ -74,6 +81,8 @@ public final class Branches<T extends Expression> {
      * @return the appended sequence of checks.
      */
     public <R extends Expression> BranchesIntermediary<T, R> eq(final T v, final Function<? super T, ? extends R> mapping) {
+        Assertions.notNull("v", v);
+        Assertions.notNull("mapping", mapping);
         return is(value -> value.eq(v), mapping);
     }
 
@@ -89,6 +98,8 @@ public final class Branches<T extends Expression> {
      * @return the appended sequence of checks.
      */
     public <R extends Expression> BranchesIntermediary<T, R> lt(final T v, final Function<? super T, ? extends R> mapping) {
+        Assertions.notNull("v", v);
+        Assertions.notNull("mapping", mapping);
         return is(value -> value.lt(v), mapping);
     }
 
@@ -104,6 +115,8 @@ public final class Branches<T extends Expression> {
      * @return the appended sequence of checks.
      */
     public <R extends Expression> BranchesIntermediary<T, R> lte(final T v, final Function<? super T, ? extends R> mapping) {
+        Assertions.notNull("v", v);
+        Assertions.notNull("mapping", mapping);
         return is(value -> value.lte(v), mapping);
     }
 
@@ -119,12 +132,13 @@ public final class Branches<T extends Expression> {
      * @param <R> the type of the produced value.
      */
     public <R extends Expression> BranchesIntermediary<T, R> isBoolean(final Function<? super BooleanExpression, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isBoolean(), v -> mapping.apply((BooleanExpression) v));
     }
 
     /**
      * A successful check for
-     * {@linkplain Expression#isBooleanOr(BooleanExpression) being a boolean}
+     * {@linkplain Expression#isNumberOr(NumberExpression) being a number}
      * produces a value specified by the {@code mapping}.
      *
      * @mongodb.server.release 4.4
@@ -133,6 +147,7 @@ public final class Branches<T extends Expression> {
      * @param <R> the type of the produced value.
      */
     public <R extends Expression> BranchesIntermediary<T, R> isNumber(final Function<? super NumberExpression, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isNumber(), v -> mapping.apply((NumberExpression) v));
     }
 
@@ -147,6 +162,7 @@ public final class Branches<T extends Expression> {
      * @param <R> the type of the produced value.
      */
     public <R extends Expression> BranchesIntermediary<T, R> isInteger(final Function<? super IntegerExpression, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isInteger(), v -> mapping.apply((IntegerExpression) v));
     }
 
@@ -160,6 +176,7 @@ public final class Branches<T extends Expression> {
      * @param <R> the type of the produced value.
      */
     public <R extends Expression> BranchesIntermediary<T, R> isString(final Function<? super StringExpression, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isString(), v -> mapping.apply((StringExpression) v));
     }
 
@@ -173,6 +190,7 @@ public final class Branches<T extends Expression> {
      * @param <R> the type of the produced value.
      */
     public <R extends Expression> BranchesIntermediary<T, R> isDate(final Function<? super DateExpression, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isDate(), v -> mapping.apply((DateExpression) v));
     }
 
@@ -192,32 +210,32 @@ public final class Branches<T extends Expression> {
      */
     @SuppressWarnings("unchecked")
     public <R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isArray(final Function<? super ArrayExpression<@MqlUnchecked(TYPE_ARGUMENT) Q>, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isArray(), v -> mapping.apply((ArrayExpression<Q>) v));
     }
 
     /**
      * A successful check for
      * {@linkplain Expression#isDocumentOr(DocumentExpression) being a document}
+     * (or document-like value, see
+     * {@link MapExpression} and {@link EntryExpression})
      * produces a value specified by the {@code mapping}.
-     *
-     * <p>Note: Any value considered to be a document by this API
-     * will also be considered a map, and vice-versa.
      *
      * @param mapping the mapping.
      * @return the appended sequence of checks.
      * @param <R> the type of the produced value.
      */
     public <R extends Expression> BranchesIntermediary<T, R> isDocument(final Function<? super DocumentExpression, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isDocumentOrMap(), v -> mapping.apply((DocumentExpression) v));
     }
 
     /**
      * A successful check for
      * {@linkplain Expression#isMapOr(MapExpression) being a map}
+     * (or map-like value, see
+     * {@link DocumentExpression} and {@link EntryExpression})
      * produces a value specified by the {@code mapping}.
-     *
-     * <p>Note: Any value considered to be a map by this API
-     * will also be considered a document, and vice-versa.
      *
      * <p>Warning: The type argument of the map is not
      * enforced by the API. The use of this method is an
@@ -230,6 +248,7 @@ public final class Branches<T extends Expression> {
      */
     @SuppressWarnings("unchecked")
     public <R extends Expression, Q extends Expression> BranchesIntermediary<T, R> isMap(final Function<? super MapExpression<@MqlUnchecked(TYPE_ARGUMENT) Q>, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isDocumentOrMap(), v -> mapping.apply((MapExpression<Q>) v));
     }
 
@@ -243,6 +262,7 @@ public final class Branches<T extends Expression> {
      * @param <R> the type of the produced value.
      */
     public <R extends Expression> BranchesIntermediary<T, R> isNull(final Function<? super Expression, ? extends R> mapping) {
+        Assertions.notNull("mapping", mapping);
         return is(v -> mqlEx(v).isNull(), v -> mapping.apply(v));
     }
 }
