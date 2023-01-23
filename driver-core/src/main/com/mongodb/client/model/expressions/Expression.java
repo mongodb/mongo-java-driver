@@ -165,6 +165,7 @@ public interface Expression {
      * {@code this} is a number, or the {@code other} number value if
      * {@code this} is null, or is missing, or is of any other non-number type.
      *
+     * @mongodb.server.release 4.4
      * @param other the other value.
      * @return the resulting value.
      */

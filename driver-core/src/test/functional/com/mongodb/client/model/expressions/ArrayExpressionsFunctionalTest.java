@@ -338,12 +338,9 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/arrayElemAt/
         assertExpression(
                 Arrays.asList(1, 2, 3).get(0),
-                // 0.0 is a valid integer value
-                array123.elementAt(of(0.0).isIntegerOr(of(-1))),
+                array123.elementAt(of(0)),
                 // MQL:
-                "{'$arrayElemAt': [[1, 2, 3], {'$switch': {'branches': [{'case': "
-                        + "{'$isNumber': [0.0]}, 'then': {'$cond': "
-                        + "[{'$eq': [{'$round': 0.0}, 0.0]}, 0.0, -1]}}], 'default': -1}}]} ");
+                "{'$arrayElemAt': [[1, 2, 3], 0]}");
         // negatives
         assertExpression(
                 Arrays.asList(1, 2, 3).get(3 - 1),
@@ -365,10 +362,17 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertThrows(MongoCommandException.class, () -> assertExpression(
                 MISSING,
                 array123.elementAt(of(Long.MAX_VALUE))));
+
+        // 0.0 is a valid integer value
+        assumeTrue(serverVersionAtLeast(4, 4)); // isNumber
+        assertExpression(
+                Arrays.asList(1, 2, 3).get(0),
+                array123.elementAt(of(0.0).isIntegerOr(of(-1))));
     }
 
     @Test
     public void firstTest() {
+        assumeTrue(serverVersionAtLeast(4, 4));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/first/
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/first-array-element/
         assertExpression(
@@ -386,6 +390,7 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
     @Test
     public void lastTest() {
+        assumeTrue(serverVersionAtLeast(4, 4));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/last-array-element/
         assertExpression(
                 new LinkedList<>(Arrays.asList(1, 2, 3)).getLast(),
