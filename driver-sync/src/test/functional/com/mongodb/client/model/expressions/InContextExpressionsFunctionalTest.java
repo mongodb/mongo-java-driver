@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.Accumulators.sum;
 import static com.mongodb.client.model.Aggregates.match;
 import static com.mongodb.client.model.Aggregates.project;
@@ -46,6 +47,7 @@ import static com.mongodb.client.model.expressions.Expressions.current;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofArray;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
 
@@ -77,6 +79,7 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
 
     @Test
     public void findTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         col.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}"),
                 Document.parse("{_id: 2, x: 0, y: 3}"),
@@ -94,6 +97,7 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
 
     @Test
     public void matchTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         col.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}"),
                 Document.parse("{_id: 2, x: 0, y: 3}"),
@@ -109,6 +113,7 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
 
     @Test
     public void currentAsMapMatchTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         col.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}"),
                 Document.parse("{_id: 2, x: 0, y: 3}"),
@@ -127,6 +132,7 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
 
     @Test
     public void projectTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         col.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}")));
 
@@ -153,6 +159,7 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
 
     @Test
     public void projectTest2() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         col.insertMany(Arrays.asList(Document.parse("{_id: 0, x: 1}")));
 
         // new, nestedArray
@@ -177,6 +184,7 @@ class InContextExpressionsFunctionalTest extends AbstractExpressionsFunctionalTe
 
     @Test
     public void groupTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         col.insertMany(Arrays.asList(
                 Document.parse("{t: 0, a: 1}"),
                 Document.parse("{t: 0, a: 2}"),

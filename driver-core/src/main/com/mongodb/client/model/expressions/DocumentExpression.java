@@ -37,6 +37,7 @@ public interface DocumentExpression extends Expression {
      * True if {@code this} document has a field with the provided
      * {@code fieldName}.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -52,6 +53,7 @@ public interface DocumentExpression extends Expression {
      * of those values correspond to the types of ensuing {@code get...}
      * invocations, since this API has no way of verifying this correspondence.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param value the value.
      * @return the resulting document.
@@ -69,6 +71,7 @@ public interface DocumentExpression extends Expression {
      * of those values correspond to the types of ensuing {@code get...}
      * invocations, since this API has no way of verifying this correspondence.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting document.
      */
@@ -87,6 +90,7 @@ public interface DocumentExpression extends Expression {
      * then a super-type encompassing all types must be chosen, and
      * if necessary the elements should be individually type-checked when used.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -102,6 +106,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -114,6 +119,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a boolean
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -126,6 +132,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a boolean
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -143,6 +150,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -155,6 +163,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a number
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -167,6 +176,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a number
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -184,6 +194,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -196,6 +207,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not an integer
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -208,6 +220,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not an integer
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -222,6 +235,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not an integer
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -239,6 +253,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -251,6 +266,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a string
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -263,6 +279,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a string
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -280,6 +297,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -292,6 +310,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a date
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -304,6 +323,7 @@ public interface DocumentExpression extends Expression {
      * or the {@code other} value if the field is not a date
      * or if the document {@linkplain #has} no such field.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -321,6 +341,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
@@ -336,6 +357,7 @@ public interface DocumentExpression extends Expression {
      * <p>Note: Any field considered to be a document by this API
      * will also be considered a map, and vice-versa.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -351,6 +373,7 @@ public interface DocumentExpression extends Expression {
      * <p>Note: Any field considered to be a document by this API
      * will also be considered a map, and vice-versa.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -368,6 +391,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      * @param <T> the type.
@@ -388,6 +412,7 @@ public interface DocumentExpression extends Expression {
      * enforced by the API. The use of this method is an
      * unchecked assertion that the type argument is correct.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -409,6 +434,7 @@ public interface DocumentExpression extends Expression {
      * enforced by the API. The use of this method is an
      * unchecked assertion that the type argument is correct.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
@@ -428,6 +454,7 @@ public interface DocumentExpression extends Expression {
      * unchecked assertion that the field is present and
      * the field value is of the specified type.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      * @param <T> the type.
@@ -445,6 +472,7 @@ public interface DocumentExpression extends Expression {
      * enforced by the API. The use of this method is an
      * unchecked assertion that the type argument is correct.
      *
+     * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @param other the other value.
      * @return the resulting value.
