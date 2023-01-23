@@ -123,6 +123,7 @@ public interface NumberExpression extends Expression {
     /**
      * The integer result of rounding {@code this} to the nearest even value.
      *
+     * @mongodb.server.release 4.2
      * @return the resulting value.
      */
     IntegerExpression round();
