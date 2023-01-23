@@ -24,19 +24,16 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 /**
- * Provides Codec instances for MQL expressions.
+ * Provides Codec instances for the {@link Expression MQL API}.
  *
  * <p>Responsible for converting values and computations expressed using the
- * driver's implementation of the {@link Expression} API into the corresponding
+ * driver's implementation of the {@link Expression MQL API} into the corresponding
  * values and computations expressed in MQL BSON. Booleans are converted to BSON
  * booleans, documents to BSON documents, and so on. The specific structure
  * representing numbers is preserved where possible (that is, number literals
  * specified as Java longs are converted into BSON int64, and so on).
  *
- * <p>This API is marked Beta because it may be replaced with a generalized
- * mechanism for converting expressions. This would only affect users who use
- * MqlExpressionCodecProvider directly in custom codec providers. This Beta
- * annotation does not imply that the Expressions API in general is Beta.
+ * @since 4.9.0
  */
 @Beta(Beta.Reason.CLIENT)
 @Immutable

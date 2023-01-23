@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
+
 import java.util.function.Function;
 
 /**
@@ -24,7 +27,10 @@ import java.util.function.Function;
  * milliseconds since the Unix epoch, and does not track the timezone.
  *
  * @mongodb.driver.manual reference/operator/aggregation/dateToString/ Format Specifiers, UTC Offset, and Olson Timezone Identifier
+ * @since 4.9.0
  */
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface DateExpression extends Expression {
 
     /**

@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
+import com.mongodb.assertions.Assertions;
 import org.bson.conversions.Bson;
 
 import java.time.Instant;
@@ -28,14 +31,21 @@ import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE;
 import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
 
 /**
- * Expresses a document value. A document is an ordered set of fields, where the
- * key is a string value, mapping to a value of any other expression type.
+ * A document {@link Expression value} in the context of the MongoDB Query
+ * Language (MQL). A document is a finite set of fields, where the field
+ * name is a string, together with a value of any other
+ * {@linkplain Expression type in the type hierarchy}.
+ * No field name is repeated.
+ *
+ * @since 4.9.0
  */
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface DocumentExpression extends Expression {
 
     /**
-     * True if {@code this} document has a field with the provided
-     * {@code fieldName}.
+     * Whether {@code this} document has a field with the provided
+     * {@code fieldName} (if a field is set to null, it is present).
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -60,16 +70,11 @@ public interface DocumentExpression extends Expression {
      */
     DocumentExpression setField(String fieldName, Expression value);
 
-
     /**
      * Returns a document with the same fields as {@code this} document, but
-     * with the {@code fieldName} field set to the specified {@code value}.
+     * excluding the field with the specified {@code fieldName}.
      *
      * <p>This does not affect the original document.
-     *
-     * <p>Warning: Users should take care to assign values, such that the types
-     * of those values correspond to the types of ensuing {@code get...}
-     * invocations, since this API has no way of verifying this correspondence.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -81,14 +86,8 @@ public interface DocumentExpression extends Expression {
      * Returns the {@linkplain Expression} value of the field
      * with the provided {@code fieldName}.
      *
-     * <p>Use of this method is an assertion that the field exists.
-     *
-     * <p>Warning: The type of the values of the resulting map are not
-     * enforced by the API. The specification of a type by the user is an
-     * unchecked assertion that all map values are of that type.
-     * If the map contains multiple types (such as both nulls and integers)
-     * then a super-type encompassing all types must be chosen, and
-     * if necessary the elements should be individually type-checked when used.
+     * <p>Warning: Use of this method is an assertion that the document
+     * {@linkplain #has(String) has} the named field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -103,7 +102,8 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -138,6 +138,7 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      */
     default BooleanExpression getBoolean(final String fieldName, final boolean other) {
+        Assertions.notNull("fieldName", fieldName);
         return getBoolean(fieldName, of(other));
     }
 
@@ -147,7 +148,8 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -182,6 +184,8 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      */
     default NumberExpression getNumber(final String fieldName, final Number other) {
+        Assertions.notNull("fieldName", fieldName);
+        Assertions.notNull("other", other);
         return getNumber(fieldName, Expressions.numberToExpression(other));
     }
 
@@ -191,7 +195,8 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -226,6 +231,7 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      */
     default IntegerExpression getInteger(final String fieldName, final int other) {
+        Assertions.notNull("fieldName", fieldName);
         return getInteger(fieldName, of(other));
     }
 
@@ -241,6 +247,7 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      */
     default IntegerExpression getInteger(final String fieldName, final long other) {
+        Assertions.notNull("fieldName", fieldName);
         return getInteger(fieldName, of(other));
     }
 
@@ -250,7 +257,8 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -285,6 +293,8 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      */
     default StringExpression getString(final String fieldName, final String other) {
+        Assertions.notNull("fieldName", fieldName);
+        Assertions.notNull("other", other);
         return getString(fieldName, of(other));
     }
 
@@ -294,7 +304,8 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -329,6 +340,8 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      */
     default DateExpression getDate(final String fieldName, final Instant other) {
+        Assertions.notNull("fieldName", fieldName);
+        Assertions.notNull("other", other);
         return getDate(fieldName, of(other));
     }
 
@@ -338,7 +351,8 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -351,11 +365,10 @@ public interface DocumentExpression extends Expression {
     /**
      * Returns the {@linkplain DocumentExpression document} value of the field
      * with the provided {@code fieldName},
-     * or the {@code other} value if the field is not a (child) document
-     * or if the document {@linkplain #has} no such field.
-     *
-     * <p>Note: Any field considered to be a document by this API
-     * will also be considered a map, and vice-versa.
+     * or the {@code other} value
+     * if the document {@linkplain #has} no such field,
+     * or if the specified field is not a (child) document
+     * (or other {@linkplain Expression#isDocumentOr document-like value}.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -367,11 +380,10 @@ public interface DocumentExpression extends Expression {
     /**
      * Returns the {@linkplain DocumentExpression document} value of the field
      * with the provided {@code fieldName},
-     * or the {@code other} value if the field is not a (child) document
-     * or if the document {@linkplain #has} no such field.
-     *
-     * <p>Note: Any field considered to be a document by this API
-     * will also be considered a map, and vice-versa.
+     * or the {@code other} value
+     * if the document {@linkplain #has} no such field,
+     * or if the specified field is not a (child) document
+     * (or other {@linkplain Expression#isDocumentOr document-like value}.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -379,6 +391,8 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      */
     default DocumentExpression getDocument(final String fieldName, final Bson other) {
+        Assertions.notNull("fieldName", fieldName);
+        Assertions.notNull("other", other);
         return getDocument(fieldName, of(other));
     }
 
@@ -388,25 +402,27 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
-     * the field value is of the specified type.
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field,
+     * and the field value is of the specified raw type,
+     * and the field value's type has the specified type argument.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      * @param <T> the type.
      */
-    @MqlUnchecked({PRESENT, TYPE, TYPE_ARGUMENT})
-    <T extends Expression> MapExpression<T> getMap(String fieldName);
+    @MqlUnchecked({PRESENT, TYPE})
+    <T extends Expression> MapExpression<@MqlUnchecked(TYPE_ARGUMENT) T> getMap(String fieldName);
+
 
     /**
      * Returns the {@linkplain MapExpression map} value of the field
      * with the provided {@code fieldName},
-     * or the {@code other} value if the field is not a map
-     * or if the document {@linkplain #has} no such field.
-     *
-     * <p>Note: Any field considered to be a document by this API
-     * will also be considered a map, and vice-versa.
+     * or the {@code other} value
+     * if the document {@linkplain #has} no such field,
+     * or if the specified field is not a map
+     * (or other {@linkplain Expression#isMapOr} map-like value}).
      *
      * <p>Warning: The type argument of the resulting value is not
      * enforced by the API. The use of this method is an
@@ -418,17 +434,15 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      * @param <T> the type.
      */
-    @MqlUnchecked({TYPE_ARGUMENT})
-    <T extends Expression> MapExpression<T> getMap(String fieldName, MapExpression<? extends T> other);
+    <T extends Expression> MapExpression<T> getMap(String fieldName, MapExpression<@MqlUnchecked(TYPE_ARGUMENT) ? extends T> other);
 
     /**
      * Returns the {@linkplain MapExpression map} value of the field
      * with the provided {@code fieldName},
-     * or the {@code other} value if the field is not a map
-     * or if the document {@linkplain #has} no such field.
-     *
-     * <p>Note: Any field considered to be a document by this API
-     * will also be considered a map, and vice-versa.
+     * or the {@code other} value
+     * if the document {@linkplain #has} no such field,
+     * or if the specified field is not a map
+     * (or other {@linkplain Expression#isMapOr} map-like value}).
      *
      * <p>Warning: The type argument of the resulting value is not
      * enforced by the API. The use of this method is an
@@ -440,8 +454,9 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      * @param <T> the type.
      */
-    @MqlUnchecked({TYPE_ARGUMENT})
-    default <T extends Expression> MapExpression<T> getMap(final String fieldName, final Bson other) {
+    default <T extends Expression> MapExpression<@MqlUnchecked(TYPE_ARGUMENT) T> getMap(final String fieldName, final Bson other) {
+        Assertions.notNull("fieldName", fieldName);
+        Assertions.notNull("other", other);
         return getMap(fieldName, ofMap(other));
     }
 
@@ -451,16 +466,18 @@ public interface DocumentExpression extends Expression {
      *
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
-     * unchecked assertion that the field is present and
-     * the field value is of the specified type.
+     * unchecked assertion that the document
+     * {@linkplain #has(String) has} the named field,
+     * and the field value is of the specified raw type,
+     * and the field value's type has the specified type argument.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
      * @return the resulting value.
      * @param <T> the type.
      */
-    @MqlUnchecked({PRESENT, TYPE, TYPE_ARGUMENT})
-    <T extends Expression> ArrayExpression<T> getArray(String fieldName);
+    @MqlUnchecked({PRESENT, TYPE})
+    <T extends Expression> ArrayExpression<@MqlUnchecked(TYPE_ARGUMENT) T> getArray(String fieldName);
 
     /**
      * Returns the {@linkplain ArrayExpression array} value of the field
@@ -478,8 +495,7 @@ public interface DocumentExpression extends Expression {
      * @return the resulting value.
      * @param <T> the type.
      */
-    @MqlUnchecked({TYPE_ARGUMENT})
-    <T extends Expression> ArrayExpression<T> getArray(String fieldName, ArrayExpression<? extends T> other);
+    <T extends Expression> ArrayExpression<@MqlUnchecked(TYPE_ARGUMENT) T> getArray(String fieldName, ArrayExpression<? extends T> other);
 
     /**
      * Returns a document with the same fields as {@code this} document, but

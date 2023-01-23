@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Sealed;
+
 import static com.mongodb.client.model.expressions.Expressions.of;
 
 /**
@@ -25,12 +28,15 @@ import static com.mongodb.client.model.expressions.Expressions.of;
  * {@linkplain Expression value}. Entries are used with
  * {@linkplain MapExpression maps}.
  *
- * Entries are {@linkplain Expression#isDocumentOr document-like} and
+ * <p>Entries are {@linkplain Expression#isDocumentOr document-like} and
  * {@linkplain Expression#isMapOr map-like}, unless the method returning the
  * entry specifies otherwise.
  *
  * @param <T> The type of the value
+ * @since 4.9.0
  */
+@Sealed
+@Beta(Beta.Reason.CLIENT)
 public interface EntryExpression<T extends Expression> extends Expression {
 
     /**

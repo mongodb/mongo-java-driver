@@ -193,21 +193,18 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(
                 BsonDocument.parse("{a: 1, r: 2}"), // map.put("r", 2)
                 a1.setField("r", of(2)),
-                // MQL:
                 "{'$setField': {'field': 'r', 'input': {'$literal': {'a': 1}}, 'value': 2}}");
 
         // Placing a null value:
         assertExpression(
                 BsonDocument.parse("{a: 1, r: null}"), // map.put("r", null)
                 a1.setField("r", Expressions.ofNull()),
-                // MQL:
                 "{'$setField': {'field': 'r', 'input': {'$literal': {'a': 1}}, 'value': null}}");
 
         // Replacing a field based on its prior value:
         assertExpression(
                 BsonDocument.parse("{a: 3}"), // map.put("a", map.get("a") * 3)
                 a1.setField("a", a1.getInteger("a").multiply(3)),
-                // MQL:
                 "{'$setField': {'field': 'a', 'input': {'$literal': {'a': 1}}, 'value': "
                         + "{'$multiply': [{'$getField': {'input': {'$literal': {'a': 1}}, 'field': 'a'}}, 3]}}}");
 
@@ -215,7 +212,6 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(
                 BsonDocument.parse("{'a': {'x': 1, 'y': 2}, r: 10}"),
                 ax1ay2.setField("r", ax1ay2.getDocument("a").getInteger("x").multiply(10)),
-                // MQL:
                 "{'$setField': {'field': 'r', 'input': {'$literal': {'a': {'x': 1, 'y': 2}}}, "
                         + "'value': {'$multiply': ["
                         + "  {'$getField': {'input': {'$getField': {'input': {'$literal': {'a': {'x': 1, 'y': 2}}}, "
@@ -242,7 +238,6 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
         assertExpression(
                 BsonDocument.parse("{}"), // map.remove("a")
                 a1.unsetField("a"),
-                // MQL:
                 "{'$unsetField': {'field': 'a', 'input': {'$literal': {'a': 1}}}}");
     }
 
@@ -273,13 +268,16 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
     @Test
     public void hasTest() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
-        DocumentExpression d = ofDoc("{a: 1}");
+        DocumentExpression d = ofDoc("{a: 1, null: null}");
         assertExpression(
                 true,
                 d.has("a"),
-                "{'$ne': [{'$getField': {'input': {'$literal': {'a': 1}}, 'field': 'a'}}, '$$REMOVE']}");
+                "{'$ne': [{'$getField': {'input': {'$literal': {'a': 1, 'null': null}}, 'field': 'a'}}, '$$REMOVE']}");
         assertExpression(
                 false,
                 d.has("not_a"));
+        assertExpression(
+                true,
+                d.has("null"));
     }
 }

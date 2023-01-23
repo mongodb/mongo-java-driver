@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
@@ -27,7 +28,9 @@ import java.util.function.Function;
  *
  * @param <T> the type of the values that may be checked.
  * @param <R> the type of the value produced.
+ * @since 4.9.0
  */
+@Beta(Beta.Reason.CLIENT)
 public class BranchesTerminal<T extends Expression, R extends Expression> {
 
     private final List<Function<T, SwitchCase<R>>> branches;

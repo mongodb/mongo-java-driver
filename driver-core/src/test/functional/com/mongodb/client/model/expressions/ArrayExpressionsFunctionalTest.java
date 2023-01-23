@@ -43,7 +43,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @SuppressWarnings({"Convert2MethodRef"})
 class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#array-expression-operators
-    // (Incomplete)
 
     private final ArrayExpression<IntegerExpression> array123 = ofIntegerArray(1, 2, 3);
     private final ArrayExpression<BooleanExpression> arrayTTF = ofBooleanArray(true, true, false);
@@ -115,7 +114,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 Stream.of(true, true, false)
                         .filter(v -> v).collect(Collectors.toList()),
                 arrayTTF.filter(v -> v),
-                // MQL:
                 "{'$filter': {'input': [true, true, false], 'cond': '$$this'}}");
     }
 
@@ -126,7 +124,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 Stream.of(true, true, false)
                         .map(v -> !v).collect(Collectors.toList()),
                 arrayTTF.map(v -> v.not()),
-                // MQL:
                 "{'$map': {'input': [true, true, false], 'in': {'$not': '$$this'}}}");
     }
 
@@ -137,7 +134,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Stream.of(3, 1, 2)
                         .sorted().collect(Collectors.toList()), sort(integerExpressionArrayExpression),
-                // MQL:
                 "{'$sortArray': {'input': [3, 1, 2], 'sortBy': 1}}");
     }
 
@@ -305,7 +301,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2, 3),
                 sort(ofArray(ofIntegerArray(1, 2), ofIntegerArray(1, 3)).union(v -> v)),
-                // MQL:
                 "{'$sortArray': {'input': {'$reduce': {'input': "
                         + "{'$map': {'input': [[1, 2], [1, 3]], 'in': '$$this'}}, "
                         + "'initialValue': [], 'in': {'$setUnion': ['$$value', '$$this']}}}, 'sortBy': 1}}");
@@ -324,12 +319,10 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2, 3).size(),
                 array123.size(),
-                // MQL:
                 "{'$size': [[1, 2, 3]]}");
         assertExpression(
                 0,
                 ofIntegerArray().size(),
-                // MQL:
                 "{'$size': [[]]}");
     }
 
@@ -339,7 +332,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2, 3).get(0),
                 array123.elementAt(of(0)),
-                // MQL:
                 "{'$arrayElemAt': [[1, 2, 3], 0]}");
         // negatives
         assertExpression(
@@ -378,13 +370,11 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 new LinkedList<>(Arrays.asList(1, 2, 3)).getFirst(),
                 array123.first(),
-                // MQL:
                 "{'$first': [[1, 2, 3]]}");
 
         assertExpression(
                 MISSING,
                 ofIntegerArray().first(),
-                // MQL:
                 "{'$first': [[]]}");
     }
 
@@ -395,13 +385,11 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 new LinkedList<>(Arrays.asList(1, 2, 3)).getLast(),
                 array123.last(),
-                // MQL:
                 "{'$last': [[1, 2, 3]]}");
 
         assertExpression(
                 MISSING,
                 ofIntegerArray().last(),
-                // MQL:
                 "{'$last': [[]]}");
     }
 
@@ -412,7 +400,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2, 3).contains(2),
                 array123.contains(of(2)),
-                // MQL:
                 "{'$in': [2, [1, 2, 3]]}");
     }
 
@@ -423,7 +410,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
                 Stream.concat(Stream.of(1, 2, 3), Stream.of(1, 2, 3))
                         .collect(Collectors.toList()),
                 ofIntegerArray(1, 2, 3).concat(ofIntegerArray(1, 2, 3)),
-                // MQL:
                 "{'$concatArrays': [[1, 2, 3], [1, 2, 3]]}");
         // mixed types:
         assertExpression(
@@ -437,7 +423,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2, 3).subList(1, 3),
                 array123.slice(1, 10),
-                // MQL:
                 "{'$slice': [[1, 2, 3], 1, 10]}");
 
         ArrayExpression<IntegerExpression> array12345 = ofIntegerArray(1, 2, 3, 4, 5);
@@ -460,7 +445,6 @@ class ArrayExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
         assertExpression(
                 Arrays.asList(1, 2, 3),
                 sort(array123.union(array123)),
-                // MQL:
                 "{'$sortArray': {'input': {'$setUnion': [[1, 2, 3], [1, 2, 3]]}, 'sortBy': 1}}");
         // mixed types:
         assertExpression(

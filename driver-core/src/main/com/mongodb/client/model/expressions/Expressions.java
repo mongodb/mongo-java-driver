@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.expressions;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.assertions.Assertions;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -36,12 +37,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.client.model.expressions.MqlExpression.AstPlaceholder;
-import static com.mongodb.client.model.expressions.MqlExpression.extractBsonValue;
+import static com.mongodb.client.model.expressions.MqlExpression.toBsonValue;
+import static com.mongodb.client.model.expressions.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
 
 /**
  * Convenience methods related to {@link Expression}, used primarily to
  * produce values in the context of the MongoDB Query Language (MQL).
+ *
+ * @since 4.9.0
  */
+@Beta(Beta.Reason.CLIENT)
 public final class Expressions {
 
     private Expressions() {}
@@ -174,7 +179,7 @@ public final class Expressions {
     /**
      * Returns an {@linkplain ArrayExpression array} of
      * {@linkplain NumberExpression numbers} corresponding to
-     * the provided {@link Decimal128 Decimal128s}.
+     * the provided {@link Decimal128}s.
      *
      * @param array the array.
      * @return the resulting value.
@@ -204,7 +209,7 @@ public final class Expressions {
     /**
      * Returns an {@linkplain ArrayExpression array} of
      * {@linkplain DateExpression dates} corresponding to
-     * the provided {@link Instant Instants}.
+     * the provided {@link Instant}s.
      *
      * @param array the array.
      * @return the resulting value.
@@ -234,7 +239,7 @@ public final class Expressions {
     /**
      * Returns an {@linkplain ArrayExpression array} of
      * {@linkplain StringExpression strings} corresponding to
-     * the provided {@link String Strings}.
+     * the provided {@link String}s.
      *
      * @param array the array.
      * @return the resulting value.
@@ -278,7 +283,7 @@ public final class Expressions {
      * @return a reference to the current value as a map.
      * @param <R> the type of the map's values.
      */
-    public static <R extends Expression> MapExpression<R> currentAsMap() {
+    public static <R extends Expression> MapExpression<@MqlUnchecked(TYPE_ARGUMENT) R> currentAsMap() {
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonString("$$CURRENT")))
                 .assertImplementsAllExpressions();
     }
@@ -317,8 +322,8 @@ public final class Expressions {
         Assertions.notNull("v", v);
         return new MqlExpression<>((cr) -> {
             BsonDocument document = new BsonDocument();
-            document.put("k", extractBsonValue(cr, k));
-            document.put("v", extractBsonValue(cr, v));
+            document.put("k", toBsonValue(cr, k));
+            document.put("v", toBsonValue(cr, v));
             return new AstPlaceholder(document);
         });
     }
@@ -348,7 +353,7 @@ public final class Expressions {
      * @param <T> the type of the resulting map's values.
      * @return the resulting map value.
      */
-    public static <T extends Expression> MapExpression<T> ofMap(final Bson map) {
+    public static <T extends Expression> MapExpression<@MqlUnchecked(TYPE_ARGUMENT) T> ofMap(final Bson map) {
         Assertions.notNull("map", map);
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonDocument("$literal",
                 map.toBsonDocument(BsonDocument.class, cr))));
