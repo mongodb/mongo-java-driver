@@ -25,11 +25,13 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.Arrays;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.expressions.Expressions.of;
 import static com.mongodb.client.model.expressions.Expressions.ofIntegerArray;
 import static com.mongodb.client.model.expressions.Expressions.ofMap;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SuppressWarnings("ConstantConditions")
 class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTest {
@@ -69,6 +71,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
     @Test
     public void getFieldTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/getField/ (100)
         // these count as assertions by the user that the value is of the correct type
 
@@ -112,6 +115,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
     @Test
     public void getFieldOrTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         // convenience
         assertExpression(true, ofDoc("{a: true}").getBoolean("a", false));
         assertExpression(1.0, ofDoc("{a: 1.0}").getNumber("a", 99));
@@ -160,6 +164,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
     @Test
     public void getFieldMissingTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         // missing fields
         assertExpression(
                 BsonDocument.parse("{'a': 1}"),
@@ -182,6 +187,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
     @Test
     public void setFieldTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setField/
         // Placing a field based on a literal:
         assertExpression(
@@ -231,6 +237,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
     @Test
     public void unsetFieldTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField (unset)
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/unsetField/
         assertExpression(
                 BsonDocument.parse("{}"), // map.remove("a")
@@ -265,6 +272,7 @@ class DocumentExpressionsFunctionalTest extends AbstractExpressionsFunctionalTes
 
     @Test
     public void hasTest() {
+        assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
         DocumentExpression d = ofDoc("{a: 1}");
         assertExpression(
                 true,
