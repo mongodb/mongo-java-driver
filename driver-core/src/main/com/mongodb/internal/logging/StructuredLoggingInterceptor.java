@@ -16,9 +16,13 @@
 
 package com.mongodb.internal.logging;
 
+import com.mongodb.annotations.ThreadSafe;
+
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@FunctionalInterface
+@ThreadSafe
 public interface StructuredLoggingInterceptor {
     void intercept(StructuredLogMessage message);
 }

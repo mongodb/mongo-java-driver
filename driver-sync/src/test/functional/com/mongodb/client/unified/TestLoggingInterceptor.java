@@ -19,6 +19,7 @@ package com.mongodb.client.unified;
 import com.mongodb.internal.logging.StructuredLogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.logging.StructuredLoggingInterceptor;
+import com.mongodb.lang.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
     }
 
     @Override
-    public void intercept(final StructuredLogMessage message) {
+    public synchronized void intercept(@NonNull final StructuredLogMessage message) {
         messages.add(message);
     }
 
@@ -45,7 +46,7 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
         StructuredLogger.removeInterceptor(applicationName);
     }
 
-    public List<StructuredLogMessage> getMessages() {
-        return messages;
+    public synchronized List<StructuredLogMessage> getMessages() {
+        return new ArrayList<>(messages);
     }
 }
