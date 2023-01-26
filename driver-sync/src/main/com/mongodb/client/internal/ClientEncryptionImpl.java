@@ -17,13 +17,19 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.Updates;
@@ -36,14 +42,20 @@ import com.mongodb.client.vault.ClientEncryption;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -169,6 +181,65 @@ public class ClientEncryptionImpl implements ClientEncryption {
                     );
         }).collect(Collectors.toList());
         return new RewrapManyDataKeyResult(collection.bulkWrite(updateModels));
+    }
+
+    @Override
+    public BsonDocument createEncryptedCollection(final MongoDatabase database, final String collectionName,
+            final CreateCollectionOptions createCollectionOptions, final CreateEncryptedCollectionParams createEncryptedCollectionParams)
+            throws MongoUpdatedEncryptedFieldsException {
+        notNull("collectionName", collectionName);
+        notNull("createCollectionOptions", createCollectionOptions);
+        notNull("createEncryptedCollectionParams", createEncryptedCollectionParams);
+        MongoNamespace namespace = new MongoNamespace(database.getName(), collectionName);
+        Bson rawEncryptedFields = createCollectionOptions.getEncryptedFields();
+        if (rawEncryptedFields == null) {
+            throw new MongoConfigurationException(format("`encryptedFields` is not configured for the collection %s.", namespace));
+        }
+        CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings() == null
+                ? MongoClientSettings.getDefaultCodecRegistry()
+                : options.getKeyVaultMongoClientSettings().getCodecRegistry();
+        BsonDocument actualEncryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry).clone();
+        BsonValue fields = actualEncryptedFields.get("fields");
+        if (fields != null) {
+            if (!fields.isArray()) {
+                throw new MongoConfigurationException(format("`encryptedFields` is incorrectly configured for the collection %s."
+                        + " `encryptedFields.fields` must be an array, but is %s type.", namespace, fields.getBsonType()));
+            }
+            String kmsProvider = createEncryptedCollectionParams.getKmsProvider();
+            DataKeyOptions dataKeyOptions = new DataKeyOptions();
+            BsonDocument masterKey = createEncryptedCollectionParams.getMasterKey();
+            if (masterKey != null) {
+                dataKeyOptions.masterKey(masterKey);
+            }
+            String keyIdBsonKey = "keyId";
+            // any mutable non-thread-safe Boolean should do
+            AtomicBoolean dataKeyMayBeCreated = new AtomicBoolean();
+            try {
+                fields.asArray()
+                        .stream()
+                        .filter(BsonValue::isDocument)
+                        .map(BsonValue::asDocument)
+                        .filter(field -> field.containsKey(keyIdBsonKey))
+                        .filter(field -> Objects.equals(field.get(keyIdBsonKey), BsonNull.VALUE))
+                        .forEachOrdered(field -> {
+                            // It is crucial to set the `dataKeyMayBeCreated` flag either immediately before calling `createDataKey`,
+                            // or after that in a `finally` block.
+                            dataKeyMayBeCreated.set(true);
+                            BsonBinary dataKeyId = createDataKey(kmsProvider, dataKeyOptions);
+                            field.put(keyIdBsonKey, dataKeyId);
+                        });
+                database.createCollection(collectionName, createCollectionOptions.clone().encryptedFields(actualEncryptedFields));
+            } catch (RuntimeException e) {
+                if (dataKeyMayBeCreated.get()) {
+                    throw new MongoUpdatedEncryptedFieldsException(actualEncryptedFields, format("Failed to create %s.", namespace), e);
+                } else {
+                    throw e;
+                }
+            }
+        } else {
+            database.createCollection(collectionName, createCollectionOptions);
+        }
+        return actualEncryptedFields;
     }
 
     @Override

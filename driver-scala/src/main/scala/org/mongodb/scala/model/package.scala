@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.Beta
+
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ GeoNearOptions, MongoTimeUnit => JMongoTimeUnit, WindowOutputField }
 import org.mongodb.scala.bson.conversions.Bson
@@ -161,6 +163,25 @@ package object model {
    */
   object CreateCollectionOptions {
     def apply(): CreateCollectionOptions = new com.mongodb.client.model.CreateCollectionOptions()
+  }
+
+  /**
+   * Auxiliary parameters for creating an encrypted collection.
+   *
+   * @since 4.9
+   */
+  @Beta(Array(Beta.Reason.SERVER))
+  type CreateEncryptedCollectionParams = com.mongodb.client.model.CreateEncryptedCollectionParams
+
+  /**
+   * Auxiliary parameters for creating an encrypted collection.
+   *
+   * @since 4.9
+   */
+  @Beta(Array(Beta.Reason.SERVER))
+  object CreateEncryptedCollectionParams {
+    def apply(kmsProvider: String) =
+      new com.mongodb.client.model.CreateEncryptedCollectionParams(kmsProvider)
   }
 
   /**

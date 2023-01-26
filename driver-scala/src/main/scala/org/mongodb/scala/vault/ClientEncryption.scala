@@ -17,11 +17,12 @@
 package org.mongodb.scala.vault
 
 import com.mongodb.annotations.Beta
+import com.mongodb.client.model.{ CreateCollectionOptions, CreateEncryptedCollectionParams }
 
 import java.io.Closeable
 import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
-import org.bson.{ BsonBinary, BsonValue }
-import org.mongodb.scala.{ Document, SingleObservable, ToSingleObservablePublisher }
+import org.bson.{ BsonBinary, BsonDocument, BsonValue }
+import org.mongodb.scala.{ Document, MongoDatabase, SingleObservable, ToSingleObservablePublisher }
 import org.mongodb.scala.model.vault.{ DataKeyOptions, EncryptOptions }
 
 /**
@@ -102,6 +103,42 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @return a Publisher containing the decrypted value
    */
   def decrypt(value: BsonBinary): SingleObservable[BsonValue] = wrapped.decrypt(value)
+
+  /**
+   * Create a new collection with encrypted fields,
+   * automatically creating
+   * new data encryption keys when needed based on the configured
+   * `encryptedFields`, which must be specified.
+   * This method does not modify the configured `encryptedFields` when creating new data keys,
+   * instead it creates a new configuration if needed.
+   *
+   * @param database The database to use for creating the collection.
+   * @param collectionName The name for the collection to create.
+   * @param createCollectionOptions Options for creating the collection.
+   * @param createEncryptedCollectionParams Auxiliary parameters for creating an encrypted collection.
+   * @return A one-shot publisher of the (potentially updated) `encryptedFields` configuration that was used to create the collection.
+   * A user may use this document to configure `com.mongodb.AutoEncryptionSettings.getEncryptedFieldsMap`.
+   *
+   * Produces [[com.mongodb.MongoUpdatedEncryptedFieldsException]]
+   * if an exception happens after creating at least one data key. This exception makes the updated `encryptedFields`
+   * available to the caller.
+   * @since 4.9
+   * @note Requires MongoDB 6.0 or greater.
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/create/ Create Command]]
+   */
+  @Beta(Array(Beta.Reason.SERVER))
+  def createEncryptedCollection(
+      database: MongoDatabase,
+      collectionName: String,
+      createCollectionOptions: CreateCollectionOptions,
+      createEncryptedCollectionParams: CreateEncryptedCollectionParams
+  ): SingleObservable[BsonDocument] =
+    wrapped.createEncryptedCollection(
+      database.wrapped,
+      collectionName,
+      createCollectionOptions,
+      createEncryptedCollectionParams
+    )
 
   override def close(): Unit = wrapped.close()
 

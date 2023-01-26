@@ -22,6 +22,7 @@ import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -31,7 +32,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  * @since 3.0
  */
-public class CreateCollectionOptions {
+public class CreateCollectionOptions implements Cloneable {
     private long maxDocuments;
     private boolean capped;
     private long sizeInBytes;
@@ -359,5 +360,20 @@ public class CreateCollectionOptions {
                 + ", changeStreamPreAndPostImagesOptions=" + changeStreamPreAndPostImagesOptions
                 + ", encryptedFields=" + encryptedFields
                 + '}';
+    }
+
+    /**
+     * Creates a shallow copy of {@code this} {@link CreateCollectionOptions} by calling {@code super.clone()}.
+     *
+     * @return A shallow copy of {@code this} {@link CreateCollectionOptions}.
+     * @since 4.9
+     */
+    @Override
+    public CreateCollectionOptions clone() {
+        try {
+            return (CreateCollectionOptions) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw fail(e.toString());
+        }
     }
 }
