@@ -29,6 +29,7 @@ import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
 import org.bson.codecs.pojo.entities.conventions.AnnotationWithObjectIdModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationWriteCollision;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorNoKnownIdModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodReturnTypeModel;
@@ -223,6 +224,12 @@ public final class ConventionsTest {
     @Test(expected = CodecConfigurationException.class)
     public void testCreatorInvalidTypeMethodModel() {
         ClassModel.builder(CreatorInvalidTypeMethodModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorConstructorNoKnownIdModel() {
+        ClassModel.builder(CreatorConstructorNoKnownIdModel.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
     }
 
