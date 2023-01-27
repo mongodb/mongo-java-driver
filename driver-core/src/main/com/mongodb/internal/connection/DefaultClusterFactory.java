@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
@@ -54,6 +55,7 @@ public final class DefaultClusterFactory {
                                  final InternalConnectionPoolSettings internalConnectionPoolSettings,
                                  final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                  @Nullable final MongoCredential credential,
+                                 final LoggerSettings loggerSettings,
                                  @Nullable final CommandListener commandListener,
                                  @Nullable final String applicationName,
                                  @Nullable final MongoDriverInformation mongoDriverInformation,
@@ -89,14 +91,14 @@ public final class DefaultClusterFactory {
 
         if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
-                    connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, commandListener, applicationName,
-                    mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
-                    serverApi);
+                    connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
+                    applicationName, mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(),
+                    compressorList, serverApi);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings,
-                    streamFactory, heartbeatStreamFactory, credential, commandListener, applicationName,
+                    streamFactory, heartbeatStreamFactory, credential, loggerSettings, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
                     serverApi);
 

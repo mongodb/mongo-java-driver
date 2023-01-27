@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.LoggerSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -67,7 +68,7 @@ public class SingleServerClusterTest {
                         ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                         streamFactory, streamFactory, getCredential(),
 
-                        null, null, null,
+                        LoggerSettings.builder().build(), null, null, null,
                         Collections.emptyList(), getServerApi()));
     }
 

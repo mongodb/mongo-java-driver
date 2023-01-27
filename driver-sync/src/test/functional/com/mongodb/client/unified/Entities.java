@@ -357,6 +357,7 @@ public final class Entities {
         }
 
         clientSettingsBuilder.applicationName(id);
+        clientSettingsBuilder.applyToLoggerSettings(builder -> builder.maxCommandLoggingDocumentLength(10_000));
 
         TestServerListener testClusterListener = new TestServerListener();
         clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerListener(testClusterListener));

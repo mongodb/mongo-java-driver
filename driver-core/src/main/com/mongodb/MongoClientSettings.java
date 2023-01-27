@@ -87,7 +87,7 @@ public final class MongoClientSettings {
     private final StreamFactoryFactory streamFactoryFactory;
     private final List<CommandListener> commandListeners;
     private final CodecRegistry codecRegistry;
-
+    private final LoggerSettings loggerSettings;
     private final ClusterSettings clusterSettings;
     private final SocketSettings socketSettings;
     private final SocketSettings heartbeatSocketSettings;
@@ -170,6 +170,7 @@ public final class MongoClientSettings {
         private StreamFactoryFactory streamFactoryFactory;
         private List<CommandListener> commandListeners = new ArrayList<>();
 
+        private final LoggerSettings.Builder loggerSettingsBuilder = LoggerSettings.builder();
         private final ClusterSettings.Builder clusterSettingsBuilder = ClusterSettings.builder();
         private final SocketSettings.Builder socketSettingsBuilder = SocketSettings.builder();
         private final ConnectionPoolSettings.Builder connectionPoolSettingsBuilder = ConnectionPoolSettings.builder();
@@ -208,6 +209,7 @@ public final class MongoClientSettings {
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             contextProvider = settings.getContextProvider();
+            loggerSettingsBuilder.applySettings(settings.getLoggerSettings());
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
             serverSettingsBuilder.applySettings(settings.getServerSettings());
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
@@ -260,6 +262,19 @@ public final class MongoClientSettings {
             if (connectionString.getWriteConcern() != null) {
                 writeConcern = connectionString.getWriteConcern();
             }
+            return this;
+        }
+
+        /**
+         * Applies the {@link LoggerSettings.Builder} block and then sets the loggerSettings.
+         *
+         * @param block the block to apply to the LoggerSettins.
+         * @return this
+         * @see MongoClientSettings#getLoggerSettings()
+         * @since 4.9
+         */
+        public Builder applyToLoggerSettings(final Block<LoggerSettings.Builder> block) {
+            notNull("block", block).apply(loggerSettingsBuilder);
             return this;
         }
 
@@ -770,6 +785,16 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the logger settings.
+     *
+     * @return the logger settings
+     * @since 4.9
+     */
+    public LoggerSettings getLoggerSettings() {
+        return loggerSettings;
+    }
+
+    /**
      * Gets the cluster settings.
      *
      * @return the cluster settings
@@ -863,6 +888,7 @@ public final class MongoClientSettings {
                 && Objects.equals(streamFactoryFactory, that.streamFactoryFactory)
                 && Objects.equals(commandListeners, that.commandListeners)
                 && Objects.equals(codecRegistry, that.codecRegistry)
+                && Objects.equals(loggerSettings, that.loggerSettings)
                 && Objects.equals(clusterSettings, that.clusterSettings)
                 && Objects.equals(socketSettings, that.socketSettings)
                 && Objects.equals(heartbeatSocketSettings, that.heartbeatSocketSettings)
@@ -880,9 +906,9 @@ public final class MongoClientSettings {
     @Override
     public int hashCode() {
         return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, readConcern, credential, streamFactoryFactory,
-                commandListeners, codecRegistry, clusterSettings, socketSettings, heartbeatSocketSettings, connectionPoolSettings,
-                serverSettings, sslSettings, applicationName, compressorList, uuidRepresentation, serverApi, autoEncryptionSettings,
-                heartbeatSocketTimeoutSetExplicitly, heartbeatConnectTimeoutSetExplicitly, contextProvider);
+                commandListeners, codecRegistry, loggerSettings, clusterSettings, socketSettings, heartbeatSocketSettings,
+                connectionPoolSettings, serverSettings, sslSettings, applicationName, compressorList, uuidRepresentation, serverApi,
+                autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly, heartbeatConnectTimeoutSetExplicitly, contextProvider);
     }
 
     @Override
@@ -897,6 +923,7 @@ public final class MongoClientSettings {
                 + ", streamFactoryFactory=" + streamFactoryFactory
                 + ", commandListeners=" + commandListeners
                 + ", codecRegistry=" + codecRegistry
+                + ", loggerSettings=" + loggerSettings
                 + ", clusterSettings=" + clusterSettings
                 + ", socketSettings=" + socketSettings
                 + ", heartbeatSocketSettings=" + heartbeatSocketSettings
@@ -923,6 +950,7 @@ public final class MongoClientSettings {
         codecRegistry = builder.codecRegistry;
         commandListeners = builder.commandListeners;
         applicationName = builder.applicationName;
+        loggerSettings = builder.loggerSettingsBuilder.build();
         clusterSettings = builder.clusterSettingsBuilder.build();
         serverSettings = builder.serverSettingsBuilder.build();
         socketSettings = builder.socketSettingsBuilder.build();
