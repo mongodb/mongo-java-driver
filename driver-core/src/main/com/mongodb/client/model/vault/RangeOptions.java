@@ -23,7 +23,7 @@ import org.bson.BsonValue;
 /**
  * Range options specifies index options for a Queryable Encryption field supporting "rangePreview" queries.
  *
- * <p>{@code min}, {@code max}, {@code sparsity}, and {@code range} must match the values set in the {@code encryptedFields}
+ * <p>{@code min}, {@code max}, {@code sparsity}, and {@code precision} must match the values set in the {@code encryptedFields}
  * of the destination collection.
  *
  * <p>For {@code double} and {@code decimal128}, {@code min}/{@code max}/{@code precision} must all be set, or all be unset.
