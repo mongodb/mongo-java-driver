@@ -696,15 +696,15 @@ final class MqlExpression<T extends MqlValue>
     }
 
     @Override
-    public MqlString join(final Function<? super T, MqlString> mapper) {
+    public MqlString joinStrings(final Function<? super T, MqlString> mapper) {
         Assertions.notNull("mapper", mapper);
         MqlExpression<MqlString> array = (MqlExpression<MqlString>) this.map(mapper);
-        return array.reduce(of(""), (a, b) -> a.concat(b));
+        return array.reduce(of(""), (a, b) -> a.append(b));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends MqlValue> MqlArray<R> concat(final Function<? super T, ? extends MqlArray<? extends R>> mapper) {
+    public <R extends MqlValue> MqlArray<R> concatArrays(final Function<? super T, ? extends MqlArray<? extends R>> mapper) {
         Assertions.notNull("mapper", mapper);
         MqlExpression<MqlArray<R>> array = (MqlExpression<MqlArray<R>>) this.map(mapper);
         return array.reduce(MqlValues.ofArray(), (a, b) -> a.concat(b));
@@ -712,7 +712,7 @@ final class MqlExpression<T extends MqlValue>
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends MqlValue> MqlArray<R> union(final Function<? super T, ? extends MqlArray<? extends R>> mapper) {
+    public <R extends MqlValue> MqlArray<R> unionArrays(final Function<? super T, ? extends MqlArray<? extends R>> mapper) {
         Assertions.notNull("mapper", mapper);
         Assertions.notNull("mapper", mapper);
         MqlExpression<MqlArray<R>> array = (MqlExpression<MqlArray<R>>) this.map(mapper);
@@ -839,7 +839,7 @@ final class MqlExpression<T extends MqlValue>
     }
 
     @Override
-    public MqlDate millisecondsToDate() {
+    public MqlDate millisecondsAsDate() {
         return newMqlExpression(ast("$toDate"));
     }
 
@@ -988,18 +988,18 @@ final class MqlExpression<T extends MqlValue>
     }
 
     @Override
-    public MqlString concat(final MqlString other) {
+    public MqlString append(final MqlString other) {
         Assertions.notNull("other", other);
         return new MqlExpression<>(ast("$concat", other));
     }
 
     @Override
-    public MqlInteger strLen() {
+    public MqlInteger length() {
         return new MqlExpression<>(ast("$strLenCP"));
     }
 
     @Override
-    public MqlInteger strLenBytes() {
+    public MqlInteger lengthBytes() {
         return new MqlExpression<>(ast("$strLenBytes"));
     }
 
@@ -1025,7 +1025,7 @@ final class MqlExpression<T extends MqlValue>
 
 
     @Override
-    public MqlBoolean has(final String fieldName) {
+    public MqlBoolean hasField(final String fieldName) {
         Assertions.notNull("fieldName", fieldName);
         return this.has(of(fieldName));
     }

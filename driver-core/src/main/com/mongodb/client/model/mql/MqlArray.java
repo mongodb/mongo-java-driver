@@ -162,7 +162,7 @@ public interface MqlArray<T extends MqlValue> extends MqlValue {
      * @param mapper the mapper function.
      * @return the resulting value.
      */
-    MqlString join(Function<? super T, MqlString> mapper);
+    MqlString joinStrings(Function<? super T, MqlString> mapper);
 
     /**
      * The {@linkplain #concat(MqlArray) array-concatenation}
@@ -179,7 +179,7 @@ public interface MqlArray<T extends MqlValue> extends MqlValue {
      * @return the resulting value.
      * @param <R> the type of the elements of the array.
      */
-    <R extends MqlValue> MqlArray<R> concat(Function<? super T, ? extends MqlArray<? extends R>> mapper);
+    <R extends MqlValue> MqlArray<R> concatArrays(Function<? super T, ? extends MqlArray<? extends R>> mapper);
 
     /**
      * The {@linkplain #union(MqlArray) set-union}
@@ -196,7 +196,7 @@ public interface MqlArray<T extends MqlValue> extends MqlValue {
      * @return the resulting value.
      * @param <R> the type of the elements of the array.
      */
-    <R extends MqlValue> MqlArray<R> union(Function<? super T, ? extends MqlArray<? extends R>> mapper);
+    <R extends MqlValue> MqlArray<R> unionArrays(Function<? super T, ? extends MqlArray<? extends R>> mapper);
 
     /**
      * The {@linkplain MqlMap map} value corresponding to the

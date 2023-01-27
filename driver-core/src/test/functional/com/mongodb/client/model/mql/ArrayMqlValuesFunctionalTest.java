@@ -272,19 +272,19 @@ class ArrayMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     public void reduceJoinTest() {
         assertExpression(
                 "abc",
-                ofStringArray("a", "b", "c").join(a -> a),
+                ofStringArray("a", "b", "c").joinStrings(a -> a),
                 "{'$reduce': {'input': {'$map': {'input': ['a', 'b', 'c'], 'in': '$$this'}}, "
                         + "'initialValue': '', 'in': {'$concat': ['$$value', '$$this']}}}");
         assertExpression(
                 "",
-                ofStringArray().join(a -> a));
+                ofStringArray().joinStrings(a -> a));
     }
 
     @Test
     public void reduceConcatTest() {
         assertExpression(
                 Arrays.asList(1, 2, 3, 4),
-                ofArray(ofIntegerArray(1, 2), ofIntegerArray(3, 4)).concat(v -> v),
+                ofArray(ofIntegerArray(1, 2), ofIntegerArray(3, 4)).concatArrays(v -> v),
                 "{'$reduce': {'input': {'$map': {'input': [[1, 2], [3, 4]], 'in': '$$this'}}, "
                         + "'initialValue': [], "
                         + "'in': {'$concatArrays': ['$$value', '$$this']}}} ");
@@ -292,7 +292,7 @@ class ArrayMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         MqlArray<MqlArray<MqlValue>> expressionArrayExpression = ofArray();
         assertExpression(
                 Collections.emptyList(),
-                expressionArrayExpression.concat(a -> a));
+                expressionArrayExpression.concatArrays(a -> a));
     }
 
     @Test
@@ -300,7 +300,7 @@ class ArrayMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/setUnion/ (40)
         assertExpression(
                 Arrays.asList(1, 2, 3),
-                sort(ofArray(ofIntegerArray(1, 2), ofIntegerArray(1, 3)).union(v -> v)),
+                sort(ofArray(ofIntegerArray(1, 2), ofIntegerArray(1, 3)).unionArrays(v -> v)),
                 "{'$sortArray': {'input': {'$reduce': {'input': "
                         + "{'$map': {'input': [[1, 2], [1, 3]], 'in': '$$this'}}, "
                         + "'initialValue': [], 'in': {'$setUnion': ['$$value', '$$this']}}}, 'sortBy': 1}}");
@@ -310,7 +310,7 @@ class ArrayMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
                         .cond(of(1), of(0)));
         assertExpression(
                 Arrays.asList(0, 1),
-                ofArray(ofBooleanArray(true, false), ofBooleanArray(false)).union(f));
+                ofArray(ofBooleanArray(true, false), ofBooleanArray(false)).unionArrays(f));
     }
 
     @Test

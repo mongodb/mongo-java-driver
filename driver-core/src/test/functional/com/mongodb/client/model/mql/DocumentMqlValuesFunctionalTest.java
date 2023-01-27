@@ -271,13 +271,13 @@ class DocumentMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         MqlDocument d = ofDoc("{a: 1, null: null}");
         assertExpression(
                 true,
-                d.has("a"),
+                d.hasField("a"),
                 "{'$ne': [{'$getField': {'input': {'$literal': {'a': 1, 'null': null}}, 'field': 'a'}}, '$$REMOVE']}");
         assertExpression(
                 false,
-                d.has("not_a"));
+                d.hasField("not_a"));
         assertExpression(
                 true,
-                d.has("null"));
+                d.hasField("null"));
     }
 }

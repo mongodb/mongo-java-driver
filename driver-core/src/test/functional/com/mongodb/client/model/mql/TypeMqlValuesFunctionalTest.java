@@ -314,13 +314,13 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDate/
         assertExpression(
                 Instant.ofEpochMilli(1234),
-                of(1234L).millisecondsToDate(),
+                of(1234L).millisecondsAsDate(),
                 "{'$toDate': {'$numberLong': '1234'}}");
         // This does not accept plain integers:
         assertThrows(MongoCommandException.class, () ->
                 assertExpression(
                         Instant.parse("2007-12-03T10:15:30.005Z"),
-                        of(1234).millisecondsToDate(),
+                        of(1234).millisecondsAsDate(),
                         "{'$toDate': 1234}"));
     }
 }

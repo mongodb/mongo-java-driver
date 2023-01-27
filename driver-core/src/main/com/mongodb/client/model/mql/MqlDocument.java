@@ -51,7 +51,7 @@ public interface MqlDocument extends MqlValue {
      * @param fieldName the name of the field.
      * @return the resulting value.
      */
-    MqlBoolean has(String fieldName);
+    MqlBoolean hasField(String fieldName);
 
     /**
      * Returns a document with the same fields as {@code this} document, but
@@ -87,7 +87,7 @@ public interface MqlDocument extends MqlValue {
      * with the provided {@code fieldName}.
      *
      * <p>Warning: Use of this method is an assertion that the document
-     * {@linkplain #has(String) has} the named field.
+     * {@linkplain #hasField(String) has} the named field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -103,7 +103,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field and
+     * {@linkplain #hasField(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -117,7 +117,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlBoolean boolean} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a boolean
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -130,7 +130,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlBoolean boolean} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a boolean
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -149,7 +149,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field and
+     * {@linkplain #hasField(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -163,7 +163,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlNumber number} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a number
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -176,7 +176,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlNumber number} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a number
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -196,7 +196,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field and
+     * {@linkplain #hasField(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -210,7 +210,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlInteger integer} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not an integer
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -223,7 +223,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlInteger integer} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not an integer
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -239,7 +239,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlInteger integer} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not an integer
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -258,7 +258,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field and
+     * {@linkplain #hasField(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -272,7 +272,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlString string} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a string
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -285,7 +285,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlString string} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a string
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -305,7 +305,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field and
+     * {@linkplain #hasField(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -319,7 +319,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlDate date} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a date
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -332,7 +332,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlDate date} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not a date
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * @mongodb.server.release 5.0
      * @param fieldName the name of the field.
@@ -352,7 +352,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field and
+     * {@linkplain #hasField(String) has} the named field and
      * the field value is of the specified type.
      *
      * @mongodb.server.release 5.0
@@ -366,7 +366,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlDocument document} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value
-     * if the document {@linkplain #has} no such field,
+     * if the document {@linkplain #hasField} no such field,
      * or if the specified field is not a (child) document
      * (or other {@linkplain MqlValue#isDocumentOr document-like value}.
      *
@@ -381,7 +381,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlDocument document} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value
-     * if the document {@linkplain #has} no such field,
+     * if the document {@linkplain #hasField} no such field,
      * or if the specified field is not a (child) document
      * (or other {@linkplain MqlValue#isDocumentOr document-like value}.
      *
@@ -403,7 +403,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field,
+     * {@linkplain #hasField(String) has} the named field,
      * and the field value is of the specified raw type,
      * and the field value's type has the specified type argument.
      *
@@ -420,7 +420,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlMap map} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value
-     * if the document {@linkplain #has} no such field,
+     * if the document {@linkplain #hasField} no such field,
      * or if the specified field is not a map
      * (or other {@linkplain MqlValue#isMapOr} map-like value}).
      *
@@ -440,7 +440,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlMap map} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value
-     * if the document {@linkplain #has} no such field,
+     * if the document {@linkplain #hasField} no such field,
      * or if the specified field is not a map
      * (or other {@linkplain MqlValue#isMapOr} map-like value}).
      *
@@ -467,7 +467,7 @@ public interface MqlDocument extends MqlValue {
      * <p>Warning: The type and presence of the resulting value is not
      * enforced by the API. The use of this method is an
      * unchecked assertion that the document
-     * {@linkplain #has(String) has} the named field,
+     * {@linkplain #hasField(String) has} the named field,
      * and the field value is of the specified raw type,
      * and the field value's type has the specified type argument.
      *
@@ -483,7 +483,7 @@ public interface MqlDocument extends MqlValue {
      * Returns the {@linkplain MqlArray array} value of the field
      * with the provided {@code fieldName},
      * or the {@code other} value if the field is not an array
-     * or if the document {@linkplain #has} no such field.
+     * or if the document {@linkplain #hasField} no such field.
      *
      * <p>Warning: The type argument of the resulting value is not
      * enforced by the API. The use of this method is an

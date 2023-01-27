@@ -54,21 +54,21 @@ public interface MqlString extends MqlValue {
      * @param other the other value.
      * @return the resulting value.
      */
-    MqlString concat(MqlString other);
+    MqlString append(MqlString other);
 
     /**
      * The number of Unicode code points in {@code this} string.
      *
      * @return the resulting value.
      */
-    MqlInteger strLen();
+    MqlInteger length();
 
     /**
      * The number of UTF-8 encoded bytes in {@code this} string.
      *
      * @return the resulting value.
      */
-    MqlInteger strLenBytes();
+    MqlInteger lengthBytes();
 
     /**
      * The substring of {@code this} string, from the {@code start} index

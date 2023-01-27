@@ -45,7 +45,7 @@ class StringMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/concat/
         assertExpression(
                 "abc".concat("de"),
-                of("abc").concat(of("de")),
+                of("abc").append(of("de")),
                 "{'$concat': ['abc', 'de']}");
     }
 
@@ -72,21 +72,21 @@ class StringMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/strLenCP/
         assertExpression(
                 "abc".codePointCount(0, 3),
-                of("abc").strLen(),
+                of("abc").length(),
                 "{'$strLenCP': 'abc'}");
 
         // unicode
         assertExpression(
                 jalapeno.codePointCount(0, jalapeno.length()),
-                of(jalapeno).strLen(),
+                of(jalapeno).length(),
                 "{'$strLenCP': '" + jalapeno + "'}");
         assertExpression(
                 sushi.codePointCount(0, sushi.length()),
-                of(sushi).strLen(),
+                of(sushi).length(),
                 "{'$strLenCP': '" + sushi + "'}");
         assertExpression(
                 fish.codePointCount(0, fish.length()),
-                of(fish).strLen(),
+                of(fish).length(),
                 "{'$strLenCP': '" + fish + "'}");
     }
 
@@ -95,30 +95,30 @@ class StringMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/strLenBytes/
         assertExpression(
                 "abc".getBytes(StandardCharsets.UTF_8).length,
-                of("abc").strLenBytes(),
+                of("abc").lengthBytes(),
                 "{'$strLenBytes': 'abc'}");
 
         // unicode
         assertExpression(
                 jalapeno.getBytes(StandardCharsets.UTF_8).length,
-                of(jalapeno).strLenBytes(),
+                of(jalapeno).lengthBytes(),
                 "{'$strLenBytes': '" + jalapeno + "'}");
         assertExpression(
                 sushi.getBytes(StandardCharsets.UTF_8).length,
-                of(sushi).strLenBytes(),
+                of(sushi).lengthBytes(),
                 "{'$strLenBytes': '" + sushi + "'}");
         assertExpression(
                 fish.getBytes(StandardCharsets.UTF_8).length,
-                of(fish).strLenBytes(),
+                of(fish).lengthBytes(),
                 "{'$strLenBytes': '" + fish + "'}");
 
         // comparison
-        assertExpression(8, of(jalapeno).strLen());
-        assertExpression(9, of(jalapeno).strLenBytes());
-        assertExpression(2, of(sushi).strLen());
-        assertExpression(6, of(sushi).strLenBytes());
-        assertExpression(1, of(fish).strLen());
-        assertExpression(4, of(fish).strLenBytes());
+        assertExpression(8, of(jalapeno).length());
+        assertExpression(9, of(jalapeno).lengthBytes());
+        assertExpression(2, of(sushi).length());
+        assertExpression(6, of(sushi).lengthBytes());
+        assertExpression(1, of(fish).length());
+        assertExpression(4, of(fish).lengthBytes());
     }
 
     @Test
