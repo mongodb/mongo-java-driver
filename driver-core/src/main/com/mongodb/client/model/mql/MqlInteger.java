@@ -119,7 +119,7 @@ public interface MqlInteger extends MqlNumber {
      * @mongodb.server.release 4.0
      * @return the resulting value.
      */
-    MqlDate millisecondsToDate();
+    MqlDate millisecondsAsDate();
 
     /**
      * The result of passing {@code this} value to the provided function.

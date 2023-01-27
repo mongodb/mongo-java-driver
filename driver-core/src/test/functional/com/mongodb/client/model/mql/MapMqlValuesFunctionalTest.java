@@ -166,7 +166,7 @@ class MapMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // key/value usage
         assertExpression(
                 "keyA|keyB|",
-                mapA1B2.entrySet().map(v -> v.getKey().concat(of("|"))).join(v -> v));
+                mapA1B2.entrySet().map(v -> v.getKey().append(of("|"))).joinStrings(v -> v));
         assertExpression(
                 23,
                 mapA1B2.entrySet().map(v -> v.getValue().add(10)).sum(v -> v));

@@ -113,14 +113,14 @@ class ControlMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // isIntegerOr relies on switch short-circuiting, which only happens after 5.2
         assumeTrue(serverVersionAtLeast(5, 2));
         Function<MqlValue, MqlString> label = expr -> expr.switchOn(on -> on
-                .isBoolean(v -> v.asString().concat(of(" - bool")))
+                .isBoolean(v -> v.asString().append(of(" - bool")))
                 // integer should be checked before string
-                .isInteger(v -> v.asString().concat(of(" - integer")))
-                .isNumber(v -> v.asString().concat(of(" - number")))
-                .isString(v -> v.asString().concat(of(" - string")))
-                .isDate(v -> v.asString().concat(of(" - date")))
-                .isArray((MqlArray<MqlInteger> v) -> v.sum(a -> a).asString().concat(of(" - array")))
-                .isDocument(v -> v.getString("_id").concat(of(" - document")))
+                .isInteger(v -> v.asString().append(of(" - integer")))
+                .isNumber(v -> v.asString().append(of(" - number")))
+                .isString(v -> v.asString().append(of(" - string")))
+                .isDate(v -> v.asString().append(of(" - date")))
+                .isArray((MqlArray<MqlInteger> v) -> v.sum(a -> a).asString().append(of(" - array")))
+                .isDocument(v -> v.getString("_id").append(of(" - document")))
                 .isNull(v -> of("null - null"))
                 .defaults(v -> of("default"))
                 ).toLower();
@@ -141,13 +141,13 @@ class ControlMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
                 "12 - map",
                 ofMap(Document.parse("{a: '1', b: '2'}")).switchOn(on -> on
                         .isMap((MqlMap<MqlString> v) -> v.entrySet()
-                                .join(e -> e.getValue()).concat(of(" - map")))));
+                                .joinStrings(e -> e.getValue()).append(of(" - map")))));
         // arrays via isArray, and tests signature:
         assertExpression(
                 "ab - array",
                 ofArray(of("a"), of("b")).switchOn(on -> on
                         .isArray((MqlArray<MqlString> v) -> v
-                                .join(e -> e).concat(of(" - array")))));
+                                .joinStrings(e -> e).append(of(" - array")))));
     }
 
     private <T extends MqlValue> BranchesIntermediary<T, MqlString> branches(final Branches<T> on) {
