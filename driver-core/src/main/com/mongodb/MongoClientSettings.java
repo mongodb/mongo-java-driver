@@ -19,7 +19,7 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
-import com.mongodb.client.model.expressions.ExpressionCodecProvider;
+import com.mongodb.client.model.mql.ExpressionCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
