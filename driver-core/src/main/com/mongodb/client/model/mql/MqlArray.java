@@ -209,7 +209,7 @@ public interface MqlArray<T extends MqlValue> extends MqlValue {
      * necessary, then the identity function {@code array.union(v -> v)} should
      * be used.
      *
-     * @see MqlMap#entrySet()
+     * @see MqlMap#entries()
      * @param mapper the mapper function.
      * @return the resulting value.
      * @param <R> the type of the resulting map's values.

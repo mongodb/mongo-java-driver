@@ -18,7 +18,7 @@ package com.mongodb.client.model.mql;
 
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions", "ConstantConditionalExpression"})
+@SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions", "ConstantConditionalExpression", "SimplifyBooleanExpression"})
 class BooleanMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     // https://www.mongodb.com/docs/manual/reference/operator/aggregation/#boolean-expression-operators
     // (Complete as of 6.0)

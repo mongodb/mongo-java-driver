@@ -186,7 +186,7 @@ public interface MqlDocument extends MqlValue {
     default MqlNumber getNumber(final String fieldName, final Number other) {
         Assertions.notNull("fieldName", fieldName);
         Assertions.notNull("other", other);
-        return getNumber(fieldName, MqlValues.numberToExpression(other));
+        return getNumber(fieldName, MqlValues.numberToMqlNumber(other));
     }
 
     /**
@@ -521,7 +521,7 @@ public interface MqlDocument extends MqlValue {
      * @param <T> the type.
      */
 
-    <T extends MqlValue> MqlMap<T> asMap();
+    <T extends MqlValue> MqlMap<@MqlUnchecked(TYPE_ARGUMENT) T> asMap();
 
     /**
      * The result of passing {@code this} value to the provided function.

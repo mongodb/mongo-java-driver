@@ -55,6 +55,7 @@ public interface MqlMap<T extends MqlValue> extends MqlValue {
      * @return the resulting value.
      */
     default MqlBoolean has(final String key) {
+        Assertions.notNull("key", key);
         return has(of(key));
     }
 
@@ -188,7 +189,7 @@ public interface MqlMap<T extends MqlValue> extends MqlValue {
      * @see MqlArray#asMap
      * @return the resulting value.
      */
-    MqlArray<MqlEntry<T>> entrySet();
+    MqlArray<MqlEntry<T>> entries();
 
     /**
      * {@code this} map as a {@linkplain MqlDocument document}.

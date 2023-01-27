@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.client.model.mql.MqlValues.numberToExpression;
+import static com.mongodb.client.model.mql.MqlValues.numberToMqlNumber;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -55,12 +55,12 @@ class ArithmeticMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest 
         assertNotEquals(toBsonValue(1.0), evaluate(of(1L)));
 
         // Number conversions; used internally
-        assertExpression(1, numberToExpression(1));
-        assertExpression(1L, numberToExpression(1L));
-        assertExpression(1.0, numberToExpression(1.0));
-        assertExpression(Decimal128.parse("1.0"), numberToExpression(Decimal128.parse("1.0")));
+        assertExpression(1, numberToMqlNumber(1));
+        assertExpression(1L, numberToMqlNumber(1L));
+        assertExpression(1.0, numberToMqlNumber(1.0));
+        assertExpression(Decimal128.parse("1.0"), numberToMqlNumber(Decimal128.parse("1.0")));
         assertThrows(IllegalArgumentException.class,
-                () -> assertExpression("n/a", numberToExpression(BigDecimal.valueOf(1))));
+                () -> assertExpression("n/a", numberToMqlNumber(BigDecimal.valueOf(1))));
     }
 
     @Test

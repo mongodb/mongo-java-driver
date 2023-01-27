@@ -140,7 +140,7 @@ class ControlMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         assertExpression(
                 "12 - map",
                 ofMap(Document.parse("{a: '1', b: '2'}")).switchOn(on -> on
-                        .isMap((MqlMap<MqlString> v) -> v.entrySet()
+                        .isMap((MqlMap<MqlString> v) -> v.entries()
                                 .joinStrings(e -> e.getValue()).append(of(" - map")))));
         // arrays via isArray, and tests signature:
         assertExpression(

@@ -18,16 +18,12 @@ package com.mongodb.client.model.mql;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,32 +42,17 @@ import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.mql.MqlValues.current;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofArray;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
-class InContextMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
-
-    private MongoClient client;
-    private MongoCollection<Document> col;
-
-    @BeforeEach
-    public void setUp() {
-        client = MongoClients.create();
-        col = client.getDatabase("testdb").getCollection("testcol");
-        col.drop();
-    }
-
-    @AfterEach
-    public void tearDown() {
-        client.close();
-    }
+public class InContextMqlValuesFunctionalTest extends DatabaseTestCase {
 
     private static String bsonToString(final Bson project) {
         return project.toBsonDocument(Document.class, MongoClientSettings.getDefaultCodecRegistry()).toString().replaceAll("\"", "'");
     }
 
     private List<Document> aggregate(final Bson... stages) {
-        AggregateIterable<Document> result = col.aggregate(Arrays.asList(stages));
+        AggregateIterable<Document> result = collection.aggregate(Arrays.asList(stages));
         List<Document> results = new ArrayList<>();
         result.forEach(r -> results.add(r));
         return results;
@@ -80,12 +61,12 @@ class InContextMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     @Test
     public void findTest() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
-        col.insertMany(Arrays.asList(
+        collection.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}"),
                 Document.parse("{_id: 2, x: 0, y: 3}"),
                 Document.parse("{_id: 3, x: 1, y: 3}")));
 
-        FindIterable<Document> iterable = col.find(expr(
+        FindIterable<Document> iterable = collection.find(expr(
                 current().getInteger("x").eq(of(1))));
         List<Document> results = new ArrayList<>();
         iterable.forEach(r -> results.add(r));
@@ -98,7 +79,7 @@ class InContextMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     @Test
     public void matchTest() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
-        col.insertMany(Arrays.asList(
+        collection.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}"),
                 Document.parse("{_id: 2, x: 0, y: 3}"),
                 Document.parse("{_id: 3, x: 1, y: 3}")));
@@ -114,14 +95,14 @@ class InContextMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     @Test
     public void currentAsMapMatchTest() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
-        col.insertMany(Arrays.asList(
+        collection.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}"),
                 Document.parse("{_id: 2, x: 0, y: 3}"),
                 Document.parse("{_id: 3, x: 1, y: 3}")));
 
         List<Document> results = aggregate(
                 match(expr(MqlValues.<MqlNumber>currentAsMap()
-                        .entrySet()
+                        .entries()
                         .map(e -> e.getValue())
                         .sum(v -> v).eq(of(7)))));
 
@@ -133,7 +114,7 @@ class InContextMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     @Test
     public void projectTest() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
-        col.insertMany(Arrays.asList(
+        collection.insertMany(Arrays.asList(
                 Document.parse("{_id: 1, x: 0, y: 2}")));
 
         List<Document> expected = Arrays.asList(Document.parse("{_id: 1, x: 0, c: 2}"));
@@ -160,7 +141,7 @@ class InContextMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     @Test
     public void projectTest2() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
-        col.insertMany(Arrays.asList(Document.parse("{_id: 0, x: 1}")));
+        collection.insertMany(Arrays.asList(Document.parse("{_id: 0, x: 1}")));
 
         // new, nestedArray
         Bson projectNestedArray = project(fields(excludeId(), computed("nestedArray", ofArray(
@@ -185,7 +166,7 @@ class InContextMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     @Test
     public void groupTest() {
         assumeTrue(serverVersionAtLeast(5, 0)); // get/setField
-        col.insertMany(Arrays.asList(
+        collection.insertMany(Arrays.asList(
                 Document.parse("{t: 0, a: 1}"),
                 Document.parse("{t: 0, a: 2}"),
                 Document.parse("{t: 1, a: 9}")));

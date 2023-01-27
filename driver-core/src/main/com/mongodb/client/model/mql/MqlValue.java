@@ -38,7 +38,7 @@ import static com.mongodb.client.model.mql.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
  * filtered and summed, in a style similar to that of the Java Stream API:
  *
  * <pre>{@code
- * import static com.mongodb.client.model.expressions.Expressions.current;
+ * import static com.mongodb.client.model.mql.MqlValues.current;
  * MongoCollection<Document> col = ...;
  * AggregateIterable<Document> result = col.aggregate(Arrays.asList(
  *     addFields(new Field<>("result", current()
@@ -254,7 +254,7 @@ public interface MqlValue {
      * @return the resulting value.
      * @param <T> the type of the values of the resulting map.
      */
-    <T extends MqlValue> MqlMap<T> isMapOr(MqlMap<@MqlUnchecked(TYPE_ARGUMENT) ? extends T> other);
+    <T extends MqlValue> MqlMap<@MqlUnchecked(TYPE_ARGUMENT) T> isMapOr(MqlMap<? extends T> other);
 
     /**
      * The {@linkplain MqlString string} representation of {@code this} value.
