@@ -22,18 +22,16 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.annotations.Beta;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
-import com.mongodb.client.model.vault.RangeOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCrypt;
 import com.mongodb.crypt.capi.MongoCryptContext;
 import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.crypt.capi.MongoDataKeyOptions;
-import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.crypt.capi.MongoRewrapManyDataKeyOptions;
+import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import org.bson.BsonBinary;
@@ -45,8 +43,6 @@ import reactor.core.publisher.MonoSink;
 
 import java.io.Closeable;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;

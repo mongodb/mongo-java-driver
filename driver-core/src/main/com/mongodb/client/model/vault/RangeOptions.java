@@ -18,9 +18,6 @@ package com.mongodb.client.model.vault;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 import org.bson.BsonValue;
 
 /**
@@ -120,27 +117,6 @@ public class RangeOptions {
     @Nullable
     public Integer getPrecision() {
         return precision;
-    }
-
-    /**
-     * @return a BsonDocument representation of the RangeOptions
-     */
-    @Beta(Beta.Reason.CLIENT)
-    public BsonDocument asBsonDocument() {
-        BsonDocument rangeOptions = new BsonDocument();
-        if (min != null) {
-            rangeOptions.put("min", min);
-        }
-        if (max != null) {
-            rangeOptions.put("max", max);
-        }
-        if (sparsity != null) {
-            rangeOptions.put("sparsity", new BsonInt64(sparsity));
-        }
-        if (precision != null) {
-            rangeOptions.put("precision", new BsonInt32(precision));
-        }
-        return rangeOptions;
     }
 
     @Override

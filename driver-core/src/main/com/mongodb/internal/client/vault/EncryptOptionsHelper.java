@@ -18,6 +18,10 @@ package com.mongodb.internal.client.vault;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RangeOptions;
 import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonValue;
 
 public final class EncryptOptionsHelper {
 
@@ -43,7 +47,24 @@ public final class EncryptOptionsHelper {
 
         RangeOptions rangeOptions = options.getRangeOptions();
         if (rangeOptions != null) {
-            encryptOptionsBuilder.rangeOptions(rangeOptions.asBsonDocument());
+            BsonDocument rangeOptionsBsonDocument = new BsonDocument();
+            BsonValue min = rangeOptions.getMin();
+            if (min != null) {
+                rangeOptionsBsonDocument.put("min", min);
+            }
+            BsonValue max = rangeOptions.getMax();
+            if (max != null) {
+                rangeOptionsBsonDocument.put("max", max);
+            }
+            Long sparsity = rangeOptions.getSparsity();
+            if (sparsity != null) {
+                rangeOptionsBsonDocument.put("sparsity", new BsonInt64(sparsity));
+            }
+            Integer precision = rangeOptions.getPrecision();
+            if (precision != null) {
+                rangeOptionsBsonDocument.put("precision", new BsonInt32(precision));
+            }
+            encryptOptionsBuilder.rangeOptions(rangeOptionsBsonDocument);
         }
         return encryptOptionsBuilder.build();
     }

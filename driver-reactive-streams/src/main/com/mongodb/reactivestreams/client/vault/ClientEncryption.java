@@ -104,7 +104,7 @@ public interface ClientEncryption extends Closeable {
      * @mongodb.driver.manual reference/operator/aggregation/match/ $match
      */
     @Beta(Beta.Reason.SERVER)
-    Publisher<BsonDocument> encryptExpression(BsonDocument expression, EncryptOptions options);
+    Publisher<BsonDocument> encryptExpression(Bson expression, EncryptOptions options);
 
     /**
      * Decrypt the given value.

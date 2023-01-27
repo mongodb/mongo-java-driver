@@ -89,8 +89,8 @@ public class ClientEncryptionImpl implements ClientEncryption {
     }
 
     @Override
-    public BsonDocument encryptExpression(final BsonDocument expression, final EncryptOptions options) {
-        return crypt.encryptExpression(expression, options);
+    public BsonDocument encryptExpression(final Bson expression, final EncryptOptions options) {
+        return crypt.encryptExpression(expression.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options);
     }
 
     @Override

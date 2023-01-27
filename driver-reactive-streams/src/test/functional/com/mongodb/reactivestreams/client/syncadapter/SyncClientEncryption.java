@@ -57,7 +57,7 @@ public class SyncClientEncryption implements ClientEncryption {
     }
 
     @Override
-    public BsonDocument encryptExpression(final BsonDocument expression, final EncryptOptions options) {
+    public BsonDocument encryptExpression(final Bson expression, final EncryptOptions options) {
         return requireNonNull(Mono.from(wrapped.encryptExpression(expression, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
