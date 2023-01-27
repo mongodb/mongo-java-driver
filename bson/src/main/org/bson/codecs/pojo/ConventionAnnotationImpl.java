@@ -166,6 +166,12 @@ final class ConventionAnnotationImpl implements Convention {
                 PropertyModelBuilder<?> propertyModelBuilder = null;
 
                 if (isIdProperty) {
+                    if (classModelBuilder.getIdPropertyName() == null) {
+                        throw new CodecConfigurationException("A @BsonId annotation has been used with @BsonCreator "
+                                + "but there is no known Id property.\n"
+                                + "Please either use the @BsonProperty annotation in the creator or "
+                                + "annotate the corresponding property in the class with the @BsonId.");
+                    }
                     propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
                 } else {
                     BsonProperty bsonProperty = properties.get(i);
