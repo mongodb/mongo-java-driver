@@ -48,8 +48,8 @@ public interface MqlString extends MqlValue {
     MqlString toUpper();
 
     /**
-     * The concatenation of {@code this} string, followed by
-     * the {@code other} string.
+     * The result of appending the {@code other} string to the end of
+     * {@code this} string (strict concatenation).
      *
      * @param other the other value.
      * @return the resulting value.

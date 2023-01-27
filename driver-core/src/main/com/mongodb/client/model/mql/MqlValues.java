@@ -368,9 +368,7 @@ public final class MqlValues {
      */
     public static MqlDocument of(final Bson document) {
         Assertions.notNull("document", document);
-        // All documents are wrapped in a $literal. If we don't wrap, we need to
-        // check for empty documents and documents that are actually expressions
-        // (and need to be wrapped in $literal anyway). This would be brittle.
+        // All documents are wrapped in a $literal; this is the least brittle approach.
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonDocument("$literal",
                 document.toBsonDocument(BsonDocument.class, cr))));
     }
@@ -391,13 +389,13 @@ public final class MqlValues {
      * @return the null value
      */
     public static MqlValue ofNull() {
-        // There is no specific expression type corresponding to Null,
-        // and Null is not a value in any other expression type.
+        // There is no specific mql type corresponding to Null,
+        // and Null is not a value in any other mql type.
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonNull()))
                 .assertImplementsAllExpressions();
     }
 
-    static MqlNumber numberToExpression(final Number number) {
+    static MqlNumber numberToMqlNumber(final Number number) {
         Assertions.notNull("number", number);
         if (number instanceof Integer) {
             return of((int) number);

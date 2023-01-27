@@ -19,8 +19,6 @@ package com.mongodb.client.model.mql;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Sealed;
 
-import static com.mongodb.client.model.mql.MqlValues.of;
-
 /**
  * A map entry {@linkplain MqlValue value} in the context
  * of the MongoDB Query Language (MQL). An entry has a
@@ -74,16 +72,4 @@ public interface MqlEntry<T extends MqlValue> extends MqlValue {
      * @return the resulting entry.
      */
     MqlEntry<T> setKey(MqlString key);
-
-    /**
-     * An entry with the same value as {@code this} entry, and the
-     * specified {@code key}.
-     *
-     * @mongodb.server.release 5.0
-     * @param key the key.
-     * @return the resulting entry.
-     */
-    default MqlEntry<T> setKey(final String key) {
-        return setKey(of(key));
-    }
 }

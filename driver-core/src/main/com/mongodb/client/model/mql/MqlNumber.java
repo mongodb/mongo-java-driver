@@ -50,7 +50,7 @@ public interface MqlNumber extends MqlValue {
      */
     default MqlNumber multiply(final Number other) {
         Assertions.notNull("other", other);
-        return this.multiply(MqlValues.numberToExpression(other));
+        return this.multiply(MqlValues.numberToMqlNumber(other));
     }
 
     /**
@@ -73,7 +73,7 @@ public interface MqlNumber extends MqlValue {
      */
     default MqlNumber divide(final Number other) {
         Assertions.notNull("other", other);
-        return this.divide(MqlValues.numberToExpression(other));
+        return this.divide(MqlValues.numberToMqlNumber(other));
     }
 
     /**
@@ -92,7 +92,7 @@ public interface MqlNumber extends MqlValue {
      */
     default MqlNumber add(final Number other) {
         Assertions.notNull("other", other);
-        return this.add(MqlValues.numberToExpression(other));
+        return this.add(MqlValues.numberToMqlNumber(other));
     }
 
     /**
@@ -111,7 +111,7 @@ public interface MqlNumber extends MqlValue {
      */
     default MqlNumber subtract(final Number other) {
         Assertions.notNull("other", other);
-        return this.subtract(MqlValues.numberToExpression(other));
+        return this.subtract(MqlValues.numberToMqlNumber(other));
     }
 
     /**

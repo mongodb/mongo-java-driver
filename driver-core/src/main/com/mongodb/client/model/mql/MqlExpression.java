@@ -43,8 +43,8 @@ final class MqlExpression<T extends MqlValue>
     }
 
     /**
-     * Exposes the evaluated BsonValue so that expressions may be used in
-     * aggregations. Non-public, as it is intended to be used only by the
+     * Exposes the evaluated BsonValue so that this mql expression may be used
+     * in aggregations. Non-public, as it is intended to be used only by the
      * {@link MqlExpressionCodec}.
      */
     BsonValue toBsonValue(final CodecRegistry codecRegistry) {
@@ -67,11 +67,13 @@ final class MqlExpression<T extends MqlValue>
 
     @Override
     public MqlEntry<T> setValue(final T value) {
+        Assertions.notNull("value", value);
         return setFieldInternal("v", value);
     }
 
     @Override
     public MqlEntry<T> setKey(final MqlString key) {
+        Assertions.notNull("key", key);
         return setFieldInternal("k", key);
     }
 
@@ -1081,7 +1083,7 @@ final class MqlExpression<T extends MqlValue>
     }
 
     @Override
-    public MqlArray<MqlEntry<T>> entrySet() {
+    public MqlArray<MqlEntry<T>> entries() {
         return newMqlExpression(ast("$objectToArray"));
     }
 

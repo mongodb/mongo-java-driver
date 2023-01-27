@@ -61,7 +61,7 @@ public interface MqlBoolean extends MqlValue {
      * @param ifTrue the ifTrue value.
      * @param ifFalse the ifFalse value.
      * @return the resulting value.
-     * @param <T> The type of the resulting expression.
+     * @param <T> The type of the resulting value.
      */
     <T extends MqlValue> T cond(T ifTrue, T ifFalse);
 

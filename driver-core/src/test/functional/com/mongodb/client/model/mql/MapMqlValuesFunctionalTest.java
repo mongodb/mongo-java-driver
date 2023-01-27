@@ -109,9 +109,6 @@ class MapMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         assertExpression(
                 Document.parse("{k: 'keyB', 'v': 1}"),
                 entryA1.setKey(of("keyB")));
-        assertExpression(
-                Document.parse("{k: 'keyB', 'v': 1}"),
-                entryA1.setKey("keyB"));
     }
 
     @Test
@@ -159,23 +156,23 @@ class MapMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/objectToArray/ (23)
         assertExpression(
                 Arrays.asList(Document.parse("{'k': 'k1', 'v': 1}")),
-                MqlValues.<MqlInteger>ofMap().set("k1", of(1)).entrySet(),
+                MqlValues.<MqlInteger>ofMap().set("k1", of(1)).entries(),
                 "{'$objectToArray': {'$setField': "
                         + "{'field': 'k1', 'input': {'$literal': {}}, 'value': 1}}}");
 
         // key/value usage
         assertExpression(
                 "keyA|keyB|",
-                mapA1B2.entrySet().map(v -> v.getKey().append(of("|"))).joinStrings(v -> v));
+                mapA1B2.entries().map(v -> v.getKey().append(of("|"))).joinStrings(v -> v));
         assertExpression(
                 23,
-                mapA1B2.entrySet().map(v -> v.getValue().add(10)).sum(v -> v));
+                mapA1B2.entries().map(v -> v.getValue().add(10)).sum(v -> v));
 
         // combined entrySet-buildMap usage
         assertExpression(
                 Document.parse("{'keyA': 2, 'keyB': 3}"),
                 mapA1B2
-                        .entrySet()
+                        .entries()
                         .map(v -> v.setValue(v.getValue().add(1)))
                         .asMap(v -> v));
 
@@ -185,7 +182,7 @@ class MapMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
                 Arrays.asList(
                         Document.parse("{'k': 'warehouse1', 'v': 2500}"),
                         Document.parse("{'k': 'warehouse2', 'v': 500}")),
-                doc.getMap("instock").entrySet(),
+                doc.getMap("instock").entries(),
                 "{'$objectToArray': {'$getField': {'input': {'$literal': "
                         + "{'instock': {'warehouse1': 2500, 'warehouse2': 500}}}, 'field': 'instock'}}}");
     }

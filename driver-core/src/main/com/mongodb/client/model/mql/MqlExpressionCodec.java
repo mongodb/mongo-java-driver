@@ -34,7 +34,7 @@ final class MqlExpressionCodec implements Codec<MqlExpression> {
 
     @Override
     public MqlExpression decode(final BsonReader reader, final DecoderContext decoderContext) {
-        throw new UnsupportedOperationException("Decoding to an expression is not supported");
+        throw new UnsupportedOperationException("Decoding to an MqlExpression is not supported");
     }
 
     @Override

@@ -35,6 +35,7 @@ import java.util.function.Function;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofArray;
+import static com.mongodb.client.model.mql.MqlValues.ofEntry;
 import static com.mongodb.client.model.mql.MqlValues.ofMap;
 import static com.mongodb.client.model.mql.MqlValues.ofNull;
 
@@ -56,6 +57,7 @@ class NotNullApiTest {
         mapping.put(MqlMap.class, ofMap(BsonDocument.parse("{}")));
         mapping.put(MqlArray.class, ofArray());
         mapping.put(MqlValue.class, ofNull());
+        mapping.put(MqlEntry.class, ofEntry(of(""), of("")));
         mapping.put(Branches.class, new Branches<>());
         mapping.put(BranchesIntermediary.class, new BranchesIntermediary<>(Collections.emptyList()));
         mapping.put(BranchesTerminal.class, new BranchesTerminal<>(Collections.emptyList(), null));
