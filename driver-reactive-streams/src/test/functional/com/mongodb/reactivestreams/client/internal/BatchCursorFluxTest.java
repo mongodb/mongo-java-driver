@@ -35,13 +35,17 @@ import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -56,12 +60,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.Test;
 
 @ExtendWith(MockitoExtension.class)
 public class BatchCursorFluxTest {
@@ -297,6 +300,30 @@ public class BatchCursorFluxTest {
         Mono.from(collection.drop()).block(TIMEOUT_DURATION);
         subscriber.assertTerminalEvent();
         subscriber.assertNoErrors();
+    }
+
+    @Test
+    @DisplayName("Ensure BatchCursor does not drop an error")
+    public void testBatchCursorDoesNotDropAnError() {
+        try {
+            AtomicBoolean errorDropped = new AtomicBoolean();
+            Hooks.onErrorDropped(t -> errorDropped.set(true));
+            Mono.from(collection.insertMany(createDocs(200))).block();
+
+            Flux.fromStream(IntStream.range(1, 200).boxed())
+                    .flatMap(i ->
+                            Flux.fromIterable(asList(1, 2))
+                                    .flatMap(x -> Flux.from(collection.find()))
+                                    .take(1)
+
+                    )
+                    .collectList()
+                    .block(TIMEOUT_DURATION);
+
+            assertFalse(errorDropped.get());
+        } finally {
+            Hooks.resetOnErrorDropped();
+        }
     }
 
     private void assertCommandNames(final List<String> commandNames) {
