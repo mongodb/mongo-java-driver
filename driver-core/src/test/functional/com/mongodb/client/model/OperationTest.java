@@ -22,12 +22,13 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.internal.connection.ServerHelper;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.Document;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
-import org.bson.codecs.DocumentCodec;
+import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +37,7 @@ import static com.mongodb.ClusterFixture.getAsyncBinding;
 import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class OperationTest {
 
@@ -53,12 +55,12 @@ public abstract class OperationTest {
         ServerHelper.checkPool(getPrimary());
     }
 
-    CollectionHelper<Document> getCollectionHelper() {
+    protected CollectionHelper<BsonDocument> getCollectionHelper() {
         return getCollectionHelper(getNamespace());
     }
 
-    private CollectionHelper<Document> getCollectionHelper(final MongoNamespace namespace) {
-        return new CollectionHelper<>(new DocumentCodec(), namespace);
+    private CollectionHelper<BsonDocument> getCollectionHelper(final MongoNamespace namespace) {
+        return new CollectionHelper<>(new BsonDocumentCodec(), namespace);
     }
 
     private String getDatabaseName() {
@@ -73,11 +75,29 @@ public abstract class OperationTest {
         return new MongoNamespace(getDatabaseName(), getCollectionName());
     }
 
-    public static List<Document> parseToList(final String s) {
-        return BsonArray.parse(s).stream().map(v -> toDocument(v.asDocument())).collect(Collectors.toList());
+    static List<BsonDocument> parseToList(final String s) {
+        return BsonArray.parse(s).stream().map(v -> toBsonDocument(v.asDocument())).collect(Collectors.toList());
     }
 
-    public static Document toDocument(final BsonDocument bsonDocument) {
-        return getDefaultCodecRegistry().get(Document.class).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
+    public static BsonDocument toBsonDocument(final BsonDocument bsonDocument) {
+        return getDefaultCodecRegistry().get(BsonDocument.class).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
+    }
+
+
+    protected List<Bson> assertPipeline(final String stageAsString, final Bson stage) {
+        List<Bson> pipeline = Collections.singletonList(stage);
+        return assertPipeline(stageAsString, pipeline);
+    }
+
+    protected List<Bson> assertPipeline(final String stageAsString, final List<Bson> pipeline) {
+        BsonDocument expectedStage = BsonDocument.parse(stageAsString);
+        assertEquals(expectedStage, pipeline.get(0).toBsonDocument(BsonDocument.class, getDefaultCodecRegistry()));
+        return pipeline;
+    }
+
+    protected void assertResults(final List<Bson> pipeline, final String expectedResultsAsString) {
+        List<BsonDocument> expectedResults = parseToList(expectedResultsAsString);
+        List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
+        assertEquals(expectedResults, results);
     }
 }
