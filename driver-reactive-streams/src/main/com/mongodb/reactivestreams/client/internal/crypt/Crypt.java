@@ -363,6 +363,9 @@ public class Crypt implements Closeable {
     }
 
     private Throwable wrapInClientException(final Throwable t) {
+        if (t instanceof MongoClientException) {
+            return t;
+        }
         return new MongoClientException("Exception in encryption library: " + t.getMessage(), t);
     }
 
