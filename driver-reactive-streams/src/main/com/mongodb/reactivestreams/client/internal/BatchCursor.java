@@ -17,13 +17,11 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.internal.async.AsyncBatchCursor;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
