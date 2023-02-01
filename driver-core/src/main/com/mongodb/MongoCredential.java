@@ -455,7 +455,7 @@ public final class MongoCredential {
     /**
      * Gets the source of the user name, typically the name of the database where the user is defined.
      *
-     * @return the user name.  Can never be null.
+     * @return the source of the user name.  Can never be null.
      */
     public String getSource() {
         return source;
