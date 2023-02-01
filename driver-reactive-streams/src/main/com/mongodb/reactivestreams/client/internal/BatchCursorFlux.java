@@ -32,7 +32,6 @@ class BatchCursorFlux<T> implements Publisher<T> {
     private final BatchCursorPublisher<T> batchCursorPublisher;
     private final AtomicBoolean inProgress = new AtomicBoolean(false);
     private final AtomicLong demandDelta = new AtomicLong(0);
-    private final AtomicBoolean fluxCancelled = new AtomicBoolean(false);
     private volatile BatchCursor<T> batchCursor;
     private FluxSink<T> sink;
 
@@ -73,11 +72,6 @@ class BatchCursorFlux<T> implements Publisher<T> {
         .subscribe(subscriber);
     }
 
-    private void cancelled() {
-        fluxCancelled.set(true);
-        closeCursor();
-    }
-
     private void closeCursor() {
         if (batchCursor != null) {
             batchCursor.close();
@@ -91,13 +85,12 @@ class BatchCursorFlux<T> implements Publisher<T> {
             } else {
                 batchCursor.setBatchSize(calculateBatchSize(sink.requestedFromDownstream()));
                 Mono.from(batchCursor.next())
+                        .doOnCancel(this::closeCursor)
                         .doOnError((e) -> {
                             try {
                                 closeCursor();
                             } finally {
-                                if (!fluxCancelled.get()) {
-                                    sink.error(e);
-                                }
+                                sink.error(e);
                             }
                         })
                         .doOnSuccess(results -> {
