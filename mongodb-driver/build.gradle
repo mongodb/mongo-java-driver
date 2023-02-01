@@ -15,9 +15,11 @@
  */
 
 archivesBaseName = 'mongodb-driver'
-description =  'The MongoDB Driver uber-artifact that combines mongodb-driver-sync and the legacy driver'
+description = '''This artifact is not the most recent release of the MongoDB Java Driver.
+                |To use the most recent release of the MongoDB Java Driver, please use mongodb-driver-sync instead.'''.stripMargin()
 ext {
-    pomName = 'MongoDB Java Driver'
+    pomName = 'Legacy MongoDB Java Driver package'
+    pomUrl = 'https://www.mongodb.com/docs/drivers/java/sync/current/'
 }
 
 clirr {
