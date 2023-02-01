@@ -21,6 +21,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 
@@ -36,13 +37,13 @@ public class BatchCursor<T> implements AutoCloseable {
     }
 
     public Publisher<List<T>> next() {
-        return Mono.create(sink -> wrapped.next(sinkToCallback(sink)));
+        return next(() -> false);
     }
 
-    public Publisher<List<T>> nextWithSink(final FluxSink<T> parentSink) {
+    public Publisher<List<T>> next(final Supplier<Boolean> hasBeenCancelled) {
         return Mono.create(sink -> wrapped.next(
                 (result, t) -> {
-                    if (!parentSink.isCancelled()) {
+                    if (!hasBeenCancelled.get()) {
                         if (t != null) {
                             sink.error(t);
                         } else if (result == null) {
