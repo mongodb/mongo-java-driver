@@ -186,14 +186,13 @@ class MongoClientSettingsSpecification extends Specification {
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
-                .applyToLoggerSettings(builder -> builder.maxDocumentLength(10))
-                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-                    @Override
-                    void apply(final ClusterSettings.Builder builder) {
-                           builder.hosts([new ServerAddress('localhost')])
-                                   .requiredReplicaSetName('test')
-                    }
-                })
+                .applyToLoggerSettings { LoggerSettings.Builder builder ->
+                    builder.maxDocumentLength(10)
+                }
+                .applyToClusterSettings { ClusterSettings.Builder builder ->
+                    builder.hosts([new ServerAddress('localhost')])
+                            .requiredReplicaSetName('test')
+                }
                 .credential(credential)
                 .codecRegistry(codecRegistry)
                 .compressorList(compressorList)
