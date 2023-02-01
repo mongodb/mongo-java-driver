@@ -26,14 +26,16 @@ import static com.mongodb.assertions.Assertions.notNull;
  * An immutable class representing settings for logging.
  *
  * <p>
- * The driver logs using SLF4J 1.0 API with a root logger of {@code org.mongodb.driver}.
+ * The driver logs using the SLF4J 1.0 API with a root logger of {@code org.mongodb.driver}. See
+ * <a href="https://www.mongodb.com/docs/drivers/java/sync/current/fundamentals/logging">Logging Fundamentals</a>
+ * for additional information.
  * </p>
  *
  * @since 4.9
  */
 @Immutable
 public final class LoggerSettings {
-    private final int maxCommandLoggingDocumentLength;
+    private final int maxDocumentLength;
     /**
      * Gets a builder for an instance of {@code LoggerSettings}.
      * @return the builder
@@ -56,7 +58,7 @@ public final class LoggerSettings {
      * A builder for an instance of {@code LoggerSettings}.
      */
     public static final class Builder {
-        private int maxCommandLoggingDocumentLength = 1000;
+        private int maxDocumentLength = 1000;
         private Builder() {
         }
 
@@ -70,18 +72,19 @@ public final class LoggerSettings {
          */
         public Builder applySettings(final LoggerSettings loggerSettings) {
             notNull("loggerSettings", loggerSettings);
-            maxCommandLoggingDocumentLength = loggerSettings.maxCommandLoggingDocumentLength;
+            maxDocumentLength = loggerSettings.maxDocumentLength;
             return this;
         }
 
         /**
-         * Sets the max command logging document length.
+         * Sets the max document length.
          *
-         * @param maxCommandLoggingDocumentLength the max command logging document length
+         * @param maxDocumentLength the max document length
          * @return this
+         * @see #getMaxDocumentLength()
          */
-        public Builder maxCommandLoggingDocumentLength(final int maxCommandLoggingDocumentLength) {
-            this.maxCommandLoggingDocumentLength = maxCommandLoggingDocumentLength;
+        public Builder maxDocumentLength(final int maxDocumentLength) {
+            this.maxDocumentLength = maxDocumentLength;
             return this;
         }
 
@@ -95,21 +98,21 @@ public final class LoggerSettings {
     }
 
     /**
-     * Gets the max command logging document length.
+     * Gets the max length of the extended JSON representation of a BSON document within a log message.
      *
      * <p>
-     * When the driver logs a command and its reply via the {@code org.mongodb.driver.protocol.command} SFL4J logger, it truncates the
-     * them to the maximum length defined by this setting.
+     * For example, when the driver logs a command or its reply via the {@code org.mongodb.driver.protocol.command} SFL4J logger, it
+     * truncates its JSON representation to the maximum length defined by this setting.
      * </p>
      *
      * <p>
      * Defaults to 1000 characters.
      * </p>
      *
-     * @return the max command logging document length
+     * @return the max document length
      */
-    public int getMaxCommandLoggingDocumentLength() {
-        return maxCommandLoggingDocumentLength;
+    public int getMaxDocumentLength() {
+        return maxDocumentLength;
     }
 
 
@@ -122,22 +125,22 @@ public final class LoggerSettings {
             return false;
         }
         LoggerSettings that = (LoggerSettings) o;
-        return maxCommandLoggingDocumentLength == that.maxCommandLoggingDocumentLength;
+        return maxDocumentLength == that.maxDocumentLength;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maxCommandLoggingDocumentLength);
+        return Objects.hash(maxDocumentLength);
     }
 
     @Override
     public String toString() {
         return "LoggerSettings{"
-                + "maxCommandLoggingDocumentLength=" + maxCommandLoggingDocumentLength
+                + "maxDocumentLength=" + maxDocumentLength
                 + '}';
     }
 
     private LoggerSettings(final Builder builder) {
-        maxCommandLoggingDocumentLength = builder.maxCommandLoggingDocumentLength;
+        maxDocumentLength = builder.maxDocumentLength;
     }
 }

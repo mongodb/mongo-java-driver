@@ -186,7 +186,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
-                .applyToLoggerSettings(builder -> builder.maxCommandLoggingDocumentLength(10))
+                .applyToLoggerSettings(builder -> builder.maxDocumentLength(10))
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override
                     void apply(final ClusterSettings.Builder builder) {

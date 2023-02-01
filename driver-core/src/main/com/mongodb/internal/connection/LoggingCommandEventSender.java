@@ -215,7 +215,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         try (BsonReader bsonReader = commandDocument.asBsonReader()) {
             JsonWriter jsonWriter = new JsonWriter(writer,
                     JsonWriterSettings.builder().outputMode(JsonMode.RELAXED)
-                            .maxLength(loggerSettings.getMaxCommandLoggingDocumentLength())
+                            .maxLength(loggerSettings.getMaxDocumentLength())
                             .build());
 
             jsonWriter.pipe(bsonReader);
