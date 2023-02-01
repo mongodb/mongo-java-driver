@@ -84,7 +84,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
                 sink.complete();
             } else {
                 batchCursor.setBatchSize(calculateBatchSize(sink.requestedFromDownstream()));
-                Mono.from(batchCursor.next())
+                Mono.from(batchCursor.nextWithSink(sink))
                         .doOnCancel(this::closeCursor)
                         .doOnError((e) -> {
                             try {
