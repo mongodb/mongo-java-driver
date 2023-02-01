@@ -16,15 +16,16 @@
 
 package org.mongodb.scala.model.vault
 
-import java.lang.reflect.Modifier.{ isPublic, isStatic }
-
 import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
 import org.mockito.ArgumentMatchers.{ any, same }
 import org.mockito.Mockito.verify
 import org.mongodb.scala.BaseSpec
+import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.{ BsonBinary, BsonString }
 import org.mongodb.scala.vault.ClientEncryption
 import org.scalatestplus.mockito.MockitoSugar
+
+import java.lang.reflect.Modifier.{ isPublic, isStatic }
 
 class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
 
@@ -62,6 +63,14 @@ class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
     clientEncryption.encrypt(bsonValue, options)
 
     verify(wrapped).encrypt(bsonValue, options)
+  }
+
+  it should "call encrypt Expression" in {
+    val bsonDocument = Document()
+    val options = EncryptOptions("algorithm").rangeOptions(RangeOptions())
+    clientEncryption.encryptExpression(bsonDocument, options)
+
+    verify(wrapped).encryptExpression(bsonDocument.toBsonDocument, options)
   }
 
   it should "call decrypt" in {
