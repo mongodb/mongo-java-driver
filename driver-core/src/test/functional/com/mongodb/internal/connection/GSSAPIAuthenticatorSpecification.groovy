@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.ClusterFixture
+import com.mongodb.LoggerSettings
 import com.mongodb.MongoCompressor
 import com.mongodb.SubjectProvider
 import com.mongodb.connection.ClusterId
@@ -49,7 +50,7 @@ class GSSAPIAuthenticatorSpecification extends Specification {
         def credentialWithCache = new MongoCredentialWithCache(credential)
         def streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings())
         def internalConnection = new InternalStreamConnectionFactory(SINGLE, streamFactory, credentialWithCache, null,
-                null, Collections.<MongoCompressor> emptyList(), null, getServerApi())
+                null, Collections.<MongoCompressor> emptyList(), LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
 
         when:
