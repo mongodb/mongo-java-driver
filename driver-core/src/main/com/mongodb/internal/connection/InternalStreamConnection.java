@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.LoggerSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
@@ -40,6 +41,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -125,6 +127,7 @@ public class InternalStreamConnection implements InternalConnection {
     private final AtomicBoolean opened = new AtomicBoolean();
 
     private final List<MongoCompressor> compressorList;
+    private final LoggerSettings loggerSettings;
     private final CommandListener commandListener;
     @Nullable private volatile Compressor sendCompressor;
     private final Map<Byte, Compressor> compressorMap;
@@ -142,18 +145,20 @@ public class InternalStreamConnection implements InternalConnection {
         return Collections.unmodifiableSet(SECURITY_SENSITIVE_HELLO_COMMANDS);
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
             final ConnectionGenerationSupplier connectionGenerationSupplier,
             final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
-        this(clusterConnectionMode, false, serverId, connectionGenerationSupplier, streamFactory, compressorList, commandListener,
-                connectionInitializer);
+        this(clusterConnectionMode, false, serverId, connectionGenerationSupplier, streamFactory, compressorList,
+                LoggerSettings.builder().build(), commandListener, connectionInitializer);
     }
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
                                     final ServerId serverId,
                                     final ConnectionGenerationSupplier connectionGenerationSupplier,
                                     final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
+                                    final LoggerSettings loggerSettings,
                                     final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.isMonitoringConnection = isMonitoringConnection;
@@ -162,6 +167,7 @@ public class InternalStreamConnection implements InternalConnection {
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.compressorList = notNull("compressorList", compressorList);
         this.compressorMap = createCompressorMap(compressorList);
+        this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
         this.connectionInitializer = notNull("connectionInitializer", connectionInitializer);
         description = new ConnectionDescription(serverId);
@@ -854,7 +860,7 @@ public class InternalStreamConnection implements InternalConnection {
             final RequestContext requestContext) {
         if (!isMonitoringConnection && opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isRequired(DEBUG, getClusterId()))) {
             return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description,
-                    commandListener, requestContext, message, bsonOutput, COMMAND_PROTOCOL_LOGGER);
+                    commandListener, requestContext, message, bsonOutput, COMMAND_PROTOCOL_LOGGER, loggerSettings);
         } else {
             return new NoOpCommandEventSender();
         }

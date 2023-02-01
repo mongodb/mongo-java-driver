@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
@@ -45,6 +46,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     private final InternalConnectionPoolSettings internalConnectionPoolSettings;
     private final StreamFactory streamFactory;
     private final MongoCredentialWithCache credential;
+    private final LoggerSettings loggerSettings;
     private final CommandListener commandListener;
     private final String applicationName;
     private final MongoDriverInformation mongoDriverInformation;
@@ -55,6 +57,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
                                                 final ConnectionPoolSettings connectionPoolSettings,
                                                 final InternalConnectionPoolSettings internalConnectionPoolSettings,
                                                 final StreamFactory streamFactory, @Nullable final MongoCredential credential,
+                                                final LoggerSettings loggerSettings,
                                                 @Nullable final CommandListener commandListener,
                                                 @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
                                                 final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
@@ -63,6 +66,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
         this.streamFactory = streamFactory;
         this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
+        this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
         this.applicationName = applicationName;
         this.mongoDriverInformation = mongoDriverInformation;
@@ -74,7 +78,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(cluster.getClusterId(), serverAddress),
                 new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, commandListener, serverApi),
+                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance());
         connectionPool.ready();
 

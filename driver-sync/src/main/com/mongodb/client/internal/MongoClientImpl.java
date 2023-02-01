@@ -228,8 +228,8 @@ public final class MongoClientImpl implements MongoClient {
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
                 getStreamFactory(settings, false), getStreamFactory(settings, true),
-                settings.getCredential(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
-                mongoDriverInformation, settings.getCompressorList(), settings.getServerApi());
+                settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
+                settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.RequestContext;
 import com.mongodb.connection.ClusterId;
@@ -47,13 +48,13 @@ import static com.mongodb.internal.logging.StructuredLogMessage.Component.COMMAN
 import static com.mongodb.internal.logging.StructuredLogMessage.Level.DEBUG;
 
 class LoggingCommandEventSender implements CommandEventSender {
-    private static final int MAX_COMMAND_DOCUMENT_LENGTH_TO_LOG = 1000;
     private static final double NANOS_PER_MILLI = 1_000_000.0d;
 
     private final ConnectionDescription description;
     @Nullable private final CommandListener commandListener;
     private final RequestContext requestContext;
     private final StructuredLogger logger;
+    private final LoggerSettings loggerSettings;
     private final long startTimeNanos;
     private final CommandMessage message;
     private final String commandName;
@@ -63,11 +64,12 @@ class LoggingCommandEventSender implements CommandEventSender {
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
             final ConnectionDescription description,
             @Nullable final CommandListener commandListener, final RequestContext requestContext, final CommandMessage message,
-            final ByteBufferBsonOutput bsonOutput, final StructuredLogger logger) {
+            final ByteBufferBsonOutput bsonOutput, final StructuredLogger logger, final LoggerSettings loggerSettings) {
         this.description = description;
         this.commandListener = commandListener;
         this.requestContext = requestContext;
         this.logger = logger;
+        this.loggerSettings = loggerSettings;
         this.startTimeNanos = System.nanoTime();
         this.message = message;
         this.commandDocument = message.getCommandDocument(bsonOutput);
@@ -207,12 +209,14 @@ class LoggingCommandEventSender implements CommandEventSender {
         entries.add(new Entry("requestId", message.getId()));
     }
 
-    private static String getTruncatedJsonCommand(final BsonDocument commandDocument) {
+    private String getTruncatedJsonCommand(final BsonDocument commandDocument) {
         StringWriter writer = new StringWriter();
 
         try (BsonReader bsonReader = commandDocument.asBsonReader()) {
             JsonWriter jsonWriter = new JsonWriter(writer,
-                    JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).maxLength(MAX_COMMAND_DOCUMENT_LENGTH_TO_LOG).build());
+                    JsonWriterSettings.builder().outputMode(JsonMode.RELAXED)
+                            .maxLength(loggerSettings.getMaxDocumentLength())
+                            .build());
 
             jsonWriter.pipe(bsonReader);
 
