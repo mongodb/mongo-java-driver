@@ -21,29 +21,21 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
+
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class BatchCursor<T> implements AutoCloseable {
 
     private final AsyncBatchCursor<T> wrapped;
-    private volatile boolean cursorClosed = false;
 
     public BatchCursor(final AsyncBatchCursor<T> wrapped) {
         this.wrapped = wrapped;
     }
 
     public Publisher<List<T>> next() {
-        return Mono.create(sink -> wrapped.next(
-                (result, t) -> {
-                    if (t != null && !cursorClosed) {
-                        sink.error(t);
-                    } else if (result == null) {
-                        sink.success();
-                    } else {
-                        sink.success(result);
-                    }
-                }));
+        return Mono.create(sink -> wrapped.next(sinkToCallback(sink)));
     }
 
     public void setBatchSize(final int batchSize) {
@@ -59,7 +51,6 @@ public class BatchCursor<T> implements AutoCloseable {
     }
 
     public void close() {
-        cursorClosed = true;
         wrapped.close();
     }
 
