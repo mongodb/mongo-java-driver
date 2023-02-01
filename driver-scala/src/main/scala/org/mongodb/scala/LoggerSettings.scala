@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{LoggerSettings => JLoggerSettings}
+import com.mongodb.{ LoggerSettings => JLoggerSettings }
 
 /**
  * Settings for the logger.
