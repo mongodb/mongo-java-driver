@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.JsonTestServerVersionChecker;
+import com.mongodb.LoggerSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
@@ -183,6 +184,7 @@ public abstract class AbstractConnectionPoolTest {
                                 poolOptions.getString("appName", new BsonString(fileName + ": " + description)).getValue(),
                                 MongoDriverInformation.builder().build(),
                                 Collections.emptyList(),
+                                LoggerSettings.builder().build(),
                                 new TestCommandListener(),
                                 ClusterFixture.getServerApi()),
                         settings, internalSettings, sdamProvider));

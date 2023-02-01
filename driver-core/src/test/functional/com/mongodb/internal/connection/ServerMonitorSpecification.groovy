@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.LoggerSettings
 import com.mongodb.MongoSocketException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
@@ -224,7 +225,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                 new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(SocketSettings.builder()
                         .connectTimeout(500, TimeUnit.MILLISECONDS)
                         .build(),
-                        getSslSettings()), getCredentialWithCache(), null, null, [], null,
+                        getSslSettings()), getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null,
                         getServerApi()),
                         getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam))
         serverMonitor.start()

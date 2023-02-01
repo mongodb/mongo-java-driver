@@ -147,7 +147,7 @@ public final class MongoClients {
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(),
                 InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
-                streamFactory, heartbeatStreamFactory, settings.getCredential(),
+                streamFactory, heartbeatStreamFactory, settings.getCredential(), settings.getLoggerSettings(),
                 getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
                 settings.getCompressorList(), settings.getServerApi());
     }

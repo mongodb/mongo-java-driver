@@ -378,7 +378,7 @@ public final class ClusterFixture {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
-                streamFactory, streamFactory, credential, null, null, null,
+                streamFactory, streamFactory, credential, LoggerSettings.builder().build(), null, null, null,
                 Collections.emptyList(), getServerApi());
     }
 
@@ -390,7 +390,7 @@ public final class ClusterFixture {
                 streamFactory,
                 new SocketStreamFactory(SocketSettings.builder().readTimeout(5, SECONDS).build(), getSslSettings(connectionString)),
                 connectionString.getCredential(),
-                null, null, null,
+                LoggerSettings.builder().build(), null, null, null,
                 connectionString.getCompressorList(), getServerApi());
     }
 

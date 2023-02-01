@@ -47,6 +47,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getReadPreference() == ReadPreference.primary()
         settings.getCommandListeners().isEmpty()
         settings.getApplicationName() == null
+        settings.getLoggerSettings() == LoggerSettings.builder().build();
         settings.clusterSettings == ClusterSettings.builder().build()
         settings.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         settings.socketSettings == SocketSettings.builder().build()
@@ -185,6 +186,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
+                .applyToLoggerSettings(builder -> builder.maxDocumentLength(10))
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override
                     void apply(final ClusterSettings.Builder builder) {
@@ -464,7 +466,7 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
                         'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential',
-                        'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS',
+                        'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'loggerSettingsBuilder',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
                         'streamFactoryFactory', 'uuidRepresentation', 'writeConcern']
@@ -478,11 +480,11 @@ class MongoClientSettingsSpecification extends Specification {
         // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
-                        'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
-                        'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'contextProvider',
-                        'credential', 'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'readConcern', 'readPreference',
-                        'retryReads', 'retryWrites', 'serverApi', 'streamFactoryFactory', 'uuidRepresentation',
-                        'writeConcern']
+                        'applyToConnectionPoolSettings', 'applyToLoggerSettings', 'applyToServerSettings', 'applyToSocketSettings',
+                        'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
+                        'compressorList', 'contextProvider', 'credential', 'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS',
+                        'readConcern', 'readPreference', 'retryReads', 'retryWrites', 'serverApi', 'streamFactoryFactory',
+                        'uuidRepresentation', 'writeConcern']
         then:
         actual == expected
     }
