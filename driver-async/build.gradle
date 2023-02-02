@@ -15,10 +15,11 @@
  */
 
 archivesBaseName = 'mongodb-driver-async'
-description = '''This artifact is not the most recent release of the MongoDB Java Driver.
-                |To use the most recent release of the MongoDB Java Driver, please use mongodb-driver-reactivestreams instead.'''.stripMargin()
+description = '''This artifact is no longer maintained / updated by MongoDB.
+                |For the most up-to-date version of the Java Driver, please refer to the mongodb-driver-reactivestreams artifact.'''
+        .stripMargin()
 ext {
-    pomName = 'Legacy MongoDB Asynchronous Driver'
+    pomName = 'MongoDB Asynchronous Driver (unmaintained)'
     pomUrl = 'https://www.mongodb.com/docs/drivers/reactive-streams/'
 }
 
