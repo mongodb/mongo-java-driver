@@ -344,9 +344,9 @@ public class BatchCursorFluxTest {
         subscriber.assertReceivedOnNext(docs.subList(0, 100));
         assertCommandNames(asList("find", "getMore"));
 
-         BsonDocument getMoreCommand = commandListener.getCommandStartedEvents().stream()
+        BsonDocument getMoreCommand = commandListener.getCommandStartedEvents().stream()
                 .filter(e -> e.getCommandName().equals("getMore"))
-                .map(e -> ((CommandStartedEvent)e).getCommand())
+                .map(e -> ((CommandStartedEvent) e).getCommand())
                 .findFirst()
                 .get();
 
