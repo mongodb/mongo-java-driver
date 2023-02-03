@@ -15,9 +15,11 @@
  */
 
 archivesBaseName = 'mongodb-driver-embedded'
-description =  'The MongoDB Embedded Driver'
+description = '''This artifact is not the most recent release of an embedded MongoDB Driver.
+                |To use the most recent release please use MongoDB Realm instead.'''.stripMargin()
 ext {
-    pomName = 'The MongoDB Embedded Driver'
+    pomName = 'Legacy MongoDB Embedded Driver'
+    pomUrl = 'https://www.mongodb.com/docs/realm/'
 }
 
 dependencies {
