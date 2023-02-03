@@ -16,9 +16,11 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -35,13 +37,17 @@ import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -56,12 +62,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.Test;
 
 @ExtendWith(MockitoExtension.class)
 public class BatchCursorFluxTest {
@@ -297,6 +302,64 @@ public class BatchCursorFluxTest {
         Mono.from(collection.drop()).block(TIMEOUT_DURATION);
         subscriber.assertTerminalEvent();
         subscriber.assertNoErrors();
+    }
+
+    @Test
+    @DisplayName("Ensure BatchCursor does not drop an error")
+    public void testBatchCursorDoesNotDropAnError() {
+        try {
+            AtomicBoolean errorDropped = new AtomicBoolean();
+            Hooks.onErrorDropped(t -> errorDropped.set(true));
+            Mono.from(collection.insertMany(createDocs(200))).block();
+
+            Flux.fromStream(IntStream.range(1, 200).boxed())
+                    .flatMap(i ->
+                            Flux.fromIterable(asList(1, 2))
+                                    .flatMap(x -> Flux.from(collection.find()))
+                                    .take(1)
+
+                    )
+                    .collectList()
+                    .block(TIMEOUT_DURATION);
+
+            assertFalse(errorDropped.get());
+        } finally {
+            Hooks.resetOnErrorDropped();
+        }
+    }
+
+    @Test
+    @DisplayName("Ensure BatchCursor reports cursor errors")
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    public void testBatchCursorReportsCursorErrors() {
+        List<Document> docs = createDocs(200);
+        Mono.from(collection.insertMany(docs)).block(TIMEOUT_DURATION);
+
+        TestSubscriber<Document> subscriber = new TestSubscriber<>();
+        FindPublisher<Document> findPublisher = collection.find().batchSize(50);
+        findPublisher.subscribe(subscriber);
+        assertCommandNames(emptyList());
+
+        subscriber.requestMore(100);
+        subscriber.assertReceivedOnNext(docs.subList(0, 100));
+        assertCommandNames(asList("find", "getMore"));
+
+        BsonDocument getMoreCommand = commandListener.getCommandStartedEvents().stream()
+                .filter(e -> e.getCommandName().equals("getMore"))
+                .map(e -> ((CommandStartedEvent) e).getCommand())
+                .findFirst()
+                .get();
+
+        Mono.from(client.getDatabase(getDefaultDatabaseName()).runCommand(
+                new BsonDocument("killCursors", new BsonString(collection.getNamespace().getCollectionName()))
+                        .append("cursors", new BsonArray(singletonList(getMoreCommand.getNumber("getMore"))))
+        )).block(TIMEOUT_DURATION);
+
+        subscriber.requestMore(200);
+        List<Throwable> onErrorEvents = subscriber.getOnErrorEvents();
+        subscriber.assertTerminalEvent();
+        assertEquals(1, onErrorEvents.size());
+        assertEquals(MongoCursorNotFoundException.class, onErrorEvents.get(0).getClass());
     }
 
     private void assertCommandNames(final List<String> commandNames) {
