@@ -54,7 +54,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -230,7 +229,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 }
                 String keyIdBsonKey = "keyId";
                 AtomicBoolean dataKeyMayBeCreated = new AtomicBoolean();
-                Iterable<Mono<SimpleImmutableEntry<BsonDocument, BsonBinary>>> publishersOfFieldsAndDataKeyIds = () -> fields.asArray()
+                Iterable<Mono<BsonDocument>> publishersOfUpdatedFields = () -> fields.asArray()
                         .stream()
                         .filter(BsonValue::isDocument)
                         .map(BsonValue::asDocument)
@@ -241,19 +240,16 @@ public class ClientEncryptionImpl implements ClientEncryption {
                                 // This is the closest we can do with reactive streams to setting the `dataKeyMayBeCreated` flag
                                 // immediately before calling `createDataKey`.
                                 .doOnSubscribe(subscription -> dataKeyMayBeCreated.set(true))
-                                .map(dataKey -> new SimpleImmutableEntry<>(field, dataKey))
+                                .doOnNext(dataKeyId -> field.put(keyIdBsonKey, dataKeyId))
+                                .map(dataKeyId -> field)
                         )
                         .iterator();
-                Flux<SimpleImmutableEntry<BsonDocument, BsonBinary>> publisherOfFieldsAndDataKeyIds = Flux.concat(publishersOfFieldsAndDataKeyIds)
-                        .doOnNext(fieldAndDataKeyId -> {
-                            BsonDocument field = fieldAndDataKeyId.getKey();
-                            BsonBinary dataKeyId = fieldAndDataKeyId.getValue();
-                            field.put(keyIdBsonKey, dataKeyId);
-                        });
-                createCollectionMono = publisherOfFieldsAndDataKeyIds
+                Flux<BsonDocument> publisherOfUpdatedFields = Flux.concat(publishersOfUpdatedFields);
+                createCollectionMono = publisherOfUpdatedFields
                         // All write actions in `doOnNext` above happen-before the completion (`onComplete`/`onError`) signals
                         // for this publisher, because all signals are serial. `thenEmpty` further guarantees that the completion signal
-                        // for this publisher happens-before the `onSubscribe` signal for the publisher passed to it (the next publisher).
+                        // for this publisher happens-before the `onSubscribe` signal for the publisher passed to it
+                        // (the next publisher, which creates a collection).
                         // `defer` defers calling `createCollection` until the next publisher is subscribed to.
                         // Therefore, all write actions in `doOnNext` above happen-before the invocation of `createCollection`,
                         // which means `createCollection` is guaranteed to observe all those write actions, i.e.,
