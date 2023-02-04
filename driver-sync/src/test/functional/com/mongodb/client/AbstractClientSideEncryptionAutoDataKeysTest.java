@@ -197,17 +197,17 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
 
     private enum KmsProvider {
         LOCAL("local",
-                properties -> properties.put("key", Base64.getDecoder().decode(
+                kmsProviderProperties -> kmsProviderProperties.put("key", Base64.getDecoder().decode(
                         "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
                                 + "GJkTXVyZG9uSjFk")),
-                () -> new CreateEncryptedCollectionParams("local")
+                createEncryptedCollectionParams -> {}
         ),
         AWS("aws",
-                properties -> {
-                    properties.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                    properties.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                kmsProviderProperties -> {
+                    kmsProviderProperties.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
+                    kmsProviderProperties.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
                 },
-                () -> new CreateEncryptedCollectionParams("aws").masterKey(BsonDocument.parse(
+                createEncryptedCollectionParams -> createEncryptedCollectionParams.masterKey(BsonDocument.parse(
                         "{"
                         + "  region: 'us-east-1',"
                         + "  key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'"
@@ -226,14 +226,18 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
         }
 
         KmsProvider(final String name, final Consumer<Map<String, Object>> propertiesUpdater,
-                final Supplier<CreateEncryptedCollectionParams> createEncryptedCollectionParamsSupplier) {
+                final Consumer<CreateEncryptedCollectionParams> encryptedCollectionParamsUpdater) {
             this.name = name;
             this.propertiesSupplier = () -> {
                 Map<String, Object> result = new HashMap<>();
                 propertiesUpdater.accept(result);
                 return result;
             };
-            this.createEncryptedCollectionParamsSupplier = createEncryptedCollectionParamsSupplier;
+            this.createEncryptedCollectionParamsSupplier = () -> {
+                CreateEncryptedCollectionParams result = new CreateEncryptedCollectionParams(name);
+                encryptedCollectionParamsUpdater.accept(result);
+                return result;
+            };
         }
 
         @Override
