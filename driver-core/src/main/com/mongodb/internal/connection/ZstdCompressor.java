@@ -46,7 +46,7 @@ class ZstdCompressor extends Compressor {
 
         try {
             byte[] out = new byte[(int) Zstd.compressBound(uncompressedSize)];
-            int compressedSize = (int) Zstd.compress(out, singleByteArraySource, Zstd.maxCompressionLevel());
+            int compressedSize = (int) Zstd.compress(out, singleByteArraySource, Zstd.defaultCompressionLevel());
             target.writeBytes(out, 0, compressedSize);
         } catch (Exception e) {
             throw new MongoInternalException("Unexpected exception", e);
