@@ -27,9 +27,6 @@ ext {
     pomName = 'MongoDB Java Driver Core'
 }
 
-// Add native-image.properties
-sourceSets.main.resources.srcDirs = ['src/resources']
-
 configurations {
     consumableTestRuntimeOnly {
         extendsFrom testRuntimeOnly
