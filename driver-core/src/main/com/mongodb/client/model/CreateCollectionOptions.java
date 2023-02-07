@@ -22,7 +22,6 @@ import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -32,7 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  * @since 3.0
  */
-public class CreateCollectionOptions implements Cloneable {
+public class CreateCollectionOptions {
     private long maxDocuments;
     private boolean capped;
     private long sizeInBytes;
@@ -45,6 +44,32 @@ public class CreateCollectionOptions implements Cloneable {
     private ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions;
     private ClusteredIndexOptions clusteredIndexOptions;
     private Bson encryptedFields;
+
+    public CreateCollectionOptions() {
+    }
+
+    /**
+     * A shallow copy constructor.
+     *
+     * @param options The options to copy.
+     *
+     * @since 4.9
+     */
+    public CreateCollectionOptions(final CreateCollectionOptions options) {
+        notNull("options", options);
+        maxDocuments = options.maxDocuments;
+        capped = options.capped;
+        sizeInBytes = options.sizeInBytes;
+        storageEngineOptions = options.storageEngineOptions;
+        indexOptionDefaults = options.indexOptionDefaults;
+        validationOptions = options.validationOptions;
+        collation = options.collation;
+        expireAfterSeconds = options.expireAfterSeconds;
+        timeSeriesOptions = options.timeSeriesOptions;
+        changeStreamPreAndPostImagesOptions = options.changeStreamPreAndPostImagesOptions;
+        clusteredIndexOptions = options.clusteredIndexOptions;
+        encryptedFields = options.encryptedFields;
+    }
 
     /**
      * Gets the maximum number of documents allowed in a capped collection.
@@ -360,20 +385,5 @@ public class CreateCollectionOptions implements Cloneable {
                 + ", changeStreamPreAndPostImagesOptions=" + changeStreamPreAndPostImagesOptions
                 + ", encryptedFields=" + encryptedFields
                 + '}';
-    }
-
-    /**
-     * Creates a shallow copy of {@code this} {@link CreateCollectionOptions} by calling {@code super.clone()}.
-     *
-     * @return A shallow copy of {@code this} {@link CreateCollectionOptions}.
-     * @since 4.9
-     */
-    @Override
-    public CreateCollectionOptions clone() {
-        try {
-            return (CreateCollectionOptions) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw fail(e.toString());
-        }
     }
 }

@@ -185,8 +185,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public BsonDocument createEncryptedCollection(final MongoDatabase database, final String collectionName,
-            final CreateCollectionOptions createCollectionOptions, final CreateEncryptedCollectionParams createEncryptedCollectionParams)
-            throws MongoUpdatedEncryptedFieldsException {
+            final CreateCollectionOptions createCollectionOptions, final CreateEncryptedCollectionParams createEncryptedCollectionParams) {
         notNull("collectionName", collectionName);
         notNull("createCollectionOptions", createCollectionOptions);
         notNull("createEncryptedCollectionParams", createEncryptedCollectionParams);
@@ -203,7 +202,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
         if (fields != null) {
             if (!fields.isArray()) {
                 throw new MongoConfigurationException(format("`encryptedFields` is incorrectly configured for the collection %s."
-                        + " `encryptedFields.fields` must be an array, but is %s type.", namespace, fields.getBsonType()));
+                        + " `encryptedFields.fields` must be an array, but is of the %s type.", namespace, fields.getBsonType()));
             }
             String kmsProvider = createEncryptedCollectionParams.getKmsProvider();
             DataKeyOptions dataKeyOptions = new DataKeyOptions();
@@ -212,8 +211,8 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 dataKeyOptions.masterKey(masterKey);
             }
             String keyIdBsonKey = "keyId";
-            // any mutable non-thread-safe Boolean should do
-            AtomicBoolean dataKeyMayBeCreated = new AtomicBoolean();
+            // any non-thread-safe mutable object that represents a Boolean should do, `AtomicBoolean` was chosen because of it being at hand
+            AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
             try {
                 fields.asArray()
                         .stream()
@@ -222,15 +221,16 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         .filter(field -> field.containsKey(keyIdBsonKey))
                         .filter(field -> Objects.equals(field.get(keyIdBsonKey), BsonNull.VALUE))
                         .forEachOrdered(field -> {
-                            // It is crucial to set the `dataKeyMayBeCreated` flag either immediately before calling `createDataKey`,
+                            // It is crucial to set the `dataKeyMightBeCreated` flag either immediately before calling `createDataKey`,
                             // or after that in a `finally` block.
-                            dataKeyMayBeCreated.set(true);
+                            dataKeyMightBeCreated.set(true);
                             BsonBinary dataKeyId = createDataKey(kmsProvider, dataKeyOptions);
                             field.put(keyIdBsonKey, dataKeyId);
                         });
-                database.createCollection(collectionName, createCollectionOptions.clone().encryptedFields(actualEncryptedFields));
-            } catch (RuntimeException e) {
-                if (dataKeyMayBeCreated.get()) {
+                database.createCollection(collectionName,
+                        new CreateCollectionOptions(createCollectionOptions).encryptedFields(actualEncryptedFields));
+            } catch (Exception e) {
+                if (dataKeyMightBeCreated.get()) {
                     throw new MongoUpdatedEncryptedFieldsException(actualEncryptedFields, format("Failed to create %s.", namespace), e);
                 } else {
                     throw e;

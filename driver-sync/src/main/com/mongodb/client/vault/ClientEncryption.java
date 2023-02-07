@@ -219,7 +219,7 @@ public interface ClientEncryption extends Closeable {
      */
     @Beta(Beta.Reason.SERVER)
     BsonDocument createEncryptedCollection(MongoDatabase database, String collectionName, CreateCollectionOptions createCollectionOptions,
-            CreateEncryptedCollectionParams createEncryptedCollectionParams) throws MongoUpdatedEncryptedFieldsException;
+            CreateEncryptedCollectionParams createEncryptedCollectionParams);
 
     @Override
     void close();

@@ -163,6 +163,9 @@ package object model {
    */
   object CreateCollectionOptions {
     def apply(): CreateCollectionOptions = new com.mongodb.client.model.CreateCollectionOptions()
+
+    def apply(options: CreateCollectionOptions): CreateCollectionOptions =
+      new com.mongodb.client.model.CreateCollectionOptions(options)
   }
 
   /**

@@ -35,8 +35,6 @@ public final class CreateEncryptedCollectionParams {
     private BsonDocument masterKey;
 
     /**
-     * A constructor.
-     *
      * @param kmsProvider The name of the KMS provider.
      */
     public CreateEncryptedCollectionParams(final String kmsProvider) {

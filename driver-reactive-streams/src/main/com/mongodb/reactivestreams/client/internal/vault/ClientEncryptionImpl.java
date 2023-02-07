@@ -219,7 +219,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
             if (fields != null) {
                 if (!fields.isArray()) {
                     throw new MongoConfigurationException(format("`encryptedFields` is incorrectly configured for the collection %s."
-                            + " `encryptedFields.fields` must be an array, but is %s type.", namespace, fields.getBsonType()));
+                            + " `encryptedFields.fields` must be an array, but is of the %s type.", namespace, fields.getBsonType()));
                 }
                 String kmsProvider = createEncryptedCollectionParams.getKmsProvider();
                 DataKeyOptions dataKeyOptions = new DataKeyOptions();
@@ -228,7 +228,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                     dataKeyOptions.masterKey(masterKey);
                 }
                 String keyIdBsonKey = "keyId";
-                AtomicBoolean dataKeyMayBeCreated = new AtomicBoolean();
+                AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
                 Iterable<Mono<BsonDocument>> publishersOfUpdatedFields = () -> fields.asArray()
                         .stream()
                         .filter(BsonValue::isDocument)
@@ -237,9 +237,9 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         .filter(field -> Objects.equals(field.get(keyIdBsonKey), BsonNull.VALUE))
                         // here we rely on the `createDataKey` publisher being cold, i.e., doing nothing until it is subscribed to
                         .map(field -> Mono.fromDirect(createDataKey(kmsProvider, dataKeyOptions))
-                                // This is the closest we can do with reactive streams to setting the `dataKeyMayBeCreated` flag
+                                // This is the closest we can do with reactive streams to setting the `dataKeyMightBeCreated` flag
                                 // immediately before calling `createDataKey`.
-                                .doOnSubscribe(subscription -> dataKeyMayBeCreated.set(true))
+                                .doOnSubscribe(subscription -> dataKeyMightBeCreated.set(true))
                                 .doOnNext(dataKeyId -> field.put(keyIdBsonKey, dataKeyId))
                                 .map(dataKeyId -> field)
                         )
@@ -256,13 +256,13 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         // it is guaranteed to observe the updated document via the `actualEncryptedFields` reference.
                         // Similarly, the updated document is observed in all other places below via the `actualEncryptedFields` reference.
                         .thenEmpty(Mono.defer(() -> Mono.fromDirect(database.createCollection(collectionName,
-                                createCollectionOptions.clone().encryptedFields(actualEncryptedFields))))
+                                new CreateCollectionOptions(createCollectionOptions).encryptedFields(actualEncryptedFields))))
                         )
-                        .doOnError(RuntimeException.class, e -> {
-                            if (dataKeyMayBeCreated.get()) {
+                        .doOnError(Exception.class, e -> {
+                            if (dataKeyMightBeCreated.get()) {
                                 throw new MongoUpdatedEncryptedFieldsException(actualEncryptedFields, format("Failed to create %s.", namespace), e);
                             } else {
-                                throw e;
+                                throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
                             }
                         });
             } else {
