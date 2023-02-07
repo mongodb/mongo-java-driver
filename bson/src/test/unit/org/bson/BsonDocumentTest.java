@@ -23,13 +23,16 @@ import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 // Don't convert to Spock, as Groovy intercepts equals/hashCode methods that we are trying to test
 public class BsonDocumentTest {
@@ -105,5 +108,29 @@ public class BsonDocumentTest {
     @Test
     public void shouldParseJson() {
         assertEquals(new BsonDocument("a", new BsonInt32(1)), BsonDocument.parse("{\"a\" : 1}"));
+    }
+
+    @Test
+    public void cloneIsDeepCopyAndMutable() {
+        Consumer<BsonDocument> assertCloneDeepCopyMutable = original -> {
+            BsonDocument clone = original.clone();
+            assertNotSame(original, clone);
+            assertEquals(original, clone);
+            // check that mutating `clone` does not mutate `original`
+            clone.getDocument("k1").put("k2", new BsonString("clone"));
+            assertEquals(new BsonString("clone"), clone.getDocument("k1").get("k2"));
+            assertEquals(BsonNull.VALUE, original.getDocument("k1").get("k2"));
+            // check that mutating `original` (if it is mutable) does not mutate `clone`
+            if (!(original instanceof RawBsonDocument)) {
+                original.put("k1", new BsonDocument("k2", new BsonString("original")));
+                assertEquals(new BsonString("original"), original.getDocument("k1").get("k2"));
+                assertEquals(new BsonString("clone"), clone.getDocument("k1").get("k2"));
+            }
+        };
+        assertAll(
+                () -> assertCloneDeepCopyMutable.accept(new BsonDocument("k1", new BsonDocument("k2", BsonNull.VALUE))),
+                () -> assertCloneDeepCopyMutable.accept(new BsonDocument("k1", RawBsonDocument.parse("{'k2': null}"))),
+                () -> assertCloneDeepCopyMutable.accept(RawBsonDocument.parse("{'k1': {'k2': null}}"))
+        );
     }
 }

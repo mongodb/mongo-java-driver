@@ -395,11 +395,10 @@ class RawBsonDocumentSpecification extends Specification {
 
     def 'clone should make a deep copy'() {
         when:
-        RawBsonDocument cloned = rawDocument.clone()
+        BsonDocument cloned = rawDocument.clone()
 
         then:
-        !cloned.getByteBuffer().array().is(createRawDocumenFromDocument().getByteBuffer().array())
-        cloned.getByteBuffer().remaining() == rawDocument.getByteBuffer().remaining()
+        cloned.getClass() == BsonDocument
         cloned == createRawDocumenFromDocument()
 
         where:

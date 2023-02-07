@@ -328,7 +328,7 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public BsonDocument clone() {
-        return new RawBsonDocument(bytes.clone(), offset, length);
+        return toBaseBsonDocument();
     }
 
     private BsonBinaryReader createReader() {
