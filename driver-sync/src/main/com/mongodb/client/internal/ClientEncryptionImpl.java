@@ -211,7 +211,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 dataKeyOptions.masterKey(masterKey);
             }
             String keyIdBsonKey = "keyId";
-            // any non-thread-safe mutable object that represents a Boolean should do, `AtomicBoolean` was chosen because of it being at hand
+            // only the mutability of `dataKeyMightBeCreated` is important, it does not need to be thread-safe
             AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
             try {
                 fields.asArray()
