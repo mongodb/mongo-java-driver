@@ -16,7 +16,11 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
@@ -32,6 +36,7 @@ import reactor.core.publisher.Mono;
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
+import static org.bson.assertions.Assertions.fail;
 
 public class SyncClientEncryption implements ClientEncryption {
 
@@ -104,6 +109,20 @@ public class SyncClientEncryption implements ClientEncryption {
     @Override
     public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
         return requireNonNull(Mono.from(wrapped.rewrapManyDataKey(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public BsonDocument createEncryptedCollection(final MongoDatabase database, final String collectionName,
+            final CreateCollectionOptions createCollectionOptions, final CreateEncryptedCollectionParams createEncryptedCollectionParams)
+            throws MongoUpdatedEncryptedFieldsException {
+        if (database instanceof SyncMongoDatabase) {
+            com.mongodb.reactivestreams.client.MongoDatabase reactiveDatabase = ((SyncMongoDatabase) database).getWrapped();
+            return requireNonNull(Mono.fromDirect(wrapped.createEncryptedCollection(
+                            reactiveDatabase, collectionName, createCollectionOptions, createEncryptedCollectionParams))
+                    .contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+        } else {
+            throw fail(database.getClass().toString());
+        }
     }
 
     @Override

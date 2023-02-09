@@ -17,9 +17,14 @@
 package com.mongodb.reactivestreams.client.internal.vault;
 
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.Updates;
@@ -32,22 +37,30 @@ import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypts;
 import com.mongodb.reactivestreams.client.vault.ClientEncryption;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -181,6 +194,79 @@ public class ClientEncryptionImpl implements ClientEncryption {
                             }).collect(Collectors.toList());
                             return Mono.from(collection.bulkWrite(updateModels)).map(RewrapManyDataKeyResult::new);
                         }));
+    }
+
+    @Override
+    public Publisher<BsonDocument> createEncryptedCollection(final MongoDatabase database, final String collectionName,
+            final CreateCollectionOptions createCollectionOptions, final CreateEncryptedCollectionParams createEncryptedCollectionParams) {
+        notNull("collectionName", collectionName);
+        notNull("createCollectionOptions", createCollectionOptions);
+        notNull("createEncryptedCollectionParams", createEncryptedCollectionParams);
+        MongoNamespace namespace = new MongoNamespace(database.getName(), collectionName);
+        Bson rawEncryptedFields = createCollectionOptions.getEncryptedFields();
+        if (rawEncryptedFields == null) {
+            throw new MongoConfigurationException(format("`encryptedFields` is not configured for the collection %s.", namespace));
+        }
+        CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings() == null
+                ? MongoClientSettings.getDefaultCodecRegistry()
+                : options.getKeyVaultMongoClientSettings().getCodecRegistry();
+        BsonDocument encryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry);
+        BsonValue fields = encryptedFields.get("fields");
+        if (fields != null && fields.isArray()) {
+            String kmsProvider = createEncryptedCollectionParams.getKmsProvider();
+            DataKeyOptions dataKeyOptions = new DataKeyOptions();
+            BsonDocument masterKey = createEncryptedCollectionParams.getMasterKey();
+            if (masterKey != null) {
+                dataKeyOptions.masterKey(masterKey);
+            }
+            String keyIdBsonKey = "keyId";
+            return Mono.defer(() -> {
+                // `Mono.defer` results in `maybeUpdatedEncryptedFields` and `dataKeyMightBeCreated` (mutable state)
+                // being created once per `Subscriber`, which allows the produced `Mono` to support multiple `Subscribers`.
+                BsonDocument maybeUpdatedEncryptedFields = encryptedFields.clone();
+                AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
+                Iterable<Mono<BsonDocument>> publishersOfUpdatedFields = () -> maybeUpdatedEncryptedFields.get("fields").asArray()
+                        .stream()
+                        .filter(BsonValue::isDocument)
+                        .map(BsonValue::asDocument)
+                        .filter(field -> field.containsKey(keyIdBsonKey))
+                        .filter(field -> Objects.equals(field.get(keyIdBsonKey), BsonNull.VALUE))
+                        // here we rely on the `createDataKey` publisher being cold, i.e., doing nothing until it is subscribed to
+                        .map(field -> Mono.fromDirect(createDataKey(kmsProvider, dataKeyOptions))
+                                // This is the closest we can do with reactive streams to setting the `dataKeyMightBeCreated` flag
+                                // immediately before calling `createDataKey`.
+                                .doOnSubscribe(subscription -> dataKeyMightBeCreated.set(true))
+                                .doOnNext(dataKeyId -> field.put(keyIdBsonKey, dataKeyId))
+                                .map(dataKeyId -> field)
+                        )
+                        .iterator();
+                // `Flux.concat` ensures that data keys are created / fields are updated sequentially one by one
+                Flux<BsonDocument> publisherOfUpdatedFields = Flux.concat(publishersOfUpdatedFields);
+                return publisherOfUpdatedFields
+                        // All write actions in `doOnNext` above happen-before the completion (`onComplete`/`onError`) signals
+                        // for this publisher, because all signals are serial. `thenEmpty` further guarantees that the completion signal
+                        // for this publisher happens-before the `onSubscribe` signal for the publisher passed to it
+                        // (the next publisher, which creates a collection).
+                        // `defer` defers calling `createCollection` until the next publisher is subscribed to.
+                        // Therefore, all write actions in `doOnNext` above happen-before the invocation of `createCollection`,
+                        // which means `createCollection` is guaranteed to observe all those write actions, i.e.,
+                        // it is guaranteed to observe the updated document via the `maybeUpdatedEncryptedFields` reference.
+                        //
+                        // Similarly, the `Subscriber` of the returned `Publisher` is guaranteed to observe all those write actions
+                        // via the `maybeUpdatedEncryptedFields` reference, which is emitted as a result of `thenReturn`.
+                        .thenEmpty(Mono.defer(() -> Mono.fromDirect(database.createCollection(collectionName,
+                                new CreateCollectionOptions(createCollectionOptions).encryptedFields(maybeUpdatedEncryptedFields))))
+                        )
+                        .onErrorMap(e -> dataKeyMightBeCreated.get(), e ->
+                                new MongoUpdatedEncryptedFieldsException(maybeUpdatedEncryptedFields,
+                                        format("Failed to create %s.", namespace), e)
+                        )
+                        .thenReturn(maybeUpdatedEncryptedFields);
+            });
+        } else {
+            return Mono.fromDirect(database.createCollection(collectionName, createCollectionOptions))
+                    .thenReturn(encryptedFields);
+        }
     }
 
     @Override

@@ -16,8 +16,13 @@
 
 package com.mongodb.client.vault;
 
+import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.annotations.Beta;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
@@ -189,6 +194,32 @@ public interface ClientEncryption extends Closeable {
      * @since 4.7
      */
     RewrapManyDataKeyResult rewrapManyDataKey(Bson filter, RewrapManyDataKeyOptions options);
+
+    /**
+     * {@linkplain MongoDatabase#createCollection(String, CreateCollectionOptions) Create} a new collection with encrypted fields,
+     * automatically {@linkplain #createDataKey(String, DataKeyOptions) creating}
+     * new data encryption keys when needed based on the configured
+     * {@link CreateCollectionOptions#getEncryptedFields() encryptedFields}, which must be specified.
+     * This method does not modify the configured {@code encryptedFields} when creating new data keys,
+     * instead it creates a new configuration if needed.
+     *
+     * @param database The database to use for creating the collection.
+     * @param collectionName The name for the collection to create.
+     * @param createCollectionOptions Options for creating the collection.
+     * @param createEncryptedCollectionParams Auxiliary parameters for creating an encrypted collection.
+     * @return The (potentially updated) {@code encryptedFields} configuration that was used to create the collection.
+     * A user may use this document to configure {@link AutoEncryptionSettings#getEncryptedFieldsMap()}.
+     * @throws MongoUpdatedEncryptedFieldsException If an exception happens after creating at least one data key.
+     * This exception makes the updated {@code encryptedFields}
+     * {@linkplain MongoUpdatedEncryptedFieldsException#getEncryptedFields() available} to the caller.
+     *
+     * @since 4.9
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    @Beta(Beta.Reason.SERVER)
+    BsonDocument createEncryptedCollection(MongoDatabase database, String collectionName, CreateCollectionOptions createCollectionOptions,
+            CreateEncryptedCollectionParams createEncryptedCollectionParams);
 
     @Override
     void close();

@@ -16,7 +16,11 @@
 
 package com.mongodb.reactivestreams.client.vault;
 
+import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.annotations.Beta;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
@@ -24,6 +28,7 @@ import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.FindPublisher;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -186,6 +191,33 @@ public interface ClientEncryption extends Closeable {
      * @since 4.7
      */
     Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(Bson filter, RewrapManyDataKeyOptions options);
+
+    /**
+     * {@linkplain MongoDatabase#createCollection(String, CreateCollectionOptions) Create} a new collection with encrypted fields,
+     * automatically {@linkplain #createDataKey(String, DataKeyOptions) creating}
+     * new data encryption keys when needed based on the configured
+     * {@link CreateCollectionOptions#getEncryptedFields() encryptedFields}, which must be specified.
+     * This method does not modify the configured {@code encryptedFields} when creating new data keys,
+     * instead it creates a new configuration if needed.
+     *
+     * @param database The database to use for creating the collection.
+     * @param collectionName The name for the collection to create.
+     * @param createCollectionOptions Options for creating the collection.
+     * @param createEncryptedCollectionParams Auxiliary parameters for creating an encrypted collection.
+     * @return A publisher of the (potentially updated) {@code encryptedFields} configuration that was used to create the
+     * collection. A user may use this document to configure {@link AutoEncryptionSettings#getEncryptedFieldsMap()}.
+     * <p>
+     * {@linkplain org.reactivestreams.Subscriber#onError(Throwable) Signals} {@link MongoUpdatedEncryptedFieldsException}
+     * if an exception happens after creating at least one data key. This exception makes the updated {@code encryptedFields}
+     * {@linkplain MongoUpdatedEncryptedFieldsException#getEncryptedFields() available} to the caller.</p>
+     *
+     * @since 4.9
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    @Beta(Beta.Reason.SERVER)
+    Publisher<BsonDocument> createEncryptedCollection(MongoDatabase database, String collectionName,
+            CreateCollectionOptions createCollectionOptions, CreateEncryptedCollectionParams createEncryptedCollectionParams);
 
     @Override
     void close();

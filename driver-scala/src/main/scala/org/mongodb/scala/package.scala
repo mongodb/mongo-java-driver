@@ -16,6 +16,7 @@
 
 package org.mongodb
 
+import com.mongodb.annotations.Beta
 import org.bson.BsonDocumentReader
 import org.bson.codecs.{ DecoderContext, DocumentCodec }
 import org.mongodb.scala.bson.BsonDocument
@@ -359,6 +360,15 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * Such clearing usually itself happens as a result of an exception.
    */
   type MongoConnectionPoolClearedException = com.mongodb.MongoConnectionPoolClearedException
+
+  /**
+   * An exception thrown by methods that may automatically create data encryption keys
+   * where needed based on the `encryptedFields` configuration.
+   *
+   * @since 4.9
+   */
+  @Beta(Array(Beta.Reason.SERVER))
+  type MongoUpdatedEncryptedFieldsException = com.mongodb.MongoUpdatedEncryptedFieldsException
 
   /**
    * The client-side automatic encryption settings. In-use encryption enables an application to specify what fields in a collection
