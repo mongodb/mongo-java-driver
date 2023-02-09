@@ -204,7 +204,7 @@ public interface ClientEncryption extends Closeable {
      * @param collectionName The name for the collection to create.
      * @param createCollectionOptions Options for creating the collection.
      * @param createEncryptedCollectionParams Auxiliary parameters for creating an encrypted collection.
-     * @return A one-shot publisher of the (potentially updated) {@code encryptedFields} configuration that was used to create the
+     * @return A publisher of the (potentially updated) {@code encryptedFields} configuration that was used to create the
      * collection. A user may use this document to configure {@link AutoEncryptionSettings#getEncryptedFieldsMap()}.
      * <p>
      * {@linkplain org.reactivestreams.Subscriber#onError(Throwable) Signals} {@link MongoUpdatedEncryptedFieldsException}

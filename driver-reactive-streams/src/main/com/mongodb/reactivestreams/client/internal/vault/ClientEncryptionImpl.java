@@ -38,7 +38,6 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.mongodb.reactivestreams.client.internal.OneShotPublisher;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypts;
 import com.mongodb.reactivestreams.client.vault.ClientEncryption;
@@ -203,33 +202,30 @@ public class ClientEncryptionImpl implements ClientEncryption {
         notNull("collectionName", collectionName);
         notNull("createCollectionOptions", createCollectionOptions);
         notNull("createEncryptedCollectionParams", createEncryptedCollectionParams);
-        // this publisher captures and mutates state, which is why it has to be one-shot
-        return OneShotPublisher.from(Mono.defer(() -> {
-            MongoNamespace namespace = new MongoNamespace(database.getName(), collectionName);
-            Bson rawEncryptedFields = createCollectionOptions.getEncryptedFields();
-            if (rawEncryptedFields == null) {
-                throw new MongoConfigurationException(format("`encryptedFields` is not configured for the collection %s.", namespace));
+        MongoNamespace namespace = new MongoNamespace(database.getName(), collectionName);
+        Bson rawEncryptedFields = createCollectionOptions.getEncryptedFields();
+        if (rawEncryptedFields == null) {
+            throw new MongoConfigurationException(format("`encryptedFields` is not configured for the collection %s.", namespace));
+        }
+        CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings() == null
+                ? MongoClientSettings.getDefaultCodecRegistry()
+                : options.getKeyVaultMongoClientSettings().getCodecRegistry();
+        BsonDocument encryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry);
+        BsonValue fields = encryptedFields.get("fields");
+        if (fields != null && fields.isArray()) {
+            String kmsProvider = createEncryptedCollectionParams.getKmsProvider();
+            DataKeyOptions dataKeyOptions = new DataKeyOptions();
+            BsonDocument masterKey = createEncryptedCollectionParams.getMasterKey();
+            if (masterKey != null) {
+                dataKeyOptions.masterKey(masterKey);
             }
-            CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings() == null
-                    ? MongoClientSettings.getDefaultCodecRegistry()
-                    : options.getKeyVaultMongoClientSettings().getCodecRegistry();
-            BsonDocument actualEncryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry).clone();
-            BsonValue fields = actualEncryptedFields.get("fields");
-            Mono<Void> createCollectionMono;
-            if (fields != null) {
-                if (!fields.isArray()) {
-                    throw new MongoConfigurationException(format("`encryptedFields` is incorrectly configured for the collection %s."
-                            + " `encryptedFields.fields` must be an array, but is of the %s type.", namespace, fields.getBsonType()));
-                }
-                String kmsProvider = createEncryptedCollectionParams.getKmsProvider();
-                DataKeyOptions dataKeyOptions = new DataKeyOptions();
-                BsonDocument masterKey = createEncryptedCollectionParams.getMasterKey();
-                if (masterKey != null) {
-                    dataKeyOptions.masterKey(masterKey);
-                }
-                String keyIdBsonKey = "keyId";
+            String keyIdBsonKey = "keyId";
+            return Mono.defer(() -> {
+                // `Mono.defer` results in `maybeUpdatedEncryptedFields` and `dataKeyMightBeCreated` (mutable state)
+                // being created once per `Subscriber`, which allows the produced `Mono` to support multiple `Subscribers`.
+                BsonDocument maybeUpdatedEncryptedFields = encryptedFields.clone();
                 AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
-                Iterable<Mono<BsonDocument>> publishersOfUpdatedFields = () -> fields.asArray()
+                Iterable<Mono<BsonDocument>> publishersOfUpdatedFields = () -> maybeUpdatedEncryptedFields.get("fields").asArray()
                         .stream()
                         .filter(BsonValue::isDocument)
                         .map(BsonValue::asDocument)
@@ -244,8 +240,9 @@ public class ClientEncryptionImpl implements ClientEncryption {
                                 .map(dataKeyId -> field)
                         )
                         .iterator();
+                // `Flux.concat` ensures that data keys are created / fields are updated sequentially one by one
                 Flux<BsonDocument> publisherOfUpdatedFields = Flux.concat(publishersOfUpdatedFields);
-                createCollectionMono = publisherOfUpdatedFields
+                return publisherOfUpdatedFields
                         // All write actions in `doOnNext` above happen-before the completion (`onComplete`/`onError`) signals
                         // for this publisher, because all signals are serial. `thenEmpty` further guarantees that the completion signal
                         // for this publisher happens-before the `onSubscribe` signal for the publisher passed to it
@@ -253,24 +250,23 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         // `defer` defers calling `createCollection` until the next publisher is subscribed to.
                         // Therefore, all write actions in `doOnNext` above happen-before the invocation of `createCollection`,
                         // which means `createCollection` is guaranteed to observe all those write actions, i.e.,
-                        // it is guaranteed to observe the updated document via the `actualEncryptedFields` reference.
-                        // Similarly, the updated document is observed in all other places below via the `actualEncryptedFields` reference.
+                        // it is guaranteed to observe the updated document via the `maybeUpdatedEncryptedFields` reference.
+                        //
+                        // Similarly, the `Subscriber` of the returned `Publisher` is guaranteed to observe all those write actions
+                        // via the `maybeUpdatedEncryptedFields` reference, which is emitted as a result of `thenReturn`.
                         .thenEmpty(Mono.defer(() -> Mono.fromDirect(database.createCollection(collectionName,
-                                new CreateCollectionOptions(createCollectionOptions).encryptedFields(actualEncryptedFields))))
+                                new CreateCollectionOptions(createCollectionOptions).encryptedFields(maybeUpdatedEncryptedFields))))
                         )
-                        .doOnError(Exception.class, e -> {
-                            if (dataKeyMightBeCreated.get()) {
-                                throw new MongoUpdatedEncryptedFieldsException(actualEncryptedFields, format("Failed to create %s.", namespace), e);
-                            } else {
-                                throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
-                            }
-                        });
-            } else {
-                createCollectionMono = Mono.fromDirect(database.createCollection(collectionName, createCollectionOptions));
-            }
-            return createCollectionMono
-                    .then(Mono.defer(() -> Mono.just(actualEncryptedFields)));
-        }));
+                        .doOnError(e -> dataKeyMightBeCreated.get(), e -> {
+                            throw new MongoUpdatedEncryptedFieldsException(maybeUpdatedEncryptedFields,
+                                    format("Failed to create %s.", namespace), e);
+                        })
+                        .thenReturn(maybeUpdatedEncryptedFields);
+            });
+        } else {
+            return Mono.fromDirect(database.createCollection(collectionName, createCollectionOptions))
+                    .thenReturn(encryptedFields);
+        }
     }
 
     @Override

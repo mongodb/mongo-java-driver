@@ -197,13 +197,9 @@ public class ClientEncryptionImpl implements ClientEncryption {
         CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings() == null
                 ? MongoClientSettings.getDefaultCodecRegistry()
                 : options.getKeyVaultMongoClientSettings().getCodecRegistry();
-        BsonDocument actualEncryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry).clone();
-        BsonValue fields = actualEncryptedFields.get("fields");
-        if (fields != null) {
-            if (!fields.isArray()) {
-                throw new MongoConfigurationException(format("`encryptedFields` is incorrectly configured for the collection %s."
-                        + " `encryptedFields.fields` must be an array, but is of the %s type.", namespace, fields.getBsonType()));
-            }
+        BsonDocument encryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry);
+        BsonValue fields = encryptedFields.get("fields");
+        if (fields != null && fields.isArray()) {
             String kmsProvider = createEncryptedCollectionParams.getKmsProvider();
             DataKeyOptions dataKeyOptions = new DataKeyOptions();
             BsonDocument masterKey = createEncryptedCollectionParams.getMasterKey();
@@ -211,10 +207,11 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 dataKeyOptions.masterKey(masterKey);
             }
             String keyIdBsonKey = "keyId";
+            BsonDocument maybeUpdatedEncryptedFields = encryptedFields.clone();
             // only the mutability of `dataKeyMightBeCreated` is important, it does not need to be thread-safe
             AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
             try {
-                fields.asArray()
+                maybeUpdatedEncryptedFields.get("fields").asArray()
                         .stream()
                         .filter(BsonValue::isDocument)
                         .map(BsonValue::asDocument)
@@ -228,18 +225,19 @@ public class ClientEncryptionImpl implements ClientEncryption {
                             field.put(keyIdBsonKey, dataKeyId);
                         });
                 database.createCollection(collectionName,
-                        new CreateCollectionOptions(createCollectionOptions).encryptedFields(actualEncryptedFields));
+                        new CreateCollectionOptions(createCollectionOptions).encryptedFields(maybeUpdatedEncryptedFields));
+                return maybeUpdatedEncryptedFields;
             } catch (Exception e) {
                 if (dataKeyMightBeCreated.get()) {
-                    throw new MongoUpdatedEncryptedFieldsException(actualEncryptedFields, format("Failed to create %s.", namespace), e);
+                    throw new MongoUpdatedEncryptedFieldsException(maybeUpdatedEncryptedFields, format("Failed to create %s.", namespace), e);
                 } else {
                     throw e;
                 }
             }
         } else {
             database.createCollection(collectionName, createCollectionOptions);
+            return encryptedFields;
         }
-        return actualEncryptedFields;
     }
 
     @Override

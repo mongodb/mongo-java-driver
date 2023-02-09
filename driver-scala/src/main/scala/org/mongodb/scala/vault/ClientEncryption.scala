@@ -116,7 +116,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @param collectionName The name for the collection to create.
    * @param createCollectionOptions Options for creating the collection.
    * @param createEncryptedCollectionParams Auxiliary parameters for creating an encrypted collection.
-   * @return A one-shot publisher of the (potentially updated) `encryptedFields` configuration that was used to create the collection.
+   * @return A publisher of the (potentially updated) `encryptedFields` configuration that was used to create the collection.
    * A user may use this document to configure `com.mongodb.AutoEncryptionSettings.getEncryptedFieldsMap`.
    *
    * Produces [[com.mongodb.MongoUpdatedEncryptedFieldsException]]
