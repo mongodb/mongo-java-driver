@@ -240,4 +240,18 @@
         <Method name="acquirePermitOrGetAvailableOpenedConnection"/>
         <Bug pattern="NS_NON_SHORT_CIRCUIT"/>
     </Match>
+
+    <!-- Can actually be null, but is not annotated as `@Nullable`. Annotating it as such causes warnings
+         in other places where `null` is not handled, see https://jira.mongodb.org/browse/JAVA-4861.
+         When the aforementioned ticket is done, it will be clear what to do with the warnings suppressed here. -->
+    <Match>
+        <Class name="com.mongodb.client.internal.ClientEncryptionImpl"/>
+        <Method name="createEncryptedCollection"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl"/>
+        <Method name="~.*createEncryptedCollection.*"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
 </FindBugsFilter>

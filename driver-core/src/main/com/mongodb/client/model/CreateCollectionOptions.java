@@ -45,6 +45,32 @@ public class CreateCollectionOptions {
     private ClusteredIndexOptions clusteredIndexOptions;
     private Bson encryptedFields;
 
+    public CreateCollectionOptions() {
+    }
+
+    /**
+     * A shallow copy constructor.
+     *
+     * @param options The options to copy.
+     *
+     * @since 4.9
+     */
+    public CreateCollectionOptions(final CreateCollectionOptions options) {
+        notNull("options", options);
+        maxDocuments = options.maxDocuments;
+        capped = options.capped;
+        sizeInBytes = options.sizeInBytes;
+        storageEngineOptions = options.storageEngineOptions;
+        indexOptionDefaults = options.indexOptionDefaults;
+        validationOptions = options.validationOptions;
+        collation = options.collation;
+        expireAfterSeconds = options.expireAfterSeconds;
+        timeSeriesOptions = options.timeSeriesOptions;
+        changeStreamPreAndPostImagesOptions = options.changeStreamPreAndPostImagesOptions;
+        clusteredIndexOptions = options.clusteredIndexOptions;
+        encryptedFields = options.encryptedFields;
+    }
+
     /**
      * Gets the maximum number of documents allowed in a capped collection.
      *
