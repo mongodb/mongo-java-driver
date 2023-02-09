@@ -257,10 +257,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         .thenEmpty(Mono.defer(() -> Mono.fromDirect(database.createCollection(collectionName,
                                 new CreateCollectionOptions(createCollectionOptions).encryptedFields(maybeUpdatedEncryptedFields))))
                         )
-                        .doOnError(e -> dataKeyMightBeCreated.get(), e -> {
-                            throw new MongoUpdatedEncryptedFieldsException(maybeUpdatedEncryptedFields,
-                                    format("Failed to create %s.", namespace), e);
-                        })
+                        .onErrorMap(e -> dataKeyMightBeCreated.get(), e ->
+                                new MongoUpdatedEncryptedFieldsException(maybeUpdatedEncryptedFields,
+                                        format("Failed to create %s.", namespace), e)
+                        )
                         .thenReturn(maybeUpdatedEncryptedFields);
             });
         } else {
