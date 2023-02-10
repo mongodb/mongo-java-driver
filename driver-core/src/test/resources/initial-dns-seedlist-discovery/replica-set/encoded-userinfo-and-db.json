@@ -8,15 +8,15 @@
     "localhost:27018",
     "localhost:27019"
   ],
-  "options" : {
-    "replicaSet" : "repl0",
-    "ssl" : true
+  "options": {
+    "replicaSet": "repl0",
+    "ssl": true
   },
-  "parsed_options" : {
-    "user" : "b*b@f3tt=",
-    "password" : "$4to@L8=MC",
-    "db" : "mydb?"
+  "parsed_options": {
+    "user": "b*b@f3tt=",
+    "password": "$4to@L8=MC",
+    "db": "mydb?"
   },
-  "ping" : false,
-  "comment" : "Encoded user, pass, and DB parse correctly"
+  "ping": false,
+  "comment": "Encoded user, pass, and DB parse correctly"
 }
