@@ -27,6 +27,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static org.bson.internal.Util.mutableDeepCopy;
+
 /**
  * A {@link Bson} that allows constructing new instances via {@link #newAppended(String, Object)} instead of mutating {@code this}.
  * See {@link #AbstractConstructibleBson(Bson, Document)} for the note on mutability.
@@ -141,7 +143,7 @@ public abstract class AbstractConstructibleBson<S extends AbstractConstructibleB
     }
 
     static BsonDocument newMerged(final BsonDocument base, final BsonDocument appended) {
-        BsonDocument result = base.clone();
+        BsonDocument result = mutableDeepCopy(base);
         result.putAll(appended);
         return result;
     }

@@ -58,6 +58,7 @@ import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataK
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.bson.internal.Util.mutableDeepCopy;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -207,7 +208,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 dataKeyOptions.masterKey(masterKey);
             }
             String keyIdBsonKey = "keyId";
-            BsonDocument maybeUpdatedEncryptedFields = encryptedFields.clone();
+            BsonDocument maybeUpdatedEncryptedFields = mutableDeepCopy(encryptedFields);
             // only the mutability of `dataKeyMightBeCreated` is important, it does not need to be thread-safe
             AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
             try {
