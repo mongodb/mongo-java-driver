@@ -64,6 +64,8 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/' +
                                    'test.my.coll')       | 1   | ['localhost']      | 'test'   | 'my.coll'  | null     | null
         new ConnectionString('mongodb://foo/bar.goo')    | 1   | ['foo']            | 'bar'    | 'goo'      | null     | null
+        new ConnectionString('mongodb://foo/s,db')       | 1   | ['foo']            | 's,db'| null      | null     | null
+        new ConnectionString('mongodb://foo/s%2Cdb')     | 1   | ['foo']            | 's,db'| null      | null     | null
         new ConnectionString('mongodb://user:pass@' +
                                    'host/bar')           | 1   | ['host']           | 'bar'    | null       | 'user'   | 'pass' as char[]
         new ConnectionString('mongodb://user:pass@' +
