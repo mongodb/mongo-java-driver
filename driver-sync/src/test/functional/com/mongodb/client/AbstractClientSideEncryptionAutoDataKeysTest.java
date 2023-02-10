@@ -88,7 +88,7 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
                         provider -> provider.name, provider -> provider.propertiesSupplier)))
                 .build());
         client.getDatabase(KEY_VAULT_NAMESPACE.getDatabaseName()).drop();
-        db = client.getDatabase("test");
+        db = client.getDatabase("autoDataKeysTest");
         db.drop();
     }
 
