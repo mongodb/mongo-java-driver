@@ -281,6 +281,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
         for (Map.Entry<String, BsonValue> entry : parsedOptions.entrySet()) {
             switch (entry.getKey()) {
                 case "db":
+                case "defaultDatabase":
                     assertEquals(entry.getValue().asString().getValue(), connectionString.getDatabase());
                     break;
                 case "user":
