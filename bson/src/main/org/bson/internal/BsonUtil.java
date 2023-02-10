@@ -24,7 +24,7 @@ import org.bson.BsonValue;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class Util {
+public final class BsonUtil {
     public static BsonDocument mutableDeepCopy(final BsonDocument original) {
         BsonDocument copy = new BsonDocument(original.size());
         original.forEach((key, value) -> copy.put(key, mutableDeepCopy(value)));
@@ -68,6 +68,6 @@ public final class Util {
         return result;
     }
 
-    private Util() {
+    private BsonUtil() {
     }
 }

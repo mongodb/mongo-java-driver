@@ -35,7 +35,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
-final class UtilTest {
+final class BsonUtilTest {
     @Test
     public void mutableDeepCopy() {
         Entry<String, BsonBinary> originalBsonBinaryEntry = new SimpleImmutableEntry<>(
@@ -84,7 +84,7 @@ final class UtilTest {
                 .append(originalBsonDocumentEntry.getKey(), originalBsonDocumentEntry.getValue())
                 .append(originalBsonArrayEntry.getKey(), originalBsonArrayEntry.getValue())
                 .append(originalRawBsonArrayEntry.getKey(), originalRawBsonArrayEntry.getValue());
-        BsonDocument copy = Util.mutableDeepCopy(original);
+        BsonDocument copy = BsonUtil.mutableDeepCopy(original);
         assertEqualNotSameAndMutable(original, copy);
         original.forEach((key, value) -> assertEqualNotSameAndMutable(value, copy.get(key)));
         // check nested document
@@ -126,6 +126,6 @@ final class UtilTest {
         }
     }
 
-    private UtilTest() {
+    private BsonUtilTest() {
     }
 }

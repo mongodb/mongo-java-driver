@@ -58,7 +58,7 @@ import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataK
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.bson.internal.Util.mutableDeepCopy;
+import static org.bson.internal.BsonUtil.mutableDeepCopy;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>

@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static org.bson.internal.Util.mutableDeepCopy;
+import static org.bson.internal.BsonUtil.mutableDeepCopy;
 
 /**
  * A {@link Bson} that allows constructing new instances via {@link #newAppended(String, Object)} instead of mutating {@code this}.
