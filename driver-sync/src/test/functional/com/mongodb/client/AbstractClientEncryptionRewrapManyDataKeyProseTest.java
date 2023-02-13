@@ -44,7 +44,11 @@ import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public abstract class AbstractRewrapManyDataKeyProseTest {
+/**
+ * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#rewrap">
+ * 16. Rewrap</a>.
+ */
+public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
 
     private static final Map<String, BsonDocument> MASTER_KEYS_BY_PROVIDER = new HashMap<>();
     static {

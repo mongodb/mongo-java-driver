@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package com.mongodb.reactivestreams.client;
+package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.AbstractRewrapManyDataKeyProseTest;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
-public class RewrapManyDataKeyProseTest extends AbstractRewrapManyDataKeyProseTest {
+public class ClientEncryptionRewrapManyDataKeyProseTest extends AbstractClientEncryptionRewrapManyDataKeyProseTest {
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return MongoClients.create(settings);
     }
 
     @Override
