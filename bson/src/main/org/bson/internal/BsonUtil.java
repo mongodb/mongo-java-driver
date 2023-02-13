@@ -45,27 +45,19 @@ public final class BsonUtil {
         return new BsonJavaScriptWithScope(original.getCode(), mutableDeepCopy(original.getScope()));
     }
 
-    private static <T extends BsonValue> T mutableDeepCopy(final T original) {
-        BsonValue copy;
+    private static BsonValue mutableDeepCopy(final BsonValue original) {
         switch (original.getBsonType()) {
             case DOCUMENT:
-                copy = mutableDeepCopy(original.asDocument());
-                break;
+                return mutableDeepCopy(original.asDocument());
             case ARRAY:
-                copy = mutableDeepCopy(original.asArray());
-                break;
+                return mutableDeepCopy(original.asArray());
             case BINARY:
-                copy = mutableDeepCopy(original.asBinary());
-                break;
+                return mutableDeepCopy(original.asBinary());
             case JAVASCRIPT_WITH_SCOPE:
-                copy = mutableDeepCopy(original.asJavaScriptWithScope());
-                break;
+                return mutableDeepCopy(original.asJavaScriptWithScope());
             default:
-                copy = original;
+                return original;
         }
-        @SuppressWarnings("unchecked")
-        T result = (T) copy;
-        return result;
     }
 
     private BsonUtil() {
