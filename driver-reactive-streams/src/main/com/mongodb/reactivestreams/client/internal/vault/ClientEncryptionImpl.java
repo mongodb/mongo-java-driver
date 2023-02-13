@@ -63,6 +63,7 @@ import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataK
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.bson.internal.BsonUtil.mutableDeepCopy;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -223,7 +224,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
             return Mono.defer(() -> {
                 // `Mono.defer` results in `maybeUpdatedEncryptedFields` and `dataKeyMightBeCreated` (mutable state)
                 // being created once per `Subscriber`, which allows the produced `Mono` to support multiple `Subscribers`.
-                BsonDocument maybeUpdatedEncryptedFields = encryptedFields.clone();
+                BsonDocument maybeUpdatedEncryptedFields = mutableDeepCopy(encryptedFields);
                 AtomicBoolean dataKeyMightBeCreated = new AtomicBoolean();
                 Iterable<Mono<BsonDocument>> publishersOfUpdatedFields = () -> maybeUpdatedEncryptedFields.get("fields").asArray()
                         .stream()
