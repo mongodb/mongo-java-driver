@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-apply plugin: 'eclipse'
-apply plugin: 'idea'
-
 buildscript {
     repositories {
         mavenLocal()
@@ -37,6 +34,14 @@ buildscript {
     }
 }
 
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' apply false
+}
+
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
 //////////////////////////////////////////
 // Common behavior                      //
 //////////////////////////////////////////
@@ -52,14 +57,23 @@ ext {
     mongoCryptVersion = '1.7.1'
     projectReactorVersion = '2022.0.0'
     junitBomVersion = '5.8.2'
+
+    kotlinCoroutineVersion = '1.6.4'
+    jacksonVersion = '2.14.1'
+    bson4jacksonVersion = '2.13.1'
+    kotlinxSerializationVersion = '1.4.1'
+    kotlinxDatetimeVersion = '0.4.0'
+    kbsonVersion = '0.4.5'
+
     gitVersion = getGitVersion()
 }
 
 def configDir = ext.configDir
 def utilProjects = project(":util").allprojects
 def coreProjects = subprojects - utilProjects
+def kotlinProjects = subprojects.findAll { it.name.contains('kotlin') }
 def scalaProjects = subprojects.findAll { it.name.contains('scala') }
-def javaProjects = subprojects - scalaProjects
+def javaProjects = subprojects - scalaProjects - kotlinProjects
 def javaMainProjects = javaProjects - utilProjects
 def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks', 'driver-workload-executor'].contains(it.name) }
 def javaAndScalaTestedProjects = javaCodeCheckedProjects + scalaProjects
@@ -159,6 +173,25 @@ configure(scalaProjects) {
 
     tasks.withType(GenerateModuleMetadata) {
         enabled = false
+    }
+}
+
+configure(kotlinProjects) {
+
+    apply plugin: 'org.jetbrains.kotlin.jvm'
+    apply plugin: 'idea'
+
+    group = 'org.mongodb.kotlin'
+
+    dependencies {
+        implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+    }
+
+    test{
+        useJUnitPlatform {
+            includeEngines('junit-jupiter')
+        }
     }
 }
 

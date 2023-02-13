@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+pluginManagement {
+    plugins {
+        id 'org.jetbrains.kotlin.jvm' version "${kotlinVersion}"
+    }
+}
+
 include ':bson'
 include ':bson-record-codec'
 include ':driver-benchmarks'
@@ -24,5 +30,19 @@ include ':driver-sync'
 include ':driver-reactive-streams'
 include ':bson-scala'
 include ':driver-scala'
+include ':driver-kotlin'
+include ':driver-kotlin:kotlin-id'
+include ':driver-kotlin:kotlin-id-jackson'
+include ':driver-kotlin:kotlin-id-serialization'
+include ':driver-kotlin:kotlin-shared'
+include ':driver-kotlin:kotlin-property'
+include ':driver-kotlin:kotlin-jackson-mapping'
+include ':driver-kotlin:kotlin-serialization-mapping'
+include ':driver-kotlin:kotlin-sync-core'
+include ':driver-kotlin:kotlin-sync-jackson'
+include ':driver-kotlin:kotlin-sync-serialization'
+include ':driver-kotlin:kotlin-coroutine-core'
+include ':driver-kotlin:kotlin-coroutine-jackson'
+include ':driver-kotlin:kotlin-coroutine-serialization'
 include 'util:spock'
 include 'util:taglets'
