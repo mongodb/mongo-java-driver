@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.kotlin.id
+package org.mongodb.kotlin.id.jvm
 
 /**
- * A unique document identifier.
- *
- * If the id type need to support json serialization and deserialization,
- * it must provide a toString() method and a constructor with a one String arg,
- * and consistent equals & hashCode methods.
- *
- *
- * @param T the owner of the id
+ * UUID-based implementation
  */
-interface Id<T> {
+internal class UUIDStringIdGeneratorProvider : IdGeneratorProvider {
 
-    /**
-     * Cast Id<T> to Id<NewType>.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <NewType> cast(): Id<NewType> = this as Id<NewType>
+    override val generator: IdGenerator = UUIDStringIdGenerator
+
+    override fun equals(other: Any?): Boolean = other is UUIDStringIdGeneratorProvider
+
+    override fun hashCode(): Int = 0
 }

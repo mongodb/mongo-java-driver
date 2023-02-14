@@ -14,23 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.kotlin.id
-
-/**
- * A unique document identifier.
- *
- * If the id type need to support json serialization and deserialization,
- * it must provide a toString() method and a constructor with a one String arg,
- * and consistent equals & hashCode methods.
- *
- *
- * @param T the owner of the id
- */
-interface Id<T> {
-
-    /**
-     * Cast Id<T> to Id<NewType>.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <NewType> cast(): Id<NewType> = this as Id<NewType>
+dependencies {
+    implementation project(":driver-kotlin:kotlin-id")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
 }

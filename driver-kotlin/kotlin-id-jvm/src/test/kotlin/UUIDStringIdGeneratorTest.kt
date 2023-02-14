@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb.kotlin.id
+package org.mongodb.kotlin.id.jvm
 
-/**
- * A unique document identifier.
- *
- * If the id type need to support json serialization and deserialization,
- * it must provide a toString() method and a constructor with a one String arg,
- * and consistent equals & hashCode methods.
- *
- *
- * @param T the owner of the id
- */
-interface Id<T> {
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.mongodb.kotlin.id.Id
 
-    /**
-     * Cast Id<T> to Id<NewType>.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <NewType> cast(): Id<NewType> = this as Id<NewType>
+class UUIDStringIdGeneratorTest {
+
+    @Test
+    fun `create returns a new Id`() {
+        val uuid: Id<Any> = UUIDStringIdGenerator.generateNewId()
+        val newUUID = UUIDStringIdGenerator.create(uuid.toString())
+        assertEquals(uuid, newUUID)
+    }
 }

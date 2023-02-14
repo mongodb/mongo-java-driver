@@ -14,5 +14,20 @@
  * limitations under the License.
  */
 
-description = "Kotlin extensions of the MongoDB Java drivers"
-archivesBaseName = 'mongo-kotlin-driver'
+package org.mongodb.kotlin.id.jvm
+
+/**
+ * An [IdGeneratorProvider], declared as [java.util.ServiceLoader].
+ */
+interface IdGeneratorProvider {
+
+    /**
+     * The priority of the [IdGeneratorProvider]. Greater is better.
+     */
+    val priority: Int get() = 0
+
+    /**
+     * The provided generator.
+     */
+    val generator: IdGenerator
+}

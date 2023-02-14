@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.mongodb.kotlin.id.jvm
 
-package org.mongodb.kotlin.id
+import org.mongodb.kotlin.id.Id
+import org.mongodb.kotlin.id.StringId
+import java.util.UUID
+import kotlin.reflect.KClass
 
 /**
- * A unique document identifier.
- *
- * If the id type need to support json serialization and deserialization,
- * it must provide a toString() method and a constructor with a one String arg,
- * and consistent equals & hashCode methods.
- *
- *
- * @param T the owner of the id
+ * Generator of [StringId] based on [UUID].
  */
-interface Id<T> {
+object UUIDStringIdGenerator : IdGenerator {
 
-    /**
-     * Cast Id<T> to Id<NewType>.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <NewType> cast(): Id<NewType> = this as Id<NewType>
+    override val idClass: KClass<out Id<*>> = StringId::class
+
+    override val wrappedIdClass: KClass<out Any> = String::class
+
+    override fun <T> generateNewId(): Id<T> = StringId(UUID.randomUUID().toString())
 }
