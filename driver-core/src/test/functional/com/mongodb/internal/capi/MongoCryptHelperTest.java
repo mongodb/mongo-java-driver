@@ -19,6 +19,7 @@ package com.mongodb.internal.capi;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
 import org.bson.BsonDocument;
@@ -52,6 +53,7 @@ public class MongoCryptHelperTest {
         ClientEncryptionSettings settings = ClientEncryptionSettings
                 .builder()
                 .kmsProviders(kmsProvidersRaw)
+                .keyVaultMongoClientSettings(MongoClientSettings.builder().build())
                 .keyVaultNamespace("a.b")
                 .build();
         MongoCryptOptions mongoCryptOptions = MongoCryptHelper.createMongoCryptOptions(settings);
