@@ -47,6 +47,7 @@ local.properties
 
 # shell scripts
 *.sh
+!.evergreen/*.sh
 
 # security-sensitive files
 *.gpg
