@@ -1,0 +1,12 @@
+org.bson
+org.bson.assertions
+org.bson.codecs
+org.bson.codecs.configuration
+org.bson.codecs.jsr310
+org.bson.codecs.pojo
+org.bson.codecs.pojo.annotations
+org.bson.conversions
+org.bson.diagnostics
+org.bson.io
+org.bson.json
+org.bson.types
