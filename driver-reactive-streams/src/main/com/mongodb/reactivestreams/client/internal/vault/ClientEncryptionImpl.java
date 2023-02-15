@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.internal.vault;
 
 import com.mongodb.ClientEncryptionSettings;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoUpdatedEncryptedFieldsException;
@@ -208,9 +207,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
         if (rawEncryptedFields == null) {
             throw new MongoConfigurationException(format("`encryptedFields` is not configured for the collection %s.", namespace));
         }
-        CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings() == null
-                ? MongoClientSettings.getDefaultCodecRegistry()
-                : options.getKeyVaultMongoClientSettings().getCodecRegistry();
+        CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings().getCodecRegistry();
         BsonDocument encryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry);
         BsonValue fields = encryptedFields.get("fields");
         if (fields != null && fields.isArray()) {
