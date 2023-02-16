@@ -20,8 +20,7 @@ plugins {
 }
 
 archivesBaseName = 'mongodb-driver-core'
-description = '''The Java operations layer for the MongoDB Java Driver.
- Third parties can wrap this layer to provide custom higher-level APIs'''
+description = 'Shared components for the Synchronous and Reactive Streams implementations of the MongoDB Java Driver.'
 
 ext {
     pomName = 'MongoDB Java Driver Core'
