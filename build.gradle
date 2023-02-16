@@ -30,7 +30,7 @@ buildscript {
 
         // Scala plugins
         classpath "com.adtran:scala-multiversion-plugin:2.0.4"
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:6.3.0"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:6.14.0"
 
         // Test logging plugin
         classpath 'com.adarshr:gradle-test-logger-plugin:2.1.0'

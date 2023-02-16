@@ -240,8 +240,8 @@ private[codecs] object CaseClassCodec {
             typeArgs += ($key -> {
               val tpeArgs = mutable.ListBuffer.empty[Class[_]]
               ..${flattenTypeArgs(f).map(t =>
-            q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]"
-          )}
+              q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]"
+            )}
               tpeArgs.toList
             })"""
       })
@@ -292,8 +292,8 @@ private[codecs] object CaseClassCodec {
       val flattenedFieldTypes = fields.flatMap({ case (t, types) => types.map(f => f._2) :+ t })
       val setClassToCaseClassMap = flattenedFieldTypes.map(t =>
         q"""classToCaseClassMap ++= ${flattenTypeArgs(t).map(t =>
-          q"(classOf[${t.finalResultType.erasure}], ${isCaseClass(t) || isCaseObject(t) || isSealed(t)})"
-        )}"""
+            q"(classOf[${t.finalResultType.erasure}], ${isCaseClass(t) || isCaseObject(t) || isSealed(t)})"
+          )}"""
       )
 
       q"""
