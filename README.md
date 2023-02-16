@@ -109,9 +109,21 @@ $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend
 If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
 the number of available file descriptors prior to starting mongod as described in [https://www.mongodb.com/docs/manual/reference/ulimit/](https://www.mongodb.com/docs/manual/reference/ulimit/)
 
-## Supporters
+## IntelliJ IDEA
 
-JetBrains is supporting this open source project with:
+A couple of manual configuration steps are required to run the code in IntelliJ:
 
-[![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)](http://www.jetbrains.com/idea/)
+- Java 17+ is required to build and compile the source.
 
+- **Error:** `java: cannot find symbol: class SNIHostName location: package javax.net.ssl`<br>
+ **Fix:** Settings/Preferences > Build, Execution, Deployment > Compiler > Java Compiler - untick "Use '--release' option for 
+  cross-compilation (Java 9 and later)"
+
+- **Error:** `java: package com.mongodb.internal.build does not exist`<br>
+ **Fixes:** Any of the following: <br>
+  - Run the `generateBuildConfig` task: eg: `./gradlew generateBuildConfig` or via Gradle > driver-core > Tasks > buildconfig >
+ generateBuildConfig
+  - Set `generateBuildConfig` to execute Before Build. via Gradle > Tasks > buildconfig > right click generateBuildConfig - click on 
+   "Execute Before Build" 
+  - Delegate all build actions to Gradle: Settings/Preferences > Build, Execution, Deployment > Build Tools > Gradle > Build and run 
+  using/Run tests using - select "Gradle"
