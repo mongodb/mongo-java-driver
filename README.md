@@ -128,14 +128,6 @@ A couple of manual configuration steps are required to run the code in IntelliJ:
   - Delegate all build actions to Gradle: Settings/Preferences > Build, Execution, Deployment > Build Tools > Gradle > Build and run 
   using/Run tests using - select "Gradle"
 
-## Maintainers
-
-* Jeff Yemin           jeff.yemin@mongodb.com
-* Ross Lawley          ross@mongodb.com
-* John Stewart         john.stewart@mongodb.com
-
-Additional contributors can be found [here](https://github.com/mongodb/mongo-java-driver/graphs/contributors).
-
 ## Supporters
 
 JetBrains is supporting this open source project with:
