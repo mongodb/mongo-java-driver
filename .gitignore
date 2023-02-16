@@ -51,3 +51,7 @@ local.properties
 
 # security-sensitive files
 *.gpg
+
+# bin build directories
+**/bin
+
