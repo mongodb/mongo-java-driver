@@ -16,6 +16,9 @@
 
 package org.mongodb.kotlin.id.jvm
 
+import org.mongodb.kotlin.id.IdGenerator
+import org.mongodb.kotlin.id.IdGeneratorProvider
+
 /**
  * UUID-based implementation
  */
@@ -25,5 +28,5 @@ internal class UUIDStringIdGeneratorProvider : IdGeneratorProvider {
 
     override fun equals(other: Any?): Boolean = other is UUIDStringIdGeneratorProvider
 
-    override fun hashCode(): Int = 0
+    override fun hashCode(): Int = UUIDStringIdGenerator.hashCode()
 }

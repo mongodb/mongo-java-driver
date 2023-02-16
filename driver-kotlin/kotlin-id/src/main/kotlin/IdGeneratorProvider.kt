@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mongodb.kotlin.id.jvm
 
-import org.mongodb.kotlin.id.Id
-import org.mongodb.kotlin.id.IdGenerator
-import org.mongodb.kotlin.id.StringId
-import java.util.UUID
-import kotlin.reflect.KClass
+package org.mongodb.kotlin.id
 
 /**
- * Generator of [StringId] based on [UUID].
+ * An [IdGeneratorProvider].
  */
-object UUIDStringIdGenerator : IdGenerator {
+interface IdGeneratorProvider {
 
-    override val idClass: KClass<out Id<*>> = StringId::class
+    /**
+     * The priority of the [IdGeneratorProvider]. Greater is better.
+     */
+    val priority: Int get() = 0
 
-    override val wrappedIdClass: KClass<out Any> = String::class
-
-    override fun <T> generateNewId(): Id<T> = StringId(UUID.randomUUID().toString())
-
-    override fun create(s: String): Id<*> = createId(s)
+    /**
+     * The provided generator.
+     */
+    val generator: IdGenerator
 }

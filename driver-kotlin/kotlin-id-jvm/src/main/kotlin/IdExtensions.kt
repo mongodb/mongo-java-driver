@@ -17,8 +17,11 @@
 package org.mongodb.kotlin.id.jvm
 
 import org.mongodb.kotlin.id.Id
+import org.mongodb.kotlin.id.IdGenerator
+import org.mongodb.kotlin.id.IdGeneratorProvider
 import org.mongodb.kotlin.id.StringId
 import java.util.ServiceLoader
+import kotlin.reflect.full.valueParameters
 
 /**
  * Generate a new [Id] with the [IdGenerator.defaultGenerator].
@@ -36,3 +39,13 @@ fun loadIdGeneratorProvider(): IdGeneratorProvider =
  * Create a new [Id] from the current [String].
  */
 fun <T> String.toId(): Id<T> = StringId(this)
+
+/**
+ * Create a new id from its String representation.
+ */
+fun IdGenerator.createId(s: String): Id<*> = idClass
+    .constructors
+    .firstOrNull { it.valueParameters.size == 1 && it.valueParameters.first().type.classifier == String::class }
+    ?.call(s)
+    ?: error("no constructor with a single string arg found for $idClass}")
+

@@ -14,3 +14,11 @@
  * limitations under the License.
  */
 
+dependencies {
+    implementation project(":driver-kotlin:kotlin-id")
+    implementation project(":driver-kotlin:kotlin-id-jvm")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
+}

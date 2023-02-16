@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mongodb.kotlin.id.jvm
 
-import org.mongodb.kotlin.id.Id
+package org.mongodb.kotlin.id.jackson
+
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.KeyDeserializer
 import org.mongodb.kotlin.id.IdGenerator
-import org.mongodb.kotlin.id.StringId
-import java.util.UUID
-import kotlin.reflect.KClass
+import org.mongodb.kotlin.id.jvm.loadIdGeneratorProvider
 
 /**
- * Generator of [StringId] based on [UUID].
+ * Deserialize a [String] to an [Id] for a key.
+ * @param idGenerator idGenerator the generator to use
  */
-object UUIDStringIdGenerator : IdGenerator {
+class IdKeyDeserializer(private val idGenerator: IdGenerator = loadIdGeneratorProvider().generator) : KeyDeserializer() {
 
-    override val idClass: KClass<out Id<*>> = StringId::class
+    override fun deserializeKey(key: String, ctxt: DeserializationContext): Any =
+        StringToIdDeserializer.deserialize(idGenerator, key)
 
-    override val wrappedIdClass: KClass<out Any> = String::class
-
-    override fun <T> generateNewId(): Id<T> = StringId(UUID.randomUUID().toString())
-
-    override fun create(s: String): Id<*> = createId(s)
 }

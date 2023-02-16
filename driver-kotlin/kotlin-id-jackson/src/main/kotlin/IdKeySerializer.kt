@@ -14,3 +14,18 @@
  * limitations under the License.
  */
 
+package org.mongodb.kotlin.id.jackson
+
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.JsonSerializer
+import com.fasterxml.jackson.databind.SerializerProvider
+import org.mongodb.kotlin.id.Id
+
+/**
+ * Serialize an [Id] to a [String] for a [Map].
+ */
+class IdKeySerializer : JsonSerializer<Id<*>>() {
+    override fun serialize(value: Id<*>, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeFieldName(value.toString())
+    }
+}

@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb.kotlin.id.jvm
+package org.mongodb.kotlin.id.jackson
+
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.JsonSerializer
+import com.fasterxml.jackson.databind.SerializerProvider
+import org.mongodb.kotlin.id.Id
 
 /**
- * An [IdGeneratorProvider], declared as [java.util.ServiceLoader].
+ * Serialize an [Id] to a [String].
  */
-interface IdGeneratorProvider {
-
-    /**
-     * The priority of the [IdGeneratorProvider]. Greater is better.
-     */
-    val priority: Int get() = 0
-
-    /**
-     * The provided generator.
-     */
-    val generator: IdGenerator
+class IdToStringSerializer : JsonSerializer<Id<*>>() {
+    override fun serialize(value: Id<*>, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeString(value.toString())
+    }
 }
