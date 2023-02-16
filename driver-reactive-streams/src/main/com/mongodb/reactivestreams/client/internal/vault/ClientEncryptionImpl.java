@@ -32,6 +32,7 @@ import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -58,6 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -77,6 +79,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
         this(MongoClients.create(options.getKeyVaultMongoClientSettings()), options);
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
     public ClientEncryptionImpl(final MongoClient keyVaultClient, final ClientEncryptionSettings options) {
         this.keyVaultClient = keyVaultClient;
         this.crypt = Crypts.create(keyVaultClient, options);
