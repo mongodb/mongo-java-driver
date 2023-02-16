@@ -32,7 +32,7 @@ dependencies {
 
 sourceSets {
     integrationTest {
-        scala.srcDir file('src/it/scala')
+        scala.srcDir file('src/integration/scala')
         scala {
             compileClasspath += main.output
             runtimeClasspath += main.output
@@ -61,7 +61,7 @@ tasks.withType(ScalaCompile) {
 }
 
 task integrationTest(type: Test) {
-    delete 'build/test-it'
+    delete 'build/test-integration'
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     mustRunAfter test
