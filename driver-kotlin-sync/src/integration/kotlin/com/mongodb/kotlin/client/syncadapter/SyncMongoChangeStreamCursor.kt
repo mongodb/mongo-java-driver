@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.kotlin.client.syncadapter
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':driver-kotlin-sync'
-include ':bson-scala'
-include ':driver-scala'
-include 'util:spock'
-include 'util:taglets'
+import com.mongodb.client.MongoChangeStreamCursor as JMongoChangeStreamCursor
+import com.mongodb.kotlin.client.MongoChangeStreamCursor
+import org.bson.BsonDocument
+
+data class SyncMongoChangeStreamCursor<T : Any>(val wrapped: MongoChangeStreamCursor<T>) :
+    JMongoChangeStreamCursor<T>, SyncMongoCursor<T>(wrapped) {
+    override fun getResumeToken(): BsonDocument? = wrapped.getResumeToken()
+}
