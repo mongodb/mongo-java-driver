@@ -30,6 +30,9 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 public final class MongoUpdatedEncryptedFieldsException extends MongoClientException {
     private static final long serialVersionUID = 1;
 
+    /**
+     * The encrypted fields
+     */
     private final BsonDocument encryptedFields;
 
     /**
