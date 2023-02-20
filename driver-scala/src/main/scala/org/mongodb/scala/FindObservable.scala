@@ -39,7 +39,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Helper to return a Observable limited to just the first result the query.
    *
-   * **Note:** Sets limit in the background so only returns 1.
+   * '''Note:''' Sets limit in the background so only returns 1.
    *
    * @return a Observable which will return the first item
    */

@@ -73,14 +73,15 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * The expression is expected to be in one of the following forms:
    *
    * - A Match Expression of this form:
-   *   {{{ {$and: [{<field>: {$gt: <value1>}}, {<field>: {$lt: <value2> }}]}} }}}
+   *   {{{ {\$and: [{<field>: {\$gt: <value1>}}, {<field>: {\$lt: <value2> }}]}} }}}
    * - An Aggregate Expression of this form:
-   *   {{{ {$and: [{$gt: [<fieldpath>, <value1>]}, {$lt: [<fieldpath>, <value2>]}] }} }}}
+   *   {{{ {\$and: [{\$gt: [<fieldpath>, <value1>]}, {\$lt: [<fieldpath>, <value2>]}] }} }}}
    *
-   * `$gt` may also be `$gte`. `$lt` may also be `$lte`.
+   * `\$gt` may also be `\$gte`. `\$lt` may also be `\$lte`.
    *
    * Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
-   * **Note:** The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
+   *
+   * '''Note:''' The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
    *
    * [[https://www.mongodb.com/docs/manual/core/queryable-encryption/ queryable encryption]]
    *
@@ -119,9 +120,8 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @return A publisher of the (potentially updated) `encryptedFields` configuration that was used to create the collection.
    * A user may use this document to configure `com.mongodb.AutoEncryptionSettings.getEncryptedFieldsMap`.
    *
-   * Produces [[com.mongodb.MongoUpdatedEncryptedFieldsException]]
-   * if an exception happens after creating at least one data key. This exception makes the updated `encryptedFields`
-   * available to the caller.
+   * Produces MongoUpdatedEncryptedFieldsException` if an exception happens after creating at least one data key.
+   * This exception makes the updated `encryptedFields` available to the caller.
    * @since 4.9
    * @note Requires MongoDB 6.0 or greater.
    * @see [[https://www.mongodb.com/docs/manual/reference/command/create/ Create Command]]
