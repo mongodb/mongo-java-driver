@@ -45,6 +45,9 @@ public class CreateCollectionOptions {
     private ClusteredIndexOptions clusteredIndexOptions;
     private Bson encryptedFields;
 
+    /**
+     * Construct a new instance
+     */
     public CreateCollectionOptions() {
     }
 
