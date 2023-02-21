@@ -20,7 +20,7 @@ import com.mongodb.client.MongoCursor
 import com.mongodb.client.MongoIterable as JMongoIterable
 import com.mongodb.kotlin.client.MongoIterable
 
-open class SyncMongoIterable<T>(val delegate: MongoIterable<T>) : JMongoIterable<T> {
+open class SyncMongoIterable<T : Any>(val delegate: MongoIterable<T>) : JMongoIterable<T> {
     override fun iterator(): MongoCursor<T> = cursor()
 
     override fun cursor(): MongoCursor<T> = SyncMongoCursor(delegate.cursor())
@@ -35,11 +35,6 @@ open class SyncMongoIterable<T>(val delegate: MongoIterable<T>) : JMongoIterable
         return target as (A & Any)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun <U : Any?> map(mapper: Function<T, U>): SyncMongoIterable<U> =
-        SyncMongoIterable(
-            delegate.map { it ->
-                val i: T & Any = it as (T & Any)
-                mapper.apply(i) as (U & Any)
-            })
+    override fun <U : Any> map(mapper: Function<T, U>): SyncMongoIterable<U> =
+        SyncMongoIterable(delegate.map { mapper.apply(it) })
 }

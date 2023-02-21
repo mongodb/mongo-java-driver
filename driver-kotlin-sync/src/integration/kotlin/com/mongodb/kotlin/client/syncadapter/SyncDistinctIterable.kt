@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.conversions.Bson
 
-data class SyncDistinctIterable<T>(val wrapped: DistinctIterable<T>) :
+data class SyncDistinctIterable<T : Any>(val wrapped: DistinctIterable<T>) :
     JDistinctIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncDistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun filter(filter: Bson?): SyncDistinctIterable<T> = apply { wrapped.filter(filter) }

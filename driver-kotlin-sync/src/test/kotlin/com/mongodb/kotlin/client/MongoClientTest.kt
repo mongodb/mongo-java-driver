@@ -16,7 +16,6 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ClientSessionOptions
-import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoClient as JMongoClient
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
@@ -36,7 +35,7 @@ import org.mockito.kotlin.whenever
 class MongoClientTest {
 
     @Mock val wrapped: JMongoClient = mock()
-    @Mock val clientSession: ClientSession = mock()
+    @Mock val clientSession: ClientSession = ClientSession(mock())
 
     @Test
     fun shouldHaveTheSameMethods() {
@@ -103,7 +102,7 @@ class MongoClientTest {
         mongoClient.listDatabaseNames(clientSession)
 
         verify(wrapped).listDatabaseNames()
-        verify(wrapped).listDatabaseNames(clientSession)
+        verify(wrapped).listDatabaseNames(clientSession.wrapped)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -111,8 +110,8 @@ class MongoClientTest {
     fun shouldCallTheUnderlyingListDatabases() {
         val mongoClient = MongoClient(wrapped)
         whenever(wrapped.listDatabases(Document::class.java)).doReturn(mock())
-        whenever(wrapped.listDatabases(clientSession, Document::class.java)).doReturn(mock())
-        whenever(wrapped.listDatabases(clientSession, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.listDatabases(clientSession.wrapped, Document::class.java)).doReturn(mock())
+        whenever(wrapped.listDatabases(clientSession.wrapped, BsonDocument::class.java)).doReturn(mock())
 
         mongoClient.listDatabases()
         mongoClient.listDatabases(clientSession)
@@ -122,8 +121,8 @@ class MongoClientTest {
         mongoClient.listDatabases<BsonDocument>(clientSession)
 
         verify(wrapped, times(3)).listDatabases(Document::class.java)
-        verify(wrapped, times(1)).listDatabases(clientSession, Document::class.java)
-        verify(wrapped, times(2)).listDatabases(clientSession, BsonDocument::class.java)
+        verify(wrapped, times(1)).listDatabases(clientSession.wrapped, Document::class.java)
+        verify(wrapped, times(2)).listDatabases(clientSession.wrapped, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -134,11 +133,11 @@ class MongoClientTest {
 
         whenever(wrapped.watch(emptyList(), Document::class.java)).doReturn(mock())
         whenever(wrapped.watch(pipeline, Document::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, emptyList(), Document::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, pipeline, Document::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, emptyList(), Document::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, pipeline, Document::class.java)).doReturn(mock())
         whenever(wrapped.watch(pipeline, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, emptyList(), Document::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, pipeline, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, emptyList(), Document::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, pipeline, BsonDocument::class.java)).doReturn(mock())
 
         mongoClient.watch()
         mongoClient.watch(pipeline)
@@ -157,10 +156,10 @@ class MongoClientTest {
 
         verify(wrapped, times(3)).watch(emptyList(), Document::class.java)
         verify(wrapped, times(1)).watch(pipeline, Document::class.java)
-        verify(wrapped, times(3)).watch(clientSession, emptyList(), Document::class.java)
-        verify(wrapped, times(1)).watch(clientSession, pipeline, Document::class.java)
+        verify(wrapped, times(3)).watch(clientSession.wrapped, emptyList(), Document::class.java)
+        verify(wrapped, times(1)).watch(clientSession.wrapped, pipeline, Document::class.java)
         verify(wrapped, times(2)).watch(pipeline, BsonDocument::class.java)
-        verify(wrapped, times(2)).watch(clientSession, pipeline, BsonDocument::class.java)
+        verify(wrapped, times(2)).watch(clientSession.wrapped, pipeline, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 }

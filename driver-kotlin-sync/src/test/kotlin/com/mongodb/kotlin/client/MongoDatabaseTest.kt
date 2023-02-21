@@ -18,7 +18,6 @@ package com.mongodb.kotlin.client
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoDatabase as JMongoDatabase
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
@@ -47,7 +46,7 @@ import org.mockito.kotlin.whenever
 class MongoDatabaseTest {
 
     @Mock val wrapped: JMongoDatabase = mock()
-    @Mock val clientSession: ClientSession = mock()
+    @Mock val clientSession: ClientSession = ClientSession(mock())
 
     @Test
     fun shouldHaveTheSameMethods() {
@@ -57,7 +56,7 @@ class MongoDatabaseTest {
                 MongoDatabase::class
                     .declaredMemberProperties
                     .filterNot { it.name == "wrapped" }
-                    .map { "get${it.name.replaceFirstChar{c -> c.uppercaseChar() }}" }
+                    .map { "get${it.name.replaceFirstChar { c -> c.uppercaseChar() }}" }
 
         assertEquals(jMongoDatabaseFunctions, kMongoDatabaseFunctions)
     }
@@ -175,11 +174,11 @@ class MongoDatabaseTest {
 
         whenever(wrapped.readPreference).doReturn(primary)
         whenever(wrapped.runCommand(command, primary, Document::class.java)).doReturn(mock())
-        whenever(wrapped.runCommand(clientSession, command, primary, Document::class.java)).doReturn(mock())
+        whenever(wrapped.runCommand(clientSession.wrapped, command, primary, Document::class.java)).doReturn(mock())
         whenever(wrapped.runCommand(command, primary, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.runCommand(clientSession, command, primary, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.runCommand(clientSession.wrapped, command, primary, BsonDocument::class.java)).doReturn(mock())
         whenever(wrapped.runCommand(command, primaryPreferred, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.runCommand(clientSession, command, primaryPreferred, BsonDocument::class.java))
+        whenever(wrapped.runCommand(clientSession.wrapped, command, primaryPreferred, BsonDocument::class.java))
             .doReturn(mock())
 
         mongoDatabase.runCommand(command)
@@ -199,11 +198,11 @@ class MongoDatabaseTest {
 
         verify(wrapped, times(6)).readPreference
         verify(wrapped, times(4)).runCommand(command, primary, Document::class.java)
-        verify(wrapped, times(4)).runCommand(clientSession, command, primary, Document::class.java)
+        verify(wrapped, times(4)).runCommand(clientSession.wrapped, command, primary, Document::class.java)
         verify(wrapped, times(1)).runCommand(command, primary, BsonDocument::class.java)
-        verify(wrapped, times(1)).runCommand(clientSession, command, primary, BsonDocument::class.java)
+        verify(wrapped, times(1)).runCommand(clientSession.wrapped, command, primary, BsonDocument::class.java)
         verify(wrapped, times(1)).runCommand(command, primaryPreferred, BsonDocument::class.java)
-        verify(wrapped, times(1)).runCommand(clientSession, command, primaryPreferred, BsonDocument::class.java)
+        verify(wrapped, times(1)).runCommand(clientSession.wrapped, command, primaryPreferred, BsonDocument::class.java)
 
         verifyNoMoreInteractions(wrapped)
     }
@@ -216,7 +215,7 @@ class MongoDatabaseTest {
         mongoDatabase.drop(clientSession)
 
         verify(wrapped).drop()
-        verify(wrapped).drop(clientSession)
+        verify(wrapped).drop(clientSession.wrapped)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -224,13 +223,13 @@ class MongoDatabaseTest {
     fun shouldCallTheUnderlyingListCollectionNames() {
         val mongoDatabase = MongoDatabase(wrapped)
         whenever(wrapped.listCollectionNames()).doReturn(mock())
-        whenever(wrapped.listCollectionNames(clientSession)).doReturn(mock())
+        whenever(wrapped.listCollectionNames(clientSession.wrapped)).doReturn(mock())
 
         mongoDatabase.listCollectionNames()
         mongoDatabase.listCollectionNames(clientSession)
 
         verify(wrapped).listCollectionNames()
-        verify(wrapped).listCollectionNames(clientSession)
+        verify(wrapped).listCollectionNames(clientSession.wrapped)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -239,8 +238,8 @@ class MongoDatabaseTest {
         val mongoDatabase = MongoDatabase(wrapped)
         whenever(wrapped.listCollections(Document::class.java)).doReturn(mock())
         whenever(wrapped.listCollections(BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.listCollections(clientSession, Document::class.java)).doReturn(mock())
-        whenever(wrapped.listCollections(clientSession, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.listCollections(clientSession.wrapped, Document::class.java)).doReturn(mock())
+        whenever(wrapped.listCollections(clientSession.wrapped, BsonDocument::class.java)).doReturn(mock())
 
         mongoDatabase.listCollections()
         mongoDatabase.listCollections(clientSession)
@@ -252,9 +251,9 @@ class MongoDatabaseTest {
         mongoDatabase.listCollections<BsonDocument>(clientSession)
 
         verify(wrapped, times(2)).listCollections(Document::class.java)
-        verify(wrapped, times(2)).listCollections(clientSession, Document::class.java)
+        verify(wrapped, times(2)).listCollections(clientSession.wrapped, Document::class.java)
         verify(wrapped, times(1)).listCollections(BsonDocument::class.java)
-        verify(wrapped, times(1)).listCollections(clientSession, BsonDocument::class.java)
+        verify(wrapped, times(1)).listCollections(clientSession.wrapped, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -274,8 +273,8 @@ class MongoDatabaseTest {
 
         verify(wrapped).createCollection(eq(name), deepRefEq(defaultOptions))
         verify(wrapped).createCollection(eq(name2), eq(options))
-        verify(wrapped).createCollection(eq(clientSession), eq(name), deepRefEq(defaultOptions))
-        verify(wrapped).createCollection(eq(clientSession), eq(name2), eq(options))
+        verify(wrapped).createCollection(eq(clientSession.wrapped), eq(name), deepRefEq(defaultOptions))
+        verify(wrapped).createCollection(eq(clientSession.wrapped), eq(name2), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -295,8 +294,9 @@ class MongoDatabaseTest {
 
         verify(wrapped).createView(eq(viewName), eq(viewOn), eq(pipeline), refEq(defaultOptions))
         verify(wrapped).createView(eq(viewName), eq(viewOn), eq(pipeline), eq(options))
-        verify(wrapped).createView(eq(clientSession), eq(viewName), eq(viewOn), eq(pipeline), refEq(defaultOptions))
-        verify(wrapped).createView(eq(clientSession), eq(viewName), eq(viewOn), eq(pipeline), eq(options))
+        verify(wrapped)
+            .createView(eq(clientSession.wrapped), eq(viewName), eq(viewOn), eq(pipeline), refEq(defaultOptions))
+        verify(wrapped).createView(eq(clientSession.wrapped), eq(viewName), eq(viewOn), eq(pipeline), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -306,9 +306,9 @@ class MongoDatabaseTest {
         val pipeline = listOf(Document(mapOf("a" to 1)))
 
         whenever(wrapped.aggregate(pipeline, Document::class.java)).doReturn(mock())
-        whenever(wrapped.aggregate(clientSession, pipeline, Document::class.java)).doReturn(mock())
+        whenever(wrapped.aggregate(clientSession.wrapped, pipeline, Document::class.java)).doReturn(mock())
         whenever(wrapped.aggregate(pipeline, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.aggregate(clientSession, pipeline, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.aggregate(clientSession.wrapped, pipeline, BsonDocument::class.java)).doReturn(mock())
 
         mongoDatabase.aggregate(pipeline)
         mongoDatabase.aggregate(clientSession, pipeline)
@@ -320,9 +320,9 @@ class MongoDatabaseTest {
         mongoDatabase.aggregate<BsonDocument>(clientSession, pipeline)
 
         verify(wrapped, times(2)).aggregate(pipeline, Document::class.java)
-        verify(wrapped, times(2)).aggregate(clientSession, pipeline, Document::class.java)
+        verify(wrapped, times(2)).aggregate(clientSession.wrapped, pipeline, Document::class.java)
         verify(wrapped, times(1)).aggregate(pipeline, BsonDocument::class.java)
-        verify(wrapped, times(1)).aggregate(clientSession, pipeline, BsonDocument::class.java)
+        verify(wrapped, times(1)).aggregate(clientSession.wrapped, pipeline, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -333,12 +333,12 @@ class MongoDatabaseTest {
 
         whenever(wrapped.watch(emptyList(), Document::class.java)).doReturn(mock())
         whenever(wrapped.watch(pipeline, Document::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, emptyList(), Document::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, pipeline, Document::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, emptyList(), Document::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, pipeline, Document::class.java)).doReturn(mock())
         whenever(wrapped.watch(emptyList(), BsonDocument::class.java)).doReturn(mock())
         whenever(wrapped.watch(pipeline, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, emptyList(), BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, pipeline, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, emptyList(), BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, pipeline, BsonDocument::class.java)).doReturn(mock())
 
         mongoDatabase.watch()
         mongoDatabase.watch(pipeline)
@@ -357,12 +357,12 @@ class MongoDatabaseTest {
 
         verify(wrapped, times(2)).watch(emptyList(), Document::class.java)
         verify(wrapped, times(2)).watch(pipeline, Document::class.java)
-        verify(wrapped, times(2)).watch(clientSession, emptyList(), Document::class.java)
-        verify(wrapped, times(2)).watch(clientSession, pipeline, Document::class.java)
+        verify(wrapped, times(2)).watch(clientSession.wrapped, emptyList(), Document::class.java)
+        verify(wrapped, times(2)).watch(clientSession.wrapped, pipeline, Document::class.java)
         verify(wrapped, times(1)).watch(emptyList(), BsonDocument::class.java)
         verify(wrapped, times(1)).watch(pipeline, BsonDocument::class.java)
-        verify(wrapped, times(1)).watch(clientSession, emptyList(), BsonDocument::class.java)
-        verify(wrapped, times(1)).watch(clientSession, pipeline, BsonDocument::class.java)
+        verify(wrapped, times(1)).watch(clientSession.wrapped, emptyList(), BsonDocument::class.java)
+        verify(wrapped, times(1)).watch(clientSession.wrapped, pipeline, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 

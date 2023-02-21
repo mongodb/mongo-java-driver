@@ -20,13 +20,13 @@ import com.mongodb.ServerCursor
 import com.mongodb.client.MongoCursor as JMongoCursor
 import com.mongodb.kotlin.client.MongoCursor
 
-open class SyncMongoCursor<T>(val delegate: MongoCursor<T>) : JMongoCursor<T> {
+open class SyncMongoCursor<T : Any>(private val delegate: MongoCursor<T>) : JMongoCursor<T> {
     override fun remove() {
         TODO("Not yet implemented")
     }
 
     override fun hasNext(): Boolean = delegate.hasNext()
-    @Suppress("UNCHECKED_CAST") override fun next(): T & Any = delegate.next() as (T & Any)
+    override fun next(): T = delegate.next()
 
     override fun close() = delegate.close()
 

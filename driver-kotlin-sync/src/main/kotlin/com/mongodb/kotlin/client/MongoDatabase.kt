@@ -18,7 +18,6 @@ package com.mongodb.kotlin.client
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoDatabase as JMongoDatabase
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
@@ -72,7 +71,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
     /**
      * Create a new MongoDatabase instance with a different read preference.
      *
-     * @param readPreference the new [ReadPreference] for the database
+     * @param newReadPreference the new [ReadPreference] for the database
      * @return a new MongoDatabase instance with the different readPreference
      */
     public fun withReadPreference(newReadPreference: ReadPreference): MongoDatabase =
@@ -81,7 +80,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
     /**
      * Create a new MongoDatabase instance with a different read concern.
      *
-     * @param readConcern the new [ReadConcern] for the database
+     * @param newReadConcern the new [ReadConcern] for the database
      * @return a new MongoDatabase instance with the different ReadConcern
      * @see [Read Concern](https://www.mongodb.com/docs/manual/reference/readConcern/)
      */
@@ -91,7 +90,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
     /**
      * Create a new MongoDatabase instance with a different write concern.
      *
-     * @param writeConcern the new [WriteConcern] for the database
+     * @param newWriteConcern the new [WriteConcern] for the database
      * @return a new MongoDatabase instance with the different writeConcern
      */
     public fun withWriteConcern(newWriteConcern: WriteConcern): MongoDatabase =
@@ -176,7 +175,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
         command: Bson,
         readPreference: ReadPreference = this.readPreference,
         resultClass: Class<T>
-    ): T = wrapped.runCommand(clientSession, command, readPreference, resultClass)
+    ): T = wrapped.runCommand(clientSession.wrapped, command, readPreference, resultClass)
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
@@ -221,7 +220,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
      * @param clientSession the client session with which to associate this operation
      * @see [Drop database](https://www.mongodb.com/docs/manual/reference/command/dropDatabase/#dbcmd.dropDatabase)
      */
-    public fun drop(clientSession: ClientSession): Unit = wrapped.drop(clientSession)
+    public fun drop(clientSession: ClientSession): Unit = wrapped.drop(clientSession.wrapped)
 
     /**
      * Gets the names of all the collections in this database.
@@ -237,7 +236,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
      * @return an iterable containing all the names of all the collections in this database
      */
     public fun listCollectionNames(clientSession: ClientSession): MongoIterable<String> =
-        MongoIterable(wrapped.listCollectionNames(clientSession))
+        MongoIterable(wrapped.listCollectionNames(clientSession.wrapped))
 
     /**
      * Gets all the collections in this database.
@@ -282,7 +281,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
     public fun <T : Any> listCollections(
         clientSession: ClientSession,
         resultClass: Class<T>
-    ): ListCollectionsIterable<T> = ListCollectionsIterable(wrapped.listCollections(clientSession, resultClass))
+    ): ListCollectionsIterable<T> = ListCollectionsIterable(wrapped.listCollections(clientSession.wrapped, resultClass))
 
     /**
      * Gets all the collections in this database.
@@ -328,7 +327,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
         clientSession: ClientSession,
         collectionName: String,
         createCollectionOptions: CreateCollectionOptions = CreateCollectionOptions()
-    ): Unit = wrapped.createCollection(clientSession, collectionName, createCollectionOptions)
+    ): Unit = wrapped.createCollection(clientSession.wrapped, collectionName, createCollectionOptions)
 
     /**
      * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines
@@ -364,7 +363,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
         viewOn: String,
         pipeline: List<Bson>,
         createViewOptions: CreateViewOptions = CreateViewOptions()
-    ): Unit = wrapped.createView(clientSession, viewName, viewOn, pipeline, createViewOptions)
+    ): Unit = wrapped.createView(clientSession.wrapped, viewName, viewOn, pipeline, createViewOptions)
 
     /**
      * Runs an aggregation framework pipeline on the database for pipeline stages that do not require an underlying
@@ -418,7 +417,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
         clientSession: ClientSession,
         pipeline: List<Bson>,
         resultClass: Class<T>
-    ): AggregateIterable<T> = AggregateIterable(wrapped.aggregate(clientSession, pipeline, resultClass))
+    ): AggregateIterable<T> = AggregateIterable(wrapped.aggregate(clientSession.wrapped, pipeline, resultClass))
 
     /**
      * Runs an aggregation framework pipeline on the database for pipeline stages that do not require an underlying
@@ -495,7 +494,7 @@ public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
         clientSession: ClientSession,
         pipeline: List<Bson> = emptyList(),
         resultClass: Class<T>
-    ): ChangeStreamIterable<T> = ChangeStreamIterable(wrapped.watch(clientSession, pipeline, resultClass))
+    ): ChangeStreamIterable<T> = ChangeStreamIterable(wrapped.watch(clientSession.wrapped, pipeline, resultClass))
 
     /**
      * Creates a change stream for this database.

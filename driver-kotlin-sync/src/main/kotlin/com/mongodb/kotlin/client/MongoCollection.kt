@@ -20,7 +20,6 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteResult
-import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoCollection as JMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
@@ -55,7 +54,8 @@ import org.bson.conversions.Bson
  *
  * Note: Additions to this interface will not be considered to break binary compatibility.
  *
- * @param <T> The type that this collection will encode documents from and decode documents to.
+ * @param T The type of documents the collection will encode documents from and decode documents to.
+ * @property wrapped the underlying sync MongoCollection
  */
 public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongoCollection<T>) {
 
@@ -194,7 +194,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         filter: Bson = BsonDocument(),
         options: CountOptions = CountOptions()
-    ): Long = wrapped.countDocuments(clientSession, filter, options)
+    ): Long = wrapped.countDocuments(clientSession.wrapped, filter, options)
 
     /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
@@ -240,7 +240,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         fieldName: String,
         filter: Bson = BsonDocument(),
         resultClass: Class<R>
-    ): DistinctIterable<R> = DistinctIterable(wrapped.distinct(clientSession, fieldName, filter, resultClass))
+    ): DistinctIterable<R> = DistinctIterable(wrapped.distinct(clientSession.wrapped, fieldName, filter, resultClass))
 
     /**
      * Gets the distinct values of the specified field name.
@@ -319,7 +319,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         filter: Bson = BsonDocument(),
         resultClass: Class<R>
-    ): FindIterable<R> = FindIterable(wrapped.find(clientSession, filter, resultClass))
+    ): FindIterable<R> = FindIterable(wrapped.find(clientSession.wrapped, filter, resultClass))
 
     /**
      * Finds all documents in the collection.
@@ -367,7 +367,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
      */
     @JvmName("aggregateAsTWithSession")
     public fun aggregate(clientSession: ClientSession, pipeline: List<Bson>): AggregateIterable<T> =
-        AggregateIterable(wrapped.aggregate(clientSession, pipeline, documentClass))
+        AggregateIterable(wrapped.aggregate(clientSession.wrapped, pipeline, documentClass))
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -395,7 +395,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         pipeline: List<Bson>,
         resultClass: Class<R>
-    ): AggregateIterable<R> = AggregateIterable(wrapped.aggregate(clientSession, pipeline, resultClass))
+    ): AggregateIterable<R> = AggregateIterable(wrapped.aggregate(clientSession.wrapped, pipeline, resultClass))
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -470,7 +470,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         pipeline: List<Bson> = emptyList(),
         resultClass: Class<R>
-    ): ChangeStreamIterable<R> = ChangeStreamIterable(wrapped.watch(clientSession, pipeline, resultClass))
+    ): ChangeStreamIterable<R> = ChangeStreamIterable(wrapped.watch(clientSession.wrapped, pipeline, resultClass))
 
     /**
      * Creates a change stream for this collection.
@@ -574,7 +574,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         reduceFunction: String,
         resultClass: Class<R>
     ): MapReduceIterable<R> =
-        MapReduceIterable(wrapped.mapReduce(clientSession, mapFunction, reduceFunction, resultClass))
+        MapReduceIterable(wrapped.mapReduce(clientSession.wrapped, mapFunction, reduceFunction, resultClass))
 
     /**
      * Aggregates documents according to the specified map-reduce function.
@@ -648,7 +648,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         document: T,
         options: InsertOneOptions = InsertOneOptions()
-    ): InsertOneResult = wrapped.insertOne(clientSession, document, options)
+    ): InsertOneResult = wrapped.insertOne(clientSession.wrapped, document, options)
 
     /**
      * Inserts one or more documents. A call to this method is equivalent to a call to the `bulkWrite` method
@@ -686,7 +686,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         documents: List<T>,
         options: InsertManyOptions = InsertManyOptions()
-    ): InsertManyResult = wrapped.insertMany(clientSession, documents, options)
+    ): InsertManyResult = wrapped.insertMany(clientSession.wrapped, documents, options)
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -745,7 +745,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         update: Bson,
         options: UpdateOptions = UpdateOptions()
-    ): UpdateResult = wrapped.updateOne(clientSession, filter, update, options)
+    ): UpdateResult = wrapped.updateOne(clientSession.wrapped, filter, update, options)
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -786,7 +786,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         update: List<Bson>,
         options: UpdateOptions = UpdateOptions()
-    ): UpdateResult = wrapped.updateOne(clientSession, filter, update, options)
+    ): UpdateResult = wrapped.updateOne(clientSession.wrapped, filter, update, options)
 
     /**
      * Update all documents in the collection according to the specified arguments.
@@ -829,7 +829,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         update: Bson,
         options: UpdateOptions = UpdateOptions()
-    ): UpdateResult = wrapped.updateMany(clientSession, filter, update, options)
+    ): UpdateResult = wrapped.updateMany(clientSession.wrapped, filter, update, options)
 
     /**
      * Update all documents in the collection according to the specified arguments.
@@ -866,7 +866,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         update: List<Bson>,
         options: UpdateOptions = UpdateOptions()
-    ): UpdateResult = wrapped.updateMany(clientSession, filter, update, options)
+    ): UpdateResult = wrapped.updateMany(clientSession.wrapped, filter, update, options)
 
     /**
      * Replace a document in the collection according to the specified arguments.
@@ -919,7 +919,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         replacement: T,
         options: ReplaceOptions = ReplaceOptions()
-    ): UpdateResult = wrapped.replaceOne(clientSession, filter, replacement, options)
+    ): UpdateResult = wrapped.replaceOne(clientSession.wrapped, filter, replacement, options)
 
     /**
      * Removes at most one document from the collection that matches the given filter.
@@ -961,7 +961,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         filter: Bson,
         options: DeleteOptions = DeleteOptions()
-    ): DeleteResult = wrapped.deleteOne(clientSession, filter, options)
+    ): DeleteResult = wrapped.deleteOne(clientSession.wrapped, filter, options)
 
     /**
      * Removes all documents from the collection that match the given query filter.
@@ -999,7 +999,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         filter: Bson,
         options: DeleteOptions = DeleteOptions()
-    ): DeleteResult = wrapped.deleteMany(clientSession, filter, options)
+    ): DeleteResult = wrapped.deleteMany(clientSession.wrapped, filter, options)
 
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
@@ -1039,7 +1039,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         requests: List<WriteModel<out T>>,
         options: BulkWriteOptions = BulkWriteOptions()
-    ): BulkWriteResult = wrapped.bulkWrite(clientSession, requests, options)
+    ): BulkWriteResult = wrapped.bulkWrite(clientSession.wrapped, requests, options)
 
     /**
      * Atomically find a document and remove it.
@@ -1067,7 +1067,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         filter: Bson,
         options: FindOneAndDeleteOptions = FindOneAndDeleteOptions()
-    ): T? = wrapped.findOneAndDelete(clientSession, filter, options)
+    ): T? = wrapped.findOneAndDelete(clientSession.wrapped, filter, options)
 
     /**
      * Atomically find a document and update it.
@@ -1119,7 +1119,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         update: Bson,
         options: FindOneAndUpdateOptions = FindOneAndUpdateOptions()
-    ): T? = wrapped.findOneAndUpdate(clientSession, filter, update, options)
+    ): T? = wrapped.findOneAndUpdate(clientSession.wrapped, filter, update, options)
 
     /**
      * Atomically find a document and update it.
@@ -1157,7 +1157,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         update: List<Bson>,
         options: FindOneAndUpdateOptions = FindOneAndUpdateOptions()
-    ): T? = wrapped.findOneAndUpdate(clientSession, filter, update, options)
+    ): T? = wrapped.findOneAndUpdate(clientSession.wrapped, filter, update, options)
 
     /**
      * Atomically find a document and replace it.
@@ -1203,7 +1203,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         filter: Bson,
         replacement: T,
         options: FindOneAndReplaceOptions = FindOneAndReplaceOptions()
-    ): T? = wrapped.findOneAndReplace(clientSession, filter, replacement, options)
+    ): T? = wrapped.findOneAndReplace(clientSession.wrapped, filter, replacement, options)
 
     /**
      * Drops this collection from the Database.
@@ -1221,7 +1221,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
      * @see [Drop Collection](https://www.mongodb.com/docs/manual/reference/command/drop/)
      */
     public fun drop(clientSession: ClientSession, options: DropCollectionOptions = DropCollectionOptions()): Unit =
-        wrapped.drop(clientSession, options)
+        wrapped.drop(clientSession.wrapped, options)
 
     /**
      * Create an index with the given keys and options.
@@ -1244,7 +1244,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
      * @see [Create indexes](https://www.mongodb.com/docs/manual/reference/command/createIndexes/)
      */
     public fun createIndex(clientSession: ClientSession, keys: Bson, options: IndexOptions = IndexOptions()): String =
-        wrapped.createIndex(clientSession, keys, options)
+        wrapped.createIndex(clientSession.wrapped, keys, options)
 
     /**
      * Create multiple indexes.
@@ -1272,7 +1272,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         indexes: List<IndexModel>,
         options: CreateIndexOptions = CreateIndexOptions()
-    ): List<String> = wrapped.createIndexes(clientSession, indexes, options)
+    ): List<String> = wrapped.createIndexes(clientSession.wrapped, indexes, options)
 
     /**
      * Get all the indexes in this collection.
@@ -1314,7 +1314,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
      * @see [List indexes](https://www.mongodb.com/docs/manual/reference/command/listIndexes/)
      */
     public fun <R : Any> listIndexes(clientSession: ClientSession, resultClass: Class<R>): ListIndexesIterable<R> =
-        ListIndexesIterable(wrapped.listIndexes(clientSession, resultClass))
+        ListIndexesIterable(wrapped.listIndexes(clientSession.wrapped, resultClass))
 
     /**
      * Get all the indexes in this collection.
@@ -1368,7 +1368,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         indexName: String,
         options: DropIndexOptions = DropIndexOptions()
-    ): Unit = wrapped.dropIndex(clientSession, indexName, options)
+    ): Unit = wrapped.dropIndex(clientSession.wrapped, indexName, options)
 
     /**
      * Drops the index given the keys used to create it.
@@ -1382,7 +1382,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         keys: Bson,
         options: DropIndexOptions = DropIndexOptions()
-    ): Unit = wrapped.dropIndex(clientSession, keys, options)
+    ): Unit = wrapped.dropIndex(clientSession.wrapped, keys, options)
 
     /**
      * Drop all the indexes on this collection, except for the default on `_id`.
@@ -1400,7 +1400,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
      * @see [Drop indexes](https://www.mongodb.com/docs/manual/reference/command/dropIndexes/)
      */
     public fun dropIndexes(clientSession: ClientSession, options: DropIndexOptions = DropIndexOptions()): Unit =
-        wrapped.dropIndexes(clientSession, options)
+        wrapped.dropIndexes(clientSession.wrapped, options)
 
     /**
      * Rename the collection with oldCollectionName to the newCollectionName.
@@ -1431,7 +1431,7 @@ public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongo
         clientSession: ClientSession,
         newCollectionNamespace: MongoNamespace,
         options: RenameCollectionOptions = RenameCollectionOptions()
-    ): Unit = wrapped.renameCollection(clientSession, newCollectionNamespace, options)
+    ): Unit = wrapped.renameCollection(clientSession.wrapped, newCollectionNamespace, options)
 }
 
 /**

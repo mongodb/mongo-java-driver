@@ -32,27 +32,29 @@ data class SyncMongoClient(val wrapped: MongoClient) : JMongoClient {
 
     override fun getDatabase(databaseName: String): MongoDatabase = SyncMongoDatabase(wrapped.getDatabase(databaseName))
 
-    override fun startSession(): ClientSession = wrapped.startSession()
+    override fun startSession(): ClientSession = SyncClientSession(wrapped.startSession(), this)
 
-    override fun startSession(options: ClientSessionOptions): ClientSession = wrapped.startSession(options)
+    override fun startSession(options: ClientSessionOptions): ClientSession =
+        SyncClientSession(wrapped.startSession(options), this)
 
     override fun listDatabaseNames(): MongoIterable<String> = SyncMongoIterable(wrapped.listDatabaseNames())
 
     override fun listDatabaseNames(clientSession: ClientSession): MongoIterable<String> =
-        SyncMongoIterable(wrapped.listDatabaseNames(clientSession))
+        SyncMongoIterable(wrapped.listDatabaseNames(clientSession.unwrapped()))
 
     override fun listDatabases(): ListDatabasesIterable<Document> = SyncListDatabasesIterable(wrapped.listDatabases())
 
     override fun listDatabases(clientSession: ClientSession): ListDatabasesIterable<Document> =
-        SyncListDatabasesIterable(wrapped.listDatabases(clientSession))
+        SyncListDatabasesIterable(wrapped.listDatabases(clientSession.unwrapped()))
 
-    override fun <T : Any?> listDatabases(resultClass: Class<T>): ListDatabasesIterable<T> =
+    override fun <T : Any> listDatabases(resultClass: Class<T>): ListDatabasesIterable<T> =
         SyncListDatabasesIterable(wrapped.listDatabases(resultClass))
 
-    override fun <T : Any?> listDatabases(
+    override fun <T : Any> listDatabases(
         clientSession: ClientSession,
         resultClass: Class<T>
-    ): ListDatabasesIterable<T> = SyncListDatabasesIterable(wrapped.listDatabases(clientSession, resultClass))
+    ): ListDatabasesIterable<T> =
+        SyncListDatabasesIterable(wrapped.listDatabases(clientSession.unwrapped(), resultClass))
 
     override fun watch(): ChangeStreamIterable<Document> = SyncChangeStreamIterable(wrapped.watch())
 
@@ -66,19 +68,22 @@ data class SyncMongoClient(val wrapped: MongoClient) : JMongoClient {
         SyncChangeStreamIterable(wrapped.watch(pipeline, resultClass))
 
     override fun watch(clientSession: ClientSession): ChangeStreamIterable<Document> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped()))
 
     override fun <T : Any> watch(clientSession: ClientSession, resultClass: Class<T>): ChangeStreamIterable<T> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession, resultClass = resultClass))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), resultClass = resultClass))
 
     override fun watch(clientSession: ClientSession, pipeline: MutableList<out Bson>): ChangeStreamIterable<Document> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession, pipeline))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline))
 
     override fun <T : Any> watch(
         clientSession: ClientSession,
         pipeline: MutableList<out Bson>,
         resultClass: Class<T>
-    ): ChangeStreamIterable<T> = SyncChangeStreamIterable(wrapped.watch(clientSession, pipeline, resultClass))
+    ): ChangeStreamIterable<T> =
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
 
     override fun getClusterDescription(): ClusterDescription = wrapped.getClusterDescription()
+
+    private fun ClientSession.unwrapped() = (this as SyncClientSession).wrapped
 }

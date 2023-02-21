@@ -92,13 +92,13 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
 
     override fun countDocuments(filter: Bson, options: CountOptions): Long = wrapped.countDocuments(filter, options)
 
-    override fun countDocuments(clientSession: ClientSession): Long = wrapped.countDocuments(clientSession)
+    override fun countDocuments(clientSession: ClientSession): Long = wrapped.countDocuments(clientSession.unwrapped())
 
     override fun countDocuments(clientSession: ClientSession, filter: Bson): Long =
-        wrapped.countDocuments(clientSession, filter)
+        wrapped.countDocuments(clientSession.unwrapped(), filter)
 
     override fun countDocuments(clientSession: ClientSession, filter: Bson, options: CountOptions): Long =
-        wrapped.countDocuments(clientSession, filter, options)
+        wrapped.countDocuments(clientSession.unwrapped(), filter, options)
 
     override fun estimatedDocumentCount(): Long = wrapped.estimatedDocumentCount()
 
@@ -115,14 +115,16 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         clientSession: ClientSession,
         fieldName: String,
         resultClass: Class<R>
-    ): DistinctIterable<R> = SyncDistinctIterable(wrapped.distinct(clientSession, fieldName, resultClass = resultClass))
+    ): DistinctIterable<R> =
+        SyncDistinctIterable(wrapped.distinct(clientSession.unwrapped(), fieldName, resultClass = resultClass))
 
     override fun <R : Any> distinct(
         clientSession: ClientSession,
         fieldName: String,
         filter: Bson,
         resultClass: Class<R>
-    ): DistinctIterable<R> = SyncDistinctIterable(wrapped.distinct(clientSession, fieldName, filter, resultClass))
+    ): DistinctIterable<R> =
+        SyncDistinctIterable(wrapped.distinct(clientSession.unwrapped(), fieldName, filter, resultClass))
 
     override fun find(): FindIterable<T> = SyncFindIterable(wrapped.find())
 
@@ -134,16 +136,17 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
     override fun <R : Any> find(filter: Bson, resultClass: Class<R>): FindIterable<R> =
         SyncFindIterable(wrapped.find(filter, resultClass))
 
-    override fun find(clientSession: ClientSession): FindIterable<T> = SyncFindIterable(wrapped.find(clientSession))
+    override fun find(clientSession: ClientSession): FindIterable<T> =
+        SyncFindIterable(wrapped.find(clientSession.unwrapped()))
 
     override fun <R : Any> find(clientSession: ClientSession, resultClass: Class<R>): FindIterable<R> =
-        SyncFindIterable(wrapped.find(clientSession, resultClass = resultClass))
+        SyncFindIterable(wrapped.find(clientSession.unwrapped(), resultClass = resultClass))
 
     override fun find(clientSession: ClientSession, filter: Bson): FindIterable<T> =
-        SyncFindIterable(wrapped.find(clientSession, filter))
+        SyncFindIterable(wrapped.find(clientSession.unwrapped(), filter))
 
     override fun <R : Any> find(clientSession: ClientSession, filter: Bson, resultClass: Class<R>): FindIterable<R> =
-        SyncFindIterable(wrapped.find(clientSession, filter, resultClass))
+        SyncFindIterable(wrapped.find(clientSession.unwrapped(), filter, resultClass))
 
     override fun aggregate(pipeline: MutableList<out Bson>): AggregateIterable<T> =
         SyncAggregateIterable(wrapped.aggregate(pipeline))
@@ -152,13 +155,13 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         SyncAggregateIterable(wrapped.aggregate(pipeline, resultClass))
 
     override fun aggregate(clientSession: ClientSession, pipeline: MutableList<out Bson>): AggregateIterable<T> =
-        SyncAggregateIterable(wrapped.aggregate(clientSession, pipeline))
+        SyncAggregateIterable(wrapped.aggregate(clientSession.unwrapped(), pipeline))
 
     override fun <R : Any> aggregate(
         clientSession: ClientSession,
         pipeline: MutableList<out Bson>,
         resultClass: Class<R>
-    ): AggregateIterable<R> = SyncAggregateIterable(wrapped.aggregate(clientSession, pipeline, resultClass))
+    ): AggregateIterable<R> = SyncAggregateIterable(wrapped.aggregate(clientSession.unwrapped(), pipeline, resultClass))
 
     override fun watch(): ChangeStreamIterable<T> = SyncChangeStreamIterable(wrapped.watch())
 
@@ -172,19 +175,20 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         SyncChangeStreamIterable(wrapped.watch(pipeline, resultClass))
 
     override fun watch(clientSession: ClientSession): ChangeStreamIterable<T> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped()))
 
     override fun <R : Any> watch(clientSession: ClientSession, resultClass: Class<R>): ChangeStreamIterable<R> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession, resultClass = resultClass))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), resultClass = resultClass))
 
     override fun watch(clientSession: ClientSession, pipeline: MutableList<out Bson>): ChangeStreamIterable<T> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession, pipeline))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline))
 
     override fun <R : Any> watch(
         clientSession: ClientSession,
         pipeline: MutableList<out Bson>,
         resultClass: Class<R>
-    ): ChangeStreamIterable<R> = SyncChangeStreamIterable(wrapped.watch(clientSession, pipeline, resultClass))
+    ): ChangeStreamIterable<R> =
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
 
     override fun mapReduce(mapFunction: String, reduceFunction: String): MapReduceIterable<T> =
         SyncMapReduceIterable(wrapped.mapReduce(mapFunction, reduceFunction))
@@ -199,7 +203,8 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         clientSession: ClientSession,
         mapFunction: String,
         reduceFunction: String
-    ): MapReduceIterable<T> = SyncMapReduceIterable(wrapped.mapReduce(clientSession, mapFunction, reduceFunction))
+    ): MapReduceIterable<T> =
+        SyncMapReduceIterable(wrapped.mapReduce(clientSession.unwrapped(), mapFunction, reduceFunction))
 
     override fun <R : Any> mapReduce(
         clientSession: ClientSession,
@@ -207,27 +212,27 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         reduceFunction: String,
         resultClass: Class<R>
     ): MapReduceIterable<R> =
-        SyncMapReduceIterable(wrapped.mapReduce(clientSession, mapFunction, reduceFunction, resultClass))
+        SyncMapReduceIterable(wrapped.mapReduce(clientSession.unwrapped(), mapFunction, reduceFunction, resultClass))
 
     override fun deleteOne(filter: Bson): DeleteResult = wrapped.deleteOne(filter)
 
     override fun deleteOne(filter: Bson, options: DeleteOptions): DeleteResult = wrapped.deleteOne(filter, options)
 
     override fun deleteOne(clientSession: ClientSession, filter: Bson): DeleteResult =
-        wrapped.deleteOne(clientSession, filter)
+        wrapped.deleteOne(clientSession.unwrapped(), filter)
 
     override fun deleteOne(clientSession: ClientSession, filter: Bson, options: DeleteOptions): DeleteResult =
-        wrapped.deleteOne(clientSession, filter, options)
+        wrapped.deleteOne(clientSession.unwrapped(), filter, options)
 
     override fun deleteMany(filter: Bson): DeleteResult = wrapped.deleteMany(filter)
 
     override fun deleteMany(filter: Bson, options: DeleteOptions): DeleteResult = wrapped.deleteMany(filter, options)
 
     override fun deleteMany(clientSession: ClientSession, filter: Bson): DeleteResult =
-        wrapped.deleteMany(clientSession, filter)
+        wrapped.deleteMany(clientSession.unwrapped(), filter)
 
     override fun deleteMany(clientSession: ClientSession, filter: Bson, options: DeleteOptions): DeleteResult =
-        wrapped.deleteMany(clientSession, filter, options)
+        wrapped.deleteMany(clientSession.unwrapped(), filter, options)
 
     override fun updateOne(filter: Bson, update: Bson): UpdateResult = wrapped.updateOne(filter, update)
 
@@ -235,14 +240,14 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.updateOne(filter, update, updateOptions)
 
     override fun updateOne(clientSession: ClientSession, filter: Bson, update: Bson): UpdateResult =
-        wrapped.updateOne(clientSession, filter, update)
+        wrapped.updateOne(clientSession.unwrapped(), filter, update)
 
     override fun updateOne(
         clientSession: ClientSession,
         filter: Bson,
         update: Bson,
         updateOptions: UpdateOptions
-    ): UpdateResult = wrapped.updateOne(clientSession, filter, update, updateOptions)
+    ): UpdateResult = wrapped.updateOne(clientSession.unwrapped(), filter, update, updateOptions)
 
     override fun updateOne(filter: Bson, update: MutableList<out Bson>): UpdateResult =
         wrapped.updateOne(filter, update)
@@ -251,14 +256,14 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.updateOne(filter, update, updateOptions)
 
     override fun updateOne(clientSession: ClientSession, filter: Bson, update: MutableList<out Bson>): UpdateResult =
-        wrapped.updateOne(clientSession, filter, update)
+        wrapped.updateOne(clientSession.unwrapped(), filter, update)
 
     override fun updateOne(
         clientSession: ClientSession,
         filter: Bson,
         update: MutableList<out Bson>,
         updateOptions: UpdateOptions
-    ): UpdateResult = wrapped.updateOne(clientSession, filter, update, updateOptions)
+    ): UpdateResult = wrapped.updateOne(clientSession.unwrapped(), filter, update, updateOptions)
 
     override fun updateMany(filter: Bson, update: Bson): UpdateResult = wrapped.updateMany(filter, update)
 
@@ -266,14 +271,14 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.updateMany(filter, update, updateOptions)
 
     override fun updateMany(clientSession: ClientSession, filter: Bson, update: Bson): UpdateResult =
-        wrapped.updateMany(clientSession, filter, update)
+        wrapped.updateMany(clientSession.unwrapped(), filter, update)
 
     override fun updateMany(
         clientSession: ClientSession,
         filter: Bson,
         update: Bson,
         updateOptions: UpdateOptions
-    ): UpdateResult = wrapped.updateMany(clientSession, filter, update, updateOptions)
+    ): UpdateResult = wrapped.updateMany(clientSession.unwrapped(), filter, update, updateOptions)
 
     override fun updateMany(filter: Bson, update: MutableList<out Bson>): UpdateResult =
         wrapped.updateMany(filter, update)
@@ -282,14 +287,14 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.updateMany(filter, update, updateOptions)
 
     override fun updateMany(clientSession: ClientSession, filter: Bson, update: MutableList<out Bson>): UpdateResult =
-        wrapped.updateMany(clientSession, filter, update)
+        wrapped.updateMany(clientSession.unwrapped(), filter, update)
 
     override fun updateMany(
         clientSession: ClientSession,
         filter: Bson,
         update: MutableList<out Bson>,
         updateOptions: UpdateOptions
-    ): UpdateResult = wrapped.updateMany(clientSession, filter, update, updateOptions)
+    ): UpdateResult = wrapped.updateMany(clientSession.unwrapped(), filter, update, updateOptions)
 
     override fun findOneAndDelete(filter: Bson): T? = wrapped.findOneAndDelete(filter)
 
@@ -297,10 +302,10 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.findOneAndDelete(filter, options)
 
     override fun findOneAndDelete(clientSession: ClientSession, filter: Bson): T? =
-        wrapped.findOneAndDelete(clientSession, filter)
+        wrapped.findOneAndDelete(clientSession.unwrapped(), filter)
 
     override fun findOneAndDelete(clientSession: ClientSession, filter: Bson, options: FindOneAndDeleteOptions): T? =
-        wrapped.findOneAndDelete(clientSession, filter, options)
+        wrapped.findOneAndDelete(clientSession.unwrapped(), filter, options)
 
     override fun findOneAndUpdate(filter: Bson, update: Bson): T? = wrapped.findOneAndUpdate(filter, update)
 
@@ -308,14 +313,14 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.findOneAndUpdate(filter, update, options)
 
     override fun findOneAndUpdate(clientSession: ClientSession, filter: Bson, update: Bson): T? =
-        wrapped.findOneAndUpdate(clientSession, filter, update)
+        wrapped.findOneAndUpdate(clientSession.unwrapped(), filter, update)
 
     override fun findOneAndUpdate(
         clientSession: ClientSession,
         filter: Bson,
         update: Bson,
         options: FindOneAndUpdateOptions
-    ): T? = wrapped.findOneAndUpdate(clientSession, filter, update, options)
+    ): T? = wrapped.findOneAndUpdate(clientSession.unwrapped(), filter, update, options)
 
     override fun findOneAndUpdate(filter: Bson, update: MutableList<out Bson>): T? =
         wrapped.findOneAndUpdate(filter, update)
@@ -324,33 +329,33 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.findOneAndUpdate(filter, update, options)
 
     override fun findOneAndUpdate(clientSession: ClientSession, filter: Bson, update: MutableList<out Bson>): T? =
-        wrapped.findOneAndUpdate(clientSession, filter, update)
+        wrapped.findOneAndUpdate(clientSession.unwrapped(), filter, update)
 
     override fun findOneAndUpdate(
         clientSession: ClientSession,
         filter: Bson,
         update: MutableList<out Bson>,
         options: FindOneAndUpdateOptions
-    ): T? = wrapped.findOneAndUpdate(clientSession, filter, update, options)
+    ): T? = wrapped.findOneAndUpdate(clientSession.unwrapped(), filter, update, options)
 
     override fun drop() = wrapped.drop()
 
-    override fun drop(clientSession: ClientSession) = wrapped.drop(clientSession)
+    override fun drop(clientSession: ClientSession) = wrapped.drop(clientSession.unwrapped())
 
     override fun drop(dropCollectionOptions: DropCollectionOptions) = wrapped.drop(dropCollectionOptions)
 
     override fun drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions) =
-        wrapped.drop(clientSession, dropCollectionOptions)
+        wrapped.drop(clientSession.unwrapped(), dropCollectionOptions)
 
     override fun createIndex(keys: Bson): String = wrapped.createIndex(keys)
 
     override fun createIndex(keys: Bson, indexOptions: IndexOptions): String = wrapped.createIndex(keys, indexOptions)
 
     override fun createIndex(clientSession: ClientSession, keys: Bson): String =
-        wrapped.createIndex(clientSession, keys)
+        wrapped.createIndex(clientSession.unwrapped(), keys)
 
     override fun createIndex(clientSession: ClientSession, keys: Bson, indexOptions: IndexOptions): String =
-        wrapped.createIndex(clientSession, keys, indexOptions)
+        wrapped.createIndex(clientSession.unwrapped(), keys, indexOptions)
 
     override fun createIndexes(indexes: MutableList<IndexModel>): MutableList<String> =
         wrapped.createIndexes(indexes).toMutableList()
@@ -361,13 +366,14 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
     ): MutableList<String> = wrapped.createIndexes(indexes, createIndexOptions).toMutableList()
 
     override fun createIndexes(clientSession: ClientSession, indexes: MutableList<IndexModel>): MutableList<String> =
-        wrapped.createIndexes(clientSession, indexes).toMutableList()
+        wrapped.createIndexes(clientSession.unwrapped(), indexes).toMutableList()
 
     override fun createIndexes(
         clientSession: ClientSession,
         indexes: MutableList<IndexModel>,
         createIndexOptions: CreateIndexOptions
-    ): MutableList<String> = wrapped.createIndexes(clientSession, indexes, createIndexOptions).toMutableList()
+    ): MutableList<String> =
+        wrapped.createIndexes(clientSession.unwrapped(), indexes, createIndexOptions).toMutableList()
 
     override fun listIndexes(): ListIndexesIterable<Document> = SyncListIndexesIterable(wrapped.listIndexes())
 
@@ -375,10 +381,10 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         SyncListIndexesIterable(wrapped.listIndexes(resultClass = resultClass))
 
     override fun listIndexes(clientSession: ClientSession): ListIndexesIterable<Document> =
-        SyncListIndexesIterable(wrapped.listIndexes(clientSession))
+        SyncListIndexesIterable(wrapped.listIndexes(clientSession.unwrapped()))
 
     override fun <R : Any> listIndexes(clientSession: ClientSession, resultClass: Class<R>): ListIndexesIterable<R> =
-        SyncListIndexesIterable(wrapped.listIndexes(clientSession, resultClass))
+        SyncListIndexesIterable(wrapped.listIndexes(clientSession.unwrapped(), resultClass))
 
     override fun dropIndex(indexName: String) = wrapped.dropIndex(indexName)
 
@@ -390,23 +396,24 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
     override fun dropIndex(keys: Bson, dropIndexOptions: DropIndexOptions) = wrapped.dropIndex(keys, dropIndexOptions)
 
     override fun dropIndex(clientSession: ClientSession, indexName: String) =
-        wrapped.dropIndex(clientSession, indexName)
+        wrapped.dropIndex(clientSession.unwrapped(), indexName)
 
-    override fun dropIndex(clientSession: ClientSession, keys: Bson) = wrapped.dropIndex(clientSession, keys)
+    override fun dropIndex(clientSession: ClientSession, keys: Bson) =
+        wrapped.dropIndex(clientSession.unwrapped(), keys)
     override fun dropIndex(clientSession: ClientSession, indexName: String, dropIndexOptions: DropIndexOptions) =
-        wrapped.dropIndex(clientSession, indexName, dropIndexOptions)
+        wrapped.dropIndex(clientSession.unwrapped(), indexName, dropIndexOptions)
 
     override fun dropIndex(clientSession: ClientSession, keys: Bson, dropIndexOptions: DropIndexOptions) =
-        wrapped.dropIndex(clientSession, keys, dropIndexOptions)
+        wrapped.dropIndex(clientSession.unwrapped(), keys, dropIndexOptions)
 
     override fun dropIndexes() = wrapped.dropIndexes()
 
-    override fun dropIndexes(clientSession: ClientSession) = wrapped.dropIndexes(clientSession)
+    override fun dropIndexes(clientSession: ClientSession) = wrapped.dropIndexes(clientSession.unwrapped())
 
     override fun dropIndexes(dropIndexOptions: DropIndexOptions) = wrapped.dropIndexes(dropIndexOptions)
 
     override fun dropIndexes(clientSession: ClientSession, dropIndexOptions: DropIndexOptions) =
-        wrapped.dropIndexes(clientSession, dropIndexOptions)
+        wrapped.dropIndexes(clientSession.unwrapped(), dropIndexOptions)
 
     override fun renameCollection(newCollectionNamespace: MongoNamespace) =
         wrapped.renameCollection(newCollectionNamespace)
@@ -417,22 +424,22 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
     ) = wrapped.renameCollection(newCollectionNamespace, renameCollectionOptions)
 
     override fun renameCollection(clientSession: ClientSession, newCollectionNamespace: MongoNamespace) =
-        wrapped.renameCollection(clientSession, newCollectionNamespace)
+        wrapped.renameCollection(clientSession.unwrapped(), newCollectionNamespace)
 
     override fun renameCollection(
         clientSession: ClientSession,
         newCollectionNamespace: MongoNamespace,
         renameCollectionOptions: RenameCollectionOptions
-    ) = wrapped.renameCollection(clientSession, newCollectionNamespace, renameCollectionOptions)
+    ) = wrapped.renameCollection(clientSession.unwrapped(), newCollectionNamespace, renameCollectionOptions)
     override fun findOneAndReplace(
         clientSession: ClientSession,
         filter: Bson,
         replacement: T,
         options: FindOneAndReplaceOptions
-    ): T? = wrapped.findOneAndReplace(clientSession, filter, replacement, options)
+    ): T? = wrapped.findOneAndReplace(clientSession.unwrapped(), filter, replacement, options)
 
     override fun findOneAndReplace(clientSession: ClientSession, filter: Bson, replacement: T): T? =
-        wrapped.findOneAndReplace(clientSession, filter, replacement)
+        wrapped.findOneAndReplace(clientSession.unwrapped(), filter, replacement)
 
     override fun findOneAndReplace(filter: Bson, replacement: T, options: FindOneAndReplaceOptions): T? =
         wrapped.findOneAndReplace(filter, replacement, options)
@@ -444,10 +451,10 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         filter: Bson,
         replacement: T,
         replaceOptions: ReplaceOptions
-    ): UpdateResult = wrapped.replaceOne(clientSession, filter, replacement, replaceOptions)
+    ): UpdateResult = wrapped.replaceOne(clientSession.unwrapped(), filter, replacement, replaceOptions)
 
     override fun replaceOne(clientSession: ClientSession, filter: Bson, replacement: T): UpdateResult =
-        wrapped.replaceOne(clientSession, filter, replacement)
+        wrapped.replaceOne(clientSession.unwrapped(), filter, replacement)
 
     override fun replaceOne(filter: Bson, replacement: T, replaceOptions: ReplaceOptions): UpdateResult =
         wrapped.replaceOne(filter, replacement, replaceOptions)
@@ -458,10 +465,10 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         clientSession: ClientSession,
         documents: MutableList<out T>,
         options: InsertManyOptions
-    ): InsertManyResult = wrapped.insertMany(clientSession, documents, options)
+    ): InsertManyResult = wrapped.insertMany(clientSession.unwrapped(), documents, options)
 
     override fun insertMany(clientSession: ClientSession, documents: MutableList<out T>): InsertManyResult =
-        wrapped.insertMany(clientSession, documents)
+        wrapped.insertMany(clientSession.unwrapped(), documents)
 
     override fun insertMany(documents: MutableList<out T>, options: InsertManyOptions): InsertManyResult =
         wrapped.insertMany(documents, options)
@@ -469,10 +476,10 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
     override fun insertMany(documents: MutableList<out T>): InsertManyResult = wrapped.insertMany(documents)
 
     override fun insertOne(clientSession: ClientSession, document: T, options: InsertOneOptions): InsertOneResult =
-        wrapped.insertOne(clientSession, document, options)
+        wrapped.insertOne(clientSession.unwrapped(), document, options)
 
     override fun insertOne(clientSession: ClientSession, document: T): InsertOneResult =
-        wrapped.insertOne(clientSession, document)
+        wrapped.insertOne(clientSession.unwrapped(), document)
 
     override fun insertOne(document: T, options: InsertOneOptions): InsertOneResult =
         wrapped.insertOne(document, options)
@@ -483,15 +490,17 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         clientSession: ClientSession,
         requests: MutableList<out WriteModel<out T>>,
         options: BulkWriteOptions
-    ): BulkWriteResult = wrapped.bulkWrite(clientSession, requests, options)
+    ): BulkWriteResult = wrapped.bulkWrite(clientSession.unwrapped(), requests, options)
 
     override fun bulkWrite(
         clientSession: ClientSession,
         requests: MutableList<out WriteModel<out T>>
-    ): BulkWriteResult = wrapped.bulkWrite(clientSession, requests)
+    ): BulkWriteResult = wrapped.bulkWrite(clientSession.unwrapped(), requests)
 
     override fun bulkWrite(requests: MutableList<out WriteModel<out T>>, options: BulkWriteOptions): BulkWriteResult =
         wrapped.bulkWrite(requests, options)
 
     override fun bulkWrite(requests: MutableList<out WriteModel<out T>>): BulkWriteResult = wrapped.bulkWrite(requests)
+
+    private fun ClientSession.unwrapped() = (this as SyncClientSession).wrapped
 }

@@ -73,29 +73,29 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
         wrapped.runCommand(command, readPreference, resultClass)
 
     override fun runCommand(clientSession: ClientSession, command: Bson): Document =
-        wrapped.runCommand(clientSession, command)
+        wrapped.runCommand(clientSession.unwrapped(), command)
 
     override fun runCommand(clientSession: ClientSession, command: Bson, readPreference: ReadPreference): Document =
-        wrapped.runCommand(clientSession, command, readPreference)
+        wrapped.runCommand(clientSession.unwrapped(), command, readPreference)
 
     override fun <T : Any> runCommand(clientSession: ClientSession, command: Bson, resultClass: Class<T>): T =
-        wrapped.runCommand(clientSession, command, resultClass = resultClass)
+        wrapped.runCommand(clientSession.unwrapped(), command, resultClass = resultClass)
 
     override fun <T : Any> runCommand(
         clientSession: ClientSession,
         command: Bson,
         readPreference: ReadPreference,
         resultClass: Class<T>
-    ): T = wrapped.runCommand(clientSession, command, readPreference, resultClass)
+    ): T = wrapped.runCommand(clientSession.unwrapped(), command, readPreference, resultClass)
 
     override fun drop() = wrapped.drop()
 
-    override fun drop(clientSession: ClientSession) = wrapped.drop(clientSession)
+    override fun drop(clientSession: ClientSession) = wrapped.drop(clientSession.unwrapped())
 
     override fun listCollectionNames(): MongoIterable<String> = SyncMongoIterable(wrapped.listCollectionNames())
 
     override fun listCollectionNames(clientSession: ClientSession): MongoIterable<String> =
-        SyncMongoIterable(wrapped.listCollectionNames(clientSession))
+        SyncMongoIterable(wrapped.listCollectionNames(clientSession.unwrapped()))
 
     override fun listCollections(): ListCollectionsIterable<Document> =
         SyncListCollectionsIterable(wrapped.listCollections())
@@ -104,12 +104,13 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
         SyncListCollectionsIterable(wrapped.listCollections(resultClass))
 
     override fun listCollections(clientSession: ClientSession): ListCollectionsIterable<Document> =
-        SyncListCollectionsIterable(wrapped.listCollections(clientSession))
+        SyncListCollectionsIterable(wrapped.listCollections(clientSession.unwrapped()))
 
     override fun <T : Any> listCollections(
         clientSession: ClientSession,
         resultClass: Class<T>
-    ): ListCollectionsIterable<T> = SyncListCollectionsIterable(wrapped.listCollections(clientSession, resultClass))
+    ): ListCollectionsIterable<T> =
+        SyncListCollectionsIterable(wrapped.listCollections(clientSession.unwrapped(), resultClass))
 
     override fun createCollection(collectionName: String) = wrapped.createCollection(collectionName)
 
@@ -117,13 +118,13 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
         wrapped.createCollection(collectionName, createCollectionOptions)
 
     override fun createCollection(clientSession: ClientSession, collectionName: String) =
-        wrapped.createCollection(clientSession, collectionName)
+        wrapped.createCollection(clientSession.unwrapped(), collectionName)
 
     override fun createCollection(
         clientSession: ClientSession,
         collectionName: String,
         createCollectionOptions: CreateCollectionOptions
-    ) = wrapped.createCollection(clientSession, collectionName, createCollectionOptions)
+    ) = wrapped.createCollection(clientSession.unwrapped(), collectionName, createCollectionOptions)
 
     override fun createView(viewName: String, viewOn: String, pipeline: MutableList<out Bson>) =
         wrapped.createView(viewName, viewOn, pipeline)
@@ -140,7 +141,7 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
         viewName: String,
         viewOn: String,
         pipeline: MutableList<out Bson>
-    ) = wrapped.createView(clientSession, viewName, viewOn, pipeline)
+    ) = wrapped.createView(clientSession.unwrapped(), viewName, viewOn, pipeline)
 
     override fun createView(
         clientSession: ClientSession,
@@ -148,7 +149,7 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
         viewOn: String,
         pipeline: MutableList<out Bson>,
         createViewOptions: CreateViewOptions
-    ) = wrapped.createView(clientSession, viewName, viewOn, pipeline, createViewOptions)
+    ) = wrapped.createView(clientSession.unwrapped(), viewName, viewOn, pipeline, createViewOptions)
 
     override fun watch(): ChangeStreamIterable<Document> = SyncChangeStreamIterable(wrapped.watch())
 
@@ -162,19 +163,20 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
         SyncChangeStreamIterable(wrapped.watch(pipeline, resultClass))
 
     override fun watch(clientSession: ClientSession): ChangeStreamIterable<Document> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped()))
 
     override fun <T : Any> watch(clientSession: ClientSession, resultClass: Class<T>): ChangeStreamIterable<T> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession, resultClass = resultClass))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), resultClass = resultClass))
 
     override fun watch(clientSession: ClientSession, pipeline: MutableList<out Bson>): ChangeStreamIterable<Document> =
-        SyncChangeStreamIterable(wrapped.watch(clientSession, pipeline))
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline))
 
     override fun <T : Any> watch(
         clientSession: ClientSession,
         pipeline: MutableList<out Bson>,
         resultClass: Class<T>
-    ): ChangeStreamIterable<T> = SyncChangeStreamIterable(wrapped.watch(clientSession, pipeline, resultClass))
+    ): ChangeStreamIterable<T> =
+        SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
 
     override fun aggregate(pipeline: MutableList<out Bson>): AggregateIterable<Document> =
         SyncAggregateIterable(wrapped.aggregate(pipeline))
@@ -183,11 +185,13 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
         SyncAggregateIterable(wrapped.aggregate(pipeline, resultClass))
 
     override fun aggregate(clientSession: ClientSession, pipeline: MutableList<out Bson>): AggregateIterable<Document> =
-        SyncAggregateIterable(wrapped.aggregate(clientSession, pipeline))
+        SyncAggregateIterable(wrapped.aggregate(clientSession.unwrapped(), pipeline))
 
     override fun <T : Any> aggregate(
         clientSession: ClientSession,
         pipeline: MutableList<out Bson>,
         resultClass: Class<T>
-    ): AggregateIterable<T> = SyncAggregateIterable(wrapped.aggregate(clientSession, pipeline, resultClass))
+    ): AggregateIterable<T> = SyncAggregateIterable(wrapped.aggregate(clientSession.unwrapped(), pipeline, resultClass))
+
+    private fun ClientSession.unwrapped() = (this as SyncClientSession).wrapped
 }

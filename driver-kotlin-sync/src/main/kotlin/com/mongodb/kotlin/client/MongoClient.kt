@@ -19,7 +19,6 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoDriverInformation
-import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.client.MongoClients as JMongoClients
 import com.mongodb.connection.ClusterDescription
@@ -101,11 +100,12 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      *
      * This method will not block, meaning that it may return a [ClusterDescription] whose `clusterType` is unknown and
      * whose [com.mongodb.connection.ServerDescription]s are all in the connecting state. If the application requires
-     * notifications after the driver has connected to a member of the cluster, it should register a [ClusterListener]
-     * via the [ClusterSettings] in [com.mongodb.MongoClientSettings].
+     * notifications after the driver has connected to a member of the cluster, it should register a
+     * [com.mongodb.event.ClusterListener] via the [com.mongodb.connection.ClusterSettings] in
+     * [com.mongodb.MongoClientSettings].
      *
      * @return the current cluster description
-     * @see ClusterSettings.Builder.addClusterListener
+     * @see com.mongodb.connection.ClusterSettings.Builder.addClusterListener
      * @see com.mongodb.MongoClientSettings.Builder.applyToClusterSettings
      */
     public fun getClusterDescription(): ClusterDescription = wrapped.clusterDescription
@@ -116,7 +116,7 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      * @param databaseName the name of the database to retrieve
      * @return a `MongoDatabase` representing the specified database
      * @throws IllegalArgumentException if databaseName is invalid
-     * @see MongoNamespace.checkDatabaseNameValidity
+     * @see com.mongodb.MongoNamespace.checkDatabaseNameValidity
      */
     public fun getDatabase(databaseName: String): MongoDatabase = MongoDatabase(wrapped.getDatabase(databaseName))
 
@@ -129,7 +129,7 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      * @return the client session
      */
     public fun startSession(options: ClientSessionOptions = ClientSessionOptions.builder().build()): ClientSession =
-        wrapped.startSession(options)
+        ClientSession(wrapped.startSession(options))
 
     /**
      * Get a list of the database names
@@ -147,7 +147,7 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      * @see [List Databases](https://www.mongodb.com/docs/manual/reference/command/listDatabases)
      */
     public fun listDatabaseNames(clientSession: ClientSession): MongoIterable<String> =
-        MongoIterable(wrapped.listDatabaseNames(clientSession))
+        MongoIterable(wrapped.listDatabaseNames(clientSession.wrapped))
 
     /**
      * Gets the list of databases
@@ -174,7 +174,7 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      * @param resultClass the target document type of the iterable.
      * @return the list databases iterable interface
      */
-    public fun <T : Any?> listDatabases(resultClass: Class<T>): ListDatabasesIterable<T> =
+    public fun <T : Any> listDatabases(resultClass: Class<T>): ListDatabasesIterable<T> =
         ListDatabasesIterable(wrapped.listDatabases(resultClass))
 
     /**
@@ -185,8 +185,8 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      * @param resultClass the target document type of the iterable.
      * @return the list databases iterable interface
      */
-    public fun <T : Any?> listDatabases(clientSession: ClientSession, resultClass: Class<T>): ListDatabasesIterable<T> =
-        ListDatabasesIterable(wrapped.listDatabases(clientSession, resultClass))
+    public fun <T : Any> listDatabases(clientSession: ClientSession, resultClass: Class<T>): ListDatabasesIterable<T> =
+        ListDatabasesIterable(wrapped.listDatabases(clientSession.wrapped, resultClass))
 
     /**
      * Gets the list of databases
@@ -194,7 +194,7 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      * @param T the type of the class to use
      * @return the list databases iterable interface
      */
-    public inline fun <reified T : Any?> listDatabases(): ListDatabasesIterable<T> = listDatabases(T::class.java)
+    public inline fun <reified T : Any> listDatabases(): ListDatabasesIterable<T> = listDatabases(T::class.java)
 
     /**
      * Gets the list of databases
@@ -203,7 +203,7 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
      * @param T the type of the class to use
      * @return the list databases iterable interface
      */
-    public inline fun <reified T : Any?> listDatabases(clientSession: ClientSession): ListDatabasesIterable<T> =
+    public inline fun <reified T : Any> listDatabases(clientSession: ClientSession): ListDatabasesIterable<T> =
         listDatabases(clientSession, T::class.java)
 
     /**
@@ -254,7 +254,7 @@ public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Clo
         clientSession: ClientSession,
         pipeline: List<Bson> = emptyList(),
         resultClass: Class<T>
-    ): ChangeStreamIterable<T> = ChangeStreamIterable(wrapped.watch(clientSession, pipeline, resultClass))
+    ): ChangeStreamIterable<T> = ChangeStreamIterable(wrapped.watch(clientSession.wrapped, pipeline, resultClass))
 
     /**
      * Creates a change stream for this client.

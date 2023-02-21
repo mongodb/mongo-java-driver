@@ -20,7 +20,7 @@ import com.mongodb.kotlin.client.ListIndexesIterable
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 
-data class SyncListIndexesIterable<T>(val wrapped: ListIndexesIterable<T>) :
+data class SyncListIndexesIterable<T : Any>(val wrapped: ListIndexesIterable<T>) :
     JListIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncListIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListIndexesIterable<T> = apply {

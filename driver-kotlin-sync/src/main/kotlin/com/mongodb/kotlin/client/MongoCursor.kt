@@ -32,9 +32,10 @@ import java.io.Closeable
  *  }
  * ```
  *
- * @param <T> The type of documents the cursor contains
+ * @param T The type of documents the cursor contains
+ * @property wrapped the underlying sync cursor
  */
-public open class MongoCursor<T>(private val wrapped: JMongoCursor<T>) : Iterator<T>, Closeable {
+public open class MongoCursor<T : Any>(private val wrapped: JMongoCursor<T>) : Iterator<T>, Closeable {
 
     public override fun hasNext(): Boolean = wrapped.hasNext()
 

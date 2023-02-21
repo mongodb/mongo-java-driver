@@ -24,10 +24,11 @@ import org.bson.conversions.Bson
 /**
  * Iterable like implementation for distinct operations.
  *
- * @param <T> The type of the result.
+ * @param T The type of the result.
  * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
  */
-public class DistinctIterable<T>(@PublishedApi internal val wrapped: JDistinctIterable<T>) : MongoIterable<T>(wrapped) {
+public class DistinctIterable<T : Any>(@PublishedApi internal val wrapped: JDistinctIterable<T>) :
+    MongoIterable<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
      *
@@ -42,7 +43,7 @@ public class DistinctIterable<T>(@PublishedApi internal val wrapped: JDistinctIt
      *
      * @param filter the filter, which may be null.
      * @return this
-     * @see [Filter](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
+     * @see [Filter results](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
      */
     public fun filter(filter: Bson?): DistinctIterable<T> = apply { wrapped.filter(filter) }
 

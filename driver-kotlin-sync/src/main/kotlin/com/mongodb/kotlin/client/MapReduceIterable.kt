@@ -28,11 +28,11 @@ import org.bson.conversions.Bson
  *
  * Note: Starting in MongoDB 5.0, map-reduce is deprecated, prefer Aggregation instead
  *
- * @param <T> The type of the result.
+ * @param T The type of the result.
  * @see [Map Reduce](https://www.mongodb.com/docs/manual/reference/command/mapReduce/)
  */
 @Deprecated("Map Reduce has been deprecated. Use Aggregation instead", replaceWith = ReplaceWith(""))
-public class MapReduceIterable<T>(@PublishedApi internal val wrapped: JMapReduceIterable<T>) :
+public class MapReduceIterable<T : Any>(@PublishedApi internal val wrapped: JMapReduceIterable<T>) :
     MongoIterable<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
@@ -80,7 +80,7 @@ public class MapReduceIterable<T>(@PublishedApi internal val wrapped: JMapReduce
      *
      * @param scope the global variables that are accessible in the map, reduce and finalize functions.
      * @return this
-     * @see [mapReduce](https://www.mongodb.com/docs/manual/reference/command/mapReduce)
+     * @see [mapReduce command](https://www.mongodb.com/docs/manual/reference/command/mapReduce)
      */
     public fun scope(scope: Bson?): MapReduceIterable<T> = apply { wrapped.scope(scope) }
 
@@ -89,7 +89,7 @@ public class MapReduceIterable<T>(@PublishedApi internal val wrapped: JMapReduce
      *
      * @param sort the sort criteria
      * @return this
-     * @see [Sort](https://www.mongodb.com/docs/manual/reference/method/cursor.sort/)
+     * @see [Sort results](https://www.mongodb.com/docs/manual/reference/method/cursor.sort/)
      */
     public fun sort(sort: Bson?): MapReduceIterable<T> = apply { wrapped.sort(sort) }
 
@@ -98,7 +98,7 @@ public class MapReduceIterable<T>(@PublishedApi internal val wrapped: JMapReduce
      *
      * @param filter the filter to apply to the query.
      * @return this
-     * @see [Filter](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
+     * @see [Filter results](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
      */
     public fun filter(filter: Bson?): MapReduceIterable<T> = apply { wrapped.filter(filter) }
 
@@ -107,7 +107,7 @@ public class MapReduceIterable<T>(@PublishedApi internal val wrapped: JMapReduce
      *
      * @param limit the limit
      * @return this
-     * @see [Limit](https://www.mongodb.com/docs/manual/reference/method/cursor.limit/#cursor.limit)
+     * @see [Limit results](https://www.mongodb.com/docs/manual/reference/method/cursor.limit/#cursor.limit)
      */
     public fun limit(limit: Int): MapReduceIterable<T> = apply { wrapped.limit(limit) }
 
@@ -118,7 +118,7 @@ public class MapReduceIterable<T>(@PublishedApi internal val wrapped: JMapReduce
      * @param jsMode the flag that specifies whether to convert intermediate data into BSON format between the execution
      *   of the map and reduce functions
      * @return jsMode
-     * @see [mapReduce](https://www.mongodb.com/docs/manual/reference/command/mapReduce)
+     * @see [mapReduce command](https://www.mongodb.com/docs/manual/reference/command/mapReduce)
      */
     public fun jsMode(jsMode: Boolean): MapReduceIterable<T> = apply { wrapped.jsMode(jsMode) }
 
@@ -189,7 +189,7 @@ public class MapReduceIterable<T>(@PublishedApi internal val wrapped: JMapReduce
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
-     * @see [Aggregation2](https://www.mongodb.com/docs/manual/reference/command/aggregate/)
+     * @see [Aggregation command](https://www.mongodb.com/docs/manual/reference/command/aggregate/)
      */
     public fun bypassDocumentValidation(bypassDocumentValidation: Boolean?): MapReduceIterable<T> = apply {
         wrapped.bypassDocumentValidation(bypassDocumentValidation)

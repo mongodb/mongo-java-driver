@@ -26,10 +26,10 @@ import org.bson.conversions.Bson
 /**
  * Iterable like implementation for aggregate operations.
  *
- * @param <T> The type of the result.
+ * @param T The type of the result.
  * @see [Aggregation command](https://www.mongodb.com/docs/manual/reference/command/aggregate)
  */
-public class AggregateIterable<T>(@PublishedApi internal val wrapped: JAggregateIterable<T>) :
+public class AggregateIterable<T : Any>(@PublishedApi internal val wrapped: JAggregateIterable<T>) :
     MongoIterable<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
@@ -161,7 +161,6 @@ public class AggregateIterable<T>(@PublishedApi internal val wrapped: JAggregate
     /**
      * Explain the execution plan for this operation with the given verbosity level
      *
-     * @param <R> the type of the document class
      * @param verbosity the verbosity of the explanation
      * @return the execution plan
      * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)

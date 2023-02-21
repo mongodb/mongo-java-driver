@@ -19,7 +19,7 @@ import com.mongodb.client.MongoChangeStreamCursor as JMongoChangeStreamCursor
 import com.mongodb.kotlin.client.MongoChangeStreamCursor
 import org.bson.BsonDocument
 
-data class SyncMongoChangeStreamCursor<T>(val wrapped: MongoChangeStreamCursor<T>) :
+data class SyncMongoChangeStreamCursor<T : Any>(val wrapped: MongoChangeStreamCursor<T>) :
     JMongoChangeStreamCursor<T>, SyncMongoCursor<T>(wrapped) {
     override fun getResumeToken(): BsonDocument? = wrapped.getResumeToken()
 }

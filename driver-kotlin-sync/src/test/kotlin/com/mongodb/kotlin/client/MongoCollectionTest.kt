@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoCollection as JMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
@@ -62,7 +61,7 @@ import org.mockito.kotlin.whenever
 class MongoCollectionTest {
 
     @Mock val wrapped: JMongoCollection<Document> = mock()
-    @Mock val clientSession: ClientSession = mock()
+    @Mock val clientSession: ClientSession = ClientSession(mock())
 
     private val defaultFilter = BsonDocument()
     private val filter = Document("a", 1)
@@ -76,7 +75,7 @@ class MongoCollectionTest {
                 MongoCollection::class
                     .declaredMemberProperties
                     .filterNot { it.name == "wrapped" }
-                    .map { "get${it.name.replaceFirstChar{c -> c.uppercaseChar() }}" }
+                    .map { "get${it.name.replaceFirstChar { c -> c.uppercaseChar() }}" }
 
         assertEquals(jMongoCollectionFunctions, kMongoCollectionFunctions)
     }
@@ -206,9 +205,10 @@ class MongoCollectionTest {
         whenever(wrapped.countDocuments(eq(defaultFilter), refEq(defaultOptions))).doReturn(1)
         whenever(wrapped.countDocuments(eq(filter), refEq(defaultOptions))).doReturn(2)
         whenever(wrapped.countDocuments(eq(filter), eq(options))).doReturn(3)
-        whenever(wrapped.countDocuments(eq(clientSession), eq(defaultFilter), refEq(defaultOptions))).doReturn(4)
-        whenever(wrapped.countDocuments(eq(clientSession), eq(filter), refEq(defaultOptions))).doReturn(5)
-        whenever(wrapped.countDocuments(eq(clientSession), eq(filter), eq(options))).doReturn(6)
+        whenever(wrapped.countDocuments(eq(clientSession.wrapped), eq(defaultFilter), refEq(defaultOptions)))
+            .doReturn(4)
+        whenever(wrapped.countDocuments(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions))).doReturn(5)
+        whenever(wrapped.countDocuments(eq(clientSession.wrapped), eq(filter), eq(options))).doReturn(6)
 
         assertEquals(1, mongoCollection.countDocuments())
         assertEquals(2, mongoCollection.countDocuments(filter))
@@ -220,9 +220,9 @@ class MongoCollectionTest {
         verify(wrapped).countDocuments(eq(defaultFilter), refEq(defaultOptions))
         verify(wrapped).countDocuments(eq(filter), refEq(defaultOptions))
         verify(wrapped).countDocuments(eq(filter), eq(options))
-        verify(wrapped).countDocuments(eq(clientSession), eq(defaultFilter), refEq(defaultOptions))
-        verify(wrapped).countDocuments(eq(clientSession), eq(filter), refEq(defaultOptions))
-        verify(wrapped).countDocuments(eq(clientSession), eq(filter), eq(options))
+        verify(wrapped).countDocuments(eq(clientSession.wrapped), eq(defaultFilter), refEq(defaultOptions))
+        verify(wrapped).countDocuments(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions))
+        verify(wrapped).countDocuments(eq(clientSession.wrapped), eq(filter), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -250,12 +250,14 @@ class MongoCollectionTest {
 
         whenever(wrapped.distinct(fieldName, defaultFilter, Document::class.java)).doReturn(mock())
         whenever(wrapped.distinct(fieldName, filter, Document::class.java)).doReturn(mock())
-        whenever(wrapped.distinct(clientSession, fieldName, defaultFilter, Document::class.java)).doReturn(mock())
-        whenever(wrapped.distinct(clientSession, fieldName, filter, Document::class.java)).doReturn(mock())
+        whenever(wrapped.distinct(clientSession.wrapped, fieldName, defaultFilter, Document::class.java))
+            .doReturn(mock())
+        whenever(wrapped.distinct(clientSession.wrapped, fieldName, filter, Document::class.java)).doReturn(mock())
         whenever(wrapped.distinct(fieldName, defaultFilter, BsonDocument::class.java)).doReturn(mock())
         whenever(wrapped.distinct(fieldName, filter, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.distinct(clientSession, fieldName, defaultFilter, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.distinct(clientSession, fieldName, filter, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.distinct(clientSession.wrapped, fieldName, defaultFilter, BsonDocument::class.java))
+            .doReturn(mock())
+        whenever(wrapped.distinct(clientSession.wrapped, fieldName, filter, BsonDocument::class.java)).doReturn(mock())
 
         mongoCollection.distinct("fieldName", resultClass = Document::class.java)
         mongoCollection.distinct("fieldName", filter, Document::class.java)
@@ -269,13 +271,13 @@ class MongoCollectionTest {
 
         verify(wrapped).distinct(fieldName, defaultFilter, Document::class.java)
         verify(wrapped).distinct(fieldName, filter, Document::class.java)
-        verify(wrapped).distinct(clientSession, fieldName, defaultFilter, Document::class.java)
-        verify(wrapped).distinct(clientSession, fieldName, filter, Document::class.java)
+        verify(wrapped).distinct(clientSession.wrapped, fieldName, defaultFilter, Document::class.java)
+        verify(wrapped).distinct(clientSession.wrapped, fieldName, filter, Document::class.java)
 
         verify(wrapped).distinct(fieldName, defaultFilter, BsonDocument::class.java)
         verify(wrapped).distinct(fieldName, filter, BsonDocument::class.java)
-        verify(wrapped).distinct(clientSession, fieldName, defaultFilter, BsonDocument::class.java)
-        verify(wrapped).distinct(clientSession, fieldName, filter, BsonDocument::class.java)
+        verify(wrapped).distinct(clientSession.wrapped, fieldName, defaultFilter, BsonDocument::class.java)
+        verify(wrapped).distinct(clientSession.wrapped, fieldName, filter, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -286,12 +288,12 @@ class MongoCollectionTest {
         whenever(wrapped.documentClass).doReturn(Document::class.java)
         whenever(wrapped.find(defaultFilter, Document::class.java)).doReturn(mock())
         whenever(wrapped.find(filter, Document::class.java)).doReturn(mock())
-        whenever(wrapped.find(clientSession, defaultFilter, Document::class.java)).doReturn(mock())
-        whenever(wrapped.find(clientSession, filter, Document::class.java)).doReturn(mock())
+        whenever(wrapped.find(clientSession.wrapped, defaultFilter, Document::class.java)).doReturn(mock())
+        whenever(wrapped.find(clientSession.wrapped, filter, Document::class.java)).doReturn(mock())
         whenever(wrapped.find(defaultFilter, BsonDocument::class.java)).doReturn(mock())
         whenever(wrapped.find(filter, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.find(clientSession, defaultFilter, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.find(clientSession, filter, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.find(clientSession.wrapped, defaultFilter, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.find(clientSession.wrapped, filter, BsonDocument::class.java)).doReturn(mock())
 
         mongoCollection.find()
         mongoCollection.find(filter)
@@ -311,12 +313,12 @@ class MongoCollectionTest {
         verify(wrapped, times(4)).documentClass
         verify(wrapped, times(2)).find(defaultFilter, Document::class.java)
         verify(wrapped, times(2)).find(filter, Document::class.java)
-        verify(wrapped, times(2)).find(clientSession, defaultFilter, Document::class.java)
-        verify(wrapped, times(2)).find(clientSession, filter, Document::class.java)
+        verify(wrapped, times(2)).find(clientSession.wrapped, defaultFilter, Document::class.java)
+        verify(wrapped, times(2)).find(clientSession.wrapped, filter, Document::class.java)
         verify(wrapped, times(1)).find(defaultFilter, BsonDocument::class.java)
         verify(wrapped, times(1)).find(filter, BsonDocument::class.java)
-        verify(wrapped, times(1)).find(clientSession, defaultFilter, BsonDocument::class.java)
-        verify(wrapped, times(1)).find(clientSession, filter, BsonDocument::class.java)
+        verify(wrapped, times(1)).find(clientSession.wrapped, defaultFilter, BsonDocument::class.java)
+        verify(wrapped, times(1)).find(clientSession.wrapped, filter, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -326,9 +328,9 @@ class MongoCollectionTest {
 
         whenever(wrapped.documentClass).doReturn(Document::class.java)
         whenever(wrapped.aggregate(pipeline, Document::class.java)).doReturn(mock())
-        whenever(wrapped.aggregate(clientSession, pipeline, Document::class.java)).doReturn(mock())
+        whenever(wrapped.aggregate(clientSession.wrapped, pipeline, Document::class.java)).doReturn(mock())
         whenever(wrapped.aggregate(pipeline, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.aggregate(clientSession, pipeline, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.aggregate(clientSession.wrapped, pipeline, BsonDocument::class.java)).doReturn(mock())
 
         mongoCollection.aggregate(pipeline)
         mongoCollection.aggregate(clientSession, pipeline)
@@ -341,9 +343,9 @@ class MongoCollectionTest {
 
         verify(wrapped, times(2)).documentClass
         verify(wrapped, times(2)).aggregate(pipeline, Document::class.java)
-        verify(wrapped, times(2)).aggregate(clientSession, pipeline, Document::class.java)
+        verify(wrapped, times(2)).aggregate(clientSession.wrapped, pipeline, Document::class.java)
         verify(wrapped, times(1)).aggregate(pipeline, BsonDocument::class.java)
-        verify(wrapped, times(1)).aggregate(clientSession, pipeline, BsonDocument::class.java)
+        verify(wrapped, times(1)).aggregate(clientSession.wrapped, pipeline, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -355,12 +357,12 @@ class MongoCollectionTest {
         whenever(wrapped.documentClass).doReturn(Document::class.java)
         whenever(wrapped.watch(emptyList(), Document::class.java)).doReturn(mock())
         whenever(wrapped.watch(pipeline, Document::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, emptyList(), Document::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, pipeline, Document::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, emptyList(), Document::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, pipeline, Document::class.java)).doReturn(mock())
         whenever(wrapped.watch(emptyList(), BsonDocument::class.java)).doReturn(mock())
         whenever(wrapped.watch(pipeline, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, emptyList(), BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.watch(clientSession, pipeline, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, emptyList(), BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.watch(clientSession.wrapped, pipeline, BsonDocument::class.java)).doReturn(mock())
 
         mongoCollection.watch()
         mongoCollection.watch(pipeline)
@@ -380,12 +382,12 @@ class MongoCollectionTest {
         verify(wrapped, times(4)).documentClass
         verify(wrapped, times(2)).watch(emptyList(), Document::class.java)
         verify(wrapped, times(2)).watch(pipeline, Document::class.java)
-        verify(wrapped, times(2)).watch(clientSession, emptyList(), Document::class.java)
-        verify(wrapped, times(2)).watch(clientSession, pipeline, Document::class.java)
+        verify(wrapped, times(2)).watch(clientSession.wrapped, emptyList(), Document::class.java)
+        verify(wrapped, times(2)).watch(clientSession.wrapped, pipeline, Document::class.java)
         verify(wrapped, times(1)).watch(emptyList(), BsonDocument::class.java)
         verify(wrapped, times(1)).watch(pipeline, BsonDocument::class.java)
-        verify(wrapped, times(1)).watch(clientSession, emptyList(), BsonDocument::class.java)
-        verify(wrapped, times(1)).watch(clientSession, pipeline, BsonDocument::class.java)
+        verify(wrapped, times(1)).watch(clientSession.wrapped, emptyList(), BsonDocument::class.java)
+        verify(wrapped, times(1)).watch(clientSession.wrapped, pipeline, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -398,9 +400,10 @@ class MongoCollectionTest {
 
         whenever(wrapped.documentClass).doReturn(Document::class.java)
         whenever(wrapped.mapReduce(mapFunction, reduceFunction, Document::class.java)).doReturn(mock())
-        whenever(wrapped.mapReduce(clientSession, mapFunction, reduceFunction, Document::class.java)).doReturn(mock())
+        whenever(wrapped.mapReduce(clientSession.wrapped, mapFunction, reduceFunction, Document::class.java))
+            .doReturn(mock())
         whenever(wrapped.mapReduce(mapFunction, reduceFunction, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.mapReduce(clientSession, mapFunction, reduceFunction, BsonDocument::class.java))
+        whenever(wrapped.mapReduce(clientSession.wrapped, mapFunction, reduceFunction, BsonDocument::class.java))
             .doReturn(mock())
 
         mongoCollection.mapReduce(mapFunction, reduceFunction)
@@ -414,9 +417,10 @@ class MongoCollectionTest {
 
         verify(wrapped, times(2)).documentClass
         verify(wrapped, times(2)).mapReduce(mapFunction, reduceFunction, Document::class.java)
-        verify(wrapped, times(2)).mapReduce(clientSession, mapFunction, reduceFunction, Document::class.java)
+        verify(wrapped, times(2)).mapReduce(clientSession.wrapped, mapFunction, reduceFunction, Document::class.java)
         verify(wrapped, times(1)).mapReduce(mapFunction, reduceFunction, BsonDocument::class.java)
-        verify(wrapped, times(1)).mapReduce(clientSession, mapFunction, reduceFunction, BsonDocument::class.java)
+        verify(wrapped, times(1))
+            .mapReduce(clientSession.wrapped, mapFunction, reduceFunction, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -429,8 +433,8 @@ class MongoCollectionTest {
 
         whenever(wrapped.insertOne(eq(value), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.insertOne(eq(value), eq(options))).doReturn(mock())
-        whenever(wrapped.insertOne(eq(clientSession), eq(value), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.insertOne(eq(clientSession), eq(value), eq(options))).doReturn(mock())
+        whenever(wrapped.insertOne(eq(clientSession.wrapped), eq(value), refEq(defaultOptions))).doReturn(mock())
+        whenever(wrapped.insertOne(eq(clientSession.wrapped), eq(value), eq(options))).doReturn(mock())
 
         mongoCollection.insertOne(value)
         mongoCollection.insertOne(value, options)
@@ -439,8 +443,8 @@ class MongoCollectionTest {
 
         verify(wrapped).insertOne(eq(value), refEq(defaultOptions))
         verify(wrapped).insertOne(eq(value), eq(options))
-        verify(wrapped).insertOne(eq(clientSession), eq(value), refEq(defaultOptions))
-        verify(wrapped).insertOne(eq(clientSession), eq(value), eq(options))
+        verify(wrapped).insertOne(eq(clientSession.wrapped), eq(value), refEq(defaultOptions))
+        verify(wrapped).insertOne(eq(clientSession.wrapped), eq(value), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -453,8 +457,8 @@ class MongoCollectionTest {
 
         whenever(wrapped.insertMany(eq(value), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.insertMany(eq(value), eq(options))).doReturn(mock())
-        whenever(wrapped.insertMany(eq(clientSession), eq(value), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.insertMany(eq(clientSession), eq(value), eq(options))).doReturn(mock())
+        whenever(wrapped.insertMany(eq(clientSession.wrapped), eq(value), refEq(defaultOptions))).doReturn(mock())
+        whenever(wrapped.insertMany(eq(clientSession.wrapped), eq(value), eq(options))).doReturn(mock())
 
         mongoCollection.insertMany(value)
         mongoCollection.insertMany(value, options)
@@ -463,8 +467,8 @@ class MongoCollectionTest {
 
         verify(wrapped).insertMany(eq(value), refEq(defaultOptions))
         verify(wrapped).insertMany(eq(value), eq(options))
-        verify(wrapped).insertMany(eq(clientSession), eq(value), refEq(defaultOptions))
-        verify(wrapped).insertMany(eq(clientSession), eq(value), eq(options))
+        verify(wrapped).insertMany(eq(clientSession.wrapped), eq(value), refEq(defaultOptions))
+        verify(wrapped).insertMany(eq(clientSession.wrapped), eq(value), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -477,8 +481,8 @@ class MongoCollectionTest {
 
         whenever(wrapped.bulkWrite(eq(value), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.bulkWrite(eq(value), eq(options))).doReturn(mock())
-        whenever(wrapped.bulkWrite(eq(clientSession), eq(value), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.bulkWrite(eq(clientSession), eq(value), eq(options))).doReturn(mock())
+        whenever(wrapped.bulkWrite(eq(clientSession.wrapped), eq(value), refEq(defaultOptions))).doReturn(mock())
+        whenever(wrapped.bulkWrite(eq(clientSession.wrapped), eq(value), eq(options))).doReturn(mock())
 
         mongoCollection.bulkWrite(value)
         mongoCollection.bulkWrite(value, options)
@@ -487,8 +491,8 @@ class MongoCollectionTest {
 
         verify(wrapped).bulkWrite(eq(value), refEq(defaultOptions))
         verify(wrapped).bulkWrite(eq(value), eq(options))
-        verify(wrapped).bulkWrite(eq(clientSession), eq(value), refEq(defaultOptions))
-        verify(wrapped).bulkWrite(eq(clientSession), eq(value), eq(options))
+        verify(wrapped).bulkWrite(eq(clientSession.wrapped), eq(value), refEq(defaultOptions))
+        verify(wrapped).bulkWrite(eq(clientSession.wrapped), eq(value), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -504,10 +508,12 @@ class MongoCollectionTest {
         whenever(wrapped.updateOne(eq(filter), eq(update), eq(options))).doReturn(mock())
         whenever(wrapped.updateOne(eq(filter), eq(updates), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.updateOne(eq(filter), eq(updates), eq(options))).doReturn(mock())
-        whenever(wrapped.updateOne(eq(clientSession), eq(filter), eq(update), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.updateOne(eq(clientSession), eq(filter), eq(update), eq(options))).doReturn(mock())
-        whenever(wrapped.updateOne(eq(clientSession), eq(filter), eq(updates), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.updateOne(eq(clientSession), eq(filter), eq(updates), eq(options))).doReturn(mock())
+        whenever(wrapped.updateOne(eq(clientSession.wrapped), eq(filter), eq(update), refEq(defaultOptions)))
+            .doReturn(mock())
+        whenever(wrapped.updateOne(eq(clientSession.wrapped), eq(filter), eq(update), eq(options))).doReturn(mock())
+        whenever(wrapped.updateOne(eq(clientSession.wrapped), eq(filter), eq(updates), refEq(defaultOptions)))
+            .doReturn(mock())
+        whenever(wrapped.updateOne(eq(clientSession.wrapped), eq(filter), eq(updates), eq(options))).doReturn(mock())
 
         mongoCollection.updateOne(filter, update)
         mongoCollection.updateOne(filter, update, options)
@@ -522,10 +528,10 @@ class MongoCollectionTest {
         verify(wrapped).updateOne(eq(filter), eq(update), eq(options))
         verify(wrapped).updateOne(eq(filter), eq(updates), refEq(defaultOptions))
         verify(wrapped).updateOne(eq(filter), eq(updates), eq(options))
-        verify(wrapped).updateOne(eq(clientSession), eq(filter), eq(update), refEq(defaultOptions))
-        verify(wrapped).updateOne(eq(clientSession), eq(filter), eq(update), eq(options))
-        verify(wrapped).updateOne(eq(clientSession), eq(filter), eq(updates), refEq(defaultOptions))
-        verify(wrapped).updateOne(eq(clientSession), eq(filter), eq(updates), eq(options))
+        verify(wrapped).updateOne(eq(clientSession.wrapped), eq(filter), eq(update), refEq(defaultOptions))
+        verify(wrapped).updateOne(eq(clientSession.wrapped), eq(filter), eq(update), eq(options))
+        verify(wrapped).updateOne(eq(clientSession.wrapped), eq(filter), eq(updates), refEq(defaultOptions))
+        verify(wrapped).updateOne(eq(clientSession.wrapped), eq(filter), eq(updates), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -541,10 +547,12 @@ class MongoCollectionTest {
         whenever(wrapped.updateMany(eq(filter), eq(update), eq(options))).doReturn(mock())
         whenever(wrapped.updateMany(eq(filter), eq(updates), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.updateMany(eq(filter), eq(updates), eq(options))).doReturn(mock())
-        whenever(wrapped.updateMany(eq(clientSession), eq(filter), eq(update), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.updateMany(eq(clientSession), eq(filter), eq(update), eq(options))).doReturn(mock())
-        whenever(wrapped.updateMany(eq(clientSession), eq(filter), eq(updates), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.updateMany(eq(clientSession), eq(filter), eq(updates), eq(options))).doReturn(mock())
+        whenever(wrapped.updateMany(eq(clientSession.wrapped), eq(filter), eq(update), refEq(defaultOptions)))
+            .doReturn(mock())
+        whenever(wrapped.updateMany(eq(clientSession.wrapped), eq(filter), eq(update), eq(options))).doReturn(mock())
+        whenever(wrapped.updateMany(eq(clientSession.wrapped), eq(filter), eq(updates), refEq(defaultOptions)))
+            .doReturn(mock())
+        whenever(wrapped.updateMany(eq(clientSession.wrapped), eq(filter), eq(updates), eq(options))).doReturn(mock())
 
         mongoCollection.updateMany(filter, update)
         mongoCollection.updateMany(filter, update, options)
@@ -559,10 +567,10 @@ class MongoCollectionTest {
         verify(wrapped).updateMany(eq(filter), eq(update), eq(options))
         verify(wrapped).updateMany(eq(filter), eq(updates), refEq(defaultOptions))
         verify(wrapped).updateMany(eq(filter), eq(updates), eq(options))
-        verify(wrapped).updateMany(eq(clientSession), eq(filter), eq(update), refEq(defaultOptions))
-        verify(wrapped).updateMany(eq(clientSession), eq(filter), eq(update), eq(options))
-        verify(wrapped).updateMany(eq(clientSession), eq(filter), eq(updates), refEq(defaultOptions))
-        verify(wrapped).updateMany(eq(clientSession), eq(filter), eq(updates), eq(options))
+        verify(wrapped).updateMany(eq(clientSession.wrapped), eq(filter), eq(update), refEq(defaultOptions))
+        verify(wrapped).updateMany(eq(clientSession.wrapped), eq(filter), eq(update), eq(options))
+        verify(wrapped).updateMany(eq(clientSession.wrapped), eq(filter), eq(updates), refEq(defaultOptions))
+        verify(wrapped).updateMany(eq(clientSession.wrapped), eq(filter), eq(updates), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -575,9 +583,10 @@ class MongoCollectionTest {
 
         whenever(wrapped.replaceOne(eq(filter), eq(replacement), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.replaceOne(eq(filter), eq(replacement), eq(options))).doReturn(mock())
-        whenever(wrapped.replaceOne(eq(clientSession), eq(filter), eq(replacement), refEq(defaultOptions)))
+        whenever(wrapped.replaceOne(eq(clientSession.wrapped), eq(filter), eq(replacement), refEq(defaultOptions)))
             .doReturn(mock())
-        whenever(wrapped.replaceOne(eq(clientSession), eq(filter), eq(replacement), eq(options))).doReturn(mock())
+        whenever(wrapped.replaceOne(eq(clientSession.wrapped), eq(filter), eq(replacement), eq(options)))
+            .doReturn(mock())
 
         mongoCollection.replaceOne(filter, replacement)
         mongoCollection.replaceOne(filter, replacement, options)
@@ -586,8 +595,8 @@ class MongoCollectionTest {
 
         verify(wrapped).replaceOne(eq(filter), eq(replacement), refEq(defaultOptions))
         verify(wrapped).replaceOne(eq(filter), eq(replacement), eq(options))
-        verify(wrapped).replaceOne(eq(clientSession), eq(filter), eq(replacement), refEq(defaultOptions))
-        verify(wrapped).replaceOne(eq(clientSession), eq(filter), eq(replacement), eq(options))
+        verify(wrapped).replaceOne(eq(clientSession.wrapped), eq(filter), eq(replacement), refEq(defaultOptions))
+        verify(wrapped).replaceOne(eq(clientSession.wrapped), eq(filter), eq(replacement), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -600,8 +609,8 @@ class MongoCollectionTest {
 
         whenever(wrapped.deleteOne(eq(filter), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.deleteOne(eq(filter), eq(options))).doReturn(mock())
-        whenever(wrapped.deleteOne(eq(clientSession), eq(filter), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.deleteOne(eq(clientSession), eq(filter), eq(options))).doReturn(mock())
+        whenever(wrapped.deleteOne(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions))).doReturn(mock())
+        whenever(wrapped.deleteOne(eq(clientSession.wrapped), eq(filter), eq(options))).doReturn(mock())
 
         mongoCollection.deleteOne(filter)
         mongoCollection.deleteOne(filter, options)
@@ -610,8 +619,8 @@ class MongoCollectionTest {
 
         verify(wrapped).deleteOne(eq(filter), refEq(defaultOptions))
         verify(wrapped).deleteOne(eq(filter), eq(options))
-        verify(wrapped).deleteOne(eq(clientSession), eq(filter), refEq(defaultOptions))
-        verify(wrapped).deleteOne(eq(clientSession), eq(filter), eq(options))
+        verify(wrapped).deleteOne(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions))
+        verify(wrapped).deleteOne(eq(clientSession.wrapped), eq(filter), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -624,8 +633,8 @@ class MongoCollectionTest {
 
         whenever(wrapped.deleteMany(eq(filter), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.deleteMany(eq(filter), eq(options))).doReturn(mock())
-        whenever(wrapped.deleteMany(eq(clientSession), eq(filter), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.deleteMany(eq(clientSession), eq(filter), eq(options))).doReturn(mock())
+        whenever(wrapped.deleteMany(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions))).doReturn(mock())
+        whenever(wrapped.deleteMany(eq(clientSession.wrapped), eq(filter), eq(options))).doReturn(mock())
 
         mongoCollection.deleteMany(filter)
         mongoCollection.deleteMany(filter, options)
@@ -634,8 +643,8 @@ class MongoCollectionTest {
 
         verify(wrapped).deleteMany(eq(filter), refEq(defaultOptions))
         verify(wrapped).deleteMany(eq(filter), eq(options))
-        verify(wrapped).deleteMany(eq(clientSession), eq(filter), refEq(defaultOptions))
-        verify(wrapped).deleteMany(eq(clientSession), eq(filter), eq(options))
+        verify(wrapped).deleteMany(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions))
+        verify(wrapped).deleteMany(eq(clientSession.wrapped), eq(filter), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -648,8 +657,9 @@ class MongoCollectionTest {
 
         whenever(wrapped.findOneAndDelete(eq(filter), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.findOneAndDelete(eq(filter), eq(options))).doReturn(mock())
-        whenever(wrapped.findOneAndDelete(eq(clientSession), eq(filter), refEq(defaultOptions))).doReturn(mock())
-        whenever(wrapped.findOneAndDelete(eq(clientSession), eq(filter), eq(options))).doReturn(mock())
+        whenever(wrapped.findOneAndDelete(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions)))
+            .doReturn(mock())
+        whenever(wrapped.findOneAndDelete(eq(clientSession.wrapped), eq(filter), eq(options))).doReturn(mock())
 
         mongoCollection.findOneAndDelete(filter)
         mongoCollection.findOneAndDelete(filter, options)
@@ -658,8 +668,8 @@ class MongoCollectionTest {
 
         verify(wrapped).findOneAndDelete(eq(filter), refEq(defaultOptions))
         verify(wrapped).findOneAndDelete(eq(filter), eq(options))
-        verify(wrapped).findOneAndDelete(eq(clientSession), eq(filter), refEq(defaultOptions))
-        verify(wrapped).findOneAndDelete(eq(clientSession), eq(filter), eq(options))
+        verify(wrapped).findOneAndDelete(eq(clientSession.wrapped), eq(filter), refEq(defaultOptions))
+        verify(wrapped).findOneAndDelete(eq(clientSession.wrapped), eq(filter), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -675,12 +685,14 @@ class MongoCollectionTest {
         whenever(wrapped.findOneAndUpdate(eq(filter), eq(update), eq(options))).doReturn(mock())
         whenever(wrapped.findOneAndUpdate(eq(filter), eq(updateList), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.findOneAndUpdate(eq(filter), eq(updateList), eq(options))).doReturn(mock())
-        whenever(wrapped.findOneAndUpdate(eq(clientSession), eq(filter), eq(update), refEq(defaultOptions)))
+        whenever(wrapped.findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(update), refEq(defaultOptions)))
             .doReturn(mock())
-        whenever(wrapped.findOneAndUpdate(eq(clientSession), eq(filter), eq(update), eq(options))).doReturn(mock())
-        whenever(wrapped.findOneAndUpdate(eq(clientSession), eq(filter), eq(updateList), refEq(defaultOptions)))
+        whenever(wrapped.findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(update), eq(options)))
             .doReturn(mock())
-        whenever(wrapped.findOneAndUpdate(eq(clientSession), eq(filter), eq(updateList), eq(options))).doReturn(mock())
+        whenever(wrapped.findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(updateList), refEq(defaultOptions)))
+            .doReturn(mock())
+        whenever(wrapped.findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(updateList), eq(options)))
+            .doReturn(mock())
 
         mongoCollection.findOneAndUpdate(filter, update)
         mongoCollection.findOneAndUpdate(filter, update, options)
@@ -695,10 +707,10 @@ class MongoCollectionTest {
         verify(wrapped).findOneAndUpdate(eq(filter), eq(update), eq(options))
         verify(wrapped).findOneAndUpdate(eq(filter), eq(updateList), refEq(defaultOptions))
         verify(wrapped).findOneAndUpdate(eq(filter), eq(updateList), eq(options))
-        verify(wrapped).findOneAndUpdate(eq(clientSession), eq(filter), eq(update), refEq(defaultOptions))
-        verify(wrapped).findOneAndUpdate(eq(clientSession), eq(filter), eq(update), eq(options))
-        verify(wrapped).findOneAndUpdate(eq(clientSession), eq(filter), eq(updateList), refEq(defaultOptions))
-        verify(wrapped).findOneAndUpdate(eq(clientSession), eq(filter), eq(updateList), eq(options))
+        verify(wrapped).findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(update), refEq(defaultOptions))
+        verify(wrapped).findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(update), eq(options))
+        verify(wrapped).findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(updateList), refEq(defaultOptions))
+        verify(wrapped).findOneAndUpdate(eq(clientSession.wrapped), eq(filter), eq(updateList), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -711,9 +723,11 @@ class MongoCollectionTest {
 
         whenever(wrapped.findOneAndReplace(eq(filter), eq(replacement), refEq(defaultOptions))).doReturn(mock())
         whenever(wrapped.findOneAndReplace(eq(filter), eq(replacement), eq(options))).doReturn(mock())
-        whenever(wrapped.findOneAndReplace(eq(clientSession), eq(filter), eq(replacement), refEq(defaultOptions)))
+        whenever(
+                wrapped.findOneAndReplace(
+                    eq(clientSession.wrapped), eq(filter), eq(replacement), refEq(defaultOptions)))
             .doReturn(mock())
-        whenever(wrapped.findOneAndReplace(eq(clientSession), eq(filter), eq(replacement), eq(options)))
+        whenever(wrapped.findOneAndReplace(eq(clientSession.wrapped), eq(filter), eq(replacement), eq(options)))
             .doReturn(mock())
 
         mongoCollection.findOneAndReplace(filter, replacement)
@@ -723,8 +737,8 @@ class MongoCollectionTest {
 
         verify(wrapped).findOneAndReplace(eq(filter), eq(replacement), refEq(defaultOptions))
         verify(wrapped).findOneAndReplace(eq(filter), eq(replacement), eq(options))
-        verify(wrapped).findOneAndReplace(eq(clientSession), eq(filter), eq(replacement), refEq(defaultOptions))
-        verify(wrapped).findOneAndReplace(eq(clientSession), eq(filter), eq(replacement), eq(options))
+        verify(wrapped).findOneAndReplace(eq(clientSession.wrapped), eq(filter), eq(replacement), refEq(defaultOptions))
+        verify(wrapped).findOneAndReplace(eq(clientSession.wrapped), eq(filter), eq(replacement), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -741,8 +755,8 @@ class MongoCollectionTest {
 
         verify(wrapped).drop(refEq(defaultOptions))
         verify(wrapped).drop(eq(options))
-        verify(wrapped).drop(eq(clientSession), refEq(defaultOptions))
-        verify(wrapped).drop(eq(clientSession), eq(options))
+        verify(wrapped).drop(eq(clientSession.wrapped), refEq(defaultOptions))
+        verify(wrapped).drop(eq(clientSession.wrapped), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -755,8 +769,8 @@ class MongoCollectionTest {
 
         whenever(wrapped.createIndex(eq(key), refEq(defaultOptions))).doReturn("1")
         whenever(wrapped.createIndex(eq(key), eq(options))).doReturn("2")
-        whenever(wrapped.createIndex(eq(clientSession), eq(key), refEq(defaultOptions))).doReturn("3")
-        whenever(wrapped.createIndex(eq(clientSession), eq(key), eq(options))).doReturn("4")
+        whenever(wrapped.createIndex(eq(clientSession.wrapped), eq(key), refEq(defaultOptions))).doReturn("3")
+        whenever(wrapped.createIndex(eq(clientSession.wrapped), eq(key), eq(options))).doReturn("4")
 
         assertEquals("1", mongoCollection.createIndex(key))
         assertEquals("2", mongoCollection.createIndex(key, options))
@@ -765,8 +779,8 @@ class MongoCollectionTest {
 
         verify(wrapped).createIndex(eq(key), refEq(defaultOptions))
         verify(wrapped).createIndex(eq(key), eq(options))
-        verify(wrapped).createIndex(eq(clientSession), eq(key), refEq(defaultOptions))
-        verify(wrapped).createIndex(eq(clientSession), eq(key), eq(options))
+        verify(wrapped).createIndex(eq(clientSession.wrapped), eq(key), refEq(defaultOptions))
+        verify(wrapped).createIndex(eq(clientSession.wrapped), eq(key), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -779,8 +793,9 @@ class MongoCollectionTest {
 
         whenever(wrapped.createIndexes(eq(indexes), refEq(defaultOptions))).doReturn(listOf("1"))
         whenever(wrapped.createIndexes(eq(indexes), eq(options))).doReturn(listOf("2"))
-        whenever(wrapped.createIndexes(eq(clientSession), eq(indexes), refEq(defaultOptions))).doReturn(listOf("3"))
-        whenever(wrapped.createIndexes(eq(clientSession), eq(indexes), eq(options))).doReturn(listOf("4"))
+        whenever(wrapped.createIndexes(eq(clientSession.wrapped), eq(indexes), refEq(defaultOptions)))
+            .doReturn(listOf("3"))
+        whenever(wrapped.createIndexes(eq(clientSession.wrapped), eq(indexes), eq(options))).doReturn(listOf("4"))
 
         assertContentEquals(listOf("1"), mongoCollection.createIndexes(indexes))
         assertContentEquals(listOf("2"), mongoCollection.createIndexes(indexes, options))
@@ -789,8 +804,8 @@ class MongoCollectionTest {
 
         verify(wrapped).createIndexes(eq(indexes), refEq(defaultOptions))
         verify(wrapped).createIndexes(eq(indexes), eq(options))
-        verify(wrapped).createIndexes(eq(clientSession), eq(indexes), refEq(defaultOptions))
-        verify(wrapped).createIndexes(eq(clientSession), eq(indexes), eq(options))
+        verify(wrapped).createIndexes(eq(clientSession.wrapped), eq(indexes), refEq(defaultOptions))
+        verify(wrapped).createIndexes(eq(clientSession.wrapped), eq(indexes), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -799,9 +814,9 @@ class MongoCollectionTest {
         val mongoCollection = MongoCollection(wrapped)
 
         whenever(wrapped.listIndexes(Document::class.java)).doReturn(mock())
-        whenever(wrapped.listIndexes(clientSession, Document::class.java)).doReturn(mock())
+        whenever(wrapped.listIndexes(clientSession.wrapped, Document::class.java)).doReturn(mock())
         whenever(wrapped.listIndexes(BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.listIndexes(clientSession, BsonDocument::class.java)).doReturn(mock())
+        whenever(wrapped.listIndexes(clientSession.wrapped, BsonDocument::class.java)).doReturn(mock())
 
         mongoCollection.listIndexes()
         mongoCollection.listIndexes(clientSession)
@@ -813,9 +828,9 @@ class MongoCollectionTest {
         mongoCollection.listIndexes<BsonDocument>(clientSession)
 
         verify(wrapped, times(2)).listIndexes(Document::class.java)
-        verify(wrapped, times(2)).listIndexes(clientSession, Document::class.java)
+        verify(wrapped, times(2)).listIndexes(clientSession.wrapped, Document::class.java)
         verify(wrapped, times(1)).listIndexes(BsonDocument::class.java)
-        verify(wrapped, times(1)).listIndexes(clientSession, BsonDocument::class.java)
+        verify(wrapped, times(1)).listIndexes(clientSession.wrapped, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -840,10 +855,10 @@ class MongoCollectionTest {
         verify(wrapped).dropIndex(eq(indexName), eq(options))
         verify(wrapped).dropIndex(eq(keys), refEq(defaultOptions))
         verify(wrapped).dropIndex(eq(keys), eq(options))
-        verify(wrapped).dropIndex(eq(clientSession), eq(indexName), refEq(defaultOptions))
-        verify(wrapped).dropIndex(eq(clientSession), eq(indexName), eq(options))
-        verify(wrapped).dropIndex(eq(clientSession), eq(keys), refEq(defaultOptions))
-        verify(wrapped).dropIndex(eq(clientSession), eq(keys), eq(options))
+        verify(wrapped).dropIndex(eq(clientSession.wrapped), eq(indexName), refEq(defaultOptions))
+        verify(wrapped).dropIndex(eq(clientSession.wrapped), eq(indexName), eq(options))
+        verify(wrapped).dropIndex(eq(clientSession.wrapped), eq(keys), refEq(defaultOptions))
+        verify(wrapped).dropIndex(eq(clientSession.wrapped), eq(keys), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -860,8 +875,8 @@ class MongoCollectionTest {
 
         verify(wrapped).dropIndexes(refEq(defaultOptions))
         verify(wrapped).dropIndexes(eq(options))
-        verify(wrapped).dropIndexes(eq(clientSession), refEq(defaultOptions))
-        verify(wrapped).dropIndexes(eq(clientSession), eq(options))
+        verify(wrapped).dropIndexes(eq(clientSession.wrapped), refEq(defaultOptions))
+        verify(wrapped).dropIndexes(eq(clientSession.wrapped), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 
@@ -879,8 +894,8 @@ class MongoCollectionTest {
 
         verify(wrapped).renameCollection(eq(mongoNamespace), refEq(defaultOptions))
         verify(wrapped).renameCollection(eq(mongoNamespace), eq(options))
-        verify(wrapped).renameCollection(eq(clientSession), eq(mongoNamespace), refEq(defaultOptions))
-        verify(wrapped).renameCollection(eq(clientSession), eq(mongoNamespace), eq(options))
+        verify(wrapped).renameCollection(eq(clientSession.wrapped), eq(mongoNamespace), refEq(defaultOptions))
+        verify(wrapped).renameCollection(eq(clientSession.wrapped), eq(mongoNamespace), eq(options))
         verifyNoMoreInteractions(wrapped)
     }
 

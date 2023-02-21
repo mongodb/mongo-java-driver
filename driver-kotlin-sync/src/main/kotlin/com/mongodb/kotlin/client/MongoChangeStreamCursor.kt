@@ -30,9 +30,11 @@ import org.bson.BsonDocument
  *  }
  * ```
  *
- * @param <T> The type of documents the cursor contains
+ * @param T The type of documents the cursor contains
+ * @property wrapped the underlying sync cursor
  */
-public class MongoChangeStreamCursor<T>(private val wrapped: JMongoChangeStreamCursor<T>) : MongoCursor<T>(wrapped) {
+public class MongoChangeStreamCursor<T : Any>(private val wrapped: JMongoChangeStreamCursor<T>) :
+    MongoCursor<T>(wrapped) {
     /**
      * Returns the resume token. If a batch has been iterated to the last change stream document in the batch and a
      * postBatchResumeToken is included in the document, the postBatchResumeToken will be returned. Otherwise, the

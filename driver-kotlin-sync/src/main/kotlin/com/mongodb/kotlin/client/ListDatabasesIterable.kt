@@ -23,10 +23,10 @@ import org.bson.conversions.Bson
 /**
  * Iterable like implementation for list database operations.
  *
- * @param <T> The type of the result.
+ * @param T The type of the result.
  * @see [List databases](https://www.mongodb.com/docs/manual/reference/command/listDatabases/)
  */
-public class ListDatabasesIterable<T>(@PublishedApi internal val wrapped: JListDatabasesIterable<T>) :
+public class ListDatabasesIterable<T : Any>(@PublishedApi internal val wrapped: JListDatabasesIterable<T>) :
     MongoIterable<T>(wrapped) {
     /**
      * Sets the maximum execution time on the server for this operation.

@@ -32,9 +32,9 @@ import org.bson.BsonValue
  * pipelines that radically change the result, then the [withDocumentClass] method can be used to provide an alternative
  * document format.
  *
- * @param <T> The type of the result.
+ * @param T The type of the result.
  */
-public class ChangeStreamIterable<T>(@PublishedApi internal val wrapped: JChangeStreamIterable<T>) :
+public class ChangeStreamIterable<T : Any>(@PublishedApi internal val wrapped: JChangeStreamIterable<T>) :
     MongoIterable<ChangeStreamDocument<T>>(wrapped) {
 
     /**
@@ -116,7 +116,7 @@ public class ChangeStreamIterable<T>(@PublishedApi internal val wrapped: JChange
      * @param resultClass the target document type of the iterable.
      * @return the new Mongo Iterable
      */
-    public fun <R> withDocumentClass(resultClass: Class<R>): MongoIterable<R> =
+    public fun <R : Any> withDocumentClass(resultClass: Class<R>): MongoIterable<R> =
         MongoIterable(wrapped.withDocumentClass(resultClass))
 
     /**

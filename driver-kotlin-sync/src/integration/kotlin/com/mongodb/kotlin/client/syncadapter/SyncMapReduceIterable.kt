@@ -24,7 +24,7 @@ import com.mongodb.kotlin.client.MapReduceIterable
 import java.util.concurrent.TimeUnit
 import org.bson.conversions.Bson
 
-data class SyncMapReduceIterable<T>(val wrapped: MapReduceIterable<T>) :
+data class SyncMapReduceIterable<T : Any>(val wrapped: MapReduceIterable<T>) :
     JMapReduceIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncMapReduceIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun toCollection() = wrapped.toCollection()

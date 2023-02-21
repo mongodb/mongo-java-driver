@@ -34,12 +34,13 @@ class ExtensionMethodsTest {
                 "FindOneAndDeleteOptions",
                 "FindOneAndReplaceOptions",
                 "FindOneAndUpdateOptions",
-                "IndexOptions")
+                "IndexOptions",
+                "TransactionOptions")
 
-        ClassGraph().enableClassInfo().enableMethodInfo().acceptPackages("com.mongodb.client.model").scan().use {
-            scanResult ->
+        ClassGraph().enableClassInfo().enableMethodInfo().acceptPackages("com.mongodb").scan().use { scanResult ->
             val optionsClassesWithTimeUnit =
                 scanResult.allClasses
+                    .filter { !it.packageName.contains("internal") }
                     .filter { it.simpleName.endsWith("Options") }
                     .filter {
                         it.methodInfo.any { m ->
