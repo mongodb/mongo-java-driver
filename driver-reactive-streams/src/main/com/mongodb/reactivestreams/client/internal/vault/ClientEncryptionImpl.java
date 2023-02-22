@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.internal.vault;
 
 import com.mongodb.ClientEncryptionSettings;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoUpdatedEncryptedFieldsException;
@@ -33,6 +32,7 @@ import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -78,6 +79,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
         this(MongoClients.create(options.getKeyVaultMongoClientSettings()), options);
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
     public ClientEncryptionImpl(final MongoClient keyVaultClient, final ClientEncryptionSettings options) {
         this.keyVaultClient = keyVaultClient;
         this.crypt = Crypts.create(keyVaultClient, options);
@@ -208,9 +210,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
         if (rawEncryptedFields == null) {
             throw new MongoConfigurationException(format("`encryptedFields` is not configured for the collection %s.", namespace));
         }
-        CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings() == null
-                ? MongoClientSettings.getDefaultCodecRegistry()
-                : options.getKeyVaultMongoClientSettings().getCodecRegistry();
+        CodecRegistry codecRegistry = options.getKeyVaultMongoClientSettings().getCodecRegistry();
         BsonDocument encryptedFields = rawEncryptedFields.toBsonDocument(BsonDocument.class, codecRegistry);
         BsonValue fields = encryptedFields.get("fields");
         if (fields != null && fields.isArray()) {
