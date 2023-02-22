@@ -596,6 +596,8 @@ public final class Entities {
 
         MongoClient mongoClient = null;
         ClientEncryptionSettings.Builder builder = ClientEncryptionSettings.builder();
+        // this is ignored in preference to the keyVaultClient, but required to be non-null in the ClientEncryptionSettings constructor
+        builder.keyVaultMongoClientSettings(MongoClientSettings.builder().build());
         for (Map.Entry<String, BsonValue> entry : clientEncryptionOpts.entrySet()) {
             switch (entry.getKey()) {
                 case "keyVaultClient":

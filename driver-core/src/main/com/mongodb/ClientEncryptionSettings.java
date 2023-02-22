@@ -55,14 +55,14 @@ public final class ClientEncryptionSettings {
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
 
         /**
-         * Sets the key vault settings.
+         * Sets the {@link MongoClientSettings} that will be used to access the key vault.
          *
-         * @param keyVaultMongoClientSettings the key vault mongo client settings, which may be null.
+         * @param keyVaultMongoClientSettings the key vault mongo client settings, which may not be null.
          * @return this
          * @see #getKeyVaultMongoClientSettings()
          */
         public Builder keyVaultMongoClientSettings(final MongoClientSettings keyVaultMongoClientSettings) {
-            this.keyVaultMongoClientSettings = keyVaultMongoClientSettings;
+            this.keyVaultMongoClientSettings = notNull("keyVaultMongoClientSettings", keyVaultMongoClientSettings);
             return this;
         }
 
@@ -143,15 +143,9 @@ public final class ClientEncryptionSettings {
     }
 
     /**
-     * Gets the key vault settings.
+     * Gets the {@link MongoClientSettings} that will be used to access the key vault.
      *
-     * <p>
-     * The key vault collection is assumed to reside on the same MongoDB cluster as indicated by the connecting URI. But the optional
-     * keyVaultMongoClientSettings can be used to route data key queries to a separate MongoDB cluster, or the same cluster but with a
-     * different credential.
-     * </p>
-     * @return the key vault settings, which may be null to indicate that the same {@code MongoClient} should be used to access the key
-     * vault collection as is used for the rest of the application.
+     * @return the key vault settings, which may be not be null
      */
     public MongoClientSettings getKeyVaultMongoClientSettings() {
         return keyVaultMongoClientSettings;
@@ -260,7 +254,7 @@ public final class ClientEncryptionSettings {
     }
 
     private ClientEncryptionSettings(final Builder builder) {
-        this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
+        this.keyVaultMongoClientSettings = notNull("keyVaultMongoClientSettings", builder.keyVaultMongoClientSettings);
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
