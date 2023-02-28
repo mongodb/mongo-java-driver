@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client
 import com.mongodb.ClientSessionOptions
 import com.mongodb.TransactionOptions
 import com.mongodb.client.ClientSession as JClientSession
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.functions
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
@@ -31,8 +32,32 @@ class ClientSessionTest {
 
     @Test
     fun shouldHaveTheSameMethods() {
-        val jClientSessionFunctions = JClientSession::class.functions.map { it.name }.toSet()
-        val kClientSessionFunctions = ClientSession::class.functions.map { it.name }.toSet()
+        val internalFunctions =
+            setOf(
+                "advanceClusterTime",
+                "advanceOperationTime",
+                "clearTransactionContext",
+                "getClusterTime",
+                "getOperationTime",
+                "getOriginator",
+                "getPinnedServerAddress",
+                "getRecoveryToken",
+                "getServerSession",
+                "getSnapshotTimestamp",
+                "getTransactionContext",
+                "notifyMessageSent",
+                "notifyOperationInitiated",
+                "setRecoveryToken",
+                "setSnapshotTimestamp",
+                "setTransactionContext")
+
+        val jClientSessionFunctions = JClientSession::class.functions.map { it.name }.toSet() - internalFunctions
+        val kClientSessionFunctions =
+            ClientSession::class.functions.map { it.name }.toSet() +
+                ClientSession::class
+                    .declaredMemberProperties
+                    .filterNot { it.name == "wrapped" }
+                    .map { "get${it.name.replaceFirstChar { c -> c.uppercaseChar() }}" }
 
         assertEquals(jClientSessionFunctions, kClientSessionFunctions)
     }
@@ -45,19 +70,16 @@ class ClientSessionTest {
         val transactionOptions = TransactionOptions.builder().maxCommitTime(10).build()
 
         whenever(wrapped.options).doReturn(ClientSessionOptions.builder().build())
-        whenever(wrapped.serverSession).doReturn(mock())
         whenever(wrapped.isCausallyConsistent).doReturn(true)
         whenever(wrapped.transactionOptions).doReturn(transactionOptions)
 
         session.options
-        session.serverSession
-        session.isCausallyConsistent
+        session.isCausallyConsistent()
         session.startTransaction()
         session.startTransaction(transactionOptions)
         session.getTransactionOptions()
 
         verify(wrapped).options
-        verify(wrapped).serverSession
         verify(wrapped).isCausallyConsistent
         verify(wrapped).startTransaction()
         verify(wrapped).startTransaction(transactionOptions)
