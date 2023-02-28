@@ -2070,8 +2070,8 @@ buildvariants:
     - name: "scala-tests"
 
 - matrix_name: "kotlin-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], topology: "replicaset", os: "ubuntu" }
-  display_name: "${jdk} ${version} ${topology} ${os}"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["6.0"], topology: "replicaset", os: "ubuntu" }
+  display_name: "Kotlin: ${jdk} ${version} ${topology} ${os}"
   tags: ["test-kotlin-variant"]
   tasks:
     - name: "kotlin-tests"
