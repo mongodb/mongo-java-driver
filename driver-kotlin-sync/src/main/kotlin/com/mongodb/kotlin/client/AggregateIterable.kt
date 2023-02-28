@@ -29,8 +29,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Aggregation command](https://www.mongodb.com/docs/manual/reference/command/aggregate)
  */
-public class AggregateIterable<T : Any>(@PublishedApi internal val wrapped: JAggregateIterable<T>) :
-    MongoIterable<T>(wrapped) {
+public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<T>) : MongoIterable<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
      *

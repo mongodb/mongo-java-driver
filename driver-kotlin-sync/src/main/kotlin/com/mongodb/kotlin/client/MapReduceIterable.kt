@@ -32,8 +32,7 @@ import org.bson.conversions.Bson
  * @see [Map Reduce](https://www.mongodb.com/docs/manual/reference/command/mapReduce/)
  */
 @Deprecated("Map Reduce has been deprecated. Use Aggregation instead", replaceWith = ReplaceWith(""))
-public class MapReduceIterable<T : Any>(@PublishedApi internal val wrapped: JMapReduceIterable<T>) :
-    MongoIterable<T>(wrapped) {
+public class MapReduceIterable<T : Any>(private val wrapped: JMapReduceIterable<T>) : MongoIterable<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
      *

@@ -25,8 +25,7 @@ import org.bson.BsonValue
  * @param T The type of the result.
  * @see [List indexes](https://www.mongodb.com/docs/manual/reference/command/listIndexes/)
  */
-public class ListIndexesIterable<T : Any>(@PublishedApi internal val wrapped: JListIndexesIterable<T>) :
-    MongoIterable<T>(wrapped) {
+public class ListIndexesIterable<T : Any>(private val wrapped: JListIndexesIterable<T>) : MongoIterable<T>(wrapped) {
     /**
      * Sets the maximum execution time on the server for this operation.
      *

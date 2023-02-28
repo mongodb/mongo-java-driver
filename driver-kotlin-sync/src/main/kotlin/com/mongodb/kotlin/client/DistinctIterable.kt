@@ -27,8 +27,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
  */
-public class DistinctIterable<T : Any>(@PublishedApi internal val wrapped: JDistinctIterable<T>) :
-    MongoIterable<T>(wrapped) {
+public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>) : MongoIterable<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
      *

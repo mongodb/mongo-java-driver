@@ -23,7 +23,7 @@ import com.mongodb.client.MongoIterable as JMongoIterable
  *
  * @param T The type that this iterable will decode documents to.
  */
-public open class MongoIterable<T : Any>(@PublishedApi internal val delegate: JMongoIterable<T>) {
+public open class MongoIterable<T : Any>(private val delegate: JMongoIterable<T>) {
 
     /**
      * Returns a cursor used for iterating over elements of type `T. The cursor is primarily used for change streams.

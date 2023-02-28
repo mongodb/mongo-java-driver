@@ -27,7 +27,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
 /** The MongoDatabase representation. */
-public class MongoDatabase(@PublishedApi internal val wrapped: JMongoDatabase) {
+public class MongoDatabase(private val wrapped: JMongoDatabase) {
 
     /** The name of the database. */
     public val name: String

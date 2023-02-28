@@ -26,7 +26,7 @@ import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 
 /** A client session that supports transactions. */
-public class ClientSession(public val wrapped: clientClientSession) : jClientSession {
+public class ClientSession(internal val wrapped: clientClientSession) : jClientSession {
 
     public override fun close(): Unit = wrapped.close()
 

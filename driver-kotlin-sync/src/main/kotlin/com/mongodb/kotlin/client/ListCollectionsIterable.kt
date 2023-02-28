@@ -26,7 +26,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [List collections](https://www.mongodb.com/docs/manual/reference/command/listCollections/)
  */
-public class ListCollectionsIterable<T : Any>(@PublishedApi internal val wrapped: JListCollectionsIterable<T>) :
+public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollectionsIterable<T>) :
     MongoIterable<T>(wrapped) {
     /**
      * Sets the maximum execution time on the server for this operation.

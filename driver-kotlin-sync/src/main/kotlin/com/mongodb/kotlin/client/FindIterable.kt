@@ -30,7 +30,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Collection filter](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
  */
-public class FindIterable<T : Any>(@PublishedApi internal val wrapped: JFindIterable<T>) : MongoIterable<T>(wrapped) {
+public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : MongoIterable<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
      *

@@ -34,7 +34,7 @@ import org.bson.BsonValue
  *
  * @param T The type of the result.
  */
-public class ChangeStreamIterable<T : Any>(@PublishedApi internal val wrapped: JChangeStreamIterable<T>) :
+public class ChangeStreamIterable<T : Any>(private val wrapped: JChangeStreamIterable<T>) :
     MongoIterable<ChangeStreamDocument<T>>(wrapped) {
 
     /**
