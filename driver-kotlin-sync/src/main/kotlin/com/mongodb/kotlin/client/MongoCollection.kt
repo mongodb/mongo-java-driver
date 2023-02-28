@@ -887,7 +887,6 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @throws com.mongodb.MongoException if the write failed due some other failure
      * @see [Modify Documents](https://www.mongodb.com/docs/manual/tutorial/modify-documents/#replace-the-document/)
      * @see [Update Command Behaviors](https://www.mongodb.com/docs/manual/reference/command/update/)
-     * @since 3.6
      */
     public fun replaceOne(filter: Bson, replacement: T, options: ReplaceOptions = ReplaceOptions()): UpdateResult =
         wrapped.replaceOne(filter, replacement, options)
@@ -912,7 +911,6 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @throws com.mongodb.MongoException if the write failed due some other failure
      * @see [Modify Documents](https://www.mongodb.com/docs/manual/tutorial/modify-documents/#replace-the-document/)
      * @see [Update Command Behaviors](https://www.mongodb.com/docs/manual/reference/command/update/)
-     * @since 3.6
      */
     public fun replaceOne(
         clientSession: ClientSession,
@@ -1425,7 +1423,6 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing
      *   collection and dropTarget is false, or if the oldCollectionName is the name of a collection that doesn't exist
      * @see [Rename collection](https://www.mongodb.com/docs/manual/reference/command/renameCollection/)
-     * @since 3.6
      */
     public fun renameCollection(
         clientSession: ClientSession,

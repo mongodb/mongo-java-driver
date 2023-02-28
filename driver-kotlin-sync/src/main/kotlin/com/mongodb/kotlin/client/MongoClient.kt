@@ -45,7 +45,6 @@ public class MongoClient(private val wrapped: JMongoClient) : Closeable {
      * A factory for [MongoClient] instances.
      *
      * @see MongoClient
-     * @since 4.10
      */
     public companion object Factory {
         /**
