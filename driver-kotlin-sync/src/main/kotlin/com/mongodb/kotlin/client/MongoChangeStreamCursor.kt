@@ -19,11 +19,11 @@ import com.mongodb.client.MongoChangeStreamCursor as JMongoChangeStreamCursor
 import org.bson.BsonDocument
 
 /**
- * The Mongo Cursor interface implementing the iterator protocol.
+ * The Mongo Cursor interface for change streams implementing the iterator protocol.
  *
  * An application should ensure that a cursor is closed in all circumstances, e.g. using a `use` statement:
  * ```
- *  collection.find().cursor().use { c ->
+ *   collection.watch().cursor().use { c ->
  *      while (c.hasNext()) {
  *          println(c.next())
  *      }
