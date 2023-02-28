@@ -27,7 +27,7 @@ import com.mongodb.kotlin.client.MongoClient
 import org.bson.Document
 import org.bson.conversions.Bson
 
-data class SyncMongoClient(val wrapped: MongoClient) : JMongoClient {
+internal class SyncMongoClient(val wrapped: MongoClient) : JMongoClient {
     override fun close(): Unit = wrapped.close()
 
     override fun getDatabase(databaseName: String): MongoDatabase = SyncMongoDatabase(wrapped.getDatabase(databaseName))

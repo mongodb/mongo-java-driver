@@ -58,7 +58,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
 @Suppress("OVERRIDE_DEPRECATION")
-data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMongoCollection<T> {
+internal class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMongoCollection<T> {
     override fun getNamespace(): MongoNamespace = wrapped.namespace
 
     override fun getDocumentClass(): Class<T> = wrapped.documentClass

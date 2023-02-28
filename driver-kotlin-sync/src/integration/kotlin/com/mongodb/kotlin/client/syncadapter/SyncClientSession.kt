@@ -25,7 +25,7 @@ import com.mongodb.session.ServerSession
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 
-class SyncClientSession(internal val wrapped: ClientSession, private val originator: Any) : JClientSession {
+internal class SyncClientSession(internal val wrapped: ClientSession, private val originator: Any) : JClientSession {
     override fun close(): Unit = wrapped.close()
 
     override fun getPinnedServerAddress(): ServerAddress? = wrapped.pinnedServerAddress

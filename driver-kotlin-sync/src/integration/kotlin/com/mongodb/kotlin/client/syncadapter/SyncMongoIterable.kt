@@ -20,7 +20,7 @@ import com.mongodb.client.MongoCursor
 import com.mongodb.client.MongoIterable as JMongoIterable
 import com.mongodb.kotlin.client.MongoIterable
 
-open class SyncMongoIterable<T : Any>(val delegate: MongoIterable<T>) : JMongoIterable<T> {
+internal open class SyncMongoIterable<T : Any>(val delegate: MongoIterable<T>) : JMongoIterable<T> {
     override fun iterator(): MongoCursor<T> = cursor()
 
     override fun cursor(): MongoCursor<T> = SyncMongoCursor(delegate.cursor())

@@ -26,7 +26,8 @@ import org.bson.Document
 import org.bson.conversions.Bson
 
 @Suppress("DEPRECATION")
-data class SyncFindIterable<T : Any>(val wrapped: FindIterable<T>) : JFindIterable<T>, SyncMongoIterable<T>(wrapped) {
+internal class SyncFindIterable<T : Any>(val wrapped: FindIterable<T>) :
+    JFindIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncFindIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun filter(filter: Bson?): SyncFindIterable<T> = apply { wrapped.filter(filter) }
 

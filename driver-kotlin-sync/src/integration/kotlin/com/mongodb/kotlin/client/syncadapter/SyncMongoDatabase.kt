@@ -32,7 +32,7 @@ import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
-data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
+internal class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
     override fun getName(): String = wrapped.name
 
     override fun getCodecRegistry(): CodecRegistry = wrapped.codecRegistry

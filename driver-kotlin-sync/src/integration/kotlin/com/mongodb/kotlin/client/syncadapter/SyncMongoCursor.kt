@@ -20,7 +20,7 @@ import com.mongodb.ServerCursor
 import com.mongodb.client.MongoCursor as JMongoCursor
 import com.mongodb.kotlin.client.MongoCursor
 
-open class SyncMongoCursor<T : Any>(private val delegate: MongoCursor<T>) : JMongoCursor<T> {
+internal open class SyncMongoCursor<T : Any>(private val delegate: MongoCursor<T>) : JMongoCursor<T> {
     override fun remove() {
         TODO("Not yet implemented")
     }

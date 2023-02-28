@@ -24,7 +24,7 @@ import org.bson.BsonValue
 import org.bson.Document
 import org.bson.conversions.Bson
 
-data class SyncAggregateIterable<T : Any>(val wrapped: AggregateIterable<T>) :
+internal class SyncAggregateIterable<T : Any>(val wrapped: AggregateIterable<T>) :
     JAggregateIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncAggregateIterable<T> = apply { wrapped.batchSize(batchSize) }
 

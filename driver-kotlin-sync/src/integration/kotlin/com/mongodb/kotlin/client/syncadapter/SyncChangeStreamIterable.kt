@@ -27,7 +27,7 @@ import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.bson.BsonValue
 
-data class SyncChangeStreamIterable<T : Any>(val wrapped: ChangeStreamIterable<T>) :
+internal class SyncChangeStreamIterable<T : Any>(val wrapped: ChangeStreamIterable<T>) :
     JChangeStreamIterable<T>, SyncMongoIterable<ChangeStreamDocument<T>>(wrapped) {
     override fun <R : Any> withDocumentClass(clazz: Class<R>): MongoIterable<R> =
         SyncMongoIterable(wrapped.withDocumentClass(clazz))

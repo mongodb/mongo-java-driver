@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.conversions.Bson
 
-data class SyncListDatabasesIterable<T : Any>(val wrapped: ListDatabasesIterable<T>) :
+internal class SyncListDatabasesIterable<T : Any>(val wrapped: ListDatabasesIterable<T>) :
     JListDatabasesIterable<T>, SyncMongoIterable<T>(wrapped) {
 
     override fun batchSize(batchSize: Int): SyncListDatabasesIterable<T> = apply { wrapped.batchSize(batchSize) }
