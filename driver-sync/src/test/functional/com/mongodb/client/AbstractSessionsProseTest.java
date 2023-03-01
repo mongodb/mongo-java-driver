@@ -16,7 +16,9 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.Updates;
@@ -26,24 +28,31 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.bson.assertions.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // Prose tests from https://github.com/mongodb/specifications/tree/master/source/sessions
 public abstract class AbstractSessionsProseTest {
+
+    private static final int MONGOCRYPTD_PORT = 47017;
 
     protected abstract MongoClient getMongoClient(MongoClientSettings settings);
 
@@ -56,14 +65,14 @@ public abstract class AbstractSessionsProseTest {
         MongoCollection<Document> collection;
         try (MongoClient client = getMongoClient(
                 getMongoClientSettingsBuilder()
-                .applyToConnectionPoolSettings(builder -> builder.maxSize(1))
-                .addCommandListener(new CommandListener() {
-                    @Override
-                    public void commandStarted(final CommandStartedEvent event) {
-                        lsidSet.add(event.getCommand().getDocument("lsid"));
-                    }
-                })
-                .build())) {
+                        .applyToConnectionPoolSettings(builder -> builder.maxSize(1))
+                        .addCommandListener(new CommandListener() {
+                            @Override
+                            public void commandStarted(final CommandStartedEvent event) {
+                                lsidSet.add(event.getCommand().getDocument("lsid"));
+                            }
+                        })
+                        .build())) {
             collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
 
             List<Runnable> operations = asList(
@@ -103,4 +112,73 @@ public abstract class AbstractSessionsProseTest {
             assertEquals(1, minLsidSetSize);
         }
     }
+
+    @Test
+    public void shouldIgnoreImplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
+        Process mongocryptdProcess = startMongocryptdProcess();
+        try {
+            AtomicBoolean containsLsid = new AtomicBoolean(true);
+            try (MongoClient client = getMongoClient(
+                    getMongoCryptdMongoClientSettingsBuilder()
+                            .addCommandListener(new CommandListener() {
+                                @Override
+                                public void commandStarted(final CommandStartedEvent event) {
+                                    containsLsid.set(event.getCommand().containsKey("lsid"));
+                                }
+                            })
+                            .build())) {
+
+                MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
+                try {
+                    collection.find().first();
+                } catch (Exception e) {
+                    // ignore exceptions
+                }
+                assertFalse(containsLsid.get());
+            }
+        } finally {
+            mongocryptdProcess.destroy();
+        }
+    }
+
+    @Test
+    public void shouldThrowOnExplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
+        Process mongocryptdProcess = startMongocryptdProcess();
+        try {
+            try (MongoClient client = getMongoClient(getMongoCryptdMongoClientSettingsBuilder().build())) {
+                MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
+                try (ClientSession session = client.startSession()) {
+                    try {
+                        collection.find(session).first();
+                        fail("Expected MongoClientException");
+                    } catch (MongoClientException e) {
+                        // expected
+                    }
+
+                    try {
+                        collection.insertOne(session, new Document());
+                        fail("Expected MongoClientException");
+                    } catch (MongoClientException e) {
+                        // expected
+                    }
+                }
+            }
+        } finally {
+            mongocryptdProcess.destroy();
+        }
+    }
+
+    private static MongoClientSettings.Builder getMongoCryptdMongoClientSettingsBuilder() {
+        return MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(singletonList(new ServerAddress("127.0.0.1", MONGOCRYPTD_PORT))));
+    }
+
+    private static Process startMongocryptdProcess() throws IOException {
+        ProcessBuilder processBuilder = new ProcessBuilder(asList("mongocryptd", "--port", Integer.toString(MONGOCRYPTD_PORT)));
+        processBuilder.redirectErrorStream(true);
+        processBuilder.redirectOutput(new File("/dev/null"));
+        return processBuilder.start();
+    }
 }
+

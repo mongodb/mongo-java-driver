@@ -68,7 +68,7 @@ public final class DescriptionHelper {
         ConnectionDescription connectionDescription = new ConnectionDescription(connectionId,
                 getMaxWireVersion(helloResult), getServerType(helloResult), getMaxWriteBatchSize(helloResult),
                 getMaxBsonObjectSize(helloResult), getMaxMessageSizeBytes(helloResult), getCompressors(helloResult),
-                helloResult.getArray("saslSupportedMechs", null));
+                helloResult.getArray("saslSupportedMechs", null), getLogicalSessionTimeoutMinutes(helloResult));
         if (helloResult.containsKey("connectionId")) {
             ConnectionId newConnectionId =
                     connectionDescription.getConnectionId().withServerValue(helloResult.getNumber("connectionId").intValue());

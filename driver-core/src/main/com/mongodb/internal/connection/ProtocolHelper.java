@@ -228,6 +228,7 @@ public final class ProtocolHelper {
                 .maxBatchCount(connectionDescription.getMaxBatchCount())
                 .maxWireVersion(connectionDescription.getMaxWireVersion())
                 .serverType(connectionDescription.getServerType())
+                .sessionSupported(connectionDescription.getLogicalSessionTimeoutMinutes() != null)
                 .build();
     }
 
