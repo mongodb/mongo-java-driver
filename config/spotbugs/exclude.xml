@@ -259,4 +259,12 @@
         <Method name="~.*createEncryptedCollection.*"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
     </Match>
+
+    <!-- Kotlin false positive for validating annotations  -->
+    <Match>
+        <Class name="org.bson.codecs.kotlin.DataClassCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="UC_USELESS_OBJECT"/>
+    </Match>
+
 </FindBugsFilter>
