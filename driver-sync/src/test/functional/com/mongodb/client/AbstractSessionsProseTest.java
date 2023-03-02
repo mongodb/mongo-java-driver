@@ -179,7 +179,7 @@ public abstract class AbstractSessionsProseTest {
                         builder.hosts(singletonList(new ServerAddress("localhost", MONGOCRYPTD_PORT))));
     }
 
-    private static Process startMongocryptdProcess(String pidSuffix) throws IOException {
+    private static Process startMongocryptdProcess(final String pidSuffix) throws IOException {
         ProcessBuilder processBuilder = new ProcessBuilder(asList("mongocryptd",
                 "--port", Integer.toString(MONGOCRYPTD_PORT),
                 "--pidfilepath", "mongocryptd-" + pidSuffix + ".pid"));
