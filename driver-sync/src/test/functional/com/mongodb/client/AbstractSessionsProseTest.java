@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCommandException;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOneModel;
@@ -116,11 +117,11 @@ public abstract class AbstractSessionsProseTest {
     @Test
     public void shouldIgnoreImplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
         assumeTrue(serverVersionAtLeast(4, 2));
-        Process mongocryptdProcess = startMongocryptdProcess();
+        Process mongocryptdProcess = startMongocryptdProcess("1");
         try {
             AtomicBoolean containsLsid = new AtomicBoolean(true);
             try (MongoClient client = getMongoClient(
-                    getMongoCryptdMongoClientSettingsBuilder()
+                    getMongocryptdMongoClientSettingsBuilder()
                             .addCommandListener(new CommandListener() {
                                 @Override
                                 public void commandStarted(final CommandStartedEvent event) {
@@ -132,8 +133,8 @@ public abstract class AbstractSessionsProseTest {
                 MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
                 try {
                     collection.find().first();
-                } catch (Exception e) {
-                    // ignore exceptions
+                } catch (MongoCommandException e) {
+                    // ignore command errors from mongocryptd
                 }
                 assertFalse(containsLsid.get());
             }
@@ -145,23 +146,25 @@ public abstract class AbstractSessionsProseTest {
     @Test
     public void shouldThrowOnExplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
         assumeTrue(serverVersionAtLeast(4, 2));
-        Process mongocryptdProcess = startMongocryptdProcess();
+        Process mongocryptdProcess = startMongocryptdProcess("2");
         try {
-            try (MongoClient client = getMongoClient(getMongoCryptdMongoClientSettingsBuilder().build())) {
+            try (MongoClient client = getMongoClient(getMongocryptdMongoClientSettingsBuilder().build())) {
                 MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
                 try (ClientSession session = client.startSession()) {
+                    String expectedClientExceptionMessage =
+                            "Attempting to use a ClientSession while connected to a server that doesn't support sessions";
                     try {
                         collection.find(session).first();
                         fail("Expected MongoClientException");
                     } catch (MongoClientException e) {
-                        // expected
+                        assertEquals(expectedClientExceptionMessage, e.getMessage());
                     }
 
                     try {
                         collection.insertOne(session, new Document());
                         fail("Expected MongoClientException");
                     } catch (MongoClientException e) {
-                        // expected
+                        assertEquals(expectedClientExceptionMessage, e.getMessage());
                     }
                 }
             }
@@ -170,16 +173,18 @@ public abstract class AbstractSessionsProseTest {
         }
     }
 
-    private static MongoClientSettings.Builder getMongoCryptdMongoClientSettingsBuilder() {
+    private static MongoClientSettings.Builder getMongocryptdMongoClientSettingsBuilder() {
         return MongoClientSettings.builder()
                 .applyToClusterSettings(builder ->
-                        builder.hosts(singletonList(new ServerAddress("127.0.0.1", MONGOCRYPTD_PORT))));
+                        builder.hosts(singletonList(new ServerAddress("localhost", MONGOCRYPTD_PORT))));
     }
 
-    private static Process startMongocryptdProcess() throws IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder(asList("mongocryptd", "--port", Integer.toString(MONGOCRYPTD_PORT)));
+    private static Process startMongocryptdProcess(String pidSuffix) throws IOException {
+        ProcessBuilder processBuilder = new ProcessBuilder(asList("mongocryptd",
+                "--port", Integer.toString(MONGOCRYPTD_PORT),
+                "--pidfilepath", "mongocryptd-" + pidSuffix + ".pid"));
         processBuilder.redirectErrorStream(true);
-        processBuilder.redirectOutput(new File("/dev/null"));
+        processBuilder.redirectOutput(new File("/tmp/mongocryptd.log"));
         return processBuilder.start();
     }
 }
