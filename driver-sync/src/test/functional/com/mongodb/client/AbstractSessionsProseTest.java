@@ -115,6 +115,7 @@ public abstract class AbstractSessionsProseTest {
 
     @Test
     public void shouldIgnoreImplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
+        assumeTrue(serverVersionAtLeast(4, 2));
         Process mongocryptdProcess = startMongocryptdProcess();
         try {
             AtomicBoolean containsLsid = new AtomicBoolean(true);
@@ -143,6 +144,7 @@ public abstract class AbstractSessionsProseTest {
 
     @Test
     public void shouldThrowOnExplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
+        assumeTrue(serverVersionAtLeast(4, 2));
         Process mongocryptdProcess = startMongocryptdProcess();
         try {
             try (MongoClient client = getMongoClient(getMongoCryptdMongoClientSettingsBuilder().build())) {
