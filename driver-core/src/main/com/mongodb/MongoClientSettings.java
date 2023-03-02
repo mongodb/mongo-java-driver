@@ -78,7 +78,8 @@ public final class MongoClientSettings {
                     new BsonCodecProvider(),
                     new EnumCodecProvider(),
                     new ExpressionCodecProvider(),
-                    new Jep395RecordCodecProvider()));
+                    new Jep395RecordCodecProvider(),
+                    new KotlinDataClassCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
@@ -127,6 +128,7 @@ public final class MongoClientSettings {
      * <li>{@link org.bson.codecs.EnumCodecProvider}</li>
      * <li>{@link ExpressionCodecProvider}</li>
      * <li>{@link com.mongodb.Jep395RecordCodecProvider}</li>
+     * <li>{@link com.mongodb.KotlinDataClassCodecProvider}</li>
      * </ul>
      *
      * <p>
