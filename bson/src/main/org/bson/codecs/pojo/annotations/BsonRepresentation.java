@@ -29,13 +29,14 @@ import java.lang.annotation.Target;
  *
  * <p>For POJOs, requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
  * <p>For Java records, the annotation is only supported on the record component.</p>
+ * <p>For Kotlin data classes, the annotation is only supported on the constructor parameter.</p>
  *
  * @since 4.2
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 public @interface BsonRepresentation {
     /**
      * The type that the property is stored as in the database.

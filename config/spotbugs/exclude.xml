@@ -245,4 +245,11 @@
         <Method name="acquirePermitOrGetAvailableOpenedConnection"/>
         <Bug pattern="NS_NON_SHORT_CIRCUIT"/>
     </Match>
+
+    <!-- Kotlin false positive for validating annotations  -->
+    <Match>
+        <Class name="org.bson.codecs.kotlin.DataClassCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="UC_USELESS_OBJECT"/>
+    </Match>
 </FindBugsFilter>
