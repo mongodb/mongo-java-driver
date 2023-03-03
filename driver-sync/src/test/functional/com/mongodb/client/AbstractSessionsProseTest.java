@@ -121,6 +121,7 @@ public abstract class AbstractSessionsProseTest {
         assumeTrue(serverVersionAtLeast(4, 2));
         Process mongocryptdProcess = startMongocryptdProcess("1");
         try {
+            // initialize to true in case the command listener is never actually called, in which case the assertFalse will fire
             AtomicBoolean containsLsid = new AtomicBoolean(true);
             try (MongoClient client = getMongoClient(
                     getMongocryptdMongoClientSettingsBuilder()
@@ -142,6 +143,9 @@ public abstract class AbstractSessionsProseTest {
                     // ignore command errors from mongocryptd
                 }
                 assertFalse(containsLsid.get());
+
+                // reset
+                containsLsid.set(true);
 
                 try {
                     collection.insertOne(new Document());
