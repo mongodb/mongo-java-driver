@@ -93,6 +93,12 @@ data class DataClassNestedParameterizedTypes(
             Triple<Int, Pair<Double, String>, Triple<String, Pair<Double, String>, Double>>>
 )
 
+data class DataClassWithMutableList(val value: MutableList<String>)
+
+data class DataClassWithMutableSet(val value: MutableSet<String>)
+
+data class DataClassWithMutableMap(val value: MutableMap<String, String>)
+
 @BsonDiscriminator data class DataClassWithBsonDiscriminator(val id: String)
 
 data class DataClassWithBsonIgnore(val id: String, @BsonIgnore val ignored: String)
@@ -110,3 +116,5 @@ data class DataClassWithFailingInit(@BsonId val id: String) {
         require(false)
     }
 }
+
+data class DataClassWithSequence(val value: Sequence<String>)

@@ -43,11 +43,15 @@ import org.bson.codecs.kotlin.samples.DataClassWithDefaults
 import org.bson.codecs.kotlin.samples.DataClassWithEmbedded
 import org.bson.codecs.kotlin.samples.DataClassWithFailingInit
 import org.bson.codecs.kotlin.samples.DataClassWithInvalidRepresentation
+import org.bson.codecs.kotlin.samples.DataClassWithMutableList
+import org.bson.codecs.kotlin.samples.DataClassWithMutableMap
+import org.bson.codecs.kotlin.samples.DataClassWithMutableSet
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterizedDataClass
 import org.bson.codecs.kotlin.samples.DataClassWithNulls
 import org.bson.codecs.kotlin.samples.DataClassWithPair
 import org.bson.codecs.kotlin.samples.DataClassWithParameterizedDataClass
+import org.bson.codecs.kotlin.samples.DataClassWithSequence
 import org.bson.codecs.kotlin.samples.DataClassWithTriple
 import org.bson.conversions.Bson
 import org.junit.jupiter.api.Test
@@ -255,10 +259,38 @@ class DataClassCodecTest {
     }
 
     @Test
+    fun testDataClassWithMutableList() {
+        val expected = """{"value": ["A", "B", "C"]}"""
+        val dataClass = DataClassWithMutableList(mutableListOf("A", "B", "C"))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithMutableSet() {
+        val expected = """{"value": ["A", "B", "C"]}"""
+        val dataClass = DataClassWithMutableSet(mutableSetOf("A", "B", "C"))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithMutableMap() {
+        val expected = """{"value": {"a": "A", "b": "B", "c": "C"}}"""
+        val dataClass = DataClassWithMutableMap(mutableMapOf("a" to "A", "b" to "B", "c" to "C"))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
     fun testDataFailures() {
         assertThrows<CodecConfigurationException>("Missing data") {
             val codec: Codec<DataClass> = createDataClassCodec(DataClass::class, registry())
             codec.decode(BsonDocumentReader(BsonDocument()), DecoderContext.builder().build())
+        }
+
+        assertThrows<CodecConfigurationException>("Unsupported type Sequence") {
+            createDataClassCodec(DataClassWithSequence::class, registry())
         }
 
         assertThrows<CodecConfigurationException>("Invalid types") {
