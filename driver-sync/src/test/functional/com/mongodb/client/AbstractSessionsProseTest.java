@@ -50,14 +50,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// Prose tests from https://github.com/mongodb/specifications/tree/master/source/sessions
+// Prose tests for Sessions specification: https://github.com/mongodb/specifications/tree/master/source/sessions
+// Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.rst
 public abstract class AbstractSessionsProseTest {
 
     private static final int MONGOCRYPTD_PORT = 47017;
 
     protected abstract MongoClient getMongoClient(MongoClientSettings settings);
 
-    // Test 13 from https://github.com/mongodb/specifications/blob/master/source/sessions/driver-sessions.rst#test-plan"
+    // Test 13 from #13-existing-sessions-are-not-checked-into-a-cleared-pool-after-forking
     @Test
     public void shouldCreateServerSessionOnlyAfterConnectionCheckout() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(3, 6));
@@ -114,6 +115,7 @@ public abstract class AbstractSessionsProseTest {
         }
     }
 
+    // Test 18 from #18-implicit-session-is-ignored-if-connection-does-not-support-sessions
     @Test
     public void shouldIgnoreImplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
         assumeTrue(serverVersionAtLeast(4, 2));
@@ -130,9 +132,19 @@ public abstract class AbstractSessionsProseTest {
                             })
                             .build())) {
 
+                Document helloResponse = client.getDatabase("admin").runCommand(new Document("hello", 1));
+                assertFalse((helloResponse.containsKey("logicalSessionTimeoutMinutes")));
+
                 MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
                 try {
                     collection.find().first();
+                } catch (MongoCommandException e) {
+                    // ignore command errors from mongocryptd
+                }
+                assertFalse(containsLsid.get());
+
+                try {
+                    collection.insertOne(new Document());
                 } catch (MongoCommandException e) {
                     // ignore command errors from mongocryptd
                 }
@@ -143,6 +155,7 @@ public abstract class AbstractSessionsProseTest {
         }
     }
 
+    // Test 19 from #19-explicit-session-raises-an-error-if-connection-does-not-support-sessions
     @Test
     public void shouldThrowOnExplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
         assumeTrue(serverVersionAtLeast(4, 2));
@@ -150,6 +163,10 @@ public abstract class AbstractSessionsProseTest {
         try {
             try (MongoClient client = getMongoClient(getMongocryptdMongoClientSettingsBuilder().build())) {
                 MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
+
+                Document helloResponse = client.getDatabase("admin").runCommand(new Document("hello", 1));
+                assertFalse((helloResponse.containsKey("logicalSessionTimeoutMinutes")));
+
                 try (ClientSession session = client.startSession()) {
                     String expectedClientExceptionMessage =
                             "Attempting to use a ClientSession while connected to a server that doesn't support sessions";
