@@ -71,6 +71,7 @@ import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.ClusterFixture.setDirectConnection;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
@@ -168,7 +169,16 @@ public abstract class AbstractUnifiedTest {
         collectionHelper.killAllSessions();
 
         if (!isDataLakeTest()) {
-            collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+            try {
+                collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+            } catch (MongoCommandException e) {
+                // Older sharded clusters sometimes reply with this error.  Work around it by retrying once.
+                if (e.getErrorCode() == 11601 && isSharded() && serverVersionLessThan(4, 2)) {
+                    collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+                } else {
+                    throw e;
+                }
+            }
         }
 
         if (!data.isEmpty()) {
