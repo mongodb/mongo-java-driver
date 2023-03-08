@@ -80,7 +80,7 @@ class MongoIterableTest {
     }
 
     @Test
-    fun shouldUseClosesTheUnderlyingCursor() {
+    fun shouldCloseTheUnderlyingCursorWhenUsingUse() {
         val delegate: JMongoIterable<Document> = mock()
         val cursor: JMongoCursor<Document> = mock()
         val iterable = MongoIterable(delegate)
@@ -96,6 +96,29 @@ class MongoIterableTest {
         verify(delegate, times(1)).cursor()
         verify(cursor, times(2)).hasNext()
         verify(cursor, times(2)).next()
+        verify(cursor, times(1)).close()
+
+        verifyNoMoreInteractions(delegate)
+        verifyNoMoreInteractions(cursor)
+    }
+
+    @Test
+    fun shouldCloseTheUnderlyingCursorWhenUsingToList() {
+        val delegate: JMongoIterable<Document> = mock()
+        val cursor: JMongoCursor<Document> = mock()
+        val iterable = MongoIterable(delegate)
+
+        val documents = listOf(Document("a", 1), Document("b", 2), Document("c", 3))
+
+        whenever(cursor.hasNext()).thenReturn(true, true, true, false)
+        whenever(cursor.next()).thenReturn(documents[0], documents[1], documents[2])
+        whenever(delegate.cursor()).doReturn(cursor)
+
+        assertContentEquals(documents, iterable.toList())
+
+        verify(delegate, times(1)).cursor()
+        verify(cursor, times(4)).hasNext()
+        verify(cursor, times(3)).next()
         verify(cursor, times(1)).close()
 
         verifyNoMoreInteractions(delegate)

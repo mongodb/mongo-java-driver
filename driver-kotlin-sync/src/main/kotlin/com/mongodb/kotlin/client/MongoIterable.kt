@@ -84,4 +84,7 @@ public open class MongoIterable<T : Any>(private val delegate: JMongoIterable<T>
      * @return the collection
      */
     public fun <C : MutableCollection<in T>> toCollection(destination: C): C = use { it.toCollection(destination) }
+
+    /** @return a [List] containing all elements. */
+    public fun toList(): List<T> = toCollection(ArrayList()).toList()
 }

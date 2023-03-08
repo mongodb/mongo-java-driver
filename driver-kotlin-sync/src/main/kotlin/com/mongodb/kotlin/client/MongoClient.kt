@@ -22,7 +22,6 @@ import com.mongodb.MongoDriverInformation
 import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.client.MongoClients as JMongoClients
 import com.mongodb.connection.ClusterDescription
-import com.mongodb.lang.Nullable
 import java.io.Closeable
 import org.bson.Document
 import org.bson.conversions.Bson
@@ -64,7 +63,7 @@ public class MongoClient(private val wrapped: JMongoClient) : Closeable {
          */
         public fun create(
             connectionString: ConnectionString = ConnectionString("mongodb://localhost"),
-            @Nullable mongoDriverInformation: MongoDriverInformation? = null
+            mongoDriverInformation: MongoDriverInformation? = null
         ): MongoClient {
             return create(
                 MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation)
@@ -83,7 +82,7 @@ public class MongoClient(private val wrapped: JMongoClient) : Closeable {
          */
         public fun create(
             settings: MongoClientSettings,
-            @Nullable mongoDriverInformation: MongoDriverInformation? = null
+            mongoDriverInformation: MongoDriverInformation? = null
         ): MongoClient {
             val builder =
                 if (mongoDriverInformation == null) MongoDriverInformation.builder()
