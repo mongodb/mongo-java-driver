@@ -141,7 +141,8 @@ internal data class DataClassCodec<T : Any>(
             types: List<Type> = emptyList()
         ): DataClassCodec<R> {
             validateAnnotations(kClass)
-            val primaryConstructor = kClass.primaryConstructor!!
+            val primaryConstructor =
+                kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
             val typeMap = types.mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType() to k }.toMap()
 
             val propertyModels =
@@ -182,10 +183,8 @@ internal data class DataClassCodec<T : Any>(
         private fun computeFieldName(parameter: KParameter): String {
             return if (parameter.hasAnnotation<BsonId>()) {
                 idFieldName
-            } else if (parameter.hasAnnotation<BsonProperty>()) {
-                parameter.findAnnotation<BsonProperty>()!!.value
             } else {
-                requireNotNull(parameter.name)
+                parameter.findAnnotation<BsonProperty>()?.value ?: requireNotNull(parameter.name)
             }
         }
 
