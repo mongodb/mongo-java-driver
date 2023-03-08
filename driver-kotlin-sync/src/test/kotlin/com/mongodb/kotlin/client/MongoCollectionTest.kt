@@ -69,7 +69,7 @@ class MongoCollectionTest {
 
     @Test
     fun shouldHaveTheSameMethods() {
-        val jMongoCollectionFunctions = JMongoCollection::class.declaredFunctions.map { it.name }.toSet()
+        val jMongoCollectionFunctions = JMongoCollection::class.declaredFunctions.map { it.name }.toSet() - "mapReduce"
         val kMongoCollectionFunctions =
             MongoCollection::class.declaredFunctions.map { it.name }.toSet() +
                 MongoCollection::class
@@ -388,39 +388,6 @@ class MongoCollectionTest {
         verify(wrapped, times(1)).watch(pipeline, BsonDocument::class.java)
         verify(wrapped, times(1)).watch(clientSession.wrapped, emptyList(), BsonDocument::class.java)
         verify(wrapped, times(1)).watch(clientSession.wrapped, pipeline, BsonDocument::class.java)
-        verifyNoMoreInteractions(wrapped)
-    }
-
-    @Suppress("DEPRECATION")
-    @Test
-    fun shouldCallTheUnderlyingMapReduce() {
-        val mongoCollection = MongoCollection(wrapped)
-        val mapFunction = "mapper"
-        val reduceFunction = "mapper"
-
-        whenever(wrapped.documentClass).doReturn(Document::class.java)
-        whenever(wrapped.mapReduce(mapFunction, reduceFunction, Document::class.java)).doReturn(mock())
-        whenever(wrapped.mapReduce(clientSession.wrapped, mapFunction, reduceFunction, Document::class.java))
-            .doReturn(mock())
-        whenever(wrapped.mapReduce(mapFunction, reduceFunction, BsonDocument::class.java)).doReturn(mock())
-        whenever(wrapped.mapReduce(clientSession.wrapped, mapFunction, reduceFunction, BsonDocument::class.java))
-            .doReturn(mock())
-
-        mongoCollection.mapReduce(mapFunction, reduceFunction)
-        mongoCollection.mapReduce(clientSession, mapFunction, reduceFunction)
-
-        mongoCollection.mapReduce(mapFunction, reduceFunction, Document::class.java)
-        mongoCollection.mapReduce(clientSession, mapFunction, reduceFunction, Document::class.java)
-
-        mongoCollection.mapReduce<BsonDocument>(mapFunction, reduceFunction)
-        mongoCollection.mapReduce<BsonDocument>(clientSession, mapFunction, reduceFunction)
-
-        verify(wrapped, times(2)).documentClass
-        verify(wrapped, times(2)).mapReduce(mapFunction, reduceFunction, Document::class.java)
-        verify(wrapped, times(2)).mapReduce(clientSession.wrapped, mapFunction, reduceFunction, Document::class.java)
-        verify(wrapped, times(1)).mapReduce(mapFunction, reduceFunction, BsonDocument::class.java)
-        verify(wrapped, times(1))
-            .mapReduce(clientSession.wrapped, mapFunction, reduceFunction, BsonDocument::class.java)
         verifyNoMoreInteractions(wrapped)
     }
 

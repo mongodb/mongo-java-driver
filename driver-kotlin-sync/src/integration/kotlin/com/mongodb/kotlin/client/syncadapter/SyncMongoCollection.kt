@@ -53,6 +53,7 @@ import com.mongodb.client.result.InsertManyResult
 import com.mongodb.client.result.InsertOneResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.kotlin.client.MongoCollection
+import java.lang.UnsupportedOperationException
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
@@ -191,28 +192,26 @@ internal class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : J
         SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
 
     override fun mapReduce(mapFunction: String, reduceFunction: String): MapReduceIterable<T> =
-        SyncMapReduceIterable(wrapped.mapReduce(mapFunction, reduceFunction))
+        throw UnsupportedOperationException("No MapReduce support")
 
     override fun <R : Any> mapReduce(
         mapFunction: String,
         reduceFunction: String,
         resultClass: Class<R>
-    ): MapReduceIterable<R> = SyncMapReduceIterable(wrapped.mapReduce(mapFunction, reduceFunction, resultClass))
+    ): MapReduceIterable<R> = throw UnsupportedOperationException("No MapReduce support")
 
     override fun mapReduce(
         clientSession: ClientSession,
         mapFunction: String,
         reduceFunction: String
-    ): MapReduceIterable<T> =
-        SyncMapReduceIterable(wrapped.mapReduce(clientSession.unwrapped(), mapFunction, reduceFunction))
+    ): MapReduceIterable<T> = throw UnsupportedOperationException("No MapReduce support")
 
     override fun <R : Any> mapReduce(
         clientSession: ClientSession,
         mapFunction: String,
         reduceFunction: String,
         resultClass: Class<R>
-    ): MapReduceIterable<R> =
-        SyncMapReduceIterable(wrapped.mapReduce(clientSession.unwrapped(), mapFunction, reduceFunction, resultClass))
+    ): MapReduceIterable<R> = throw UnsupportedOperationException("No MapReduce support")
 
     override fun deleteOne(filter: Bson): DeleteResult = wrapped.deleteOne(filter)
 
