@@ -16,7 +16,10 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCommandException;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.Updates;
@@ -26,28 +29,36 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.bson.assertions.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// Prose tests from https://github.com/mongodb/specifications/tree/master/source/sessions
+// Prose tests for Sessions specification: https://github.com/mongodb/specifications/tree/master/source/sessions
+// Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.rst
 public abstract class AbstractSessionsProseTest {
+
+    private static final int MONGOCRYPTD_PORT = 47017;
 
     protected abstract MongoClient getMongoClient(MongoClientSettings settings);
 
-    // Test 13 from https://github.com/mongodb/specifications/blob/master/source/sessions/driver-sessions.rst#test-plan"
+    // Test 13 from #13-existing-sessions-are-not-checked-into-a-cleared-pool-after-forking
     @Test
     public void shouldCreateServerSessionOnlyAfterConnectionCheckout() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(3, 6));
@@ -56,14 +67,14 @@ public abstract class AbstractSessionsProseTest {
         MongoCollection<Document> collection;
         try (MongoClient client = getMongoClient(
                 getMongoClientSettingsBuilder()
-                .applyToConnectionPoolSettings(builder -> builder.maxSize(1))
-                .addCommandListener(new CommandListener() {
-                    @Override
-                    public void commandStarted(final CommandStartedEvent event) {
-                        lsidSet.add(event.getCommand().getDocument("lsid"));
-                    }
-                })
-                .build())) {
+                        .applyToConnectionPoolSettings(builder -> builder.maxSize(1))
+                        .addCommandListener(new CommandListener() {
+                            @Override
+                            public void commandStarted(final CommandStartedEvent event) {
+                                lsidSet.add(event.getCommand().getDocument("lsid"));
+                            }
+                        })
+                        .build())) {
             collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
 
             List<Runnable> operations = asList(
@@ -103,4 +114,99 @@ public abstract class AbstractSessionsProseTest {
             assertEquals(1, minLsidSetSize);
         }
     }
+
+    // Test 18 from #18-implicit-session-is-ignored-if-connection-does-not-support-sessions
+    @Test
+    public void shouldIgnoreImplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
+        assumeTrue(serverVersionAtLeast(4, 2));
+        Process mongocryptdProcess = startMongocryptdProcess("1");
+        try {
+            // initialize to true in case the command listener is never actually called, in which case the assertFalse will fire
+            AtomicBoolean containsLsid = new AtomicBoolean(true);
+            try (MongoClient client = getMongoClient(
+                    getMongocryptdMongoClientSettingsBuilder()
+                            .addCommandListener(new CommandListener() {
+                                @Override
+                                public void commandStarted(final CommandStartedEvent event) {
+                                    containsLsid.set(event.getCommand().containsKey("lsid"));
+                                }
+                            })
+                            .build())) {
+
+                Document helloResponse = client.getDatabase("admin").runCommand(new Document("hello", 1));
+                assertFalse((helloResponse.containsKey("logicalSessionTimeoutMinutes")));
+
+                MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
+                try {
+                    collection.find().first();
+                } catch (MongoCommandException e) {
+                    // ignore command errors from mongocryptd
+                }
+                assertFalse(containsLsid.get());
+
+                // reset
+                containsLsid.set(true);
+
+                try {
+                    collection.insertOne(new Document());
+                } catch (MongoCommandException e) {
+                    // ignore command errors from mongocryptd
+                }
+                assertFalse(containsLsid.get());
+            }
+        } finally {
+            mongocryptdProcess.destroy();
+        }
+    }
+
+    // Test 19 from #19-explicit-session-raises-an-error-if-connection-does-not-support-sessions
+    @Test
+    public void shouldThrowOnExplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
+        assumeTrue(serverVersionAtLeast(4, 2));
+        Process mongocryptdProcess = startMongocryptdProcess("2");
+        try {
+            try (MongoClient client = getMongoClient(getMongocryptdMongoClientSettingsBuilder().build())) {
+                MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
+
+                Document helloResponse = client.getDatabase("admin").runCommand(new Document("hello", 1));
+                assertFalse((helloResponse.containsKey("logicalSessionTimeoutMinutes")));
+
+                try (ClientSession session = client.startSession()) {
+                    String expectedClientExceptionMessage =
+                            "Attempting to use a ClientSession while connected to a server that doesn't support sessions";
+                    try {
+                        collection.find(session).first();
+                        fail("Expected MongoClientException");
+                    } catch (MongoClientException e) {
+                        assertEquals(expectedClientExceptionMessage, e.getMessage());
+                    }
+
+                    try {
+                        collection.insertOne(session, new Document());
+                        fail("Expected MongoClientException");
+                    } catch (MongoClientException e) {
+                        assertEquals(expectedClientExceptionMessage, e.getMessage());
+                    }
+                }
+            }
+        } finally {
+            mongocryptdProcess.destroy();
+        }
+    }
+
+    private static MongoClientSettings.Builder getMongocryptdMongoClientSettingsBuilder() {
+        return MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(singletonList(new ServerAddress("localhost", MONGOCRYPTD_PORT))));
+    }
+
+    private static Process startMongocryptdProcess(final String pidSuffix) throws IOException {
+        ProcessBuilder processBuilder = new ProcessBuilder(asList("mongocryptd",
+                "--port", Integer.toString(MONGOCRYPTD_PORT),
+                "--pidfilepath", "mongocryptd-" + pidSuffix + ".pid"));
+        processBuilder.redirectErrorStream(true);
+        processBuilder.redirectOutput(new File("/tmp/mongocryptd.log"));
+        return processBuilder.start();
+    }
 }
+

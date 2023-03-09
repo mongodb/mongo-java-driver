@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.ClusterDescription;
@@ -238,9 +237,8 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public Publisher<ClientSession> startSession(final ClientSessionOptions options) {
-        return clientSessionHelper.createClientSessionMono(notNull("options", options), executor)
-                .switchIfEmpty(Mono.create(sink -> sink.error(
-                        new MongoClientException("Sessions are not supported by the MongoDB cluster to which this client is connected"))));
+        notNull("options", options);
+        return Mono.fromCallable(() -> clientSessionHelper.createClientSession(options, executor));
     }
 
     @Override

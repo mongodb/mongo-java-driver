@@ -221,8 +221,14 @@ public final class CommandMessage extends RequestMessage {
         if (sessionContext.getClusterTime() != null) {
             extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));
         }
-        if (sessionContext.hasSession() && responseExpected) {
-            extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
+        if (sessionContext.hasSession()) {
+            if (!sessionContext.isImplicitSession() && !getSettings().isSessionSupported()) {
+                throw new MongoClientException("Attempting to use a ClientSession while connected to a server that doesn't support "
+                        + "sessions");
+            }
+            if (getSettings().isSessionSupported() && responseExpected) {
+                extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
+            }
         }
         boolean firstMessageInTransaction = sessionContext.notifyMessageSent();
 

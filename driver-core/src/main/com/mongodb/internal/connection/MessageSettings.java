@@ -36,6 +36,7 @@ public final class MessageSettings {
     private final int maxBatchCount;
     private final int maxWireVersion;
     private final ServerType serverType;
+    private final boolean sessionSupported;
 
     /**
      * Gets the builder
@@ -56,6 +57,7 @@ public final class MessageSettings {
         private int maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
         private int maxWireVersion;
         private ServerType serverType;
+        private boolean sessionSupported;
 
         /**
          * Build it.
@@ -108,6 +110,11 @@ public final class MessageSettings {
             this.serverType = serverType;
             return this;
         }
+
+        public Builder sessionSupported(final boolean sessionSupported) {
+            this.sessionSupported = sessionSupported;
+            return this;
+        }
     }
 
     /**
@@ -145,11 +152,17 @@ public final class MessageSettings {
         return serverType;
     }
 
+    public boolean isSessionSupported() {
+        return sessionSupported;
+    }
+
+
     private MessageSettings(final Builder builder) {
         this.maxDocumentSize = builder.maxDocumentSize;
         this.maxMessageSize = builder.maxMessageSize;
         this.maxBatchCount = builder.maxBatchCount;
         this.maxWireVersion = builder.maxWireVersion;
         this.serverType = builder.serverType;
+        this.sessionSupported = builder.sessionSupported;
     }
 }

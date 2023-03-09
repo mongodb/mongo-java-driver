@@ -224,7 +224,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
             putIfNotNull(commandDocument, "comment", getComment());
             putIfNotNull(commandDocument, "let", getLet());
 
-            if (isRetryableWrite(isRetryWrites(), getWriteConcern(), serverDescription, connectionDescription, sessionContext)) {
+            if (isRetryableWrite(isRetryWrites(), getWriteConcern(), connectionDescription, sessionContext)) {
                 commandDocument.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
             }
             return commandDocument;
