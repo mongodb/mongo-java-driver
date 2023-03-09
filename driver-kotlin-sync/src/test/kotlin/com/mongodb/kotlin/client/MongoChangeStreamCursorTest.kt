@@ -53,12 +53,12 @@ class MongoChangeStreamCursorTest {
         whenever(wrapped.serverCursor).doReturn(ServerCursor(1, ServerAddress()))
         whenever(wrapped.serverAddress).doReturn(mock())
 
-        cursor.getServerCursor()
+        cursor.serverCursor
         cursor.serverAddress
         cursor.hasNext()
         cursor.tryNext()
-        cursor.available()
-        cursor.getResumeToken()
+        cursor.available
+        cursor.resumeToken
 
         verify(wrapped).serverCursor
         verify(wrapped).serverAddress

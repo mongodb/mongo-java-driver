@@ -38,7 +38,10 @@ class MongoCursorTest {
                 MongoCursor::class
                     .declaredMemberProperties
                     .filterNot { it.name == "wrapped" }
-                    .map { "get${it.name.replaceFirstChar{c -> c.uppercaseChar() }}" }
+                    .map {
+                        if (it.name == "available") it.name
+                        else "get${it.name.replaceFirstChar{c -> c.uppercaseChar() }}"
+                    }
 
         assertEquals(jMongoCursorFunctions, kMongoCursorFunctions)
     }
@@ -51,11 +54,11 @@ class MongoCursorTest {
         whenever(wrapped.serverCursor).doReturn(ServerCursor(1, ServerAddress()))
         whenever(wrapped.serverAddress).doReturn(mock())
 
-        cursor.getServerCursor()
+        cursor.serverCursor
         cursor.serverAddress
         cursor.hasNext()
         cursor.tryNext()
-        cursor.available()
+        cursor.available
 
         verify(wrapped).serverCursor
         verify(wrapped).serverAddress

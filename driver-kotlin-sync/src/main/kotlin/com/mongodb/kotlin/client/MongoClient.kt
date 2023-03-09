@@ -106,7 +106,8 @@ public class MongoClient(private val wrapped: JMongoClient) : Closeable {
      * @see com.mongodb.connection.ClusterSettings.Builder.addClusterListener
      * @see com.mongodb.MongoClientSettings.Builder.applyToClusterSettings
      */
-    public fun getClusterDescription(): ClusterDescription = wrapped.clusterDescription
+    public val clusterDescription: ClusterDescription
+        get() = wrapped.clusterDescription
 
     /**
      * Gets a [MongoDatabase] instance for the given database name.

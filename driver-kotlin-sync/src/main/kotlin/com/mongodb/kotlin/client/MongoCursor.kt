@@ -48,10 +48,9 @@ public open class MongoCursor<T : Any>(private val wrapped: JMongoCursor<T>) : I
      *
      * If the cursor is known to be exhausted, returns 0. If the cursor is closed before it's been exhausted, it may
      * return a non-zero value.
-     *
-     * @return the number of results available locally without blocking
      */
-    public fun available(): Int = wrapped.available()
+    public val available: Int
+        get() = wrapped.available()
 
     /**
      * A special [next] case that returns the next element in the iteration if available or null.
@@ -65,7 +64,8 @@ public open class MongoCursor<T : Any>(private val wrapped: JMongoCursor<T>) : I
     public fun tryNext(): T? = wrapped.tryNext()
 
     /** @return the ServerCursor if available */
-    public fun getServerCursor(): ServerCursor? = wrapped.serverCursor
+    public val serverCursor: ServerCursor?
+        get() = wrapped.serverCursor
 
     /** @return the ServerAddress */
     public val serverAddress: ServerAddress

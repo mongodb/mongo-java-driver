@@ -30,11 +30,11 @@ internal open class SyncMongoCursor<T : Any>(private val delegate: MongoCursor<T
 
     override fun close() = delegate.close()
 
-    override fun available(): Int = delegate.available()
+    override fun available(): Int = delegate.available
 
     override fun tryNext(): T? = delegate.tryNext()
 
-    override fun getServerCursor(): ServerCursor? = delegate.getServerCursor()
+    override fun getServerCursor(): ServerCursor? = delegate.serverCursor
 
     override fun getServerAddress(): ServerAddress = delegate.serverAddress
 }

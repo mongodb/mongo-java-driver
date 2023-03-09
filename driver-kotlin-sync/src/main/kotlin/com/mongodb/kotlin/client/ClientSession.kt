@@ -30,28 +30,21 @@ public class ClientSession(public val wrapped: JClientSession) : Closeable {
     public val options: ClientSessionOptions
         get() = wrapped.options
 
-    /**
-     * Returns true if operations in this session must be causally consistent
-     *
-     * @return whether operations in this session must be causally consistent.
-     */
-    public fun isCausallyConsistent(): Boolean = wrapped.isCausallyConsistent
+    /** Returns true if operations in this session must be causally consistent */
+    public val isCausallyConsistent: Boolean
+        get() = wrapped.isCausallyConsistent
 
-    /**
-     * Returns true if there is an active transaction on this session, and false otherwise
-     *
-     * @return true if there is an active transaction on this session
-     */
-    public fun hasActiveTransaction(): Boolean = wrapped.hasActiveTransaction()
+    /** Returns true if there is an active transaction on this session, and false otherwise */
+    public val hasActiveTransaction: Boolean
+        get() = wrapped.hasActiveTransaction()
 
     /**
      * Gets the transaction options.
      *
      * Only call this method of the session has an active transaction
-     *
-     * @return the transaction options
      */
-    public fun getTransactionOptions(): TransactionOptions = wrapped.transactionOptions
+    public val transactionOptions: TransactionOptions
+        get() = wrapped.transactionOptions
 
     /**
      * Start a transaction in the context of this session with default transaction options. A transaction can not be

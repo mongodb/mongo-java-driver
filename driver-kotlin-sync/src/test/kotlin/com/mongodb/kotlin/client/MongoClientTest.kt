@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client
 import com.mongodb.ClientSessionOptions
 import com.mongodb.client.MongoClient as JMongoClient
 import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.Document
@@ -40,7 +41,12 @@ class MongoClientTest {
     @Test
     fun shouldHaveTheSameMethods() {
         val jMongoClientFunctions = JMongoClient::class.declaredFunctions.map { it.name }.toSet()
-        val kMongoClientFunctions = MongoClient::class.declaredFunctions.map { it.name }.toSet()
+        val kMongoClientFunctions =
+            MongoClient::class.declaredFunctions.map { it.name }.toSet() +
+                MongoClient::class
+                    .declaredMemberProperties
+                    .filterNot { it.name == "wrapped" }
+                    .map { "get${it.name.replaceFirstChar{c -> c.uppercaseChar() }}" }
 
         assertEquals(jMongoClientFunctions, kMongoClientFunctions)
     }
@@ -59,7 +65,7 @@ class MongoClientTest {
         val mongoClient = MongoClient(wrapped)
         whenever(wrapped.clusterDescription).doReturn(mock())
 
-        mongoClient.getClusterDescription()
+        mongoClient.clusterDescription
 
         verify(wrapped).clusterDescription
         verifyNoMoreInteractions(wrapped)

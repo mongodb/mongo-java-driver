@@ -83,7 +83,7 @@ internal class SyncMongoClient(val wrapped: MongoClient) : JMongoClient {
     ): ChangeStreamIterable<T> =
         SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
 
-    override fun getClusterDescription(): ClusterDescription = wrapped.getClusterDescription()
+    override fun getClusterDescription(): ClusterDescription = wrapped.clusterDescription
 
     private fun ClientSession.unwrapped() = (this as SyncClientSession).wrapped
 }

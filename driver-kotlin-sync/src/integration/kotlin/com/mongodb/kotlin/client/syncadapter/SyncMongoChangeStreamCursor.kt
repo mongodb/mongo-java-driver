@@ -21,5 +21,5 @@ import org.bson.BsonDocument
 
 internal class SyncMongoChangeStreamCursor<T : Any>(val wrapped: MongoChangeStreamCursor<T>) :
     JMongoChangeStreamCursor<T>, SyncMongoCursor<T>(wrapped) {
-    override fun getResumeToken(): BsonDocument? = wrapped.getResumeToken()
+    override fun getResumeToken(): BsonDocument? = wrapped.resumeToken
 }

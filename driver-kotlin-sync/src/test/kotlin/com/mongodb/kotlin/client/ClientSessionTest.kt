@@ -57,7 +57,10 @@ class ClientSessionTest {
                 ClientSession::class
                     .declaredMemberProperties
                     .filterNot { it.name == "wrapped" }
-                    .map { "get${it.name.replaceFirstChar { c -> c.uppercaseChar() }}" }
+                    .map {
+                        if (it.name.startsWith("is") || it.name.startsWith("has")) it.name
+                        else "get${it.name.replaceFirstChar { c -> c.uppercaseChar()}}"
+                    }
 
         assertEquals(jClientSessionFunctions, kClientSessionFunctions)
     }
@@ -74,10 +77,10 @@ class ClientSessionTest {
         whenever(wrapped.transactionOptions).doReturn(transactionOptions)
 
         session.options
-        session.isCausallyConsistent()
+        session.isCausallyConsistent
         session.startTransaction()
         session.startTransaction(transactionOptions)
-        session.getTransactionOptions()
+        session.transactionOptions
 
         verify(wrapped).options
         verify(wrapped).isCausallyConsistent

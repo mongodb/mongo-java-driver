@@ -43,5 +43,6 @@ public class MongoChangeStreamCursor<T : Any>(private val wrapped: JMongoChangeS
      * @return the resume token, which can be null if the cursor has either not been iterated yet, or the cursor is
      *   closed.
      */
-    public fun getResumeToken(): BsonDocument? = wrapped.resumeToken
+    public val resumeToken: BsonDocument?
+        get() = wrapped.resumeToken
 }
