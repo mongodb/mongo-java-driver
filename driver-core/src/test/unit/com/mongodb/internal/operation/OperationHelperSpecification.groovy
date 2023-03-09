@@ -28,6 +28,7 @@ import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.bulk.WriteRequest
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.session.SessionContext
+import org.bson.BsonArray
 import org.bson.BsonDocument
 import spock.lang.Specification
 
@@ -79,24 +80,19 @@ class OperationHelperSpecification extends Specification {
             hasSession() >> true
             hasActiveTransaction() >> false
         }
-        def noOpSessionContext = Stub(SessionContext) {
-            hasSession() >> false
-            hasActiveTransaction() >> false
-        }
 
         expect:
-        isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, noTransactionSessionContext) == expected
-        !isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, activeTransactionSessionContext)
-        !isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, noOpSessionContext)
+        isRetryableWrite(retryWrites, writeConcern, connectionDescription, noTransactionSessionContext) == expected
+        !isRetryableWrite(retryWrites, writeConcern, connectionDescription, activeTransactionSessionContext)
 
         where:
-        retryWrites | writeConcern   | serverDescription             | connectionDescription                 | expected
-        false       | ACKNOWLEDGED   | retryableServerDescription    | threeSixConnectionDescription         | false
-        true        | UNACKNOWLEDGED | retryableServerDescription    | threeSixConnectionDescription         | false
-        true        | ACKNOWLEDGED   | nonRetryableServerDescription | threeSixConnectionDescription         | false
-        true        | ACKNOWLEDGED   | retryableServerDescription    | threeFourConnectionDescription        | false
-        true        | ACKNOWLEDGED   | retryableServerDescription    | threeSixConnectionDescription         | false
-        true        | ACKNOWLEDGED   | retryableServerDescription    | threeSixPrimaryConnectionDescription  | true
+        retryWrites | writeConcern   | connectionDescription                 | expected
+        false       | ACKNOWLEDGED   | threeSixConnectionDescription         | false
+        true        | UNACKNOWLEDGED | threeSixConnectionDescription         | false
+        true        | ACKNOWLEDGED   | threeSixConnectionDescription         | false
+        true        | ACKNOWLEDGED   | threeFourConnectionDescription        | false
+        true        | ACKNOWLEDGED   | threeSixConnectionDescription         | false
+        true        | ACKNOWLEDGED   | threeSixPrimaryConnectionDescription  | true
     }
 
     def 'should check if a valid retryable read'() {
@@ -109,30 +105,20 @@ class OperationHelperSpecification extends Specification {
             hasSession() >> true
             hasActiveTransaction() >> false
         }
-        def noOpSessionContext = Stub(SessionContext) {
-            hasSession() >> false
-            hasActiveTransaction() >> false
-        }
 
         expect:
-        canRetryRead(serverDescription, noTransactionSessionContext) == expected
-        !canRetryRead(serverDescription, activeTransactionSessionContext)
-        !canRetryRead(serverDescription, noOpSessionContext)
-
-        where:
-        serverDescription             | expected
-        retryableServerDescription    | true
-        nonRetryableServerDescription | false
+        canRetryRead(retryableServerDescription, noTransactionSessionContext)
+        !canRetryRead(retryableServerDescription, activeTransactionSessionContext)
     }
 
 
     static ConnectionId connectionId = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
     static ConnectionDescription threeSixConnectionDescription = new ConnectionDescription(connectionId, 6,
-            STANDALONE, 1000, 100000, 100000, [])
+            STANDALONE, 1000, 100000, 100000, [], new BsonArray(), 30)
     static ConnectionDescription threeSixPrimaryConnectionDescription = new ConnectionDescription(connectionId, 6,
-            REPLICA_SET_PRIMARY, 1000, 100000, 100000, [])
+            REPLICA_SET_PRIMARY, 1000, 100000, 100000, [], new BsonArray(), 30)
     static ConnectionDescription threeFourConnectionDescription = new ConnectionDescription(connectionId, 5,
-            STANDALONE, 1000, 100000, 100000, [])
+            STANDALONE, 1000, 100000, 100000, [], new BsonArray(), null)
 
     static ServerDescription retryableServerDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)
             .logicalSessionTimeoutMinutes(1).build()

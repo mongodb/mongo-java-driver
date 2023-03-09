@@ -27,7 +27,6 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
@@ -96,8 +95,7 @@ public final class BulkWriteBatch {
     private final BsonDocument variables;
 
     static BulkWriteBatch createBulkWriteBatch(final MongoNamespace namespace,
-                                                      final ServerDescription serverDescription,
-                                                      final ConnectionDescription connectionDescription,
+                                               final ConnectionDescription connectionDescription,
                                                       final boolean ordered, final WriteConcern writeConcern,
                                                       final Boolean bypassDocumentValidation, final boolean retryWrites,
                                                       final List<? extends WriteRequest> writeRequests,
@@ -107,7 +105,7 @@ public final class BulkWriteBatch {
                 && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
         }
-        boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, sessionContext);
+        boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext);
         List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<>();
         boolean writeRequestsAreRetryable = true;
         for (int i = 0; i < writeRequests.size(); i++) {

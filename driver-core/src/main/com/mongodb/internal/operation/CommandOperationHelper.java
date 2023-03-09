@@ -407,8 +407,7 @@ final class CommandOperationHelper {
             return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 int maxWireVersion = connection.getDescription().getMaxWireVersion();
                 try {
-                    retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(source.getServerDescription(), connection.getDescription(),
-                            binding.getSessionContext()));
+                    retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(connection.getDescription(), binding.getSessionContext()));
                     BsonDocument command = retryState.attachment(AttachmentKeys.command())
                             .map(previousAttemptCommand -> {
                                 assertFalse(firstAttempt);
@@ -462,8 +461,8 @@ final class CommandOperationHelper {
                 SingleResultCallback<R> addingRetryableLabelCallback = firstAttempt
                         ? releasingCallback
                         : addingRetryableLabelCallback(releasingCallback, maxWireVersion);
-                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryWrite(source.getServerDescription(), connection.getDescription(),
-                        binding.getSessionContext()), addingRetryableLabelCallback)) {
+                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryWrite(connection.getDescription(), binding.getSessionContext()),
+                        addingRetryableLabelCallback)) {
                     return;
                 }
                 BsonDocument command;

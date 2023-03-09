@@ -184,14 +184,13 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                 SessionContext sessionContext = binding.getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
-                if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext),
-                        source.getServerDescription(), connectionDescription, sessionContext)) {
+                if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext), connectionDescription, sessionContext)) {
                     handleMongoWriteConcernWithResponseException(retryState, true);
                 }
                 validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, writeConcern);
                 if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                     BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
-                            source.getServerDescription(), connectionDescription, ordered, writeConcern,
+                            connectionDescription, ordered, writeConcern,
                             bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables));
                 }
                 logRetryExecute(retryState);
@@ -220,9 +219,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                 SessionContext sessionContext = binding.getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
-                if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext),
-                        source.getServerDescription(),
-                        connectionDescription, sessionContext)
+                if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext), connectionDescription, sessionContext)
                         && handleMongoWriteConcernWithResponseExceptionAsync(retryState, releasingCallback)) {
                     return;
                 }
@@ -233,7 +230,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 try {
                     if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                         BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
-                                source.getServerDescription(), connectionDescription, ordered, writeConcern,
+                                connectionDescription, ordered, writeConcern,
                                 bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables));
                     }
                 } catch (Throwable t) {

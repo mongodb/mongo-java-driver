@@ -202,8 +202,7 @@ final class OperationHelper {
     }
 
     static boolean isRetryableWrite(final boolean retryWrites, final WriteConcern writeConcern,
-                                    final ServerDescription serverDescription, final ConnectionDescription connectionDescription,
-                                    final SessionContext sessionContext) {
+            final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
         if (!retryWrites) {
             return false;
         } else if (!writeConcern.isAcknowledged()) {
@@ -213,21 +212,16 @@ final class OperationHelper {
             LOGGER.debug("retryWrites set to true but in an active transaction.");
             return false;
         } else {
-            return canRetryWrite(serverDescription, connectionDescription, sessionContext);
+            return canRetryWrite(connectionDescription, sessionContext);
         }
     }
 
-    static boolean canRetryWrite(final ServerDescription serverDescription, final ConnectionDescription connectionDescription,
-                                 final SessionContext sessionContext) {
-        if (serverDescription.getLogicalSessionTimeoutMinutes() == null && serverDescription.getType() != ServerType.LOAD_BALANCER) {
-            LOGGER.debug("retryWrites set to true but the server does not have 3.6 feature compatibility enabled.");
+    static boolean canRetryWrite(final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
+        if (connectionDescription.getLogicalSessionTimeoutMinutes() == null) {
+            LOGGER.debug("retryWrites set to true but the server does not support sessions.");
             return false;
         } else if (connectionDescription.getServerType().equals(ServerType.STANDALONE)) {
             LOGGER.debug("retryWrites set to true but the server is a standalone server.");
-            return false;
-        } else if (!sessionContext.hasSession()) {
-            LOGGER.debug("retryWrites set to true but there is no implicit session, likely because the MongoClient was created with "
-                    + "multiple MongoCredential instances and sessions can only be used with a single MongoCredential");
             return false;
         }
         return true;
@@ -236,13 +230,6 @@ final class OperationHelper {
     static boolean canRetryRead(final ServerDescription serverDescription, final SessionContext sessionContext) {
         if (sessionContext.hasActiveTransaction()) {
             LOGGER.debug("retryReads set to true but in an active transaction.");
-            return false;
-        } else if (serverDescription.getLogicalSessionTimeoutMinutes() == null && serverDescription.getType() != ServerType.LOAD_BALANCER) {
-            LOGGER.debug("retryReads set to true but the server does not have 3.6 feature compatibility enabled.");
-            return false;
-        } else if (serverDescription.getType() != ServerType.STANDALONE && !sessionContext.hasSession()) {
-            LOGGER.debug("retryReads set to true but there is no implicit session, likely because the MongoClient was created with "
-                    + "multiple MongoCredential instances and sessions can only be used with a single MongoCredential");
             return false;
         }
         return true;

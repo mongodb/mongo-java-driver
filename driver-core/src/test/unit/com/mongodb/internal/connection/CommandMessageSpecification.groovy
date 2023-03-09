@@ -61,6 +61,7 @@ class CommandMessageSpecification extends Specification {
                 MessageSettings.builder()
                         .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION)
                         .serverType(serverType as ServerType)
+                        .sessionSupported(true)
                         .build(),
                 responseExpected, exhaustAllowed, null, null, clusterConnectionMode, null)
         def output = new BasicOutputBuffer()

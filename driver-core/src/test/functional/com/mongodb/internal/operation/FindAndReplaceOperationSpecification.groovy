@@ -313,14 +313,8 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should create the expected command'() {
         when:
-        def includeBypassValidation = serverVersionIsGreaterThan(serverVersion, [3, 4, 0])
-        def includeCollation = serverVersionIsGreaterThan(serverVersion, [3, 4, 0])
-        def includeTxnNumber = (serverVersionIsGreaterThan(serverVersion, [3, 6, 0]) && retryWrites
-                && writeConcern.isAcknowledged() && serverType != STANDALONE)
-        def includeWriteConcern = (writeConcern.isAcknowledged() && !writeConcern.isServerDefault()
-                && serverVersionIsGreaterThan(serverVersion, [3, 4, 0]))
-
-
+        def includeTxnNumber = retryWrites && writeConcern.isAcknowledged() && serverType != STANDALONE
+        def includeWriteConcern = writeConcern.isAcknowledged() && !writeConcern.isServerDefault()
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def replacement = BsonDocument.parse('{ replacement: 1}')
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, retryWrites, documentCodec, replacement)
@@ -335,7 +329,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         expectedCommand.put('new', BsonBoolean.FALSE)
 
         then:
-        testOperation([operation: operation, serverVersion: serverVersion, expectedCommand: expectedCommand, async: async,
+        testOperation([operation: operation, serverVersion: [3, 6, 0], expectedCommand: expectedCommand, async: async,
                        result   : cannedResult, serverType: serverType])
 
         when:
@@ -354,21 +348,16 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
                 .append('fields', projection)
                 .append('maxTimeMS', new BsonInt64(10))
 
-        if (includeCollation) {
-            operation.collation(defaultCollation)
-            expectedCommand.append('collation', defaultCollation.asDocument())
-        }
-        if (includeBypassValidation) {
-            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
-        }
+        operation.collation(defaultCollation)
+        expectedCommand.append('collation', defaultCollation.asDocument())
+        expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
 
         then:
-        testOperation([operation: operation, serverVersion: serverVersion, expectedCommand: expectedCommand, async: async,
+        testOperation([operation: operation, serverVersion: [3, 6, 0], expectedCommand: expectedCommand, async: async,
                        result   : cannedResult, serverType: serverType])
 
         where:
-        [serverVersion, serverType, writeConcern, async, retryWrites] << [
-                [[3, 6, 0], [3, 4, 0]],
+        [serverType, writeConcern, async, retryWrites] << [
                 [REPLICA_SET_PRIMARY, STANDALONE],
                 [ACKNOWLEDGED, W1, UNACKNOWLEDGED],
                 [true, false],

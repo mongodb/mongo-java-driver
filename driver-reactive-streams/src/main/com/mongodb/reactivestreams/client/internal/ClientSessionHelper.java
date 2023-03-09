@@ -18,20 +18,12 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.TransactionOptions;
-import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerType;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
-import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -56,30 +48,10 @@ public class ClientSessionHelper {
     }
 
     Mono<ClientSession> createClientSessionMono(final ClientSessionOptions options, final OperationExecutor executor) {
-        ClusterDescription clusterDescription = mongoClient.getCluster().getCurrentDescription();
-        if (!getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()
-                && (clusterDescription.getLogicalSessionTimeoutMinutes() != null
-                || clusterDescription.getConnectionMode() == ClusterConnectionMode.LOAD_BALANCED)) {
-            return Mono.fromCallable(() -> createClientSession(options, executor));
-        } else {
-            return Mono.create(sink ->
-                mongoClient.getCluster()
-                        .selectServerAsync(this::getServerDescriptionListToConsiderForSessionSupport,
-                                           (serverTuple, t) -> {
-                                               if (t != null) {
-                                                   sink.success();
-                                               } else if (serverTuple.getServerDescription().getLogicalSessionTimeoutMinutes() == null
-                                                       && serverTuple.getServerDescription().getType() != ServerType.LOAD_BALANCER) {
-                                                   sink.success();
-                                               } else {
-                                                   sink.success(createClientSession(options, executor));
-                                               }
-                                           })
-            );
-        }
+        return Mono.fromCallable(() -> createClientSession(options, executor));
     }
 
-    private ClientSession createClientSession(final ClientSessionOptions options, final OperationExecutor executor) {
+    ClientSession createClientSession(final ClientSessionOptions options, final OperationExecutor executor) {
         ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
                     .defaultTransactionOptions(
                             TransactionOptions.merge(
@@ -91,13 +63,5 @@ public class ClientSessionHelper {
                                             .build()))
                     .build();
             return new ClientSessionPublisherImpl(serverSessionPool, mongoClient, mergedOptions, executor);
-    }
-
-    private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {
-        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-            return getAny(clusterDescription);
-        } else {
-            return getAnyPrimaryOrSecondary(clusterDescription);
-        }
     }
 }
