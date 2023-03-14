@@ -15,7 +15,7 @@ For tutorials on how to use the MongoDB Java Driver, please reference MongoDB Un
 For issues with, questions about, or feedback for the MongoDB Java driver, please look into
 our [support channels](https://www.mongodb.com/docs/manual/support/). Please
 do not email any of the Java driver developers directly with issues or
-questions - you're more likely to get an answer on the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver) or [StackOverflow](https://stackoverflow.com/questions/tagged/mongodb).
+questions - you're more likely to get an answer on the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver) or [StackOverflow](https://stackoverflow.com/questions/tagged/mongodb+java).
 
 At a minimum, please include in your description the exact version of the driver that you are using.  If you are having
 connectivity issues, it's often also useful to paste in the line of code where you construct the MongoClient instance,
