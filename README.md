@@ -6,17 +6,23 @@ Release notes are available [here](https://github.com/mongodb/mongo-java-driver/
 
 Reference and API documentation is available [here](http://mongodb.github.io/mongo-java-driver/).
 
+## Tutorials / Training
+
+For tutorials on how to use the MongoDB Java Driver, please reference MongoDB University's Java offerings [here](https://learn.mongodb.com/catalog?labels=%5B%22Language%22%5D&values=%5B%22Java%22%5D). Additional tutorials, videos, and code examples using the Java Driver can also be found in the [MongoDB Developer Center](https://www.mongodb.com/developer/languages/java/).
+
 ## Support / Feedback
 
 For issues with, questions about, or feedback for the MongoDB Java driver, please look into
 our [support channels](https://www.mongodb.com/docs/manual/support/). Please
 do not email any of the Java driver developers directly with issues or
-questions - you're more likely to get an answer on the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver).
+questions - you're more likely to get an answer on the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver) or [StackOverflow](https://stackoverflow.com/questions/tagged/mongodb+java).
 
 At a minimum, please include in your description the exact version of the driver that you are using.  If you are having
 connectivity issues, it's often also useful to paste in the line of code where you construct the MongoClient instance,
 along with the values of all parameters that you pass to the constructor. You should also check your application logs for
 any connectivity-related exceptions and post those as well.
+
+
 
 ## Bugs / Feature Requests
 
