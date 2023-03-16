@@ -17,13 +17,11 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.binding.ReferenceCounted;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -48,14 +46,13 @@ public interface AsyncConnection extends ReferenceCounted {
     ConnectionDescription getDescription();
 
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator,
-            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
-            @Nullable ServerApi serverApi, RequestContext requestContext, SingleResultCallback<T> callback);
+            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, BindingContext context,
+            SingleResultCallback<T> callback);
 
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
-                          @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, SessionContext sessionContext,
-                          @Nullable ServerApi serverApi, RequestContext requestContext, boolean responseExpected,
-                          @Nullable SplittablePayload payload, @Nullable FieldNameValidator payloadFieldNameValidator,
-                          SingleResultCallback<T> callback);
+            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder,
+            BindingContext context, boolean responseExpected, @Nullable SplittablePayload payload,
+            @Nullable FieldNameValidator payloadFieldNameValidator, SingleResultCallback<T> callback);
 
     void markAsPinned(Connection.PinningMode pinningMode);
 }

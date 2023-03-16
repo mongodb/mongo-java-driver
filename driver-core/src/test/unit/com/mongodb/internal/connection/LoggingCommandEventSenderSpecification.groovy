@@ -62,7 +62,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
             isDebugEnabled() >> debugLoggingEnabled
         }
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                IgnorableRequestContext.INSTANCE, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+                IgnorableRequestContext.INSTANCE, new OperationContext(), message, bsonOutput, new StructuredLogger(logger),
+                LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()
@@ -104,7 +105,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
             isDebugEnabled() >> true
         }
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                IgnorableRequestContext.INSTANCE, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+                IgnorableRequestContext.INSTANCE, new OperationContext(), message, bsonOutput, new StructuredLogger(logger),
+                LoggerSettings.builder().build())
         when:
         sender.sendStartedEvent()
         sender.sendSucceededEventForOneWayCommand()
@@ -156,8 +158,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, null, message, bsonOutput,
-                new StructuredLogger(logger), LoggerSettings.builder().build())
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, null,
+                new OperationContext(), message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()
@@ -187,7 +189,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
             isDebugEnabled() >> true
         }
         def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null,
-                IgnorableRequestContext.INSTANCE, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+                IgnorableRequestContext.INSTANCE, new OperationContext(), message, bsonOutput, new StructuredLogger(logger),
+                LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()

@@ -140,7 +140,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, primary(), decoder, _, null, _) >> new BsonDocument()
+        1 * connection.command(dbName, command, _, primary(), decoder, writeBinding) >> new BsonDocument()
         1 * connection.release()
     }
 
@@ -181,7 +181,7 @@ class CommandOperationHelperSpecification extends Specification {
                 FindAndModifyHelper.transformer()) { cmd -> cmd }
 
         then:
-        2 * connection.command(dbName, command, _, primary(), decoder, _, null, _) >> { results.poll() }
+        2 * connection.command(dbName, command, _, primary(), decoder, writeBinding) >> { results.poll() }
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -266,7 +266,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, readPreference, decoder, _, null, _) >> new BsonDocument()
+        1 * connection.command(dbName, command, _, readPreference, decoder, readBinding) >> new BsonDocument()
         1 * connection.release()
 
         where:

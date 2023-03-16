@@ -17,36 +17,19 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncReadBinding extends ReferenceCounted {
+public interface AsyncReadBinding extends BindingContext, ReferenceCounted {
     /**
      * The read preference that all connection sources returned by this instance will satisfy.
      * @return the non-null read preference
      */
     ReadPreference getReadPreference();
-
-    /**
-     * Gets the session context for this binding.
-     *
-     * @return the session context, which may not be null
-     *
-     */
-    SessionContext getSessionContext();
-
-    @Nullable
-    ServerApi getServerApi();
-
-    RequestContext getRequestContext();
 
     /**
      * Returns a connection source to a server that satisfies the read preference with which this instance is configured.

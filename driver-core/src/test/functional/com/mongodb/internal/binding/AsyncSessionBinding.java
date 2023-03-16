@@ -22,6 +22,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
@@ -67,6 +68,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     @Override
     public RequestContext getRequestContext() {
         return wrapped.getRequestContext();
+    }
+
+    @Override
+    public OperationContext getOperationContext() {
+        return wrapped.getOperationContext();
     }
 
     @Override
@@ -135,6 +141,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
         @Override
         public RequestContext getRequestContext() {
             return wrapped.getRequestContext();
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return wrapped.getOperationContext();
         }
 
         @Override

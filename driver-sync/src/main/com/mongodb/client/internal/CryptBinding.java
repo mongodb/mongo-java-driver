@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -80,6 +81,11 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
+    public OperationContext getOperationContext() {
+        return wrapped.getOperationContext();
+    }
+
+    @Override
     public int getCount() {
         return wrapped.getCount();
     }
@@ -115,6 +121,11 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
         @Override
         public SessionContext getSessionContext() {
             return wrapped.getSessionContext();
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return wrapped.getOperationContext();
         }
 
         @Override

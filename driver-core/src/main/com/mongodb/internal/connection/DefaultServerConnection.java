@@ -17,11 +17,10 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
@@ -71,45 +70,39 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
-                requestContext, true, null, null);
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context) {
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, context, true, null, null);
     }
 
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            @Nullable final ServerApi serverApi,
-            final RequestContext requestContext, final boolean responseExpected, @Nullable final SplittablePayload payload,
-            @Nullable final FieldNameValidator payloadFieldNameValidator) {
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+            final BindingContext context, final boolean responseExpected,
+            @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
-                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
-                        requestContext),
-                sessionContext);
+                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
+                        context.getServerApi(), context.getRequestContext(), context.getOperationContext()),
+                context.getSessionContext());
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, @Nullable final ServerApi serverApi,
-                                 final RequestContext requestContext, final SingleResultCallback<T> callback) {
-        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi, requestContext,
-                true, null, null, callback);
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final SingleResultCallback<T> callback) {
+        commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
+                context, true, null, null, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, @Nullable final ServerApi serverApi,
-                                 final RequestContext requestContext, final boolean responseExpected,
-                                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
-                                 final SingleResultCallback<T> callback) {
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final boolean responseExpected, @Nullable final SplittablePayload payload,
+            @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
-                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, serverApi,
-                        requestContext),
-                sessionContext, callback);
+                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
+                        context.getServerApi(), context.getRequestContext(), context.getOperationContext()),
+                context.getSessionContext(), callback);
     }
 
     @Override

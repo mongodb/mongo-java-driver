@@ -90,14 +90,14 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, mock(DnsSrvRecordMonitorFactory.class));
 
         // when
-        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class));
+        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class), new OperationContext());
 
         // then
         assertServerTupleExpectations(serverAddress, expectedServer, serverTuple);
 
         // when
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), new OperationContext(), callback);
         serverTuple = callback.get();
 
         // then
@@ -125,7 +125,7 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
         // when
-        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class));
+        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class), new OperationContext());
 
         // then
         assertServerTupleExpectations(resolvedServerAddress, expectedServer, serverTuple);
@@ -153,7 +153,7 @@ public class LoadBalancedClusterTest {
 
         // when
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), new OperationContext(), callback);
         ServerTuple serverTuple = callback.get();
 
         // then
@@ -178,7 +178,8 @@ public class LoadBalancedClusterTest {
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
-        MongoClientException exception = assertThrows(MongoClientException.class, () -> cluster.selectServer(mock(ServerSelector.class)));
+        MongoClientException exception = assertThrows(MongoClientException.class, () -> cluster.selectServer(mock(ServerSelector.class),
+                new OperationContext()));
         assertEquals("In load balancing mode, the host must resolve to a single SRV record, but instead it resolved to multiple hosts",
                 exception.getMessage());
     }
@@ -202,7 +203,7 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), new OperationContext(), callback);
 
         MongoClientException exception = assertThrows(MongoClientException.class, callback::get);
         assertEquals("In load balancing mode, the host must resolve to a single SRV record, but instead it resolved to multiple hosts",
@@ -230,7 +231,8 @@ public class LoadBalancedClusterTest {
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
-        MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class)));
+        MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class),
+                new OperationContext()));
         assertEquals("Timed out after 5 ms while waiting to resolve SRV records for foo.bar.com.", exception.getMessage());
     }
 
@@ -256,7 +258,8 @@ public class LoadBalancedClusterTest {
                         .exception(new MongoConfigurationException("Unable to resolve SRV record")));
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
-        MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class)));
+        MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class),
+                new OperationContext()));
         assertEquals("Timed out after 10 ms while waiting to resolve SRV records for foo.bar.com. "
                         + "Resolution exception was 'com.mongodb.MongoConfigurationException: Unable to resolve SRV record'",
                 exception.getMessage());
@@ -285,7 +288,7 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), new OperationContext(), callback);
 
         MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, callback::get);
         assertEquals("Timed out after 5 ms while waiting to resolve SRV records for foo.bar.com.", exception.getMessage());
@@ -314,7 +317,7 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
 
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), new OperationContext(), callback);
 
         MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, callback::get);
         assertEquals("Timed out after 10 ms while waiting to resolve SRV records for foo.bar.com. "
@@ -386,7 +389,7 @@ public class LoadBalancedClusterTest {
                 boolean success = false;
                 while (!success) {
                     try {
-                        cluster.selectServer(mock(ServerSelector.class));
+                        cluster.selectServer(mock(ServerSelector.class),  new OperationContext());
                         success = true;
                     } catch (MongoTimeoutException e) {
                         // this is expected
@@ -394,7 +397,7 @@ public class LoadBalancedClusterTest {
                 }
                 // Keep going for a little while
                 for (int j = 0; j < 100; j++) {
-                    cluster.selectServer(mock(ServerSelector.class));
+                    cluster.selectServer(mock(ServerSelector.class),  new OperationContext());
                 }
             }));
         }
@@ -444,13 +447,13 @@ public class LoadBalancedClusterTest {
                 while (!dnsSrvRecordMonitorReference.get().isInitialized()) {
                     FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
                     callbacks.add(callback);
-                    cluster.selectServerAsync(mock(ServerSelector.class), callback);
+                    cluster.selectServerAsync(mock(ServerSelector.class), new OperationContext(), callback);
                 }
                 // Keep going for a little while
                 for (int j = 0; j < 100; j++) {
                     FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
                     callbacks.add(callback);
-                    cluster.selectServerAsync(mock(ServerSelector.class), callback);
+                    cluster.selectServerAsync(mock(ServerSelector.class), new OperationContext(), callback);
                 }
             }));
         }

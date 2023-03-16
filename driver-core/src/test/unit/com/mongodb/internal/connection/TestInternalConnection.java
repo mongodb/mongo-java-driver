@@ -166,7 +166,7 @@ class TestInternalConnection implements InternalConnection {
 
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-            final RequestContext requestContext) {
+                                final RequestContext requestContext, final OperationContext operationContext) {
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, sessionContext);
             sendMessage(bsonOutput.getByteBuffers(), message.getId());
@@ -206,9 +206,10 @@ class TestInternalConnection implements InternalConnection {
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-            final SessionContext sessionContext, final RequestContext requestContext, final SingleResultCallback<T> callback) {
+            final SessionContext sessionContext, final RequestContext requestContext, final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
         try {
-            T result = sendAndReceive(message, decoder, sessionContext, requestContext);
+            T result = sendAndReceive(message, decoder, sessionContext, requestContext, operationContext);
             callback.onResult(result, null);
         } catch (MongoException ex) {
             callback.onResult(null, ex);

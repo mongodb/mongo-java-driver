@@ -17,20 +17,16 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 /**
  * A source of connections to a single MongoDB server.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncConnectionSource extends ReferenceCounted {
+public interface AsyncConnectionSource extends BindingContext, ReferenceCounted {
 
     /**
      * Gets the current description of this source.
@@ -38,20 +34,6 @@ public interface AsyncConnectionSource extends ReferenceCounted {
      * @return the current details of the server state.
      */
     ServerDescription getServerDescription();
-
-    /**
-     * Gets the session context for this source
-     *
-     * @return the session context, which may not be null
-     *
-     * <p>This class is not part of the public API and may be removed or changed at any time</p>
-     */
-    SessionContext getSessionContext();
-
-    @Nullable
-    ServerApi getServerApi();
-
-    RequestContext getRequestContext();
 
     /**
      * Gets the read preference that was applied when selecting this source.

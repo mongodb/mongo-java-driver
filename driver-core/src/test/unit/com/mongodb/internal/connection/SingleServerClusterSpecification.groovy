@@ -140,7 +140,7 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
-        cluster.selectServer(new WritableServerSelector())
+        cluster.selectServer(new WritableServerSelector(), new OperationContext())
 
         then:
         thrown(MongoIncompatibleDriverException)

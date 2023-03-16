@@ -72,7 +72,7 @@ class CommandHelperSpecification extends Specification {
                 getServerApi(), connection)
 
         then:
-        1 * connection.sendAndReceive(_, _, _ as ClusterClockAdvancingSessionContext, _) >> new BsonDocument()
+        1 * connection.sendAndReceive(_, _, _ as ClusterClockAdvancingSessionContext, _, _) >> new BsonDocument()
     }
 
 

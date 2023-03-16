@@ -27,6 +27,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
@@ -55,6 +56,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     private volatile ServerDescription writeServerDescription;
     @Nullable
     private final ServerApi serverApi;
+    private final OperationContext operationContext = new OperationContext();
 
     /**
      * Create a new binding with the given cluster.
@@ -83,14 +85,14 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         CountDownLatch latch = new CountDownLatch(2);
-        cluster.selectServerAsync(new WritableServerSelector(), (result, t) -> {
+        cluster.selectServerAsync(new WritableServerSelector(), operationContext, (result, t) -> {
             if (t == null) {
                 writeServer = result.getServer();
                 writeServerDescription = result.getServerDescription();
                 latch.countDown();
             }
         });
-        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), (result, t) -> {
+        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), operationContext, (result, t) -> {
             if (t == null) {
                 readServer = result.getServer();
                 readServerDescription = result.getServerDescription();
@@ -105,7 +107,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         }
 
         CountDownLatch writeServerLatch = new CountDownLatch(1);
-        writeServer.getConnectionAsync((result, t) -> {
+        writeServer.getConnectionAsync(operationContext, (result, t) -> {
             writeConnection = result;
             writeServerLatch.countDown();
         });
@@ -118,7 +120,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         CountDownLatch readServerLatch = new CountDownLatch(1);
 
-        readServer.getConnectionAsync((result, t) -> {
+        readServer.getConnectionAsync(operationContext, (result, t) -> {
             readConnection = result;
             readServerLatch.countDown();
         });
@@ -164,6 +166,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     @Override
     public RequestContext getRequestContext() {
         return IgnorableRequestContext.INSTANCE;
+    }
+
+    @Override
+    public OperationContext getOperationContext() {
+        return operationContext;
     }
 
     @Override
@@ -228,6 +235,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         @Override
         public RequestContext getRequestContext() {
             return IgnorableRequestContext.INSTANCE;
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return operationContext;
         }
 
         @Override
