@@ -34,8 +34,8 @@ class MongoCursorTest {
     fun shouldHaveTheSameMethods() {
         val jMongoCursorFunctions = JMongoCursor::class.declaredFunctions.map { it.name }.toSet()
         val kMongoCursorFunctions =
-            MongoCursor::class.declaredFunctions.map { it.name }.toSet() +
-                MongoCursor::class
+            MongoCursorImpl::class.declaredFunctions.map { it.name }.toSet() +
+                MongoCursorImpl::class
                     .declaredMemberProperties
                     .filterNot { it.name == "wrapped" }
                     .map {
