@@ -78,7 +78,7 @@ public sealed interface MongoCursor<T : Any> : Iterator<T>, Closeable {
  *
  * @param T The type of documents the cursor contains
  */
-public interface MongoChangeStreamCursor<T : Any> : MongoCursor<T> {
+public sealed interface MongoChangeStreamCursor<T : Any> : MongoCursor<T> {
     /**
      * Returns the resume token. If a batch has been iterated to the last change stream document in the batch and a
      * postBatchResumeToken is included in the document, the postBatchResumeToken will be returned. Otherwise, the
