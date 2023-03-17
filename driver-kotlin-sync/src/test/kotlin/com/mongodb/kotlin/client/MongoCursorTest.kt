@@ -49,7 +49,7 @@ class MongoCursorTest {
     @Test
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JMongoCursor<Document> = mock()
-        val cursor = MongoCursor(wrapped)
+        val cursor = MongoCursorImpl(wrapped)
 
         whenever(wrapped.serverCursor).doReturn(ServerCursor(1, ServerAddress()))
         whenever(wrapped.serverAddress).doReturn(mock())

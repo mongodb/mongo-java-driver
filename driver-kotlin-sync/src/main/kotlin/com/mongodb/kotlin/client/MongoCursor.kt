@@ -17,8 +17,10 @@ package com.mongodb.kotlin.client
 
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
+import com.mongodb.client.MongoChangeStreamCursor as JMongoChangeStreamCursor
 import com.mongodb.client.MongoCursor as JMongoCursor
 import java.io.Closeable
+import org.bson.BsonDocument
 
 /**
  * The Mongo Cursor interface implementing the iterator protocol.
@@ -33,15 +35,8 @@ import java.io.Closeable
  * ```
  *
  * @param T The type of documents the cursor contains
- * @property wrapped the underlying sync cursor
  */
-public open class MongoCursor<T : Any>(private val wrapped: JMongoCursor<T>) : Iterator<T>, Closeable {
-
-    public override fun hasNext(): Boolean = wrapped.hasNext()
-
-    public override fun next(): T = wrapped.next()
-
-    public override fun close(): Unit = wrapped.close()
+public sealed interface MongoCursor<T : Any> : Iterator<T>, Closeable {
 
     /**
      * Gets the number of results available locally without blocking, which may be 0.
@@ -50,7 +45,6 @@ public open class MongoCursor<T : Any>(private val wrapped: JMongoCursor<T>) : I
      * return a non-zero value.
      */
     public val available: Int
-        get() = wrapped.available()
 
     /**
      * A special [next] case that returns the next element in the iteration if available or null.
@@ -61,13 +55,81 @@ public open class MongoCursor<T : Any>(private val wrapped: JMongoCursor<T>) : I
      * @return the next element in the iteration if available or null.
      * @see [Tailable Cursor](https://www.mongodb.com/docs/manual/reference/glossary/#term-tailable-cursor)
      */
-    public fun tryNext(): T? = wrapped.tryNext()
+    public fun tryNext(): T?
 
     /** @return the ServerCursor if available */
     public val serverCursor: ServerCursor?
-        get() = wrapped.serverCursor
 
     /** @return the ServerAddress */
     public val serverAddress: ServerAddress
+}
+
+/**
+ * The Mongo Cursor interface for change streams implementing the iterator protocol.
+ *
+ * An application should ensure that a cursor is closed in all circumstances, e.g. using a `use` statement:
+ * ```
+ *   collection.watch().cursor().use { c ->
+ *      while (c.hasNext()) {
+ *          println(c.next())
+ *      }
+ *  }
+ * ```
+ *
+ * @param T The type of documents the cursor contains
+ */
+public interface MongoChangeStreamCursor<T : Any> : MongoCursor<T> {
+    /**
+     * Returns the resume token. If a batch has been iterated to the last change stream document in the batch and a
+     * postBatchResumeToken is included in the document, the postBatchResumeToken will be returned. Otherwise, the
+     * resume token contained in the last change stream document will be returned.
+     *
+     * @return the resume token, which can be null if the cursor has either not been iterated yet, or the cursor is
+     *   closed.
+     */
+    public val resumeToken: BsonDocument?
+}
+
+internal class MongoCursorImpl<T : Any>(private val wrapped: JMongoCursor<T>) : MongoCursor<T> {
+
+    override fun hasNext(): Boolean = wrapped.hasNext()
+
+    override fun next(): T = wrapped.next()
+
+    override fun close(): Unit = wrapped.close()
+
+    override val available: Int
+        get() = wrapped.available()
+
+    override fun tryNext(): T? = wrapped.tryNext()
+
+    override val serverCursor: ServerCursor?
+        get() = wrapped.serverCursor
+
+    override val serverAddress: ServerAddress
         get() = wrapped.serverAddress
+}
+
+internal class MongoChangeStreamCursorImpl<T : Any>(private val wrapped: JMongoChangeStreamCursor<T>) :
+    MongoChangeStreamCursor<T> {
+
+    override fun hasNext(): Boolean = wrapped.hasNext()
+
+    override fun next(): T = wrapped.next()
+
+    override fun close(): Unit = wrapped.close()
+
+    override val available: Int
+        get() = wrapped.available()
+
+    override fun tryNext(): T? = wrapped.tryNext()
+
+    override val serverCursor: ServerCursor?
+        get() = wrapped.serverCursor
+
+    override val serverAddress: ServerAddress
+        get() = wrapped.serverAddress
+
+    override val resumeToken: BsonDocument?
+        get() = wrapped.resumeToken
 }

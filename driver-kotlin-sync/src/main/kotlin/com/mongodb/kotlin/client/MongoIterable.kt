@@ -32,7 +32,7 @@ public open class MongoIterable<T : Any>(private val delegate: JMongoIterable<T>
      *
      * @return a cursor
      */
-    public open fun cursor(): MongoCursor<T> = MongoCursor(delegate.cursor())
+    public open fun cursor(): MongoCursor<T> = MongoCursorImpl(delegate.cursor())
 
     /** @return the first item or null */
     public fun firstOrNull(): T? = delegate.first()

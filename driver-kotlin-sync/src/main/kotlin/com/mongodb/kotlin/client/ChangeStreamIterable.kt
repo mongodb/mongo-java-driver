@@ -44,7 +44,7 @@ public class ChangeStreamIterable<T : Any>(private val wrapped: JChangeStreamIte
      * @return the change stream cursor
      */
     public override fun cursor(): MongoChangeStreamCursor<ChangeStreamDocument<T>> =
-        MongoChangeStreamCursor(wrapped.cursor())
+        MongoChangeStreamCursorImpl(wrapped.cursor())
 
     /**
      * Sets the fullDocument value.

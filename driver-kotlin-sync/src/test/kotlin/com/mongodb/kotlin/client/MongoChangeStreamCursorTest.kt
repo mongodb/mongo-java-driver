@@ -47,7 +47,7 @@ class MongoChangeStreamCursorTest {
     @Test
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JMongoChangeStreamCursor<Document> = mock()
-        val cursor = MongoChangeStreamCursor(wrapped)
+        val cursor = MongoChangeStreamCursorImpl(wrapped)
 
         whenever(wrapped.resumeToken).doReturn(mock())
         whenever(wrapped.serverCursor).doReturn(ServerCursor(1, ServerAddress()))
