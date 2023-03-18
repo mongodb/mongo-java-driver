@@ -29,6 +29,8 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.DnsClient;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -107,6 +109,8 @@ public final class MongoClientSettings {
     private final boolean heartbeatConnectTimeoutSetExplicitly;
 
     private final ContextProvider contextProvider;
+    private final DnsClient dnsClient;
+    private final InetAddressResolver inetAddressResolver;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -161,6 +165,39 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the {@link DnsClient} to use for resolving DNS queries.
+     *
+     * <p>If set, it will be used to resolve SRV and TXT records for mongodb+srv connections. Otherwise,
+     * implementations of {@link com.mongodb.spi.dns.DnsClientProvider} will be discovered via {@link java.util.ServiceLoader}.
+     * If no implementations are discovered, then {@code com.sun.jndi.dns.DnsContextFactory} will be used to resolve these records.
+     *
+     * <p>If applying a connection string to these settings, care must be taken to also pass the same {@link DnsClient} as an argument to
+     * the {@link ConnectionString} constructor.
+     *
+     * @return the DNS client
+     * @since 4.10
+     * @see ConnectionString#ConnectionString(String, DnsClient)
+     */
+    @Nullable
+    public DnsClient getDnsClient() {
+        return dnsClient;
+    }
+
+    /**
+     * Gets the {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
+     *
+     * <p>If set, it will be used to look up the {@link java.net.InetAddress} for each host, via
+     * {@link InetAddressResolver#lookupByName(String)}. Otherwise, {@link java.net.InetAddress#getAllByName(String)} will be used.
+     *
+     * @return the {@link java.net.InetAddress} resolver
+     * @since 4.10
+     */
+    @Nullable
+    public InetAddressResolver getInetAddressResolver() {
+        return inetAddressResolver;
+    }
+
+    /**
      * A builder for {@code MongoClientSettings} so that {@code MongoClientSettings} can be immutable, and to support easier construction
      * through chaining.
      */
@@ -193,6 +230,8 @@ public final class MongoClientSettings {
         private int heartbeatSocketTimeoutMS;
 
         private ContextProvider contextProvider;
+        private DnsClient dnsClient;
+        private InetAddressResolver inetAddressResolver;
 
         private Builder() {
         }
@@ -211,6 +250,7 @@ public final class MongoClientSettings {
             credential = settings.getCredential();
             uuidRepresentation = settings.getUuidRepresentation();
             serverApi = settings.getServerApi();
+            dnsClient = settings.getDnsClient();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             contextProvider = settings.getContextProvider();
@@ -220,6 +260,7 @@ public final class MongoClientSettings {
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
             connectionPoolSettingsBuilder.applySettings(settings.getConnectionPoolSettings());
             sslSettingsBuilder.applySettings(settings.getSslSettings());
+
             if (settings.heartbeatConnectTimeoutSetExplicitly) {
                 heartbeatConnectTimeoutMS = settings.heartbeatSocketSettings.getConnectTimeout(MILLISECONDS);
             }
@@ -273,7 +314,7 @@ public final class MongoClientSettings {
         /**
          * Applies the {@link LoggerSettings.Builder} block and then sets the loggerSettings.
          *
-         * @param block the block to apply to the LoggerSettins.
+         * @param block the block to apply to the LoggerSettings.
          * @return this
          * @see MongoClientSettings#getLoggerSettings()
          * @since 4.9
@@ -580,6 +621,45 @@ public final class MongoClientSettings {
             return this;
         }
 
+        /**
+         * Sets the {@link DnsClient} to use for resolving DNS queries.
+         *
+         * <p> If set, it will be used to resolve SRV and TXT records for mongodb+srv connections. Otherwise,
+         * implementation of {@link com.mongodb.spi.dns.DnsClientProvider} will be discovered via {@link java.util.ServiceLoader}
+         * and used to create an instance of {@link DnsClient}. If no implementation is discovered, then
+         * {@code com.sun.jndi.dns.DnsContextFactory} will be used to resolve these records.
+         *
+         * <p>If applying a connection string to these settings, care must be taken to also pass the same {@link DnsClient} as an
+         * argument to the {@link ConnectionString} constructor.
+         *
+         * @param dnsClient the DNS client
+         * @return the DNS client
+         * @since 4.10
+         * @see ConnectionString#ConnectionString(String, DnsClient)
+         */
+        public Builder dnsClient(@Nullable final DnsClient dnsClient) {
+            this.dnsClient = dnsClient;
+            return this;
+        }
+
+        /**
+         * Sets the {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
+         *
+         * <p>If set, it will be used to look up the {@link java.net.InetAddress} for each host, via
+         * {@link InetAddressResolver#lookupByName(String)}. Otherwise,
+         * an implementation of {@link com.mongodb.spi.dns.InetAddressResolverProvider} will be discovered via
+         * {@link java.util.ServiceLoader} and used to create an instance of {@link InetAddressResolver}.  If no implementation is
+         * discovered, {@link java.net.InetAddress#getAllByName(String)} will be used to lookup the {@link java.net.InetAddress}
+         * instances for a host.
+         *
+         * @param inetAddressResolver the InetAddress provider
+         * @return the {@link java.net.InetAddress} resolver
+         * @since 4.10
+         */
+        public Builder inetAddressResolver(@Nullable final InetAddressResolver inetAddressResolver) {
+            this.inetAddressResolver = inetAddressResolver;
+            return this;
+        }
 
         // Package-private to provide interop with MongoClientOptions
         Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
@@ -964,6 +1044,8 @@ public final class MongoClientSettings {
         compressorList = builder.compressorList;
         uuidRepresentation = builder.uuidRepresentation;
         serverApi = builder.serverApi;
+        dnsClient = builder.dnsClient;
+        inetAddressResolver = builder.inetAddressResolver;
         autoEncryptionSettings = builder.autoEncryptionSettings;
         heartbeatSocketSettings = SocketSettings.builder()
                 .readTimeout(builder.heartbeatSocketTimeoutMS == 0

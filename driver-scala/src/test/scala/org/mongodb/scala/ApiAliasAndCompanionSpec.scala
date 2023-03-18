@@ -55,6 +55,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "DocumentToDBRefTransformer",
       "Function",
       "FutureResultCallback",
+      "InetAddressResolver",
+      "InetAddressResolverProvider",
       "Jep395RecordCodecProvider",
       "KerberosSubjectProvider",
       "KotlinCodecProvider",

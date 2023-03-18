@@ -379,7 +379,7 @@ public final class ClusterFixture {
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                 streamFactory, streamFactory, credential, LoggerSettings.builder().build(), null, null, null,
-                Collections.emptyList(), getServerApi());
+                Collections.emptyList(), getServerApi(), null, null);
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
@@ -391,7 +391,7 @@ public final class ClusterFixture {
                 new SocketStreamFactory(SocketSettings.builder().readTimeout(5, SECONDS).build(), getSslSettings(connectionString)),
                 connectionString.getCredential(),
                 LoggerSettings.builder().build(), null, null, null,
-                connectionString.getCompressorList(), getServerApi());
+                connectionString.getCompressorList(), getServerApi(), null, null);
     }
 
     public static StreamFactory getStreamFactory() {
