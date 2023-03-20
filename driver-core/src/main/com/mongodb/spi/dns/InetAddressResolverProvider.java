@@ -17,29 +17,29 @@
 package com.mongodb.spi.dns;
 
 /**
- * Service-provider class for {@link DnsClient}.
+ * Service-provider class for {@link InetAddressResolver}.
  *
- * <p> A resolver provider is a factory for custom implementations of
- * {@linkplain DnsClient a DNS client}. A DNS client defines operations for
- * looking up DNS records for a given type.
+ * <p> A resolver provider is a factory for custom implementations of {@linkplain
+ * InetAddressResolver InetAddress resolvers}. A resolver defines operations for
+ * looking up (resolving) host names.
  *
- * <p>A DNS client provider is a concrete implementation of this interface that has a
+ * <p>A resolver provider is a concrete implementation of this interface that has a
  * zero-argument constructor and implements the abstract methods specified below.
  *
  * <p>The driver discovers implementations of this interface via {@link java.util.ServiceLoader}.
  *
- * <p>If more fine-grained control is required for multi-tenant applications, an
- * {@linkplain DnsClient a DNS client} can be configured via
- * {@link com.mongodb.MongoClientSettings.Builder#dnsClient(DnsClient)}.
+ * <p>If more fine-grained control is required for multi-tenant applications, an {@linkplain InetAddressResolver InetAddress resolver}
+ * can be configured via {@link com.mongodb.MongoClientSettings.Builder#inetAddressResolver(InetAddressResolver)}.
  *
- * @since 4.6
+ * @since 4.10
  * @see java.util.ServiceLoader
-*/
-public interface DnsClientProvider {
+ */
+
+public interface InetAddressResolverProvider {
     /**
-     * Construct a new instance of a {@link DnsClient}.
+     * Construct a new instance of a {@link InetAddressResolver}.
      *
-     * @return a {@link DnsClient}
+     * @return a {@link InetAddressResolver}
      */
-    DnsClient create();
+    InetAddressResolver create();
 }
