@@ -43,7 +43,7 @@ local.properties
 .java-version
 
 # mongocryptd
-**/mongocryptd.pid
+**/mongocryptd*.pid
 
 # shell scripts
 *.sh
