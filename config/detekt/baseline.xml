@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>IteratorNotThrowingNoSuchElementException:MongoCursor.kt$MongoCursor&lt;T : Any> : IteratorCloseable</ID>
+    <ID>LargeClass:MongoCollectionTest.kt$MongoCollectionTest</ID>
+    <ID>LongMethod:FindIterableTest.kt$FindIterableTest$@Suppress("DEPRECATION") @Test fun shouldCallTheUnderlyingMethods()</ID>
+    <ID>MaxLineLength:MapReduceIterable.kt$MapReduceIterable$*</ID>
+    <ID>SwallowedException:MockitoHelper.kt$MockitoHelper.DeepReflectionEqMatcher$e: Throwable</ID>
+    <ID>TooManyFunctions:ClientSession.kt$ClientSession : jClientSession</ID>
+    <ID>TooManyFunctions:FindIterable.kt$FindIterable&lt;T : Any> : MongoIterable</ID>
+    <ID>TooManyFunctions:MongoCollection.kt$MongoCollection&lt;T : Any></ID>
+    <ID>TooManyFunctions:MongoDatabase.kt$MongoDatabase</ID>
+  </CurrentIssues>
+</SmellBaseline>
