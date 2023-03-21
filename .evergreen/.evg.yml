@@ -289,6 +289,16 @@ functions:
           ${PREPARE_SHELL}
           SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-scala-tests.sh
 
+  "run kotlin tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-kotlin-tests.sh
+
+
   "run socket tests":
     - command: shell.exec
       type: test
@@ -904,6 +914,11 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run scala tests"
 
+    - name: "kotlin-tests"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run kotlin tests"
+
     - name: "reactive-streams-tck-test"
       commands:
         - func: "bootstrap mongo-orchestration"
@@ -1437,6 +1452,8 @@ tasks:
           name: "plain-auth-test"
         - variant: ".test-scala-variant"
           name: "scala-tests"
+        - variant: ".test-kotlin-variant"
+          name: "kotlin-tests"
         - variant: ".tests-netty-variant"
           name: "netty-test"
       commands:
@@ -2051,6 +2068,13 @@ buildvariants:
   tags: ["test-scala-variant"]
   tasks:
     - name: "scala-tests"
+
+- matrix_name: "kotlin-tests"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["6.0"], topology: "replicaset", os: "ubuntu" }
+  display_name: "Kotlin: ${jdk} ${version} ${topology} ${os}"
+  tags: ["test-kotlin-variant"]
+  tasks:
+    - name: "kotlin-tests"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
