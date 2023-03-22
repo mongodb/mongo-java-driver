@@ -19,6 +19,7 @@ import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 
+/** A Kotlin reflection based Codec Provider for data classes */
 public class DataClassCodecProvider : CodecProvider {
     override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry): Codec<T>? =
         DataClassCodec.create(clazz.kotlin, registry)
