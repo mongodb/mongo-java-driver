@@ -19,8 +19,8 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
-import com.mongodb.client.model.mql.ExpressionCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
+import com.mongodb.client.model.mql.ExpressionCodecProvider;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
@@ -79,7 +79,7 @@ public final class MongoClientSettings {
                     new EnumCodecProvider(),
                     new ExpressionCodecProvider(),
                     new Jep395RecordCodecProvider(),
-                    new KotlinDataClassCodecProvider()));
+                    new KotlinCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
@@ -128,7 +128,7 @@ public final class MongoClientSettings {
      * <li>{@link org.bson.codecs.EnumCodecProvider}</li>
      * <li>{@link ExpressionCodecProvider}</li>
      * <li>{@link com.mongodb.Jep395RecordCodecProvider}</li>
-     * <li>{@link com.mongodb.KotlinDataClassCodecProvider}</li>
+     * <li>{@link com.mongodb.KotlinCodecProvider}</li>
      * </ul>
      *
      * <p>

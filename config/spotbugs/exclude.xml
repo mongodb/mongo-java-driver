@@ -252,4 +252,9 @@
         <Method name="~.*validateAnnotations.*"/>
         <Bug pattern="UC_USELESS_OBJECT"/>
     </Match>
+    <Match>
+        <Class name="org.bson.codecs.kotlinx.KotlinSerializerCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="UC_USELESS_OBJECT"/>
+    </Match>
 </FindBugsFilter>
