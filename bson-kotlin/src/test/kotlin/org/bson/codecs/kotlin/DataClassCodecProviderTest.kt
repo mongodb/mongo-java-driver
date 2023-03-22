@@ -26,10 +26,10 @@ import org.bson.BsonDocumentWriter
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
-import org.bson.codecs.kotlin.samples.DataClass
 import org.bson.codecs.kotlin.samples.DataClassEmbedded
 import org.bson.codecs.kotlin.samples.DataClassParameterized
 import org.bson.codecs.kotlin.samples.DataClassWithParameterizedDataClass
+import org.bson.codecs.kotlin.samples.DataClassWithSimpleValues
 import org.bson.conversions.Bson
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -44,11 +44,11 @@ class DataClassCodecProviderTest {
     @Test
     fun shouldReturnDataClassCodecForDataClass() {
         val provider = DataClassCodecProvider()
-        val codec = provider.get(DataClass::class.java, Bson.DEFAULT_CODEC_REGISTRY)
+        val codec = provider.get(DataClassWithSimpleValues::class.java, Bson.DEFAULT_CODEC_REGISTRY)
 
         assertNotNull(codec)
         assertTrue { codec is DataClassCodec }
-        assertEquals(DataClass::class.java, codec.encoderClass)
+        assertEquals(DataClassWithSimpleValues::class.java, codec.encoderClass)
     }
 
     @Test
@@ -78,10 +78,10 @@ class DataClassCodecProviderTest {
 
     @Test
     fun shouldReturnDataClassCodecUsingDefaultRegistry() {
-        val codec = MongoClientSettings.getDefaultCodecRegistry().get(DataClass::class.java)
+        val codec = MongoClientSettings.getDefaultCodecRegistry().get(DataClassWithSimpleValues::class.java)
 
         assertNotNull(codec)
         assertTrue { codec is DataClassCodec }
-        assertEquals(DataClass::class.java, codec.encoderClass)
+        assertEquals(DataClassWithSimpleValues::class.java, codec.encoderClass)
     }
 }

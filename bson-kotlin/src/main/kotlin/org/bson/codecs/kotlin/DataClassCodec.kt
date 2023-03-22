@@ -129,17 +129,25 @@ internal data class DataClassCodec<T : Any>(
         internal val logger = Loggers.getLogger("DataClassCodec")
         private const val idFieldName = "_id"
 
-        fun <R : Any> create(kClass: KClass<R>, codecRegistry: CodecRegistry): Codec<R>? {
-            return if (!kClass.isData) null
-            else if (kClass.typeParameters.isEmpty()) createDataClassCodec(kClass, codecRegistry)
-            else RawDataClassCodec(kClass)
-        }
-
-        internal fun <R : Any> createDataClassCodec(
+        internal fun <R : Any> create(
             kClass: KClass<R>,
             codecRegistry: CodecRegistry,
             types: List<Type> = emptyList()
-        ): DataClassCodec<R> {
+        ): Codec<R>? {
+            return if (!kClass.isData) {
+                null
+            } else if (kClass.typeParameters.isNotEmpty()) {
+                RawDataClassCodec(kClass)
+            } else {
+                createDataClassCodec(kClass, codecRegistry, types)
+            }
+        }
+
+        private fun <R : Any> createDataClassCodec(
+            kClass: KClass<R>,
+            codecRegistry: CodecRegistry,
+            types: List<Type> = emptyList()
+        ): Codec<R> {
             validateAnnotations(kClass)
             val primaryConstructor =
                 kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
