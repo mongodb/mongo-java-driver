@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.kotlin.client.coroutine.syncadapter
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-kotlin'
-include ':driver-kotlin-sync'
-include ':driver-kotlin-coroutine'
-include ':bson-scala'
-include ':driver-scala'
-include 'util:spock'
-include 'util:taglets'
+import com.mongodb.client.MongoChangeStreamCursor as JMongoChangeStreamCursor
+import kotlinx.coroutines.flow.Flow
+import org.bson.BsonDocument
+
+data class SyncMongoChangeStreamCursor<T>(val wrapped: Flow<T>) :
+    JMongoChangeStreamCursor<T>, SyncMongoCursor<T>(wrapped) {
+    override fun getResumeToken(): BsonDocument? = throw UnsupportedOperationException()
+}
