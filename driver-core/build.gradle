@@ -38,6 +38,7 @@ dependencies {
     api project(path: ':bson', configuration: 'default')
     implementation project(path: ':bson-record-codec', configuration: 'default')
     implementation project(path: ':bson-kotlin', configuration: 'default')
+    implementation project(path: ':bson-kotlinx', configuration: 'default')
 
     implementation "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
     api platform("io.netty:netty-bom:$nettyVersion")
