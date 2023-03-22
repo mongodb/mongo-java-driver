@@ -57,7 +57,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "FutureResultCallback",
       "Jep395RecordCodecProvider",
       "KerberosSubjectProvider",
-      "KotlinDataClassCodecProvider",
+      "KotlinCodecProvider",
       "MongoClients",
       "NonNull",
       "NonNullApi",

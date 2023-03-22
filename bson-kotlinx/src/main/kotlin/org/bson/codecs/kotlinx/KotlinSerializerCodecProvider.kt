@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.bson.codecs.kotlinx
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-kotlin'
-include ':bson-kotlinx'
-include ':driver-kotlin-sync'
-include ':driver-kotlin-coroutine'
-include ':bson-scala'
-include ':driver-scala'
-include 'util:spock'
-include 'util:taglets'
+import org.bson.codecs.Codec
+import org.bson.codecs.configuration.CodecProvider
+import org.bson.codecs.configuration.CodecRegistry
+
+/**
+ * A Kotlin Serialization based Codec Provider
+ *
+ * The underlying class must be annotated with the `@Serializable`.
+ */
+public class KotlinSerializerCodecProvider : CodecProvider {
+
+    override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry): Codec<T>? =
+        KotlinSerializerCodec.create(clazz.kotlin)
+}
