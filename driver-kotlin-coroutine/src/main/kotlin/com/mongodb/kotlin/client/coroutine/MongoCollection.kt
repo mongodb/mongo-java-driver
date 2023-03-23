@@ -60,7 +60,7 @@ import org.bson.conversions.Bson
  *
  * @param T The type that this collection will encode documents from and decode documents to.
  */
-public class MongoCollection<T : Any>(@PublishedApi internal val wrapped: JMongoCollection<T>) {
+public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) {
 
     /** The class of documents stored in this collection. */
     public val documentClass: Class<T>

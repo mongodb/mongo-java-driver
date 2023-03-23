@@ -42,7 +42,7 @@ import org.bson.conversions.Bson
  *
  * @see MongoClient.create
  */
-public class MongoClient(@PublishedApi internal val wrapped: JMongoClient) : Closeable {
+public class MongoClient(private val wrapped: JMongoClient) : Closeable {
 
     /**
      * A factory for [MongoClient] instances.

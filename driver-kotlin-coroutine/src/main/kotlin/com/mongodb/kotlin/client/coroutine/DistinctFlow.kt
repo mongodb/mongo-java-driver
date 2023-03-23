@@ -30,7 +30,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
  */
-public class DistinctFlow<T : Any>(@PublishedApi internal val wrapped: DistinctPublisher<T>) : Flow<T> {
+public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : Flow<T> {
 
     /**
      * Sets the number of documents to return per batch.

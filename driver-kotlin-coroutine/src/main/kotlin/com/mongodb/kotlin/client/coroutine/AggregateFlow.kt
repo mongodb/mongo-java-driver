@@ -34,7 +34,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Aggregation command](https://www.mongodb.com/docs/manual/reference/command/aggregate)
  */
-public class AggregateFlow<T : Any>(@PublishedApi internal val wrapped: AggregatePublisher<T>) : Flow<T> {
+public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) : Flow<T> {
 
     /**
      * Sets the number of documents to return per batch.

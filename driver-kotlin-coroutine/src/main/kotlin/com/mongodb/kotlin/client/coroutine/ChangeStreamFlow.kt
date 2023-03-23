@@ -37,8 +37,7 @@ import org.bson.BsonValue
  *
  * @param T The type of the result.
  */
-public class ChangeStreamFlow<T : Any>(@PublishedApi internal val wrapped: ChangeStreamPublisher<T>) :
-    Flow<ChangeStreamDocument<T>> {
+public class ChangeStreamFlow<T : Any>(private val wrapped: ChangeStreamPublisher<T>) : Flow<ChangeStreamDocument<T>> {
 
     /**
      * Sets the fullDocument value.

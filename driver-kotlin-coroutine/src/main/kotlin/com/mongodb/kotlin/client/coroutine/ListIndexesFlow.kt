@@ -28,7 +28,7 @@ import org.bson.BsonValue
  * @param T The type of the result.
  * @see [List indexes](https://www.mongodb.com/docs/manual/reference/command/listIndexes/)
  */
-public class ListIndexesFlow<T : Any>(@PublishedApi internal val wrapped: ListIndexesPublisher<T>) : Flow<T> {
+public class ListIndexesFlow<T : Any>(private val wrapped: ListIndexesPublisher<T>) : Flow<T> {
     /**
      * Sets the maximum execution time on the server for this operation.
      *

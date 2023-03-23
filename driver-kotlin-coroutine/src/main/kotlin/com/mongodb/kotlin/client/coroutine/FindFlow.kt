@@ -34,7 +34,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Collection filter](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
  */
-public class FindFlow<T : Any>(@PublishedApi internal val wrapped: FindPublisher<T>) : Flow<T> {
+public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> {
 
     /**
      * Sets the number of documents to return per batch.

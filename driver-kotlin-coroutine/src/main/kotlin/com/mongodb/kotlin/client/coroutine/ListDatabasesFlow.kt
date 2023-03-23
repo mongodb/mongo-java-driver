@@ -29,7 +29,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [List databases](https://www.mongodb.com/docs/manual/reference/command/listDatabases/)
  */
-public class ListDatabasesFlow<T : Any>(@PublishedApi internal val wrapped: ListDatabasesPublisher<T>) : Flow<T> {
+public class ListDatabasesFlow<T : Any>(private val wrapped: ListDatabasesPublisher<T>) : Flow<T> {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
