@@ -38,8 +38,6 @@ public class CommandLoggingTest extends UnifiedSyncTest {
                               final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         assumeFalse(isServerlessTest());
-        // The driver does not currently support operation identifiers
-        assumeFalse(fileDescription.equals("operation-id"));
         // The driver has a hack where getLastError command is executed as part of the handshake in order to get a connectionId
         // even when the hello command response doesn't contain it.
         assumeFalse(fileDescription.equals("pre-42-server-connection-id"));

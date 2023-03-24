@@ -101,8 +101,8 @@ class LoggingCommandEventSender implements CommandEventSender {
             BsonDocument commandDocumentForEvent = redactionRequired
                     ? new BsonDocument() : commandDocument;
 
-            sendCommandStartedEvent(message, message.getNamespace().getDatabaseName(),
-                    commandName, commandDocumentForEvent, description, assertNotNull(commandListener), requestContext);
+            sendCommandStartedEvent(message, message.getNamespace().getDatabaseName(), commandName, commandDocumentForEvent, description,
+                    assertNotNull(commandListener), requestContext, operationContext);
         }
         // the buffer underlying the command document may be released after the started event, so set to null to ensure it's not used
         // when sending the failed or succeeded event
@@ -134,7 +134,7 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (eventRequired()) {
             sendCommandFailedEvent(message, commandName, description, elapsedTimeNanos, commandEventException, commandListener,
-                    requestContext);
+                    requestContext, operationContext);
         }
     }
 
@@ -171,7 +171,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         if (eventRequired()) {
             BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
             sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                    elapsedTimeNanos, commandListener, requestContext);
+                    elapsedTimeNanos, commandListener, requestContext, operationContext);
         }
     }
 
@@ -208,8 +208,9 @@ class LoggingCommandEventSender implements CommandEventSender {
             entries.add(new Entry("serviceId", descriptionServiceId));
         }
 
-        builder.append(". The request ID is %s.");
+        builder.append(". The request ID is %s and the operation ID is %s.");
         entries.add(new Entry("requestId", message.getId()));
+        entries.add(new Entry("operationId", operationContext.getId()));
     }
 
     private String getTruncatedJsonCommand(final BsonDocument commandDocument) {
