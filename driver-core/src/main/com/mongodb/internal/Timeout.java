@@ -94,6 +94,10 @@ public final class Timeout {
         return IMMEDIATE;
     }
 
+    public long getStartNanos() {
+        return startNanos;
+    }
+
     /**
      * Must not be called on {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate} timeouts.
      * <p>
