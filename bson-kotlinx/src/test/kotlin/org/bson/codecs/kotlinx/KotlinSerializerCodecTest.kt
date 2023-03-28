@@ -20,6 +20,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.plus
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
@@ -27,6 +30,8 @@ import org.bson.BsonInvalidOperationException
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
+import org.bson.codecs.kotlinx.samples.DataClassContainsValueClass
 import org.bson.codecs.kotlinx.samples.DataClassEmbedded
 import org.bson.codecs.kotlinx.samples.DataClassKey
 import org.bson.codecs.kotlinx.samples.DataClassListOfDataClasses
@@ -35,6 +40,9 @@ import org.bson.codecs.kotlinx.samples.DataClassListOfSealed
 import org.bson.codecs.kotlinx.samples.DataClassMapOfDataClasses
 import org.bson.codecs.kotlinx.samples.DataClassMapOfListOfDataClasses
 import org.bson.codecs.kotlinx.samples.DataClassNestedParameterizedTypes
+import org.bson.codecs.kotlinx.samples.DataClassOpen
+import org.bson.codecs.kotlinx.samples.DataClassOpenA
+import org.bson.codecs.kotlinx.samples.DataClassOpenB
 import org.bson.codecs.kotlinx.samples.DataClassParameterized
 import org.bson.codecs.kotlinx.samples.DataClassSealed
 import org.bson.codecs.kotlinx.samples.DataClassSealedA
@@ -72,6 +80,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithSequence
 import org.bson.codecs.kotlinx.samples.DataClassWithSimpleValues
 import org.bson.codecs.kotlinx.samples.DataClassWithTriple
 import org.bson.codecs.kotlinx.samples.Key
+import org.bson.codecs.kotlinx.samples.ValueClass
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -497,6 +506,49 @@ class KotlinSerializerCodecTest {
         val expectedListOfSealedDiscriminator = expectedListOfSealed.replace("_t", "#class")
         assertRoundTrips(
             expectedListOfSealedDiscriminator, dataClassListOfSealed, BsonConfiguration(classDiscriminator = "#class"))
+    }
+
+    @Test
+    fun testDataClassOpen() {
+        val expectedA = """{"a": "string"}"""
+        val dataClassA = DataClassOpenA("string")
+        assertRoundTrips(expectedA, dataClassA)
+
+        val expectedB = """{"b": 1}"""
+        val dataClassB = DataClassOpenB(1)
+        assertRoundTrips(expectedB, dataClassB)
+
+        val serializersModule =
+            SerializersModule {
+                this.polymorphic(DataClassOpen::class) {
+                    this.subclass(DataClassOpenA::class)
+                    this.subclass(DataClassOpenB::class)
+                }
+            } + defaultSerializersModule
+
+        val dataClassContainsOpenA = DataClassContainsOpen(dataClassA)
+        val expectedOpenA = """{"open": {"_t": "org.bson.codecs.kotlinx.samples.DataClassOpenA", "a": "string"}}"""
+        assertRoundTrips(expectedOpenA, dataClassContainsOpenA, serializersModule = serializersModule)
+
+        val dataClassContainsOpenB = DataClassContainsOpen(dataClassB)
+        val expectedOpenB = """{"open": {"#class": "org.bson.codecs.kotlinx.samples.DataClassOpenB", "b": 1}}"""
+        assertRoundTrips(
+            expectedOpenB,
+            dataClassContainsOpenB,
+            configuration = BsonConfiguration(classDiscriminator = "#class"),
+            serializersModule = serializersModule)
+    }
+
+    @Test
+    fun testValueClasses() {
+        val expected = """{"value": "valueString"}"""
+        val valueClass = ValueClass("valueString")
+        val dataClass =  DataClassContainsValueClass(valueClass)
+
+        assertThrows<BsonInvalidOperationException>() {
+            serialize(valueClass)
+        }
+        assertRoundTrips(expected, dataClass)
     }
 
     @Test

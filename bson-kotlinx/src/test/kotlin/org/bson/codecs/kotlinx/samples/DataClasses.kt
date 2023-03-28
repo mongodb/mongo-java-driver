@@ -18,6 +18,7 @@ package org.bson.codecs.kotlinx.samples
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -176,6 +177,19 @@ data class DataClassWithObjectIdAndBsonDocument(
 @Serializable @SerialName("C") data class DataClassSealedC(val c: String) : DataClassSealed()
 
 @Serializable data class DataClassListOfSealed(val items: List<DataClassSealed>)
+
+interface DataClassOpen
+
+@Serializable data class DataClassOpenA(val a: String) : DataClassOpen
+
+@Serializable data class DataClassOpenB(val b: Int) : DataClassOpen
+
+@Serializable data class DataClassContainsOpen(val open: DataClassOpen)
+
+@JvmInline
+@Serializable value class ValueClass(val s: String)
+
+@Serializable data class DataClassContainsValueClass(val value: ValueClass)
 
 @Serializable data class DataClassWithBsonId(@BsonId val id: String)
 

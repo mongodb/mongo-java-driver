@@ -82,7 +82,7 @@ internal open class DefaultBsonDecoder(
         initElementNullsIndexes(descriptor)
 
         val name: String? =
-            when (reader.state!!) {
+            when (reader.state ?: error("State of reader may not be null.")) {
                 AbstractBsonReader.State.NAME -> reader.readName()
                 AbstractBsonReader.State.VALUE -> reader.currentName
                 AbstractBsonReader.State.TYPE -> {
@@ -91,11 +91,14 @@ internal open class DefaultBsonDecoder(
                 }
                 AbstractBsonReader.State.END_OF_DOCUMENT,
                 AbstractBsonReader.State.END_OF_ARRAY -> {
-                    val indexOfNullableElement = elementsIsNullableIndexes!!.indexOfFirst { it }
+                    val isNullableIndexes =
+                        elementsIsNullableIndexes ?: error("elementsIsNullableIndexes may not be null.")
+                    val indexOfNullableElement = isNullableIndexes.indexOfFirst { it }
+
                     return if (indexOfNullableElement == -1) {
                         DECODE_DONE
                     } else {
-                        elementsIsNullableIndexes!![indexOfNullableElement] = false
+                        isNullableIndexes[indexOfNullableElement] = false
                         indexOfNullableElement
                     }
                 }
