@@ -395,7 +395,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.selectServer(new WritableServerSelector())
+        cluster.selectServer(new WritableServerSelector(), new OperationContext())
 
         then:
         thrown(IllegalStateException)

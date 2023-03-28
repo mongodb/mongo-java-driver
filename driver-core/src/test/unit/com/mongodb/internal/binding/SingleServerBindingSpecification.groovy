@@ -34,7 +34,7 @@ class SingleServerBindingSpecification extends Specification {
     def 'should implement getters'() {
         given:
         def cluster = Mock(Cluster) {
-            selectServer(_) >> new ServerTuple(Mock(Server),
+            selectServer(_, _) >> new ServerTuple(Mock(Server),
                     ServerDescription.builder()
                             .type(ServerType.STANDALONE)
                             .state(ServerConnectionState.CONNECTED)
@@ -67,7 +67,7 @@ class SingleServerBindingSpecification extends Specification {
     def 'should increment and decrement reference counts'() {
         given:
         def cluster = Mock(Cluster) {
-            selectServer(_) >> new ServerTuple(Mock(Server),
+            selectServer(_, _) >> new ServerTuple(Mock(Server),
                     ServerDescription.builder()
                             .type(ServerType.STANDALONE)
                             .state(ServerConnectionState.CONNECTED)

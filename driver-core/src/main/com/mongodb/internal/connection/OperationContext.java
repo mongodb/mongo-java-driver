@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.internal.connection;
 
-package com.mongodb.internal.binding;
-
-import com.mongodb.internal.async.SingleResultCallback;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
- *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncWriteBinding extends BindingContext, ReferenceCounted {
+public class OperationContext {
+    private static final AtomicLong NEXT_ID = new AtomicLong(0);
+    private final long id;
 
-    /**
-     * Supply a connection source to a server that can be written to
-     *
-     * @param callback the to be passed the connection source
-     */
-    void getWriteConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+    public OperationContext() {
+        id = NEXT_ID.incrementAndGet();
+    }
 
-    @Override
-    AsyncWriteBinding retain();
+    public long getId() {
+        return id;
+    }
 }

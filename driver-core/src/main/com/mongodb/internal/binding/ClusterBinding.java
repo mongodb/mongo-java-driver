@@ -22,6 +22,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
@@ -50,6 +51,7 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     @Nullable
     private final ServerApi serverApi;
     private final RequestContext requestContext;
+    private final OperationContext operationContext;
 
     /**
      * Creates an instance.
@@ -66,6 +68,7 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         this.readConcern = notNull("readConcern", readConcern);
         this.serverApi = serverApi;
         this.requestContext = notNull("requestContext", requestContext);
+        operationContext = new OperationContext();
     }
 
     /**
@@ -104,8 +107,13 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     }
 
     @Override
+    public OperationContext getOperationContext() {
+        return operationContext;
+    }
+
+    @Override
     public ConnectionSource getReadConnectionSource() {
-        return new ClusterBindingConnectionSource(cluster.selectServer(new ReadPreferenceServerSelector(readPreference)), readPreference);
+        return new ClusterBindingConnectionSource(cluster.selectServer(new ReadPreferenceServerSelector(readPreference), operationContext), readPreference);
     }
 
     @Override
@@ -116,19 +124,19 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         } else {
             ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
                     = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
-            ServerTuple serverTuple = cluster.selectServer(readPreferenceWithFallbackServerSelector);
+            ServerTuple serverTuple = cluster.selectServer(readPreferenceWithFallbackServerSelector, operationContext);
             return new ClusterBindingConnectionSource(serverTuple, readPreferenceWithFallbackServerSelector.getAppliedReadPreference());
         }
     }
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
-        return new ClusterBindingConnectionSource(cluster.selectServer(new WritableServerSelector()), readPreference);
+        return new ClusterBindingConnectionSource(cluster.selectServer(new WritableServerSelector(), operationContext), readPreference);
     }
 
     @Override
     public ConnectionSource getConnectionSource(final ServerAddress serverAddress) {
-        return new ClusterBindingConnectionSource(cluster.selectServer(new ServerAddressSelector(serverAddress)), readPreference);
+        return new ClusterBindingConnectionSource(cluster.selectServer(new ServerAddressSelector(serverAddress), operationContext), readPreference);
     }
 
     private final class ClusterBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
@@ -154,6 +162,11 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         }
 
         @Override
+        public OperationContext getOperationContext() {
+            return operationContext;
+        }
+
+        @Override
         public ServerApi getServerApi() {
             return serverApi;
         }
@@ -170,7 +183,7 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
 
         @Override
         public Connection getConnection() {
-            return server.getConnection();
+            return server.getConnection(operationContext);
         }
 
         public ConnectionSource retain() {

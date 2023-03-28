@@ -185,8 +185,8 @@ class ClientSessionBindingSpecification extends Specification {
 
     private AsyncClusterAwareReadWriteBinding createStubBinding() {
         def cluster = Mock(Cluster) {
-            selectServerAsync(_, _) >> {
-                it[1].onResult(new ServerTuple(Stub(Server), ServerDescription.builder()
+            selectServerAsync(_, _, _) >> {
+                it.last().onResult(new ServerTuple(Stub(Server), ServerDescription.builder()
                         .type(ServerType.STANDALONE)
                         .state(ServerConnectionState.CONNECTED)
                         .address(new ServerAddress())

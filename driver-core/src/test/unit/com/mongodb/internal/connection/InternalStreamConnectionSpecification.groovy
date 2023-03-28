@@ -422,7 +422,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_, 0) >> helper.reply(response)
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         thrown(MongoCommandException)
@@ -451,7 +452,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                IgnorableRequestContext.INSTANCE, callback)
+                IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:
@@ -504,7 +505,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90, 0) >> helper.defaultReply()
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         commandListener.eventsWereDelivered([
@@ -527,7 +529,7 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendAndReceive(commandMessage, {
             BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
-        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new OperationContext())
 
         then:
         thrown(CodecConfigurationException)
@@ -559,7 +561,8 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         true
@@ -594,7 +597,8 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE,
+                new OperationContext(), callback)
         callback.get()
 
         then:
@@ -611,7 +615,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.write(_) >> { throw new MongoSocketWriteException('Failed to write', serverAddress, new IOException()) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         def e = thrown(MongoSocketWriteException)
@@ -631,7 +636,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(16, 0) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         def e = thrown(MongoSocketReadException)
@@ -652,7 +658,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90, 0) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         def e = thrown(MongoSocketException)
@@ -674,7 +681,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_, 0) >> helper.reply(response)
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         def e = thrown(MongoCommandException)
@@ -695,7 +703,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90, 0) >> helper.defaultReply()
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         commandListener.eventsWereDelivered([
@@ -731,7 +740,8 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_, 0) >> helper.reply('{ok : 0, errmsg : "failed"}')
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE,
+                new OperationContext())
 
         then:
         thrown(MongoCommandException)
@@ -778,7 +788,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                IgnorableRequestContext.INSTANCE, callback)
+                IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:
@@ -811,7 +821,7 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendAndReceiveAsync(commandMessage, {
             BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
-        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, callback)
+        }, NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:
@@ -839,7 +849,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                IgnorableRequestContext.INSTANCE, callback)
+                IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:
@@ -868,7 +878,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                IgnorableRequestContext.INSTANCE, callback)
+                IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:
@@ -900,7 +910,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                IgnorableRequestContext.INSTANCE, callback)
+                IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:
@@ -933,7 +943,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                IgnorableRequestContext.INSTANCE, callback)
+                IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:
@@ -965,7 +975,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                IgnorableRequestContext.INSTANCE, callback)
+                IgnorableRequestContext.INSTANCE, new OperationContext(), callback)
         callback.get()
 
         then:

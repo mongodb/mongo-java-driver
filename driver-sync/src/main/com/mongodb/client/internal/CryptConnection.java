@@ -18,14 +18,12 @@ package com.mongodb.client.internal;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
@@ -87,8 +85,8 @@ class CryptConnection implements Connection {
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+            final BindingContext context, final boolean responseExpected,
             @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
@@ -110,7 +108,7 @@ class CryptConnection implements Connection {
                 new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()));
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                new RawBsonDocumentCodec(), sessionContext, serverApi, requestContext, responseExpected, null, null);
+                new RawBsonDocumentCodec(), context, responseExpected, null, null);
 
         if (encryptedResponse == null) {
             return null;
@@ -126,10 +124,8 @@ class CryptConnection implements Connection {
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
-                requestContext, true, null, null);
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context) {
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, context, true, null, null);
     }
 
     @SuppressWarnings("unchecked")

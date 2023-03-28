@@ -23,7 +23,6 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerSettings
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.Server
 import com.mongodb.internal.connection.ServerTuple
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -201,7 +200,7 @@ class ServerSessionPoolSpecification extends Specification {
         given:
         def connection = Mock(Connection)
         def server = Stub(Server) {
-            getConnection() >> connection
+            getConnection(_) >> connection
         }
         def cluster = Mock(Cluster) {
             getCurrentDescription() >> connectedDescription
@@ -218,11 +217,11 @@ class ServerSessionPoolSpecification extends Specification {
         pool.close()
 
         then:
-        1 * cluster.selectServer(_)  >> new ServerTuple(server, connectedDescription.serverDescriptions[0])
+        1 * cluster.selectServer(_, _)  >> new ServerTuple(server, connectedDescription.serverDescriptions[0])
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray(sessions*.getIdentifier())),
                 { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
-                { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE, getServerApi(), _) >> new BsonDocument()
+                { it instanceof BsonDocumentCodec }, _) >> new BsonDocument()
         1 * connection.release()
     }
 }

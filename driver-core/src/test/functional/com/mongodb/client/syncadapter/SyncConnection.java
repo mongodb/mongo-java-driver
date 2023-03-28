@@ -16,13 +16,11 @@
 package com.mongodb.client.syncadapter;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.SplittablePayload;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -57,22 +55,21 @@ public final class SyncConnection implements Connection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            final ServerApi serverApi, final RequestContext requestContext) {
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+            final BindingContext context) {
         SupplyingCallback<T> callback = new SupplyingCallback<>();
-        wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
-                requestContext, callback);
+        wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, context, callback);
         return callback.get();
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected, final SplittablePayload payload,
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+            final BindingContext context, final boolean responseExpected, final SplittablePayload payload,
             final FieldNameValidator payloadFieldNameValidator) {
         SupplyingCallback<T> callback = new SupplyingCallback<>();
-        wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
-                serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator, callback);
+        wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, context,
+                responseExpected, payload, payloadFieldNameValidator, callback);
         return callback.get();
     }
 

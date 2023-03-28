@@ -16,22 +16,23 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.RequestContext;
+import com.mongodb.ServerApi;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
+
 
 /**
- * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
- *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncWriteBinding extends BindingContext, ReferenceCounted {
+public interface BindingContext {
+    SessionContext getSessionContext();
 
-    /**
-     * Supply a connection source to a server that can be written to
-     *
-     * @param callback the to be passed the connection source
-     */
-    void getWriteConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+    @Nullable
+    ServerApi getServerApi();
 
-    @Override
-    AsyncWriteBinding retain();
+    RequestContext getRequestContext();
+
+    OperationContext getOperationContext();
 }

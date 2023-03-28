@@ -88,12 +88,12 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
-    public Connection getConnection() {
+    public Connection getConnection(final OperationContext operationContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
+    public void getConnectionAsync(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
         throw new UnsupportedOperationException();
     }
 

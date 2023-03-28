@@ -26,12 +26,10 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.syncadapter.SyncConnection
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.QueryResult
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
@@ -56,7 +54,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
 import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
-import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -64,7 +61,6 @@ import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.connection.ServerHelper.waitForRelease
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
 import static com.mongodb.internal.operation.QueryOperationHelper.makeAdditionalGetMoreCall
-import static java.util.Arrays.asList
 import static java.util.Collections.singletonList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
@@ -376,15 +372,12 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
         def connection = new SyncConnection(getConnection(connectionSource))
         def serverCursor = cursor.cursor.get()
-        if (serverVersionLessThan(3, 6)) {
-            connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id), IgnorableRequestContext.INSTANCE)
-        } else {
-            connection.command(getNamespace().databaseName,
-                    new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
-                            .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
-                    new NoOpFieldNameValidator(), ReadPreference.primary(),
-                    new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
-        }
+        connection.command(getNamespace().databaseName,
+                new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
+                        .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
+                new NoOpFieldNameValidator(), ReadPreference.primary(),
+                new BsonDocumentCodec()
+                , connectionSource)
         connection.release()
         nextBatch()
 
@@ -436,8 +429,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
         def futureResultCallback = new FutureResultCallback<BsonDocument>()
         connection.commandAsync(getDatabaseName(), findCommand, NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
-                CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
-                    connectionSource.sessionContext, binding.getServerApi(), IgnorableRequestContext.INSTANCE, futureResultCallback)
+                CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), connectionSource,
+                futureResultCallback)
         def response = futureResultCallback.get()
         cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
     }

@@ -29,6 +29,7 @@ import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
@@ -99,6 +100,11 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     @Override
     public RequestContext getRequestContext() {
         return wrapped.getRequestContext();
+    }
+
+    @Override
+    public OperationContext getOperationContext() {
+        return wrapped.getOperationContext();
     }
 
     private void getPinnedConnectionSource(final boolean isRead, final SingleResultCallback<AsyncConnectionSource> callback) {
@@ -190,6 +196,11 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         @Override
         public RequestContext getRequestContext() {
             return wrapped.getRequestContext();
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return wrapped.getOperationContext();
         }
 
         @Override

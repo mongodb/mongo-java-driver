@@ -440,7 +440,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _, null, _) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, readBinding) >> helper.commandResult
         1 * connection.release()
 
         where:

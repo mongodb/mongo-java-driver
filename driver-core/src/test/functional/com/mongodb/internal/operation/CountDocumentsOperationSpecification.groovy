@@ -309,7 +309,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext, null, _) >>
+        1 * connection.command(_, commandDocument, _, _, _, binding) >>
                 helper.cursorResult
         1 * connection.release()
 
@@ -349,7 +349,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, *_) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, *_) >> {
             it.last().onResult(helper.cursorResult, null)
         }
         1 * connection.release()

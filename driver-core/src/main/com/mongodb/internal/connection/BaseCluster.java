@@ -99,7 +99,7 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public ServerTuple selectServer(final ServerSelector serverSelector) {
+    public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
 
         try {
@@ -147,7 +147,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public void selectServerAsync(final ServerSelector serverSelector, final SingleResultCallback<ServerTuple> callback) {
+    public void selectServerAsync(final ServerSelector serverSelector, final OperationContext operationContext,
+            final SingleResultCallback<ServerTuple> callback) {
         isTrue("open", !isClosed());
 
         if (LOGGER.isTraceEnabled()) {
@@ -345,7 +346,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Nullable
-    private ServerTuple selectServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
+    private ServerTuple selectServer(final ServerSelector serverSelector,
+            final ClusterDescription clusterDescription) {
         return selectServer(serverSelector, clusterDescription, this::getServer);
     }
 

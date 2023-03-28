@@ -110,8 +110,8 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-            final RequestContext requestContext) {
-        T result = wrapped.sendAndReceive(message, decoder, sessionContext, requestContext);
+                                final RequestContext requestContext, final OperationContext operationContext) {
+        T result = wrapped.sendAndReceive(message, decoder, sessionContext, requestContext, operationContext);
         lastUsedAt = System.currentTimeMillis();
         return result;
     }
@@ -148,13 +148,13 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-            final SessionContext sessionContext, final RequestContext requestContext,
+            final SessionContext sessionContext, final RequestContext requestContext, final OperationContext operationContext,
             final SingleResultCallback<T> callback) {
         SingleResultCallback<T> errHandlingCallback = errorHandlingCallback((result, t) -> {
             lastUsedAt = System.currentTimeMillis();
             callback.onResult(result, t);
         }, LOGGER);
-        wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, errHandlingCallback);
+        wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, operationContext, errHandlingCallback);
     }
 
     @Override

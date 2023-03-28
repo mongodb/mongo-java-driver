@@ -47,8 +47,8 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         provider.ready()
 
         when:
-        provider.get()
-        provider.get().close()
+        provider.get(new OperationContext())
+        provider.get(new OperationContext()).close()
 
         then:
         with(jmxListener.getMBean(SERVER_ID)) {

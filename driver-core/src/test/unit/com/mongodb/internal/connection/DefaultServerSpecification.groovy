@@ -38,6 +38,7 @@ import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.event.ServerListener
 import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
+import com.mongodb.internal.binding.StaticBindingContext
 import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -65,12 +66,12 @@ class DefaultServerSpecification extends Specification {
         def internalConnection = Stub(InternalConnection)
         def connection = Stub(Connection)
 
-        connectionPool.get() >> { internalConnection }
+        connectionPool.get(_) >> { internalConnection }
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, Mock(ServerMonitor),
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
-        def receivedConnection = server.getConnection()
+        def receivedConnection = server.getConnection(new OperationContext())
 
         then:
         receivedConnection
@@ -87,8 +88,8 @@ class DefaultServerSpecification extends Specification {
         def internalConnection = Stub(InternalConnection)
         def connection = Stub(AsyncConnection)
 
-        connectionPool.getAsync(_) >> {
-            it[0].onResult(internalConnection, null)
+        connectionPool.getAsync(_, _) >> {
+            it.last().onResult(internalConnection, null)
         }
 
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, Mock(ServerMonitor),
@@ -96,7 +97,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def callback = new SupplyingCallback<AsyncConnection>()
-        server.getConnectionAsync(callback)
+        server.getConnectionAsync(new OperationContext(), callback)
 
         then:
         callback.get() == connection
@@ -113,7 +114,7 @@ class DefaultServerSpecification extends Specification {
         server.close()
 
         when:
-        server.getConnection()
+        server.getConnection(new OperationContext())
 
         then:
         def ex = thrown(MongoServerUnavailableException)
@@ -123,7 +124,10 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
+        server.getConnectionAsync(new OperationContext()) {
+            result, throwable ->
+                receivedConnection = result; receivedThrowable = throwable; latch.countDown()
+        }
         latch.await()
 
         then:
@@ -162,7 +166,7 @@ class DefaultServerSpecification extends Specification {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitor = Mock(ServerMonitor)
-        connectionPool.get() >> { throw exceptionToThrow }
+        connectionPool.get(new OperationContext()) >> { throw exceptionToThrow }
 
         def server = defaultServer(connectionPool, serverMonitor)
         server.close()
@@ -178,12 +182,12 @@ class DefaultServerSpecification extends Specification {
     def 'failed open should invalidate the server'() {
         given:
         def connectionPool = Mock(ConnectionPool)
-        connectionPool.get() >> { throw exceptionToThrow }
+        connectionPool.get(_) >> { throw exceptionToThrow }
         def serverMonitor = Mock(ServerMonitor)
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection()
+        server.getConnection(new OperationContext())
 
         then:
         def e = thrown(MongoException)
@@ -203,12 +207,12 @@ class DefaultServerSpecification extends Specification {
     def 'failed authentication should invalidate the connection pool'() {
         given:
         def connectionPool = Mock(ConnectionPool)
-        connectionPool.get() >> { throw exceptionToThrow }
+        connectionPool.get(_) >> { throw exceptionToThrow }
         def serverMonitor = Mock(ServerMonitor)
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection()
+        server.getConnection(new OperationContext())
 
         then:
         def e = thrown(MongoSecurityException)
@@ -225,7 +229,7 @@ class DefaultServerSpecification extends Specification {
     def 'failed open should invalidate the server asynchronously'() {
         given:
         def connectionPool = Mock(ConnectionPool)
-        connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
+        connectionPool.getAsync(_, _) >> { it.last().onResult(null, exceptionToThrow) }
         def serverMonitor = Mock(ServerMonitor)
         def server = defaultServer(connectionPool, serverMonitor)
 
@@ -233,7 +237,10 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
+        server.getConnectionAsync(new OperationContext()) {
+            result, throwable ->
+                receivedConnection = result; receivedThrowable = throwable; latch.countDown()
+        }
         latch.await()
 
         then:
@@ -255,7 +262,7 @@ class DefaultServerSpecification extends Specification {
     def 'failed auth should invalidate the connection pool asynchronously'() {
         given:
         def connectionPool = Mock(ConnectionPool)
-        connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
+        connectionPool.getAsync(_, _) >> { it.last().onResult(null, exceptionToThrow) }
         def serverMonitor = Mock(ServerMonitor)
         def server = defaultServer(connectionPool, serverMonitor)
 
@@ -263,7 +270,10 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
+        server.getConnectionAsync(new OperationContext()) {
+            result, throwable ->
+                receivedConnection = result; receivedThrowable = throwable; latch.countDown()
+        }
         latch.await()
 
         then:
@@ -296,18 +306,19 @@ class DefaultServerSpecification extends Specification {
                           ''')
         def protocol = new TestCommandProtocol(response)
         testConnection.enqueueProtocol(protocol)
+        def context = new StaticBindingContext(sessionContext, getServerApi(), IgnorableRequestContext.INSTANCE, new OperationContext())
 
         when:
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
             testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, getServerApi(), null) {
+                    ReadPreference.primary(), new BsonDocumentCodec(), context) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
         } else {
             testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, getServerApi(), IgnorableRequestContext.INSTANCE)
+                    ReadPreference.primary(), new BsonDocumentCodec(), context)
         }
 
         then:

@@ -847,8 +847,7 @@ public class MongoClient implements Closeable {
                         BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
                                 .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));
                         connection.command(cur.namespace.getDatabaseName(), killCursorsCommand, new NoOpFieldNameValidator(),
-                                ReadPreference.primary(), new BsonDocumentCodec(), source.getSessionContext(), source.getServerApi(),
-                                source.getRequestContext());
+                                ReadPreference.primary(), new BsonDocumentCodec(), source);
                     } finally {
                         connection.release();
                     }

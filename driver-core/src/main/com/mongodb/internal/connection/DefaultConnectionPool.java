@@ -162,12 +162,12 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
-    public InternalConnection get() {
-        return get(settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
+    public InternalConnection get(final OperationContext operationContext) {
+        return get(operationContext, settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
     }
 
     @Override
-    public InternalConnection get(final long timeoutValue, final TimeUnit timeUnit) {
+    public InternalConnection get(final OperationContext operationContext, final long timeoutValue, final TimeUnit timeUnit) {
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
         Timeout timeout = Timeout.startNow(timeoutValue, timeUnit);
         try {
@@ -184,7 +184,7 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
-    public void getAsync(final SingleResultCallback<InternalConnection> callback) {
+    public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
@@ -638,9 +638,9 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                final RequestContext requestContext) {
+                final RequestContext requestContext, final OperationContext operationContext) {
             isTrue("open", !isClosed.get());
-            return wrapped.sendAndReceive(message, decoder, sessionContext, requestContext);
+            return wrapped.sendAndReceive(message, decoder, sessionContext, requestContext, operationContext);
         }
 
         @Override
@@ -675,9 +675,9 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                final RequestContext requestContext, final SingleResultCallback<T> callback) {
+                final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, (result, t) -> callback.onResult(result, t));
+            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, operationContext, (result, t) -> callback.onResult(result, t));
         }
 
         @Override
@@ -1215,7 +1215,7 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     /**
-     * This class maintains threads needed to perform {@link #getAsync(SingleResultCallback)}.
+     * This class maintains threads needed to perform {@link ConnectionPool#getAsync(OperationContext, SingleResultCallback)}.
      */
     @ThreadSafe
     private static class AsyncWorkManager implements AutoCloseable {
