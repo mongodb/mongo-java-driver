@@ -255,7 +255,7 @@ class BaseClusterSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def thread = new Thread({
             try {
-                cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+                cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()), new OperationContext())
             } catch (MongoInterruptedException e) {
                 latch.countDown()
             }
