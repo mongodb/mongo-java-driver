@@ -21,9 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
-import com.mongodb.ServerApi;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
@@ -33,7 +31,6 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -78,8 +75,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private static final String MESSAGE_IF_CLOSED_AS_ITERATOR = "Iterator has been closed";
 
     private final MongoNamespace namespace;
-    @Nullable
-    private final ServerApi serverApi;
     private final ServerAddress serverAddress;
     private final int limit;
     private final Decoder<T> decoder;
@@ -115,7 +110,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstQueryResult.getNamespace();
-        this.serverApi = connectionSource == null ? null : connectionSource.getServerApi();
         this.serverAddress = firstQueryResult.getAddress();
         this.limit = limit;
         this.comment = comment;
@@ -292,8 +286,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                         NO_OP_FIELD_NAME_VALIDATOR,
                         ReadPreference.primary(),
                         CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                        resourceManager.sessionContext(),
-                        serverApi, resourceManager.requestContext()));
+                        assertNotNull(resourceManager.connectionSource)));
             } catch (MongoCommandException e) {
                 throw translateCommandException(e, serverCursor);
             }
@@ -566,13 +559,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             }
         }
 
-        SessionContext sessionContext() {
-            return assertNotNull(connectionSource).getSessionContext();
-        }
-
-        RequestContext requestContext() {
-            return assertNotNull(connectionSource).getRequestContext();
-        }
 
         void releaseServerAndClientResources(final Connection connection) {
             try {
@@ -586,20 +572,16 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             try {
                 ServerCursor localServerCursor = serverCursor;
                 if (localServerCursor != null) {
-                    killServerCursor(namespace, localServerCursor, sessionContext(), requestContext(), serverApi,
-                            assertNotNull(connection));
+                    killServerCursor(namespace, localServerCursor, assertNotNull(connection));
                 }
             } finally {
                 serverCursor = null;
             }
         }
 
-        private void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor,
-                final SessionContext sessionContext, final RequestContext requestContext, @Nullable final ServerApi serverApi,
-                final Connection connection) {
+        private void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor, final Connection connection) {
             connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(namespace, serverCursor),
-                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), sessionContext, serverApi,
-                    requestContext);
+                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), assertNotNull(connectionSource));
         }
 
         private BsonDocument asKillCursorsCommandDocument(final MongoNamespace namespace, final ServerCursor serverCursor) {
@@ -620,7 +602,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 pinnedConnection = null;
             }
         }
-    }
+   }
 
     private enum State {
         IDLE(true, false),

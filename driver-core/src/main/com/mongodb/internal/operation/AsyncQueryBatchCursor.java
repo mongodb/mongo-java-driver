@@ -251,8 +251,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void getMore(final AsyncConnection connection, final ServerCursor cursor, final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId(), connection.getDescription()),
                 NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                connectionSource.getSessionContext(), connectionSource.getServerApi(), connectionSource.getRequestContext(),
-                new CommandResultSingleResultCallback(connection, cursor, callback));
+                connectionSource, new CommandResultSingleResultCallback(connection, cursor, callback));
    }
 
     private BsonDocument asGetMoreCommandDocument(final long cursorId, final ConnectionDescription connectionDescription) {
@@ -302,11 +301,10 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
         connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
-                ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                connectionSource.getServerApi(), connectionSource.getRequestContext(), (result, t) -> {
-                        connection.release();
-                        connectionSource.release();
-                        });
+                ReadPreference.primary(), new BsonDocumentCodec(), connectionSource, (result, t) -> {
+                    connection.release();
+                    connectionSource.release();
+                });
     }
 
     private BsonDocument asKillCursorsCommandDocument(final ServerCursor localCursor) {

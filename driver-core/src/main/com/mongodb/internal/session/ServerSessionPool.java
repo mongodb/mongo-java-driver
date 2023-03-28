@@ -21,9 +21,11 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.binding.StaticBindingContext;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -120,6 +122,8 @@ public class ServerSessionPool {
 
         Connection connection = null;
         try {
+            StaticBindingContext context = new StaticBindingContext(NoOpSessionContext.INSTANCE, serverApi,
+                    IgnorableRequestContext.INSTANCE, new OperationContext());
             connection = cluster.selectServer(clusterDescription -> {
                 for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
                     if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
@@ -127,12 +131,11 @@ public class ServerSessionPool {
                     }
                 }
                 return Collections.emptyList();
-            }).getServer().getConnection();
+            }, context.getOperationContext()).getServer().getConnection(context.getOperationContext());
 
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
-                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, serverApi,
-                    IgnorableRequestContext.INSTANCE);
+                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), context);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {

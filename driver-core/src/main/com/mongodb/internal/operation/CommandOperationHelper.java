@@ -237,8 +237,7 @@ final class CommandOperationHelper {
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
         logRetryExecute(retryState);
         return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
-                source.getReadPreference(), decoder, binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext())),
-                source, connection);
+                source.getReadPreference(), decoder, binding)), source, connection);
     }
 
     /* Write Binding Helpers */
@@ -248,8 +247,7 @@ final class CommandOperationHelper {
                                    final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
         return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection) ->
             transformer.apply(assertNotNull(
-                    connection.command(database, command, new NoOpFieldNameValidator(), primary(), decoder, source.getSessionContext(),
-                            source.getServerApi(), binding.getRequestContext())), connection));
+                    connection.command(database, command, new NoOpFieldNameValidator(), primary(), decoder, binding)), connection));
     }
 
     @Nullable
@@ -257,8 +255,8 @@ final class CommandOperationHelper {
                                 final Connection connection, final CommandWriteTransformer<BsonDocument, T> transformer) {
         notNull("binding", binding);
         return transformer.apply(assertNotNull(
-                connection.command(database, command, new NoOpFieldNameValidator(), primary(), new BsonDocumentCodec(),
-                        binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext())), connection);
+                connection.command(database, command, new NoOpFieldNameValidator(), primary(), new BsonDocumentCodec(), binding)),
+                connection);
     }
 
     /* Async Read Binding Helpers */
@@ -321,8 +319,7 @@ final class CommandOperationHelper {
             return;
         }
         connection.commandAsync(database, command, new NoOpFieldNameValidator(), source.getReadPreference(), decoder,
-                binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),
-                transformingReadCallback(transformer, source, connection, callback));
+                binding, transformingReadCallback(transformer, source, connection, callback));
     }
 
     private static <T, R> SingleResultCallback<T> transformingReadCallback(final CommandReadTransformerAsync<T, R> transformer,
@@ -373,8 +370,7 @@ final class CommandOperationHelper {
         SingleResultCallback<T> addingRetryableLabelCallback = addingRetryableLabelCallback(callback,
                 connection.getDescription().getMaxWireVersion());
         connection.commandAsync(database, command, new NoOpFieldNameValidator(), primary(), new BsonDocumentCodec(),
-                binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext(),
-                transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
+                binding, transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
     }
 
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final Supplier<R> writeFunction) {
@@ -420,7 +416,7 @@ final class CommandOperationHelper {
                             .attach(AttachmentKeys.command(), command, false);
                     logRetryExecute(retryState);
                     return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference,
-                        commandResultDecoder, binding.getSessionContext(), binding.getServerApi(), binding.getRequestContext()),
+                                    commandResultDecoder, binding),
                         connection);
                 } catch (MongoException e) {
                     if (!firstAttempt) {
@@ -482,9 +478,7 @@ final class CommandOperationHelper {
                     addingRetryableLabelCallback.onResult(null, t);
                     return;
                 }
-                connection.commandAsync(database, command, fieldNameValidator, readPreference,
-                        commandResultDecoder, binding.getSessionContext(),
-                        binding.getServerApi(), binding.getRequestContext(),
+                connection.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, binding,
                         transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
             });
         }).whenComplete(binding::release);

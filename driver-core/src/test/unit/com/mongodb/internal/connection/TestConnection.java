@@ -17,10 +17,9 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -60,35 +59,31 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
-        return executeEnqueuedCommandBasedProtocol(sessionContext);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context) {
+        return executeEnqueuedCommandBasedProtocol(context.getSessionContext());
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-            @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
-            @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
-        return executeEnqueuedCommandBasedProtocol(sessionContext);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final boolean responseExpected, @Nullable final SplittablePayload payload,
+            @Nullable final FieldNameValidator payloadFieldNameValidator) {
+        return executeEnqueuedCommandBasedProtocol(context.getSessionContext());
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, @Nullable final ServerApi serverApi,
-                                 final RequestContext requestContext, final SingleResultCallback<T> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final SingleResultCallback<T> callback) {
+        executeEnqueuedCommandBasedProtocolAsync(context.getSessionContext(), callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final @Nullable ServerApi serverApi,
-                                 final RequestContext requestContext, final boolean responseExpected,
-                                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
-                                 final SingleResultCallback<T> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final boolean responseExpected, @Nullable final SplittablePayload payload,
+            @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+        executeEnqueuedCommandBasedProtocolAsync(context.getSessionContext(), callback);
     }
 
     @Override

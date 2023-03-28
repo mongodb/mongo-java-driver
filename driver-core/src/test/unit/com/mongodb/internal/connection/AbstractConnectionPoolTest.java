@@ -564,22 +564,22 @@ public abstract class AbstractConnectionPoolTest {
         }
 
         @Override
-        public InternalConnection get() {
-            InternalConnection result = pool.get();
+        public InternalConnection get(final OperationContext operationContext) {
+            InternalConnection result = pool.get(operationContext);
             updateConnectionIdLocalValueAdjustment(result);
             return result;
         }
 
         @Override
-        public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
-            InternalConnection result = pool.get(timeout, timeUnit);
+        public InternalConnection get(final OperationContext operationContext, final long timeout, final TimeUnit timeUnit) {
+            InternalConnection result = pool.get(new OperationContext(), timeout, timeUnit);
             updateConnectionIdLocalValueAdjustment(result);
             return result;
         }
 
         @Override
-        public void getAsync(final SingleResultCallback<InternalConnection> callback) {
-            pool.getAsync((result, problem) -> {
+        public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
+            pool.getAsync(operationContext, (result, problem) -> {
                 try {
                     if (result != null) {
                         updateConnectionIdLocalValueAdjustment(result);

@@ -87,7 +87,7 @@ class BaseClusterSpecification extends Specification {
         thrown(MongoTimeoutException)
 
         when: 'a server is selected before initialization'
-        cluster.selectServer { def clusterDescription -> [] }
+        cluster.selectServer({ def clusterDescription -> [] }, new OperationContext())
 
         then: 'a MongoTimeoutException is thrown'
         thrown(MongoTimeoutException)
@@ -120,7 +120,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()))
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()), new OperationContext())
                 .serverDescription.address == firstServer
     }
 
@@ -137,7 +137,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ServerAddressSelector(firstServer)).serverDescription.address == firstServer
+        cluster.selectServer(new ServerAddressSelector(firstServer), new OperationContext()).serverDescription.address == firstServer
     }
 
     def 'should apply local threshold when custom server selector is present'() {
@@ -155,7 +155,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.nearest()))
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.nearest()), new OperationContext())
                 .serverDescription.address == firstServer
     }
 
@@ -173,7 +173,8 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
 
         expect: // firstServer is the only secondary within the latency threshold
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary())).serverDescription.address == firstServer
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()), new OperationContext())
+                .serverDescription.address == firstServer
     }
 
     def 'should timeout with useful message'() {
@@ -203,7 +204,7 @@ class BaseClusterSpecification extends Specification {
         e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}')
 
         when:
-        cluster.selectServer(new WritableServerSelector())
+        cluster.selectServer(new WritableServerSelector(), new OperationContext())
 
         then:
         e = thrown(MongoTimeoutException)
@@ -230,7 +231,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()), new OperationContext())
                 .serverDescription.address == thirdServer
 
         cleanup:
@@ -400,11 +401,12 @@ class BaseClusterSpecification extends Specification {
 
     def selectServerAsync(BaseCluster cluster, ServerAddress serverAddress) {
         def serverLatch = new ServerLatch()
-        cluster.selectServerAsync(new ServerAddressSelector(serverAddress)) { ServerTuple result, MongoException e ->
-            serverLatch.server = result != null ? result.getServer() : null
-            serverLatch.serverDescription = result != null ? result.serverDescription : null
-            serverLatch.throwable = e
-            serverLatch.latch.countDown()
+        cluster.selectServerAsync(new ServerAddressSelector(serverAddress), new OperationContext()) {
+            ServerTuple result, MongoException e ->
+                serverLatch.server = result != null ? result.getServer() : null
+                serverLatch.serverDescription = result != null ? result.serverDescription : null
+                serverLatch.throwable = e
+                serverLatch.latch.countDown()
         }
         serverLatch
     }

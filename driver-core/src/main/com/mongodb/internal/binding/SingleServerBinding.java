@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
@@ -42,6 +43,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     @Nullable
     private final ServerApi serverApi;
     private final RequestContext requestContext;
+    private final OperationContext operationContext;
 
     /**
      * Creates an instance, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
@@ -56,6 +58,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.serverApi = serverApi;
         this.requestContext = notNull("requestContext", requestContext);
+        operationContext = new OperationContext();
     }
 
     @Override
@@ -95,6 +98,11 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     }
 
     @Override
+    public OperationContext getOperationContext() {
+        return operationContext;
+    }
+
+    @Override
     public SingleServerBinding retain() {
         super.retain();
         return this;
@@ -105,7 +113,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         private SingleServerBindingConnectionSource() {
             SingleServerBinding.this.retain();
-            ServerTuple serverTuple = cluster.selectServer(new ServerAddressSelector(serverAddress));
+            ServerTuple serverTuple = cluster.selectServer(new ServerAddressSelector(serverAddress), operationContext);
             serverDescription = serverTuple.getServerDescription();
         }
 
@@ -117,6 +125,11 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         @Override
         public SessionContext getSessionContext() {
             return NoOpSessionContext.INSTANCE;
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return operationContext;
         }
 
         @Override
@@ -136,7 +149,8 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         @Override
         public Connection getConnection() {
-            return cluster.selectServer(new ServerAddressSelector(serverAddress)).getServer().getConnection();
+            return cluster.selectServer(new ServerAddressSelector(serverAddress), operationContext)
+                    .getServer().getConnection(operationContext);
         }
 
         @Override

@@ -30,28 +30,29 @@ import java.util.concurrent.TimeUnit;
  */
 interface ConnectionPool extends Closeable {
     /**
-     * Is equivalent to {@link #get(long, TimeUnit)} called with {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
+     * Is equivalent to {@link #get(OperationContext, long, TimeUnit)} called with {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
      */
-    InternalConnection get() throws MongoConnectionPoolClearedException;
+    InternalConnection get(OperationContext operationContext) throws MongoConnectionPoolClearedException;
 
     /**
-     * @param timeout See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
+     * @param operationContext operation context
+     * @param timeout          See {@link com.mongodb.internal.Timeout#startNow(long, TimeUnit)}.
      * @throws MongoConnectionPoolClearedException If detects that the pool is {@linkplain #invalidate(Throwable) paused}.
      */
-    InternalConnection get(long timeout, TimeUnit timeUnit) throws MongoConnectionPoolClearedException;
+    InternalConnection get(OperationContext operationContext, long timeout, TimeUnit timeUnit) throws MongoConnectionPoolClearedException;
 
     /**
      * Completes the {@code callback} with a {@link MongoConnectionPoolClearedException}
      * if detects that the pool is {@linkplain #invalidate(Throwable) paused}.
      */
-    void getAsync(SingleResultCallback<InternalConnection> callback);
+    void getAsync(OperationContext operationContext, SingleResultCallback<InternalConnection> callback);
 
     /**
-     * Mark the pool as paused, unblock all threads waiting in {@link #get() get…} methods, unless they are blocked
+     * Mark the pool as paused, unblock all threads waiting in {@link #get(OperationContext) get…} methods, unless they are blocked
      * doing an IO operation, increment {@linkplain #getGeneration() generation} to lazily clear all connections managed by the pool
-     * (this is done via {@link #get() get…} and {@linkplain InternalConnection#close() check in} methods, and may also be done
+     * (this is done via {@link #get(OperationContext) get…} and {@linkplain InternalConnection#close() check in} methods, and may also be done
      * by a background task). In the paused state, connections can be created neither in the background
-     * nor via {@link #get() get…} methods.
+     * nor via {@link #get(OperationContext) get…} methods.
      * If the pool is paused, the method does nothing except for recording the specified {@code cause}.
      *
      * @see #ready()
@@ -69,7 +70,7 @@ interface ConnectionPool extends Closeable {
     void invalidate(ObjectId serviceId, int generation);
 
     /**
-     * Mark the pool as ready, allowing connections to be created in the background and via {@link #get() get…} methods.
+     * Mark the pool as ready, allowing connections to be created in the background and via {@link #get(OperationContext) get…} methods.
      * If the pool is ready, the method does nothing.
      *
      * @see #invalidate(Throwable)

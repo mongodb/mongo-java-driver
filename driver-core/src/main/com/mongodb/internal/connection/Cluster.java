@@ -68,9 +68,10 @@ public interface Cluster extends Closeable {
      */
     ClusterClock getClock();
 
-    ServerTuple selectServer(ServerSelector serverSelector);
+    ServerTuple selectServer(ServerSelector serverSelector, OperationContext operationContext);
 
-    void selectServerAsync(ServerSelector serverSelector, SingleResultCallback<ServerTuple> callback);
+    void selectServerAsync(ServerSelector serverSelector, OperationContext operationContext,
+            SingleResultCallback<ServerTuple> callback);
 
     /**
      * Closes connections to the servers in the cluster.  After this is called, this cluster instance can no longer be used.

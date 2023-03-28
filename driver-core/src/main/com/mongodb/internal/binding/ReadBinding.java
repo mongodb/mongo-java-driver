@@ -17,17 +17,13 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 /**
  * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ReadBinding extends ReferenceCounted {
+public interface ReadBinding extends BindingContext, ReferenceCounted {
     ReadPreference getReadPreference();
 
     /**
@@ -47,13 +43,6 @@ public interface ReadBinding extends ReferenceCounted {
      * @see com.mongodb.internal.operation.AggregateToCollectionOperation
      */
     ConnectionSource getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference);
-
-    SessionContext getSessionContext();
-
-    @Nullable
-    ServerApi getServerApi();
-
-    RequestContext getRequestContext();
 
     @Override
     ReadBinding retain();

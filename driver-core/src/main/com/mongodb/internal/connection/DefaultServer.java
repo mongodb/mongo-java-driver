@@ -20,8 +20,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
@@ -31,6 +29,7 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -86,7 +85,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public Connection getConnection() {
+    public Connection getConnection(final OperationContext operationContext) {
         if (isClosed) {
             throw new MongoServerUnavailableException(String.format("The server at %s is no longer available", serverId.getAddress()));
         }
@@ -94,7 +93,7 @@ class DefaultServer implements ClusterableServer {
         operationBegin();
         try {
             return OperationCountTrackingConnection.decorate(this,
-                    connectionFactory.create(connectionPool.get(), new DefaultServerProtocolExecutor(), clusterConnectionMode));
+                    connectionFactory.create(connectionPool.get(operationContext), new DefaultServerProtocolExecutor(), clusterConnectionMode));
         } catch (Throwable e) {
             operationEnd();
             if (e instanceof MongoException) {
@@ -105,7 +104,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
+    public void getConnectionAsync(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
         if (isClosed) {
             callback.onResult(null, new MongoServerUnavailableException(
                     String.format("The server at %s is no longer available", serverId.getAddress())));
@@ -113,7 +112,7 @@ class DefaultServer implements ClusterableServer {
         }
         SdamIssue.Context exceptionContext = sdam.context();
         operationBegin();
-        connectionPool.getAsync((result, t) -> {
+        connectionPool.getAsync(operationContext, (result, t) -> {
             if (t != null) {
                 try {
                     operationEnd();
@@ -283,19 +282,18 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                @Nullable final ServerApi serverApi, final RequestContext requestContext) {
-            return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
-                    requestContext);
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final BindingContext context) {
+            return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, context);
         }
 
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final BindingContext context, final boolean responseExpected,
                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
-            return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
-                    serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator);
+            return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, context,
+                    responseExpected, payload, payloadFieldNameValidator);
         }
 
         @Override
@@ -346,20 +344,19 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                @Nullable final ServerApi serverApi, final RequestContext requestContext, final SingleResultCallback<T> callback) {
-            wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, serverApi,
-                    requestContext, callback);
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+                final SingleResultCallback<T> callback) {
+            wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
+                    context, callback);
         }
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                @Nullable final ServerApi serverApi, final RequestContext requestContext, final boolean responseExpected,
-                @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
-                final SingleResultCallback<T> callback) {
-            wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, sessionContext,
-                    serverApi, requestContext, responseExpected, payload, payloadFieldNameValidator, callback);
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+                final boolean responseExpected, @Nullable final SplittablePayload payload,
+                @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+            wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder,
+                    context, responseExpected, payload, payloadFieldNameValidator, callback);
         }
 
         @Override

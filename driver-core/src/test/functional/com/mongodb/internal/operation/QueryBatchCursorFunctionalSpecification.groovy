@@ -23,10 +23,8 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.QueryResult
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
@@ -47,7 +45,6 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -532,8 +529,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         connection.command(getNamespace().databaseName,
                 new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                         .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
-                new NoOpFieldNameValidator(), ReadPreference.primary(),
-                new BsonDocumentCodec(), new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE)
+                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), connectionSource)
         connection.release()
         cursor.next()
 
@@ -637,28 +633,10 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
             def response = connection.command(getDatabaseName(), findCommand,
                     NO_OP_FIELD_NAME_VALIDATOR, readPreference,
-                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
-                        connectionSource.sessionContext, connectionSource.getServerApi(), IgnorableRequestContext.INSTANCE)
+                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), connectionSource)
             cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } finally {
             connection.release()
         }
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
-        def connection = connectionSource.getConnection()
-        try {
-            makeAdditionalGetMoreCall(serverCursor, connection)
-        } finally {
-            connection.release()
-        }
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
-        connection.command(getNamespace().databaseName,
-                new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
-                        .append('collection', new BsonString(namespace.getCollectionName())),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                connectionSource.getServerApi())
     }
 }

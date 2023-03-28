@@ -45,6 +45,7 @@ import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.operation.AsyncReadOperation
@@ -276,6 +277,7 @@ class OperationFunctionalSpecification extends Specification {
                           BsonDocument expectedCommand=null, Boolean checkSecondaryOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
+        def operationContext = new OperationContext()
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -287,6 +289,7 @@ class OperationFunctionalSpecification extends Specification {
             getConnection() >> {
                 connection
             }
+            getOperationContext() >> operationContext
             getServerApi() >> null
             getReadPreference() >> readPreference
             getServerDescription() >> {
@@ -301,6 +304,7 @@ class OperationFunctionalSpecification extends Specification {
             getReadConnectionSource(*_) >> connectionSource
             getReadPreference() >> readPreference
             getServerApi() >> null
+            getOperationContext() >> operationContext
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -310,6 +314,7 @@ class OperationFunctionalSpecification extends Specification {
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
             getServerApi() >> null
+            getOperationContext() >> operationContext
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -324,8 +329,8 @@ class OperationFunctionalSpecification extends Specification {
         if (checkCommand) {
             1 * connection.command(*_) >> {
                 assert it[1] == expectedCommand
-                if (it.size() == 11) {
-                    SplittablePayload payload = it[9]
+                if (it.size() > 6) {
+                    SplittablePayload payload = it[7]
                     payload.setPosition(payload.size())
                 }
                 result
@@ -358,6 +363,7 @@ class OperationFunctionalSpecification extends Specification {
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSecondaryOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
                            ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
+        def operationContext = new OperationContext()
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -369,6 +375,7 @@ class OperationFunctionalSpecification extends Specification {
             getConnection(_) >> { it[0].onResult(connection, null) }
             getReadPreference() >> readPreference
             getServerApi() >> null
+            getOperationContext() >> operationContext
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
                 if (new ServerVersion(serverVersion).compareTo(new ServerVersion(3, 6)) >= 0) {
@@ -381,6 +388,7 @@ class OperationFunctionalSpecification extends Specification {
             getReadConnectionSource(*_) >> { it.last().onResult(connectionSource, null) }
             getReadPreference() >> readPreference
             getServerApi() >> null
+            getOperationContext() >> operationContext
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -390,6 +398,7 @@ class OperationFunctionalSpecification extends Specification {
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getServerApi() >> null
+            getOperationContext() >> operationContext
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
                 hasActiveTransaction() >> activeTransaction
@@ -407,8 +416,8 @@ class OperationFunctionalSpecification extends Specification {
         if (checkCommand) {
             1 * connection.commandAsync(*_) >> {
                 assert it[1] == expectedCommand
-                if (it.size() == 12) {
-                    SplittablePayload payload = it[9]
+                if (it.size() > 7) {
+                    SplittablePayload payload = it[7]
                     payload.setPosition(payload.size())
                 }
                 it.last().onResult(result, null)

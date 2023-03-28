@@ -19,6 +19,7 @@ package com.mongodb.internal.binding;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.connection.Cluster;
@@ -48,6 +49,7 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     private int count = 1;
     @Nullable
     private final ServerApi serverApi;
+    private final OperationContext operationContext;
 
     /**
      * Create a new binding with the given cluster.
@@ -57,14 +59,15 @@ public class SingleConnectionBinding implements ReadWriteBinding {
      */
     public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, @Nullable final ServerApi serverApi) {
         this.serverApi = serverApi;
+        operationContext = new OperationContext();
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        ServerTuple writeServerTuple = cluster.selectServer(new WritableServerSelector());
+        ServerTuple writeServerTuple = cluster.selectServer(new WritableServerSelector(), operationContext);
         writeServerDescription = writeServerTuple.getServerDescription();
-        writeConnection = writeServerTuple.getServer().getConnection();
-        ServerTuple readServerTuple = cluster.selectServer(new ReadPreferenceServerSelector(readPreference));
+        writeConnection = writeServerTuple.getServer().getConnection(operationContext);
+        ServerTuple readServerTuple = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), operationContext);
         readServerDescription = readServerTuple.getServerDescription();
-        readConnection = readServerTuple.getServer().getConnection();
+        readConnection = readServerTuple.getServer().getConnection(operationContext);
     }
 
     @Override
@@ -126,6 +129,11 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
+    public OperationContext getOperationContext() {
+        return operationContext;
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         isTrue("open", getCount() > 0);
         return new SingleConnectionSource(writeServerDescription, writeConnection);
@@ -150,6 +158,11 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         @Override
         public SessionContext getSessionContext() {
             return NoOpSessionContext.INSTANCE;
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return operationContext;
         }
 
         @Override

@@ -53,6 +53,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final ConnectionDescription description;
     @Nullable private final CommandListener commandListener;
     private final RequestContext requestContext;
+    private final OperationContext operationContext;
     private final StructuredLogger logger;
     private final LoggerSettings loggerSettings;
     private final long startTimeNanos;
@@ -63,11 +64,13 @@ class LoggingCommandEventSender implements CommandEventSender {
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
             final ConnectionDescription description,
-            @Nullable final CommandListener commandListener, final RequestContext requestContext, final CommandMessage message,
-            final ByteBufferBsonOutput bsonOutput, final StructuredLogger logger, final LoggerSettings loggerSettings) {
+            @Nullable final CommandListener commandListener, final RequestContext requestContext, final OperationContext operationContext,
+            final CommandMessage message, final ByteBufferBsonOutput bsonOutput, final StructuredLogger logger,
+            final LoggerSettings loggerSettings) {
         this.description = description;
         this.commandListener = commandListener;
         this.requestContext = requestContext;
+        this.operationContext = operationContext;
         this.logger = logger;
         this.loggerSettings = loggerSettings;
         this.startTimeNanos = System.nanoTime();

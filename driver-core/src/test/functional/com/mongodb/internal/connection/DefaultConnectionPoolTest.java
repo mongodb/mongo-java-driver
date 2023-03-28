@@ -114,7 +114,7 @@ public class DefaultConnectionPoolTest {
                         .build(),
                 mockSdamProvider());
         provider.ready();
-        provider.get();
+        provider.get(new OperationContext());
 
         // when
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider);
@@ -138,10 +138,10 @@ public class DefaultConnectionPoolTest {
 
         String expectedExceptionMessage = "The server at 127.0.0.1:27017 is no longer available";
         MongoServerUnavailableException exception;
-        exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get());
+        exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get(new OperationContext()));
         assertEquals(expectedExceptionMessage, exception.getMessage());
         SupplyingCallback<InternalConnection> supplyingCallback = new SupplyingCallback<>();
-        provider.getAsync(supplyingCallback);
+        provider.getAsync(new OperationContext(), supplyingCallback);
         exception = assertThrows(MongoServerUnavailableException.class, supplyingCallback::get);
         assertEquals(expectedExceptionMessage, exception.getMessage());
     }
@@ -159,10 +159,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get().close();
+        provider.get(new OperationContext()).close();
         Thread.sleep(100);
         provider.doMaintenance();
-        provider.get();
+        provider.get(new OperationContext());
 
         // then
         assertTrue(connectionFactory.getNumCreatedConnections() >= 2);  // should really be two, but it's racy
@@ -180,7 +180,7 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        InternalConnection connection = provider.get();
+        InternalConnection connection = provider.get(new OperationContext());
         Thread.sleep(50);
         connection.close();
 
@@ -201,10 +201,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get().close();
+        provider.get(new OperationContext()).close();
         Thread.sleep(100);
         provider.doMaintenance();
-        provider.get();
+        provider.get(new OperationContext());
 
         // then
         assertTrue(connectionFactory.getNumCreatedConnections() >= 2);  // should really be two, but it's racy
@@ -223,10 +223,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get().close();
+        provider.get(new OperationContext()).close();
         Thread.sleep(50);
         provider.doMaintenance();
-        provider.get();
+        provider.get(new OperationContext());
 
         // then
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
@@ -245,10 +245,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get().close();
+        provider.get(new OperationContext()).close();
         Thread.sleep(50);
         provider.doMaintenance();
-        InternalConnection secondConnection = provider.get();
+        InternalConnection secondConnection = provider.get(new OperationContext());
 
         // then
         assertNotNull(secondConnection);
@@ -267,7 +267,7 @@ public class DefaultConnectionPoolTest {
                         .build(),
                 mockSdamProvider());
         provider.ready();
-        provider.get().close();
+        provider.get(new OperationContext()).close();
 
 
         // when
@@ -287,7 +287,7 @@ public class DefaultConnectionPoolTest {
         List<InternalConnection> connections = new ArrayList<>();
         try {
             for (int i = 0; i < 2 * defaultMaxSize; i++) {
-                connections.add(provider.get());
+                connections.add(provider.get(new OperationContext()));
             }
         } finally {
             connections.forEach(connection -> {
@@ -398,7 +398,7 @@ public class DefaultConnectionPoolTest {
         provider.ready();
         List<InternalConnection> connections = new ArrayList<>();
         for (int i = 0; i < openConnectionsCount; i++) {
-            connections.add(provider.get(0, NANOSECONDS));
+            connections.add(provider.get(new OperationContext(), 0, NANOSECONDS));
         }
         acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener);
         int previousIdx = 0;
@@ -416,7 +416,7 @@ public class DefaultConnectionPoolTest {
                     return connectionId;
                 }));
                 Runnable checkOut = () -> receivedFutures.add(cachedExecutor.submit(() -> {
-                    InternalConnection connection = provider.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                    InternalConnection connection = provider.get(new OperationContext(), TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
                     return connection.getDescription().getConnectionId();
                 }));
                 if (ThreadLocalRandom.current().nextBoolean()) {
@@ -530,7 +530,7 @@ public class DefaultConnectionPoolTest {
                         spontaneouslyInvalidateReady.run();
                         InternalConnection conn = null;
                         try {
-                            conn = pool.get(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                            conn = pool.get(new OperationContext(), TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
                         } catch (MongoConnectionPoolClearedException e) {
                             // expected because we spontaneously invalidate `pool`
                         } finally {
@@ -545,7 +545,7 @@ public class DefaultConnectionPoolTest {
                     while (!(duration.expired() || Thread.currentThread().isInterrupted())) {
                         spontaneouslyInvalidateReady.run();
                         CompletableFuture<InternalConnection> futureCheckOutCheckIn = new CompletableFuture<>();
-                        pool.getAsync((conn, t) -> {
+                        pool.getAsync(new OperationContext(), (conn, t) -> {
                             if (t != null) {
                                 if (t instanceof MongoConnectionPoolClearedException) {
                                     futureCheckOutCheckIn.complete(null); // expected because we spontaneously invalidate `pool`
@@ -599,14 +599,14 @@ public class DefaultConnectionPoolTest {
             case INFINITE_CALLBACK: {
                 for (int i = 0; i < openPermitsCount; i++) {
                     SingleResultCallback<InternalConnection> infiniteCallback = (result, t) -> sleepMillis(MAX_VALUE);
-                    pool.getAsync(infiniteCallback);
+                    pool.getAsync(new OperationContext(), infiniteCallback);
                 }
                 break;
             }
             case INFINITE_OPEN: {
                 controllableConnFactory.openDurationHandle.set(Duration.ofMillis(MAX_VALUE), openPermitsCount);
                 for (int i = 0; i < openPermitsCount; i++) {
-                    pool.getAsync((result, t) -> {});
+                    pool.getAsync(new OperationContext(), (result, t) -> {});
                 }
                 controllableConnFactory.openDurationHandle.await(Duration.ofMillis(TEST_WAIT_TIMEOUT_MILLIS));
                 break;

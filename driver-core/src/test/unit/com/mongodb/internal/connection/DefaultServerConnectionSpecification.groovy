@@ -24,9 +24,10 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
-import com.mongodb.internal.diagnostics.logging.Logger
 import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
+import com.mongodb.internal.binding.StaticBindingContext
+import com.mongodb.internal.diagnostics.logging.Logger
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -59,15 +60,16 @@ class DefaultServerConnectionSpecification extends Specification {
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
+        def operationContext = new OperationContext()
+        def context = new StaticBindingContext(NoOpSessionContext.INSTANCE, getServerApi(), IgnorableRequestContext.INSTANCE,
+                operationContext)
         when:
-        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, NoOpSessionContext.INSTANCE,
-                getServerApi(), IgnorableRequestContext.INSTANCE, callback)
+        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, context, callback)
 
         then:
         1 * executor.executeAsync({
             compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, true, null, null,
-                    ClusterConnectionMode.MULTIPLE, getServerApi(), IgnorableRequestContext.INSTANCE), it)
+                    ClusterConnectionMode.MULTIPLE, getServerApi(), IgnorableRequestContext.INSTANCE, operationContext), it)
         }, internalConnection, NoOpSessionContext.INSTANCE, callback)
     }
 }

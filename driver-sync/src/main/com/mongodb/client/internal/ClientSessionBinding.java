@@ -22,6 +22,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
@@ -125,6 +126,11 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         return wrapped.getRequestContext();
     }
 
+    @Override
+    public OperationContext getOperationContext() {
+        return wrapped.getOperationContext();
+    }
+
     private boolean isConnectionSourcePinningRequired() {
         ClusterType clusterType = wrapped.getCluster().getDescription().getType();
         return session.hasActiveTransaction() && (clusterType == ClusterType.SHARDED || clusterType == LOAD_BALANCED);
@@ -160,6 +166,11 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         @Override
         public SessionContext getSessionContext() {
             return sessionContext;
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return wrapped.getOperationContext();
         }
 
         @Override

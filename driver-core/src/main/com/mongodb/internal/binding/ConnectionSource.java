@@ -17,28 +17,17 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 /**
  * A source of connections to a single MongoDB server.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ConnectionSource extends ReferenceCounted {
+public interface ConnectionSource extends BindingContext, ReferenceCounted {
 
     ServerDescription getServerDescription();
-
-    SessionContext getSessionContext();
-
-    @Nullable
-    ServerApi getServerApi();
-
-    RequestContext getRequestContext();
 
     ReadPreference getReadPreference();
 
