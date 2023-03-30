@@ -31,6 +31,26 @@ public abstract class CommandEvent {
     private final int requestId;
     private final ConnectionDescription connectionDescription;
     private final String commandName;
+    private final long operationId;
+
+    /**
+     * Construct an instance.
+     *
+     * @param requestContext        the request context
+     * @param operationId           the operation id
+     * @param requestId             the request id
+     * @param connectionDescription the connection description
+     * @param commandName           the command name
+     * @since 4.10
+     */
+    public CommandEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
+            final ConnectionDescription connectionDescription, final String commandName) {
+        this.requestContext = requestContext;
+        this.requestId = requestId;
+        this.connectionDescription = connectionDescription;
+        this.commandName = commandName;
+        this.operationId = operationId;
+    }
 
     /**
      * Construct an instance.
@@ -39,13 +59,12 @@ public abstract class CommandEvent {
      * @param connectionDescription the connection description
      * @param commandName the command name
      * @since 4.4
+     * @deprecated Prefer {@link CommandEvent#CommandEvent(RequestContext, long, int, ConnectionDescription, String)}
      */
+    @Deprecated
     public CommandEvent(@Nullable final RequestContext requestContext, final int requestId,
             final ConnectionDescription connectionDescription, final String commandName) {
-        this.requestContext = requestContext;
-        this.requestId = requestId;
-        this.connectionDescription = connectionDescription;
-        this.commandName = commandName;
+        this(requestContext, -1, requestId, connectionDescription, commandName);
     }
 
     /**
@@ -56,6 +75,16 @@ public abstract class CommandEvent {
      */
     public CommandEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName) {
         this(null, requestId, connectionDescription, commandName);
+    }
+
+    /**
+     * Gets the operation identifier
+     *
+     * @return the operation identifier
+     * @since 4.10
+     */
+    public long getOperationId() {
+        return operationId;
     }
 
     /**
