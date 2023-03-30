@@ -61,8 +61,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Stub(Logger) {
             isDebugEnabled() >> debugLoggingEnabled
         }
+        def context = new OperationContext()
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                IgnorableRequestContext.INSTANCE, new OperationContext(), message, bsonOutput, new StructuredLogger(logger),
+                IgnorableRequestContext.INSTANCE, context, message, bsonOutput, new StructuredLogger(logger),
                 LoggerSettings.builder().build())
 
         when:
@@ -74,13 +75,14 @@ class LoggingCommandEventSenderSpecification extends Specification {
         then:
         commandListener.eventsWereDelivered(
                 [
-                        new CommandStartedEvent(message.getId(), connectionDescription, namespace.databaseName,
+                        new CommandStartedEvent(null, context.id, message.getId(), connectionDescription, namespace.databaseName,
                                 commandDocument.getFirstKey(), commandDocument.append('$db', new BsonString(namespace.databaseName))),
-                        new CommandSucceededEvent(message.getId(), connectionDescription, commandDocument.getFirstKey(),
+                        new CommandSucceededEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(),
                                 new BsonDocument(), 1),
-                        new CommandSucceededEvent(message.getId(), connectionDescription, commandDocument.getFirstKey(),
+                        new CommandSucceededEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(),
                                 replyDocument, 1),
-                        new CommandFailedEvent(message.getId(), connectionDescription, commandDocument.getFirstKey(), 1, failureException)
+                        new CommandFailedEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(), 1,
+                                failureException)
                 ])
 
         where:
@@ -104,8 +106,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
+        def operationContext = new OperationContext()
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                IgnorableRequestContext.INSTANCE, new OperationContext(), message, bsonOutput, new StructuredLogger(logger),
+                IgnorableRequestContext.INSTANCE, operationContext, message, bsonOutput, new StructuredLogger(logger),
                 LoggerSettings.builder().build())
         when:
         sender.sendStartedEvent()
@@ -118,25 +121,26 @@ class LoggingCommandEventSenderSpecification extends Specification {
             it == "Command \"ping\" started on database test using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
-                    "request ID is ${message.getId()}. Command: {\"ping\": 1, \"\$db\": \"test\"}"
+                    "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. " +
+                    "Command: {\"ping\": 1, " + "\"\$db\": \"test\"}"
         }
         1 * logger.debug {
             it.matches("Command \"ping\" succeeded in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
-                    "request ID is ${message.getId()}. Command reply: \\{\"ok\": 1}")
+                    "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. Command reply: \\{\"ok\": 1}")
         }
         1 * logger.debug {
             it.matches("Command \"ping\" succeeded in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
-                    "request ID is ${message.getId()}. Command reply: \\{\"ok\": 42}")
+                    "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. Command reply: \\{\"ok\": 42}")
         }
         1 * logger.debug({
             it.matches("Command \"ping\" failed in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
-                    "request ID is ${message.getId()}.")
+                    "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}.")
        }, failureException)
 
         where:
@@ -158,8 +162,10 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
+        def operationContext = new OperationContext()
+
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, null,
-                new OperationContext(), message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+                operationContext, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()
@@ -169,7 +175,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
             it == "Command \"fake\" started on database test using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
-                    "request ID is ${message.getId()}. Command: {\"fake\": {\"\$binary\": {\"base64\": \"${'A' * 967} ..."
+                    "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. " +
+                    "Command: {\"fake\": {\"\$binary\": {\"base64\": \"${'A' * 967} ..."
         }
     }
 
@@ -188,8 +195,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
+        def operationContext = new OperationContext()
         def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null,
-                IgnorableRequestContext.INSTANCE, new OperationContext(), message, bsonOutput, new StructuredLogger(logger),
+                IgnorableRequestContext.INSTANCE, operationContext, message, bsonOutput, new StructuredLogger(logger),
                 LoggerSettings.builder().build())
 
         when:
@@ -200,7 +208,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
             it == "Command \"createUser\" started on database test using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
-                    "request ID is ${message.getId()}. Command: {}"
+                    "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. Command: {}"
         }
     }
 }

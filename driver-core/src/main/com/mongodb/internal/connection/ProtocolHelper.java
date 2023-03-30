@@ -277,10 +277,10 @@ public final class ProtocolHelper {
 
     static void sendCommandStartedEvent(final RequestMessage message, final String databaseName, final String commandName,
             final BsonDocument command, final ConnectionDescription connectionDescription,
-            final CommandListener commandListener, final RequestContext requestContext) {
+            final CommandListener commandListener, final RequestContext requestContext, final OperationContext operationContext) {
         notNull("requestContext", requestContext);
         try {
-            commandListener.commandStarted(new CommandStartedEvent(getRequestContextForEvent(requestContext), message.getId(),
+            commandListener.commandStarted(new CommandStartedEvent(getRequestContextForEvent(requestContext), operationContext.getId(), message.getId(),
                     connectionDescription, databaseName, commandName, command));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
@@ -291,11 +291,11 @@ public final class ProtocolHelper {
 
     static void sendCommandSucceededEvent(final RequestMessage message, final String commandName, final BsonDocument response,
             final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
-            final CommandListener commandListener, final RequestContext requestContext) {
+            final CommandListener commandListener, final RequestContext requestContext, final OperationContext operationContext) {
         notNull("requestContext", requestContext);
         try {
-            commandListener.commandSucceeded(new CommandSucceededEvent(getRequestContextForEvent(requestContext), message.getId(),
-                    connectionDescription, commandName, response, elapsedTimeNanos));
+            commandListener.commandSucceeded(new CommandSucceededEvent(getRequestContextForEvent(requestContext),
+                    operationContext.getId(), message.getId(), connectionDescription, commandName, response, elapsedTimeNanos));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
                 PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command succeeded event to listener %s", commandListener), e);
@@ -305,11 +305,12 @@ public final class ProtocolHelper {
 
     static void sendCommandFailedEvent(final RequestMessage message, final String commandName,
             final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
-            final Throwable throwable, final CommandListener commandListener, final RequestContext requestContext) {
+            final Throwable throwable, final CommandListener commandListener, final RequestContext requestContext,
+            final OperationContext operationContext) {
         notNull("requestContext", requestContext);
         try {
-            commandListener.commandFailed(new CommandFailedEvent(getRequestContextForEvent(requestContext), message.getId(),
-                    connectionDescription, commandName, elapsedTimeNanos, throwable));
+            commandListener.commandFailed(new CommandFailedEvent(getRequestContextForEvent(requestContext),
+                    operationContext.getId(), message.getId(), connectionDescription, commandName, elapsedTimeNanos, throwable));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
                 PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command failed event to listener %s", commandListener), e);

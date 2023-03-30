@@ -33,6 +33,26 @@ public final class CommandStartedEvent extends CommandEvent {
     /**
      * Construct an instance.
      *
+     * @param requestContext        the request context
+     * @param operationId           the operation id
+     * @param requestId             the request id
+     * @param connectionDescription the connection description
+     * @param databaseName          the database name
+     * @param commandName           the command name
+     * @param command               the command as a BSON document
+     * @since 4.10
+     */
+    public CommandStartedEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
+            final BsonDocument command) {
+        super(requestContext, operationId, requestId, connectionDescription, commandName);
+        this.databaseName = databaseName;
+        this.command = command;
+    }
+
+    /**
+     * Construct an instance.
+     *
      * @param requestContext the request context
      * @param requestId             the request id
      * @param connectionDescription the connection description
@@ -40,13 +60,14 @@ public final class CommandStartedEvent extends CommandEvent {
      * @param commandName           the command name
      * @param command the command as a BSON document
      * @since 4.4
+     * @deprecated Prefer {@link
+     * CommandStartedEvent#CommandStartedEvent(RequestContext, long, int, ConnectionDescription, String, String, BsonDocument)}
      */
+    @Deprecated
     public CommandStartedEvent(@Nullable final RequestContext requestContext, final int requestId,
             final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
             final BsonDocument command) {
-        super(requestContext, requestId, connectionDescription, commandName);
-        this.command = command;
-        this.databaseName = databaseName;
+        this(requestContext, -1, requestId, connectionDescription, databaseName, commandName, command);
     }
 
     /**
@@ -57,7 +78,10 @@ public final class CommandStartedEvent extends CommandEvent {
      * @param databaseName          the database name
      * @param commandName           the command name
      * @param command the command as a BSON document
+     * @deprecated Prefer {@link
+     * CommandStartedEvent#CommandStartedEvent(RequestContext, long, int, ConnectionDescription, String, String, BsonDocument)}
      */
+    @Deprecated
     public CommandStartedEvent(final int requestId, final ConnectionDescription connectionDescription,
             final String databaseName, final String commandName, final BsonDocument command) {
         this(null, requestId, connectionDescription, databaseName, commandName, command);
