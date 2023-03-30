@@ -32,6 +32,12 @@ buildscript {
         classpath "com.adtran:scala-multiversion-plugin:2.0.4"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:6.14.0"
 
+        // kotlin plugins
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:1.8.10"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.21.0"
+
         // Test logging plugin
         classpath 'com.adarshr:gradle-test-logger-plugin:2.1.0'
     }
