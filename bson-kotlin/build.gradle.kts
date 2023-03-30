@@ -17,13 +17,13 @@ import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.8.10"
+    id("org.jetbrains.kotlin.jvm")
     `java-library`
 
     // Test based plugins
     id("com.diffplug.spotless")
-    id("org.jetbrains.dokka") version "1.7.20"
-    id("io.gitlab.arturbosch.detekt") version "1.21.0"
+    id("org.jetbrains.dokka")
+    id("io.gitlab.arturbosch.detekt")
 }
 
 repositories {
