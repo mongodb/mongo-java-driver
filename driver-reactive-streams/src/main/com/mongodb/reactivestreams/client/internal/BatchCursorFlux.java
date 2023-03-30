@@ -24,6 +24,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -95,7 +96,10 @@ class BatchCursorFlux<T> implements Publisher<T> {
                         })
                         .doOnSuccess(results -> {
                             if (results != null) {
-                                results.forEach(sink::next);
+                                results
+                                        .stream()
+                                        .filter(Objects::nonNull)
+                                        .forEach(sink::next);
                                 calculateDemand(-results.size());
                             }
                             if (batchCursor.isClosed()) {

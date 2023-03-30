@@ -46,6 +46,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -321,6 +322,32 @@ public class BatchCursorFluxTest {
                     )
                     .collectList()
                     .block(TIMEOUT_DURATION);
+
+            assertFalse(errorDropped.get());
+        } finally {
+            Hooks.resetOnErrorDropped();
+        }
+    }
+
+    @Test
+    @DisplayName("Ensure no NPE is thrown on null in result set")
+    public void testNoNPEOnNull() {
+        try {
+            AtomicBoolean errorDropped = new AtomicBoolean();
+            Hooks.onErrorDropped(t -> errorDropped.set(true));
+
+            Document doc = new Document("x", null);
+            Document doc2 = new Document("x", "hello");
+
+            Mono.from(collection.insertMany(Arrays.asList(doc, doc2))).block();
+
+            TestSubscriber<String> subscriber = new TestSubscriber<>();
+
+            collection.distinct("x", String.class).subscribe(subscriber);
+
+            subscriber.requestMore(1);
+
+            subscriber.assertReceivedOnNext(Arrays.asList("hello"));
 
             assertFalse(errorDropped.get());
         } finally {
