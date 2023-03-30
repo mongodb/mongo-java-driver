@@ -176,6 +176,11 @@
     </Match>
 
     <Match>
+        <Class name="~com.mongodb.kotlin.client.coroutine.ClientSession.*"/>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+    </Match>
+
+    <Match>
         <Class name="~com.mongodb.internal.async.client.ClientSession.*"/>
         <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
     </Match>
@@ -252,4 +257,20 @@
         <Method name="~.*validateAnnotations.*"/>
         <Bug pattern="UC_USELESS_OBJECT"/>
     </Match>
+
+
+    <!-- Spotbugs reports false positives for suspendable operations with default params
+         see: https://github.com/Kotlin/kotlinx.coroutines/issues/3099
+    -->
+    <Match>
+        <Class name="com.mongodb.kotlin.client.coroutine.MongoClient"/>
+        <Method name="startSession"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+    <Match>
+        <Class name="~com.mongodb.kotlin.client.coroutine.*"/>
+        <Bug pattern="NP_NONNULL_PARAM_VIOLATION"/>
+    </Match>
+
+
 </FindBugsFilter>
