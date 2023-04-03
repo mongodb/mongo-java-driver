@@ -70,17 +70,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static util.ThreadTestHelpers.executeAll;
 
 abstract class PojoTestCase {
 
@@ -97,34 +93,12 @@ abstract class PojoTestCase {
 
     <T> void threadedRoundTrip(final PojoCodecProvider.Builder builder, final T value, final String json) {
         int numberOfThreads = 5;
-        ExecutorService service = null;
-        try {
-            service = Executors.newFixedThreadPool(10);
-            CountDownLatch latch = new CountDownLatch(numberOfThreads);
-            List<String> errors = new ArrayList<>();
-            CodecRegistry codecRegistry = getCodecRegistry(builder);
-            for (int i = 0; i < numberOfThreads; i++) {
-                service.submit(() -> {
-                    try {
-                        encodesTo(codecRegistry, value, json);
-                        decodesTo(codecRegistry, json, value);
-                    } catch (Exception e) {
-                        errors.add(e instanceof  NullPointerException ? "NPE: " + e.getStackTrace()[0] : e.getMessage());
-                    }
-                    latch.countDown();
-                });
-            }
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                // Ignore
-            }
-            assertTrue(format("Errors encountered: [%s]", String.join(",", errors)), errors.isEmpty());
-        } finally {
-            if (service != null) {
-                service.shutdown();
-            }
-        }
+        CodecRegistry codecRegistry = getCodecRegistry(builder);
+
+        executeAll(numberOfThreads, () -> {
+            encodesTo(codecRegistry, value, json);
+            decodesTo(codecRegistry, json, value);
+        });
     }
 
     <T> void roundTrip(final CodecRegistry registry, final T value, final String json) {

@@ -18,12 +18,12 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
+import com.mongodb.internal.Locks;
 import com.mongodb.lang.Nullable;
 
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.mongodb.internal.Locks.withLock;
+import java.util.function.Supplier;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -36,7 +36,7 @@ public class MongoCredentialWithCache {
         this(credential, null);
     }
 
-    public MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
+    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
         this.credential = credential;
         this.cache = cache != null ? cache : new Cache();
     }
@@ -63,28 +63,23 @@ public class MongoCredentialWithCache {
         cache.set(key, value);
     }
 
-    public Lock getLock() {
-        return cache.lock;
+    public <V> V withLock(final Supplier<V> k) {
+        return Locks.withLock(cache.lock, k);
     }
 
     static class Cache {
         private final ReentrantLock lock = new ReentrantLock();
-        private Object cacheKey;
-        private Object cacheValue;
+        private final ConcurrentHashMap<Object, Object> cache = new ConcurrentHashMap<>();
 
         Object get(final Object key) {
-            return withLock(lock, () -> {
-                if (cacheKey != null && cacheKey.equals(key)) {
-                    return cacheValue;
-                }
-                return null;
+            return Locks.withLock(lock, () -> {
+                return cache.get(key);
             });
         }
 
         void set(final Object key, final Object value) {
-            withLock(lock, () -> {
-                cacheKey = key;
-                cacheValue = value;
+            Locks.withLock(lock, () -> {
+                cache.put(key, value);
             });
         }
     }

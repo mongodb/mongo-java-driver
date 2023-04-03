@@ -105,8 +105,7 @@ public class AwsAuthenticator extends SaslAuthenticator {
             step++;
             if (step == 0) {
                 return computeClientFirstMessage();
-            }
-            if (step == 1) {
+            } else if (step == 1) {
                 return computeClientFinalMessage(challenge);
             } else {
                 throw new SaslException(format("Too many steps involved in the %s negotiation.", getMechanismName()));
@@ -207,14 +206,14 @@ public class AwsAuthenticator extends SaslAuthenticator {
             }
             return awsCredential;
         }
+    }
 
-        private byte[] toBson(final BsonDocument document) {
-            byte[] bytes;
-            BasicOutputBuffer buffer = new BasicOutputBuffer();
-            new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
-            bytes = new byte[buffer.size()];
-            System.arraycopy(buffer.getInternalBuffer(), 0, bytes, 0, buffer.getSize());
-            return bytes;
-        }
+    private static byte[] toBson(final BsonDocument document) {
+        byte[] bytes;
+        BasicOutputBuffer buffer = new BasicOutputBuffer();
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
+        bytes = new byte[buffer.size()];
+        System.arraycopy(buffer.getInternalBuffer(), 0, bytes, 0, buffer.getSize());
+        return bytes;
     }
 }
