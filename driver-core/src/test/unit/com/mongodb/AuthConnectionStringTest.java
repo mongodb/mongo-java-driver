@@ -101,7 +101,7 @@ public class AuthConnectionStringTest extends TestCase {
             assertMechanism("credential.mechanism", credential.getMechanism());
         } else {
             if (!getExpectedValue("credential").equals(BsonNull.VALUE)) {
-                fail(String.format("Connection string '%s' should not produce credentials", input));
+                fail(String.format("Connection string '%s' should produce credentials", input));
             }
         }
     }

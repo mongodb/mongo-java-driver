@@ -21,7 +21,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.internal.Locks;
 import com.mongodb.lang.Nullable;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -30,15 +29,15 @@ import java.util.function.Supplier;
  */
 public class MongoCredentialWithCache {
     private final MongoCredential credential;
-    private final Cache cache;
+    private final SingleValueCache cache;
 
     public MongoCredentialWithCache(final MongoCredential credential) {
         this(credential, null);
     }
 
-    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
+    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final SingleValueCache cache) {
         this.credential = credential;
-        this.cache = cache != null ? cache : new Cache();
+        this.cache = cache != null ? cache : new SingleValueCache();
     }
 
     public MongoCredentialWithCache withMechanism(final AuthenticationMechanism mechanism) {
@@ -59,6 +58,9 @@ public class MongoCredentialWithCache {
         return clazz.cast(cache.get(key));
     }
 
+    /**
+     * Putting a key and value will overwrite any prior key and value.
+     */
     public void putInCache(final Object key, final Object value) {
         cache.set(key, value);
     }
@@ -67,19 +69,24 @@ public class MongoCredentialWithCache {
         return Locks.withLock(cache.lock, k);
     }
 
-    static class Cache {
+    static class SingleValueCache {
         private final ReentrantLock lock = new ReentrantLock();
-        private final ConcurrentHashMap<Object, Object> cache = new ConcurrentHashMap<>();
+        private Object cacheKey;
+        private Object cacheValue;
 
         Object get(final Object key) {
             return Locks.withLock(lock, () -> {
-                return cache.get(key);
+                if (cacheKey != null && cacheKey.equals(key)) {
+                    return cacheValue;
+                }
+                return null;
             });
         }
 
         void set(final Object key, final Object value) {
             Locks.withLock(lock, () -> {
-                cache.put(key, value);
+                cacheKey = key;
+                cacheValue = value;
             });
         }
     }

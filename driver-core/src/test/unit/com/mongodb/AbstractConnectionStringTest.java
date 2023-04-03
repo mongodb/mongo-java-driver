@@ -241,7 +241,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                 // We don't allow null passwords without setting the authentication mechanism.
                 return;
             } else {
-                fail(String.format("Connection string '%s' should not have thrown an exception: %s", input, t));
+                fail(String.format("Connection string '%s' should not have throw an exception: %s", input, t));
             }
         }
 
