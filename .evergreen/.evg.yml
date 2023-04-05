@@ -923,7 +923,7 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
-            VERSION: "4.2"
+            VERSION: "6.0"
             TOPOLOGY: "server"
         - func: "run reactive streams tck tests"
 
@@ -2058,7 +2058,7 @@ buildvariants:
 
 - name: "reactive-streams-tck-test"
   display_name: "Reactive Streams TCK tests"
-  run_on: ubuntu2004-small
+  run_on: rhel80-small
   tasks:
     - name: "reactive-streams-tck-test"
 
