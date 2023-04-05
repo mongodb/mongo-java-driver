@@ -21,7 +21,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
+
 
 public class MongoWriteExceptionTest {
 
