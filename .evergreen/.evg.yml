@@ -1644,10 +1644,10 @@ axes:
     values:
       - id: "linux"
         display_name: "Linux"
-        run_on: rhel70-small
+        run_on: rhel80-small
       - id: "ubuntu"
-        display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-test
+        display_name: "Ubuntu"
+        run_on: ubuntu2004-small
 
   - id: topology
     display_name: Topology
@@ -1873,7 +1873,7 @@ buildvariants:
 # Test packaging and other release related routines
 - name: static-checks
   display_name: "Static Checks"
-  run_on: rhel70-small
+  run_on: rhel80-small
   tasks:
     - name: "static-analysis"
 
@@ -2001,7 +2001,7 @@ buildvariants:
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
-  run_on: rhel70-small
+  run_on: rhel80-small
   tasks:
     - name: "plain-auth-test"
 
@@ -2009,7 +2009,7 @@ buildvariants:
   matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu",
                  aws-credential-provider: "*" }
   display_name: "MONGODB-AWS Auth test ${version} ${jdk} ${aws-credential-provider}"
-  run_on: ubuntu1804-test
+  run_on: ubuntu2004-small
   tasks:
     - name: "aws-auth-test-with-regular-aws-credentials"
     - name: "aws-auth-test-with-assume-role-credentials"
@@ -2021,14 +2021,14 @@ buildvariants:
 - matrix_name: "aws-ecs-auth-test"
   matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
   display_name: "MONGODB-AWS ECS Auth test ${version} ${jdk}"
-  run_on: ubuntu1804-test
+  run_on: ubuntu2004-small
   tasks:
     - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
   matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "6.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "Accept API Version 2 ${version}"
-  run_on: ubuntu1804-test
+  run_on: ubuntu2004-small
   tasks:
     - name: "accept-api-version-2-test"
 
@@ -2040,25 +2040,25 @@ buildvariants:
 
 - name: atlas-data-lake-test
   display_name: "Atlas Data Lake test"
-  run_on: ubuntu1804-test
+  run_on: ubuntu2004-small
   tasks:
     - name: "atlas-data-lake-test"
 
 - name: atlas-test
   display_name: "Atlas test"
-  run_on: rhel70-small
+  run_on: rhel80-small
   tasks:
     - name: "atlas-test"
 
 - name: atlas-search-test
   display_name: "Atlas Search test"
-  run_on: rhel70-small
+  run_on: rhel80-small
   tasks:
     - name: "atlas-search-test"
 
 - name: "reactive-streams-tck-test"
   display_name: "Reactive Streams TCK tests"
-  run_on: ubuntu1804-test
+  run_on: ubuntu2004-small
   tasks:
     - name: "reactive-streams-tck-test"
 
@@ -2078,13 +2078,13 @@ buildvariants:
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
-  run_on: ubuntu1804-test
+  run_on: ubuntu2004-small
   tasks:
     - name: "publish-snapshot"
 
 - name: publish-release
   display_name: "Publish Release"
-  run_on: ubuntu1804-test
+  run_on: ubuntu2004-small
   tasks:
     - name: "publish-release"
 
