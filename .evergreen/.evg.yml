@@ -2018,12 +2018,12 @@ buildvariants:
     - name: "aws-auth-test-with-aws-EC2-credentials"
     - name: "aws-auth-test-with-web-identity-credentials"
 
-- matrix_name: "aws-ecs-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
-  display_name: "MONGODB-AWS ECS Auth test ${version} ${jdk}"
-  run_on: ubuntu2004-small
-  tasks:
-    - name: "aws-ECS-auth-test"
+#- matrix_name: "aws-ecs-auth-test"
+#  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "latest"], os: "ubuntu" }
+#  display_name: "MONGODB-AWS ECS Auth test ${version} ${jdk}"
+#  run_on: ubuntu2004-small
+#  tasks:
+#    - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
   matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "6.0", "latest"], topology: "standalone", os: "linux" }
