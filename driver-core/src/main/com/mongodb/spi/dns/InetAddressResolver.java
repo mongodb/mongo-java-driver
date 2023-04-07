@@ -29,7 +29,7 @@ import java.util.List;
  * <a href="InetAddressResolverProvider.html#system-wide-resolver">
  * deploying an implementation</a> of {@link InetAddressResolverProvider}.
  * <p>
- * since 4.10
+ * @since 4.10
  */
 public interface InetAddressResolver {
     /**
