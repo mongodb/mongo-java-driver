@@ -25,27 +25,30 @@ import com.mongodb.spi.dns.InetAddressResolverProvider;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 final class ServerAddressWithResolver extends ServerAddress {
-    private static final long serialVersionUID = -1;  // this internal class will never be serialized
+    private static final long serialVersionUID = 1;
 
-    private static final InetAddressResolver DEFAULT_INET_ADDRESS_PROVIDER;
+    @Nullable
+    private static final InetAddressResolver DEFAULT_INET_ADDRESS_RESOLVER;
 
     static {
-        DEFAULT_INET_ADDRESS_PROVIDER = StreamSupport.stream(ServiceLoader.load(InetAddressResolverProvider.class).spliterator(), false)
+        DEFAULT_INET_ADDRESS_RESOLVER = StreamSupport.stream(ServiceLoader.load(InetAddressResolverProvider.class).spliterator(), false)
                 .findFirst()
                 .map(InetAddressResolverProvider::create)
                 .orElse(null);
     }
 
+    @Nullable
     private final transient InetAddressResolver resolver;
 
     ServerAddressWithResolver(final ServerAddress serverAddress, @Nullable final InetAddressResolver inetAddressResolver) {
         super(serverAddress.getHost(), serverAddress.getPort());
-        this.resolver = inetAddressResolver == null ? DEFAULT_INET_ADDRESS_PROVIDER : inetAddressResolver;
+        this.resolver = inetAddressResolver == null ? DEFAULT_INET_ADDRESS_RESOLVER : inetAddressResolver;
     }
 
     @Override
@@ -73,11 +76,21 @@ final class ServerAddressWithResolver extends ServerAddress {
 
     @Override
     public boolean equals(final Object o) {
-        return super.equals(o);
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        ServerAddressWithResolver that = (ServerAddressWithResolver) o;
+        return Objects.equals(resolver, that.resolver);
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        return Objects.hash(super.hashCode(), resolver);
     }
 }

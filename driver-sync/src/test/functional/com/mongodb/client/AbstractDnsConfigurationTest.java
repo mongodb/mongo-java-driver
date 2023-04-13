@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 
 import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -75,7 +74,6 @@ public abstract class AbstractDnsConfigurationTest {
         };
 
         CompletableFuture<Throwable> exceptionReceived = new CompletableFuture<>();
-        CountDownLatch latch = new CountDownLatch(1);
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString("mongodb+srv://free-java.mongodb-dev.net"))
                 .applyToClusterSettings(builder ->
@@ -85,7 +83,6 @@ public abstract class AbstractDnsConfigurationTest {
                                 MongoException srvResolutionException = event.getNewDescription().getSrvResolutionException();
                                 if (srvResolutionException != null) {
                                     exceptionReceived.complete(srvResolutionException.getCause());
-                                    latch.countDown();
                                 }
                             }
                         }))

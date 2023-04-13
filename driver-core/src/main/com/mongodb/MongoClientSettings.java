@@ -251,6 +251,7 @@ public final class MongoClientSettings {
             uuidRepresentation = settings.getUuidRepresentation();
             serverApi = settings.getServerApi();
             dnsClient = settings.getDnsClient();
+            inetAddressResolver = settings.getInetAddressResolver();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             contextProvider = settings.getContextProvider();
@@ -629,8 +630,8 @@ public final class MongoClientSettings {
          * and used to create an instance of {@link DnsClient}. If no implementation is discovered, then
          * {@code com.sun.jndi.dns.DnsContextFactory} will be used to resolve these records.
          *
-         * <p>If applying a connection string to these settings, care must be taken to also pass the same {@link DnsClient} as an
-         * argument to the {@link ConnectionString} constructor.
+         * <p>If {@link #applyConnectionString(ConnectionString) applying a connection string to these settings}, care must be taken to
+         * also pass the same {@link DnsClient} as an argument to the {@link ConnectionString} constructor.
          *
          * @param dnsClient the DNS client
          * @return the DNS client
@@ -985,6 +986,8 @@ public final class MongoClientSettings {
                 && uuidRepresentation == that.uuidRepresentation
                 && Objects.equals(serverApi, that.serverApi)
                 && Objects.equals(autoEncryptionSettings, that.autoEncryptionSettings)
+                && Objects.equals(dnsClient, that.dnsClient)
+                && Objects.equals(inetAddressResolver, that.inetAddressResolver)
                 && Objects.equals(contextProvider, that.contextProvider);
     }
 
@@ -993,7 +996,8 @@ public final class MongoClientSettings {
         return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, readConcern, credential, streamFactoryFactory,
                 commandListeners, codecRegistry, loggerSettings, clusterSettings, socketSettings, heartbeatSocketSettings,
                 connectionPoolSettings, serverSettings, sslSettings, applicationName, compressorList, uuidRepresentation, serverApi,
-                autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly, heartbeatConnectTimeoutSetExplicitly, contextProvider);
+                autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly, heartbeatConnectTimeoutSetExplicitly, dnsClient,
+                inetAddressResolver, contextProvider);
     }
 
     @Override
@@ -1020,6 +1024,8 @@ public final class MongoClientSettings {
                 + ", uuidRepresentation=" + uuidRepresentation
                 + ", serverApi=" + serverApi
                 + ", autoEncryptionSettings=" + autoEncryptionSettings
+                + ", dnsClient=" + dnsClient
+                + ", inetAddressResolver=" + inetAddressResolver
                 + ", contextProvider=" + contextProvider
                 + '}';
     }

@@ -25,10 +25,7 @@ import java.util.List;
 /**
  * This interface defines operations for looking up host names.
  *
- * <p> The <i>system-wide resolver</i> can be customized by
- * <a href="InetAddressResolverProvider.html#system-wide-resolver">
- * deploying an implementation</a> of {@link InetAddressResolverProvider}.
- * <p>
+ * <p> The default resolver for the driver can be customized by deploying an implementation of {@link InetAddressResolverProvider}.</p>
  * @since 4.10
  */
 public interface InetAddressResolver {
@@ -49,7 +46,7 @@ public interface InetAddressResolver {
      *
      * @param host the specified hostname
      * @return a list of IP addresses for the requested host
-     * @throws NullPointerException if either parameter is {@code null}
+     * @throws NullPointerException if the parameter is {@code null}
      * @throws UnknownHostException if no IP address for the {@code host} could be found
      * @see InetAddressResolverProvider
      * @see MongoClientSettings.Builder#inetAddressResolver(InetAddressResolver)
