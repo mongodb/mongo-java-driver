@@ -27,6 +27,9 @@ import java.util.List;
  * This interface defines operations for looking up host names.
  *
  * <p> The default resolver for the driver can be customized by deploying an implementation of {@link InetAddressResolverProvider}.</p>
+ *
+ * @see InetAddressResolverProvider
+ * @see MongoClientSettings.Builder#inetAddressResolver(InetAddressResolver)
  * @since 4.10
  */
 @ThreadSafe
@@ -35,23 +38,12 @@ public interface InetAddressResolver {
      * Given the name of a host, returns a list of IP addresses of the requested
      * address family associated with a provided hostname.
      *
-     * <p> {@code host} should be a machine name, such as "{@code www.example.com}",
-     * not a textual representation of its IP address. No validation is performed on
-     * the given {@code host} name: if a textual representation is supplied, the name
-     * resolution is likely to fail and {@link UnknownHostException} may be thrown.
-     *
      * <p>Implementations are encouraged to implement their own caching policies, as there is
      * no guarantee that the caller will implement a cache.
      *
-     * <p> Inspired by the interface of the same name that was added in Java 18, but duplicated
-     * here due to the minimum supported Java version of Java 8 at the time of creation.
-     *
-     * @param host the specified hostname
+     * @param host the host
      * @return a list of IP addresses for the requested host
-     * @throws NullPointerException if the parameter is {@code null}
-     * @throws UnknownHostException if no IP address for the {@code host} could be found
-     * @see InetAddressResolverProvider
-     * @see MongoClientSettings.Builder#inetAddressResolver(InetAddressResolver)
+     * @throws UnknownHostException if no IP addresses for the {@code host} could be found
      */
     List<InetAddress> lookupByName(String host) throws UnknownHostException;
 }
