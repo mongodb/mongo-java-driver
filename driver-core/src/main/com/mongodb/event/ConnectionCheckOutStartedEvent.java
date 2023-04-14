@@ -34,6 +34,7 @@ public final class ConnectionCheckOutStartedEvent {
      *
      * @param serverId the server id
      * @param operationId the operation id
+     * @since 4.10
      */
     public ConnectionCheckOutStartedEvent(final ServerId serverId, final long operationId) {
         this.serverId = notNull("serverId", serverId);

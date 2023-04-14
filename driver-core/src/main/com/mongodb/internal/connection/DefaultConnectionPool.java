@@ -190,13 +190,14 @@ class DefaultConnectionPool implements ConnectionPool {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
-        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
+        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
         Timeout timeout = Timeout.startNow(settings.getMaxWaitTime(NANOSECONDS));
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
                 connection.checkedOutForOperation(operationContext);
-                connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection)));
+                connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection), operationContext.getId(),
+                        System.nanoTime() - timeout.getStartNanos()));
                 errHandlingCallback.onResult(connection, null);
             } else {
                 errHandlingCallback.onResult(null, checkOutFailed(failure, operationContext, System.nanoTime() - timeout.getStartNanos()));
