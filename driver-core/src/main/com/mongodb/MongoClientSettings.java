@@ -630,8 +630,8 @@ public final class MongoClientSettings {
          * and used to create an instance of {@link DnsClient}. If no implementation is discovered, then
          * {@code com.sun.jndi.dns.DnsContextFactory} will be used to resolve these records.
          *
-         * <p>If {@link #applyConnectionString(ConnectionString) applying a connection string to these settings}, care must be taken to
-         * also pass the same {@link DnsClient} as an argument to the {@link ConnectionString} constructor.
+         * <p>If {@linkplain #applyConnectionString(ConnectionString) applying a connection string to these settings}, care must be
+         * taken to also pass the same {@link DnsClient} as an argument to the {@link ConnectionString} constructor.
          *
          * @param dnsClient the DNS client
          * @return the DNS client
