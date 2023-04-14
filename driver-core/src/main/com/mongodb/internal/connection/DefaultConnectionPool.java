@@ -177,11 +177,10 @@ class DefaultConnectionPool implements ConnectionPool {
                 connection = openConcurrencyLimiter.openOrGetAvailable(connection, timeout);
             }
             connection.checkedOutForOperation(operationContext);
-            connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection), operationContext.getId(),
-                    System.nanoTime() - timeout.getStartNanos()));
+            connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection), operationContext.getId()));
             return connection;
         } catch (Exception e) {
-            throw (RuntimeException) checkOutFailed(e, operationContext, System.nanoTime() - timeout.getStartNanos());
+            throw (RuntimeException) checkOutFailed(e, operationContext);
         }
     }
 
@@ -196,11 +195,10 @@ class DefaultConnectionPool implements ConnectionPool {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
                 connection.checkedOutForOperation(operationContext);
-                connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection), operationContext.getId(),
-                        System.nanoTime() - timeout.getStartNanos()));
+                connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection), operationContext.getId()));
                 errHandlingCallback.onResult(connection, null);
             } else {
-                errHandlingCallback.onResult(null, checkOutFailed(failure, operationContext, System.nanoTime() - timeout.getStartNanos()));
+                errHandlingCallback.onResult(null, checkOutFailed(failure, operationContext));
             }
         };
         try {
@@ -242,7 +240,7 @@ class DefaultConnectionPool implements ConnectionPool {
      * and returns {@code t} if it is not {@link MongoOpenConnectionInternalException},
      * or returns {@code t.}{@linkplain MongoOpenConnectionInternalException#getCause() getCause()} otherwise.
      */
-    private Throwable checkOutFailed(final Throwable t, final OperationContext operationContext, final long elapsedTimeNanos) {
+    private Throwable checkOutFailed(final Throwable t, final OperationContext operationContext) {
         Throwable result = t;
         Reason reason;
         if (t instanceof MongoTimeoutException) {
@@ -257,8 +255,7 @@ class DefaultConnectionPool implements ConnectionPool {
         } else {
             reason = Reason.UNKNOWN;
         }
-        connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, operationContext.getId(),
-                elapsedTimeNanos, reason));
+        connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, operationContext.getId(), reason));
         return result;
     }
 
@@ -524,7 +521,6 @@ class DefaultConnectionPool implements ConnectionPool {
         private final AtomicBoolean isClosed = new AtomicBoolean();
         private Connection.PinningMode pinningMode;
         private volatile long operationId;
-        private volatile long checkedOutTimeNanos;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -539,7 +535,6 @@ class DefaultConnectionPool implements ConnectionPool {
          * Associates this with the operation context and establishes the checked out start time
          */
         public void checkedOutForOperation(final OperationContext operationContext) {
-            this.checkedOutTimeNanos = System.nanoTime();
             this.operationId = operationContext.getId();
         }
 
@@ -549,7 +544,6 @@ class DefaultConnectionPool implements ConnectionPool {
             try {
                 connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
                 wrapped.open();
-                checkedOutTimeNanos = System.nanoTime();
             } catch (Exception e) {
                 closeAndHandleOpenFailure();
                 throw new MongoOpenConnectionInternalException(e);
@@ -562,7 +556,6 @@ class DefaultConnectionPool implements ConnectionPool {
             assertFalse(isClosed.get());
             connectionCreated(connectionPoolListener, wrapped.getDescription().getConnectionId());
             wrapped.openAsync((nullResult, failure) -> {
-                checkedOutTimeNanos = System.nanoTime();
                 if (failure != null) {
                     closeAndHandleOpenFailure();
                     callback.onResult(null, new MongoOpenConnectionInternalException(failure));
@@ -578,8 +571,7 @@ class DefaultConnectionPool implements ConnectionPool {
             // All but the first call is a no-op
             if (!isClosed.getAndSet(true)) {
                 unmarkAsPinned();
-                connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped), operationId,
-                        System.nanoTime() - checkedOutTimeNanos));
+                connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped), operationId));
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
                 }
@@ -751,7 +743,7 @@ class DefaultConnectionPool implements ConnectionPool {
     /**
      * This internal exception is used to express an exceptional situation encountered when opening a connection.
      * It exists because it allows consolidating the code that sends events for exceptional situations in a
-     * {@linkplain #checkOutFailed(Throwable, OperationContext, long) single place}, it must not be observable by an external code.
+     * {@linkplain #checkOutFailed(Throwable, OperationContext) single place}, it must not be observable by an external code.
      */
     private static final class MongoOpenConnectionInternalException extends RuntimeException {
         private static final long serialVersionUID = 1;

@@ -18,8 +18,6 @@ package com.mongodb.event;
 
 import com.mongodb.connection.ServerId;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -56,7 +54,6 @@ public final class ConnectionCheckOutFailedEvent {
 
     private final ServerId serverId;
     private final long operationId;
-    private final long elapsedTimeNanos;
 
     private final Reason reason;
 
@@ -65,15 +62,12 @@ public final class ConnectionCheckOutFailedEvent {
      *
      * @param serverId the server id
      * @param operationId the operation id
-     * @param elapsedTimeNanos the elapsed time between check out started and check out failed
      * @param reason the reason the connection check out failed
      * @since 4.10
      */
-    public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final long elapsedTimeNanos,
-            final Reason reason) {
+    public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason) {
         this.serverId = notNull("serverId", serverId);
         this.operationId = operationId;
-        this.elapsedTimeNanos = elapsedTimeNanos;
         this.reason = notNull("reason", reason);
     }
 
@@ -82,11 +76,11 @@ public final class ConnectionCheckOutFailedEvent {
      *
      * @param serverId the server id
      * @param reason the reason the connection check out failed
-     * @deprecated Prefer {@link ConnectionCheckOutFailedEvent#ConnectionCheckOutFailedEvent(ServerId, long, long, Reason)}
+     * @deprecated Prefer {@link #ConnectionCheckOutFailedEvent(ServerId, long, Reason)}
      */
     @Deprecated
     public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
-        this(serverId, -1, -1, reason);
+        this(serverId, -1, reason);
     }
 
     /**
@@ -109,17 +103,6 @@ public final class ConnectionCheckOutFailedEvent {
     }
 
     /**
-     * Gets the elapsed time between check out started and check out failed.
-     *
-     * @param timeUnit the time unit
-     * @return the elapsed time
-     * @since 4.10
-     */
-    public long getElapsedTime(final TimeUnit timeUnit) {
-        return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);
-    }
-
-    /**
      * Gets the reason for the check out failure.
      *
      * @return the reason
@@ -135,7 +118,6 @@ public final class ConnectionCheckOutFailedEvent {
                 + "server=" + serverId.getAddress()
                 + ", clusterId=" + serverId.getClusterId()
                 + ", operationId=" + operationId
-                + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + ", reason=" + reason
                 + '}';
     }

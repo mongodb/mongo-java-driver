@@ -18,8 +18,6 @@ package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -30,31 +28,28 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class ConnectionCheckedOutEvent {
     private final ConnectionId connectionId;
     private final long operationId;
-    private final long elapsedTimeNanos;
 
     /**
      * Construct an instance
      *
      * @param connectionId the connectionId
      * @param operationId the operation id
-     * @param elapsedTimeNanos the elapsed time between check out started and check out
      * @since 4.10
      */
-    public ConnectionCheckedOutEvent(final ConnectionId connectionId, final long operationId, final long elapsedTimeNanos) {
+    public ConnectionCheckedOutEvent(final ConnectionId connectionId, final long operationId) {
         this.connectionId = notNull("connectionId", connectionId);
         this.operationId = operationId;
-        this.elapsedTimeNanos = elapsedTimeNanos;
     }
 
     /**
      * Construct an instance
      *
      * @param connectionId the connectionId
-     * @deprecated Prefer {@link ConnectionCheckedOutEvent#ConnectionCheckedOutEvent(ConnectionId, long, long)}
+     * @deprecated Prefer {@link #ConnectionCheckedOutEvent(ConnectionId, long)}
      */
     @Deprecated
     public ConnectionCheckedOutEvent(final ConnectionId connectionId) {
-        this(connectionId, -1, -1);
+        this(connectionId, -1);
     }
 
     /**
@@ -76,17 +71,6 @@ public final class ConnectionCheckedOutEvent {
         return operationId;
     }
 
-    /**
-     * Gets the elapsed time between check out started and check out.
-     *
-     * @param timeUnit the time unit
-     * @return the elapsed time
-     * @since 4.10
-     */
-    public long getElapsedTime(final TimeUnit timeUnit) {
-        return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);
-    }
-
     @Override
     public String toString() {
         return "ConnectionCheckedOutEvent{"
@@ -94,7 +78,6 @@ public final class ConnectionCheckedOutEvent {
                 + ", server=" + connectionId.getServerId().getAddress()
                 + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + ", operationId=" + operationId
-                + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + '}';
     }
 }
