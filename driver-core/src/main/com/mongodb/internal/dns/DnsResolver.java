@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.dns;
 
-import com.mongodb.annotations.ThreadSafe;
-
 import java.util.List;
 
 /**
@@ -25,7 +23,6 @@ import java.util.List;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@ThreadSafe
 public interface DnsResolver {
 
     List<String> resolveHostFromSrvRecords(String srvHost, String srvServiceName);

@@ -17,6 +17,7 @@
 package com.mongodb.spi.dns;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.annotations.ThreadSafe;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -28,6 +29,7 @@ import java.util.List;
  * <p> The default resolver for the driver can be customized by deploying an implementation of {@link InetAddressResolverProvider}.</p>
  * @since 4.10
  */
+@ThreadSafe
 public interface InetAddressResolver {
     /**
      * Given the name of a host, returns a list of IP addresses of the requested
