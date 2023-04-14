@@ -53,7 +53,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.createReadCo
 import static com.mongodb.internal.operation.CommandOperationHelper.createReadCommandAndExecuteAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.decorateReadWithRetries;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
@@ -318,9 +317,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads);
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, () -> {
-            logRetryExecute(retryState);
-            return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
+        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, () ->
+            withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
                     return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(),
@@ -329,8 +327,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                 } catch (MongoCommandException e) {
                     throw new MongoQueryException(e.getResponse(), e.getServerAddress());
                 }
-            });
-        });
+            })
+        );
         return read.get();
     }
 
@@ -340,8 +338,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = CommandOperationHelper.<AsyncBatchCursor<T>>decorateReadWithRetries(
-                retryState, funcCallback -> {
-                    logRetryExecute(retryState);
+                retryState, funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                             (source, connection, releasingCallback) -> {
                                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
@@ -352,8 +349,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                 createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
                                         getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                         asyncTransformer(), connection, wrappedCallback);
-                            });
-                }).whenComplete(binding::release);
+                            })
+                ).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 
