@@ -428,10 +428,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             retryState.attach(AttachmentKeys.bulkWriteTracker(), new BulkWriteTracker(retry, null), false);
         }
 
-        static BulkWriteTracker attachNew(final RetryState retryState, final BulkWriteBatch batch) {
-            BulkWriteTracker tracker = new BulkWriteTracker(batch.getRetryWrites(), batch);
-            attach(retryState, tracker);
-            return tracker;
+        static void attachNew(final RetryState retryState, final BulkWriteBatch batch) {
+            attach(retryState, new BulkWriteTracker(batch.getRetryWrites(), batch));
         }
 
         static BulkWriteTracker attachNext(final RetryState retryState, final BulkWriteBatch batch) {
