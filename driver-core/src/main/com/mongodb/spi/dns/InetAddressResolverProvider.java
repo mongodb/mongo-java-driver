@@ -23,9 +23,6 @@ package com.mongodb.spi.dns;
  * InetAddressResolver InetAddress resolvers}. A resolver defines operations for
  * looking up (resolving) host names.
  *
- * <p>A resolver provider is a concrete implementation of this interface that has a
- * zero-argument constructor and implements the abstract methods specified below.
- *
  * <p>The driver discovers implementations of this interface via {@link java.util.ServiceLoader}.
  *
  * <p>If more fine-grained control is required for multi-tenant applications, an {@linkplain InetAddressResolver InetAddress resolver}

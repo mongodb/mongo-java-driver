@@ -23,9 +23,6 @@ package com.mongodb.spi.dns;
  * {@linkplain DnsClient a DNS client}. A DNS client defines operations for
  * looking up DNS records for a given type.
  *
- * <p>A DNS client provider is a concrete implementation of this interface that has a
- * zero-argument constructor and implements the abstract methods specified below.
- *
  * <p>The driver discovers implementations of this interface via {@link java.util.ServiceLoader}.
  *
  * <p>If more fine-grained control is required for multi-tenant applications, an
