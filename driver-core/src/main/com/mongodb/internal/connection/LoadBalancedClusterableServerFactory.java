@@ -31,6 +31,7 @@ import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.util.List;
 
@@ -52,15 +53,17 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     private final MongoDriverInformation mongoDriverInformation;
     private final List<MongoCompressor> compressorList;
     private final ServerApi serverApi;
+    private final InetAddressResolver inetAddressResolver;
 
     public LoadBalancedClusterableServerFactory(final ServerSettings serverSettings,
-                                                final ConnectionPoolSettings connectionPoolSettings,
-                                                final InternalConnectionPoolSettings internalConnectionPoolSettings,
-                                                final StreamFactory streamFactory, @Nullable final MongoCredential credential,
-                                                final LoggerSettings loggerSettings,
-                                                @Nullable final CommandListener commandListener,
-                                                @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
-                                                final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
+            final ConnectionPoolSettings connectionPoolSettings,
+            final InternalConnectionPoolSettings internalConnectionPoolSettings,
+            final StreamFactory streamFactory, @Nullable final MongoCredential credential,
+            final LoggerSettings loggerSettings,
+            @Nullable final CommandListener commandListener,
+            @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
+            final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
+            @Nullable final InetAddressResolver inetAddressResolver) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
@@ -72,13 +75,14 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         this.mongoDriverInformation = mongoDriverInformation;
         this.compressorList = compressorList;
         this.serverApi = serverApi;
+        this.inetAddressResolver = inetAddressResolver;
     }
 
     @Override
     public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(cluster.getClusterId(), serverAddress),
                 new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
+                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi, inetAddressResolver),
                 connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance());
         connectionPool.ready();
 

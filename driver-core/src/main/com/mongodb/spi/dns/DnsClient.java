@@ -16,6 +16,9 @@
 
 package com.mongodb.spi.dns;
 
+import com.mongodb.MongoClientSettings;
+import com.mongodb.annotations.ThreadSafe;
+
 import java.util.List;
 
 
@@ -24,7 +27,9 @@ import java.util.List;
  *
  * @since 4.6
  * @see DnsClientProvider
+ * @see MongoClientSettings.Builder#dnsClient(DnsClient)
  */
+@ThreadSafe
 public interface DnsClient {
     /**
      * Gets the resource record values for the given name and type.

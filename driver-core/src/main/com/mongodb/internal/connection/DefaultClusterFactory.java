@@ -32,6 +32,8 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.DnsClient;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.util.List;
 
@@ -59,7 +61,8 @@ public final class DefaultClusterFactory {
                                  @Nullable final CommandListener commandListener,
                                  @Nullable final String applicationName,
                                  @Nullable final MongoDriverInformation mongoDriverInformation,
-                                 final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
+                                 final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
+                                 @Nullable final DnsClient dnsClient, @Nullable final InetAddressResolver inetAddressResolver) {
 
         ClusterId clusterId = new ClusterId(applicationName);
         ClusterSettings clusterSettings;
@@ -87,20 +90,20 @@ public final class DefaultClusterFactory {
                     .build();
         }
 
-        DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings);
+        DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings, dnsClient);
 
         if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
                     applicationName, mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(),
-                    compressorList, serverApi);
+                    compressorList, serverApi, inetAddressResolver);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings,
                     streamFactory, heartbeatStreamFactory, credential, loggerSettings, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
-                    serverApi);
+                    serverApi, inetAddressResolver);
 
             if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
                 return new SingleServerCluster(clusterId, clusterSettings, serverFactory);

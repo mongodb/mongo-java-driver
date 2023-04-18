@@ -107,7 +107,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def getConnection() {
         new InternalStreamConnection(SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(), streamFactory, [], commandListener,
-                initializer)
+                initializer, null)
     }
 
     def getOpenedConnection() {
@@ -172,7 +172,7 @@ class InternalStreamConnectionSpecification extends Specification {
             startHandshake(_) >> { throw new MongoInternalException('Something went wrong') }
         }
         def connection = new InternalStreamConnection(SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(), streamFactory, [], null,
-                failedInitializer)
+                failedInitializer, null)
 
         when:
         connection.open()
@@ -189,7 +189,7 @@ class InternalStreamConnectionSpecification extends Specification {
             startHandshakeAsync(_, _) >> { it[1].onResult(null, new MongoInternalException('Something went wrong')) }
         }
         def connection = new InternalStreamConnection(SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(), streamFactory, [], null,
-                failedInitializer)
+                failedInitializer, null)
 
         when:
         def futureResultCallback = new FutureResultCallback<Void>()

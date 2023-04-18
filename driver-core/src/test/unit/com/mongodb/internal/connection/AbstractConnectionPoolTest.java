@@ -186,7 +186,8 @@ public abstract class AbstractConnectionPoolTest {
                                 Collections.emptyList(),
                                 LoggerSettings.builder().build(),
                                 new TestCommandListener(),
-                                ClusterFixture.getServerApi()),
+                                ClusterFixture.getServerApi(),
+                                null),
                         settings, internalSettings, sdamProvider));
                 sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockedCluster(), serverId, mock(ServerListener.class),
                         mock(ServerMonitor.class), pool, connectionMode));

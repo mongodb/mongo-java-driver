@@ -229,7 +229,8 @@ public final class MongoClientImpl implements MongoClient {
                 settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
                 getStreamFactory(settings, false), getStreamFactory(settings, true),
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
-                settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi());
+                settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
+                settings.getDnsClient(), settings.getInetAddressResolver());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {

@@ -149,7 +149,7 @@ public final class MongoClients {
                 InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
                 streamFactory, heartbeatStreamFactory, settings.getCredential(), settings.getLoggerSettings(),
                 getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
-                settings.getCompressorList(), settings.getServerApi());
+                settings.getCompressorList(), settings.getServerApi(), settings.getDnsClient(), settings.getInetAddressResolver());
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {

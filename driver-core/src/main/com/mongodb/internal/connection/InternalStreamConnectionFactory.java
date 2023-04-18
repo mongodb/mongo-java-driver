@@ -25,6 +25,7 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.BsonDocument;
 
 import java.util.List;
@@ -39,28 +40,31 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final StreamFactory streamFactory;
     private final BsonDocument clientMetadataDocument;
     private final List<MongoCompressor> compressorList;
-    private LoggerSettings loggerSettings;
+    private final LoggerSettings loggerSettings;
     private final CommandListener commandListener;
     @Nullable
     private final ServerApi serverApi;
+    private final InetAddressResolver inetAddressResolver;
     private final MongoCredentialWithCache credential;
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode,
             final StreamFactory streamFactory,
             @Nullable final MongoCredentialWithCache credential,
-            @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
+            @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList,
-            final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
+            final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi,
+            @Nullable final InetAddressResolver inetAddressResolver) {
         this(clusterConnectionMode, false, streamFactory, credential, applicationName, mongoDriverInformation, compressorList,
-                loggerSettings, commandListener, serverApi);
+                loggerSettings, commandListener, serverApi, inetAddressResolver);
     }
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
             final StreamFactory streamFactory,
             @Nullable final MongoCredentialWithCache credential,
-            @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
+            @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList,
-            final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
+            final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi,
+            @Nullable final InetAddressResolver inetAddressResolver) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.isMonitoringConnection = isMonitoringConnection;
         this.streamFactory = notNull("streamFactory", streamFactory);
@@ -68,6 +72,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
         this.serverApi = serverApi;
+        this.inetAddressResolver = inetAddressResolver;
         this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
         this.credential = credential;
     }
@@ -78,7 +83,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         return new InternalStreamConnection(clusterConnectionMode, isMonitoringConnection, serverId, connectionGenerationSupplier,
                 streamFactory, compressorList, loggerSettings, commandListener,
                 new InternalStreamConnectionInitializer(clusterConnectionMode, authenticator, clientMetadataDocument, compressorList,
-                        serverApi));
+                        serverApi), inetAddressResolver);
     }
 
     private Authenticator createAuthenticator(final MongoCredentialWithCache credential) {
