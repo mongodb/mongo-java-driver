@@ -24,6 +24,8 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import com.mongodb.event.CommandListener
+import com.mongodb.spi.dns.DnsClient
+import com.mongodb.spi.dns.InetAddressResolver
 import org.bson.UuidRepresentation
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
@@ -58,6 +60,8 @@ class MongoClientSettingsSpecification extends Specification {
         settings.credential == null
         settings.uuidRepresentation == UuidRepresentation.UNSPECIFIED
         settings.contextProvider == null
+        settings.dnsClient == null
+        settings.inetAddressResolver == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -119,6 +123,8 @@ class MongoClientSettingsSpecification extends Specification {
         def commandListener = Stub(CommandListener)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
         def contextProvider = Stub(ContextProvider)
+        def dnsClient = Stub(DnsClient)
+        def inetAddressResolver = Stub(InetAddressResolver)
 
         when:
         def settings = MongoClientSettings.builder()
@@ -141,6 +147,8 @@ class MongoClientSettingsSpecification extends Specification {
                 .compressorList([MongoCompressor.createZlibCompressor()])
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .contextProvider(contextProvider)
+                .dnsClient(dnsClient)
+                .inetAddressResolver(inetAddressResolver)
                 .build()
 
         then:
@@ -160,6 +168,8 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
         settings.getUuidRepresentation() == UuidRepresentation.STANDARD
         settings.getContextProvider() == contextProvider
+        settings.getDnsClient() == dnsClient
+        settings.getInetAddressResolver() == inetAddressResolver
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -175,6 +185,8 @@ class MongoClientSettingsSpecification extends Specification {
         def commandListener = Stub(CommandListener)
         def compressorList = [MongoCompressor.createZlibCompressor()]
         def contextProvider = Stub(ContextProvider)
+        def dnsClient = Stub(DnsClient)
+        def inetAddressResolver = Stub(InetAddressResolver)
 
         settings = MongoClientSettings.builder()
                 .heartbeatConnectTimeoutMS(24000)
@@ -197,6 +209,8 @@ class MongoClientSettingsSpecification extends Specification {
                 .codecRegistry(codecRegistry)
                 .compressorList(compressorList)
                 .contextProvider(contextProvider)
+                .dnsClient(dnsClient)
+                .inetAddressResolver(inetAddressResolver)
                 .build()
 
         then:
@@ -464,8 +478,8 @@ class MongoClientSettingsSpecification extends Specification {
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
-                        'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential',
-                        'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'loggerSettingsBuilder',
+                        'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential', 'dnsClient',
+                        'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'loggerSettingsBuilder',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
                         'streamFactoryFactory', 'uuidRepresentation', 'writeConcern']
@@ -481,9 +495,9 @@ class MongoClientSettingsSpecification extends Specification {
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToLoggerSettings', 'applyToServerSettings', 'applyToSocketSettings',
                         'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
-                        'compressorList', 'contextProvider', 'credential', 'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS',
-                        'readConcern', 'readPreference', 'retryReads', 'retryWrites', 'serverApi', 'streamFactoryFactory',
-                        'uuidRepresentation', 'writeConcern']
+                        'compressorList', 'contextProvider', 'credential', 'dnsClient', 'heartbeatConnectTimeoutMS',
+                        'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'readConcern', 'readPreference', 'retryReads', 'retryWrites',
+                        'serverApi', 'streamFactoryFactory', 'uuidRepresentation', 'writeConcern']
         then:
         actual == expected
     }

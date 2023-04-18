@@ -19,6 +19,8 @@ package com.mongodb.internal.connection;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.internal.dns.DefaultDnsResolver;
+import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.DnsClient;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -32,15 +34,17 @@ public class DefaultDnsSrvRecordMonitorFactory implements DnsSrvRecordMonitorFac
 
     private final ClusterId clusterId;
     private final long noRecordsRescanFrequency;
+    private final DnsClient dnsClient;
 
-    public DefaultDnsSrvRecordMonitorFactory(final ClusterId clusterId, final ServerSettings serverSettings) {
+    public DefaultDnsSrvRecordMonitorFactory(final ClusterId clusterId, final ServerSettings serverSettings, @Nullable final DnsClient dnsClient) {
         this.clusterId = clusterId;
         this.noRecordsRescanFrequency = serverSettings.getHeartbeatFrequency(MILLISECONDS);
+        this.dnsClient = dnsClient;
     }
 
     @Override
     public DnsSrvRecordMonitor create(final String hostName, final String srvServiceName, final DnsSrvRecordInitializer dnsSrvRecordInitializer) {
         return new DefaultDnsSrvRecordMonitor(hostName, srvServiceName, DEFAULT_RESCAN_FREQUENCY_MILLIS, noRecordsRescanFrequency,
-                dnsSrvRecordInitializer, clusterId, new DefaultDnsResolver());
+                dnsSrvRecordInitializer, clusterId, new DefaultDnsResolver(dnsClient));
     }
 }

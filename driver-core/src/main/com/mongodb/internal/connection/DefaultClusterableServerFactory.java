@@ -31,6 +31,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.util.List;
 
@@ -54,6 +55,8 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final List<MongoCompressor> compressorList;
     @Nullable
     private final ServerApi serverApi;
+    @Nullable
+    private final InetAddressResolver inetAddressResolver;
 
     public DefaultClusterableServerFactory(
             final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
@@ -63,7 +66,8 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
             final LoggerSettings loggerSettings,
             @Nullable final CommandListener commandListener,
             @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
-            final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
+            final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
+            @Nullable final InetAddressResolver inetAddressResolver) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
@@ -76,6 +80,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         this.mongoDriverInformation = mongoDriverInformation;
         this.compressorList = compressorList;
         this.serverApi = serverApi;
+        this.inetAddressResolver = inetAddressResolver;
     }
 
     @Override
@@ -86,11 +91,11 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, cluster.getClock(),
                 // no credentials, compressor list, or command listener for the server monitor factory
                 new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, applicationName,
-                        mongoDriverInformation, emptyList(), loggerSettings, null, serverApi),
+                        mongoDriverInformation, emptyList(), loggerSettings, null, serverApi, inetAddressResolver),
                 clusterMode, serverApi, sdamProvider);
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
                 new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
+                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi, inetAddressResolver),
                 connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
         ServerListener serverListener = singleServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,

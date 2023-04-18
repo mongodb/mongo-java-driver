@@ -23,6 +23,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.DnsClient;
 import org.bson.UuidRepresentation;
 
 import java.io.UnsupportedEncodingException;
@@ -296,6 +297,21 @@ public class ConnectionString {
      * @since 3.0
      */
     public ConnectionString(final String connectionString) {
+        this(connectionString, null);
+    }
+
+    /**
+     * Creates a ConnectionString from the given string with the given {@link DnsClient}.
+     *
+     * <p>If setting {@link MongoClientSettings#getDnsClient()} explicitly, care should be taken to call this constructor with the same
+     * {@link DnsClient}.
+     *
+     * @param connectionString the connection string
+     * @param dnsClient        the DNS client with which to resolve TXT record for the mongodb+srv protocol
+     * @since 4.10
+     * @see MongoClientSettings#getDnsClient()
+     */
+    public ConnectionString(final String connectionString, @Nullable final DnsClient dnsClient) {
         this.connectionString = connectionString;
         boolean isMongoDBProtocol = connectionString.startsWith(MONGODB_PREFIX);
         isSrvProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
@@ -394,7 +410,7 @@ public class ConnectionString {
         }
 
         String txtRecordsQueryParameters = isSrvProtocol
-                ? new DefaultDnsResolver().resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
+                ? new DefaultDnsResolver(dnsClient).resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
         String connectionStringQueryParameters = unprocessedConnectionString;
 
         Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParameters);

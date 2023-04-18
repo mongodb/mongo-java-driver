@@ -70,7 +70,7 @@ public class SingleServerClusterTest {
                         streamFactory, streamFactory, getCredential(),
 
                         LoggerSettings.builder().build(), null, null, null,
-                        Collections.emptyList(), getServerApi()));
+                        Collections.emptyList(), getServerApi(), null));
     }
 
     @After

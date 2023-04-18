@@ -703,4 +703,15 @@ class ConnectionStringSpecification extends Specification {
         expect:
         uri.credential == createCredential('bob', 'otherDB', 'pwd'.toCharArray())
     }
+
+    def 'should use DnsClient to resolve TXT record'() {
+        given:
+        def dnsClient = { def name, def type -> ['replicaSet=java'] }
+
+        when:
+        def connectionString = new ConnectionString('mongodb+srv://free-java.mongodb-dev.net', dnsClient);
+
+        then:
+        connectionString.getRequiredReplicaSetName() == 'java'
+    }
 }

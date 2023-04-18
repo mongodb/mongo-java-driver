@@ -17,6 +17,7 @@
 package com.mongodb.internal.dns;
 
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.DnsClientProvider;
 import com.mongodb.spi.dns.DnsWithResponseCodeException;
@@ -24,6 +25,7 @@ import com.mongodb.spi.dns.DnsWithResponseCodeException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.StreamSupport;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -35,21 +37,23 @@ import static java.util.Arrays.asList;
  */
 public final class DefaultDnsResolver implements DnsResolver {
 
+    private static final DnsClient DEFAULT_DNS_CLIENT;
+
+    static {
+        DEFAULT_DNS_CLIENT = StreamSupport.stream(ServiceLoader.load(DnsClientProvider.class).spliterator(), false)
+                .findFirst()
+                .map(DnsClientProvider::create)
+                .orElse(new JndiDnsClient());
+    }
+
     private final DnsClient dnsClient;
 
     public DefaultDnsResolver() {
-        ServiceLoader<DnsClientProvider> loader = ServiceLoader.load(DnsClientProvider.class);
-        DnsClient dnsClientFromServiceLoader = null;
-        for (DnsClientProvider dnsClientProvider : loader) {
-            dnsClientFromServiceLoader = dnsClientProvider.create();
-            break;
-        }
+        this(DEFAULT_DNS_CLIENT);
+    }
 
-        if (dnsClientFromServiceLoader == null) {
-            dnsClient = new JndiDnsClient();
-        } else {
-            dnsClient = dnsClientFromServiceLoader;
-        }
+    public DefaultDnsResolver(@Nullable final DnsClient dnsClient) {
+        this.dnsClient = dnsClient == null ? DEFAULT_DNS_CLIENT : dnsClient;
     }
 
     /*
