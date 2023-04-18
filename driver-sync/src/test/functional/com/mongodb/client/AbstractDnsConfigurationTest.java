@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
@@ -28,6 +29,7 @@ import com.mongodb.spi.dns.InetAddressResolver;
 import org.junit.jupiter.api.Test;
 
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -49,20 +51,21 @@ public abstract class AbstractDnsConfigurationTest {
         CompletableFuture<UnknownHostException> exceptionReceived = new CompletableFuture<>();
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyToClusterSettings(builder ->
-                builder.addClusterListener(new ClusterListener() {
-                    @Override
-                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-                        ServerDescription serverDescription = event.getNewDescription().getServerDescriptions().get(0);
-                        if (serverDescription.getException() != null) {
-                            exceptionReceived.complete(exception);
-                        }
-                    }
-                }))
+                        builder.hosts(Collections.singletonList(new ServerAddress("some.host")))
+                                .addClusterListener(new ClusterListener() {
+                                    @Override
+                                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+                                        ServerDescription serverDescription = event.getNewDescription().getServerDescriptions().get(0);
+                                        if (serverDescription.getException() != null) {
+                                            exceptionReceived.complete(exception);
+                                        }
+                                    }
+                                }))
                 .inetAddressResolver(resolver)
                 .build();
 
         try (MongoClient ignored = createMongoClient(settings)) {
-            assertEquals(exception, exceptionReceived.get(1, SECONDS));
+            assertEquals(exception, exceptionReceived.get(10, SECONDS));
         }
     }
 
