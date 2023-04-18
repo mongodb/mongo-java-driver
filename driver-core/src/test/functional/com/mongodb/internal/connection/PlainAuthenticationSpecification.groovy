@@ -112,7 +112,8 @@ class PlainAuthenticationSpecification extends Specification {
                 new TestConnectionGenerationSupplier(),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(SINGLE, createAuthenticator(credential), null, [], null))
+                new InternalStreamConnectionInitializer(SINGLE, createAuthenticator(credential), null, [], null),
+        null)
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {
