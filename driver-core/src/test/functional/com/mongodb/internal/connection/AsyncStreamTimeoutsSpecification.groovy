@@ -53,7 +53,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
-                [], LoggerSettings.builder().build(), null, getServerApi())
+                [], LoggerSettings.builder().build(), null, getServerApi(), null)
                 .create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
@@ -68,7 +68,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
-                [], LoggerSettings.builder().build(), null, getServerApi()).create(new ServerId(new ClusterId(), getPrimary()))
+                [], LoggerSettings.builder().build(), null, getServerApi(), null).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
@@ -89,7 +89,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
-                [], LoggerSettings.builder().build(), null, getServerApi()).create(new ServerId(new ClusterId(),
+                [], LoggerSettings.builder().build(), null, getServerApi(), null).create(new ServerId(new ClusterId(),
                 new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
@@ -104,7 +104,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
-                [], LoggerSettings.builder().build(), null, getServerApi()).create(new ServerId(new ClusterId(), getPrimary()))
+                [], LoggerSettings.builder().build(), null, getServerApi(), null).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
