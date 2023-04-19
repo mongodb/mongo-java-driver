@@ -28,6 +28,7 @@ import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
+import com.mongodb.UnixServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -267,7 +268,11 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private ServerAddress getServerAddressWithResolver() {
-        return new ServerAddressWithResolver(serverId.getAddress(), inetAddressResolver);
+        if (serverId.getAddress() instanceof UnixServerAddress) {
+            return serverId.getAddress();
+        } else {
+            return new ServerAddressWithResolver(serverId.getAddress(), inetAddressResolver);
+        }
     }
 
     private void initAfterHandshakeStart(final InternalConnectionInitializationDescription initializationDescription) {
