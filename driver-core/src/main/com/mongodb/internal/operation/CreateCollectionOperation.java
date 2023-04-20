@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoClientException;
+import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.Collation;
@@ -23,6 +25,7 @@ import com.mongodb.client.model.TimeSeriesGranularity;
 import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -51,6 +54,7 @@ import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionSevenDotZero;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -232,6 +236,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
+            checkEncryptedFieldsSupported(connection.getDescription());
             getCommandFunctions().forEach(commandCreator ->
                 executeCommand(binding, databaseName, commandCreator.get(), connection,
                         writeConcernErrorTransformer())
@@ -276,14 +281,11 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * <li>Create the collection with name encryptedFields["escCollection"] using default options.
      *   If encryptedFields["escCollection"] is not set, use the collection name enxcol_.<collectionName>.esc.
      *   Creating this collection MUST NOT check if the collection namespace is in the AutoEncryptionOpts.encryptedFieldsMap.
-     * <li>Create the collection with name encryptedFields["eccCollection"] using default options.
-     *   If encryptedFields["eccCollection"] is not set, use the collection name enxcol_.<collectionName>.ecc.
-     *   Creating this collection MUST NOT check if the collection namespace is in the AutoEncryptionOpts.encryptedFieldsMap.
      * <li>Create the collection with name encryptedFields["ecocCollection"] using default options.
      *   If encryptedFields["ecocCollection"] is not set, use the collection name enxcol_.<collectionName>.ecoc.
      *   Creating this collection MUST NOT check if the collection namespace is in the AutoEncryptionOpts.encryptedFieldsMap.
      * <li>Create the collection collectionName with collectionOptions and the option encryptedFields set to the encryptedFields.
-     * <li>Create the the index {"__safeContent__": 1} on collection collectionName.
+     * <li>Create the index {"__safeContent__": 1} on collection collectionName.
      *  </ol>
      * </p>
      * @return the list of commands to run to create the collection
@@ -294,7 +296,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         }
         return asList(
                 () -> getCreateEncryptedFieldsCollectionCommand("esc"),
-                () -> getCreateEncryptedFieldsCollectionCommand("ecc"),
                 () -> getCreateEncryptedFieldsCollectionCommand("ecoc"),
                 this::getCreateCollectionCommand,
                 () -> new BsonDocument("createIndexes", new BsonString(collectionName))
@@ -361,6 +362,27 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return document;
     }
 
+    private void checkEncryptedFieldsSupported(final ConnectionDescription connectionDescription) throws MongoException {
+        if (encryptedFields != null && serverIsLessThanVersionSevenDotZero(connectionDescription)) {
+            throw new MongoClientException("Driver support of Queryable Encryption is incompatible with server."
+                    + " Upgrade server to use Queryable Encryption.");
+        }
+    }
+
+    /**
+     * @return {@code true} iff the {@linkplain #checkEncryptedFieldsSupported(ConnectionDescription) check} was successful,
+     * and the {@code callback} was not completed with a failed result.
+     */
+    private boolean checkEncryptedFieldsSupported(final AsyncConnection connection, final SingleResultCallback<Void> callback) {
+        try {
+            checkEncryptedFieldsSupported(connection.getDescription());
+            return true;
+        } catch (Exception e) {
+            callback.onResult(null, e);
+            return false;
+        }
+    }
+
     /**
      * A SingleResultCallback that can be repeatedly called via onResult until all commands have been run.
      */
@@ -382,6 +404,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         public void onResult(@Nullable final Void result, @Nullable final Throwable t) {
             if (t != null) {
                 finalCallback.onResult(null, t);
+                return;
+            }
+            if (!checkEncryptedFieldsSupported(connection, finalCallback)) {
                 return;
             }
             Supplier<BsonDocument> nextCommandFunction = commands.poll();
