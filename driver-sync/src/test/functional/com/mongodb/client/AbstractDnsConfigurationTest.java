@@ -38,10 +38,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getSslSettings;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SuppressWarnings("try")
 public abstract class AbstractDnsConfigurationTest {
@@ -80,8 +83,10 @@ public abstract class AbstractDnsConfigurationTest {
 
     @ParameterizedTest(name = "InetAddressResolver should not be used to resolve IP literal {0}")
     @ValueSource(strings = {"127.0.0.1", "::1", "[0:0:0:0:0:0:0:1]"})
-    public void testInetAddressResolverDoesNotResultIpLiteral(final String ipLiteral) throws InterruptedException, ExecutionException,
+    public void testInetAddressResolverDoesNotResolveIpLiteral(final String ipLiteral) throws InterruptedException, ExecutionException,
             TimeoutException {
+        assumeTrue(isStandalone());
+        
         // should not be invoked for IP literals
         InetAddressResolver resolver = host -> {
             throw new UnknownHostException();
@@ -89,6 +94,7 @@ public abstract class AbstractDnsConfigurationTest {
 
         CompletableFuture<Boolean> serverConnectedFuture = new CompletableFuture<>();
         MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(getConnectionString())
                 .applyToClusterSettings(builder ->
                         builder.hosts(Collections.singletonList(new ServerAddress(ipLiteral)))
                                 .addClusterListener(new ClusterListener() {
