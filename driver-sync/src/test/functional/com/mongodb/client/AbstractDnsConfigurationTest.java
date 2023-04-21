@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
-import static com.mongodb.ClusterFixture.getSslSettings;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,7 +86,8 @@ public abstract class AbstractDnsConfigurationTest {
     public void testInetAddressResolverDoesNotResolveIpLiteral(final String ipLiteral) throws InterruptedException, ExecutionException,
             TimeoutException {
         assumeTrue(isStandalone());
-        
+        assumeTrue(getServerApi() == null);
+
         // should not be invoked for IP literals
         InetAddressResolver resolver = host -> {
             throw new UnknownHostException();
@@ -107,7 +108,6 @@ public abstract class AbstractDnsConfigurationTest {
                                         }
                                     }
                                 }))
-                .applyToSslSettings(builder -> builder.applySettings(getSslSettings()))
                 .inetAddressResolver(resolver)
                 .build();
 
