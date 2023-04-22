@@ -47,6 +47,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
@@ -74,8 +75,9 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
 
     @BeforeEach
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(6, 0));
+        assumeTrue(serverVersionAtLeast(7, 0));
         assumeFalse(isStandalone());
+        assumeFalse(isServerlessTest());
 
         client = createMongoClient(getMongoClientSettings());
         Set<KmsProvider> kmsProviders = KmsProvider.detect();

@@ -163,6 +163,8 @@ Do the following before running spec tests:
 
 Load each YAML (or JSON) file using a Canonical Extended JSON parser.
 
+If the test file name matches the regular expression ``fle2\-Range\-.*\-Correctness``, drivers MAY skip the test on macOS. The ``fle2-Range`` tests are very slow on macOS and do not provide significant additional test coverage.
+
 Then for each element in ``tests``:
 
 #. If the ``skipReason`` field is present, skip this test completely.
@@ -1677,7 +1679,14 @@ Expect no error on construction.
 12. Explicit Encryption
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The Explicit Encryption tests require MongoDB server 6.0+. The tests must not run against a standalone.
+The Explicit Encryption tests require MongoDB server 7.0+. The tests must not run against a standalone.
+
+.. note::
+   MongoDB Server 7.0 introduced a backwards breaking change to the Queryable Encryption (QE) protocol: QEv2.
+	libmongocrypt 1.8.0 is configured to use the QEv2 protocol.
+
+.. note::
+   Skip this test on Serverless until MongoDB Serverless enables the QEv2 protocol. Refer: `DRIVERS-2589 <https://jira.mongodb.org/browse/DRIVERS-2589>`_
 
 Before running each of the following test cases, perform the following Test Setup.
 
@@ -2493,7 +2502,14 @@ The following tests that a mongocryptd client is not created when shared library
 21. Automatic Data Encryption Keys
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Automatic Data Encryption Keys tests require MongoDB server 6.0+. The tests must not run against a standalone.
+The Automatic Data Encryption Keys tests require MongoDB server 7.0+. The tests must not run against a standalone.
+
+.. note::
+   MongoDB Server 7.0 introduced a backwards breaking change to the Queryable Encryption (QE) protocol: QEv2.
+	libmongocrypt 1.8.0 is configured to use the QEv2 protocol.
+
+.. note::
+   Skip this test on Serverless until MongoDB Serverless enables the QEv2 protocol. Refer: `DRIVERS-2589 <https://jira.mongodb.org/browse/DRIVERS-2589>`_
 
 For each of the following test cases, assume `DB` is a valid open database
 handle, and assume a ClientEncryption_ object `CE` created using the following
@@ -2504,9 +2520,24 @@ options::
       keyVaultNamespace: "keyvault.datakeys",
       kmsProviders: {
          local: { key: base64Decode(LOCAL_MASTERKEY) },
+         aws: {
+            accessKeyId: <set from environment>,
+            secretAccessKey: <set from environment>
+         },
       },
    }
 
+Run each test case with each of these KMS providers: ``aws``, ``local``. The KMS provider name is referred to as ``kmsProvider``.
+When testing ``aws``, use the following as the ``masterKey`` option:
+
+.. code:: javascript
+
+   {
+      region: "us-east-1",
+      key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0"
+   }
+
+When testing ``local``, set ``masterKey`` to ``null``.
 
 Case 1: Simple Creation and Validation
 ``````````````````````````````````````
@@ -2533,7 +2564,7 @@ rejects an attempt to insert plaintext in an encrypted fields.
          }
       }
 
-2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, "local", null)`
+2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, kmsProvider, masterKey)`
    to obtain a new collection `Coll`. Expect success.
 3. Attempt to insert the following document into `Coll`::
 
@@ -2557,7 +2588,7 @@ missing.
 
 1. Create a new empty create-collection options `Opts`. (i.e. it must not
    contain any ``encryptedFields`` options.)
-2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, "local", null)`.
+2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, kmsProvider, masterKey)`.
 3. Expect the invocation to fail with an error indicating that
    ``encryptedFields`` is not defined for the collection, and expect that no
    collection was created within the database. It would be *incorrect* for
@@ -2590,7 +2621,7 @@ when attempting to create a collection with such invalid settings.
          }
       }
 
-2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, "local", null)`.
+2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, kmsProvider, masterKey)`.
 3. Expect an error from the server indicating a validation error at
    ``create.encryptedFields.fields.keyId``, which must be a UUID and not a
    boolean value.
@@ -2613,7 +2644,7 @@ with encrypted value.
          }
       }
 
-2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, "local", null)`
+2. Invoke `CreateEncryptedCollection(CE, DB, "testing1", Opts, kmsProvider, masterKey)`
    to obtain a new collection `Coll` and data key `key1`. Expect success.
 3. Use `CE` to explicitly encrypt the string "123-45-6789" using
    algorithm `Unindexed` and data key `key1`. Refer result as `encryptedPayload`.
@@ -2627,7 +2658,14 @@ with encrypted value.
 
 22. Range Explicit Encryption
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The Range Explicit Encryption tests require MongoDB server 6.2+. The tests must not run against a standalone.
+The Range Explicit Encryption tests require MongoDB server 7.0+. The tests must not run against a standalone.
+
+.. note::
+   MongoDB Server 7.0 introduced a backwards breaking change to the Queryable Encryption (QE) protocol: QEv2.
+	libmongocrypt 1.8.0 is configured to use the QEv2 protocol.
+
+.. note::
+   Skip this test on Serverless until MongoDB Serverless enables the QEv2 protocol. Refer: `DRIVERS-2589 <https://jira.mongodb.org/browse/DRIVERS-2589>`_
 
 Each of the following test cases must pass for each of the supported types (``DecimalNoPrecision``, ``DecimalPrecision``, ``DoublePrecision``, ``DoubleNoPrecision``, ``Date``, ``Int``, and ``Long``), unless it is stated the type should be skipped.
 
