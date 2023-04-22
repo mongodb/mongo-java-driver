@@ -71,7 +71,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
 
     @BeforeEach
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(6, 0));
+        assumeTrue(serverVersionAtLeast(7, 0));
         assumeFalse(isStandalone());
         assumeFalse(isServerlessTest());
 

@@ -55,7 +55,7 @@ ext {
     zstdVersion = '1.5.2-5'
     awsSdkV2Version = '2.18.9'
     awsSdkV1Version = '1.12.337'
-    mongoCryptVersion = '1.7.3'
+    mongoCryptVersion = '1.8.0-SNAPSHOT'
     projectReactorVersion = '2022.0.0'
     junitBomVersion = '5.8.2'
     gitVersion = getGitVersion()
@@ -82,12 +82,12 @@ configure(coreProjects) {
         mavenCentral()
 
         // Uncomment this to test with a snapshot build of mongodb-crypt
-//        maven {
-//            url 'https://oss.sonatype.org/content/repositories/snapshots'
-//            content {
-//                includeGroup "org.mongodb"
-//            }
-//        }
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+            content {
+                includeGroup "org.mongodb"
+            }
+        }
     }
 }
 
