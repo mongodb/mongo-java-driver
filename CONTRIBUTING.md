@@ -32,3 +32,9 @@ Talk To Us
 
 If you have questions about using the driver, please reach out on the 
 [MongoDB Community Forums](https://developer.mongodb.com/community/forums/tags/c/drivers-odms-connectors/7/java-driver).
+
+Thanks to all the people who have already contributed!
+
+<a href="https://github.com/mongodb/mongo-java-driver/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=mongodb/mongo-java-driver" />
+</a>
