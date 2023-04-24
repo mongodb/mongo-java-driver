@@ -139,13 +139,19 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final Supplier<R> writeFunction) {
         return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
-                this::shouldAttemptToRetryWrite, writeFunction);
+                this::shouldAttemptToRetryWrite, () -> {
+            logRetryExecute(retryState);
+            return writeFunction.get();
+        });
     }
 
     private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState,
             final AsyncCallbackSupplier<R> writeFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
-                this::shouldAttemptToRetryWrite, writeFunction);
+                this::shouldAttemptToRetryWrite, callback -> {
+            logRetryExecute(retryState);
+            writeFunction.get(callback);
+        });
     }
 
     private boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
@@ -176,9 +182,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
          * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
         RetryState retryState = new RetryState();
         BulkWriteTracker.attachNew(retryState, retryWrites);
-        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, () -> {
-            logRetryExecute(retryState);
-            return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
+        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, () ->
+            withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
@@ -193,10 +198,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             connectionDescription, ordered, writeConcern,
                             bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables));
                 }
-                logRetryExecute(retryState);
                 return executeBulkWriteBatch(retryState, binding, connection);
-            });
-        });
+            })
+        );
         try {
             return retryingBulkWrite.get();
         } catch (MongoException e) {
@@ -210,8 +214,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         BulkWriteTracker.attachNew(retryState, retryWrites);
         binding.retain();
         AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
-                funcCallback -> {
-            logRetryExecute(retryState);
+                funcCallback ->
             withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
                     (source, connection, releasingCallback) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
@@ -237,10 +240,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     releasingCallback.onResult(null, t);
                     return;
                 }
-                logRetryExecute(retryState);
                 executeBulkWriteBatchAsync(retryState, binding, connection, releasingCallback);
-            });
-        }).whenComplete(binding::release);
+            })
+        ).whenComplete(binding::release);
         retryingBulkWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
     }
 

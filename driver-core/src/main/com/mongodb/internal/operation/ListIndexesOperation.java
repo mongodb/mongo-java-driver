@@ -46,7 +46,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.createReadCo
 import static com.mongodb.internal.operation.CommandOperationHelper.decorateReadWithRetries;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
@@ -120,9 +119,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads);
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, () -> {
-            logRetryExecute(retryState);
-            return withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
+        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, () ->
+            withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
                     return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
@@ -131,8 +129,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
                             source.getServerDescription().getAddress(), batchSize));
                 }
-            });
-        });
+            })
+        );
         return read.get();
     }
 
@@ -141,8 +139,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = CommandOperationHelper.<AsyncBatchCursor<T>>decorateReadWithRetries(
-                retryState, funcCallback -> {
-                    logRetryExecute(retryState);
+                retryState, funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                             (source, connection, releasingCallback) -> {
                                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
@@ -157,8 +154,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                                 releasingCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
                                             }
                                         });
-                            });
-                }).whenComplete(binding::release);
+                            })
+                ).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 
