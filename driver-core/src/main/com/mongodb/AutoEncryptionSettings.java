@@ -214,6 +214,7 @@ public final class AutoEncryptionSettings {
          * @param encryptedFieldsMap the mapping of the collection namespace to the encryptedFields
          * @return this
          * @since 4.7
+         * @mongodb.server.release 7.0
          */
         @Beta(Beta.Reason.SERVER)
         public Builder encryptedFieldsMap(final Map<String, BsonDocument> encryptedFieldsMap) {
@@ -462,6 +463,7 @@ public final class AutoEncryptionSettings {
      *
      * @return the mapping of the collection namespaces to encryptedFields
      * @since 4.7
+     * @mongodb.server.release 7.0
      */
     @Beta(Beta.Reason.SERVER)
     @Nullable
