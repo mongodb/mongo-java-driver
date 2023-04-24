@@ -252,7 +252,11 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
             } else {
-                new ProcessCommandsCallback(binding, connection, releasingCallback(errHandlingCallback, connection))
+                SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
+                if (!checkEncryptedFieldsSupported(connection.getDescription(), releasingCallback)) {
+                    return;
+                }
+                new ProcessCommandsCallback(binding, connection, releasingCallback)
                         .onResult(null, null);
             }
         });
@@ -370,12 +374,12 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     /**
-     * @return {@code true} iff the {@linkplain #checkEncryptedFieldsSupported(ConnectionDescription) check} was successful,
-     * and the {@code callback} was not completed with a failed result.
+     * @return {@code true} iff the {@linkplain #checkEncryptedFieldsSupported(ConnectionDescription) check} was successful.
+     * The {@code callback} is completed (with a failed result) iff the check was not successful.
      */
-    private boolean checkEncryptedFieldsSupported(final AsyncConnection connection, final SingleResultCallback<Void> callback) {
+    private boolean checkEncryptedFieldsSupported(final ConnectionDescription connectionDescription, final SingleResultCallback<Void> callback) {
         try {
-            checkEncryptedFieldsSupported(connection.getDescription());
+            checkEncryptedFieldsSupported(connectionDescription);
             return true;
         } catch (Exception e) {
             callback.onResult(null, e);
@@ -404,9 +408,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         public void onResult(@Nullable final Void result, @Nullable final Throwable t) {
             if (t != null) {
                 finalCallback.onResult(null, t);
-                return;
-            }
-            if (!checkEncryptedFieldsSupported(connection, finalCallback)) {
                 return;
             }
             Supplier<BsonDocument> nextCommandFunction = commands.poll();
