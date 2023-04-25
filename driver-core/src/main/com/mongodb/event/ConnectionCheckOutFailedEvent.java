@@ -53,17 +53,34 @@ public final class ConnectionCheckOutFailedEvent {
     }
 
     private final ServerId serverId;
+    private final long operationId;
+
     private final Reason reason;
 
     /**
      * Construct an instance
      *
      * @param serverId the server id
+     * @param operationId the operation id
      * @param reason the reason the connection check out failed
+     * @since 4.10
      */
-    public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
+    public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason) {
         this.serverId = notNull("serverId", serverId);
+        this.operationId = operationId;
         this.reason = notNull("reason", reason);
+    }
+
+    /**
+     * Construct an instance
+     *
+     * @param serverId the server id
+     * @param reason the reason the connection check out failed
+     * @deprecated Prefer {@link #ConnectionCheckOutFailedEvent(ServerId, long, Reason)}
+     */
+    @Deprecated
+    public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
+        this(serverId, -1, reason);
     }
 
     /**
@@ -73,6 +90,16 @@ public final class ConnectionCheckOutFailedEvent {
      */
     public ServerId getServerId() {
         return serverId;
+    }
+
+    /**
+     * Gets the operation identifier
+     *
+     * @return the operation identifier
+     * @since 4.10
+     */
+    public long getOperationId() {
+        return operationId;
     }
 
     /**
@@ -90,6 +117,7 @@ public final class ConnectionCheckOutFailedEvent {
         return "ConnectionCheckOutFailedEvent{"
                 + "server=" + serverId.getAddress()
                 + ", clusterId=" + serverId.getClusterId()
+                + ", operationId=" + operationId
                 + ", reason=" + reason
                 + '}';
     }

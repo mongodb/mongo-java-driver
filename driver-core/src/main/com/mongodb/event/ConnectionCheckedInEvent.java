@@ -27,14 +27,30 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class ConnectionCheckedInEvent {
     private final ConnectionId connectionId;
+    private final long operationId;
+
 
     /**
      * Construct an instance
      *
      * @param connectionId the connectionId
+     * @param operationId the operation id
+     * @since 4.10
      */
-    public ConnectionCheckedInEvent(final ConnectionId connectionId) {
+    public ConnectionCheckedInEvent(final ConnectionId connectionId, final long operationId) {
         this.connectionId = notNull("connectionId", connectionId);
+        this.operationId = operationId;
+    }
+
+    /**
+     * Construct an instance
+     *
+     * @param connectionId the connectionId
+     * @deprecated Prefer {@link #ConnectionCheckedInEvent(ConnectionId, long)}
+     */
+    @Deprecated
+    public ConnectionCheckedInEvent(final ConnectionId connectionId) {
+        this(connectionId, -1);
     }
 
     /**
@@ -46,12 +62,23 @@ public final class ConnectionCheckedInEvent {
         return connectionId;
     }
 
+    /**
+     * Gets the operation identifier
+     *
+     * @return the operation identifier
+     * @since 4.10
+     */
+    public long getOperationId() {
+        return operationId;
+    }
+
     @Override
     public String toString() {
         return "ConnectionCheckedInEvent{"
                 + "connectionId=" + connectionId
                 + ", server=" + connectionId.getServerId().getAddress()
                 + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + ", operationId=" + operationId
                 + '}';
     }
 }
