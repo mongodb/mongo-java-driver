@@ -168,7 +168,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public InternalConnection get(final OperationContext operationContext, final long timeoutValue, final TimeUnit timeUnit) {
-        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
+        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
         Timeout timeout = Timeout.startNow(timeoutValue, timeUnit);
         try {
             stateAndGeneration.throwIfClosedOrPaused();
@@ -176,10 +176,11 @@ class DefaultConnectionPool implements ConnectionPool {
             if (!connection.opened()) {
                 connection = openConcurrencyLimiter.openOrGetAvailable(connection, timeout);
             }
-            connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection)));
+            connection.checkedOutForOperation(operationContext);
+            connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection), operationContext.getId()));
             return connection;
         } catch (Exception e) {
-            throw (RuntimeException) checkOutFailed(e);
+            throw (RuntimeException) checkOutFailed(e, operationContext);
         }
     }
 
@@ -188,15 +189,16 @@ class DefaultConnectionPool implements ConnectionPool {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
-        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
+        connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
         Timeout timeout = Timeout.startNow(settings.getMaxWaitTime(NANOSECONDS));
-        SingleResultCallback<InternalConnection> eventSendingCallback = (result, failure) -> {
+        SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
-                connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(result)));
-                errHandlingCallback.onResult(result, null);
+                connection.checkedOutForOperation(operationContext);
+                connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(getId(connection), operationContext.getId()));
+                errHandlingCallback.onResult(connection, null);
             } else {
-                errHandlingCallback.onResult(null, checkOutFailed(failure));
+                errHandlingCallback.onResult(null, checkOutFailed(failure, operationContext));
             }
         };
         try {
@@ -238,20 +240,22 @@ class DefaultConnectionPool implements ConnectionPool {
      * and returns {@code t} if it is not {@link MongoOpenConnectionInternalException},
      * or returns {@code t.}{@linkplain MongoOpenConnectionInternalException#getCause() getCause()} otherwise.
      */
-    private Throwable checkOutFailed(final Throwable t) {
+    private Throwable checkOutFailed(final Throwable t, final OperationContext operationContext) {
         Throwable result = t;
+        Reason reason;
         if (t instanceof MongoTimeoutException) {
-            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.TIMEOUT));
+            reason = Reason.TIMEOUT;
         } else if (t instanceof MongoOpenConnectionInternalException) {
-            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
+            reason = Reason.CONNECTION_ERROR;
             result = t.getCause();
         } else if (t instanceof MongoConnectionPoolClearedException) {
-            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.CONNECTION_ERROR));
+            reason = Reason.CONNECTION_ERROR;
         } else if (ConcurrentPool.isPoolClosedException(t)) {
-            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.POOL_CLOSED));
+            reason = Reason.POOL_CLOSED;
         } else {
-            connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, Reason.UNKNOWN));
+            reason = Reason.UNKNOWN;
         }
+        connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, operationContext.getId(), reason));
         return result;
     }
 
@@ -516,6 +520,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
         private Connection.PinningMode pinningMode;
+        private OperationContext operationContext;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -524,6 +529,13 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public int getGeneration() {
             return wrapped.getGeneration();
+        }
+
+        /**
+         * Associates this with the operation context and establishes the checked out start time
+         */
+        public void checkedOutForOperation(final OperationContext operationContext) {
+            this.operationContext = operationContext;
         }
 
         @Override
@@ -559,7 +571,7 @@ class DefaultConnectionPool implements ConnectionPool {
             // All but the first call is a no-op
             if (!isClosed.getAndSet(true)) {
                 unmarkAsPinned();
-                connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
+                connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped), operationContext.getId()));
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
                 }
@@ -731,7 +743,7 @@ class DefaultConnectionPool implements ConnectionPool {
     /**
      * This internal exception is used to express an exceptional situation encountered when opening a connection.
      * It exists because it allows consolidating the code that sends events for exceptional situations in a
-     * {@linkplain #checkOutFailed(Throwable) single place}, it must not be observable by an external code.
+     * {@linkplain #checkOutFailed(Throwable, OperationContext) single place}, it must not be observable by an external code.
      */
     private static final class MongoOpenConnectionInternalException extends RuntimeException {
         private static final long serialVersionUID = 1;
@@ -919,7 +931,7 @@ class DefaultConnectionPool implements ConnectionPool {
          * </ul>
          */
         void openAsyncWithConcurrencyLimit(
-                final PooledConnection connection, final Timeout timeout, final SingleResultCallback<InternalConnection> callback) {
+                final PooledConnection connection, final Timeout timeout, final SingleResultCallback<PooledConnection> callback) {
             PooledConnection availableConnection;
             try {//phase one
                 availableConnection = acquirePermitOrGetAvailableOpenedConnection(true, timeout);
