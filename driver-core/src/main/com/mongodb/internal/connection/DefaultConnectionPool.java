@@ -520,7 +520,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
         private Connection.PinningMode pinningMode;
-        private volatile long operationId;
+        private OperationContext operationContext;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -535,7 +535,7 @@ class DefaultConnectionPool implements ConnectionPool {
          * Associates this with the operation context and establishes the checked out start time
          */
         public void checkedOutForOperation(final OperationContext operationContext) {
-            this.operationId = operationContext.getId();
+            this.operationContext = operationContext;
         }
 
         @Override
@@ -571,7 +571,7 @@ class DefaultConnectionPool implements ConnectionPool {
             // All but the first call is a no-op
             if (!isClosed.getAndSet(true)) {
                 unmarkAsPinned();
-                connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped), operationId));
+                connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped), operationContext.getId()));
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
                 }

@@ -94,7 +94,6 @@ public final class Timeout {
         return IMMEDIATE;
     }
 
-
     /**
      * Must not be called on {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate} timeouts.
      * <p>
