@@ -212,7 +212,7 @@ public interface ClientEncryption extends Closeable {
      * {@linkplain MongoUpdatedEncryptedFieldsException#getEncryptedFields() available} to the caller.</p>
      *
      * @since 4.9
-     * @mongodb.server.release 6.0
+     * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/create Create Command
      */
     @Beta(Beta.Reason.SERVER)

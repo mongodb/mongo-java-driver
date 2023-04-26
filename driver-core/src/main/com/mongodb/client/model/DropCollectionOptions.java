@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -36,7 +37,9 @@ public class DropCollectionOptions {
      * <p>Note: If not set the driver will lookup the namespace in {@link AutoEncryptionSettings#getEncryptedFieldsMap()}</p>
      * @return the encrypted fields document
      * @since 4.7
+     * @mongodb.server.release 7.0
      */
+    @Beta(Beta.Reason.SERVER)
     @Nullable
     public Bson getEncryptedFields() {
         return encryptedFields;
@@ -50,8 +53,10 @@ public class DropCollectionOptions {
      * @param encryptedFields the encrypted fields document
      * @return this
      * @since 4.7
+     * @mongodb.server.release 7.0
      * @mongodb.driver.manual core/security-client-side-encryption/ In-use encryption
      */
+    @Beta(Beta.Reason.SERVER)
     public DropCollectionOptions encryptedFields(@Nullable final Bson encryptedFields) {
         this.encryptedFields = encryptedFields;
         return this;

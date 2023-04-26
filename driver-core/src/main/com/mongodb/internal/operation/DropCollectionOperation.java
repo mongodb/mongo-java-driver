@@ -145,8 +145,6 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
      * <li>Drop the collection collectionName.
      * <li>Drop the collection with name encryptedFields["escCollection"].
      *    If encryptedFields["escCollection"] is not set, use the collection name enxcol_.<collectionName>.esc.</li>
-     * <li>Drop the collection with name encryptedFields["eccCollection"].
-     *    If encryptedFields["eccCollection"] is not set, use the collection name enxcol_.<collectionName>.ecc.</li>
      * <li>Drop the collection with name encryptedFields["ecocCollection"].
      *    If encryptedFields["ecocCollection"] is not set, use the collection name enxcol_.<collectionName>.ecoc.</li>
      * </ol>
@@ -160,7 +158,6 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
         } else  {
             return asList(
                     () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "esc"),
-                    () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecc"),
                     () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecoc"),
                     this::dropCollectionCommand
             );

@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -350,8 +351,9 @@ public class CreateCollectionOptions {
      * <p>Note: If not set the driver will lookup the namespace in {@link AutoEncryptionSettings#getEncryptedFieldsMap()}</p>
      * @return the encrypted fields document
      * @since 4.7
-     * @mongodb.server.release 6.0
+     * @mongodb.server.release 7.0
      */
+    @Beta(Beta.Reason.SERVER)
     @Nullable
     public Bson getEncryptedFields() {
         return encryptedFields;
@@ -366,8 +368,9 @@ public class CreateCollectionOptions {
      * @return this
      * @since 4.7
      * @mongodb.driver.manual core/security-client-side-encryption/ In-use encryption
-     * @mongodb.server.release 6.0
+     * @mongodb.server.release 7.0
      */
+    @Beta(Beta.Reason.SERVER)
     public CreateCollectionOptions encryptedFields(@Nullable final Bson encryptedFields) {
         this.encryptedFields = encryptedFields;
         return this;
