@@ -123,7 +123,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * Produces MongoUpdatedEncryptedFieldsException` if an exception happens after creating at least one data key.
    * This exception makes the updated `encryptedFields` available to the caller.
    * @since 4.9
-   * @note Requires MongoDB 6.0 or greater.
+   * @note Requires MongoDB 7.0 or greater.
    * @see [[https://www.mongodb.com/docs/manual/reference/command/create/ Create Command]]
    */
   @Beta(Array(Beta.Reason.SERVER))

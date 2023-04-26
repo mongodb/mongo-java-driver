@@ -291,37 +291,25 @@ public final class CommandMonitoringTestHelper {
         BsonDocument command = getWritableCloneOfCommand(event.getCommand());
 
         massageCommand(event, command);
-
+        // The null-treatment below stems from
+        // https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#null-values
         if (lsidMap == null) {
             command.remove("lsid");
         } else if (command.containsKey("lsid")) {
             command.put("lsid", lsidMap.get(command.getString("lsid").getValue()));
         }
-
-        if (command.containsKey("txnNumber") && command.isNull("txnNumber")) {
-            command.remove("txnNumber");
+        for (String nullableFieldName : new String[] {"txnNumber", "stmtId", "startTransaction", "autocommit", "maxTimeMS", "writeConcern",
+                "allowDiskUse", "readConcern", "encryptedFields"}) {
+            if (command.isNull(nullableFieldName)) {
+                command.remove(nullableFieldName);
+            }
         }
-        if (command.containsKey("stmtId") && command.isNull("stmtId")) {
-            command.remove("stmtId");
-        }
-        if (command.containsKey("startTransaction") && command.isNull("startTransaction")) {
-            command.remove("startTransaction");
-        }
-        if (command.containsKey("autocommit") && command.isNull("autocommit")) {
-            command.remove("autocommit");
-        }
-        if (command.containsKey("maxTimeMS") && command.isNull("maxTimeMS")) {
-            command.remove("maxTimeMS");
-        }
-        if (command.containsKey("writeConcern") && command.isNull("writeConcern")) {
-            command.remove("writeConcern");
-        }
-        if (command.containsKey("allowDiskUse") && command.isNull("allowDiskUse")) {
-            command.remove("allowDiskUse");
-        }
-        if (command.containsKey("readConcern")) {
-            if (command.isNull("readConcern")) {
-                command.remove("readConcern");
+        if (command.containsKey("encryptedFields")) {
+            BsonDocument encryptedFields = command.getDocument("encryptedFields");
+            for (String nullableFieldName : new String[] {"escCollection", "ecocCollection", "eccCollection"}) {
+                if (encryptedFields.isNull(nullableFieldName)) {
+                    encryptedFields.remove(nullableFieldName);
+                }
             }
         }
         command.remove("recoveryToken");
