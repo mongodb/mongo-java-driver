@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
@@ -195,10 +196,7 @@ public abstract class AbstractClientSideEncryptionTest {
         }
 
         Map<String, Object> extraOptions = new HashMap<>();
-        String cryptSharedLibPath = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
-        if (!cryptSharedLibPath.isEmpty()) {
-            extraOptions.put("cryptSharedLibPath", cryptSharedLibPath);
-        }
+        cryptSharedLibPathSysPropValue().ifPresent(path -> extraOptions.put("cryptSharedLibPath", path));
         if (cryptOptions.containsKey("extraOptions")) {
             BsonDocument extraOptionsDocument = cryptOptions.getDocument("extraOptions");
             if (extraOptionsDocument.containsKey("mongocryptdSpawnArgs")) {
@@ -383,5 +381,10 @@ public abstract class AbstractClientSideEncryptionTest {
             }
         }
         return data;
+    }
+
+    static Optional<String> cryptSharedLibPathSysPropValue() {
+        String value = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
+        return value.isEmpty() ? Optional.empty() : Optional.of(value);
     }
 }
