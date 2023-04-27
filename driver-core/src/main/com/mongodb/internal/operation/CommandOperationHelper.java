@@ -44,6 +44,7 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -183,19 +184,20 @@ final class CommandOperationHelper {
         return new RetryState(retry ? RetryState.RETRIES : 0);
     }
 
-    static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final Supplier<R> readFunction) {
+    static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
+            final Supplier<R> readFunction) {
         return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
                 CommandOperationHelper::shouldAttemptToRetryRead, () -> {
-            logRetryExecute(retryState);
+            logRetryExecute(retryState, operationContext);
             return readFunction.get();
         });
     }
 
-    static <R> AsyncCallbackSupplier<R> decorateReadWithRetries(final RetryState retryState,
+    static <R> AsyncCallbackSupplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
                 CommandOperationHelper::shouldAttemptToRetryRead, callback -> {
-            logRetryExecute(retryState);
+            logRetryExecute(retryState, operationContext);
             asyncReadFunction.get(callback);
         });
     }
@@ -219,7 +221,7 @@ final class CommandOperationHelper {
             final CommandReadTransformer<D, T> transformer,
             final boolean retryReads) {
         RetryState retryState = initialRetryState(retryReads);
-        Supplier<T> read = decorateReadWithRetries(retryState, () ->
+        Supplier<T> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
             withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 return createReadCommandAndExecute(retryState, binding, source, database, commandCreator, decoder, transformer, connection);
@@ -288,7 +290,8 @@ final class CommandOperationHelper {
             final SingleResultCallback<T> callback) {
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
-        AsyncCallbackSupplier<T> asyncRead = CommandOperationHelper.<T>decorateReadWithRetries(retryState, funcCallback ->
+        AsyncCallbackSupplier<T> asyncRead = CommandOperationHelper.<T>decorateReadWithRetries(retryState, binding.getOperationContext(),
+                funcCallback ->
             withAsyncSourceAndConnection(sourceAsyncSupplier, false, funcCallback,
                 (source, connection, releasingCallback) -> {
                     if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
@@ -375,19 +378,20 @@ final class CommandOperationHelper {
                 binding, transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
     }
 
-    static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final Supplier<R> writeFunction) {
+    static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
+            final OperationContext operationContext, final Supplier<R> writeFunction) {
         return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 CommandOperationHelper::shouldAttemptToRetryWrite, () -> {
-            logRetryExecute(retryState);
+            logRetryExecute(retryState, operationContext);
             return writeFunction.get();
         });
     }
 
-    static <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState,
+    static <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 CommandOperationHelper::shouldAttemptToRetryWrite, callback -> {
-            logRetryExecute(retryState);
+            logRetryExecute(retryState, operationContext);
             asyncWriteFunction.get(callback);
         });
     }
@@ -402,7 +406,7 @@ final class CommandOperationHelper {
             final CommandWriteTransformer<T, R> transformer,
             final Function<BsonDocument, BsonDocument> retryCommandModifier) {
         RetryState retryState = initialRetryState(true);
-        Supplier<R> retryingWrite = decorateWriteWithRetries(retryState, () -> {
+        Supplier<R> retryingWrite = decorateWriteWithRetries(retryState, binding.getOperationContext(), () -> {
             boolean firstAttempt = retryState.isFirstAttempt();
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
@@ -451,7 +455,8 @@ final class CommandOperationHelper {
             final SingleResultCallback<R> callback) {
         RetryState retryState = initialRetryState(true);
         binding.retain();
-        AsyncCallbackSupplier<R> asyncWrite = CommandOperationHelper.<R>decorateWriteWithRetries(retryState, funcCallback -> {
+        AsyncCallbackSupplier<R> asyncWrite = CommandOperationHelper.<R>decorateWriteWithRetries(retryState,
+                binding.getOperationContext(), funcCallback -> {
             boolean firstAttempt = retryState.isFirstAttempt();
             if (!firstAttempt && binding.getSessionContext().hasActiveTransaction()) {
                 binding.getSessionContext().clearTransactionContext();
@@ -601,15 +606,16 @@ final class CommandOperationHelper {
         }
     }
 
-    static void logRetryExecute(final RetryState retryState) {
+    static void logRetryExecute(final RetryState retryState, final OperationContext operationContext) {
         if (LOGGER.isDebugEnabled() && !retryState.isFirstAttempt()) {
             String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
             Throwable exception = retryState.exception().orElseThrow(Assertions::fail);
             int oneBasedAttempt = retryState.attempt() + 1;
+            long operationId = operationContext.getId();
             LOGGER.debug(commandDescription == null
-                    ? format("Retrying the operation due to the error \"%s\"; attempt #%d", exception, oneBasedAttempt)
-                    : format("Retrying the operation '%s' due to the error \"%s\"; attempt #%d",
-                            commandDescription, exception, oneBasedAttempt));
+                    ? format("Retrying the operation due to the error \"%s\"; attempt #%d; operation ID %s", exception, oneBasedAttempt, operationId)
+                    : format("Retrying the operation '%s' due to the error \"%s\"; attempt #%d; operation ID %s",
+                            commandDescription, exception, oneBasedAttempt, operationId));
         }
     }
 
