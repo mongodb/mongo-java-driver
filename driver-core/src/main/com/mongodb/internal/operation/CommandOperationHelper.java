@@ -613,9 +613,11 @@ final class CommandOperationHelper {
             int oneBasedAttempt = retryState.attempt() + 1;
             long operationId = operationContext.getId();
             LOGGER.debug(commandDescription == null
-                    ? format("Retrying the operation due to the error \"%s\"; attempt #%d; operation ID %s", exception, oneBasedAttempt, operationId)
-                    : format("Retrying the operation '%s' due to the error \"%s\"; attempt #%d; operation ID %s",
-                            commandDescription, exception, oneBasedAttempt, operationId));
+                    ? format("Retrying the operation with operation ID %s due to the error \"%s\". Attempt number: #%d", operationId,
+                    exception,
+                    oneBasedAttempt)
+                    : format("Retrying the operation '%s' with operation ID %s due to the error \"%s\". Attempt number: #%d",
+                    commandDescription, operationId, exception, oneBasedAttempt));
         }
     }
 
