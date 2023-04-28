@@ -36,6 +36,7 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ProtocolHelper;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.session.SessionContext;
@@ -137,19 +138,20 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return retryWrites;
     }
 
-    private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final Supplier<R> writeFunction) {
+    private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
+            final Supplier<R> writeFunction) {
         return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 this::shouldAttemptToRetryWrite, () -> {
-            logRetryExecute(retryState);
+            logRetryExecute(retryState, operationContext);
             return writeFunction.get();
         });
     }
 
-    private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState,
+    private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> writeFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
                 this::shouldAttemptToRetryWrite, callback -> {
-            logRetryExecute(retryState);
+            logRetryExecute(retryState, operationContext);
             writeFunction.get(callback);
         });
     }
@@ -182,7 +184,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
          * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
         RetryState retryState = new RetryState();
         BulkWriteTracker.attachNew(retryState, retryWrites);
-        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, () ->
+        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, binding.getOperationContext(), () ->
             withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
@@ -214,6 +216,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         BulkWriteTracker.attachNew(retryState, retryWrites);
         binding.retain();
         AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
+                binding.getOperationContext(),
                 funcCallback ->
             withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
                     (source, connection, releasingCallback) -> {
