@@ -365,7 +365,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             bulkWriteBatch.addResult(
                                     (BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult).getResponse());
                             BulkWriteTracker.attachNext(retryState, bulkWriteBatch);
-                        });
+                });
             }
         }
     }
@@ -384,7 +384,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             bulkWriteBatch.addResult(
                                     (BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult).getResponse());
                             BulkWriteTracker.attachNext(retryState, bulkWriteBatch);
-                        });
+                });
             }
         }
         return false;
