@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>FindIterable</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>mongodb-driver-kotlin-sync</span>
+            </a>
+    </div>
+    <div>
+4.10.0-SNAPSHOT    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":driver-kotlin-sync:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="mongodb-driver-kotlin-sync::com.mongodb.kotlin.client/FindIterable///PointingToDeclaration//305748649">
+  <div class="breadcrumbs"><a href="../../../index.html">mongodb-driver-kotlin-sync</a><span class="delimiter">/</span><a href="../index.html">com.mongodb.kotlin.client</a><span class="delimiter">/</span><span class="current">FindIterable</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Find</span><wbr></wbr><span><span>Iterable</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">wrapped<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client/FindIterable///PointingToDeclaration/">FindIterable</span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span> : <a href="../-mongo-iterable/index.html">MongoIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt; </span></div><p class="paragraph">Iterable like implementation for find operations.</p><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>T</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The type of the result.</p></div></div></div></div></div><h4 class="">See also</h4><div class="table"><div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div></div></span></div><div><div class="title"><p class="paragraph"><a href="https://www.mongodb.com/docs/manual/reference/method/db.collection.find/">Collection filter</a></p></div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="1579087424%2FConstructors%2F305748649" anchor-label="FindIterable" id="1579087424%2FConstructors%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-find-iterable.html"><span>Find</span><wbr></wbr><span><span>Iterable</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1579087424%2FConstructors%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">wrapped<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client/FindIterable///PointingToDeclaration/">FindIterable</span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="1612503366%2FFunctions%2F305748649" anchor-label="allowDiskUse" id="1612503366%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="allow-disk-use.html"><span>allow</span><wbr></wbr><span>Disk</span><wbr></wbr><span><span>Use</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1612503366%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="allow-disk-use.html"><span class="token function">allowDiskUse</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">allowDiskUse<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Enables writing to temporary files on the server. When set to true, the server can write temporary data to disk while executing the find operation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-287821532%2FFunctions%2F305748649" anchor-label="batchSize" id="-287821532%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="batch-size.html"><span>batch</span><wbr></wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-287821532%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="batch-size.html"><span class="token function">batchSize</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">batchSize<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the number of documents to return per batch.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-500056619%2FFunctions%2F305748649" anchor-label="collation" id="-500056619%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="collation.html"><span><span>collation</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-500056619%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="collation.html"><span class="token function">collation</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">collation<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/Collation///PointingToDeclaration/">Collation</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the collation options</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="382527811%2FFunctions%2F305748649" anchor-label="comment" id="382527811%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="comment.html"><span><span>comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="382527811%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="comment.html"><span class="token function">comment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">comment<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="comment.html"><span class="token function">comment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">comment<span class="token operator">: </span><span data-unresolved-link="org.bson/BsonValue///PointingToDeclaration/">BsonValue</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the comment for this operation. A null value means no comment is set.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="430515870%2FFunctions%2F305748649" anchor-label="cursor" id="430515870%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/cursor.html"><span><span>cursor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="430515870%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-mongo-iterable/cursor.html"><span class="token function">cursor</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mongo-cursor/index.html">MongoCursor</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns a cursor used for iterating over elements of type `T. The cursor is primarily used for change streams.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="735191760%2FFunctions%2F305748649" anchor-label="cursorType" id="735191760%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="cursor-type.html"><span>cursor</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="735191760%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="cursor-type.html"><span class="token function">cursorType</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">cursorType<span class="token operator">: </span><span data-unresolved-link="com.mongodb/CursorType///PointingToDeclaration/">CursorType</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the cursor type.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1942292016%2FFunctions%2F305748649" anchor-label="explain" id="1942292016%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="explain.html"><span><span>explain</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1942292016%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="explain.html"><span class="token function">explain</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">verbosity<span class="token operator">: </span><span data-unresolved-link="com.mongodb/ExplainVerbosity///PointingToDeclaration/">ExplainVerbosity</span><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson/Document///PointingToDeclaration/">Document</span></div><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="explain.html">R</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="explain.html"><span class="token function">explain</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">verbosity<span class="token operator">: </span><span data-unresolved-link="com.mongodb/ExplainVerbosity///PointingToDeclaration/">ExplainVerbosity</span><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="explain.html">R</a></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="explain.html">R</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="explain.html"><span class="token function">explain</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">resultClass<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="explain.html">R</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">verbosity<span class="token operator">: </span><span data-unresolved-link="com.mongodb/ExplainVerbosity///PointingToDeclaration/">ExplainVerbosity</span><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="explain.html">R</a></div><div class="brief "><p class="paragraph">Explain the execution plan for this operation with the given verbosity level</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2111898025%2FFunctions%2F305748649" anchor-label="filter" id="-2111898025%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="filter.html"><span><span>filter</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2111898025%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="filter.html"><span class="token function">filter</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">filter<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the query filter to apply to the query.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1236442442%2FFunctions%2F305748649" anchor-label="first" id="-1236442442%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/first.html"><span><span>first</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1236442442%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-mongo-iterable/first.html"><span class="token function">first</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2062736652%2FFunctions%2F305748649" anchor-label="firstOrNull" id="2062736652%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/first-or-null.html"><span>first</span><wbr></wbr><span>Or</span><wbr></wbr><span><span>Null</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2062736652%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-mongo-iterable/first-or-null.html"><span class="token function">firstOrNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">T</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1600878790%2FFunctions%2F305748649" anchor-label="forEach" id="1600878790%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/for-each.html"><span>for</span><wbr></wbr><span><span>Each</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1600878790%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-mongo-iterable/for-each.html"><span class="token function">forEach</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">action<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="index.html">T</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html">Unit</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Performs the given <a href="../-mongo-iterable/for-each.html">action</a> on each element and safely closes the cursor.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1247840792%2FFunctions%2F305748649" anchor-label="hint" id="-1247840792%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="hint.html"><span><span>hint</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1247840792%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="hint.html"><span class="token function">hint</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">hint<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the hint for which index to use. A null value means no hint is set.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="551245088%2FFunctions%2F305748649" anchor-label="hintString" id="551245088%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="hint-string.html"><span>hint</span><wbr></wbr><span><span>String</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="551245088%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="hint-string.html"><span class="token function">hintString</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">hint<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the hint to apply.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1024933924%2FFunctions%2F305748649" anchor-label="let" id="-1024933924%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="let.html"><span><span>let</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1024933924%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="let.html"><span class="token function">let</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">variables<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Add top-level variables to the operation. A null value means no variables are set.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1931585988%2FFunctions%2F305748649" anchor-label="limit" id="1931585988%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="limit.html"><span><span>limit</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1931585988%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="limit.html"><span class="token function">limit</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">limit<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the limit to apply.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1344163048%2FFunctions%2F305748649" anchor-label="map" id="-1344163048%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/map.html"><span><span>map</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1344163048%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-mongo-iterable/map.html">R</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="../-mongo-iterable/map.html"><span class="token function">map</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">transform<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="index.html">T</a><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../-mongo-iterable/map.html">R</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mongo-iterable/index.html">MongoIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-mongo-iterable/map.html">R</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Maps this iterable from the source document type to the target document type.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1601954291%2FFunctions%2F305748649" anchor-label="max" id="1601954291%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max.html"><span><span>max</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1601954291%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="max.html"><span class="token function">max</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">max<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the exclusive upper bound for a specific index. A null value means no max is set.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1697469766%2FFunctions%2F305748649" anchor-label="maxAwaitTime" id="-1697469766%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max-await-time.html"><span>max</span><wbr></wbr><span>Await</span><wbr></wbr><span><span>Time</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1697469766%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="max-await-time.html"><span class="token function">maxAwaitTime</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maxAwaitTime<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a><span class="token operator"> = </span>TimeUnit.MILLISECONDS</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor, this option is ignored.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="83332932%2FFunctions%2F305748649" anchor-label="maxTime" id="83332932%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max-time.html"><span>max</span><wbr></wbr><span><span>Time</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="83332932%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="max-time.html"><span class="token function">maxTime</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maxTime<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a><span class="token operator"> = </span>TimeUnit.MILLISECONDS</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the maximum execution time on the server for this operation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-19175867%2FFunctions%2F305748649" anchor-label="min" id="-19175867%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="min.html"><span><span>min</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-19175867%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="min.html"><span class="token function">min</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">min<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the minimum inclusive lower bound for a specific index. A null value means no max is set.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="328575836%2FFunctions%2F305748649" anchor-label="noCursorTimeout" id="328575836%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="no-cursor-timeout.html"><span>no</span><wbr></wbr><span>Cursor</span><wbr></wbr><span><span>Timeout</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="328575836%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="no-cursor-timeout.html"><span class="token function">noCursorTimeout</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">noCursorTimeout<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The server normally times out idle cursors after an inactivity period (10 minutes) to prevent excess memory use. Set this option to prevent that.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1806520644%2FFunctions%2F305748649" anchor-label="oplogReplay" id="-1806520644%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="oplog-replay.html"><span>oplog</span><wbr></wbr><span><span>Replay</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1806520644%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="oplog-replay.html"><span class="token function"><strike>oplogReplay</strike></span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">oplogReplay<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Users should not set this under normal circumstances.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="594559717%2FFunctions%2F305748649" anchor-label="partial" id="594559717%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="partial.html"><span><span>partial</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="594559717%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="partial.html"><span class="token function">partial</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">partial<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1708759008%2FFunctions%2F305748649" anchor-label="projection" id="-1708759008%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="projection.html"><span><span>projection</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1708759008%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="projection.html"><span class="token function">projection</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">projection<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets a document describing the fields to return for all matching documents.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1030040727%2FFunctions%2F305748649" anchor-label="returnKey" id="1030040727%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="return-key.html"><span>return</span><wbr></wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1030040727%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="return-key.html"><span class="token function">returnKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">returnKey<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="20638709%2FFunctions%2F305748649" anchor-label="showRecordId" id="20638709%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="show-record-id.html"><span>show</span><wbr></wbr><span>Record</span><wbr></wbr><span><span>Id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="20638709%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="show-record-id.html"><span class="token function">showRecordId</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">showRecordId<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the showRecordId. Set to true to add a field <code class="lang-kotlin">$recordId</code> to the returned documents.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1804115064%2FFunctions%2F305748649" anchor-label="skip" id="1804115064%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="skip.html"><span><span>skip</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1804115064%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="skip.html"><span class="token function">skip</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">skip<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the number of documents to skip.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1305402737%2FFunctions%2F305748649" anchor-label="sort" id="1305402737%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="sort.html"><span><span>sort</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1305402737%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="sort.html"><span class="token function">sort</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">sort<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">FindIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Sets the sort criteria to apply to the query.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1275458726%2FFunctions%2F305748649" anchor-label="toCollection" id="-1275458726%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/to-collection.html"><span>to</span><wbr></wbr><span><span>Collection</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1275458726%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-mongo-iterable/to-collection.html">C</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html">MutableCollection</a><span class="token operator">&lt;</span><span class="token keyword">in </span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span><a href="../-mongo-iterable/to-collection.html"><span class="token function">toCollection</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">destination<span class="token operator">: </span><a href="../-mongo-iterable/to-collection.html">C</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mongo-iterable/to-collection.html">C</a></div><div class="brief "><p class="paragraph">Appends all elements to the given <a href="../-mongo-iterable/to-collection.html">destination</a> collection.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-670883429%2FFunctions%2F305748649" anchor-label="toList" id="-670883429%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/to-list.html"><span>to</span><wbr></wbr><span><span>List</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-670883429%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="../-mongo-iterable/to-list.html"><span class="token function">toList</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1883301336%2FFunctions%2F305748649" anchor-label="use" id="-1883301336%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-mongo-iterable/use.html"><span><span>use</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1883301336%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-mongo-iterable/use.html">R</a><span class="token operator">&gt; </span><a href="../-mongo-iterable/use.html"><span class="token function">use</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">consumer<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html">Sequence</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../-mongo-iterable/use.html">R</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mongo-iterable/use.html">R</a></div><div class="brief "><p class="paragraph">Creates a new cursor and treats it as a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html">Sequence</a>, invokes the given <a href="../-mongo-iterable/use.html">consumer</a> function and closes the cursor down correctly whether an exception is thrown or not.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>

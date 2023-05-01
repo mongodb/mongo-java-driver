@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ClientSession</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>mongodb-driver-kotlin-coroutine</span>
+            </a>
+    </div>
+    <div>
+4.10.0-SNAPSHOT    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":driver-kotlin-coroutine:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="mongodb-driver-kotlin-coroutine::com.mongodb.kotlin.client.coroutine/ClientSession///PointingToDeclaration//-1409914714">
+  <div class="breadcrumbs"><a href="../../../index.html">mongodb-driver-kotlin-coroutine</a><span class="delimiter">/</span><a href="../index.html">com.mongodb.kotlin.client.coroutine</a><span class="delimiter">/</span><span class="current">ClientSession</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Client</span><wbr></wbr><span><span>Session</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ClientSession</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>wrapped<span class="token operator">: </span><span data-unresolved-link="com.mongodb.reactivestreams.client/ClientSession///PointingToDeclaration/">ClientSession</span></span></span><span class="token punctuation">)</span> : <span data-unresolved-link="com.mongodb.session/ClientSession///PointingToDeclaration/">ClientSession</span></div><p class="paragraph">A client session that supports transactions.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="1175134471%2FConstructors%2F-1409914714" anchor-label="ClientSession" id="1175134471%2FConstructors%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-client-session.html"><span>Client</span><wbr></wbr><span><span>Session</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1175134471%2FConstructors%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">wrapped<span class="token operator">: </span><span data-unresolved-link="com.mongodb.reactivestreams.client/ClientSession///PointingToDeclaration/">ClientSession</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1064998699%2FFunctions%2F-1409914714" anchor-label="abortTransaction" id="-1064998699%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="abort-transaction.html"><span>abort</span><wbr></wbr><span><span>Transaction</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1064998699%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="abort-transaction.html"><span class="token function">abortTransaction</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Abort a transaction in the context of this session. A transaction can only be aborted if one has first been started.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1289606366%2FFunctions%2F-1409914714" anchor-label="advanceClusterTime" id="1289606366%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="advance-cluster-time.html"><span>advance</span><wbr></wbr><span>Cluster</span><wbr></wbr><span><span>Time</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1289606366%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="advance-cluster-time.html"><span class="token function">advanceClusterTime</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clusterTime<span class="token operator">: </span><span data-unresolved-link="org.bson/BsonDocument///PointingToDeclaration/">BsonDocument</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1878579012%2FFunctions%2F-1409914714" anchor-label="advanceOperationTime" id="1878579012%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="advance-operation-time.html"><span>advance</span><wbr></wbr><span>Operation</span><wbr></wbr><span><span>Time</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1878579012%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="advance-operation-time.html"><span class="token function">advanceOperationTime</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">operationTime<span class="token operator">: </span><span data-unresolved-link="org.bson/BsonTimestamp///PointingToDeclaration/">BsonTimestamp</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Set the operation time of the last operation executed in this session.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="188625337%2FFunctions%2F-1409914714" anchor-label="clearTransactionContext" id="188625337%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="clear-transaction-context.html"><span>clear</span><wbr></wbr><span>Transaction</span><wbr></wbr><span><span>Context</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="188625337%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="clear-transaction-context.html"><span class="token function">clearTransactionContext</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Clears the transaction context.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2082061727%2FFunctions%2F-1409914714" anchor-label="close" id="2082061727%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="close.html"><span><span>close</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2082061727%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="close.html"><span class="token function">close</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-528773552%2FFunctions%2F-1409914714" anchor-label="commitTransaction" id="-528773552%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="commit-transaction.html"><span>commit</span><wbr></wbr><span><span>Transaction</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-528773552%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="commit-transaction.html"><span class="token function">commitTransaction</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Commit a transaction in the context of this session. A transaction can only be commmited if one has first been started.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1743892846%2FFunctions%2F-1409914714" anchor-label="getClusterTime" id="-1743892846%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-cluster-time.html"><span>get</span><wbr></wbr><span>Cluster</span><wbr></wbr><span><span>Time</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1743892846%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-cluster-time.html"><span class="token function">getClusterTime</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson/BsonDocument///PointingToDeclaration/">BsonDocument</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="972863301%2FFunctions%2F-1409914714" anchor-label="getOperationTime" id="972863301%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-operation-time.html"><span>get</span><wbr></wbr><span>Operation</span><wbr></wbr><span><span>Time</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="972863301%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-operation-time.html"><span class="token function">getOperationTime</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson/BsonTimestamp///PointingToDeclaration/">BsonTimestamp</span></div><div class="brief "><p class="paragraph">Gets the operation time of the last operation executed in this session.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-810447429%2FFunctions%2F-1409914714" anchor-label="getOptions" id="-810447429%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-options.html"><span>get</span><wbr></wbr><span><span>Options</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-810447429%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-options.html"><span class="token function">getOptions</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb/ClientSessionOptions///PointingToDeclaration/">ClientSessionOptions</span></div><div class="brief "><p class="paragraph">Get the options for this session.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1273520485%2FFunctions%2F-1409914714" anchor-label="getOriginator" id="1273520485%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-originator.html"><span>get</span><wbr></wbr><span><span>Originator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1273520485%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-originator.html"><span class="token function">getOriginator</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></div><div class="brief "><p class="paragraph">Gets the originator for the session.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1913643136%2FFunctions%2F-1409914714" anchor-label="getPinnedServerAddress" id="1913643136%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-pinned-server-address.html"><span>get</span><wbr></wbr><span>Pinned</span><wbr></wbr><span>Server</span><wbr></wbr><span><span>Address</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1913643136%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-pinned-server-address.html"><span class="token function">getPinnedServerAddress</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb/ServerAddress///PointingToDeclaration/">ServerAddress</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Get the server address of the pinned mongos on this session. For internal use only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="421006005%2FFunctions%2F-1409914714" anchor-label="getRecoveryToken" id="421006005%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-recovery-token.html"><span>get</span><wbr></wbr><span>Recovery</span><wbr></wbr><span><span>Token</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="421006005%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-recovery-token.html"><span class="token function">getRecoveryToken</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson/BsonDocument///PointingToDeclaration/">BsonDocument</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Get the recovery token from the latest outcome in a sharded transaction. For internal use only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1687046950%2FFunctions%2F-1409914714" anchor-label="getServerSession" id="1687046950%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-server-session.html"><span>get</span><wbr></wbr><span>Server</span><wbr></wbr><span><span>Session</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1687046950%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-server-session.html"><span class="token function">getServerSession</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.session/ServerSession///PointingToDeclaration/">ServerSession</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1050615847%2FFunctions%2F-1409914714" anchor-label="getSnapshotTimestamp" id="1050615847%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-snapshot-timestamp.html"><span>get</span><wbr></wbr><span>Snapshot</span><wbr></wbr><span><span>Timestamp</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1050615847%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-snapshot-timestamp.html"><span class="token function">getSnapshotTimestamp</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson/BsonTimestamp///PointingToDeclaration/">BsonTimestamp</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">For internal use only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-148358256%2FFunctions%2F-1409914714" anchor-label="getTransactionContext" id="-148358256%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-transaction-context.html"><span>get</span><wbr></wbr><span>Transaction</span><wbr></wbr><span><span>Context</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-148358256%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-transaction-context.html"><span class="token function">getTransactionContext</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Gets the transaction context.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-719878783%2FFunctions%2F-1409914714" anchor-label="getTransactionOptions" id="-719878783%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-transaction-options.html"><span>get</span><wbr></wbr><span>Transaction</span><wbr></wbr><span><span>Options</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-719878783%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-transaction-options.html"><span class="token function">getTransactionOptions</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb/TransactionOptions///PointingToDeclaration/">TransactionOptions</span></div><div class="brief "><p class="paragraph">Gets the transaction options. Only call this method of the session has an active transaction</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2128462619%2FFunctions%2F-1409914714" anchor-label="hasActiveTransaction" id="-2128462619%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="has-active-transaction.html"><span>has</span><wbr></wbr><span>Active</span><wbr></wbr><span><span>Transaction</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2128462619%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="has-active-transaction.html"><span class="token function">hasActiveTransaction</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns true if there is an active transaction on this session, and false otherwise</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-991512397%2FFunctions%2F-1409914714" anchor-label="isCausallyConsistent" id="-991512397%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-causally-consistent.html"><span>is</span><wbr></wbr><span>Causally</span><wbr></wbr><span><span>Consistent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-991512397%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="is-causally-consistent.html"><span class="token function">isCausallyConsistent</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns true if operations in this session must be causally consistent</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1354242783%2FFunctions%2F-1409914714" anchor-label="notifyMessageSent" id="-1354242783%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="notify-message-sent.html"><span>notify</span><wbr></wbr><span>Message</span><wbr></wbr><span><span>Sent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1354242783%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="notify-message-sent.html"><span class="token function">notifyMessageSent</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Notify the client session that a message has been sent.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-958105001%2FFunctions%2F-1409914714" anchor-label="notifyOperationInitiated" id="-958105001%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="notify-operation-initiated.html"><span>notify</span><wbr></wbr><span>Operation</span><wbr></wbr><span><span>Initiated</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-958105001%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="notify-operation-initiated.html"><span class="token function">notifyOperationInitiated</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">operation<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Notify the client session that command execution is being initiated. This should be called before server selection occurs.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-824125822%2FFunctions%2F-1409914714" anchor-label="setRecoveryToken" id="-824125822%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-recovery-token.html"><span>set</span><wbr></wbr><span>Recovery</span><wbr></wbr><span><span>Token</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-824125822%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="set-recovery-token.html"><span class="token function">setRecoveryToken</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">recoveryToken<span class="token operator">: </span><span data-unresolved-link="org.bson/BsonDocument///PointingToDeclaration/">BsonDocument</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Set the recovery token. For internal use only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2109500226%2FFunctions%2F-1409914714" anchor-label="setSnapshotTimestamp" id="2109500226%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-snapshot-timestamp.html"><span>set</span><wbr></wbr><span>Snapshot</span><wbr></wbr><span><span>Timestamp</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2109500226%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="set-snapshot-timestamp.html"><span class="token function">setSnapshotTimestamp</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">snapshotTimestamp<span class="token operator">: </span><span data-unresolved-link="org.bson/BsonTimestamp///PointingToDeclaration/">BsonTimestamp</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">For internal use only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1453908842%2FFunctions%2F-1409914714" anchor-label="setTransactionContext" id="1453908842%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-transaction-context.html"><span>set</span><wbr></wbr><span>Transaction</span><wbr></wbr><span><span>Context</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1453908842%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="set-transaction-context.html"><span class="token function">setTransactionContext</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">address<span class="token operator">: </span><span data-unresolved-link="com.mongodb/ServerAddress///PointingToDeclaration/">ServerAddress</span><span class="token punctuation">, </span></span><span class="parameter ">transactionContext<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Sets the transaction context.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="176328323%2FFunctions%2F-1409914714" anchor-label="startTransaction" id="176328323%2FFunctions%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="start-transaction.html"><span>start</span><wbr></wbr><span><span>Transaction</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="176328323%2FFunctions%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="start-transaction.html"><span class="token function">startTransaction</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is already an active transaction on this session.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="start-transaction.html"><span class="token function">startTransaction</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">transactionOptions<span class="token operator">: </span><span data-unresolved-link="com.mongodb/TransactionOptions///PointingToDeclaration/">TransactionOptions</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Start a transaction in the context of this session with the given transaction options. A transaction can not be started if there is already an active transaction on this session.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="1051644210%2FProperties%2F-1409914714" anchor-label="wrapped" id="1051644210%2FProperties%2F-1409914714" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-coroutine:dokkaHtml/main" data-filterable-set=":driver-kotlin-coroutine:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="wrapped.html"><span><span>wrapped</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1051644210%2FProperties%2F-1409914714"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-coroutine:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="wrapped.html">wrapped</a><span class="token operator">: </span><span data-unresolved-link="com.mongodb.reactivestreams.client/ClientSession///PointingToDeclaration/">ClientSession</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>

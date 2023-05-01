@@ -1,0 +1,40 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:org.bson.codecs.kotlinx////PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/index.html
+$dokka.location:org.bson.codecs.kotlinx//defaultSerializersModule/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/default-serializers-module.html
+$dokka.location:org.bson.codecs.kotlinx/BsonConfiguration///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-configuration/index.html
+$dokka.location:org.bson.codecs.kotlinx/BsonConfiguration/BsonConfiguration/#kotlin.Boolean#kotlin.Boolean#kotlin.String/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-configuration/-bson-configuration.html
+$dokka.location:org.bson.codecs.kotlinx/BsonConfiguration/classDiscriminator/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-configuration/class-discriminator.html
+$dokka.location:org.bson.codecs.kotlinx/BsonConfiguration/encodeDefaults/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-configuration/encode-defaults.html
+$dokka.location:org.bson.codecs.kotlinx/BsonConfiguration/explicitNulls/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-configuration/explicit-nulls.html
+$dokka.location:org.bson.codecs.kotlinx/BsonDecoder///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-decoder/index.html
+$dokka.location:org.bson.codecs.kotlinx/BsonDecoder/decodeBsonValue/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-decoder/decode-bson-value.html
+$dokka.location:org.bson.codecs.kotlinx/BsonDecoder/decodeObjectId/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-decoder/decode-object-id.html
+$dokka.location:org.bson.codecs.kotlinx/BsonDecoder/reader/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-decoder/reader.html
+$dokka.location:org.bson.codecs.kotlinx/BsonEncoder///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-encoder/index.html
+$dokka.location:org.bson.codecs.kotlinx/BsonEncoder/encodeBsonValue/#org.bson.BsonValue/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-encoder/encode-bson-value.html
+$dokka.location:org.bson.codecs.kotlinx/BsonEncoder/encodeObjectId/#org.bson.types.ObjectId/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-encoder/encode-object-id.html
+$dokka.location:org.bson.codecs.kotlinx/BsonEncoder/writer/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-encoder/writer.html
+$dokka.location:org.bson.codecs.kotlinx/BsonValueSerializer///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-value-serializer/index.html
+$dokka.location:org.bson.codecs.kotlinx/BsonValueSerializer/descriptor/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-value-serializer/descriptor.html
+$dokka.location:org.bson.codecs.kotlinx/BsonValueSerializer/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-value-serializer/deserialize.html
+$dokka.location:org.bson.codecs.kotlinx/BsonValueSerializer/serialize/#kotlinx.serialization.encoding.Encoder#org.bson.BsonValue/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-value-serializer/serialize.html
+$dokka.location:org.bson.codecs.kotlinx/BsonValueSerializer/serializersModule/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-bson-value-serializer/serializers-module.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec.Companion///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/-companion/index.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec.Companion/create/#kotlin.reflect.KClass[TypeParam(bounds=[kotlin.Any])]#kotlinx.serialization.KSerializer[TypeParam(bounds=[kotlin.Any])]#kotlinx.serialization.modules.SerializersModule#org.bson.codecs.kotlinx.BsonConfiguration/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/-companion/create.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec.Companion/create/#kotlin.reflect.KClass[TypeParam(bounds=[kotlin.Any])]#kotlinx.serialization.modules.SerializersModule#org.bson.codecs.kotlinx.BsonConfiguration/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/-companion/create.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec.Companion/create/#kotlinx.serialization.modules.SerializersModule#org.bson.codecs.kotlinx.BsonConfiguration/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/-companion/create.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/index.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec/decode/#org.bson.BsonReader#org.bson.codecs.DecoderContext/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/decode.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec/encode/#org.bson.BsonWriter#TypeParam(bounds=[kotlin.Any])#org.bson.codecs.EncoderContext/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/encode.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodec/getEncoderClass/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec/get-encoder-class.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodecProvider///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec-provider/index.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodecProvider/KotlinSerializerCodecProvider/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec-provider/-kotlin-serializer-codec-provider.html
+$dokka.location:org.bson.codecs.kotlinx/KotlinSerializerCodecProvider/get/#java.lang.Class[TypeParam(bounds=[kotlin.Any])]#org.bson.codecs.configuration.CodecRegistry/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-kotlin-serializer-codec-provider/get.html
+$dokka.location:org.bson.codecs.kotlinx/ObjectIdSerializer///PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-object-id-serializer/index.html
+$dokka.location:org.bson.codecs.kotlinx/ObjectIdSerializer/descriptor/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-object-id-serializer/descriptor.html
+$dokka.location:org.bson.codecs.kotlinx/ObjectIdSerializer/deserialize/#kotlinx.serialization.encoding.Decoder/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-object-id-serializer/deserialize.html
+$dokka.location:org.bson.codecs.kotlinx/ObjectIdSerializer/serialize/#kotlinx.serialization.encoding.Encoder#org.bson.types.ObjectId/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-object-id-serializer/serialize.html
+$dokka.location:org.bson.codecs.kotlinx/ObjectIdSerializer/serializersModule/#/PointingToDeclaration/bson-kotlinx/org.bson.codecs.kotlinx/-object-id-serializer/serializers-module.html
+org.bson.codecs.kotlinx
+
