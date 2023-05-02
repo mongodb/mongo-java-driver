@@ -64,12 +64,10 @@ echo "Running tests with Java ${JAVA_VERSION}"
       ${GRADLE_EXTRA_VARS} \
       --stacktrace --info --continue \
       driver-legacy:test \
-          --tests com.mongodb.ClientSideEncryptionLegacyTest \
+          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*" \
       driver-sync:test \
-          --tests com.mongodb.client.ClientSideEncryptionTest \
-          --tests com.mongodb.client.unified.ClientSideEncryptionTest \
+          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*" \
       driver-reactive-streams:test \
-          --tests com.mongodb.reactivestreams.client.ClientSideEncryptionTest \
-          --tests com.mongodb.reactivestreams.client.unified.ClientSideEncryptionTest \
+          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*" \
       driver-scala:integrationTest \
-          --tests org.mongodb.scala.ClientSideEncryptionTest
+          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*"
