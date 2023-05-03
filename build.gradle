@@ -55,7 +55,7 @@ ext {
     zstdVersion = '1.5.2-5'
     awsSdkV2Version = '2.18.9'
     awsSdkV1Version = '1.12.337'
-    mongoCryptVersion = '1.8.0-SNAPSHOT'
+    mongoCryptVersion = '1.8.0-alpha1'
     projectReactorVersion = '2022.0.0'
     junitBomVersion = '5.8.2'
     gitVersion = getGitVersion()
