@@ -22,7 +22,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.ByteBuf;
-import org.bson.ByteBufNIO;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
@@ -34,7 +33,6 @@ import org.bson.json.JsonWriterSettings;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.StringWriter;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,23 +40,6 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
     private static final long serialVersionUID = 2L;
 
     private final transient ByteBuf byteBuf;
-
-    static List<ByteBufBsonDocument> createList(final ResponseBuffers responseBuffers) {
-        int numDocuments = responseBuffers.getReplyHeader().getNumberReturned();
-        ByteBuf documentsBuffer = responseBuffers.getBodyByteBuffer();
-        documentsBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        List<ByteBufBsonDocument> documents = new ArrayList<>(numDocuments);
-        while (documents.size() < numDocuments) {
-            int documentSizeInBytes = documentsBuffer.getInt();
-            documentsBuffer.position(documentsBuffer.position() - 4);
-            ByteBuf documentBuffer = documentsBuffer.duplicate();
-            documentBuffer.limit(documentBuffer.position() + documentSizeInBytes);
-            documents.add(new ByteBufBsonDocument(new ByteBufNIO(documentBuffer.asNIO())));
-            documentBuffer.release();
-            documentsBuffer.position(documentsBuffer.position() + documentSizeInBytes);
-        }
-        return documents;
-    }
 
     static List<ByteBufBsonDocument> createList(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
         List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
