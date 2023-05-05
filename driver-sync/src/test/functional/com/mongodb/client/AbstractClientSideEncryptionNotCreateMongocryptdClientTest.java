@@ -19,7 +19,6 @@ package com.mongodb.client;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.NoCheckedAutoCloseable;
 import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.lang.Nullable;
@@ -104,7 +103,7 @@ public abstract class AbstractClientSideEncryptionNotCreateMongocryptdClientTest
         //noinspection unused
         try (ConnectionTracker autoClosed = mongocryptdConnectionTracker;
              MongoClient autoClosed2 = client) {
-            // empty
+            // we use the `try`-with-resources statement to release multiple resources
         }
     }
 
@@ -133,6 +132,7 @@ public abstract class AbstractClientSideEncryptionNotCreateMongocryptdClientTest
         }
     }
 
+    @SuppressWarnings("try")
     private static final class ConnectionTracker implements AutoCloseable {
         private final ServerSocket serverSocket;
         private final ExecutorService executor;
@@ -168,7 +168,6 @@ public abstract class AbstractClientSideEncryptionNotCreateMongocryptdClientTest
             }
         }
 
-        @SuppressWarnings("try")
         private static ConnectionTracker start(final ServerSocket serverSocket, final ExecutorService executor) throws Exception {
             CompletableFuture<Void> confirmListening = new CompletableFuture<>();
             Future<?> failOnConnect = executor.submit(() -> {
@@ -209,12 +208,11 @@ public abstract class AbstractClientSideEncryptionNotCreateMongocryptdClientTest
         }
 
         @Override
-        @SuppressWarnings("try")
-        public void close() throws IOException {
+        public void close() throws Exception {
             if (active) {
                 active = false;
                 //noinspection unused
-                try (NoCheckedAutoCloseable autoClosed = executor::shutdownNow;
+                try (AutoCloseable autoClosed = executor::shutdownNow;
                      ServerSocket autoClosed1 = serverSocket) {
                     assertNoConnections();
                 }

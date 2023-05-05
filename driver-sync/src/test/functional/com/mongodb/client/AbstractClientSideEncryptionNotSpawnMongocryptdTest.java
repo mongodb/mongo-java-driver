@@ -82,7 +82,6 @@ public abstract class AbstractClientSideEncryptionNotSpawnMongocryptdTest {
     }
 
     @AfterEach
-    @SuppressWarnings("try")
     public void cleanUp() {
         mongocryptdSocketAddress = null;
         if (client != null) {
