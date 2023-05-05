@@ -87,7 +87,6 @@ import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.StructuredLogMessage.Level.DEBUG;
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 /**
@@ -289,9 +288,6 @@ public class InternalStreamConnection implements InternalConnection {
         initialServerDescription = initializationDescription.getServerDescription();
         opened.set(true);
         sendCompressor = findSendCompressor(description);
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
-        }
     }
 
     private Map<Byte, Compressor> createCompressorMap(final List<MongoCompressor> compressorList) {
@@ -337,13 +333,8 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void close() {
         // All but the first call is a no-op
-        if (!isClosed.getAndSet(true)) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(format("Closing connection %s", getId()));
-            }
-            if (stream != null) {
+        if (!isClosed.getAndSet(true) && (stream != null)) {
                 stream.close();
-            }
         }
     }
 
@@ -655,9 +646,6 @@ public class InternalStreamConnection implements InternalConnection {
             return;
         }
 
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(format("Start receiving response on %s", getId()));
-        }
         readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback((result, t) -> {
             if (t != null) {
                 close();

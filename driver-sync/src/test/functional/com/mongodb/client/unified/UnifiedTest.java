@@ -35,6 +35,7 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.logging.StructuredLogMessage;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -58,6 +59,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -71,6 +73,7 @@ import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -266,9 +269,25 @@ public abstract class UnifiedTest {
             String clientId = curLogMessagesForClient.getString("client").getValue();
             TestLoggingInterceptor loggingInterceptor =
                     entities.getClientLoggingInterceptor(clientId);
-            rootContext.getLogMatcher().assertLogMessageEquality(clientId, curLogMessagesForClient.getArray("messages"),
-                    loggingInterceptor.getMessages());
+
+            BsonArray messages = curLogMessagesForClient.getArray("messages");
+            Set<StructuredLogMessage.Component> expectedComponents = getExpectedComponents(messages);
+
+            rootContext.getLogMatcher().assertLogMessageEquality(clientId, messages,
+                    loggingInterceptor.getMessages(expectedComponents));
         }
+    }
+
+    private Set<StructuredLogMessage.Component> getExpectedComponents(BsonArray messages) {
+        Set<StructuredLogMessage.Component> components = messages.stream()
+                .map(BsonValue::asDocument)
+                .map(bsonDocument -> bsonDocument.get("component"))
+                .map(BsonValue::asString)
+                .map(BsonString::getValue)
+                .map(String::toUpperCase)
+                .map(StructuredLogMessage.Component::valueOf)
+                .collect(toCollection(() -> EnumSet.noneOf(StructuredLogMessage.Component.class)));
+        return components;
     }
 
     private void assertOutcome(final UnifiedTestContext context) {

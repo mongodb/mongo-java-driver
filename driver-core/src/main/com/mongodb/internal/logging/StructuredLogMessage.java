@@ -34,7 +34,8 @@ public final class StructuredLogMessage {
     private final List<Entry> entries;
 
     public enum Component {
-        COMMAND
+        COMMAND,
+        CONNECTION
     }
 
     public enum Level {
@@ -42,6 +43,8 @@ public final class StructuredLogMessage {
     }
 
     public static final class Entry {
+        public static final String NAME_SERVER_HOST = "serverHost";
+        public static final String NAME_SERVER_PORT = "serverPort";
         private final String name;
         private final Object value;
 

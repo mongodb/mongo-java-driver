@@ -453,6 +453,14 @@ public final class Entities {
                         clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
                                 builder.maxWaitTime(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
                         break;
+                    case "maxIdleTimeMS":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                                builder.maxConnectionIdleTime(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "maxConnecting":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                                builder.maxConnecting(value.asNumber().intValue()));
+                        break;
                     case "heartbeatFrequencyMS":
                         clientSettingsBuilder.applyToServerSettings(builder ->
                                 builder.heartbeatFrequency(value.asNumber().longValue(), TimeUnit.MILLISECONDS));

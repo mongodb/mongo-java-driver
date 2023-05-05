@@ -23,6 +23,8 @@ import com.mongodb.lang.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -46,7 +48,9 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
         StructuredLogger.removeInterceptor(applicationName);
     }
 
-    public synchronized List<StructuredLogMessage> getMessages() {
-        return new ArrayList<>(messages);
+    public synchronized List<StructuredLogMessage> getMessages(Set<StructuredLogMessage.Component> components) {
+       return messages.stream()
+               .filter(structuredLogMessage -> components.contains(structuredLogMessage.getComponent()))
+               .collect(Collectors.toList());
     }
 }
