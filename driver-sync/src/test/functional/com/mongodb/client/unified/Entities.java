@@ -509,19 +509,8 @@ public final class Entities {
             BsonDocument observeLogMessagesDocument = entity.getDocument("observeLogMessages");
             TestLoggingInterceptor.LoggingFilter loggingFilter = new TestLoggingInterceptor.LoggingFilter();
 
-            observeLogMessagesDocument.forEach((componentName, bsonValue) -> {
-                StructuredLogMessage.Component component = StructuredLogMessage.Component
-                        .valueOf(componentName.toUpperCase());
+            observeLogMessagesDocument.forEach((componentName, bsonValue) -> addComponentToFilter(loggingFilter, componentName, bsonValue));
 
-                String levelName = bsonValue
-                        .asString()
-                        .getValue()
-                        .toUpperCase();
-                StructuredLogMessage.Level level = StructuredLogMessage.Level.valueOf(levelName);
-
-                loggingFilter.addComponent(component, level);
-
-            });
             putEntity(id + "-logging-interceptor", new TestLoggingInterceptor(clientSettings.getApplicationName(), loggingFilter),
                     clientLoggingInterceptors);
         }
@@ -530,6 +519,18 @@ public final class Entities {
         if (waitForPoolAsyncWorkManagerStart) {
             waitForPoolAsyncWorkManagerStart();
         }
+    }
+    private void addComponentToFilter(TestLoggingInterceptor.LoggingFilter loggingFilter, String componentName, BsonValue bsonValue) {
+        StructuredLogMessage.Component component = StructuredLogMessage.Component
+                .valueOf(componentName.toUpperCase());
+
+        String levelName = bsonValue
+                .asString()
+                .getValue()
+                .toUpperCase();
+        StructuredLogMessage.Level level = StructuredLogMessage.Level.valueOf(levelName);
+
+        loggingFilter.addComponent(component, level);
     }
 
     private void initDatabase(final BsonDocument entity, final String id) {
