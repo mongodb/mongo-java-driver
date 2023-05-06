@@ -101,4 +101,8 @@ public final class StructuredLogMessage {
     public List<Entry> getEntries() {
         return entries;
     }
+
+    public void addEntry(Entry entry){
+        entries.add(entry);
+    }
 }
