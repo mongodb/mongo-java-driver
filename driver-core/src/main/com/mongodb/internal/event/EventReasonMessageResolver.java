@@ -22,7 +22,7 @@ import com.mongodb.event.ConnectionClosedEvent;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class EventReasonMessageResolver {
+public final class EventReasonMessageResolver {
     private static final String MESSAGE_CONNECTION_POOL_WAS_CLOSED = "Connection pool was closed";
 
     public static String getMessage(ConnectionClosedEvent.Reason reason) {
