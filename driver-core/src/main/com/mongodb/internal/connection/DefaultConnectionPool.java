@@ -256,11 +256,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         ClusterId clusterId = serverId.getClusterId();
-        if(STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)){
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             StringBuilder message = new StringBuilder("Checkout failed for connection to %s:%s. Reason: %s");
             List<StructuredLogMessage.Entry> entries = createCommonEntries();
             entries.add(new StructuredLogMessage.Entry("reason", EventReasonMessageResolver.getMessage(reason)));
-            if(reason == Reason.CONNECTION_ERROR){
+            if (reason == Reason.CONNECTION_ERROR) {
                 message.append(". Error: %s");
                 entries.add(new StructuredLogMessage.Entry("error", result.toString()));
             }
@@ -469,8 +469,8 @@ class DefaultConnectionPool implements ConnectionPool {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             List<StructuredLogMessage.Entry> entries = new ArrayList<>();
-            String message = "Connection pool created for %s:%s using options maxIdleTimeMS=%s, minPoolSize=%s, " +
-                    "maxPoolSize=%s, maxConnecting=%s, waitQueueTimeoutMS=%s";
+            String message = "Connection pool created for %s:%s using options maxIdleTimeMS=%s, minPoolSize=%s, "
+                    + "maxPoolSize=%s, maxConnecting=%s, waitQueueTimeoutMS=%s";
 
             entries.add(new StructuredLogMessage.Entry(NAME_SERVER_HOST, serverId.getAddress().getHost()));
             entries.add(new StructuredLogMessage.Entry(NAME_SERVER_PORT, serverId.getAddress().getPort()));
@@ -505,13 +505,13 @@ class DefaultConnectionPool implements ConnectionPool {
     private void connectionClosed(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId,
                                   final ConnectionClosedEvent.Reason reason) {
         ClusterId clusterId = serverId.getClusterId();
-        if(STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)){
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             StringBuilder message = new StringBuilder("Connection closed: address= %s:%s, driver-generated ID=%s. Reason: %s");
             List<StructuredLogMessage.Entry> entries = createCommonEntries();
             entries.add(new StructuredLogMessage.Entry("driverConnectionId", connectionId.getLocalValue()));
 
             entries.add(new StructuredLogMessage.Entry("reason", EventReasonMessageResolver.getMessage(reason)));
-            if(reason == ERROR){
+            if (reason == ERROR) {
                 message.append(". Error: %s");
                 entries.add(new StructuredLogMessage.Entry("error", "There was a socket exception raised by this connection"));
             }
@@ -522,7 +522,7 @@ class DefaultConnectionPool implements ConnectionPool {
         connectionPoolListener.connectionClosed(new ConnectionClosedEvent(connectionId, reason));
     }
 
-    private void connectionCheckedOut(OperationContext operationContext, PooledConnection connection) {
+    private void connectionCheckedOut(final OperationContext operationContext, final PooledConnection connection) {
         ConnectionId connectionId = getId(connection);
 
         String message = "Connection checked out: address=%s:%s, driver-generated ID=%s";
@@ -530,7 +530,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(connectionId, operationContext.getId()));
     }
-    private void connectionCheckoutStarted(OperationContext operationContext) {
+    private void connectionCheckoutStarted(final OperationContext operationContext) {
         String message = "Checkout started for connection to %s:%s";
         logEvent("Connection checkout started", message);
 
@@ -1593,7 +1593,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     }
 
-    private void logEvent(String messageId, String message, int driverConnectionId) {
+    private void logEvent(final String messageId, final String message, final int driverConnectionId) {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             List<StructuredLogMessage.Entry> entries = createCommonEntries();
@@ -1602,7 +1602,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private void logEvent(String messageId, String message) {
+    private void logEvent(final String messageId, final String message) {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             List<StructuredLogMessage.Entry> entries = createCommonEntries();

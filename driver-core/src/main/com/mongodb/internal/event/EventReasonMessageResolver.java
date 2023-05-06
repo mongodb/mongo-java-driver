@@ -25,7 +25,7 @@ import com.mongodb.event.ConnectionClosedEvent;
 public final class EventReasonMessageResolver {
     private static final String MESSAGE_CONNECTION_POOL_WAS_CLOSED = "Connection pool was closed";
 
-    public static String getMessage(ConnectionClosedEvent.Reason reason) {
+    public static String getMessage(final ConnectionClosedEvent.Reason reason) {
         switch (reason) {
             case STALE:
                 return "Connection became stale because the pool was cleared";
@@ -40,7 +40,7 @@ public final class EventReasonMessageResolver {
         }
     }
 
-    public static String getMessage(ConnectionCheckOutFailedEvent.Reason reason) {
+    public static String getMessage(final ConnectionCheckOutFailedEvent.Reason reason) {
         switch (reason) {
             case TIMEOUT:
                 return "Wait queue timeout elapsed without a connection becoming available";
