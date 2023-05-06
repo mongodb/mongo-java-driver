@@ -24,6 +24,7 @@ import com.mongodb.event.ConnectionClosedEvent;
  */
 public final class EventReasonMessageResolver {
     private static final String MESSAGE_CONNECTION_POOL_WAS_CLOSED = "Connection pool was closed";
+    private static final String EMPTY_REASON = "";
 
     public static String getMessage(final ConnectionClosedEvent.Reason reason) {
         switch (reason) {
@@ -36,7 +37,7 @@ public final class EventReasonMessageResolver {
             case POOL_CLOSED:
                 return MESSAGE_CONNECTION_POOL_WAS_CLOSED;
             default:
-                return "";
+                return EMPTY_REASON;
         }
     }
 
