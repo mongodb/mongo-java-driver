@@ -307,7 +307,6 @@ class DefaultConnectionPool implements ConnectionPool {
             backgroundMaintenance.close();
             asyncWorkManager.close();
             openConcurrencyLimiter.signalClosedOrPaused();
-            ClusterId clusterId = serverId.getClusterId();
 
             String message = "Connection pool closed";
             logEvent("Connection pool closed", message);
