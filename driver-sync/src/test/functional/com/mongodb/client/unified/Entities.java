@@ -57,6 +57,7 @@ import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
+import com.mongodb.internal.logging.StructuredLogMessage;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -505,7 +506,24 @@ public final class Entities {
         MongoClientSettings clientSettings = clientSettingsBuilder.build();
 
         if (entity.containsKey("observeLogMessages")) {
-            putEntity(id + "-logging-interceptor", new TestLoggingInterceptor(clientSettings.getApplicationName()), clientLoggingInterceptors);
+            BsonDocument observeLogMessagesDocument = entity.getDocument("observeLogMessages");
+            TestLoggingInterceptor.LoggingFilter loggingFilter = new TestLoggingInterceptor.LoggingFilter();
+
+            observeLogMessagesDocument.forEach((componentName, bsonValue) -> {
+                StructuredLogMessage.Component component = StructuredLogMessage.Component
+                        .valueOf(componentName.toUpperCase());
+
+                String levelName = bsonValue
+                        .asString()
+                        .getValue()
+                        .toUpperCase();
+                StructuredLogMessage.Level level = StructuredLogMessage.Level.valueOf(levelName);
+
+                loggingFilter.addComponent(component, level);
+
+            });
+            putEntity(id + "-logging-interceptor", new TestLoggingInterceptor(clientSettings.getApplicationName(), loggingFilter),
+                    clientLoggingInterceptors);
         }
 
         putEntity(id, mongoClientSupplier.apply(clientSettings), clients);

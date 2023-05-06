@@ -269,27 +269,10 @@ public abstract class UnifiedTest {
             String clientId = curLogMessagesForClient.getString("client").getValue();
             TestLoggingInterceptor loggingInterceptor =
                     entities.getClientLoggingInterceptor(clientId);
-
-            BsonArray messages = curLogMessagesForClient.getArray("messages");
-            Set<StructuredLogMessage.Component> expectedComponents = getExpectedComponents(messages);
-
-            rootContext.getLogMatcher().assertLogMessageEquality(clientId, messages,
-                    loggingInterceptor.getMessages(expectedComponents));
+            rootContext.getLogMatcher().assertLogMessageEquality(clientId, curLogMessagesForClient.getArray("messages"),
+                    loggingInterceptor.getMessages());
         }
     }
-
-    private Set<StructuredLogMessage.Component> getExpectedComponents(BsonArray messages) {
-        Set<StructuredLogMessage.Component> components = messages.stream()
-                .map(BsonValue::asDocument)
-                .map(bsonDocument -> bsonDocument.get("component"))
-                .map(BsonValue::asString)
-                .map(BsonString::getValue)
-                .map(String::toUpperCase)
-                .map(StructuredLogMessage.Component::valueOf)
-                .collect(toCollection(() -> EnumSet.noneOf(StructuredLogMessage.Component.class)));
-        return components;
-    }
-
     private void assertOutcome(final UnifiedTestContext context) {
         for (BsonValue cur : definition.getArray("outcome")) {
             BsonDocument curDocument = cur.asDocument();

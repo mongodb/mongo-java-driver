@@ -22,9 +22,9 @@ import com.mongodb.internal.logging.StructuredLoggingInterceptor;
 import com.mongodb.lang.NonNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
@@ -32,15 +32,19 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
 
     private final List<StructuredLogMessage> messages = new ArrayList<>();
     private final String applicationName;
+    private final LoggingFilter filter;
 
-    public TestLoggingInterceptor(final String applicationName) {
+    public TestLoggingInterceptor(final String applicationName, final LoggingFilter filter) {
         this.applicationName = requireNonNull(applicationName);
+        this.filter = requireNonNull(filter);;
         StructuredLogger.addInterceptor(applicationName, this);
     }
 
     @Override
     public synchronized void intercept(@NonNull final StructuredLogMessage message) {
-        messages.add(message);
+        if(filter.match(message)){
+            messages.add(message);
+        }
     }
 
     @Override
@@ -48,9 +52,23 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
         StructuredLogger.removeInterceptor(applicationName);
     }
 
-    public synchronized List<StructuredLogMessage> getMessages(Set<StructuredLogMessage.Component> components) {
-       return messages.stream()
-               .filter(structuredLogMessage -> components.contains(structuredLogMessage.getComponent()))
-               .collect(Collectors.toList());
+    public synchronized List<StructuredLogMessage> getMessages() {
+        return new ArrayList<>(messages);
+    }
+
+    public static class LoggingFilter{
+        private final Map<StructuredLogMessage.Component, StructuredLogMessage.Level> componentLevelMap;
+
+        public LoggingFilter(){
+            componentLevelMap = new HashMap<>();
+        }
+        public void addComponent(StructuredLogMessage.Component component, StructuredLogMessage.Level level){
+            componentLevelMap.put(component, level);
+        }
+
+        public boolean match(StructuredLogMessage message){
+            StructuredLogMessage.Level level = componentLevelMap.get(message.getComponent());
+            return level == message.getLevel();
+        }
     }
 }
