@@ -280,10 +280,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void ready() {
-        if (stateAndGeneration.ready()) {
-            String message = "Connection pool ready for %s:%s";
-            logEvent("Connection pool ready", message);
-        }
+        stateAndGeneration.ready();
     }
 
     public void invalidate(final ObjectId serviceId, final int generation) {
@@ -1547,6 +1544,10 @@ class DefaultConnectionPool implements ConnectionPool {
                         paused = false;
                         cause = null;
                         pool.ready();
+
+                        String message = "Connection pool ready for %s:%s";
+                        logEvent("Connection pool ready", message);
+
                         connectionPoolListener.connectionPoolReady(new ConnectionPoolReadyEvent(serverId));
                         backgroundMaintenance.start();
                         result = true;
