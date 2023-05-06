@@ -102,7 +102,7 @@ public final class StructuredLogMessage {
         return entries;
     }
 
-    public void addEntry(Entry entry){
+    public void addEntry(final Entry entry){
         entries.add(entry);
     }
 }

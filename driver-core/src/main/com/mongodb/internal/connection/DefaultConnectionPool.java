@@ -1610,7 +1610,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private StructuredLogMessage createBasicStructuredMessage(String messageId, ClusterId clusterId) {
+    private StructuredLogMessage createBasicStructuredMessage(final String messageId, final ClusterId clusterId) {
         List<StructuredLogMessage.Entry> entries = new ArrayList<>();
         entries.add(new StructuredLogMessage.Entry(NAME_SERVER_HOST, serverId.getAddress().getHost()));
         entries.add(new StructuredLogMessage.Entry(NAME_SERVER_PORT, serverId.getAddress().getPort()));
