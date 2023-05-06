@@ -35,7 +35,6 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
-import com.mongodb.internal.logging.StructuredLogMessage;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -59,7 +58,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -73,7 +71,6 @@ import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
-import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -273,6 +270,7 @@ public abstract class UnifiedTest {
                     loggingInterceptor.getMessages());
         }
     }
+
     private void assertOutcome(final UnifiedTestContext context) {
         for (BsonValue cur : definition.getArray("outcome")) {
             BsonDocument curDocument = cur.asDocument();
