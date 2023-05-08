@@ -36,13 +36,13 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
 
     public TestLoggingInterceptor(final String applicationName, final LoggingFilter filter) {
         this.applicationName = requireNonNull(applicationName);
-        this.filter = requireNonNull(filter);;
+        this.filter = requireNonNull(filter);
         StructuredLogger.addInterceptor(applicationName, this);
     }
 
     @Override
     public synchronized void intercept(@NonNull final StructuredLogMessage message) {
-        if(filter.match(message)){
+        if (filter.match(message)) {
             messages.add(message);
         }
     }
@@ -62,11 +62,11 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
         public LoggingFilter(){
             componentLevelMap = new HashMap<>();
         }
-        public void addComponent(StructuredLogMessage.Component component, StructuredLogMessage.Level level){
+        public void addComponent(final StructuredLogMessage.Component component, final StructuredLogMessage.Level level){
             componentLevelMap.put(component, level);
         }
 
-        public boolean match(StructuredLogMessage message){
+        public boolean match(final StructuredLogMessage message){
             StructuredLogMessage.Level level = componentLevelMap.get(message.getComponent());
             return level == message.getLevel();
         }

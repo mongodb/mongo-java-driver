@@ -520,7 +520,8 @@ public final class Entities {
             waitForPoolAsyncWorkManagerStart();
         }
     }
-    private void addComponentToFilter(TestLoggingInterceptor.LoggingFilter loggingFilter, String componentName, BsonValue bsonValue) {
+    private void addComponentToFilter(final TestLoggingInterceptor.LoggingFilter loggingFilter, final String componentName,
+           final BsonValue bsonValue) {
         StructuredLogMessage.Component component = StructuredLogMessage.Component
                 .valueOf(componentName.toUpperCase());
 
