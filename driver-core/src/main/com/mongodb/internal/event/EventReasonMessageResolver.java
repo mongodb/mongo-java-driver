@@ -50,7 +50,7 @@ public final class EventReasonMessageResolver {
             case POOL_CLOSED:
                 return MESSAGE_CONNECTION_POOL_WAS_CLOSED;
             default:
-                return "";
+                return EMPTY_REASON;
         }
     }
 
