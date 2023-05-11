@@ -17,7 +17,7 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.internal.logging.StructuredLogMessage;
+import com.mongodb.internal.logging.LogMessage;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -42,7 +42,7 @@ final class LogMatcher {
         this.context = context;
     }
 
-    void assertLogMessageEquality(final String client, final BsonArray expectedMessages, final List<StructuredLogMessage> actualMessages) {
+    void assertLogMessageEquality(final String client, final BsonArray expectedMessages, final List<LogMessage.StructuredLogMessage> actualMessages) {
         context.push(ContextElement.ofLogMessages(client, expectedMessages, actualMessages));
 
         assertEquals(context.getMessage("Number of log messages must be the same"), expectedMessages.size(), actualMessages.size());
@@ -55,7 +55,7 @@ final class LogMatcher {
         context.pop();
     }
 
-     static BsonDocument asDocument(final StructuredLogMessage message) {
+     static BsonDocument asDocument(final LogMessage.StructuredLogMessage message) {
         BsonDocument document = new BsonDocument();
         document.put("component", new BsonString(message.getComponent().name().toLowerCase()));
         document.put("level", new BsonString(message.getLevel().name().toLowerCase()));
@@ -67,7 +67,7 @@ final class LogMatcher {
         if (message.getException() != null) {
             dataDocument.put("failure", new BsonString(message.getException().toString()));
         }
-        for (StructuredLogMessage.Entry entry : message.getEntries()) {
+        for (LogMessage.Entry entry : message.getEntries()) {
             dataDocument.put(entry.getName(), asBsonValue(entry.getValue()));
         }
         document.put("data", dataDocument);

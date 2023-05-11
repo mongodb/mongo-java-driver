@@ -57,7 +57,7 @@ import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
-import com.mongodb.internal.logging.StructuredLogMessage;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -507,9 +507,11 @@ public final class Entities {
 
         if (entity.containsKey("observeLogMessages")) {
             BsonDocument observeLogMessagesDocument = entity.getDocument("observeLogMessages");
-            TestLoggingInterceptor.LoggingFilter loggingFilter = new TestLoggingInterceptor.LoggingFilter();
 
-            observeLogMessagesDocument.forEach((componentName, bsonValue) -> addComponentToFilter(loggingFilter, componentName, bsonValue));
+            Map<LogMessage.Component, LogMessage.Level> filterConfig = observeLogMessagesDocument.entrySet().stream()
+                    .collect(Collectors.toMap(this::toComponent, this::toLevel));
+
+            TestLoggingInterceptor.LoggingFilter loggingFilter = new TestLoggingInterceptor.LoggingFilter(filterConfig);
 
             putEntity(id + "-logging-interceptor", new TestLoggingInterceptor(clientSettings.getApplicationName(), loggingFilter),
                     clientLoggingInterceptors);
@@ -520,18 +522,20 @@ public final class Entities {
             waitForPoolAsyncWorkManagerStart();
         }
     }
-    private void addComponentToFilter(final TestLoggingInterceptor.LoggingFilter loggingFilter, final String componentName,
-           final BsonValue bsonValue) {
-        StructuredLogMessage.Component component = StructuredLogMessage.Component
-                .valueOf(componentName.toUpperCase());
 
+    private LogMessage.Component toComponent(final Map.Entry<String, BsonValue> entry) {
+        String componentName = entry.getKey();
+      return   LogMessage.Component
+                .valueOf(componentName.toUpperCase());
+    }
+
+    private LogMessage.Level toLevel(final Map.Entry<String, BsonValue> entry) {
+         BsonValue bsonValue = entry.getValue();
         String levelName = bsonValue
                 .asString()
                 .getValue()
                 .toUpperCase();
-        StructuredLogMessage.Level level = StructuredLogMessage.Level.valueOf(levelName);
-
-        loggingFilter.addComponent(component, level);
+        return LogMessage.Level.valueOf(levelName);
     }
 
     private void initDatabase(final BsonDocument entity, final String id) {

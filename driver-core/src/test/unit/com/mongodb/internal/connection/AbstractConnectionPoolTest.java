@@ -506,7 +506,7 @@ public abstract class AbstractConnectionPoolTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/connection-monitoring-and-pooling")) {
+        for (File file : JsonPoweredTestHelper.getTestFiles("/connection-monitoring-and-pooling/cmap")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{
                     file.getName(),

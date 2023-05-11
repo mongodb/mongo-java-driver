@@ -16,13 +16,12 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.internal.logging.StructuredLogMessage;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.logging.StructuredLoggingInterceptor;
 import com.mongodb.lang.NonNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +29,7 @@ import static java.util.Objects.requireNonNull;
 
 public class TestLoggingInterceptor implements StructuredLoggingInterceptor, AutoCloseable {
 
-    private final List<StructuredLogMessage> messages = new ArrayList<>();
+    private final List<LogMessage.StructuredLogMessage> messages = new ArrayList<>();
     private final String applicationName;
     private final LoggingFilter filter;
 
@@ -41,7 +40,7 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
     }
 
     @Override
-    public synchronized void intercept(@NonNull final StructuredLogMessage message) {
+    public synchronized void intercept(@NonNull final LogMessage.StructuredLogMessage message) {
         if (filter.match(message)) {
             messages.add(message);
         }
@@ -52,23 +51,22 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
         StructuredLogger.removeInterceptor(applicationName);
     }
 
-    public synchronized List<StructuredLogMessage> getMessages() {
+    public synchronized List<LogMessage.StructuredLogMessage> getMessages() {
         return new ArrayList<>(messages);
     }
 
-    public static class LoggingFilter{
-        private final Map<StructuredLogMessage.Component, StructuredLogMessage.Level> componentLevelMap;
+    public static final class LoggingFilter{
+        private final Map<LogMessage.Component, LogMessage.Level> filterConfig;
 
-        public LoggingFilter(){
-            componentLevelMap = new HashMap<>();
+        public LoggingFilter(Map<LogMessage.Component, LogMessage.Level> filterConfig){
+            this.filterConfig = filterConfig;
         }
-        public void addComponent(final StructuredLogMessage.Component component, final StructuredLogMessage.Level level){
-            componentLevelMap.put(component, level);
-        }
-
-        public boolean match(final StructuredLogMessage message){
-            StructuredLogMessage.Level level = componentLevelMap.get(message.getComponent());
-            return level == message.getLevel();
+        boolean match(final LogMessage.StructuredLogMessage message){
+            LogMessage.Level expectedLevel = filterConfig.get(message.getComponent());
+            if(expectedLevel!=null) {
+                return message.getLevel().compareTo(expectedLevel) <= 0;
+            }
+            return false;
         }
     }
 }

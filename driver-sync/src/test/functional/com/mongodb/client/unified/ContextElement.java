@@ -21,7 +21,7 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
-import com.mongodb.internal.logging.StructuredLogMessage;
+import com.mongodb.internal.logging.LogMessage;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -143,7 +143,7 @@ abstract class ContextElement {
         }
     }
     public static ContextElement ofLogMessages(final String client, final BsonArray expectedMessages,
-            final List<StructuredLogMessage> actualMessages) {
+            final List<LogMessage.StructuredLogMessage> actualMessages) {
         return new LogMessageMatchingContextElement(client, expectedMessages, actualMessages);
     }
 
@@ -383,10 +383,10 @@ abstract class ContextElement {
     private static class LogMessageMatchingContextElement extends ContextElement {
         private final String client;
         private final BsonArray expectedMessages;
-        private final List<StructuredLogMessage> actualMessages;
+        private final List<LogMessage.StructuredLogMessage> actualMessages;
 
         LogMessageMatchingContextElement(final String client, final BsonArray expectedMessages,
-                final List<StructuredLogMessage> actualMessages) {
+                final List<LogMessage.StructuredLogMessage> actualMessages) {
             super();
             this.client = client;
             this.expectedMessages = expectedMessages;

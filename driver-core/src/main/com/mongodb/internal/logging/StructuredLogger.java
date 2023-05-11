@@ -20,14 +20,12 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.logging.StructuredLogMessage.Entry;
-import com.mongodb.internal.logging.StructuredLogMessage.Level;
+import com.mongodb.internal.logging.LogMessage.Level;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static java.lang.String.format;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -79,20 +77,24 @@ public final class StructuredLogger {
         }
    }
 
-    public void log(final StructuredLogMessage message, final String format) {
-        StructuredLoggingInterceptor interceptor = getInterceptor(message.getClusterId().getDescription());
+    public void log(final LogMessage logMessage) {
+        LogMessage.StructuredLogMessage structuredLogMessage = logMessage.toStructuredLogMessage();
+        LogMessage.UnstructuredLogMessage unStructuredLogMessage = logMessage.toUnstructuredLogMessage();
+
+        StructuredLoggingInterceptor interceptor = getInterceptor(logMessage.getClusterId().getDescription());
         if (interceptor != null) {
-            interceptor.intercept(message);
+            interceptor.intercept(structuredLogMessage);
         }
         //noinspection SwitchStatementWithTooFewBranches
-        switch (message.getLevel()) {
+        switch (structuredLogMessage.getLevel()) {
             case DEBUG:
                 if (logger.isDebugEnabled()) {
-                    Throwable exception = message.getException();
+                    Throwable exception = structuredLogMessage.getException();
+                    String message = unStructuredLogMessage.interpolate();
                     if (exception == null) {
-                        logger.debug(format(format, message.getEntries().stream().map(Entry::getValue).toArray()));
+                        logger.debug(message);
                     } else {
-                        logger.debug(format(format, message.getEntries().stream().map(Entry::getValue).toArray()), exception);
+                        logger.debug(message, exception);
                     }
                 }
                 break;

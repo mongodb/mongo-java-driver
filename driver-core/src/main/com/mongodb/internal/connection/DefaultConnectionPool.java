@@ -51,7 +51,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.event.EventReasonMessageResolver;
 import com.mongodb.internal.inject.OptionalProvider;
-import com.mongodb.internal.logging.StructuredLogMessage;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
@@ -103,10 +103,13 @@ import static com.mongodb.internal.connection.ConcurrentPool.lockInterruptibly;
 import static com.mongodb.internal.connection.ConcurrentPool.lockUnfair;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
-import static com.mongodb.internal.logging.StructuredLogMessage.Component.CONNECTION;
-import static com.mongodb.internal.logging.StructuredLogMessage.Entry.NAME_SERVER_HOST;
-import static com.mongodb.internal.logging.StructuredLogMessage.Entry.NAME_SERVER_PORT;
-import static com.mongodb.internal.logging.StructuredLogMessage.Level.DEBUG;
+import static com.mongodb.internal.logging.LogMessage.Component.CONNECTION;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DRIVER_CONNECTION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.ERROR_DESCRIPTION;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.REASON_DESCRIPTION;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
+import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -257,16 +260,11 @@ class DefaultConnectionPool implements ConnectionPool {
 
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            StringBuilder message = new StringBuilder("Checkout failed for connection to %s:%s. Reason: %s");
-            StructuredLogMessage structuredMessage = createBasicStructuredMessage("Connection created", clusterId);
-
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("reason", EventReasonMessageResolver.getMessage(reason)));
-            if (reason == Reason.CONNECTION_ERROR) {
-                message.append(". Error: %s");
-                structuredMessage.addEntry(new StructuredLogMessage.Entry("error", result.toString()));
-            }
-
-            STRUCTURED_LOGGER.log(structuredMessage, message.toString());
+            String message = "Checkout failed for connection to {}:{}. Reason: {}.[ Error: {}]";
+            List<LogMessage.Entry> entries = createBasicEntries();
+            entries.add(new LogMessage.Entry(REASON_DESCRIPTION.getValue(), EventReasonMessageResolver.getMessage(reason)));
+            entries.add(new LogMessage.Entry(ERROR_DESCRIPTION.getValue(), reason == Reason.CONNECTION_ERROR ? result.toString() : null));
+            logMessage("Connection created", clusterId, message, entries);
         }
         connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId, operationContext.getId(), reason));
         return result;
@@ -292,7 +290,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
         if (serviceStateManager.incrementGeneration(serviceId, generation)) {
 
-            String message = "Connection pool for %s:%s cleared";
+            String message = "Connection pool for {}:{} cleared";
             logEvent("Connection pool cleared", message);
 
             connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(this.serverId, serviceId));
@@ -307,7 +305,7 @@ class DefaultConnectionPool implements ConnectionPool {
             asyncWorkManager.close();
             openConcurrencyLimiter.signalClosedOrPaused();
 
-            String message = "Connection pool closed";
+            String message = "Connection pool closed for {}:{}";
             logEvent("Connection pool closed", message);
 
             connectionPoolListener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
@@ -466,17 +464,17 @@ class DefaultConnectionPool implements ConnectionPool {
                                              final ConnectionPoolSettings settings) {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            String message = "Connection pool created for %s:%s using options maxIdleTimeMS=%s, minPoolSize=%s, "
-                    + "maxPoolSize=%s, maxConnecting=%s, waitQueueTimeoutMS=%s";
+            String message = "Connection pool created for {}:{} using options maxIdleTimeMS={}, minPoolSize={}, "
+                    + "maxPoolSize={}, maxConnecting={}, waitQueueTimeoutMS={}";
 
-            StructuredLogMessage structuredMessage = createBasicStructuredMessage("Connection pool created", clusterId);
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("maxIdleTimeMS", settings.getMaxConnectionIdleTime(MILLISECONDS)));
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("minPoolSize", settings.getMinSize()));
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("maxPoolSize", settings.getMaxSize()));
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("maxConnecting", settings.getMaxConnecting()));
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("waitQueueTimeoutMS", settings.getMaxWaitTime(MILLISECONDS)));
+            List<LogMessage.Entry> entries = createBasicEntries();
+            entries.add(new LogMessage.Entry("maxIdleTimeMS", settings.getMaxConnectionIdleTime(MILLISECONDS)));
+            entries.add(new LogMessage.Entry("minPoolSize", settings.getMinSize()));
+            entries.add(new LogMessage.Entry("maxPoolSize", settings.getMaxSize()));
+            entries.add(new LogMessage.Entry("maxConnecting", settings.getMaxConnecting()));
+            entries.add(new LogMessage.Entry("waitQueueTimeoutMS", settings.getMaxWaitTime(MILLISECONDS)));
 
-            STRUCTURED_LOGGER.log(structuredMessage, message);
+            logMessage("Connection pool created", clusterId, message, entries);
         }
         connectionPoolListener.connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, settings));
         connectionPoolListener.connectionPoolOpened(new com.mongodb.event.ConnectionPoolOpenedEvent(serverId, settings));
@@ -487,7 +485,7 @@ class DefaultConnectionPool implements ConnectionPool {
      * Must not throw {@link Exception}s.
      */
     private void connectionCreated(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId) {
-        String message = "Connection created: address=%s:%s, driver-generated ID=%s";
+        String message = "Connection created: address={}:{}, driver-generated ID={}";
         logEvent("Connection created", message, connectionId.getLocalValue());
 
         connectionPoolListener.connectionAdded(new com.mongodb.event.ConnectionAddedEvent(connectionId));
@@ -502,17 +500,14 @@ class DefaultConnectionPool implements ConnectionPool {
                                   final ConnectionClosedEvent.Reason reason) {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            StringBuilder message = new StringBuilder("Connection closed: address= %s:%s, driver-generated ID=%s. Reason: %s");
-            StructuredLogMessage structuredMessage = createBasicStructuredMessage("Connection closed", clusterId);
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("driverConnectionId", connectionId.getLocalValue()));
+            String message = "Connection closed: address={}:{}, driver-generated ID={}. Reason: {}.[ Error: {}]";
+            String errorReason = "There was a socket exception raised by this connection";
 
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("reason", EventReasonMessageResolver.getMessage(reason)));
-            if (reason == ERROR) {
-                message.append(". Error: %s");
-                structuredMessage.addEntry(new StructuredLogMessage.Entry("error", "There was a socket exception raised by this connection"));
-            }
-
-            STRUCTURED_LOGGER.log(structuredMessage, message.toString());
+            List<LogMessage.Entry> entries = createBasicEntries();
+            entries.add(new LogMessage.Entry(DRIVER_CONNECTION_ID.getValue(), connectionId.getLocalValue()));
+            entries.add(new LogMessage.Entry(REASON_DESCRIPTION.getValue(), EventReasonMessageResolver.getMessage(reason)));
+            entries.add(new LogMessage.Entry(ERROR_DESCRIPTION.getValue(), reason == ERROR ? errorReason : null));
+            logMessage("Connection closed", clusterId, message, entries);
         }
         connectionPoolListener.connectionRemoved(new com.mongodb.event.ConnectionRemovedEvent(connectionId, getReasonForRemoved(reason)));
         connectionPoolListener.connectionClosed(new ConnectionClosedEvent(connectionId, reason));
@@ -521,13 +516,13 @@ class DefaultConnectionPool implements ConnectionPool {
     private void connectionCheckedOut(final OperationContext operationContext, final PooledConnection connection) {
         ConnectionId connectionId = getId(connection);
 
-        String message = "Connection checked out: address=%s:%s, driver-generated ID=%s";
+        String message = "Connection checked out: address={}:{}, driver-generated ID={}";
         logEvent("Connection checked out", message, connectionId.getLocalValue());
 
         connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(connectionId, operationContext.getId()));
     }
     private void connectionCheckoutStarted(final OperationContext operationContext) {
-        String message = "Checkout started for connection to %s:%s";
+        String message = "Checkout started for connection to {}:{}";
         logEvent("Connection checkout started", message);
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
@@ -639,7 +634,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private void connectionCheckedIn() {
             ConnectionId connectionId = getId(wrapped);
 
-            String message = "Connection checked in: address=%s:%s, driver-generated ID=%s";
+            String message = "Connection checked in: address={}:{}, driver-generated ID={}";
             logEvent("Connection checked in", message, connectionId.getLocalValue());
 
             connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId, operationContext.getId()));
@@ -681,7 +676,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private void handleOpenSuccess() {
             ConnectionId connectionId = getId(this);
 
-            String message = "Connection ready: address=%s:%s, driver-generated ID=%s";
+            String message = "Connection ready: address={}:{}, driver-generated ID={}";
             logEvent("Connection ready", message, connectionId.getLocalValue());
 
             connectionPoolListener.connectionReady(new ConnectionReadyEvent(connectionId));
@@ -1522,7 +1517,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 //noinspection NonAtomicOperationOnVolatileField
                 generation++;
                 if (result) {
-                    String message = "Connection pool for %s:%s cleared";
+                    String message = "Connection pool for {}:{} cleared";
                     logEvent("Connection pool cleared", message);
 
                     connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(serverId));
@@ -1545,7 +1540,7 @@ class DefaultConnectionPool implements ConnectionPool {
                         cause = null;
                         pool.ready();
 
-                        String message = "Connection pool ready for %s:%s";
+                        String message = "Connection pool ready for {}:{}";
                         logEvent("Connection pool ready", message);
 
                         connectionPoolListener.connectionPoolReady(new ConnectionPoolReadyEvent(serverId));
@@ -1596,24 +1591,28 @@ class DefaultConnectionPool implements ConnectionPool {
     private void logEvent(final String messageId, final String message, final int driverConnectionId) {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            StructuredLogMessage structuredMessage = createBasicStructuredMessage(messageId, clusterId);
-            structuredMessage.addEntry(new StructuredLogMessage.Entry("driverConnectionId", driverConnectionId));
-            STRUCTURED_LOGGER.log(structuredMessage, message);
+            List<LogMessage.Entry> entries = createBasicEntries();
+            entries.add(new LogMessage.Entry(DRIVER_CONNECTION_ID.getValue(), driverConnectionId));
+            logMessage(messageId, clusterId, message, entries);
         }
     }
 
     private void logEvent(final String messageId, final String message) {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            StructuredLogMessage structuredMessage = createBasicStructuredMessage(messageId, clusterId);
-            STRUCTURED_LOGGER.log(structuredMessage, message);
+            List<LogMessage.Entry> entries = createBasicEntries();
+            logMessage(messageId, clusterId, message, entries);
         }
     }
 
-    private StructuredLogMessage createBasicStructuredMessage(final String messageId, final ClusterId clusterId) {
-        List<StructuredLogMessage.Entry> entries = new ArrayList<>();
-        entries.add(new StructuredLogMessage.Entry(NAME_SERVER_HOST, serverId.getAddress().getHost()));
-        entries.add(new StructuredLogMessage.Entry(NAME_SERVER_PORT, serverId.getAddress().getPort()));
-        return new StructuredLogMessage(CONNECTION, DEBUG, messageId, clusterId, entries);
+    private List<LogMessage.Entry> createBasicEntries() {
+        List<LogMessage.Entry> entries = new ArrayList<>();
+        entries.add(new LogMessage.Entry(SERVER_HOST.getValue(), serverId.getAddress().getHost()));
+        entries.add(new LogMessage.Entry(SERVER_PORT.getValue(), serverId.getAddress().getPort()));
+        return entries;
+    }
+
+    private void logMessage(final String messageId, final ClusterId clusterId, final String format, final List<LogMessage.Entry> entries) {
+        STRUCTURED_LOGGER.log(new LogMessage(CONNECTION, DEBUG, messageId, clusterId, entries, format));
     }
 }

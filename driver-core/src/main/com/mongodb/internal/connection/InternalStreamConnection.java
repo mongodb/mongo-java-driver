@@ -86,7 +86,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getOperationTime;
 import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
-import static com.mongodb.internal.logging.StructuredLogMessage.Level.DEBUG;
+import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static java.util.Arrays.asList;
 
 /**
