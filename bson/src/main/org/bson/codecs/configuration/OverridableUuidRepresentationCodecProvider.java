@@ -20,7 +20,12 @@ import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
 import org.bson.codecs.OverridableUuidRepresentationCodec;
 
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
+
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.internal.ProvidersCodecRegistry.getFromCodecProvider;
 
 final class OverridableUuidRepresentationCodecProvider implements CodecProvider {
 
@@ -33,11 +38,17 @@ final class OverridableUuidRepresentationCodecProvider implements CodecProvider 
     }
 
     @Override
-    @SuppressWarnings({"unchecked"})
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        Codec<T> codec = wrapped.get(clazz, registry);
+        return get(clazz, Collections.emptyList(), registry);
+    }
+
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
+        Codec<T> codec = getFromCodecProvider(wrapped, clazz, typeArguments, registry);
         if (codec instanceof OverridableUuidRepresentationCodec) {
-            return ((OverridableUuidRepresentationCodec<T>) codec).withUuidRepresentation(uuidRepresentation);
+            @SuppressWarnings("unchecked")
+            Codec<T> codecWithUuidRepresentation = ((OverridableUuidRepresentationCodec<T>) codec).withUuidRepresentation(uuidRepresentation);
+            codec = codecWithUuidRepresentation;
         }
         return codec;
     }

@@ -22,7 +22,6 @@ import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
-import org.bson.codecs.Parameterizable;
 import org.bson.codecs.RepresentationConfigurable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -50,10 +49,9 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 
-final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
+final class RecordCodec<T extends Record> implements Codec<T> {
     private static final Logger LOGGER = Loggers.getLogger("RecordCodec");
     private final Class<T> clazz;
-    private final boolean requiresParameterization;
     private final Constructor<?> canonicalConstructor;
     private final List<ComponentModel> componentModels;
     private final ComponentModel componentModelForId;
@@ -251,30 +249,11 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
         }
     }
 
-    RecordCodec(final Class<T> clazz, final CodecRegistry codecRegistry) {
-        this.clazz = notNull("class", clazz);
-        if (clazz.getTypeParameters().length > 0) {
-            requiresParameterization = true;
-            canonicalConstructor = null;
-            componentModels = null;
-            fieldNameToComponentModel = null;
-            componentModelForId = null;
-        } else {
-            requiresParameterization = false;
-            canonicalConstructor = notNull("canonicalConstructor", getCanonicalConstructor(clazz));
-            componentModels = getComponentModels(clazz, codecRegistry, List.of());
-            fieldNameToComponentModel = componentModels.stream()
-                    .collect(Collectors.toMap(ComponentModel::getFieldName, Function.identity()));
-            componentModelForId = getComponentModelForId(clazz, componentModels);
-        }
-    }
-
-    RecordCodec(final Class<T> clazz, final CodecRegistry codecRegistry, final List<Type> types) {
-        if (types.size() != clazz.getTypeParameters().length || types.isEmpty()) {
+    RecordCodec(final Class<T> clazz, final List<Type> types, final CodecRegistry codecRegistry) {
+        if (types.size() != clazz.getTypeParameters().length) {
             throw new CodecConfigurationException("Unexpected number of type parameters for record class " + clazz);
         }
         this.clazz = notNull("class", clazz);
-        requiresParameterization = false;
         canonicalConstructor = notNull("canonicalConstructor", getCanonicalConstructor(clazz));
         componentModels = getComponentModels(clazz, codecRegistry, types);
         fieldNameToComponentModel = componentModels.stream()
@@ -282,18 +261,9 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
         componentModelForId = getComponentModelForId(clazz, componentModels);
     }
 
-    @Override
-    public Codec<?> parameterize(final CodecRegistry codecRegistry, final List<Type> types) {
-        return new RecordCodec<>(clazz, codecRegistry, types);
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public T decode(final BsonReader reader, final DecoderContext decoderContext) {
-        if (requiresParameterization) {
-            throw new CodecConfigurationException("Can not decode to a record with type parameters that has not been parameterized");
-        }
-
         reader.readStartDocument();
 
         Object[] constructorArguments = new Object[componentModels.size()];
@@ -320,10 +290,6 @@ final class RecordCodec<T extends Record> implements Codec<T>, Parameterizable {
 
     @Override
     public void encode(final BsonWriter writer, final T record, final EncoderContext encoderContext) {
-        if (requiresParameterization) {
-            throw new CodecConfigurationException("Can not decode to a record with type parameters that has not been parameterized");
-        }
-
         writer.writeStartDocument();
         if (componentModelForId != null) {
             writeComponent(writer, record, componentModelForId);

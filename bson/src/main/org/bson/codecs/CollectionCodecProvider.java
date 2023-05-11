@@ -17,14 +17,19 @@
 package org.bson.codecs;
 
 import org.bson.Transformer;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
+import static org.bson.codecs.ContainerCodecHelper.getCodec;
 
 /**
  * A {@code CodecProvider} for classes than implement the {@code Collection} interface.
@@ -75,12 +80,30 @@ public class CollectionCodecProvider implements CodecProvider {
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (Collection.class.isAssignableFrom(clazz)) {
-            return new CollectionCodec(registry, bsonTypeClassMap, valueTransformer, clazz);
-        }
+        return get(clazz, Collections.emptyList(), registry);
+    }
 
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
+        if (Collection.class.isAssignableFrom(clazz)) {
+            int typeArgumentsSize = typeArguments.size();
+            switch (typeArgumentsSize) {
+                case 0: {
+                    @SuppressWarnings({"unchecked", "rawtypes"})
+                    Codec<T> result = new CollectionCodec(registry, bsonTypeClassMap, valueTransformer, clazz);
+                    return result;
+                }
+                case 1: {
+                    @SuppressWarnings({"unchecked", "rawtypes"})
+                    Codec<T> result = new ParameterizedCollectionCodec(getCodec(registry, typeArguments.get(0)), clazz);
+                    return result;
+                }
+                default: {
+                    throw new CodecConfigurationException("Expected only one type argument for a Collection, but found " + typeArgumentsSize);
+                }
+            }
+        }
         return null;
     }
 

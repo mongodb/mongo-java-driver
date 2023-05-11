@@ -18,6 +18,10 @@ package org.bson.codecs.configuration;
 
 import org.bson.codecs.Codec;
 
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * A provider of {@code Codec} instances.  Typically, an instance of a class implementing this interface would be used to construct a
  * {@code CodecRegistry}.
@@ -34,10 +38,34 @@ public interface CodecProvider {
     /**
      * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.
      *
+     * <p>This method is called only if {@link #get(Class, List, CodecRegistry)} is not properly overridden.</p>
+     *
      * @param clazz the Class for which to get a Codec
      * @param registry the registry to use for resolving dependent Codec instances
      * @param <T> the type of the class for which a Codec is required
      * @return the Codec instance, which may be null, if this source is unable to provide one for the requested Class
      */
     <T> Codec<T> get(Class<T> clazz, CodecRegistry registry);
+
+    /**
+     * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.
+     *
+     * <p>The default implementation delegates to {@link #get(Class, CodecRegistry)}, thus ignoring {@code typeArguments}.</p>
+     *
+     * @param clazz the Class for which to get a Codec
+     * @param typeArguments The type arguments for the {@code clazz}. The size of the list is either equal to the
+     * number of type parameters of the {@code clazz}, or is zero.
+     * For example, if {@code clazz} is {@link Collection}{@code .class}, then the size of {@code typeArguments} is one,
+     * since {@link Collection} has a single type parameter.
+     * The list may be {@linkplain List#isEmpty() empty} either because the {@code clazz} is not generic,
+     * or because another {@link CodecProvider} did not propagate {@code clazz}'s type arguments via the {@code registry},
+     * which may if that {@link CodecProvider} does not properly override {@link #get(Class, List, CodecRegistry)}.
+     * @param registry the registry to use for resolving dependent Codec instances
+     * @return the Codec instance, which may be null, if this source is unable to provide one for the requested Class
+     * @param <T> the type of the class for which a Codec is required
+     * @since 4.10
+     */
+    default <T> Codec<T> get(Class<T> clazz, List<Type> typeArguments, CodecRegistry registry) {
+        return get(clazz, registry);
+    }
 }

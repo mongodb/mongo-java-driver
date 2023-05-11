@@ -21,6 +21,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -84,7 +85,12 @@ class ChildCodecRegistry<T> implements CodecRegistry {
 
     @Override
     public <U> Codec<U> get(final Class<U> clazz, final CodecRegistry registry) {
-        return this.registry.get(clazz, registry);
+        return get(clazz, Collections.emptyList(), registry);
+    }
+
+    @Override
+    public <U> Codec<U> get(final Class<U> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
+        return this.registry.get(clazz, typeArguments, registry);
     }
 
     private <U> Boolean hasCycles(final Class<U> theClass) {

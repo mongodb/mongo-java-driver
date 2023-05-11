@@ -22,13 +22,20 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.record.RecordCodecProvider;
 
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
+
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static org.bson.internal.ProvidersCodecRegistry.getFromCodecProvider;
 
 
 /**
  * A CodecProvider for Java Records.
- *
- * <p>Requires java.lang.Record support - eg Java 17 or greater.</p>
+ * Delegates to {@code org.bson.codecs.record.RecordCodecProvider}.
+ * If neither the runtime supports {@code java.lang.Record}, which was introduced in Java SE 17,
+ * nor {@code org.bson.codecs.record.RecordCodecProvider} is available,
+ * {@linkplain CodecProvider#get(Class, CodecRegistry) provides} {@code null}.
  *
  * @since 4.6
  */
@@ -53,10 +60,18 @@ public class Jep395RecordCodecProvider implements CodecProvider {
     @Override
     @Nullable
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        return RECORD_CODEC_PROVIDER != null ? RECORD_CODEC_PROVIDER.get(clazz, registry) : null;
+        return get(clazz, Collections.emptyList(), registry);
+    }
+
+    @Override
+    @Nullable
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
+        return RECORD_CODEC_PROVIDER != null ? getFromCodecProvider(RECORD_CODEC_PROVIDER, clazz, typeArguments, registry) : null;
     }
 
     /**
+     * This method is not part of the public API and may be removed or changed at any time.
+     *
      * @return true if records are supported
      */
     @VisibleForTesting(otherwise = PRIVATE)
@@ -64,4 +79,3 @@ public class Jep395RecordCodecProvider implements CodecProvider {
         return RECORD_CODEC_PROVIDER != null;
     }
 }
-

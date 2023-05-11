@@ -30,6 +30,7 @@ import java.lang.reflect.ParameterizedType
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 
+import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.JAVA_LEGACY
@@ -195,15 +196,15 @@ class CollectionCodecSpecification extends Specification {
 
     def 'should parameterize'() {
         given:
-        def codec = new CollectionCodec(REGISTRY, new BsonTypeClassMap(), null, Collection)
+        def codec = fromProviders(new Jsr310CodecProvider(), REGISTRY).get(
+                Collection,
+                asList(((ParameterizedType) Container.getMethod('getInstants').genericReturnType).actualTypeArguments))
         def writer = new BsonDocumentWriter(new BsonDocument())
         def reader = new BsonDocumentReader(writer.getDocument())
         def instants = [
                 ['firstMap': [Instant.ofEpochMilli(1), Instant.ofEpochMilli(2)]],
                 ['secondMap': [Instant.ofEpochMilli(3), Instant.ofEpochMilli(4)]]]
         when:
-        codec = codec.parameterize(fromProviders(new Jsr310CodecProvider(), REGISTRY),
-                Arrays.asList(((ParameterizedType) Container.getMethod('getInstants').genericReturnType).actualTypeArguments))
         writer.writeStartDocument()
         writer.writeName('instants')
         codec.encode(writer, instants, EncoderContext.builder().build())
