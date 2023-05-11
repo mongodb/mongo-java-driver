@@ -115,6 +115,7 @@ public abstract class AbstractClientSideEncryptionNotCreateMongocryptdClientTest
         //noinspection unused
         try (AutoCloseable assertNoConnectionsOnAutoCloseToPreserveAssertionFailure = mongocryptdConnectionTracker) {
             collection.insertOne(Document.parse("{unencrypted: 'test'}"));
+            // ConnectionTracker.assertNoConnections is called on auto-close
         }
     }
 
