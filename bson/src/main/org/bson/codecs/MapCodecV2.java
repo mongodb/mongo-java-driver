@@ -20,18 +20,14 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
-import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
 
 import static org.bson.assertions.Assertions.notNull;
-import static org.bson.codecs.ContainerCodecHelper.getCodec;
 
 /**
- * A parameterized Codec for {@code Map<String, Object>}.
+ * A codec for {@code Map<String, Object>}.
  *
  * <p>Supports {@link Map}, {@link java.util.NavigableMap}, {@link java.util.AbstractMap} or any concrete class that implements {@code
  * Map} and has a public no-args constructor. If the type argument is {@code Map<String, Object>}, it constructs
@@ -44,7 +40,7 @@ import static org.bson.codecs.ContainerCodecHelper.getCodec;
  */
 @SuppressWarnings("rawtypes")
 final class MapCodecV2<M extends Map<String, Object>> extends AbstractMapCodec<Object, M>
-        implements OverridableUuidRepresentationCodec<M>, Parameterizable {
+        implements OverridableUuidRepresentationCodec<M> {
 
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final CodecRegistry registry;
@@ -83,20 +79,6 @@ final class MapCodecV2<M extends Map<String, Object>> extends AbstractMapCodec<O
             return this;
         }
         return new MapCodecV2<>(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation, getEncoderClass());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Codec<?> parameterize(final CodecRegistry codecRegistry, final List<Type> types) {
-        if (types.size() != 2) {
-            throw new CodecConfigurationException("Expected two parameterized type for an Iterable, but found "
-                    + types.size());
-        }
-        Type genericTypeOfMapKey = types.get(0);
-        if (!genericTypeOfMapKey.getTypeName().equals("java.lang.String")) {
-            throw new CodecConfigurationException("Unsupported key type for Map: " + genericTypeOfMapKey.getTypeName());
-        }
-        return new ParameterizedMapCodec(getCodec(codecRegistry, types.get(1)), getEncoderClass());
     }
 
     @Override
