@@ -79,7 +79,6 @@ public final class StructuredLogger {
 
     public void log(final LogMessage logMessage) {
         LogMessage.StructuredLogMessage structuredLogMessage = logMessage.toStructuredLogMessage();
-        LogMessage.UnstructuredLogMessage unStructuredLogMessage = logMessage.toUnstructuredLogMessage();
 
         StructuredLoggingInterceptor interceptor = getInterceptor(logMessage.getClusterId().getDescription());
         if (interceptor != null) {
@@ -89,8 +88,9 @@ public final class StructuredLogger {
         switch (structuredLogMessage.getLevel()) {
             case DEBUG:
                 if (logger.isDebugEnabled()) {
-                    Throwable exception = structuredLogMessage.getException();
+                    LogMessage.UnstructuredLogMessage unStructuredLogMessage = logMessage.toUnstructuredLogMessage();
                     String message = unStructuredLogMessage.interpolate();
+                    Throwable exception = structuredLogMessage.getException();
                     if (exception == null) {
                         logger.debug(message);
                     } else {

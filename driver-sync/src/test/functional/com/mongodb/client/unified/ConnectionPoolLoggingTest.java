@@ -25,9 +25,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
-import static org.junit.Assume.assumeFalse;
-
 public class ConnectionPoolLoggingTest extends UnifiedSyncTest {
 
     public ConnectionPoolLoggingTest(@SuppressWarnings("unused") final String fileDescription,
