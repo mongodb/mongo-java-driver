@@ -289,9 +289,7 @@ class DefaultConnectionPool implements ConnectionPool {
             return;
         }
         if (serviceStateManager.incrementGeneration(serviceId, generation)) {
-
-            String message = "Connection pool for {}:{} cleared";
-            logEvent("Connection pool cleared", message);
+            logEvent("Connection pool cleared", "Connection pool for {}:{} cleared");
 
             connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(this.serverId, serviceId));
         }
@@ -304,9 +302,7 @@ class DefaultConnectionPool implements ConnectionPool {
             backgroundMaintenance.close();
             asyncWorkManager.close();
             openConcurrencyLimiter.signalClosedOrPaused();
-
-            String message = "Connection pool closed for {}:{}";
-            logEvent("Connection pool closed", message);
+            logEvent("Connection pool closed", "Connection pool closed for {}:{}");
 
             connectionPoolListener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
         }
@@ -485,8 +481,9 @@ class DefaultConnectionPool implements ConnectionPool {
      * Must not throw {@link Exception}s.
      */
     private void connectionCreated(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId) {
-        String message = "Connection created: address={}:{}, driver-generated ID={}";
-        logEvent("Connection created", message, connectionId.getLocalValue());
+        logEvent("Connection created",
+                "Connection created: address={}:{}, driver-generated ID={}",
+                connectionId.getLocalValue());
 
         connectionPoolListener.connectionAdded(new com.mongodb.event.ConnectionAddedEvent(connectionId));
         connectionPoolListener.connectionCreated(new ConnectionCreatedEvent(connectionId));
@@ -500,14 +497,17 @@ class DefaultConnectionPool implements ConnectionPool {
                                   final ConnectionClosedEvent.Reason reason) {
         ClusterId clusterId = serverId.getClusterId();
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            String message = "Connection closed: address={}:{}, driver-generated ID={}. Reason: {}.[ Error: {}]";
             String errorReason = "There was a socket exception raised by this connection";
 
             List<LogMessage.Entry> entries = createBasicEntries();
             entries.add(new LogMessage.Entry(DRIVER_CONNECTION_ID.getValue(), connectionId.getLocalValue()));
             entries.add(new LogMessage.Entry(REASON_DESCRIPTION.getValue(), EventReasonMessageResolver.getMessage(reason)));
             entries.add(new LogMessage.Entry(ERROR_DESCRIPTION.getValue(), reason == ERROR ? errorReason : null));
-            logMessage("Connection closed", clusterId, message, entries);
+
+            logMessage("Connection closed",
+                    clusterId,
+                    "Connection closed: address={}:{}, driver-generated ID={}. Reason: {}.[ Error: {}]",
+                    entries);
         }
         connectionPoolListener.connectionRemoved(new com.mongodb.event.ConnectionRemovedEvent(connectionId, getReasonForRemoved(reason)));
         connectionPoolListener.connectionClosed(new ConnectionClosedEvent(connectionId, reason));
@@ -515,15 +515,12 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private void connectionCheckedOut(final OperationContext operationContext, final PooledConnection connection) {
         ConnectionId connectionId = getId(connection);
-
-        String message = "Connection checked out: address={}:{}, driver-generated ID={}";
-        logEvent("Connection checked out", message, connectionId.getLocalValue());
+        logEvent("Connection checked out", "Connection checked out: address={}:{}, driver-generated ID={}", connectionId.getLocalValue());
 
         connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(connectionId, operationContext.getId()));
     }
     private void connectionCheckoutStarted(final OperationContext operationContext) {
-        String message = "Checkout started for connection to {}:{}";
-        logEvent("Connection checkout started", message);
+        logEvent("Connection checkout started", "Checkout started for connection to {}:{}");
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
     }
@@ -633,9 +630,9 @@ class DefaultConnectionPool implements ConnectionPool {
 
         private void connectionCheckedIn() {
             ConnectionId connectionId = getId(wrapped);
-
-            String message = "Connection checked in: address={}:{}, driver-generated ID={}";
-            logEvent("Connection checked in", message, connectionId.getLocalValue());
+            logEvent("Connection checked in",
+                    "Connection checked in: address={}:{}, driver-generated ID={}",
+                    connectionId.getLocalValue());
 
             connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId, operationContext.getId()));
         }
@@ -675,9 +672,9 @@ class DefaultConnectionPool implements ConnectionPool {
          */
         private void handleOpenSuccess() {
             ConnectionId connectionId = getId(this);
-
-            String message = "Connection ready: address={}:{}, driver-generated ID={}";
-            logEvent("Connection ready", message, connectionId.getLocalValue());
+            logEvent("Connection ready",
+                    "Connection ready: address={}:{}, driver-generated ID={}",
+                    connectionId.getLocalValue());
 
             connectionPoolListener.connectionReady(new ConnectionReadyEvent(connectionId));
         }
@@ -1517,8 +1514,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 //noinspection NonAtomicOperationOnVolatileField
                 generation++;
                 if (result) {
-                    String message = "Connection pool for {}:{} cleared";
-                    logEvent("Connection pool cleared", message);
+                    logEvent("Connection pool cleared", "Connection pool for {}:{} cleared");
 
                     connectionPoolListener.connectionPoolCleared(new ConnectionPoolClearedEvent(serverId));
                     // one additional run is required to guarantee that a paused pool releases resources
@@ -1539,9 +1535,7 @@ class DefaultConnectionPool implements ConnectionPool {
                         paused = false;
                         cause = null;
                         pool.ready();
-
-                        String message = "Connection pool ready for {}:{}";
-                        logEvent("Connection pool ready", message);
+                        logEvent("Connection pool ready", "Connection pool ready for {}:{}");
 
                         connectionPoolListener.connectionPoolReady(new ConnectionPoolReadyEvent(serverId));
                         backgroundMaintenance.start();
