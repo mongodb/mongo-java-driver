@@ -58,12 +58,12 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
     public static final class LoggingFilter{
         private final Map<LogMessage.Component, LogMessage.Level> filterConfig;
 
-        public LoggingFilter(Map<LogMessage.Component, LogMessage.Level> filterConfig){
+        public LoggingFilter(final Map<LogMessage.Component, LogMessage.Level> filterConfig){
             this.filterConfig = filterConfig;
         }
         boolean match(final LogMessage.StructuredLogMessage message){
             LogMessage.Level expectedLevel = filterConfig.get(message.getComponent());
-            if(expectedLevel!=null) {
+            if (expectedLevel != null) {
                 return message.getLevel().compareTo(expectedLevel) <= 0;
             }
             return false;
