@@ -177,7 +177,7 @@ public final class LogMessage {
             Iterator<LogMessage.Entry> iterator = entries.iterator();
             StringBuilder builder = new StringBuilder();
             int s = 0, i = 0;
-            while(i < format.length()) {
+            while (i < format.length()) {
                 char curr = format.charAt(i);
                 if (curr == '[' || curr == '{') {
                     Object value = iterator.next().getValue();
