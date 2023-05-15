@@ -118,6 +118,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         return finder.notFound();
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public BsonDocument clone() {
         byte[] clonedBytes = new byte[byteBuf.remaining()];
