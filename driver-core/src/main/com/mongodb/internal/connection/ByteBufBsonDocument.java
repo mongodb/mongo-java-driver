@@ -326,19 +326,6 @@ class ByteBufBsonDocument extends BsonDocument {
         T notFound();
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        return toBaseBsonDocument().equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-        return toBaseBsonDocument().hashCode();
-    }
-
     private BsonValue deserializeBsonValue(final BsonReader bsonReader) {
         return REGISTRY.get(getClassForBsonType(bsonReader.getCurrentBsonType())).decode(bsonReader, DecoderContext.builder().build());
     }
