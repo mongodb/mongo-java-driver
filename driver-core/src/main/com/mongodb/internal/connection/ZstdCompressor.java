@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.util.List;
 
 class ZstdCompressor extends Compressor {
+    private static final int DEFAULT_COMPRESSION_LEVEL = 3;
+
     @Override
     public String getName() {
         return "zstd";
@@ -46,7 +48,7 @@ class ZstdCompressor extends Compressor {
 
         try {
             byte[] out = new byte[(int) Zstd.compressBound(uncompressedSize)];
-            int compressedSize = (int) Zstd.compress(out, singleByteArraySource, Zstd.maxCompressionLevel());
+            int compressedSize = (int) Zstd.compress(out, singleByteArraySource, DEFAULT_COMPRESSION_LEVEL);
             target.writeBytes(out, 0, compressedSize);
         } catch (RuntimeException e) {
             throw new MongoInternalException("Unexpected RuntimeException", e);
