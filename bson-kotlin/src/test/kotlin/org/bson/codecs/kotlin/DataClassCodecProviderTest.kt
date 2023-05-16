@@ -16,23 +16,16 @@
 package org.bson.codecs.kotlin
 
 import com.mongodb.MongoClientSettings
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
-import org.bson.BsonDocument
-import org.bson.BsonDocumentReader
-import org.bson.BsonDocumentWriter
-import org.bson.codecs.DecoderContext
-import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
-import org.bson.codecs.kotlin.samples.DataClassEmbedded
 import org.bson.codecs.kotlin.samples.DataClassParameterized
-import org.bson.codecs.kotlin.samples.DataClassWithParameterizedDataClass
 import org.bson.codecs.kotlin.samples.DataClassWithSimpleValues
 import org.bson.conversions.Bson
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class DataClassCodecProviderTest {
 
@@ -52,27 +45,9 @@ class DataClassCodecProviderTest {
     }
 
     @Test
-    fun shouldReturnRawDataClassCodecForParameterizedDataClass() {
-        val provider = DataClassCodecProvider()
-        val codec = provider.get(DataClassParameterized::class.java, Bson.DEFAULT_CODEC_REGISTRY)
-
-        assertNotNull(codec)
-        assertTrue { codec is DataClassCodec.Companion.RawDataClassCodec }
-        assertEquals(DataClassParameterized::class.java, codec.encoderClass)
-
+    fun shouldRequireTypeArgumentsForDataClassParameterized() {
         assertThrows<CodecConfigurationException> {
-            val writer = BsonDocumentWriter(BsonDocument())
-            val dataClass =
-                DataClassWithParameterizedDataClass(
-                    "myId", DataClassParameterized(2.0, "myString", listOf(DataClassEmbedded("embedded1"))))
-            codec.encode(writer, dataClass.parameterizedDataClass, EncoderContext.builder().build())
-        }
-
-        assertThrows<CodecConfigurationException> {
-            val value =
-                BsonDocument.parse(
-                    """{"number": 2.0, "string": "myString", "parameterizedList": [{"name": "embedded1"}]}""")
-            codec.decode(BsonDocumentReader(value), DecoderContext.builder().build())
+            DataClassCodecProvider().get(DataClassParameterized::class.java, Bson.DEFAULT_CODEC_REGISTRY)
         }
     }
 
