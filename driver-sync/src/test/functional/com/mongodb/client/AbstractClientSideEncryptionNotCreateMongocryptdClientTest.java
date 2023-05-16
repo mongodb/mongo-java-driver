@@ -84,7 +84,7 @@ public abstract class AbstractClientSideEncryptionNotCreateMongocryptdClientTest
                         .keyVaultNamespace(KEY_VAULT_NAMESPACE.getFullName())
                         .extraOptions(Stream.of(
                                 new SimpleImmutableEntry<>("cryptSharedLibPath", CRYPT_SHARED_LIB_PATH_SYS_PROP_VALUE),
-                                new SimpleImmutableEntry<>("mongocryptdURI", format("mongodb://%s:%d/db?serverSelectionTimeoutMS=%d",
+                                new SimpleImmutableEntry<>("mongocryptdURI", format("mongodb://%s:%d/?serverSelectionTimeoutMS=%d",
                                         mongocryptdConnectionTracker.serverSocket().getInetAddress().getHostAddress(),
                                         mongocryptdConnectionTracker.serverSocket().getLocalPort(),
                                         TIMEOUT.toMillis()))

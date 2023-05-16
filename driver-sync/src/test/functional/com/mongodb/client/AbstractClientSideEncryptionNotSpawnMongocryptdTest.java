@@ -103,7 +103,7 @@ public abstract class AbstractClientSideEncryptionNotSpawnMongocryptdTest {
                 autoEncryptionSettingsBuilder.extraOptions(merge(commonExtraAutoEncryptionOptions(mongocryptdSocketAddress),
                         new SimpleImmutableEntry<>("cryptSharedLibPath", CRYPT_SHARED_LIB_PATH_SYS_PROP_VALUE),
                         new SimpleImmutableEntry<>("cryptSharedLibRequired", true),
-                        new SimpleImmutableEntry<>("mongocryptdURI", format("mongodb://%s:%d/db?serverSelectionTimeoutMS=%d",
+                        new SimpleImmutableEntry<>("mongocryptdURI", format("mongodb://%s:%d/?serverSelectionTimeoutMS=%d",
                                 mongocryptdSocketAddress.getAddress().getHostAddress(),
                                 mongocryptdSocketAddress.getPort(),
                                 TIMEOUT.toMillis()))
@@ -123,7 +123,7 @@ public abstract class AbstractClientSideEncryptionNotSpawnMongocryptdTest {
         MongoCollection<Document> collection = setUpCollection((mongocryptdSocketAddress, autoEncryptionSettingsBuilder) ->
                 autoEncryptionSettingsBuilder.extraOptions(merge(commonExtraAutoEncryptionOptions(mongocryptdSocketAddress),
                         new SimpleImmutableEntry<>("mongocryptdBypassSpawn", true),
-                        new SimpleImmutableEntry<>("mongocryptdURI", format("mongodb://%s:%d/db?serverSelectionTimeoutMS=%d",
+                        new SimpleImmutableEntry<>("mongocryptdURI", format("mongodb://%s:%d/?serverSelectionTimeoutMS=%d",
                                 mongocryptdSocketAddress.getAddress().getHostAddress(),
                                 mongocryptdSocketAddress.getPort(),
                                 TIMEOUT.toMillis()))
