@@ -59,7 +59,7 @@ public interface CodecProvider {
      * since {@link Collection} has a single type parameter.
      * The list may be {@linkplain List#isEmpty() empty} either because the {@code clazz} is not generic,
      * or because another {@link CodecProvider} did not propagate {@code clazz}'s type arguments via the {@code registry},
-     * which may if that {@link CodecProvider} does not properly override {@link #get(Class, List, CodecRegistry)}.
+     * which may happen if that {@link CodecProvider} does not properly override {@link #get(Class, List, CodecRegistry)}.
      * @param registry the registry to use for resolving dependent Codec instances
      * @return the Codec instance, which may be null, if this source is unable to provide one for the requested Class
      * @param <T> the type of the class for which a Codec is required
