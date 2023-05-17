@@ -237,7 +237,7 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
     @Override
     public String toString() {
         return "BsonArray{"
-               + "values=" + values
+               + "values=" + getValues()
                + '}';
     }
 
