@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
-import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -50,16 +50,16 @@ public final class LogMessage {
     }
 
     public static final class Entry {
-        private final String name;
+        private final Name name;
         private final Object value;
 
-        public Entry(final String name, final @Nullable Object value) {
+        public Entry(final Name name, final @Nullable Object value) {
             this.name = name;
             this.value = value;
         }
 
         public String getName() {
-            return name;
+            return name.getValue();
         }
 
         @Nullable
@@ -81,7 +81,12 @@ public final class LogMessage {
             REPLY("reply"),
             COMMAND_CONTENT("command"),
             REASON_DESCRIPTION("reason"),
-            ERROR_DESCRIPTION("error");
+            ERROR_DESCRIPTION("error"),
+            MAX_IDLE_TIME_MS("maxIdleTimeMS"),
+            MIN_POOL_SIZE("minPoolSize"),
+            MAX_POOL_SIZE("maxPoolSize"),
+            MAX_CONNECTING("maxConnecting"),
+            WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS");
 
             private final String value;
 
@@ -115,6 +120,26 @@ public final class LogMessage {
         return clusterId;
     }
 
+    public LogMessage.Component getComponent() {
+        return component;
+    }
+
+    public LogMessage.Level getLevel() {
+        return level;
+    }
+
+    public String getMessageId() {
+        return messageId;
+    }
+    @Nullable
+    public Throwable getException() {
+        return exception;
+    }
+
+    public Collection<LogMessage.Entry> getEntries() {
+        return entries;
+    }
+
     public LogMessage.StructuredLogMessage toStructuredLogMessage() {
         List<LogMessage.Entry> nullableEntries = entries.stream()
                 .filter(entry -> entry.getValue() != null)
@@ -130,24 +155,8 @@ public final class LogMessage {
         private final Collection<LogMessage.Entry> entries;
 
         public StructuredLogMessage(final Collection<LogMessage.Entry> entries) {
-            entries.forEach(entry -> notNull(entry.getName(), entry.getValue()));
+            entries.forEach(entry -> assertNotNull(entry.getValue()));
             this.entries = entries;
-        }
-
-        public LogMessage.Component getComponent() {
-            return component;
-        }
-
-        public LogMessage.Level getLevel() {
-            return level;
-        }
-
-        public String getMessageId() {
-            return messageId;
-        }
-        @Nullable
-        public Throwable getException() {
-            return exception;
         }
 
         public Collection<LogMessage.Entry> getEntries() {

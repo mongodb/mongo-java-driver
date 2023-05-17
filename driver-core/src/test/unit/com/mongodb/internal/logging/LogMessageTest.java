@@ -17,8 +17,8 @@
 package com.mongodb.internal.logging;
 
 import com.mongodb.connection.ClusterId;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -27,6 +27,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.COMMAND_NAME;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DRIVER_CONNECTION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DURATION_MS;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.REPLY;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.REQUEST_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_CONNECTION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVICE_ID;
 
 class UnstructuredLogMessageTest {
 
@@ -44,76 +55,76 @@ class UnstructuredLogMessageTest {
 
         String format = "Command \"{}\" succeeded in {} ms using a connection with driver-generated ID {}"
                 + "[ and server-generated ID {}] to {}:{}[ with service ID {}]. The requestID is {} and the "
-                + "operation ID is {}. Command reply: {}]";
+                + "operation ID is {}. Command reply: {}";
         return Stream.of(
                 Arguments.of(format, "Command \"create\" succeeded in 5000 ms using a connection with driver-generated ID 1"
                         + " and server-generated ID 2 to localhost:8080 with service ID 3. The requestID is 333 and the "
                         + "operation ID is 444. Command reply: create", createEntries(
-                        entry("commandName", "create"),
-                        entry("durationMS", 5000),
-                        entry("driverConnectionId", 1),
-                        entry("serverConnectionId", 2),
-                        entry("serverHost", "localhost"),
-                        entry("serverPort", 8080),
-                        entry("serviceId", 3),
-                        entry("requestId", 333),
-                        entry("operationId", 444),
-                        entry("commandReply", "create")
+                        entry(COMMAND_NAME, "create"),
+                        entry(DURATION_MS, 5000),
+                        entry(DRIVER_CONNECTION_ID, 1),
+                        entry(SERVER_CONNECTION_ID, 2),
+                        entry(SERVER_HOST, "localhost"),
+                        entry(SERVER_PORT, 8080),
+                        entry(SERVICE_ID, 3),
+                        entry(REQUEST_ID, 333),
+                        entry(OPERATION_ID, 444),
+                        entry(REPLY, "create")
                 )),
                 Arguments.of(format, "Command \"null\" succeeded in null ms using a connection with driver-generated ID null"
                         + " and server-generated ID 2 to localhost:8080 with service ID 3. The requestID is null and the "
                         + "operation ID is null. Command reply: null", createEntries(
-                        entry("commandName", null),
-                        entry("durationMS", null),
-                        entry("driverConnectionId", null),
-                        entry("serverConnectionId", 2),
-                        entry("serverHost", "localhost"),
-                        entry("serverPort", 8080),
-                        entry("serviceId", 3),
-                        entry("requestId", null),
-                        entry("operationId", null),
-                        entry("commandReply", null)
+                        entry(COMMAND_NAME, null),
+                        entry(DURATION_MS, null),
+                        entry(DRIVER_CONNECTION_ID, null),
+                        entry(SERVER_CONNECTION_ID, 2),
+                        entry(SERVER_HOST, "localhost"),
+                        entry(SERVER_PORT, 8080),
+                        entry(SERVICE_ID, 3),
+                        entry(REQUEST_ID, null),
+                        entry(OPERATION_ID, null),
+                        entry(REPLY, null)
                 )), Arguments.of(format, "Command \"null\" succeeded in null ms using a connection with driver-generated ID null"
                         + " to localhost:8080 with service ID 3. The requestID is null and the "
                         + "operation ID is null. Command reply: null", createEntries(
-                        entry("commandName", null),
-                        entry("durationMS", null),
-                        entry("driverConnectionId", null),
-                        entry("serverConnectionId", null),
-                        entry("serverHost", "localhost"),
-                        entry("serverPort", 8080),
-                        entry("serviceId", 3),
-                        entry("requestId", null),
-                        entry("operationId", null),
-                        entry("commandReply", null)
+                        entry(COMMAND_NAME, null),
+                        entry(DURATION_MS, null),
+                        entry(DRIVER_CONNECTION_ID, null),
+                        entry(SERVER_CONNECTION_ID, null),
+                        entry(SERVER_HOST, "localhost"),
+                        entry(SERVER_PORT, 8080),
+                        entry(SERVICE_ID, 3),
+                        entry(REQUEST_ID, null),
+                        entry(OPERATION_ID, null),
+                        entry(REPLY, null)
                 )),
                 Arguments.of(format, "Command \"null\" succeeded in null ms using a connection with driver-generated ID null"
                         + " to localhost:8080. The requestID is null and the "
                         + "operation ID is null. Command reply: null", createEntries(
-                        entry("commandName", null),
-                        entry("durationMS", null),
-                        entry("driverConnectionId", null),
-                        entry("serverConnectionId", null),
-                        entry("serverHost", "localhost"),
-                        entry("serverPort", 8080),
-                        entry("serviceId", null),
-                        entry("requestId", null),
-                        entry("operationId", null),
-                        entry("commandReply", null)
+                        entry(COMMAND_NAME, null),
+                        entry(DURATION_MS, null),
+                        entry(DRIVER_CONNECTION_ID, null),
+                        entry(SERVER_CONNECTION_ID, null),
+                        entry(SERVER_HOST, "localhost"),
+                        entry(SERVER_PORT, 8080),
+                        entry(SERVICE_ID, null),
+                        entry(REQUEST_ID, null),
+                        entry(OPERATION_ID, null),
+                        entry(REPLY, null)
                 )),
                 Arguments.of(format, "Command \"create\" succeeded in 5000 ms using a connection with driver-generated ID 1"
                         + " to localhost:8080. The requestID is 333 and the "
                         + "operation ID is 444. Command reply: create", createEntries(
-                        entry("commandName", "create"),
-                        entry("durationMS", 5000),
-                        entry("driverConnectionId", 1),
-                        entry("serverConnectionId", null),
-                        entry("serverHost", "localhost"),
-                        entry("serverPort", 8080),
-                        entry("serviceId", null),
-                        entry("requestId", 333),
-                        entry("operationId", 444),
-                        entry("commandReply", "create")
+                        entry(COMMAND_NAME, "create"),
+                        entry(DURATION_MS, 5000),
+                        entry(DRIVER_CONNECTION_ID, 1),
+                        entry(SERVER_CONNECTION_ID, null),
+                        entry(SERVER_HOST, "localhost"),
+                        entry(SERVER_PORT, 8080),
+                        entry(SERVICE_ID, null),
+                        entry(REQUEST_ID, 333),
+                        entry(OPERATION_ID, 444),
+                        entry(REPLY, "create")
                 )),
                 Arguments.of("Command \"{}\" succeeded in {} ms using a connection with driver-generated ID {}"
                                 + "[ and server-generated ID {}] to {}:{}[ with service ID {}]. The requestID is {} and the "
@@ -122,16 +133,16 @@ class UnstructuredLogMessageTest {
                         "Command \"create\" succeeded in 5000 ms using a connection with driver-generated ID 1"
                                 + " to localhost:8080. The requestID is 333 and the "
                                 + "operation ID is 444. Command reply: create. Command finished", createEntries(
-                                entry("commandName", "create"),
-                                entry("durationMS", 5000),
-                                entry("driverConnectionId", 1),
-                                entry("serverConnectionId", null),
-                                entry("serverHost", "localhost"),
-                                entry("serverPort", 8080),
-                                entry("serviceId", null),
-                                entry("requestId", 333),
-                                entry("operationId", 444),
-                                entry("commandReply", "create")
+                                entry(COMMAND_NAME, "create"),
+                                entry(DURATION_MS, 5000),
+                                entry(DRIVER_CONNECTION_ID, 1),
+                                entry(SERVER_CONNECTION_ID, null),
+                                entry(SERVER_HOST, "localhost"),
+                                entry(SERVER_PORT, 8080),
+                                entry(SERVICE_ID, null),
+                                entry(REQUEST_ID, 333),
+                                entry(OPERATION_ID, 444),
+                                entry(REPLY, "create")
                         )),
                 Arguments.of("Command \"{}\" succeeded in {} ms using a connection with driver-generated ID {}"
                                 + "[ and server-generated ID {}] to {}:{}[ with service ID {} generated]. The requestID is {} and the "
@@ -140,38 +151,38 @@ class UnstructuredLogMessageTest {
                         "Command \"create\" succeeded in 5000 ms using a connection with driver-generated ID 1"
                                 + " to localhost:8080 with service ID 1 generated. The requestID is 333 and the "
                                 + "operation ID is 444. Command reply: create.", createEntries(
-                                entry("commandName", "create"),
-                                entry("durationMS", 5000),
-                                entry("driverConnectionId", 1),
-                                entry("serverConnectionId", null),
-                                entry("serverHost", "localhost"),
-                                entry("serverPort", 8080),
-                                entry("serviceId", 1),
-                                entry("requestId", 333),
-                                entry("operationId", 444),
-                                entry("commandReply", "create")
+                                entry(COMMAND_NAME, "create"),
+                                entry(DURATION_MS, 5000),
+                                entry(DRIVER_CONNECTION_ID, 1),
+                                entry(SERVER_CONNECTION_ID, null),
+                                entry(SERVER_HOST, "localhost"),
+                                entry(SERVER_PORT, 8080),
+                                entry(SERVICE_ID, 1),
+                                entry(REQUEST_ID, 333),
+                                entry(OPERATION_ID, 444),
+                                entry(REPLY, "create")
                         )),
                 Arguments.of("Command succeeded.", "Command succeeded.", createEntries(
-                        entry("commandName", "create"),
-                        entry("durationMS", 5000),
-                        entry("driverConnectionId", 1),
-                        entry("serverConnectionId", null),
-                        entry("serverHost", "localhost"),
-                        entry("serverPort", 8080),
-                        entry("serviceId", null),
-                        entry("requestId", 333),
-                        entry("operationId", 444),
-                        entry("commandReply", "create")
+                        entry(COMMAND_NAME, "create"),
+                        entry(DURATION_MS, 5000),
+                        entry(DRIVER_CONNECTION_ID, 1),
+                        entry(SERVER_CONNECTION_ID, null),
+                        entry(SERVER_HOST, "localhost"),
+                        entry(SERVER_PORT, 8080),
+                        entry(SERVICE_ID, null),
+                        entry(REQUEST_ID, 333),
+                        entry(OPERATION_ID, 444),
+                        entry(REPLY, "create")
                 ))
         );
     }
 
 
-    private static LogMessage.Entry entry(final String name, final @Nullable Object key) {
+    private static LogMessage.Entry entry(final LogMessage.Entry.Name name, final @Nullable Object key) {
         return new LogMessage.Entry(name, key);
     }
 
-    @NotNull
+    @NonNull
     private static List<LogMessage.Entry> createEntries(final LogMessage.Entry... entry) {
         return Arrays.asList(entry);
     }

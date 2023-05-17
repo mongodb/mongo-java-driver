@@ -143,7 +143,7 @@ abstract class ContextElement {
         }
     }
     public static ContextElement ofLogMessages(final String client, final BsonArray expectedMessages,
-            final List<LogMessage.StructuredLogMessage> actualMessages) {
+            final List<LogMessage> actualMessages) {
         return new LogMessageMatchingContextElement(client, expectedMessages, actualMessages);
     }
 
@@ -383,10 +383,10 @@ abstract class ContextElement {
     private static class LogMessageMatchingContextElement extends ContextElement {
         private final String client;
         private final BsonArray expectedMessages;
-        private final List<LogMessage.StructuredLogMessage> actualMessages;
+        private final List<LogMessage> actualMessages;
 
         LogMessageMatchingContextElement(final String client, final BsonArray expectedMessages,
-                final List<LogMessage.StructuredLogMessage> actualMessages) {
+                final List<LogMessage> actualMessages) {
             super();
             this.client = client;
             this.expectedMessages = expectedMessages;

@@ -23,6 +23,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
+import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
@@ -509,7 +510,7 @@ public final class Entities {
             BsonDocument observeLogMessagesDocument = entity.getDocument("observeLogMessages");
 
             Map<LogMessage.Component, LogMessage.Level> filterConfig = observeLogMessagesDocument.entrySet().stream()
-                    .collect(Collectors.toMap(this::toComponent, this::toLevel));
+                    .collect(Collectors.toMap(Entities::toComponent, Entities::toLevel));
 
             TestLoggingInterceptor.LoggingFilter loggingFilter = new TestLoggingInterceptor.LoggingFilter(filterConfig);
 
@@ -523,13 +524,13 @@ public final class Entities {
         }
     }
 
-    private LogMessage.Component toComponent(final Map.Entry<String, BsonValue> entry) {
+    private static LogMessage.Component toComponent(final Map.Entry<String, BsonValue> entry) {
         String componentName = entry.getKey();
       return   LogMessage.Component
                 .valueOf(componentName.toUpperCase());
     }
 
-    private LogMessage.Level toLevel(final Map.Entry<String, BsonValue> entry) {
+    private static LogMessage.Level toLevel(final Map.Entry<String, BsonValue> entry) {
          BsonValue bsonValue = entry.getValue();
         String levelName = bsonValue
                 .asString()

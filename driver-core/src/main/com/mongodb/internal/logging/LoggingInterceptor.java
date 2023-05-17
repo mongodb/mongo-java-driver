@@ -23,6 +23,6 @@ import com.mongodb.annotations.ThreadSafe;
  */
 @FunctionalInterface
 @ThreadSafe
-public interface StructuredLoggingInterceptor {
-    void intercept(LogMessage.StructuredLogMessage message);
+public interface LoggingInterceptor {
+    void intercept(LogMessage message);
 }

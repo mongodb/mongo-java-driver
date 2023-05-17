@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.unified;
+package com.mongodb.logging;
 
 import com.mongodb.internal.logging.LogMessage;
+import com.mongodb.internal.logging.LoggingInterceptor;
 import com.mongodb.internal.logging.StructuredLogger;
-import com.mongodb.internal.logging.StructuredLoggingInterceptor;
 import com.mongodb.lang.NonNull;
 
 import java.util.ArrayList;
@@ -27,9 +27,9 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
-public class TestLoggingInterceptor implements StructuredLoggingInterceptor, AutoCloseable {
+public class TestLoggingInterceptor implements LoggingInterceptor, AutoCloseable {
 
-    private final List<LogMessage.StructuredLogMessage> messages = new ArrayList<>();
+    private final List<LogMessage> messages = new ArrayList<>();
     private final String applicationName;
     private final LoggingFilter filter;
 
@@ -40,7 +40,7 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
     }
 
     @Override
-    public synchronized void intercept(@NonNull final LogMessage.StructuredLogMessage message) {
+    public synchronized void intercept(@NonNull final LogMessage message) {
         if (filter.match(message)) {
             messages.add(message);
         }
@@ -51,7 +51,7 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
         StructuredLogger.removeInterceptor(applicationName);
     }
 
-    public synchronized List<LogMessage.StructuredLogMessage> getMessages() {
+    public synchronized List<LogMessage> getMessages() {
         return new ArrayList<>(messages);
     }
 
@@ -61,7 +61,7 @@ public class TestLoggingInterceptor implements StructuredLoggingInterceptor, Aut
         public LoggingFilter(final Map<LogMessage.Component, LogMessage.Level> filterConfig){
             this.filterConfig = filterConfig;
         }
-        boolean match(final LogMessage.StructuredLogMessage message){
+        boolean match(final LogMessage message){
             LogMessage.Level expectedLevel = filterConfig.get(message.getComponent());
             if (expectedLevel != null) {
                 return message.getLevel().compareTo(expectedLevel) <= 0;

@@ -32,12 +32,12 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  */
 public final class StructuredLogger {
 
-    private static final ConcurrentHashMap<String, StructuredLoggingInterceptor> INTERCEPTORS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, LoggingInterceptor> INTERCEPTORS = new ConcurrentHashMap<>();
 
     private final Logger logger;
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public static void addInterceptor(final String clusterDescription, final StructuredLoggingInterceptor interceptor) {
+    public static void addInterceptor(final String clusterDescription, final LoggingInterceptor interceptor) {
         INTERCEPTORS.put(clusterDescription, interceptor);
     }
 
@@ -47,7 +47,7 @@ public final class StructuredLogger {
     }
 
     @Nullable
-    private static StructuredLoggingInterceptor getInterceptor(@Nullable final String clusterDescription) {
+    private static LoggingInterceptor getInterceptor(@Nullable final String clusterDescription) {
         if (clusterDescription == null) {
             return null;
         }
@@ -78,19 +78,17 @@ public final class StructuredLogger {
    }
 
     public void log(final LogMessage logMessage) {
-        LogMessage.StructuredLogMessage structuredLogMessage = logMessage.toStructuredLogMessage();
-
-        StructuredLoggingInterceptor interceptor = getInterceptor(logMessage.getClusterId().getDescription());
+        LoggingInterceptor interceptor = getInterceptor(logMessage.getClusterId().getDescription());
         if (interceptor != null) {
-            interceptor.intercept(structuredLogMessage);
+            interceptor.intercept(logMessage);
         }
         //noinspection SwitchStatementWithTooFewBranches
-        switch (structuredLogMessage.getLevel()) {
+        switch (logMessage.getLevel()) {
             case DEBUG:
                 if (logger.isDebugEnabled()) {
                     LogMessage.UnstructuredLogMessage unStructuredLogMessage = logMessage.toUnstructuredLogMessage();
                     String message = unStructuredLogMessage.interpolate();
-                    Throwable exception = structuredLogMessage.getException();
+                    Throwable exception = logMessage.getException();
                     if (exception == null) {
                         logger.debug(message);
                     } else {
