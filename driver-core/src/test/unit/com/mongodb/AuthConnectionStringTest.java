@@ -39,11 +39,8 @@ public class AuthConnectionStringTest extends TestCase {
     private final String input;
     private final BsonDocument definition;
 
-    public AuthConnectionStringTest(
-            final String filename,
-            final String description,
-            final String input,
-            final BsonDocument definition) {
+    public AuthConnectionStringTest(final String filename, final String description, final String input,
+                                    final BsonDocument definition) {
         this.input = input;
         this.definition = definition;
     }
@@ -63,11 +60,8 @@ public class AuthConnectionStringTest extends TestCase {
         for (File file : JsonPoweredTestHelper.getTestFiles("/auth")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
-                data.add(new Object[]{
-                        file.getName(),
-                        test.asDocument().getString("description").getValue(),
-                        test.asDocument().getString("uri").getValue(),
-                        test.asDocument()});
+                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                        test.asDocument().getString("uri").getValue(), test.asDocument()});
             }
         }
         return data;
