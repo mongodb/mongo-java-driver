@@ -76,7 +76,7 @@ public class AuthConnectionStringTest extends TestCase {
     private void testInvalidUris() {
         Throwable expectedError = null;
         try {
-            getMongoCredential();
+            new ConnectionString(input).getCredential();
         } catch (Throwable t) {
             expectedError = t;
         }
@@ -85,7 +85,7 @@ public class AuthConnectionStringTest extends TestCase {
     }
 
     private void testValidUris() {
-        MongoCredential credential = getMongoCredential();
+        MongoCredential credential = new ConnectionString(input).getCredential();
 
         if (credential != null) {
             assertString("credential.source", credential.getSource());
@@ -104,14 +104,6 @@ public class AuthConnectionStringTest extends TestCase {
                 fail(String.format("Connection string '%s' should produce credentials", input));
             }
         }
-    }
-
-    @Nullable
-    private MongoCredential getMongoCredential() {
-        ConnectionString connectionString;
-        connectionString = new ConnectionString(input);
-        MongoCredential credential = connectionString.getCredential();
-        return credential;
     }
 
     private void assertString(final String key, final String actual) {
