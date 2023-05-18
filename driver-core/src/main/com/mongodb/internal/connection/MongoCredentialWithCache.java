@@ -18,12 +18,16 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
+import com.mongodb.internal.Locks;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import static com.mongodb.internal.Locks.withLock;
+
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcCacheEntry;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -33,12 +37,13 @@ public class MongoCredentialWithCache {
     private final Cache cache;
 
     public MongoCredentialWithCache(final MongoCredential credential) {
-        this(credential, null);
+        this.credential = credential;
+        this.cache = new Cache();
     }
 
-    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
+    private MongoCredentialWithCache(final MongoCredential credential, final Cache cache) {
         this.credential = credential;
-        this.cache = cache != null ? cache : new Cache();
+        this.cache = cache;
     }
 
     public MongoCredentialWithCache withMechanism(final AuthenticationMechanism mechanism) {
@@ -63,14 +68,33 @@ public class MongoCredentialWithCache {
         cache.set(key, value);
     }
 
+    public OidcCacheEntry getOidcCacheEntry() {
+        return cache.oidcCacheEntry;
+    }
+
+    public void setOidcCacheEntry(final OidcCacheEntry oidcCacheEntry) {
+        this.cache.oidcCacheEntry = oidcCacheEntry;
+    }
+
+    public <V> V withOidcLock(final Supplier<V> k) {
+        return Locks.withLock(cache.oidcLock, k);
+    }
+
     public Lock getLock() {
         return cache.lock;
     }
 
+    /**
+     * Stores any state associated with the credential.
+     */
     static class Cache {
         private final ReentrantLock lock = new ReentrantLock();
         private Object cacheKey;
         private Object cacheValue;
+
+
+        private final ReentrantLock oidcLock = new ReentrantLock();
+        private volatile OidcCacheEntry oidcCacheEntry = new OidcCacheEntry();
 
         Object get(final Object key) {
             return withLock(lock, () -> {

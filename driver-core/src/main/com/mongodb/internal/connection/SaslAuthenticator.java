@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.AuthenticationMechanism;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
@@ -55,6 +57,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         super(credential, clusterConnectionMode, serverApi);
     }
 
+    @Override
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
         doAsSubject(() -> {
             SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
@@ -121,9 +124,11 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
     private BsonDocument getNextSaslResponse(final SaslClient saslClient, final InternalConnection connection) {
-        BsonDocument response = getSpeculativeAuthenticateResponse();
-        if (response != null) {
-            return response;
+        if (!connection.opened()) {
+            BsonDocument response = getSpeculativeAuthenticateResponse();
+            if (response != null) {
+                return response;
+            }
         }
 
         try {
@@ -136,9 +141,9 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     private void getNextSaslResponseAsync(final SaslClient saslClient, final InternalConnection connection,
                                           final SingleResultCallback<Void> callback) {
-        BsonDocument response = getSpeculativeAuthenticateResponse();
-        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
+            BsonDocument response = getSpeculativeAuthenticateResponse();
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (response == null) {
                 byte[] serverResponse = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
                 sendSaslStartAsync(serverResponse, connection, (result, t) -> {
@@ -331,8 +336,52 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 disposeOfSaslClient(saslClient);
             }
         }
-
     }
 
+    protected abstract static class SaslClientImpl implements SaslClient {
+        private final MongoCredential credential;
+
+        public SaslClientImpl(final MongoCredential credential) {
+            this.credential = credential;
+        }
+
+        @Override
+        public boolean hasInitialResponse() {
+            return true;
+        }
+
+        @Override
+        public byte[] unwrap(final byte[] bytes, final int i, final int i1) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
+        public byte[] wrap(final byte[] bytes, final int i, final int i1) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
+        public Object getNegotiatedProperty(final String s) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
+        public void dispose() {
+            // nothing to do
+        }
+
+        @Override
+        public final String getMechanismName() {
+            AuthenticationMechanism authMechanism = getCredential().getAuthenticationMechanism();
+            if (authMechanism == null) {
+                throw new IllegalArgumentException("Authentication mechanism cannot be null");
+            }
+            return authMechanism.getMechanismName();
+        }
+
+        protected MongoCredential getCredential() {
+            return credential;
+        }
+    }
 }
 

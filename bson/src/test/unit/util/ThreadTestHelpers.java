@@ -31,15 +31,19 @@ public final class ThreadTestHelpers {
     }
 
     public static void executeAll(final int nThreads, final Runnable c) {
+        executeAll(Collections.nCopies(nThreads, c).toArray(new Runnable[0]));
+    }
+
+    public static void executeAll(final Runnable... runnables) {
         ExecutorService service = null;
         try {
-            service = Executors.newFixedThreadPool(nThreads);
-            CountDownLatch latch = new CountDownLatch(nThreads);
+            service = Executors.newFixedThreadPool(runnables.length);
+            CountDownLatch latch = new CountDownLatch(runnables.length);
             List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
-            for (int i = 0; i < nThreads; i++) {
+            for (final Runnable runnable : runnables) {
                 service.submit(() -> {
                     try {
-                        c.run();
+                        runnable.run();
                     } catch (Throwable e) {
                         failures.add(e);
                     } finally {

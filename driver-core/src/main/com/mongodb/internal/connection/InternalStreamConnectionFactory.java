@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.AuthenticationMechanism;
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoDriverInformation;
@@ -30,9 +31,9 @@ import org.bson.BsonDocument;
 
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateBeforeUse;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
@@ -80,18 +81,21 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     @Override
     public InternalConnection create(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
         Authenticator authenticator = credential == null ? null : createAuthenticator(credential);
-        return new InternalStreamConnection(clusterConnectionMode, isMonitoringConnection, serverId, connectionGenerationSupplier,
+        InternalStreamConnectionInitializer connectionInitializer = new InternalStreamConnectionInitializer(
+                clusterConnectionMode, authenticator, clientMetadataDocument, compressorList, serverApi);
+        return new InternalStreamConnection(
+                clusterConnectionMode, authenticator,
+                isMonitoringConnection, serverId, connectionGenerationSupplier,
                 streamFactory, compressorList, loggerSettings, commandListener,
-                new InternalStreamConnectionInitializer(clusterConnectionMode, authenticator, clientMetadataDocument, compressorList,
-                        serverApi), inetAddressResolver);
+                connectionInitializer, inetAddressResolver);
     }
 
     private Authenticator createAuthenticator(final MongoCredentialWithCache credential) {
-        if (credential.getAuthenticationMechanism() == null) {
+        AuthenticationMechanism authenticationMechanism = credential.getAuthenticationMechanism();
+        if (authenticationMechanism == null) {
             return new DefaultAuthenticator(credential, clusterConnectionMode, serverApi);
         }
-
-        switch (assertNotNull(credential.getAuthenticationMechanism())) {
+        switch (authenticationMechanism) {
             case GSSAPI:
                 return new GSSAPIAuthenticator(credential, clusterConnectionMode, serverApi);
             case PLAIN:
@@ -103,8 +107,11 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
                 return new ScramShaAuthenticator(credential, clusterConnectionMode, serverApi);
             case MONGODB_AWS:
                 return new AwsAuthenticator(credential, clusterConnectionMode, serverApi);
+            case MONGODB_OIDC:
+                validateBeforeUse(credential.getCredential());
+                return new OidcAuthenticator(credential, clusterConnectionMode, serverApi);
             default:
-                throw new IllegalArgumentException("Unsupported authentication mechanism " + credential.getAuthenticationMechanism());
+                throw new IllegalArgumentException("Unsupported authentication mechanism " + authenticationMechanism);
         }
     }
 }

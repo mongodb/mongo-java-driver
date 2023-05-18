@@ -21,6 +21,7 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
@@ -40,6 +41,11 @@ public abstract class Authenticator {
         this.credential = credential;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
+    }
+
+    public static boolean shouldAuthenticate(@Nullable final Authenticator authenticator,
+            final ConnectionDescription connectionDescription) {
+        return authenticator != null && connectionDescription.getServerType() != ServerType.REPLICA_SET_ARBITER;
     }
 
     @NonNull
@@ -93,4 +99,10 @@ public abstract class Authenticator {
 
     abstract void authenticateAsync(InternalConnection connection, ConnectionDescription connectionDescription,
                                     SingleResultCallback<Void> callback);
+
+    public void reauthenticate(final InternalConnection connection) {
+        throw new UnsupportedOperationException(
+                "Reauthentication requested by server but is not supported by specified mechanism.");
+    }
+
 }

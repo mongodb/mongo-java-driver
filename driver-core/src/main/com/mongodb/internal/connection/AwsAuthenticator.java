@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.AuthenticationMechanism;
 import com.mongodb.AwsCredential;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCredential;
@@ -77,27 +76,12 @@ public class AwsAuthenticator extends SaslAuthenticator {
         return new AwsSaslClient(getMongoCredential());
     }
 
-    private static class AwsSaslClient implements SaslClient {
-        private final MongoCredential credential;
+    private static class AwsSaslClient extends SaslClientImpl {
         private final byte[] clientNonce = new byte[RANDOM_LENGTH];
         private int step = -1;
 
         AwsSaslClient(final MongoCredential credential) {
-            this.credential = credential;
-        }
-
-        @Override
-        public String getMechanismName() {
-            AuthenticationMechanism authMechanism = credential.getAuthenticationMechanism();
-            if (authMechanism == null) {
-                throw new IllegalArgumentException("Authentication mechanism cannot be null");
-            }
-            return authMechanism.getMechanismName();
-        }
-
-        @Override
-        public boolean hasInitialResponse() {
-            return true;
+            super(credential);
         }
 
         @Override
@@ -115,26 +99,6 @@ public class AwsAuthenticator extends SaslAuthenticator {
         @Override
         public boolean isComplete() {
             return step == 1;
-        }
-
-        @Override
-        public byte[] unwrap(final byte[] bytes, final int i, final int i1) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        @Override
-        public byte[] wrap(final byte[] bytes, final int i, final int i1) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        @Override
-        public Object getNegotiatedProperty(final String s) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        @Override
-        public void dispose() {
-            // nothing to do
         }
 
         private byte[] computeClientFirstMessage() {
@@ -184,6 +148,7 @@ public class AwsAuthenticator extends SaslAuthenticator {
 
         private AwsCredential createAwsCredential() {
             AwsCredential awsCredential;
+            MongoCredential credential = getCredential();
             if (credential.getUserName() != null) {
                 if (credential.getPassword() == null) {
                     throw new MongoClientException("secretAccessKey is required for AWS credential");
