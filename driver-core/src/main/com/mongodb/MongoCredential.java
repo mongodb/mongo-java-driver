@@ -362,20 +362,13 @@ public final class MongoCredential {
      * @param source    the source of the user name, typically a database name
      * @param password  the password
      */
-    MongoCredential(
-            @Nullable final AuthenticationMechanism mechanism,
-            @Nullable final String userName,
-            final String source,
-            @Nullable final char[] password) {
+    MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName,
+            final String source, @Nullable final char[] password) {
         this(mechanism, userName, source, password, Collections.emptyMap());
     }
 
-    MongoCredential(
-            @Nullable final AuthenticationMechanism mechanism,
-            @Nullable final String userName,
-            final String source,
-            @Nullable final char[] password,
-            final Map<String, Object> mechanismProperties) {
+    MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName,
+            final String source, @Nullable final char[] password, final Map<String, Object> mechanismProperties) {
 
         if (userName == null && !Arrays.asList(MONGODB_X509, MONGODB_AWS).contains(mechanism)) {
             throw new IllegalArgumentException("username can not be null");
@@ -418,10 +411,8 @@ public final class MongoCredential {
      * @param <T>                    the mechanism property type
      */
     <T> MongoCredential(final MongoCredential from, final String mechanismPropertyKey, final T mechanismPropertyValue) {
-        this(from.mechanism, from.userName, from.source, from.password, mapWith(
-                from.mechanismProperties,
-                notNull("mechanismPropertyKey", mechanismPropertyKey).toLowerCase(),
-                mechanismPropertyValue));
+        this(from.mechanism, from.userName, from.source, from.password, mapWith(from.mechanismProperties, notNull(
+                "mechanismPropertyKey", mechanismPropertyKey).toLowerCase(), mechanismPropertyValue));
     }
 
     private static <T> Map<String, Object> mapWith(final Map<String, Object> map, final String key, final T value) {

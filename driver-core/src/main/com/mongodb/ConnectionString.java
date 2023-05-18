@@ -800,10 +800,8 @@ public class ConnectionString {
     }
 
     @Nullable
-    private MongoCredential createCredentials(
-            final Map<String, List<String>> optionsMap,
-            @Nullable final String userName,
-            @Nullable final char[] password) {
+    private MongoCredential createCredentials(final Map<String, List<String>> optionsMap,
+            @Nullable final String userName, @Nullable final char[] password) {
         AuthenticationMechanism mechanism = null;
         String authSource = null;
         String gssapiServiceName = null;
