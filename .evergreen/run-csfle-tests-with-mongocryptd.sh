@@ -64,10 +64,10 @@ echo "Running tests with Java ${JAVA_VERSION}"
       ${GRADLE_EXTRA_VARS} \
       --stacktrace --info --continue \
       driver-legacy:test \
-          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*" \
+          --tests "*.Client*Encryption*" \
       driver-sync:test \
-          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*" \
+          --tests "*.Client*Encryption*" \
       driver-reactive-streams:test \
-          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*" \
+          --tests "*.Client*Encryption*" \
       driver-scala:integrationTest \
-          --tests "*.ClientEncryption*" --tests "*.ClientSideEncryption*"
+          --tests "*.Client*Encryption*"
