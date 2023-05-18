@@ -151,10 +151,10 @@ public final class LogMessage {
         return new LogMessage.UnstructuredLogMessage();
     }
 
-    public final class StructuredLogMessage {
+    public static final class StructuredLogMessage {
         private final Collection<LogMessage.Entry> entries;
 
-        public StructuredLogMessage(final Collection<LogMessage.Entry> entries) {
+        private StructuredLogMessage(final Collection<LogMessage.Entry> entries) {
             entries.forEach(entry -> assertNotNull(entry.getValue()));
             this.entries = entries;
         }
