@@ -86,8 +86,8 @@ public final class StructuredLogger {
         switch (logMessage.getLevel()) {
             case DEBUG:
                 if (logger.isDebugEnabled()) {
-                    LogMessage.UnstructuredLogMessage unStructuredLogMessage = logMessage.toUnstructuredLogMessage();
-                    String message = unStructuredLogMessage.interpolate();
+                    LogMessage.UnstructuredLogMessage unstructuredLogMessage = logMessage.toUnstructuredLogMessage();
+                    String message = unstructuredLogMessage.interpolate();
                     Throwable exception = logMessage.getException();
                     if (exception == null) {
                         logger.debug(message);

@@ -35,9 +35,9 @@ import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
-import java.util.ArrayDeque;
 
-import java.util.Deque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -101,10 +101,10 @@ class LoggingCommandEventSender implements CommandEventSender {
             String command = redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument);
 
             logEventMessage(messagePrefix, "Command started", null, entries -> {
-                entries.addFirst(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
-                entries.addFirst(new Entry(COMMAND_NAME, commandName));
-                entries.add(new Entry(COMMAND_CONTENT, command));
-            });
+                        entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
+                    },
+                    entries -> entries.add(new Entry(COMMAND_CONTENT, command)));
         }
 
         if (eventRequired()) {
@@ -133,11 +133,12 @@ class LoggingCommandEventSender implements CommandEventSender {
         if (loggingRequired()) {
             String messagePrefix = "Command \"{}\" failed in {} ms";
 
-            logEventMessage(messagePrefix, "Command failed", commandEventException, entries -> {
-                entries.addFirst(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
-                entries.addFirst(new Entry(COMMAND_NAME, commandName));
-                entries.addLast(new Entry(COMMAND_CONTENT, null));
-            });
+            logEventMessage(messagePrefix, "Command failed", commandEventException,
+                    entries -> {
+                        entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
+                    },
+                    entries -> entries.add(new Entry(COMMAND_CONTENT, null)));
         }
 
         if (eventRequired()) {
@@ -167,11 +168,12 @@ class LoggingCommandEventSender implements CommandEventSender {
             BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
             String replyString = redactionRequired ? "{}" : getTruncatedJsonCommand(responseDocumentForEvent);
 
-            logEventMessage("Command succeeded", null, entries -> {
-                entries.addFirst(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
-                entries.addFirst(new Entry(COMMAND_NAME, commandName));
-                entries.addLast(new Entry(REPLY, replyString));
-            }, format);
+            logEventMessage("Command succeeded", null,
+                    entries -> {
+                        entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
+                    },
+                    entries -> entries.add(new Entry(REPLY, replyString)), format);
         }
 
         if (eventRequired()) {
@@ -195,16 +197,20 @@ class LoggingCommandEventSender implements CommandEventSender {
     }
 
     private void logEventMessage(final String messagePrefix, final String messageId, @Nullable final Throwable exception,
-                                 final Consumer<Deque<Entry>> entriesMutator) {
+                                 final Consumer<List<Entry>> prefixEntriesMutator,
+                                 final Consumer<List<Entry>> suffixEntriesMutator) {
         String format = messagePrefix + " using a connection with driver-generated ID {}"
                 + "[ and server-generated ID {}] to {}:{}[ with service ID {}]. The request ID is {}"
                 + " and the operation ID is {}.[ Command: {}]";
-        logEventMessage(messageId, exception, entriesMutator, format);
+        logEventMessage(messageId, exception, prefixEntriesMutator, suffixEntriesMutator, format);
     }
 
-    private void logEventMessage(final String messageId, final @Nullable Throwable exception, final Consumer<Deque<Entry>> entriesMutator,
+    private void logEventMessage(final String messageId, final @Nullable Throwable exception,
+                                 final Consumer<List<Entry>> prefixEntriesMutator,
+                                 final Consumer<List<Entry>> suffixEntriesMutator,
                                  final String format) {
-        Deque<Entry> entries = new ArrayDeque<>();
+        List<Entry> entries = new ArrayList<>();
+        prefixEntriesMutator.accept(entries);
         entries.add(new Entry(DRIVER_CONNECTION_ID, description.getConnectionId().getLocalValue()));
         entries.add(new Entry(SERVER_CONNECTION_ID, description.getConnectionId().getServerValue()));
         entries.add(new Entry(SERVER_HOST, description.getServerAddress().getHost()));
@@ -212,7 +218,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         entries.add(new Entry(SERVICE_ID, description.getServiceId()));
         entries.add(new Entry(REQUEST_ID, message.getId()));
         entries.add(new Entry(OPERATION_ID, operationContext.getId()));
-        entriesMutator.accept(entries);
+        suffixEntriesMutator.accept(entries);
         logger.log(new LogMessage(COMMAND, DEBUG, messageId, getClusterId(), exception, entries, format));
     }
 

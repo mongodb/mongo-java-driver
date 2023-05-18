@@ -1369,7 +1369,7 @@ final class UnifiedCrudHelper {
     public OperationResult close(final BsonDocument operation) {
         String id = operation.getString("object").getValue();
 
-        if ("client".equals(id)) {
+        if (entities.hasClient(id)) {
             entities.getClient(id).close();
         } else {
             MongoCursor<BsonDocument> cursor = entities.getCursor(id);
