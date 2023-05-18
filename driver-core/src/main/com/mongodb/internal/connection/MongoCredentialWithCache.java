@@ -18,26 +18,27 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
-import com.mongodb.internal.Locks;
 import com.mongodb.lang.Nullable;
 
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
+
+import static com.mongodb.internal.Locks.withLock;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MongoCredentialWithCache {
     private final MongoCredential credential;
-    private final SingleValueCache cache;
+    private final Cache cache;
 
     public MongoCredentialWithCache(final MongoCredential credential) {
         this(credential, null);
     }
 
-    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final SingleValueCache cache) {
+    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
         this.credential = credential;
-        this.cache = cache != null ? cache : new SingleValueCache();
+        this.cache = cache != null ? cache : new Cache();
     }
 
     public MongoCredentialWithCache withMechanism(final AuthenticationMechanism mechanism) {
@@ -58,24 +59,21 @@ public class MongoCredentialWithCache {
         return clazz.cast(cache.get(key));
     }
 
-    /**
-     * Putting a key and value will overwrite any prior key and value.
-     */
     public void putInCache(final Object key, final Object value) {
         cache.set(key, value);
     }
 
-    public <V> V withLock(final Supplier<V> k) {
-        return Locks.withLock(cache.lock, k);
+    public Lock getLock() {
+        return cache.lock;
     }
 
-    static class SingleValueCache {
+    static class Cache {
         private final ReentrantLock lock = new ReentrantLock();
         private Object cacheKey;
         private Object cacheValue;
 
         Object get(final Object key) {
-            return Locks.withLock(lock, () -> {
+            return withLock(lock, () -> {
                 if (cacheKey != null && cacheKey.equals(key)) {
                     return cacheValue;
                 }
@@ -84,7 +82,7 @@ public class MongoCredentialWithCache {
         }
 
         void set(final Object key, final Object value) {
-            Locks.withLock(lock, () -> {
+            withLock(lock, () -> {
                 cacheKey = key;
                 cacheValue = value;
             });
