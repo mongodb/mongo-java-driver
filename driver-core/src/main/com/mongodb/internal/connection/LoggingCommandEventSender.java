@@ -22,8 +22,8 @@ import com.mongodb.RequestContext;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.logging.StructuredLogMessage;
-import com.mongodb.internal.logging.StructuredLogMessage.Entry;
+import com.mongodb.internal.logging.LogMessage;
+import com.mongodb.internal.logging.LogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -33,25 +33,38 @@ import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
-import org.bson.types.ObjectId;
 
 import java.io.StringWriter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.internal.connection.ProtocolHelper.sendCommandSucceededEvent;
-import static com.mongodb.internal.logging.StructuredLogMessage.Component.COMMAND;
-import static com.mongodb.internal.logging.StructuredLogMessage.Level.DEBUG;
+import static com.mongodb.internal.logging.LogMessage.Component.COMMAND;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.COMMAND_CONTENT;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.COMMAND_NAME;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DATABASE_NAME;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DRIVER_CONNECTION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DURATION_MS;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.REPLY;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.REQUEST_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_CONNECTION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVICE_ID;
+import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 
 class LoggingCommandEventSender implements CommandEventSender {
     private static final double NANOS_PER_MILLI = 1_000_000.0d;
-
     private final ConnectionDescription description;
-    @Nullable private final CommandListener commandListener;
+    @Nullable
+    private final CommandListener commandListener;
     private final RequestContext requestContext;
     private final OperationContext operationContext;
     private final StructuredLogger logger;
@@ -84,17 +97,14 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendStartedEvent() {
         if (loggingRequired()) {
-            List<Entry> entries = new ArrayList<>();
-            StringBuilder builder = new StringBuilder("Command \"%s\" started on database %s");
-            entries.add(new Entry("commandName", commandName));
-            entries.add(new Entry("databaseName", message.getNamespace().getDatabaseName()));
+            String messagePrefix = "Command \"{}\" started on database {}";
+            String command = redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument);
 
-            appendCommonLogFragment(entries, builder);
-
-            builder.append(" Command: %s");
-            entries.add(new Entry("command", redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument)));
-
-            logger.log(new StructuredLogMessage(COMMAND, DEBUG, "Command started", getClusterId(), entries), builder.toString());
+            logEventMessage(messagePrefix, "Command started", null, entries -> {
+                        entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
+                    },
+                    entries -> entries.add(new Entry(COMMAND_CONTENT, command)));
         }
 
         if (eventRequired()) {
@@ -121,15 +131,14 @@ class LoggingCommandEventSender implements CommandEventSender {
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {
-            List<Entry> entries = new ArrayList<>();
-            StringBuilder builder = new StringBuilder("Command \"%s\" failed in %.2f ms");
-            entries.add(new Entry("commandName", commandName));
-            entries.add(new Entry("durationMS", elapsedTimeNanos / NANOS_PER_MILLI));
+            String messagePrefix = "Command \"{}\" failed in {} ms";
 
-            appendCommonLogFragment(entries, builder);
-
-            logger.log(new StructuredLogMessage(COMMAND, DEBUG, "Command failed", getClusterId(), commandEventException, entries),
-                    builder.toString());
+            logEventMessage(messagePrefix, "Command failed", commandEventException,
+                    entries -> {
+                        entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
+                    },
+                    entries -> entries.add(new Entry(COMMAND_CONTENT, null)));
         }
 
         if (eventRequired()) {
@@ -152,20 +161,19 @@ class LoggingCommandEventSender implements CommandEventSender {
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {
-            List<Entry> entries = new ArrayList<>();
-            StringBuilder builder = new StringBuilder("Command \"%s\" succeeded in %.2f ms");
-            entries.add(new Entry("commandName", commandName));
-            entries.add(new Entry("durationMS", elapsedTimeNanos / NANOS_PER_MILLI));
+            String format = "Command \"{}\" succeeded in {} ms using a connection with driver-generated ID {}"
+                    + "[ and server-generated ID {}] to {}:{}[ with service ID {}]. The request ID is {}"
+                    + " and the operation ID is {}. Command reply: {}";
 
-            appendCommonLogFragment(entries, builder);
-
-            builder.append(" Command reply: %s");
             BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
             String replyString = redactionRequired ? "{}" : getTruncatedJsonCommand(responseDocumentForEvent);
-            entries.add(new Entry("reply", replyString));
 
-            logger.log(new StructuredLogMessage(COMMAND, DEBUG, "Command succeeded", getClusterId(), entries),
-                    builder.toString());
+            logEventMessage("Command succeeded", null,
+                    entries -> {
+                        entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
+                    },
+                    entries -> entries.add(new Entry(REPLY, replyString)), format);
         }
 
         if (eventRequired()) {
@@ -188,29 +196,30 @@ class LoggingCommandEventSender implements CommandEventSender {
         return commandListener != null;
     }
 
-    private void appendCommonLogFragment(final List<Entry> entries, final StringBuilder builder) {
-        builder.append(" using a connection with driver-generated ID %d");
-        entries.add(new Entry("driverConnectionId", description.getConnectionId().getLocalValue()));
+    private void logEventMessage(final String messagePrefix, final String messageId, @Nullable final Throwable exception,
+                                 final Consumer<List<Entry>> prefixEntriesMutator,
+                                 final Consumer<List<Entry>> suffixEntriesMutator) {
+        String format = messagePrefix + " using a connection with driver-generated ID {}"
+                + "[ and server-generated ID {}] to {}:{}[ with service ID {}]. The request ID is {}"
+                + " and the operation ID is {}.[ Command: {}]";
+        logEventMessage(messageId, exception, prefixEntriesMutator, suffixEntriesMutator, format);
+    }
 
-        Integer connectionServerValue = description.getConnectionId().getServerValue();
-        if (connectionServerValue != null) {
-            builder.append(" and server-generated ID %d");
-            entries.add(new Entry("serverConnectionId", connectionServerValue));
-        }
-
-        builder.append(" to %s:%s");
-        entries.add(new Entry("serverHost", description.getServerAddress().getHost()));
-        entries.add(new Entry("serverPort", description.getServerAddress().getPort()));
-
-        ObjectId descriptionServiceId = description.getServiceId();
-        if (descriptionServiceId != null) {
-            builder.append(" with service ID %s");
-            entries.add(new Entry("serviceId", descriptionServiceId));
-        }
-
-        builder.append(". The request ID is %s and the operation ID is %s.");
-        entries.add(new Entry("requestId", message.getId()));
-        entries.add(new Entry("operationId", operationContext.getId()));
+    private void logEventMessage(final String messageId, final @Nullable Throwable exception,
+                                 final Consumer<List<Entry>> prefixEntriesMutator,
+                                 final Consumer<List<Entry>> suffixEntriesMutator,
+                                 final String format) {
+        List<Entry> entries = new ArrayList<>();
+        prefixEntriesMutator.accept(entries);
+        entries.add(new Entry(DRIVER_CONNECTION_ID, description.getConnectionId().getLocalValue()));
+        entries.add(new Entry(SERVER_CONNECTION_ID, description.getConnectionId().getServerValue()));
+        entries.add(new Entry(SERVER_HOST, description.getServerAddress().getHost()));
+        entries.add(new Entry(SERVER_PORT, description.getServerAddress().getPort()));
+        entries.add(new Entry(SERVICE_ID, description.getServiceId()));
+        entries.add(new Entry(REQUEST_ID, message.getId()));
+        entries.add(new Entry(OPERATION_ID, operationContext.getId()));
+        suffixEntriesMutator.accept(entries);
+        logger.log(new LogMessage(COMMAND, DEBUG, messageId, getClusterId(), exception, entries, format));
     }
 
     private String getTruncatedJsonCommand(final BsonDocument commandDocument) {

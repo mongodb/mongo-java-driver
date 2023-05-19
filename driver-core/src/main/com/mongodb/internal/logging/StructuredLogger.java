@@ -20,26 +20,24 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.logging.StructuredLogMessage.Entry;
-import com.mongodb.internal.logging.StructuredLogMessage.Level;
+import com.mongodb.internal.logging.LogMessage.Level;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static java.lang.String.format;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class StructuredLogger {
 
-    private static final ConcurrentHashMap<String, StructuredLoggingInterceptor> INTERCEPTORS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, LoggingInterceptor> INTERCEPTORS = new ConcurrentHashMap<>();
 
     private final Logger logger;
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public static void addInterceptor(final String clusterDescription, final StructuredLoggingInterceptor interceptor) {
+    public static void addInterceptor(final String clusterDescription, final LoggingInterceptor interceptor) {
         INTERCEPTORS.put(clusterDescription, interceptor);
     }
 
@@ -49,7 +47,7 @@ public final class StructuredLogger {
     }
 
     @Nullable
-    private static StructuredLoggingInterceptor getInterceptor(@Nullable final String clusterDescription) {
+    private static LoggingInterceptor getInterceptor(@Nullable final String clusterDescription) {
         if (clusterDescription == null) {
             return null;
         }
@@ -79,20 +77,22 @@ public final class StructuredLogger {
         }
    }
 
-    public void log(final StructuredLogMessage message, final String format) {
-        StructuredLoggingInterceptor interceptor = getInterceptor(message.getClusterId().getDescription());
+    public void log(final LogMessage logMessage) {
+        LoggingInterceptor interceptor = getInterceptor(logMessage.getClusterId().getDescription());
         if (interceptor != null) {
-            interceptor.intercept(message);
+            interceptor.intercept(logMessage);
         }
         //noinspection SwitchStatementWithTooFewBranches
-        switch (message.getLevel()) {
+        switch (logMessage.getLevel()) {
             case DEBUG:
                 if (logger.isDebugEnabled()) {
-                    Throwable exception = message.getException();
+                    LogMessage.UnstructuredLogMessage unstructuredLogMessage = logMessage.toUnstructuredLogMessage();
+                    String message = unstructuredLogMessage.interpolate();
+                    Throwable exception = logMessage.getException();
                     if (exception == null) {
-                        logger.debug(format(format, message.getEntries().stream().map(Entry::getValue).toArray()));
+                        logger.debug(message);
                     } else {
-                        logger.debug(format(format, message.getEntries().stream().map(Entry::getValue).toArray()), exception);
+                        logger.debug(message, exception);
                     }
                 }
                 break;

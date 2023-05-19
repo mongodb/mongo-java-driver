@@ -17,15 +17,21 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.MongoConnectionPoolClearedException
+import com.mongodb.MongoServerUnavailableException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
+import com.mongodb.logging.TestLoggingInterceptor
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.event.ConnectionCheckOutFailedEvent
 import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.internal.async.SingleResultCallback
+import com.mongodb.internal.inject.EmptyProvider
 import com.mongodb.internal.inject.SameObjectProvider
+import com.mongodb.internal.logging.LogMessage
+import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Subject
 import util.spock.annotations.Slow
@@ -38,14 +44,24 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
 
 class DefaultConnectionPoolSpecification extends Specification {
-    private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
+    private static final ServerAddress SERVER_ADDRESS = new ServerAddress()
+    private static final ServerId SERVER_ID = new ServerId(new ClusterId("test"), SERVER_ADDRESS)
 
     private final TestInternalConnectionFactory connectionFactory = Spy(TestInternalConnectionFactory)
+    private TestLoggingInterceptor interceptor;
 
     @Subject
     private DefaultConnectionPool pool
 
+    def setup() {
+        def filterConfig = [:]
+        filterConfig[LogMessage.Component.CONNECTION] = LogMessage.Level.DEBUG
+        interceptor = new TestLoggingInterceptor("test",
+                new TestLoggingInterceptor.LoggingFilter(filterConfig))
+    }
+
     def cleanup() {
+        interceptor.close();
         pool.close()
     }
 
@@ -202,6 +218,184 @@ class DefaultConnectionPoolSpecification extends Specification {
         1 * listener.connectionCreated { it.connectionId.serverId == SERVER_ID }
         1 * listener.connectionAdded { it.connectionId.serverId == SERVER_ID }
         1 * listener.connectionReady { it.connectionId.serverId == SERVER_ID }
+    }
+
+    def 'should log connection pool events'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        def settings = builder().maxSize(10).minSize(5).addConnectionPoolListener(listener).build()
+        def connection = Mock(InternalConnection)
+        def connectionDescription = Mock(ConnectionDescription)
+        def driverConnectionId = 1
+        def id = new ConnectionId(SERVER_ID, driverConnectionId, 1);
+        connectionFactory.create(SERVER_ID, _) >> connection
+        connectionDescription.getConnectionId() >> id
+        connection.getDescription() >> connectionDescription
+        connection.opened() >> false
+
+        when: 'connection pool is created'
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, settings, mockSdamProvider())
+        then: '"pool is created" log message is emitted'
+        def poolCreatedLogMessage = getMessage("Connection pool created")
+        "Connection pool created for ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()} using options " +
+                "maxIdleTimeMS=${settings.getMaxConnectionIdleTime(MILLISECONDS)}, " +
+                "minPoolSize=${settings.getMinSize()}, maxPoolSize=${settings.getMaxSize()}, " +
+                "maxConnecting=${settings.getMaxConnecting()}, " +
+                "waitQueueTimeoutMS=${settings.getMaxWaitTime(MILLISECONDS)}" == poolCreatedLogMessage
+
+        when: 'connection pool is ready'
+        pool.ready()
+        then: '"pool is ready" log message is emitted'
+        def poolReadyLogMessage = getMessage("Connection pool ready")
+        "Connection pool ready for ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}" == poolReadyLogMessage
+
+        when: 'connection is created'
+        pool.get(new OperationContext())
+        then: '"connection created" and "connection ready" log messages are emitted'
+        def createdLogMessage = getMessage( "Connection created")
+        def readyLogMessage = getMessage("Connection ready")
+        "Connection created: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
+                "driver-generated ID=${driverConnectionId}" == createdLogMessage
+        "Connection ready: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
+                "driver-generated ID=${driverConnectionId}" == readyLogMessage
+
+        when: 'connection is released back into the pool on close'
+        pool.get(new OperationContext()).close()
+        then: '"connection check out" and "connection checked in" log messages are emitted'
+        def checkoutStartedMessage = getMessage("Connection checkout started")
+        def connectionCheckedInMessage = getMessage("Connection checked in")
+        def checkedOutLogMessage = getMessage("Connection checked out")
+        "Connection checked out: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
+                "driver-generated ID=${driverConnectionId}" == checkedOutLogMessage
+        "Checkout started for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}" == checkoutStartedMessage
+        "Connection checked in: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
+                "driver-generated ID=${driverConnectionId}" == connectionCheckedInMessage
+
+        when: 'connection pool is cleared'
+        pool.invalidate(null)
+        then: '"connection pool cleared" log message is emitted'
+        def poolClearedLogMessage = getMessage("Connection pool cleared")
+        "Connection pool for ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()} cleared"  == poolClearedLogMessage
+
+        when: 'the maintenance tasks runs'
+        pool.doMaintenance()
+        //not cool - but we have no way of being notified that the maintenance task has finished
+        Thread.sleep(500)
+        then: '"connection became stale" log message is emitted'
+        def unstructuredMessage = getMessage("Connection closed")
+        "Connection closed: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
+                "driver-generated ID=1. " +
+                "Reason: Connection became stale because the pool was cleared." == unstructuredMessage
+
+        when: 'pool is closed'
+        pool.close()
+        then: '"connection pool closed" log message is emitted'
+        def poolClosedLogMessage = getMessage("Connection pool closed")
+        "Connection pool closed for ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}"  == poolClosedLogMessage
+
+        when: 'connection checked out on closed pool'
+        pool.get(new OperationContext())
+        then:
+        thrown(MongoServerUnavailableException)
+        def connectionCheckoutFailedInMessage = getMessage("Connection checkout failed")
+        "Checkout failed for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}. " +
+                "Reason: Connection pool was closed." == connectionCheckoutFailedInMessage
+    }
+
+    private String getMessage(messageId) {
+        interceptor.getMessages()
+                .find {
+                    it.getMessageId() == messageId
+                }
+                .toUnstructuredLogMessage().interpolate()
+    }
+
+
+    def 'should log on checkout timeout fail'() throws InterruptedException {
+        given:
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                builder().maxSize(1).maxWaitTime(50, MILLISECONDS).build(), mockSdamProvider())
+        pool.ready()
+        pool.get(new OperationContext())
+
+        when:
+        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool)
+        new Thread(connectionGetter).start()
+        connectionGetter.latch.await()
+
+        then:
+        connectionGetter.gotTimeout
+        def unstructuredMessage = getMessage("Connection checkout failed")
+        "Checkout failed for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}." +
+                " Reason: Wait queue timeout elapsed without a connection becoming available." == unstructuredMessage
+    }
+
+    def 'should log on connection become idle'() {
+        given:
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                builder().maxSize(2).minSize(0).maxConnectionIdleTime(1, MILLISECONDS).build(), mockSdamProvider())
+
+        when:
+        pool.ready()
+        pool.get(new OperationContext()).close()
+        //not cool - but we have no way of waiting for connection to become idle
+        Thread.sleep(500)
+        pool.close();
+
+        then:
+        def unstructuredMessage = getMessage("Connection closed")
+        "Connection closed: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}," +
+                " driver-generated ID=1." +
+                " Reason: Connection has been available but unused for longer than the configured max " +
+                "idle time." == unstructuredMessage
+    }
+
+
+    def 'should log on connection pool cleared in load-balanced mode'() {
+        given:
+        def serviceId = new ObjectId()
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                builder().maxSize(1)
+                        .minSize(0)
+                        .maxConnectionIdleTime(1, MILLISECONDS)
+                        .build(), EmptyProvider.instance())
+
+        when:
+        pool.ready()
+        pool.invalidate(serviceId, 1);
+
+        then:
+        def poolClearedLogMessage = getMessage("Connection pool cleared")
+        "Connection pool for ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()} " +
+                "cleared for serviceId ${serviceId.toHexString()}"  == poolClearedLogMessage
+    }
+
+    def 'should log connection checkout failed with Reason.CONNECTION_ERROR if fails to open a connection'() {
+        given:
+        def listener = Mock(ConnectionPoolListener)
+        def connection = Mock(InternalConnection)
+        connection.getDescription() >> new ConnectionDescription(SERVER_ID)
+        connection.opened() >> false
+        connection.open() >> { throw new UncheckedIOException('expected failure', new IOException()) }
+        connectionFactory.create(SERVER_ID, _) >> connection
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build(),
+                mockSdamProvider())
+        pool.ready()
+
+        when:
+        try {
+            pool.get(new OperationContext())
+        } catch (UncheckedIOException e) {
+            if ('expected failure' != e.getMessage()) {
+                throw e
+            }
+        }
+
+        then:
+        def unstructuredMessage = getMessage("Connection checkout failed" )
+       "Checkout failed for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}." +
+               " Reason: An error occurred while trying to establish a new connection." +
+               " Error: java.io.UncheckedIOException: expected failure" == unstructuredMessage
     }
 
     def 'should fire asynchronous connection created to pool event'() {
