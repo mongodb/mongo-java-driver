@@ -62,7 +62,7 @@ final class ServerAddressWithResolver extends ServerAddress {
 
     @Override
     public List<InetSocketAddress> getSocketAddresses() {
-        if (resolver == null || isIpLiteral()) {
+        if (resolver == null) {
             return super.getSocketAddresses();
         }
         try {
@@ -72,11 +72,6 @@ final class ServerAddressWithResolver extends ServerAddress {
         } catch (UnknownHostException e) {
             throw new MongoSocketException(e.getMessage(), this, e);
         }
-    }
-
-    // If this returns true, it's either an IP literal or a malformed hostname.  But either way, skip lookup via resolver
-    private boolean isIpLiteral() {
-        return getHost().charAt(0) == '[' || Character.digit(getHost().charAt(0), 16) != -1 || (getHost().charAt(0) == ':');
     }
 
     @Override

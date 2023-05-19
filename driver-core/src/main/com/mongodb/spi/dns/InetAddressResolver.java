@@ -38,6 +38,8 @@ public interface InetAddressResolver {
      * Given the name of a host, returns a list of IP addresses of the requested
      * address family associated with a provided hostname.
      *
+     * <p>The host name can be an IP literal, as with {@link InetAddress#getAllByName(String)}</p>
+     *
      * <p>Implementations are encouraged to implement their own caching policies, as there is
      * no guarantee that the caller will implement a cache.
      *
