@@ -151,7 +151,6 @@ public class AuthConnectionStringTest extends TestCase {
         }
     }
 
-    @Nullable
     private BsonValue getExpectedValue(final String key) {
         BsonValue expected = definition;
         if (key.contains(".")) {

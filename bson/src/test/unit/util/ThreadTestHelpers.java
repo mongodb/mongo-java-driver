@@ -33,7 +33,7 @@ public final class ThreadTestHelpers {
     public static void executeAll(final int nThreads, final Runnable c) {
         ExecutorService service = null;
         try {
-            service = Executors.newFixedThreadPool(10);
+            service = Executors.newFixedThreadPool(nThreads);
             CountDownLatch latch = new CountDownLatch(nThreads);
             List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
             for (int i = 0; i < nThreads; i++) {
@@ -50,6 +50,7 @@ public final class ThreadTestHelpers {
             try {
                 latch.await();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
             if (!failures.isEmpty()) {
