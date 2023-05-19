@@ -38,7 +38,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Base64;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +50,7 @@ import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static com.mongodb.client.unified.UnifiedClientEncryptionHelper.localKmsProviderKey;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
@@ -199,9 +199,7 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
 
     private enum KmsProvider {
         LOCAL("local",
-                kmsProviderProperties -> kmsProviderProperties.put("key", Base64.getDecoder().decode(
-                        "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
-                                + "GJkTXVyZG9uSjFk")),
+                kmsProviderProperties -> kmsProviderProperties.put("key", localKmsProviderKey()),
                 createEncryptedCollectionParams -> {}
         ),
         AWS("aws",

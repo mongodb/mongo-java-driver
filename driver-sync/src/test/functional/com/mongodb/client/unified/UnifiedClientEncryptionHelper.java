@@ -28,6 +28,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonValue;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import java.util.function.Supplier;
 
 import static java.lang.Math.toIntExact;
 
-final class UnifiedClientEncryptionHelper {
+public final class UnifiedClientEncryptionHelper {
     private static final BsonDocument PLACEHOLDER = BsonDocument.parse("{'$$placeholder': 1}");
     private final Entities entities;
 
@@ -51,7 +52,7 @@ final class UnifiedClientEncryptionHelper {
         }
     }
 
-    public static Map<String, Map<String, Object>> createKmsProvidersMap(final BsonDocument kmsProviders) {
+    static Map<String, Map<String, Object>> createKmsProvidersMap(final BsonDocument kmsProviders) {
         Map<String, Map<String, Object>> kmsProvidersMap = new HashMap<>();
         for (String kmsProviderKey : kmsProviders.keySet()) {
             BsonDocument kmsProviderOptions = kmsProviders.get(kmsProviderKey).asDocument();
@@ -84,9 +85,7 @@ final class UnifiedClientEncryptionHelper {
                             System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "key", () ->
-                            "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
-                            + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "key", UnifiedClientEncryptionHelper::localKmsProviderKey);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProviderKey);
@@ -94,6 +93,12 @@ final class UnifiedClientEncryptionHelper {
             kmsProvidersMap.put(kmsProviderKey, kmsProviderMap);
         }
         return kmsProvidersMap;
+    }
+
+    public static byte[] localKmsProviderKey() {
+        return Base64.getDecoder().decode(
+                "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
+                        + "GJkTXVyZG9uSjFk");
     }
 
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
