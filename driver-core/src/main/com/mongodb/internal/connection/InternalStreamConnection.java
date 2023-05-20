@@ -324,7 +324,7 @@ public class InternalStreamConnection implements InternalConnection {
             case "snappy":
                 return new SnappyCompressor();
             case "zstd":
-                return new ZstdCompressor();
+                return new ZstdCompressor(mongoCompressor);
             default:
                 throw new MongoClientException("Unsupported compressor " + mongoCompressor.getName());
         }
