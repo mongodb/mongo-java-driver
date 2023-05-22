@@ -85,8 +85,12 @@ private[codecs] object CaseClassCodec {
     val codecName = TypeName(s"${classTypeName}MacroCodec")
 
     // Type checkers
-    def isCaseClass(t: Type): Boolean =
+    def isCaseClass(t: Type): Boolean = {
+      // https://github.com/scala/bug/issues/7755
+      val _ = t.typeSymbol.typeSignature
       t.typeSymbol.isClass && t.typeSymbol.asClass.isCaseClass && !t.typeSymbol.isModuleClass
+    }
+
     def isCaseObject(t: Type): Boolean = t.typeSymbol.isModuleClass && t.typeSymbol.asClass.isCaseClass
     def isMap(t: Type): Boolean = t.baseClasses.contains(mapTypeSymbol)
     def isOption(t: Type): Boolean = t.typeSymbol == definitions.OptionClass
