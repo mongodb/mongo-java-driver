@@ -899,8 +899,8 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the connection-specific settings wrapped in a settings object.   This settings object uses the values for connectTimeout,
-     * socketTimeout and socketKeepAlive.
+     * Gets the connection-specific settings wrapped in a settings object.   This settings object uses the values for connectTimeout
+     * and socketTimeout.
      *
      * @return a SocketSettings object populated with the connection settings from this {@code MongoClientSettings} instance.
      * @see SocketSettings
