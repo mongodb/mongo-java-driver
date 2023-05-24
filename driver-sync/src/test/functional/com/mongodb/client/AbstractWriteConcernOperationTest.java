@@ -32,6 +32,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.isServerlessTest;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static org.junit.Assume.assumeFalse;
@@ -44,6 +46,7 @@ public abstract class AbstractWriteConcernOperationTest extends AbstractUnifiedT
                                              final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, definition, skipTest, true);
         assumeFalse(isServerlessTest());
+        assumeFalse(isSharded() && serverVersionLessThan(4, 2));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
