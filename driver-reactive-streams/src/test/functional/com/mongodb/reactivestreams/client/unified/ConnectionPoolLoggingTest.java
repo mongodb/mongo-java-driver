@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static org.junit.Assume.assumeFalse;
+
 public class ConnectionPoolLoggingTest extends UnifiedReactiveStreamsTest {
 
 
@@ -34,6 +36,9 @@ public class ConnectionPoolLoggingTest extends UnifiedReactiveStreamsTest {
                                      @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
                                      final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        // The implementation of the functionality related to clearing the connection pool before closing the connection
+        // will be carried out once the specification is finalized and ready.
+        assumeFalse(testDescription.equals("Connection checkout fails due to error establishing connection"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
