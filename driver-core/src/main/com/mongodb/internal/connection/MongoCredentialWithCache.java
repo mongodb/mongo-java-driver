@@ -36,7 +36,7 @@ public class MongoCredentialWithCache {
         this(credential, null);
     }
 
-    public MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
+    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
         this.credential = credential;
         this.cache = cache != null ? cache : new Cache();
     }

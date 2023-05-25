@@ -369,7 +369,8 @@ public final class MongoCredential {
 
     MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
                     @Nullable final char[] password, final Map<String, Object> mechanismProperties) {
-        if (mechanism != MONGODB_X509 && mechanism != MONGODB_AWS && userName == null) {
+
+        if (userName == null && !Arrays.asList(MONGODB_X509, MONGODB_AWS).contains(mechanism)) {
             throw new IllegalArgumentException("username can not be null");
         }
 
@@ -399,7 +400,6 @@ public final class MongoCredential {
 
     private boolean mechanismRequiresPassword(@Nullable final AuthenticationMechanism mechanism) {
         return mechanism == PLAIN || mechanism == SCRAM_SHA_1 || mechanism == SCRAM_SHA_256;
-
     }
 
     /**
@@ -411,14 +411,14 @@ public final class MongoCredential {
      * @param <T>                    the mechanism property type
      */
     <T> MongoCredential(final MongoCredential from, final String mechanismPropertyKey, final T mechanismPropertyValue) {
-        notNull("mechanismPropertyKey", mechanismPropertyKey);
+        this(from.mechanism, from.userName, from.source, from.password, mapWith(from.mechanismProperties, notNull(
+                "mechanismPropertyKey", mechanismPropertyKey).toLowerCase(), mechanismPropertyValue));
+    }
 
-        this.mechanism = from.mechanism;
-        this.userName = from.userName;
-        this.source = from.source;
-        this.password = from.password;
-        this.mechanismProperties = new HashMap<>(from.mechanismProperties);
-        this.mechanismProperties.put(mechanismPropertyKey.toLowerCase(), mechanismPropertyValue);
+    private static <T> Map<String, Object> mapWith(final Map<String, Object> map, final String key, final T value) {
+        HashMap<String, Object> result = new HashMap<>(map);
+        result.put(key, value);
+        return result;
     }
 
     /**
