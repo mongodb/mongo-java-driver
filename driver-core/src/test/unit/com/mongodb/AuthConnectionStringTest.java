@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.lang.Nullable;
 import junit.framework.TestCase;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
