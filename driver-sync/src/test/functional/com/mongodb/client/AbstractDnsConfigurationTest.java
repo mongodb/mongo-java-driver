@@ -72,7 +72,7 @@ public abstract class AbstractDnsConfigurationTest {
             assertEquals(exception, exceptionReceived.getCause());
         }
     }
-    
+
     @Test
     public void testDnsClientConfiguration() throws InterruptedException, ExecutionException, TimeoutException {
         DnsException exception = new DnsException("", new Exception());
