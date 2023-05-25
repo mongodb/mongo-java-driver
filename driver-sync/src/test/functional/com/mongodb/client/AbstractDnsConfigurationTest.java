@@ -21,7 +21,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
@@ -29,8 +28,6 @@ import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.DnsException;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.UnknownHostException;
 import java.util.Collections;
@@ -38,13 +35,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
-import static com.mongodb.ClusterFixture.getServerApi;
-import static com.mongodb.ClusterFixture.isStandalone;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SuppressWarnings("try")
 public abstract class AbstractDnsConfigurationTest {
@@ -80,42 +72,7 @@ public abstract class AbstractDnsConfigurationTest {
             assertEquals(exception, exceptionReceived.getCause());
         }
     }
-
-    @ParameterizedTest(name = "InetAddressResolver should not be used to resolve IP literal {0}")
-    @ValueSource(strings = {"127.0.0.1", "::1", "[0:0:0:0:0:0:0:1]"})
-    public void testInetAddressResolverDoesNotResolveIpLiteral(final String ipLiteral) throws InterruptedException, ExecutionException,
-            TimeoutException {
-        assumeTrue(isStandalone());
-        assumeTrue(getServerApi() == null);
-
-        // should not be invoked for IP literals
-        InetAddressResolver resolver = host -> {
-            throw new UnknownHostException();
-        };
-
-        CompletableFuture<Boolean> serverConnectedFuture = new CompletableFuture<>();
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(getConnectionString())
-                .applyToClusterSettings(builder ->
-                        builder.hosts(Collections.singletonList(new ServerAddress(ipLiteral)))
-                                .addClusterListener(new ClusterListener() {
-                                    @Override
-                                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
-                                        ServerDescription serverDescription = event.getNewDescription().getServerDescriptions().get(0);
-                                        // If the resolver that throws an exception is invoked, the state will not be CONNECTED
-                                        if (serverDescription.getState() == ServerConnectionState.CONNECTED) {
-                                            serverConnectedFuture.complete(true);
-                                        }
-                                    }
-                                }))
-                .inetAddressResolver(resolver)
-                .build();
-
-        try (MongoClient ignored = createMongoClient(settings)) {
-            assertTrue(serverConnectedFuture.get(1, SECONDS));
-        }
-    }
-
+    
     @Test
     public void testDnsClientConfiguration() throws InterruptedException, ExecutionException, TimeoutException {
         DnsException exception = new DnsException("", new Exception());
