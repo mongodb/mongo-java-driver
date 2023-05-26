@@ -1920,8 +1920,8 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-jdk-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk17"], version: ["3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "latest"],
-                 topology: ["replicaset", "sharded-cluster"], os: "linux" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17" ], version: [ "3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "latest" ],
+                 topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
