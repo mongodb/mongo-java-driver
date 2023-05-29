@@ -717,21 +717,21 @@ public final class MongoCredential {
         private final String accessToken;
 
         @Nullable
-        private final Integer expiresInSeconds;
+        private final Integer accessTokenExpiresInSeconds;
 
         @Nullable
         private final String refreshToken;
 
         /**
          * @param accessToken The OIDC access token
-         * @param expiresInSeconds The expiration in seconds. If null, the access token is single-use.
+         * @param accessTokenExpiresInSeconds The expiration in seconds. If null, the access token is single-use.
          * @param refreshToken The refresh token. If null, refresh will not be attempted.
          */
-        public IdpResponse(final String accessToken, @Nullable final Integer expiresInSeconds,
+        public IdpResponse(final String accessToken, @Nullable final Integer accessTokenExpiresInSeconds,
                 @Nullable final String refreshToken) {
             notNull("accessToken", accessToken);
             this.accessToken = accessToken;
-            this.expiresInSeconds = expiresInSeconds;
+            this.accessTokenExpiresInSeconds = accessTokenExpiresInSeconds;
             this.refreshToken = refreshToken;
         }
 
@@ -743,11 +743,12 @@ public final class MongoCredential {
         }
 
         /**
-         * @return The expiration time in seconds. If null, the access token is single-use.
+         * @return The expiration time for the access token in seconds.
+         * If null, the access token is single-use.
          */
         @Nullable
-        public Integer getExpiresInSeconds() {
-            return expiresInSeconds;
+        public Integer getAccessTokenExpiresInSeconds() {
+            return accessTokenExpiresInSeconds;
         }
 
         /**

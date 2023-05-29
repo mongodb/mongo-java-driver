@@ -29,6 +29,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
@@ -45,12 +46,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -195,6 +195,8 @@ public class OidcAuthenticator extends SaslAuthenticator {
             } catch (MongoSecurityException e) {
                 if (triggersRetry(e)) { // TODO-OIDC-x unclear how to provide test coverage for this
                     authLock(connection, connectionDescription);
+                } else {
+                    throw e;
                 }
             }
         } else {
@@ -314,31 +316,16 @@ public class OidcAuthenticator extends SaslAuthenticator {
 
     @Nullable
     private String getValidCachedAccessToken() {
-        MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
-        OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
-        String cachedAccessToken = cacheEntry.accessToken;
-        if (cachedAccessToken == null) {
-            return null;
-        }
-        if (cacheEntry.isExpired()) {
-            return mongoCredentialWithCache.withOidcLock(() -> {
-                OidcCacheEntry mostRecentCacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
-                if (mostRecentCacheEntry.isExpired()) {
-                    mongoCredentialWithCache.setOidcCacheEntry(mostRecentCacheEntry.clearAccessToken());
-                    return null;
-                } else {
-                    return mostRecentCacheEntry.accessToken;
-                }
-            });
-        }
-        return cachedAccessToken;
+        return getMongoCredentialWithCache()
+                .getOidcCacheEntry()
+                .getValidCachedAccessToken();
     }
 
     static final class OidcCacheEntry {
         @Nullable
         private final String accessToken;
         @Nullable
-        private final Instant expiry;
+        private final Timeout accessTokenExpiry;
         @Nullable
         private final String refreshToken;
         @Nullable
@@ -348,22 +335,23 @@ public class OidcAuthenticator extends SaslAuthenticator {
         public String toString() {
             return "OidcCacheEntry{"
                     + "\n accessToken#hashCode='" + (accessToken == null ? null : accessToken.hashCode()) + '\''
-                    + ",\n expiry=" + expiry
+                    + ",\n expiry=" + accessTokenExpiry
                     + ",\n refreshToken='" + refreshToken + '\''
                     + ",\n idpInfo=" + idpInfo
                     + '}';
         }
 
         OidcCacheEntry(@Nullable final IdpInfo idpInfo, final IdpResponse idpResponse) {
-            Integer expiresInSeconds = idpResponse.getExpiresInSeconds();
-            if (expiresInSeconds != null) {
-                final Instant expiry = Instant.now().plusSeconds(expiresInSeconds)
-                        .minus(5, ChronoUnit.MINUTES);
+            Integer accessTokenExpiresInSeconds = idpResponse.getAccessTokenExpiresInSeconds();
+            if (accessTokenExpiresInSeconds != null) {
                 this.accessToken = idpResponse.getAccessToken();
-                this.expiry = expiry;
+                long accessTokenExpiryReservedSeconds = TimeUnit.MINUTES.toSeconds(5);
+                this.accessTokenExpiry = Timeout.startNow(
+                        Math.max(0, accessTokenExpiresInSeconds - accessTokenExpiryReservedSeconds),
+                        TimeUnit.SECONDS);
             } else {
                 this.accessToken = null;
-                this.expiry = null;
+                this.accessTokenExpiry = null;
             }
             String refreshToken = idpResponse.getRefreshToken();
             if (refreshToken != null) {
@@ -379,16 +367,20 @@ public class OidcAuthenticator extends SaslAuthenticator {
             this(null, null, null, null);
         }
 
-        private OidcCacheEntry(@Nullable final String accessToken, @Nullable final Instant expiry,
+        private OidcCacheEntry(@Nullable final String accessToken, @Nullable final Timeout accessTokenExpiry,
                 @Nullable final String refreshToken, @Nullable final IdpInfo idpInfo) {
             this.accessToken = accessToken;
-            this.expiry = expiry;
+            this.accessTokenExpiry = accessTokenExpiry;
             this.refreshToken = refreshToken;
             this.idpInfo = idpInfo;
         }
 
-        public boolean isExpired() {
-            return expiry == null || Instant.now().isAfter(expiry);
+        @Nullable
+        public String getValidCachedAccessToken() {
+            if (accessToken == null || accessTokenExpiry == null || accessTokenExpiry.expired()) {
+                return null;
+            }
+            return accessToken;
         }
 
         public OidcCacheEntry clearAccessToken() {
@@ -402,7 +394,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
         public OidcCacheEntry clearRefreshToken() {
             return new OidcCacheEntry(
                     this.accessToken,
-                    this.expiry,
+                    this.accessTokenExpiry,
                     null,
                     null);
         }
