@@ -19,6 +19,7 @@ package com.mongodb.internal;
 import com.mongodb.MongoInterruptedException;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
 /**
@@ -30,6 +31,15 @@ public final class Locks {
             action.run();
             return null;
         });
+    }
+
+    public static <V> V withLock(final StampedLock lock, final Supplier<V> supplier) {
+        long stamp = lock.writeLock();
+        try {
+            return supplier.get();
+        } finally {
+            lock.unlockWrite(stamp);
+        }
     }
 
     public static <V> V withLock(final Lock lock, final Supplier<V> supplier) {

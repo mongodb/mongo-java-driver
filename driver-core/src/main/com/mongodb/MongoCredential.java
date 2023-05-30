@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Evolving;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
@@ -186,8 +187,8 @@ public final class MongoCredential {
     /**
      * The provider name. The value must be a string.
      * <p>
-     * If this is provided, neither
-     * {@link MongoCredential#REQUEST_TOKEN_CALLBACK_KEY} nor
+     * If this is provided,
+     * {@link MongoCredential#REQUEST_TOKEN_CALLBACK_KEY} and
      * {@link MongoCredential#REFRESH_TOKEN_CALLBACK_KEY}
      * must not be provided.
      *
@@ -224,7 +225,7 @@ public final class MongoCredential {
     public static final String REFRESH_TOKEN_CALLBACK_KEY = "REFRESH_TOKEN_CALLBACK";
 
     /**
-     * Mechanism key for a list of allowed hostnames or ip-addresses (ignoring ports) for MongoDB connections.
+     * Mechanism key for a list of allowed hostnames or ip-addresses for MongoDB connections. Ports must be excluded.
      * The hostnames may include a leading "*." wildcard, which allows for matching (potentially nested) subdomains.
      * When MONGODB-OIDC authentication is attempted against a hostname that does not match any of list of allowed hosts
      * the driver will raise an error. The type of the value must be {@code List<String>}.
@@ -238,6 +239,8 @@ public final class MongoCredential {
     /**
      * The list of allowed hosts that will be used if no
      * {@link MongoCredential#ALLOWED_HOSTS_KEY} value is supplied.
+     * The default allowed hosts are:
+     * {@code "*.mongodb.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1")}
      *
      * @see #createOidcCredential(String)
      * @since 4.10
@@ -634,6 +637,7 @@ public final class MongoCredential {
     /**
      * The context for the {@link OidcRequestCallback#onRequest(OidcRequestContext) OIDC request callback}.
      */
+    @Evolving
     public interface OidcRequestContext {
         /**
          * @return The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
@@ -649,6 +653,7 @@ public final class MongoCredential {
     /**
      * The context for the {@link OidcRefreshCallback#onRefresh(OidcRefreshContext) OIDC refresh callback}.
      */
+    @Evolving
     public interface OidcRefreshContext extends OidcRequestContext {
         /**
          * @return The OIDC Refresh token supplied by a prior callback invocation.
@@ -690,6 +695,7 @@ public final class MongoCredential {
     /**
      * The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
      */
+    @Evolving
     public interface IdpInfo {
         /**
          * @return URL which describes the Authorization Server. This identifier is the

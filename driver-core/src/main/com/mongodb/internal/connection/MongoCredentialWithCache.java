@@ -18,15 +18,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
-import com.mongodb.internal.Locks;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
+import java.util.concurrent.locks.StampedLock;
 
 import static com.mongodb.internal.Locks.withLock;
-
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcCacheEntry;
 
 /**
@@ -76,8 +74,8 @@ public class MongoCredentialWithCache {
         this.cache.oidcCacheEntry = oidcCacheEntry;
     }
 
-    public <V> V withOidcLock(final Supplier<V> k) {
-        return Locks.withLock(cache.oidcLock, k);
+    public StampedLock getOidcLock() {
+        return cache.oidcLock;
     }
 
     public Lock getLock() {
@@ -93,7 +91,7 @@ public class MongoCredentialWithCache {
         private Object cacheValue;
 
 
-        private final ReentrantLock oidcLock = new ReentrantLock();
+        private final StampedLock oidcLock = new StampedLock();
         private volatile OidcCacheEntry oidcCacheEntry = new OidcCacheEntry();
 
         Object get(final Object key) {

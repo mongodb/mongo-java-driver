@@ -141,9 +141,9 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     private void getNextSaslResponseAsync(final SaslClient saslClient, final InternalConnection connection,
                                           final SingleResultCallback<Void> callback) {
+        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
             BsonDocument response = getSpeculativeAuthenticateResponse();
-            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (response == null) {
                 byte[] serverResponse = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
                 sendSaslStartAsync(serverResponse, connection, (result, t) -> {
@@ -341,7 +341,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     protected abstract static class SaslClientImpl implements SaslClient {
         private final MongoCredential credential;
 
-        public SaslClientImpl(final MongoCredential credential) {
+        protected SaslClientImpl(final MongoCredential credential) {
             this.credential = credential;
         }
 
@@ -379,7 +379,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
             return authMechanism.getMechanismName();
         }
 
-        protected MongoCredential getCredential() {
+        protected final MongoCredential getCredential() {
             return credential;
         }
     }
