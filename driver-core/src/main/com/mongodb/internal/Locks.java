@@ -22,6 +22,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
+
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
@@ -34,7 +36,14 @@ public final class Locks {
     }
 
     public static <V> V withLock(final StampedLock lock, final Supplier<V> supplier) {
-        long stamp = lock.writeLock();
+        long stamp;
+        try {
+            assertFalse(lock.isWriteLocked()); // not re-entrant, prevent deadlock
+            stamp = lock.writeLockInterruptibly();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MongoInterruptedException("Interrupted waiting for lock", e);
+        }
         try {
             return supplier.get();
         } finally {

@@ -52,8 +52,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -63,11 +63,11 @@ import java.util.stream.Stream;
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.MongoCredential.IdpInfo;
 import static com.mongodb.MongoCredential.OidcRefreshContext;
+import static com.mongodb.MongoCredential.OidcRequestCallback;
 import static com.mongodb.MongoCredential.OidcRequestContext;
 import static com.mongodb.MongoCredential.PROVIDER_NAME_KEY;
 import static com.mongodb.MongoCredential.REFRESH_TOKEN_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.REQUEST_TOKEN_CALLBACK_KEY;
-import static com.mongodb.MongoCredential.OidcRequestCallback;
 import static com.mongodb.MongoCredential.createOidcCredential;
 import static com.mongodb.client.TestHelper.setEnvironmentVariable;
 import static java.lang.System.getenv;
@@ -77,9 +77,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.ThreadTestHelpers.executeAll;
 
 public class OidcAuthenticationProseTests {
+
+    public static boolean oidcTestsEnabled() {
+        return "true".equals(getenv().get("OIDC_TESTS_ENABLED"));
+    }
 
     private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
 
@@ -88,6 +93,7 @@ public class OidcAuthenticationProseTests {
     protected static final String OIDC_URL = "mongodb://localhost/?authMechanism=MONGODB-OIDC";
     private static final String AWS_OIDC_URL =
             "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=PROVIDER_NAME:aws";
+    private String appName;
 
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return MongoClients.create(settings);
@@ -99,9 +105,11 @@ public class OidcAuthenticationProseTests {
 
     @BeforeEach
     public void beforeEach() {
+        assumeTrue(oidcTestsEnabled());
+        // In each test, clearing the cache is not required, since there is no global cache
         setOidcFile("test_user1");
         InternalStreamConnection.setRecordEverything(true);
-        // In each test, clearing the cache is not required, since there is no global cache
+        this.appName = this.getClass().getSimpleName() + "-" + new Random().nextInt(Integer.MAX_VALUE);
     }
 
     @AfterEach
@@ -135,8 +143,6 @@ public class OidcAuthenticationProseTests {
                     "Command failed with error 18 (AuthenticationFailed)");
         }
     }
-
-    // TODO-OIDC-x additional tests for token with null expiry?
 
     @ParameterizedTest
     @CsvSource(delimiter = '#', value = {
@@ -208,6 +214,7 @@ public class OidcAuthenticationProseTests {
         MongoCredential credential = createOidcCredential(null)
                 .withMechanismProperty(PROVIDER_NAME_KEY, "aws");
         MongoClientSettings clientSettings = MongoClientSettings.builder()
+                .applicationName(appName)
                 .credential(credential)
                 .applyConnectionString(new ConnectionString(url))
                 .build();
@@ -238,14 +245,14 @@ public class OidcAuthenticationProseTests {
         OidcRequestCallback onRequest2 = (context) -> {
             assertEquals(expectedClientId, context.getIdpInfo().getClientId());
             assertEquals(expectedIssuer, context.getIdpInfo().getIssuer());
-            //assertEquals(Arrays.asList(""), serverInfo.getRequestScopes()); // TODO-OIDC-x fix when docker updated
+            assertEquals(Arrays.asList(), context.getIdpInfo().getRequestScopes());
             assertEquals(expectedSeconds, context.getTimeout());
             return onRequest.onRequest(context);
         };
         OidcRefreshCallback onRefresh2 = (context) -> {
             assertEquals(expectedClientId, context.getIdpInfo().getClientId());
             assertEquals(expectedIssuer, context.getIdpInfo().getIssuer());
-            //assertEquals(Arrays.asList(""), serverInfo.getRequestScopes()); // TODO-OIDC-x fix when docker updated
+            assertEquals(Arrays.asList(), context.getIdpInfo().getRequestScopes());
             assertEquals(expectedSeconds, context.getTimeout());
             assertEquals("refreshToken", context.getRefreshToken());
             return onRefresh.onRefresh(context);
@@ -513,6 +520,7 @@ public class OidcAuthenticationProseTests {
                 .withMechanismProperty(PROVIDER_NAME_KEY, "aws");
         ConnectionString connectionString = new ConnectionString(AWS_OIDC_URL);
         MongoClientSettings clientSettings = MongoClientSettings.builder()
+                .applicationName(appName)
                 .credential(credential)
                 .applyConnectionString(connectionString)
                 .build();
@@ -629,85 +637,6 @@ public class OidcAuthenticationProseTests {
         }
     }
 
-    //@Test // TODO-OIDC-x ignore this. not a prose test; will need to be updated after oidc spec changes
-    public void testFullReath() {
-        ConcurrentLinkedQueue<String> tokens = tokenQueue(
-                "test_user1", // read during initial population
-                "test_user1_1", // read when first thread clears cache
-                "test_user1_expires", // read during onRefresh
-                "test_user1_2", // read during onRequest
-                "invalid");
-        TestListener events = new TestListener() {
-            public void add(final String s) {
-                String message = new Date()
-                        + " -- " + Thread.currentThread().getName()
-                        + " -- " + s;
-                super.add(message);
-            }
-        };
-        TestCallback onRequest = new TestCallback()
-                .setPathSupplier(() -> tokens.remove())
-                .setEventListener(events);
-        TestCallback onRefresh = new TestCallback()
-                .setPathSupplier(() -> tokens.remove())
-                .setEventListener(events);
-        TestCommandListener commandListener = new TestCommandListener();
-        commandListener.setEventStrings(events);
-
-        MongoClientSettings clientSettings = createSettings(OIDC_URL, onRequest, onRefresh, null, commandListener);
-        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
-            // Populate the cache, authenticate both connections
-            delayNextFind();
-            executeAll(2, () -> performFind(mongoClient));
-            assertEquals(1, onRequest.getInvocations());
-            assertEquals(0, onRefresh.getInvocations());
-
-            events.clear();
-
-            // Now we need a thread to arrive at AUTHLOCK after a failed find,
-            // but the cache must contain a new credential.
-            // The first thread performs a failing-find that takes a long time.
-            // Then, the second thread starts, and immediately fails its find,
-            // and passes through AUTHLOCK to populate the cache.
-            executeAll(
-                    () -> {
-                        failCommand(391, 1, "find");
-                        performFind(mongoClient);
-                    },
-                    () -> {
-                        sleep(500); // TODO-OIDC-x less time?
-                        //events.clear();
-                        events.add("retrying task started");
-                        failCommand(391, 1, "find");
-                        performFind(mongoClient);
-                        events.add("retrying task finished");
-                    });
-
-            //events.getEventStrings().forEach(e -> System.out.println(" \"" + e + "\","));
-            assertEquals(Arrays.asList(
-                    "retrying task started",
-                    "find started",
-                    "find failed",
-                    // entered 391 retry logic
-                    "onRefresh invoked",
-                    "read access token: test_user1_expires",
-                    "saslStart started",
-                    "saslStart failed",
-                    //
-                    "saslStart started",
-                    "saslStart succeeded",
-                    "onRequest invoked",
-                    "read access token: test_user1_2",
-                    "saslContinue started",
-                    "saslContinue succeeded",
-                    "find started",
-                    "find succeeded",
-                    "retrying task finished"
-            ), events.getEventStrings());
-
-        }
-    }
-
     @NotNull
     private ConcurrentLinkedQueue<String> tokenQueue(final String... queue) {
         return Stream
@@ -733,11 +662,7 @@ public class OidcAuthenticationProseTests {
     }
 
     // 6.3   Retries and Fails with no Cache
-    // TODO-OIDC-x appears to be untestable, since it requires 391 failure on jwt; awaiting spec changes
-//    @Test
-//    public void test6p3RetriesAndFailsWithNoCache() {
-//        fail();
-//    }
+    // Appears to be untestable, since it requires 391 failure on jwt (may be fixed in future spec)
 
     @Test
     public void test6p4SeparateConnectionsAvoidExtraCallbackCalls() {
@@ -783,6 +708,7 @@ public class OidcAuthenticationProseTests {
                 .withMechanismProperty(REFRESH_TOKEN_CALLBACK_KEY, onRefresh)
                 .withMechanismProperty(ALLOWED_HOSTS_KEY, allowedHosts);
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                .applicationName(appName)
                 .applyConnectionString(cs)
                 .credential(credential);
         if (commandListener != null) {
@@ -839,6 +765,7 @@ public class OidcAuthenticationProseTests {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(1)))
                     .append("data", new BsonDocument()
+                            .append("appName", new BsonString(appName))
                             .append("failCommands", new BsonArray(asList(new BsonString("find"))))
                             .append("blockConnection", new BsonBoolean(true))
                             .append("blockTimeMS", new BsonInt32(100)));
@@ -853,12 +780,11 @@ public class OidcAuthenticationProseTests {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(times)))
                     .append("data", new BsonDocument()
+                            .append("appName", new BsonString(appName))
                             .append("failCommands", new BsonArray(list))
                             .append("errorCode", new BsonInt32(code)));
             mongoClient.getDatabase("admin").runCommand(failPointDocument);
         }
-        // TODO-OIDC-x the driver MUST either use a unique appName or explicitly remove the failCommand after the test to prevent leakage.
-        //   .append("appName", new BsonString(appName))
     }
 
     public static class TestCallback implements OidcRequestCallback, OidcRefreshCallback {

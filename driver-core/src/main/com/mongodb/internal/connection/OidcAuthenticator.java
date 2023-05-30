@@ -195,7 +195,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
             try {
                 authenticateUsing(connection, connectionDescription, (bytes) -> prepareTokenAsJwt(accessToken));
             } catch (MongoSecurityException e) {
-                if (triggersRetry(e)) { // TODO-OIDC-x unclear how to provide test coverage for this
+                if (triggersRetry(e)) {
                     authLock(connection, connectionDescription);
                 } else {
                     throw e;
