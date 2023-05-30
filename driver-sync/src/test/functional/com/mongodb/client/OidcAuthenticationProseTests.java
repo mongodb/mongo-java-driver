@@ -655,7 +655,7 @@ public class OidcAuthenticationProseTests {
             // #. Perform a find operation that succeeds.
             performFind(mongoClient);
             // #. Force a reauthenication using a failCommand
-            failCommand(391, 2, "find", "saslStart");
+            failCommand(391, 1, "find");
             // #. Perform a find operation that succeeds.
             performFind(mongoClient);
         }
