@@ -67,6 +67,15 @@ public final class Accumulators {
         return accumulatorOperator("$avg", fieldName, expression);
     }
 
+    public static <InExpression, PExpression> BsonField percentile(final String fieldName, final InExpression inExpression,
+                                                                   final PExpression pExpression,  final String method) {
+        return quantileAccumulator("$percentile", fieldName, inExpression, pExpression, method);
+    }
+
+    public static <InExpression> BsonField median(final String fieldName, final InExpression inExpression,  final String method) {
+        return quantileAccumulator("$median", fieldName, inExpression, null, method);
+    }
+
     /**
      * Gets a field name for a $group operation representing the value of the given expression when applied to the first member of
      * the group.
@@ -508,6 +517,17 @@ public final class Accumulators {
         return new BsonField(fieldName, new Document(accumulatorName, new Document("sortBy", sort)
                 .append("output", outExpression)
                 .append("n", nExpression)));
+    }
+
+    private static <InExpression, PExpression> BsonField quantileAccumulator(final String quantileAccumulatorName,
+                                                                             final String fieldName, final InExpression inExpression,
+                                                                             @Nullable final PExpression pExpression, final String method) {
+        Document document = new Document("input", notNull("inExpression", inExpression))
+                        .append("method", notNull("method", method));
+        if (pExpression != null) {
+            document.append("p", notNull("pExpression", pExpression));
+        }
+        return accumulatorOperator(quantileAccumulatorName, fieldName, document);
     }
 
     private Accumulators() {
