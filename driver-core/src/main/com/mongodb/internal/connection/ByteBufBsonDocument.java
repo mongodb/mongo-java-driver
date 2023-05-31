@@ -319,7 +319,7 @@ class ByteBufBsonDocument extends BsonDocument {
         }));
     }
 
-    interface Finder<T> {
+    private interface Finder<T> {
         @Nullable
         T find(BsonReader bsonReader);
         @Nullable
