@@ -331,7 +331,7 @@ final class ByteBufBsonDocument extends BsonDocument {
     }
 
     // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
-    Object writeReplace() {
+    private Object writeReplace() {
         return toBaseBsonDocument();
     }
 
