@@ -55,6 +55,21 @@ object Accumulators {
    */
   def avg[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.avg(fieldName, expression)
 
+  def percentile[InExpression, PExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      pExpression: PExpression,
+      method: String
+  ): BsonField =
+    JAccumulators.percentile(fieldName, inExpression, pExpression, method)
+
+  def median[InExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      method: String
+  ): BsonField =
+    JAccumulators.median(fieldName, inExpression, method)
+
   /**
    * Gets a field name for a `\$group` operation representing the value of the given expression when applied to the first member of
    * the group.
