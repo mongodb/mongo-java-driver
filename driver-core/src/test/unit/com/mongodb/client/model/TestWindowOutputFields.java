@@ -45,8 +45,6 @@ import java.util.stream.Stream;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.client.model.Sorts.ascending;
-import static com.mongodb.client.model.WindowOutputFields.median;
-import static com.mongodb.client.model.WindowOutputFields.percentile;
 import static com.mongodb.client.model.Windows.documents;
 import static com.mongodb.client.model.Windows.range;
 import static java.util.Arrays.asList;
@@ -226,11 +224,11 @@ final class TestWindowOutputFields {
 
     @ParameterizedTest
     @MethodSource("percentileWindowFunctionsSource")
-    void percentileWindowFunctions(final Object inExpressionParameter,
-                                   final BsonValue expectedInExpression,
-                                   final Object pExpressionParameter,
-                                   final BsonValue expectedPExpression,
-                                   final Window window) {
+    void percentile(final Object inExpressionParameter,
+                    final BsonValue expectedInExpression,
+                    final Object pExpressionParameter,
+                    final BsonValue expectedPExpression,
+                    final Window window) {
         String expectedFunctionName = "$percentile";
         String method = "approximate";
         BsonField expectedWindowOutputField = getExpectedBsonField(expectedFunctionName, expectedInExpression, expectedPExpression,
@@ -243,19 +241,19 @@ final class TestWindowOutputFields {
                 + ", method=" + method
                 + ", window=" + window;
 
-        assertWindowOutputField(expectedWindowOutputField, percentile(PATH, inExpressionParameter, pExpressionParameter, method, window),
+        assertWindowOutputField(expectedWindowOutputField, WindowOutputFields.percentile(PATH, inExpressionParameter, pExpressionParameter, method, window),
                 msg);
-        assertThrows(IllegalArgumentException.class, () -> percentile(null, inExpressionParameter, pExpressionParameter, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> percentile(PATH, null, pExpressionParameter, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> percentile(PATH, inExpressionParameter, null, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> percentile(PATH, inExpressionParameter, pExpressionParameter, null, window), msg);
+        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(null, inExpressionParameter, pExpressionParameter, method, window), msg);
+        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(PATH, null, pExpressionParameter, method, window), msg);
+        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(PATH, inExpressionParameter, null, method, window), msg);
+        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(PATH, inExpressionParameter, pExpressionParameter, null, window), msg);
     }
 
     @ParameterizedTest
     @MethodSource("medianWindowFunctionsSource")
-    void medianWindowFunctions(final Object inExpressionParameter,
-                               final BsonValue expectedInExpression,
-                               final Window window) {
+    void median(final Object inExpressionParameter,
+                final BsonValue expectedInExpression,
+                final Window window) {
         String expectedFunctionName = "$median";
         String method = "approximate";
         BsonField expectedWindowOutputField = getExpectedBsonField(expectedFunctionName, expectedInExpression,
@@ -267,12 +265,12 @@ final class TestWindowOutputFields {
                 + ", method=" + method
                 + ", window=" + window;
 
-        assertWindowOutputField(expectedWindowOutputField, median(PATH, inExpressionParameter, method, window),
+        assertWindowOutputField(expectedWindowOutputField, WindowOutputFields.median(PATH, inExpressionParameter, method, window),
                 msg);
-        assertThrows(IllegalArgumentException.class, () -> median(null, inExpressionParameter, method, window),
+        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.median(null, inExpressionParameter, method, window),
                 msg);
-        assertThrows(IllegalArgumentException.class, () -> median(PATH, null, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> median(PATH, inExpressionParameter, null, window), msg);
+        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.median(PATH, null, method, window), msg);
+        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.median(PATH, inExpressionParameter, null, window), msg);
     }
 
     private static Stream<Arguments> percentileWindowFunctionsSource() {
@@ -305,7 +303,7 @@ final class TestWindowOutputFields {
 
         Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
 
-        // Generate different combinations of test arguments using Cartesian product of inExpressions, pExpressions, and windows.
+        // Generate different combinations of test arguments using Cartesian product of inExpressions and windows.
         List<Arguments> argumentsList = new ArrayList<>();
         inExpressions.forEach((incomingInParameter, inBsonValue) ->
                 windows.forEach(window ->

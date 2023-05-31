@@ -84,6 +84,23 @@ object WindowOutputFields {
   def avg[TExpression](path: String, expression: TExpression, window: Option[_ <: Window]): WindowOutputField =
     JWindowOutputFields.avg(path, expression, window.orNull)
 
+  def percentile[InExpression, PExpression](
+      path: String,
+      inExpression: InExpression,
+      pExpression: PExpression,
+      method: String,
+      window: Option[_ <: Window]
+  ): WindowOutputField =
+    JWindowOutputFields.percentile(path, inExpression, pExpression, method, window.orNull)
+
+  def median[InExpression](
+      path: String,
+      inExpression: InExpression,
+      method: String,
+      window: Option[_ <: Window]
+  ): WindowOutputField =
+    JWindowOutputFields.median(path, inExpression, method, window.orNull)
+
   /**
    * Builds a computation of the sample standard deviation of the evaluation results of the `expression` over the `window`.
    *

@@ -1235,6 +1235,9 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         null | null | null | WindowOutputFields
                 .percentile('result', '$num1', [0.1, 0.9], 'approximate', documents(UNBOUNDED, UNBOUNDED)) |
                 [[1.0, 3.0], [1.0, 3.0], [1.0, 3.0]]
+        null | null | null | WindowOutputFields
+                .percentile('result', '$num1', [0.1, 0.9], 'approximate', null) |
+                [[1.0, 3.0], [1.0, 3.0], [1.0, 3.0]]
         null | '$partitionId' | null | WindowOutputFields
                 .percentile('result', '$num1', [0.1, 0.9], 'approximate', documents(UNBOUNDED, UNBOUNDED)) |
                 [[1.0, 2.0], [1.0, 2.0], [3.0, 3.0]]
