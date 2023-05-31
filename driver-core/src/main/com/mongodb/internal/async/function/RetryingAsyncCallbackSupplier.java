@@ -84,6 +84,16 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
         this.asyncFunction = asyncFunction;
     }
 
+    public RetryingAsyncCallbackSupplier(
+            final RetryState state,
+            final BiPredicate<RetryState, Throwable> retryPredicate,
+            final AsyncCallbackSupplier<R> asyncFunction) {
+        this.state = state;
+        this.retryPredicate = retryPredicate;
+        this.failedResultTransformer = (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure;
+        this.asyncFunction = asyncFunction;
+    }
+
     @Override
     public void get(final SingleResultCallback<R> callback) {
         /* `asyncFunction` and `callback` are the only externally provided pieces of code for which we do not need to care about

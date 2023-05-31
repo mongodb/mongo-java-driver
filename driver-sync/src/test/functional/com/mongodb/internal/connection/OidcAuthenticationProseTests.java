@@ -598,12 +598,16 @@ public class OidcAuthenticationProseTests {
             assertEquals(0, onRefresh.getInvocations());
 
             assertEquals(Arrays.asList(
+                    // speculative:
                     "isMaster started",
                     "isMaster succeeded",
+                    // onRequest:
                     "onRequest invoked",
                     "read access token: test_user1",
+                    // jwt from onRequest:
                     "saslContinue started",
                     "saslContinue succeeded",
+                    // ensuing find:
                     "find started",
                     "find succeeded"
             ), listener.getEventStrings());
@@ -624,10 +628,12 @@ public class OidcAuthenticationProseTests {
             assertEquals(Arrays.asList(
                     "find started",
                     "find failed",
+                    // find has triggered 391, and cleared the access token; fall back to refresh:
                     "onRefresh invoked",
                     "read access token: test_user1",
                     "saslStart started",
                     "saslStart succeeded",
+                    // find retry succeeds:
                     "find started",
                     "find succeeded"
             ), listener.getEventStrings());

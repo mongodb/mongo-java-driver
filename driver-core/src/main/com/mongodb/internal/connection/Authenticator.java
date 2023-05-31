@@ -104,4 +104,9 @@ public abstract class Authenticator {
         authenticate(connection, connection.getDescription());
     }
 
+    public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
+        throw new UnsupportedOperationException(
+                "Reauthentication requested by server but is not supported by specified mechanism.");
+    }
+
 }

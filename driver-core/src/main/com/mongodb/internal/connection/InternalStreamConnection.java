@@ -44,6 +44,7 @@ import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.async.AsyncSupplier;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -74,6 +75,7 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.startAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
@@ -390,6 +392,31 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
+
+    @Override
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+            final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
+        notNull("stream is open", stream, callback);
+
+        AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
+                message, decoder, sessionContext, requestContext, operationContext, c);
+
+        if (!Authenticator.shouldAuthenticate(authenticator, this.description)) {
+            sendAndReceiveAsyncInternal.complete(callback);
+            return;
+        }
+
+        sendAndReceiveAsyncInternal.onErrorIf(e -> triggersReauthentication(e), startAsync()
+                .run(c -> {
+                    authenticated.set(false);
+                    authenticator.reauthenticateAsync(this, c);
+                }).supply((c) -> {
+                    authenticated.set(true);
+                    sendAndReceiveAsyncInternal.complete(c);
+                }))
+        .complete(callback);
+    }
+
     public static boolean triggersReauthentication(@Nullable final Throwable t) {
         if (t instanceof MongoCommandException) {
             MongoCommandException e = (MongoCommandException) t;
@@ -518,11 +545,8 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+    private <T> void sendAndReceiveAsyncInternal(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
             final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
-        notNull("stream is open", stream, callback);
-
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
             return;

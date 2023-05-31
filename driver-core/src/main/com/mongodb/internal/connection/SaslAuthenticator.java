@@ -128,11 +128,9 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
     private BsonDocument getNextSaslResponse(final SaslClient saslClient, final InternalConnection connection) {
-        if (!connection.opened()) {
-            BsonDocument response = getSpeculativeAuthenticateResponse();
-            if (response != null) {
-                return response;
-            }
+        BsonDocument response = connection.opened() ? null : getSpeculativeAuthenticateResponse();
+        if (response != null) {
+            return response;
         }
 
         try {
@@ -147,7 +145,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                                           final SingleResultCallback<Void> callback) {
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
-            BsonDocument response = getSpeculativeAuthenticateResponse();
+            BsonDocument response = connection.opened() ? null : getSpeculativeAuthenticateResponse();
             if (response == null) {
                 byte[] serverResponse = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
                 sendSaslStartAsync(serverResponse, connection, (result, t) -> {
