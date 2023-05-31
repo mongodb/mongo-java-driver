@@ -35,8 +35,7 @@ public class MongoCredentialWithCache {
     private final Cache cache;
 
     public MongoCredentialWithCache(final MongoCredential credential) {
-        this.credential = credential;
-        this.cache = new Cache();
+        this(credential, new Cache());
     }
 
     private MongoCredentialWithCache(final MongoCredential credential, final Cache cache) {

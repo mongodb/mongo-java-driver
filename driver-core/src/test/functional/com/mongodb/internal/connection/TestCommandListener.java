@@ -112,8 +112,9 @@ public class TestCommandListener implements CommandListener {
         lock.lock();
         try {
             events.clear();
-            if (listener != null) {
-                listener.add("CommandListener reset");
+            TestListener observedListener = listener;
+            if (observedListener != null) {
+                observedListener.clear();
             }
         } finally {
             lock.unlock();
@@ -131,13 +132,15 @@ public class TestCommandListener implements CommandListener {
 
     private void addEvent(final CommandEvent c) {
         events.add(c);
-        if (listener != null) {
+        TestListener observedListener = listener;
+        if (observedListener != null) {
             String className = c.getClass().getSimpleName()
                     .replace("Command", "")
                     .replace("Event", "")
                     .toLowerCase();
             // example: "saslContinue succeeded"
-            listener.add(c.getCommandName() + " " + className);
+            observedListener.add(c.getCommandName() + " " + className);
+        }
         }
     }
 
