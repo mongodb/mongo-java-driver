@@ -573,9 +573,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
 
         @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PACKAGE)
         public static void validateBeforeUse(final MongoCredential credential) {
-            AuthenticationMechanism mechanism = credential.getAuthenticationMechanism();
             String userName = credential.getUserName();
-            assertTrue(mechanism == AuthenticationMechanism.MONGODB_OIDC);
             Object providerName = credential.getMechanismProperty(PROVIDER_NAME_KEY, null);
             Object requestCallback = credential.getMechanismProperty(REQUEST_TOKEN_CALLBACK_KEY, null);
             Object refreshCallback = credential.getMechanismProperty(REFRESH_TOKEN_CALLBACK_KEY, null);

@@ -113,20 +113,18 @@ public class AuthConnectionStringTest extends TestCase {
         MongoCredential credential = connectionString.getCredential();
         if (credential != null) {
             BsonArray callbacks = (BsonArray) getExpectedValue("callback");
-            if (callbacks != null) {
-                for (BsonValue v : callbacks) {
-                    String string = ((BsonString) v).getValue();
-                    if ("oidcRequest".equals(string)) {
-                        credential = credential.withMechanismProperty(
-                                REQUEST_TOKEN_CALLBACK_KEY,
-                                (MongoCredential.OidcRequestCallback) (context) -> null);
-                    } else if ("oidcRefresh".equals(string)) {
-                        credential = credential.withMechanismProperty(
-                                REFRESH_TOKEN_CALLBACK_KEY,
-                                (MongoCredential.OidcRefreshCallback) (context) -> null);
-                    } else {
-                        fail("Unsupported callback: " + string);
-                    }
+            for (BsonValue v : callbacks) {
+                String string = ((BsonString) v).getValue();
+                if ("oidcRequest".equals(string)) {
+                    credential = credential.withMechanismProperty(
+                            REQUEST_TOKEN_CALLBACK_KEY,
+                            (MongoCredential.OidcRequestCallback) (context) -> null);
+                } else if ("oidcRefresh".equals(string)) {
+                    credential = credential.withMechanismProperty(
+                            REFRESH_TOKEN_CALLBACK_KEY,
+                            (MongoCredential.OidcRefreshCallback) (context) -> null);
+                } else {
+                    fail("Unsupported callback: " + string);
                 }
             }
             OidcAuthenticator.OidcValidator.validateBeforeUse(credential);
