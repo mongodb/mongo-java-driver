@@ -38,7 +38,8 @@ public interface CodecProvider {
     /**
      * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.
      *
-     * <p>This method is called only if {@link #get(Class, List, CodecRegistry)} is not properly overridden.</p>
+     * <p>This method is called only if {@link #get(Class, List, CodecRegistry)} is not overridden,
+     * or is overridden such that it calls this method.</p>
      *
      * @param clazz the Class for which to get a Codec
      * @param registry the registry to use for resolving dependent Codec instances
@@ -50,7 +51,8 @@ public interface CodecProvider {
     /**
      * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.
      *
-     * <p>The default implementation delegates to {@link #get(Class, CodecRegistry)}, thus ignoring {@code typeArguments}.</p>
+     * <p>The default implementation delegates to {@link #get(Class, CodecRegistry)}, thus not propagating {@code typeArguments}
+     * when it uses the {@code registry}.</p>
      *
      * @param clazz the Class for which to get a Codec
      * @param typeArguments The type arguments for the {@code clazz}. The size of the list is either equal to the
@@ -58,8 +60,7 @@ public interface CodecProvider {
      * For example, if {@code clazz} is {@link Collection}{@code .class}, then the size of {@code typeArguments} is one,
      * since {@link Collection} has a single type parameter.
      * The list may be {@linkplain List#isEmpty() empty} either because the {@code clazz} is not generic,
-     * or because another {@link CodecProvider} did not propagate {@code clazz}'s type arguments via the {@code registry},
-     * which may happen if that {@link CodecProvider} does not properly override {@link #get(Class, List, CodecRegistry)}.
+     * or because another {@link CodecProvider} did not propagate {@code clazz}'s type arguments to the {@code registry} when using it.
      * @param registry the registry to use for resolving dependent Codec instances
      * @return the Codec instance, which may be null, if this source is unable to provide one for the requested Class
      * @param <T> the type of the class for which a Codec is required
