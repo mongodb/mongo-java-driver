@@ -83,7 +83,7 @@ import static util.ThreadTestHelpers.executeAll;
 public class OidcAuthenticationProseTests {
 
     public static boolean oidcTestsEnabled() {
-        return "true".equals(getenv().get("OIDC_TESTS_ENABLED"));
+        return Boolean.parseBoolean(getenv().get("OIDC_TESTS_ENABLED"));
     }
 
     private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";

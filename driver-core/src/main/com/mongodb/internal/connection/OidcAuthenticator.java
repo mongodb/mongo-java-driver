@@ -83,14 +83,18 @@ public class OidcAuthenticator extends SaslAuthenticator {
 
     private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
 
+    @Nullable
     private ServerAddress serverAddress;
 
+    @Nullable
     private String connectionLastAccessToken;
 
     private FallbackState fallbackState = FallbackState.INITIAL;
 
+    @Nullable
     private BsonDocument speculativeAuthenticateResponse;
 
+    @Nullable
     private Function<byte[], byte[]> evaluateChallengeFunction;
 
     public OidcAuthenticator(final MongoCredentialWithCache credential,
@@ -193,7 +197,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
         String accessToken = getValidCachedAccessToken();
         if (accessToken != null) {
             try {
-                authenticateUsing(connection, connectionDescription, (bytes) -> prepareTokenAsJwt(accessToken));
+                authenticateUsing(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken));
             } catch (MongoSecurityException e) {
                 if (triggersRetry(e)) {
                     authLock(connection, connectionDescription);
@@ -268,7 +272,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
             fallbackState = FallbackState.PHASE_1_CACHED_TOKEN;
             return prepareTokenAsJwt(cachedAccessToken);
         } else if (refreshCallback != null && cachedRefreshToken != null) {
-            assertTrue(cachedIdpInfo != null);
+            assertNotNull(cachedIdpInfo);
             // Invoke Refresh Callback using cached Refresh Token
             validateAllowedHosts(getMongoCredential());
             fallbackState = FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN;
@@ -299,8 +303,8 @@ public class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private boolean shouldRetryHandler() {
-        OidcCacheEntry cacheEntry = getMongoCredentialWithCache().getOidcCacheEntry();
         MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
+        OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
         if (fallbackState == FallbackState.PHASE_1_CACHED_TOKEN) {
             // a cached access token failed
             mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
@@ -457,7 +461,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
-    private byte[] prepareUsername(@Nullable final String username) {
+    private static byte[] prepareUsername(@Nullable final String username) {
         BsonDocument document = new BsonDocument();
         if (username != null) {
             document = document.append("n", new BsonString(username));
@@ -476,7 +480,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
         return prepareTokenAsJwt(idpResponse.getAccessToken());
     }
 
-    private IdpInfo toIdpInfo(final byte[] challenge) {
+    private static IdpInfo toIdpInfo(final byte[] challenge) {
         BsonDocument c = new RawBsonDocument(challenge);
         String issuer = c.getString("issuer").getValue();
         String clientId = c.getString("clientId").getValue();
@@ -513,16 +517,16 @@ public class OidcAuthenticator extends SaslAuthenticator {
     }
 
     @Nullable
-    private List<String> getStringArray(final BsonDocument document, final String key) {
-        if (!document.containsKey(key) || document.isArray(key)) {
+    private static List<String> getStringArray(final BsonDocument document, final String key) {
+        if (!document.isArray(key)) {
             return null;
         }
-        List<String> result = document.getArray(key).getValues().stream()
+        List<String> result = document.getArray(key).stream()
                 // ignore non-string values from server, rather than error
                 .filter(v -> v.isString())
                 .map(v -> v.asString().getValue())
                 .collect(Collectors.toList());
-        return Collections.unmodifiableList(result);
+        return result;
     }
 
     private byte[] prepareTokenAsJwt(final String accessToken) {
@@ -599,15 +603,13 @@ public class OidcAuthenticator extends SaslAuthenticator {
     }
 
 
-    public static class OidcRequestContextImpl implements OidcRequestContext {
+    private static class OidcRequestContextImpl implements OidcRequestContext {
         private final IdpInfo idpInfo;
         private final Duration timeout;
 
-        public OidcRequestContextImpl(final IdpInfo idpInfo, final Duration timeout) {
-            notNull("idpInfo", idpInfo);
-            notNull("timeout", timeout);
-            this.idpInfo = idpInfo;
-            this.timeout = timeout;
+        OidcRequestContextImpl(final IdpInfo idpInfo, final Duration timeout) {
+            this.idpInfo = assertNotNull(idpInfo);
+            this.timeout = assertNotNull(timeout);
         }
 
         @Override
@@ -621,15 +623,14 @@ public class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
-    public static final class OidcRefreshContextImpl extends OidcRequestContextImpl
+    private static final class OidcRefreshContextImpl extends OidcRequestContextImpl
             implements OidcRefreshContext {
         private final String refreshToken;
 
-        public OidcRefreshContextImpl(final IdpInfo idpInfo, final String refreshToken,
+        OidcRefreshContextImpl(final IdpInfo idpInfo, final String refreshToken,
                 final Duration timeout) {
             super(idpInfo, timeout);
-            notNull("refreshToken", refreshToken);
-            this.refreshToken = refreshToken;
+            this.refreshToken = assertNotNull(refreshToken);
         }
 
         @Override
@@ -638,15 +639,15 @@ public class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
-    public static final class IdpInfoImpl implements IdpInfo {
+    private static final class IdpInfoImpl implements IdpInfo {
         private final String issuer;
         private final String clientId;
 
         private final List<String> requestScopes;
 
-        public IdpInfoImpl(final String issuer, final String clientId, @Nullable final List<String> requestScopes) {
-            this.issuer = issuer;
-            this.clientId = clientId;
+        IdpInfoImpl(final String issuer, final String clientId, @Nullable final List<String> requestScopes) {
+            this.issuer = assertNotNull(issuer);
+            this.clientId = assertNotNull(clientId);
             this.requestScopes = requestScopes == null
                     ? Collections.emptyList()
                     : Collections.unmodifiableList(requestScopes);
