@@ -38,7 +38,7 @@ public interface CodecProvider {
     /**
      * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.
      *
-     * <p>This method is called only if {@link #get(Class, List, CodecRegistry)} is not overridden,
+     * <p>This method is called by the driver only if {@link #get(Class, List, CodecRegistry)} is not overridden,
      * or is overridden such that it calls this method.</p>
      *
      * @param clazz the Class for which to get a Codec
