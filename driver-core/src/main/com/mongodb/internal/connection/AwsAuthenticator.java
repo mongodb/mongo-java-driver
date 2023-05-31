@@ -26,14 +26,10 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.authentication.AwsCredentialHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
-import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.RawBsonDocument;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.EncoderContext;
-import org.bson.io.BasicOutputBuffer;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;

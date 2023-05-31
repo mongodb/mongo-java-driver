@@ -56,17 +56,16 @@ import java.util.stream.Collectors;
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.MongoCredential.DEFAULT_ALLOWED_HOSTS;
+import static com.mongodb.MongoCredential.OidcRefreshCallback;
 import static com.mongodb.MongoCredential.OidcRefreshContext;
+import static com.mongodb.MongoCredential.OidcRequestCallback;
 import static com.mongodb.MongoCredential.OidcRequestContext;
 import static com.mongodb.MongoCredential.PROVIDER_NAME_KEY;
 import static com.mongodb.MongoCredential.REFRESH_TOKEN_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.REQUEST_TOKEN_CALLBACK_KEY;
-import static com.mongodb.MongoCredential.OidcRefreshCallback;
-import static com.mongodb.MongoCredential.OidcRequestCallback;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateBeforeUse;
 import static java.lang.String.format;
 
@@ -81,7 +80,6 @@ public class OidcAuthenticator extends SaslAuthenticator {
 
     private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
 
-    @Nullable
     private ServerAddress serverAddress;
 
     @Nullable
@@ -449,7 +447,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
         }
 
         public byte[] evaluateChallengeInternal(final byte[] challenge) {
-            return evaluateChallengeFunction.apply(challenge);
+            return assertNotNull(evaluateChallengeFunction).apply(challenge);
         }
     }
 
@@ -522,12 +520,11 @@ public class OidcAuthenticator extends SaslAuthenticator {
         if (!document.isArray(key)) {
             return null;
         }
-        List<String> result = document.getArray(key).stream()
+        return document.getArray(key).stream()
                 // ignore non-string values from server, rather than error
                 .filter(v -> v.isString())
                 .map(v -> v.asString().getValue())
                 .collect(Collectors.toList());
-        return result;
     }
 
     private byte[] prepareTokenAsJwt(final String accessToken) {

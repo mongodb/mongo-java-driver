@@ -57,6 +57,7 @@ public class TestCommandListener implements CommandListener {
     private final List<String> eventTypes;
     private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
+    @Nullable
     private final TestListener listener;
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
@@ -101,7 +102,7 @@ public class TestCommandListener implements CommandListener {
     }
 
     public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents,
-            final boolean observeSensitiveCommands, final TestListener listener) {
+            final boolean observeSensitiveCommands, @Nullable final TestListener listener) {
         this.eventTypes = eventTypes;
         this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
         this.observeSensitiveCommands = observeSensitiveCommands;
@@ -114,7 +115,9 @@ public class TestCommandListener implements CommandListener {
         lock.lock();
         try {
             events.clear();
-            listener.clear();
+            if (listener != null) {
+                listener.clear();
+            }
         } finally {
             lock.unlock();
         }
@@ -136,7 +139,9 @@ public class TestCommandListener implements CommandListener {
                 .replace("Event", "")
                 .toLowerCase();
         // example: "saslContinue succeeded"
-        listener.add(c.getCommandName() + " " + className);
+        if (listener != null) {
+            listener.add(c.getCommandName() + " " + className);
+        }
     }
 
     public CommandStartedEvent getCommandStartedEvent(final String commandName) {
