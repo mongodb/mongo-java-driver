@@ -1179,7 +1179,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         when:
         List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, sortBy, output, preSortBy)
 
-        expect:
+        then:
         actualFieldValues.size() == expectedFieldValues.size()
         assertEquals(actualFieldValues, expectedFieldValues)
 
@@ -1270,14 +1270,15 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     }
 
     @IgnoreIf({ serverVersionLessThan(7, 0) })
-    def '$setWindowFields with quantiles'(Bson preSortBy, Object partitionBy, Bson sortBy, WindowOutputField output, List<Object> expectedFieldValues) {
+    def '$setWindowFields with quantiles'(Bson preSortBy, Object partitionBy, Bson sortBy,
+                                          WindowOutputField output, List<Object> expectedFieldValues) {
         given:
         populateDatabaseWithInitialData()
 
         when:
         List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, sortBy, output, preSortBy)
 
-        expect:
+        then:
         actualFieldValues.size() == expectedFieldValues.size()
         assertEquals(actualFieldValues, expectedFieldValues)
 

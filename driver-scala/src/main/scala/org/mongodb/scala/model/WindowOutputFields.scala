@@ -84,6 +84,22 @@ object WindowOutputFields {
   def avg[TExpression](path: String, expression: TExpression, window: Option[_ <: Window]): WindowOutputField =
     JWindowOutputFields.avg(path, expression, window.orNull)
 
+  /**
+   * Builds a window output field of percentiles of the evaluation results of the `inExpression`
+   * over documents in the specified `window`. The `pExpression` parameter represents an array of
+   * percentiles of interest, with each element being a numeric value between 0.0 and 1.0 (inclusive).
+   *
+   * @param path         The output field path.
+   * @param inExpression The input expression.
+   * @param pExpression  The expression representing the percentiles of interest.
+   * @param method       The method to be used for computing the percentiles.
+   * @param window       The window.
+   * @tparam InExpression The input expression type.
+   * @tparam PExpression  The percentile expression type.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/percentile/ \$percentile]]
+   * @note Requires MongoDB 7.0 or greater
+   */
   def percentile[InExpression, PExpression](
       path: String,
       inExpression: InExpression,
@@ -93,6 +109,19 @@ object WindowOutputFields {
   ): WindowOutputField =
     JWindowOutputFields.percentile(path, inExpression, pExpression, method, window.orNull)
 
+  /**
+   * Builds a window output field representing the median value of the evaluation results of the `inExpression`
+   * over documents in the specified `window`.
+   *
+   * @param inExpression The input expression.
+   * @param method       The method to be used for computing the median.
+   * @param window       The window.
+   * @tparam InExpression The input expression type.
+   * @return The constructed windowed computation.
+   * @since 4.10
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/medoan/ \$median]]
+   * @note Requires MongoDB 7.0 or greater
+   */
   def median[InExpression](
       path: String,
       inExpression: InExpression,

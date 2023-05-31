@@ -111,7 +111,22 @@ public final class WindowOutputFields {
         return simpleParameterWindowFunction(path, "$avg", expression, window);
     }
 
-
+    /**
+     * Builds a window output field of percentiles of the evaluation results of the {@code inExpression}
+     * over documents in the specified {@code window}. The {@code pExpression} parameter represents an array of
+     * percentiles of interest, with each element being a numeric value between 0.0 and 1.0 (inclusive).
+     *
+     * @param path The output field path.
+     * @param inExpression The input expression.
+     * @param pExpression The expression representing a percentiles of interest.
+     * @param method The method to be used for computing the percentiles.
+     * @param window The window.
+     * @param <InExpression> The type of the input expression.
+     * @param <PExpression> The type of the percentile expression.
+     * @return The constructed windowed output field.
+     * @mongodb.driver.manual reference/operator/aggregation/percentile/ $percentile
+     * @mongodb.server.release 7.0
+     */
     public static <InExpression, PExpression> WindowOutputField percentile(final String path, final InExpression inExpression,
                                                                            final PExpression pExpression, final String method,
                                                                            @Nullable final Window window) {
@@ -126,6 +141,18 @@ public final class WindowOutputFields {
         return compoundParameterWindowFunction(path, "$percentile", args, window);
     }
 
+    /**
+     * Builds a window output field representing the median value of the evaluation results of the {@code inExpression}
+     * over documents in the specified {@code window}.
+     *
+     * @param inExpression The input expression.
+     * @param method The method to be used for computing the median.
+     * @param window The window.
+     * @param <InExpression> The type of the input expression.
+     * @return The constructed windowed output field.
+     * @mongodb.driver.manual reference/operator/aggregation/median/ $median
+     * @mongodb.server.release 7.0
+     */
     public static <InExpression> WindowOutputField median(final String path, final InExpression inExpression,
                                                                            final String method,
                                                                            @Nullable final Window window) {
