@@ -33,7 +33,6 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
-import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateBeforeUse;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
@@ -108,7 +107,6 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
             case MONGODB_AWS:
                 return new AwsAuthenticator(credential, clusterConnectionMode, serverApi);
             case MONGODB_OIDC:
-                validateBeforeUse(credential.getCredential());
                 return new OidcAuthenticator(credential, clusterConnectionMode, serverApi);
             default:
                 throw new IllegalArgumentException("Unsupported authentication mechanism " + authenticationMechanism);

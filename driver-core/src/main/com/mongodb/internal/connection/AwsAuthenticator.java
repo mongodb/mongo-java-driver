@@ -172,13 +172,4 @@ public class AwsAuthenticator extends SaslAuthenticator {
             return awsCredential;
         }
     }
-
-    private static byte[] toBson(final BsonDocument document) {
-        byte[] bytes;
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
-        new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
-        bytes = new byte[buffer.size()];
-        System.arraycopy(buffer.getInternalBuffer(), 0, bytes, 0, buffer.getSize());
-        return bytes;
-    }
 }

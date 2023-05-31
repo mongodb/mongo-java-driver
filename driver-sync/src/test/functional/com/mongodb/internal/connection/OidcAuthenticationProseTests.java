@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.internal.connection;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -24,10 +24,10 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoCredential.IdpResponse;
 import com.mongodb.MongoCredential.OidcRefreshCallback;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.TestListener;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.connection.InternalStreamConnection;
-import com.mongodb.internal.connection.OidcAuthenticator;
-import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -80,6 +80,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.ThreadTestHelpers.executeAll;
 
+
+/**
+ * See
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/auth/tests/mongodb-oidc.rst#mongodb-oidc">Prose Tests</a>.
+ */
 public class OidcAuthenticationProseTests {
 
     public static boolean oidcTestsEnabled() {

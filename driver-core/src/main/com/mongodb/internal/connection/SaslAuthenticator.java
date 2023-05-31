@@ -32,9 +32,13 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
+import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.EncoderContext;
+import org.bson.io.BasicOutputBuffer;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
@@ -283,6 +287,15 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         } else {
             Subject.doAs(subject, action);
         }
+    }
+
+    static byte[] toBson(final BsonDocument document) {
+        byte[] bytes;
+        BasicOutputBuffer buffer = new BasicOutputBuffer();
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
+        bytes = new byte[buffer.size()];
+        System.arraycopy(buffer.getInternalBuffer(), 0, bytes, 0, buffer.getSize());
+        return bytes;
     }
 
     private final class Continuator implements SingleResultCallback<BsonDocument> {
