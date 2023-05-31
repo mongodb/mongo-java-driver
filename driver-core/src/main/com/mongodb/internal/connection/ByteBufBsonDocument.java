@@ -48,7 +48,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
-class ByteBufBsonDocument extends BsonDocument {
+final class ByteBufBsonDocument extends BsonDocument {
     private static final long serialVersionUID = 2L;
 
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
