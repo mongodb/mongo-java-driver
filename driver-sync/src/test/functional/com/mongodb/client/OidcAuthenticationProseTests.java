@@ -401,8 +401,7 @@ public class OidcAuthenticationProseTests {
                 .setPathSupplier(() -> tokens.remove())
                 .setEventListener(listener);
 
-        TestCommandListener commandListener = new TestCommandListener();
-        commandListener.setEventStrings(listener);
+        TestCommandListener commandListener = new TestCommandListener(listener);
 
         MongoClientSettings clientSettings = createSettings(OIDC_URL, onRequest, onRefresh, null, commandListener);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -483,8 +482,7 @@ public class OidcAuthenticationProseTests {
                 .setPathSupplier(() -> tokens.remove())
                 .setEventListener(listener);
 
-        TestCommandListener commandListener = new TestCommandListener();
-        commandListener.setEventStrings(listener);
+        TestCommandListener commandListener = new TestCommandListener(listener);
 
         MongoClientSettings clientSettings = createSettings(OIDC_URL, onRequest, onRefresh, null, commandListener);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -539,8 +537,7 @@ public class OidcAuthenticationProseTests {
         // #. Create a client with a request callback that returns a valid token that will not expire soon.
         TestListener listener = new TestListener();
         TestCallback onRequest = createCallback().setEventListener(listener);
-        TestCommandListener commandListener = new TestCommandListener();
-        commandListener.setEventStrings(listener);
+        TestCommandListener commandListener = new TestCommandListener(listener);
         MongoClientSettings clientSettings = createSettings(OIDC_URL, onRequest, null, null, commandListener);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             // instead of setting failpoints for saslStart, we inspect events
@@ -560,8 +557,7 @@ public class OidcAuthenticationProseTests {
     @Test
     public void testAutomaticAuthUsesSpeculative() {
         TestListener listener = new TestListener();
-        TestCommandListener commandListener = new TestCommandListener();
-        commandListener.setEventStrings(listener);
+        TestCommandListener commandListener = new TestCommandListener(listener);
 
         MongoClientSettings settings = createSettings(
                 AWS_OIDC_URL, null, null, Arrays.asList(), commandListener);
@@ -585,8 +581,7 @@ public class OidcAuthenticationProseTests {
         TestCallback onRefresh = createCallback().setEventListener(listener);
 
         // #. Create a client with the callbacks and an event listener capable of listening for SASL commands.
-        TestCommandListener commandListener = new TestCommandListener();
-        commandListener.setEventStrings(listener);
+        TestCommandListener commandListener = new TestCommandListener(listener);
 
         MongoClientSettings clientSettings = createSettings(OIDC_URL, onRequest, onRefresh, null, commandListener);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {

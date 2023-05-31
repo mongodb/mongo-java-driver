@@ -57,8 +57,7 @@ public class TestCommandListener implements CommandListener {
     private final List<String> eventTypes;
     private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
-    @Nullable
-    private volatile TestListener listener = null;
+    private final TestListener listener;
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
     private final boolean observeSensitiveCommands;
@@ -80,42 +79,42 @@ public class TestCommandListener implements CommandListener {
                 });
     }
 
+    /**
+     * When a test listener is set, this command listener will send string events to the
+     * test listener in the form {@code "<command name> <eventType>"}, where the event
+     * type will be lowercase and will omit the terms "command" and "event".
+     * For example: {@code "saslContinue succeeded"}.
+     *
+     * @see InternalStreamConnection#setRecordEverything(boolean)
+     * @param listener the test listener
+     */
+    public TestCommandListener(final TestListener listener) {
+        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList(), true, listener);
+    }
+
     public TestCommandListener() {
         this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList());
     }
 
     public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents) {
-        this(eventTypes, ignoredCommandMonitoringEvents, true);
+        this(eventTypes, ignoredCommandMonitoringEvents, true, null);
     }
 
     public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents,
-            final boolean observeSensitiveCommands) {
+            final boolean observeSensitiveCommands, final TestListener listener) {
         this.eventTypes = eventTypes;
         this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
         this.observeSensitiveCommands = observeSensitiveCommands;
+        this.listener = listener;
     }
 
-    /**
-     * When this is set, this command listener will send string events to the
-     * listener in the form {@code "<command name> <eventType>"}, where the event
-     * type will be lowercase and will omit the terms "command" and "event".
-     * For example: {@code "saslContinue succeeded"}.
-     *
-     * @see InternalStreamConnection#setRecordEverything(boolean)
-     * @param eventStrings the test listener
-     */
-    public void setEventStrings(final TestListener eventStrings) {
-        this.listener = eventStrings;
-    }
+
 
     public void reset() {
         lock.lock();
         try {
             events.clear();
-            TestListener observedListener = listener;
-            if (observedListener != null) {
-                observedListener.clear();
-            }
+            listener.clear();
         } finally {
             lock.unlock();
         }
@@ -132,16 +131,12 @@ public class TestCommandListener implements CommandListener {
 
     private void addEvent(final CommandEvent c) {
         events.add(c);
-        TestListener observedListener = listener;
-        if (observedListener != null) {
-            String className = c.getClass().getSimpleName()
-                    .replace("Command", "")
-                    .replace("Event", "")
-                    .toLowerCase();
-            // example: "saslContinue succeeded"
-            observedListener.add(c.getCommandName() + " " + className);
-        }
-        }
+        String className = c.getClass().getSimpleName()
+                .replace("Command", "")
+                .replace("Event", "")
+                .toLowerCase();
+        // example: "saslContinue succeeded"
+        listener.add(c.getCommandName() + " " + className);
     }
 
     public CommandStartedEvent getCommandStartedEvent(final String commandName) {
