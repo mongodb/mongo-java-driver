@@ -80,6 +80,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
 
     private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
 
+    @Nullable
     private ServerAddress serverAddress;
 
     @Nullable
@@ -497,7 +498,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
 
     private void validateAllowedHosts(final MongoCredential credential) {
         List<String> allowedHosts = assertNotNull(credential.getMechanismProperty(ALLOWED_HOSTS_KEY, DEFAULT_ALLOWED_HOSTS));
-        String host = serverAddress.getHost();
+        String host = assertNotNull(serverAddress).getHost();
         boolean permitted = allowedHosts.stream().anyMatch(allowedHost -> {
             if (allowedHost.startsWith("*.")) {
                 String ending = allowedHost.substring(1);

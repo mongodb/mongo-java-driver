@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.MongoCredential.REFRESH_TOKEN_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.REQUEST_TOKEN_CALLBACK_KEY;
 
@@ -113,21 +114,25 @@ public class AuthConnectionStringTest extends TestCase {
         MongoCredential credential = connectionString.getCredential();
         if (credential != null) {
             BsonArray callbacks = (BsonArray) getExpectedValue("callback");
-            for (BsonValue v : callbacks) {
-                String string = ((BsonString) v).getValue();
-                if ("oidcRequest".equals(string)) {
-                    credential = credential.withMechanismProperty(
-                            REQUEST_TOKEN_CALLBACK_KEY,
-                            (MongoCredential.OidcRequestCallback) (context) -> null);
-                } else if ("oidcRefresh".equals(string)) {
-                    credential = credential.withMechanismProperty(
-                            REFRESH_TOKEN_CALLBACK_KEY,
-                            (MongoCredential.OidcRefreshCallback) (context) -> null);
-                } else {
-                    fail("Unsupported callback: " + string);
+            if (callbacks != null) {
+                for (BsonValue v : callbacks) {
+                    String string = ((BsonString) v).getValue();
+                    if ("oidcRequest".equals(string)) {
+                        credential = credential.withMechanismProperty(
+                                REQUEST_TOKEN_CALLBACK_KEY,
+                                (MongoCredential.OidcRequestCallback) (context) -> null);
+                    } else if ("oidcRefresh".equals(string)) {
+                        credential = credential.withMechanismProperty(
+                                REFRESH_TOKEN_CALLBACK_KEY,
+                                (MongoCredential.OidcRefreshCallback) (context) -> null);
+                    } else {
+                        fail("Unsupported callback: " + string);
+                    }
                 }
             }
-            OidcAuthenticator.OidcValidator.validateBeforeUse(credential);
+            if (MONGODB_OIDC.getMechanismName().equals(credential.getMechanism())) {
+                OidcAuthenticator.OidcValidator.validateBeforeUse(credential);
+            }
         }
         return credential;
     }
