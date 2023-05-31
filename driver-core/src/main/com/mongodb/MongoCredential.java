@@ -240,7 +240,7 @@ public final class MongoCredential {
      * The list of allowed hosts that will be used if no
      * {@link MongoCredential#ALLOWED_HOSTS_KEY} value is supplied.
      * The default allowed hosts are:
-     * {@code "*.mongodb.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1")}
+     * {@code "*.mongodb.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
      *
      * @see #createOidcCredential(String)
      * @since 4.10

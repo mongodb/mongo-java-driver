@@ -65,15 +65,15 @@ public class MongoCredentialWithCache {
         cache.set(key, value);
     }
 
-    public OidcCacheEntry getOidcCacheEntry() {
+    OidcCacheEntry getOidcCacheEntry() {
         return cache.oidcCacheEntry;
     }
 
-    public void setOidcCacheEntry(final OidcCacheEntry oidcCacheEntry) {
+    void setOidcCacheEntry(final OidcCacheEntry oidcCacheEntry) {
         this.cache.oidcCacheEntry = oidcCacheEntry;
     }
 
-    public StampedLock getOidcLock() {
+    StampedLock getOidcLock() {
         return cache.oidcLock;
     }
 

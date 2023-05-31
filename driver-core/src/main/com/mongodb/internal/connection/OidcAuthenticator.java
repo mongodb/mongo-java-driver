@@ -394,12 +394,12 @@ public class OidcAuthenticator extends SaslAuthenticator {
         }
 
         @Nullable
-        public String getRefreshToken() {
+        String getRefreshToken() {
             return refreshToken;
         }
 
         @Nullable
-        public IdpInfo getIdpInfo() {
+        IdpInfo getIdpInfo() {
             return idpInfo;
         }
 

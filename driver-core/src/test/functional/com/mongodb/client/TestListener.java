@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.annotations.ThreadSafe;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +25,8 @@ import java.util.List;
 /**
  * A simple listener that consumes string events, which can be checked in tests.
  */
-public class TestListener {
+@ThreadSafe
+public final class TestListener {
     private final List<String> events = Collections.synchronizedList(new ArrayList<>());
 
     public void add(final String s) {
