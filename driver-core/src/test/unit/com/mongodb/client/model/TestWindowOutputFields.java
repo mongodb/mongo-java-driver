@@ -26,22 +26,15 @@ import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.client.model.Sorts.ascending;
@@ -58,9 +51,6 @@ final class TestWindowOutputFields {
     private static final String PATH = "newField";
     private static final Bson SORT_BY = ascending("sortByField");
     private static final Map.Entry<Integer, BsonValue> INT_EXPR = new AbstractMap.SimpleImmutableEntry<>(1, new BsonInt32(1));
-    private static final Map.Entry<Object, BsonArray> ARRAY_EXPR =
-            new AbstractMap.SimpleImmutableEntry<>(Arrays.asList(0.5, 0.9, "$$letValueX"),
-                    new BsonArray(Arrays.asList(new BsonDouble(0.5), new BsonDouble(0.9), new BsonString("$$letValueX"))));
     private static final Map.Entry<String, BsonValue> STR_EXPR =
             new AbstractMap.SimpleImmutableEntry<>("$fieldToRead", new BsonString("$fieldToRead"));
     private static final Map.Entry<Document, BsonDocument> DOC_EXPR = new AbstractMap.SimpleImmutableEntry<>(
@@ -220,111 +210,6 @@ final class TestWindowOutputFields {
                 () -> assertPickNoNWindowFunction("$top", WindowOutputFields::top, expressions, "output", windows),
                 () -> assertPickSortWindowFunction("$topN", WindowOutputFields::topN, expressions, "output", nExpressions, windows)
         );
-    }
-
-    @ParameterizedTest
-    @MethodSource("percentileWindowFunctionsSource")
-    void percentile(final Object inExpressionParameter,
-                    final BsonValue expectedInExpression,
-                    final Object pExpressionParameter,
-                    final BsonValue expectedPExpression,
-                    final Window window) {
-        String expectedFunctionName = "$percentile";
-        String method = "approximate";
-        BsonField expectedWindowOutputField = getExpectedBsonField(expectedFunctionName, expectedInExpression, expectedPExpression,
-                method, window);
-
-        Supplier<String> msg = () -> "expectedFunctionName=" + expectedFunctionName
-                + ", path=" + PATH
-                + ", InExpression=" + inExpressionParameter
-                + ", pExpression=" + pExpressionParameter
-                + ", method=" + method
-                + ", window=" + window;
-
-        assertWindowOutputField(expectedWindowOutputField, WindowOutputFields.percentile(PATH, inExpressionParameter, pExpressionParameter, method, window),
-                msg);
-        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(null, inExpressionParameter, pExpressionParameter, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(PATH, null, pExpressionParameter, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(PATH, inExpressionParameter, null, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.percentile(PATH, inExpressionParameter, pExpressionParameter, null, window), msg);
-    }
-
-    @ParameterizedTest
-    @MethodSource("medianWindowFunctionsSource")
-    void median(final Object inExpressionParameter,
-                final BsonValue expectedInExpression,
-                final Window window) {
-        String expectedFunctionName = "$median";
-        String method = "approximate";
-        BsonField expectedWindowOutputField = getExpectedBsonField(expectedFunctionName, expectedInExpression,
-                null, method, window);
-
-        Supplier<String> msg = () -> "expectedFunctionName=" + expectedFunctionName
-                + ", path=" + PATH
-                + ", InExpression=" + inExpressionParameter
-                + ", method=" + method
-                + ", window=" + window;
-
-        assertWindowOutputField(expectedWindowOutputField, WindowOutputFields.median(PATH, inExpressionParameter, method, window),
-                msg);
-        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.median(null, inExpressionParameter, method, window),
-                msg);
-        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.median(PATH, null, method, window), msg);
-        assertThrows(IllegalArgumentException.class, () -> WindowOutputFields.median(PATH, inExpressionParameter, null, window), msg);
-    }
-
-    private static Stream<Arguments> percentileWindowFunctionsSource() {
-        Map<Object, BsonValue> inExpressions = new HashMap<>();
-        inExpressions.put(INT_EXPR.getKey(), INT_EXPR.getValue());
-        inExpressions.put(STR_EXPR.getKey(), STR_EXPR.getValue());
-        inExpressions.put(DOC_EXPR.getKey(), DOC_EXPR.getValue());
-
-        Map<Object, BsonValue> pExpressions = new HashMap<>();
-        pExpressions.put(ARRAY_EXPR.getKey(), ARRAY_EXPR.getValue());
-        pExpressions.put(STR_EXPR.getKey(), STR_EXPR.getValue());
-
-        Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
-
-        // Generate different combinations of test arguments using Cartesian product of inExpressions, pExpressions, and windows.
-        List<Arguments> argumentsList = new ArrayList<>();
-        inExpressions.forEach((incomingInParameter, inBsonValue) ->
-                pExpressions.forEach((incomingPParameter, pBsonValue) ->
-                        windows.forEach(window ->
-                                argumentsList.add(
-                                        Arguments.of(incomingInParameter, inBsonValue, incomingPParameter, pBsonValue, window)))));
-        return Stream.of(argumentsList.toArray(new Arguments[]{}));
-    }
-
-    private static Stream<Arguments> medianWindowFunctionsSource() {
-        Map<Object, BsonValue> inExpressions = new HashMap<>();
-        inExpressions.put(INT_EXPR.getKey(), INT_EXPR.getValue());
-        inExpressions.put(STR_EXPR.getKey(), STR_EXPR.getValue());
-        inExpressions.put(DOC_EXPR.getKey(), DOC_EXPR.getValue());
-
-        Collection<Window> windows = asList(null, POSITION_BASED_WINDOW, RANGE_BASED_WINDOW);
-
-        // Generate different combinations of test arguments using Cartesian product of inExpressions and windows.
-        List<Arguments> argumentsList = new ArrayList<>();
-        inExpressions.forEach((incomingInParameter, inBsonValue) ->
-                windows.forEach(window ->
-                        argumentsList.add(
-                                Arguments.of(incomingInParameter, inBsonValue,  window))));
-        return Stream.of(argumentsList.toArray(new Arguments[]{}));
-    }
-
-    private static BsonField getExpectedBsonField(final String expectedFunctionName, final BsonValue expectedInExpression,
-                                                  final @Nullable BsonValue expectedPExpression,
-                                                  final String method, final @Nullable Window window) {
-        BsonDocument expectedFunctionDoc = new BsonDocument("input", expectedInExpression);
-        if (expectedPExpression != null) {
-            expectedFunctionDoc.append("p", expectedPExpression);
-        }
-        expectedFunctionDoc.append("method", new BsonString(method));
-        BsonDocument expectedFunctionAndWindow = new BsonDocument(expectedFunctionName, expectedFunctionDoc);
-        if (window != null) {
-            expectedFunctionAndWindow.append("window", window.toBsonDocument());
-        }
-        return new BsonField(PATH, expectedFunctionAndWindow);
     }
 
     private static void assertPickNoSortWindowFunction(
