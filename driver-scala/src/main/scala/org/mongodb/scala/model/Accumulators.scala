@@ -68,6 +68,7 @@ object Accumulators {
    * @tparam PExpression  The type of the percentile expression.
    * @return The requested [[BsonField]].
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/percentile/ \$percentile]]
+   * @since 4.10
    * @note Requires MongoDB 7.0 or greater
    */
   def percentile[InExpression, PExpression](
@@ -88,6 +89,7 @@ object Accumulators {
    * @tparam InExpression The type of the input expression.
    * @return The requested [[BsonField]].
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/median/ \$median]]
+   * @since 4.10
    * @note Requires MongoDB 7.0 or greater
    */
   def median[InExpression](

@@ -80,6 +80,7 @@ public final class Accumulators {
      * @param <PExpression>  The type of the percentile expression.
      * @return The requested {@link BsonField}.
      * @mongodb.driver.manual reference/operator/aggregation/percentile/ $percentile
+     * @since 4.10
      * @mongodb.server.release 7.0
      */
     public static <InExpression, PExpression> BsonField percentile(final String fieldName, final InExpression inExpression,
@@ -97,6 +98,7 @@ public final class Accumulators {
      * @param <InExpression> The type of the input expression.
      * @return The requested {@link BsonField}.
      * @mongodb.driver.manual reference/operator/aggregation/median/ $median
+     * @since 4.10
      * @mongodb.server.release 7.0
      */
     public static <InExpression> BsonField median(final String fieldName, final InExpression inExpression,  final String method) {
@@ -130,7 +132,6 @@ public final class Accumulators {
      * @return The requested {@link BsonField}.
      * @mongodb.driver.manual reference/operator/aggregation/firstN/ $firstN
      * @since 4.7
-     * @mongodb.server.release 5.2
      */
     public static <InExpression, NExpression> BsonField firstN(
             final String fieldName, final InExpression inExpression, final NExpression nExpression) {
