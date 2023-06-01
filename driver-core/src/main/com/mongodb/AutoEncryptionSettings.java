@@ -216,7 +216,6 @@ public final class AutoEncryptionSettings {
          * @since 4.7
          * @mongodb.server.release 7.0
          */
-        @Beta(Beta.Reason.SERVER)
         public Builder encryptedFieldsMap(final Map<String, BsonDocument> encryptedFieldsMap) {
             this.encryptedFieldsMap = notNull("encryptedFieldsMap", encryptedFieldsMap);
             return this;
@@ -232,7 +231,6 @@ public final class AutoEncryptionSettings {
          * @return this
          * @since 4.7
          */
-        @Beta(Beta.Reason.SERVER)
         public Builder bypassQueryAnalysis(final boolean bypassQueryAnalysis) {
             this.bypassQueryAnalysis = bypassQueryAnalysis;
             return this;
@@ -465,7 +463,6 @@ public final class AutoEncryptionSettings {
      * @since 4.7
      * @mongodb.server.release 7.0
      */
-    @Beta(Beta.Reason.SERVER)
     @Nullable
     public Map<String, BsonDocument> getEncryptedFieldsMap() {
         return encryptedFieldsMap;
@@ -480,7 +477,6 @@ public final class AutoEncryptionSettings {
      * @return true if query analysis should be bypassed
      * @since 4.7
      */
-    @Beta(Beta.Reason.SERVER)
     public boolean isBypassQueryAnalysis() {
         return bypassQueryAnalysis;
     }

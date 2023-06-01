@@ -121,7 +121,6 @@ public class EncryptOptions {
      * @return this
      * @since 4.7
      */
-    @Beta(Beta.Reason.SERVER)
     public EncryptOptions contentionFactor(@Nullable final Long contentionFactor) {
         this.contentionFactor = contentionFactor;
         return this;
@@ -135,7 +134,6 @@ public class EncryptOptions {
      * @since 4.7
      */
     @Nullable
-    @Beta(Beta.Reason.SERVER)
     public Long getContentionFactor() {
         return contentionFactor;
     }
@@ -150,7 +148,6 @@ public class EncryptOptions {
      * @return this
      * @since 4.7
      */
-    @Beta(Beta.Reason.SERVER)
     public EncryptOptions queryType(@Nullable final String queryType) {
         this.queryType = queryType;
         return this;
@@ -165,7 +162,6 @@ public class EncryptOptions {
      * @since 4.7
      */
     @Nullable
-    @Beta(Beta.Reason.SERVER)
     public String getQueryType() {
         return queryType;
     }

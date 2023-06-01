@@ -215,7 +215,6 @@ public interface ClientEncryption extends Closeable {
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/create Create Command
      */
-    @Beta(Beta.Reason.SERVER)
     Publisher<BsonDocument> createEncryptedCollection(MongoDatabase database, String collectionName,
             CreateCollectionOptions createCollectionOptions, CreateEncryptedCollectionParams createEncryptedCollectionParams);
 
