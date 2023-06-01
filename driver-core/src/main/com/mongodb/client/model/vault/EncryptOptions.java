@@ -120,6 +120,7 @@ public class EncryptOptions {
      * @param contentionFactor the contention factor, which must be {@code >= 0} or null.
      * @return this
      * @since 4.7
+     * @mongodb.server.release 7.0
      */
     public EncryptOptions contentionFactor(@Nullable final Long contentionFactor) {
         this.contentionFactor = contentionFactor;
@@ -132,6 +133,7 @@ public class EncryptOptions {
      * @see #contentionFactor(Long)
      * @return the contention factor
      * @since 4.7
+     * @mongodb.server.release 7.0
      */
     @Nullable
     public Long getContentionFactor() {
@@ -147,6 +149,7 @@ public class EncryptOptions {
      * @param queryType the query type
      * @return this
      * @since 4.7
+     * @mongodb.server.release 7.0
      */
     public EncryptOptions queryType(@Nullable final String queryType) {
         this.queryType = queryType;
@@ -160,6 +163,7 @@ public class EncryptOptions {
      * @see #queryType(String)
      * @return the queryType or null
      * @since 4.7
+     * @mongodb.server.release 7.0
      */
     @Nullable
     public String getQueryType() {

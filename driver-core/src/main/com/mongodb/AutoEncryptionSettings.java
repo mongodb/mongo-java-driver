@@ -230,6 +230,7 @@ public final class AutoEncryptionSettings {
          * @param bypassQueryAnalysis whether query analysis should be bypassed
          * @return this
          * @since 4.7
+         * @mongodb.server.release 7.0
          */
         public Builder bypassQueryAnalysis(final boolean bypassQueryAnalysis) {
             this.bypassQueryAnalysis = bypassQueryAnalysis;
@@ -476,6 +477,7 @@ public final class AutoEncryptionSettings {
      *
      * @return true if query analysis should be bypassed
      * @since 4.7
+     * @mongodb.server.release 7.0
      */
     public boolean isBypassQueryAnalysis() {
         return bypassQueryAnalysis;
