@@ -35,7 +35,6 @@ import org.bson.BsonWriter
 import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
-import org.bson.codecs.Parameterizable
 import org.bson.codecs.RepresentationConfigurable
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistry
@@ -136,29 +135,20 @@ internal data class DataClassCodec<T : Any>(
         ): Codec<R>? {
             return if (!kClass.isData) {
                 null
-            } else if (kClass.typeParameters.isNotEmpty()) {
-                RawDataClassCodec(kClass)
             } else {
-                createDataClassCodec(kClass, codecRegistry, types)
+                validateAnnotations(kClass)
+                val primaryConstructor =
+                    kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
+                val typeMap = types.mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType() to k }
+                    .toMap()
+
+                val propertyModels =
+                    primaryConstructor.parameters.map { kParameter ->
+                        PropertyModel(
+                            kParameter, computeFieldName(kParameter), getCodec(kParameter, typeMap, codecRegistry))
+                    }
+                return DataClassCodec(kClass, primaryConstructor, propertyModels)
             }
-        }
-
-        private fun <R : Any> createDataClassCodec(
-            kClass: KClass<R>,
-            codecRegistry: CodecRegistry,
-            types: List<Type> = emptyList()
-        ): Codec<R> {
-            validateAnnotations(kClass)
-            val primaryConstructor =
-                kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
-            val typeMap = types.mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType() to k }.toMap()
-
-            val propertyModels =
-                primaryConstructor.parameters.map { kParameter ->
-                    PropertyModel(
-                        kParameter, computeFieldName(kParameter), getCodec(kParameter, typeMap, codecRegistry))
-                }
-            return DataClassCodec(kClass, primaryConstructor, propertyModels)
         }
 
         private fun <R : Any> validateAnnotations(kClass: KClass<R>) {
@@ -249,30 +239,6 @@ internal data class DataClassCodec<T : Any>(
         private fun codecConfigurationRequires(value: Boolean, lazyMessage: () -> String) {
             if (!value) {
                 throw CodecConfigurationException(lazyMessage.invoke())
-            }
-        }
-
-        /**
-         * A Raw unparameterized data class
-         *
-         * It cannot encode or decode it just can create parameterized DataClassCodecs
-         */
-        internal data class RawDataClassCodec<T : Any>(private val kClass: KClass<T>) : Codec<T>, Parameterizable {
-
-            override fun getEncoderClass(): Class<T> = kClass.java
-
-            override fun parameterize(codecRegistry: CodecRegistry, types: List<Type>): Codec<*> {
-                return createDataClassCodec(kClass, codecRegistry, types)
-            }
-
-            override fun decode(reader: BsonReader?, decoderContext: DecoderContext?): T {
-                throw CodecConfigurationException(
-                    "Can not decode to ${kClass.simpleName} as it has type parameters and has not been parameterized.")
-            }
-
-            override fun encode(writer: BsonWriter?, value: T, encoderContext: EncoderContext?) {
-                throw CodecConfigurationException(
-                    "Can not encode to ${kClass.simpleName} as it has type parameters and has not been parameterized.")
             }
         }
     }

@@ -16,6 +16,7 @@
 
 package org.bson.codecs;
 
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.lang.reflect.Type;
@@ -26,7 +27,13 @@ import java.util.List;
  * An interface indicating that a Codec is for a type that can be parameterized by generic types.
  *
  * @since 4.8
+ * @deprecated Since 4.10. Instead of implementing {@link Parameterizable} for a custom {@link Codec},
+ * users should implement {@link CodecProvider#get(Class, List, CodecRegistry)} for a custom {@link CodecProvider}.
  */
+@Deprecated
+// After releasing this interface, we realized that our implementations of `Parameterizable.parameterize` were doing what
+// `CodecProvider.get` is supposed to be doing. As a result, we introduced a new default method to `CodecProvider`,
+// and deprecated `Parameterizable`.
 public interface Parameterizable {
     /**
      * Recursively parameterize the codec with the given registry and generic type arguments.

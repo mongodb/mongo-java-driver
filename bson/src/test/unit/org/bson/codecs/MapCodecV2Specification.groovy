@@ -254,15 +254,16 @@ class MapCodecV2Specification extends Specification {
 
     def 'should parameterize'() {
         given:
-        def codec = new MapCodecV2(REGISTRY, new BsonTypeClassMap(), null, Map)
+        def codec = fromProviders(new Jsr310CodecProvider(), REGISTRY).get(
+                Map,
+                asList(((ParameterizedType) Container.getMethod('getInstants').genericReturnType).actualTypeArguments))
+
         def writer = new BsonDocumentWriter(new BsonDocument())
         def reader = new BsonDocumentReader(writer.getDocument())
         def instants =
                 ['firstMap': [Instant.ofEpochMilli(1), Instant.ofEpochMilli(2)],
                  'secondMap': [Instant.ofEpochMilli(3), Instant.ofEpochMilli(4)]]
         when:
-        codec = codec.parameterize(fromProviders(new Jsr310CodecProvider(), REGISTRY),
-                asList(((ParameterizedType) Container.getMethod('getInstants').genericReturnType).actualTypeArguments))
         writer.writeStartDocument()
         writer.writeName('instants')
         codec.encode(writer, instants, EncoderContext.builder().build())

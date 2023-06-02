@@ -27,6 +27,7 @@ import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.record.samples.TestRecordEmbedded;
 import org.bson.codecs.record.samples.TestRecordParameterized;
 import org.bson.codecs.record.samples.TestRecordWithDeprecatedAnnotations;
@@ -67,7 +68,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithDeprecatedAnnotations() {
-        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = createRecordCodec(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithDeprecatedAnnotations("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
 
@@ -95,7 +96,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithPojoAnnotations() {
-        var codec = new RecordCodec<>(TestRecordWithPojoAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = createRecordCodec(TestRecordWithPojoAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithPojoAnnotations("Lucas", 14, List.of("soccer", "basketball"), identifier.toHexString());
 
@@ -123,7 +124,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithNestedListOfRecords() {
-        var codec = new RecordCodec<>(TestRecordWithListOfRecords.class,
+        var codec = createRecordCodec(TestRecordWithListOfRecords.class,
                 fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithListOfRecords(identifier, List.of(new TestRecordEmbedded("embedded")));
@@ -150,7 +151,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithNestedListOfListOfRecords() {
-        var codec = new RecordCodec<>(TestRecordWithListOfListOfRecords.class,
+        var codec = createRecordCodec(TestRecordWithListOfListOfRecords.class,
                 fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithListOfListOfRecords(identifier, List.of(List.of(new TestRecordEmbedded("embedded"))));
@@ -178,7 +179,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithNestedMapOfRecords() {
-        var codec = new RecordCodec<>(TestRecordWithMapOfRecords.class,
+        var codec = createRecordCodec(TestRecordWithMapOfRecords.class,
                 fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithMapOfRecords(identifier,
@@ -206,7 +207,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithNestedMapOfListRecords() {
-        var codec = new RecordCodec<>(TestRecordWithMapOfListOfRecords.class,
+        var codec = createRecordCodec(TestRecordWithMapOfListOfRecords.class,
                 fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithMapOfListOfRecords(identifier,
@@ -236,7 +237,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithNestedParameterizedRecord() {
-        var codec = new RecordCodec<>(TestRecordWithParameterizedRecord.class,
+        var codec = createRecordCodec(TestRecordWithParameterizedRecord.class,
                 fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithParameterizedRecord(identifier,
@@ -267,7 +268,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithNestedParameterizedRecordWithDifferentlyOrderedTypeParameters() {
-        var codec = new RecordCodec<>(TestRecordWithNestedParameterizedRecord.class,
+        var codec = createRecordCodec(TestRecordWithNestedParameterizedRecord.class,
                 fromProviders(new RecordCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY));
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithNestedParameterizedRecord(identifier,
@@ -301,7 +302,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithNulls() {
-        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = createRecordCodec(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithDeprecatedAnnotations(null, 14, null, identifier.toHexString());
 
@@ -326,7 +327,7 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithExtraData() {
-        var codec = new RecordCodec<>(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = createRecordCodec(TestRecordWithDeprecatedAnnotations.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
         var testRecord = new TestRecordWithDeprecatedAnnotations("Felix", 13, List.of("rugby", "badminton"), identifier.toHexString());
 
@@ -376,36 +377,40 @@ public class RecordCodecTest {
     @Test
     public void testExceptionsForAnnotationsNotOnRecordComponent() {
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonIdOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonIdOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonIdOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonIdOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
 
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonPropertyOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonPropertyOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonPropertyOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonPropertyOnCanonicalConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
 
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonRepresentationOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonRepresentationOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
     }
 
     @Test
     public void testExceptionsForUnsupportedAnnotations() {
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonDiscriminatorOnRecord.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonDiscriminatorOnRecord.class, Bson.DEFAULT_CODEC_REGISTRY));
 
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonCreatorOnConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonCreatorOnConstructor.class, Bson.DEFAULT_CODEC_REGISTRY));
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonCreatorOnMethod.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonCreatorOnMethod.class, Bson.DEFAULT_CODEC_REGISTRY));
 
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonIgnoreOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonIgnoreOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonIgnoreOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonIgnoreOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonExtraElementsOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonExtraElementsOnComponent.class, Bson.DEFAULT_CODEC_REGISTRY));
         assertThrows(CodecConfigurationException.class, () ->
-                new RecordCodec<>(TestRecordWithIllegalBsonExtraElementsOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+                createRecordCodec(TestRecordWithIllegalBsonExtraElementsOnAccessor.class, Bson.DEFAULT_CODEC_REGISTRY));
+    }
+
+    private static <T extends Record> RecordCodec<T> createRecordCodec(final Class<T> clazz, final CodecRegistry registry) {
+        return new RecordCodec<>(clazz, List.of(), registry);
     }
 }

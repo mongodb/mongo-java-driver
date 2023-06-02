@@ -20,18 +20,15 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
-import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 
 import static org.bson.assertions.Assertions.notNull;
-import static org.bson.codecs.ContainerCodecHelper.getCodec;
 
 /**
- * A parameterized Codec for {@code Collection<Object>}.
+ * A codec for {@code Collection<Object>}.
  *
  * <p>Supports {@link Collection}, {@link List}, {@link java.util.AbstractCollection}, {@link java.util.AbstractList},
  * {@link java.util.Set}, {@link java.util.NavigableSet}, {@link java.util.SortedSet}, {@link java.util.AbstractSet} or any
@@ -47,7 +44,7 @@ import static org.bson.codecs.ContainerCodecHelper.getCodec;
  */
 @SuppressWarnings("rawtypes")
 final class CollectionCodec<C extends Collection<Object>> extends AbstractCollectionCodec<Object, C>
-        implements OverridableUuidRepresentationCodec<C>, Parameterizable {
+        implements OverridableUuidRepresentationCodec<C> {
 
     private final CodecRegistry registry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
@@ -74,17 +71,6 @@ final class CollectionCodec<C extends Collection<Object>> extends AbstractCollec
         this.bsonTypeCodecMap = bsonTypeCodecMap;
         this.valueTransformer = valueTransformer != null ? valueTransformer : (value) -> value;
         this.uuidRepresentation = uuidRepresentation;
-    }
-
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Codec<?> parameterize(final CodecRegistry codecRegistry, final List<Type> types) {
-        if (types.size() != 1) {
-            throw new CodecConfigurationException("Expected only one parameterized type for an Iterable, but found " + types.size());
-        }
-
-        return new ParameterizedCollectionCodec(getCodec(codecRegistry, types.get(0)), getEncoderClass());
     }
 
     @Override

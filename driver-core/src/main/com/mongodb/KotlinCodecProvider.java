@@ -22,10 +22,18 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.kotlin.DataClassCodecProvider;
 import org.bson.codecs.kotlinx.KotlinSerializerCodecProvider;
 
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
+
+import static org.bson.internal.ProvidersCodecRegistry.getFromCodecProvider;
+
 /**
  * A CodecProvider for Kotlin data classes.
- *
- * <p>Requires the bson-kotlin package and / or the bson-kotlinx package.</p>
+ * Delegates to {@code org.bson.codecs.kotlinx.KotlinSerializerCodecProvider}
+ * and falls back to {@code org.bson.codecs.kotlin.DataClassCodecProvider}.
+ * If neither bson-kotlin package nor the bson-kotlinx package is available,
+ * {@linkplain CodecProvider#get(Class, CodecRegistry) provides} {@code null}.
  *
  * @since 4.10
  */
@@ -60,16 +68,21 @@ public class KotlinCodecProvider implements CodecProvider {
     @Override
     @Nullable
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+        return get(clazz, Collections.emptyList(), registry);
+    }
+
+    @Override
+    @Nullable
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
         Codec<T> codec = null;
         if (KOTLIN_SERIALIZABLE_CODEC_PROVIDER != null) {
-            codec = KOTLIN_SERIALIZABLE_CODEC_PROVIDER.get(clazz, registry);
+            codec = getFromCodecProvider(KOTLIN_SERIALIZABLE_CODEC_PROVIDER, clazz, typeArguments, registry);
         }
 
         if (codec == null && DATA_CLASS_CODEC_PROVIDER != null) {
-            codec = DATA_CLASS_CODEC_PROVIDER.get(clazz, registry);
+            codec = getFromCodecProvider(DATA_CLASS_CODEC_PROVIDER, clazz, typeArguments, registry);
         }
         return codec;
     }
 
 }
-

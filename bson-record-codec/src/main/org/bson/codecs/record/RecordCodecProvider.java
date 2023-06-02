@@ -20,6 +20,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.lang.reflect.Type;
+import java.util.List;
+
+import static org.bson.assertions.Assertions.assertNotNull;
+
 /**
  * Provides Codec instances for Java records.
  *
@@ -27,13 +32,18 @@ import org.bson.codecs.configuration.CodecRegistry;
  * @see Record
  */
 public final class RecordCodecProvider implements CodecProvider {
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (!clazz.isRecord()) {
+        return get(clazz, List.of(), registry);
+    }
+
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
+        if (!assertNotNull(clazz).isRecord()) {
             return null;
         }
-
-        return (Codec<T>) new RecordCodec(clazz, registry);
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Codec<T> result = new RecordCodec(clazz, assertNotNull(typeArguments), registry);
+        return result;
     }
 }
