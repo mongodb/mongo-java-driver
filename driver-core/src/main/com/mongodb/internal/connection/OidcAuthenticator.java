@@ -72,7 +72,7 @@ import static java.lang.String.format;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class OidcAuthenticator extends SaslAuthenticator {
+public final class OidcAuthenticator extends SaslAuthenticator {
 
     private static final List<String> SUPPORTED_PROVIDERS = Arrays.asList("aws");
 
@@ -439,7 +439,7 @@ public class OidcAuthenticator extends SaslAuthenticator {
 
         @Override
         public byte[] evaluateChallenge(final byte[] challenge) {
-            return evaluateChallengeInternal(challenge);
+            return assertNotNull(evaluateChallengeFunction).apply(challenge);
         }
 
         @Override
@@ -447,9 +447,6 @@ public class OidcAuthenticator extends SaslAuthenticator {
             return clientIsComplete();
         }
 
-        public byte[] evaluateChallengeInternal(final byte[] challenge) {
-            return assertNotNull(evaluateChallengeFunction).apply(challenge);
-        }
     }
 
     private static String readAwsTokenFromFile() {
