@@ -569,7 +569,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             }
         }
 
-        @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PACKAGE)
+        @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
         public static void validateBeforeUse(final MongoCredential credential) {
             String userName = credential.getUserName();
             Object providerName = credential.getMechanismProperty(PROVIDER_NAME_KEY, null);
