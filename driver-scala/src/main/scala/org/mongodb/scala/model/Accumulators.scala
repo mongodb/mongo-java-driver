@@ -56,6 +56,50 @@ object Accumulators {
   def avg[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.avg(fieldName, expression)
 
   /**
+   * Returns a combination of a computed field and an accumulator that generates a BSON `ARRAY`
+   * containing computed values from the given `inExpression` based on the provided `pExpression`, which represents an array
+   * of percentiles of interest within a group, where each element is a numeric value between 0.0 and 1.0 (inclusive).
+   *
+   * @param fieldName    The field computed by the accumulator.
+   * @param inExpression The input expression.
+   * @param pExpression  The expression representing a percentiles of interest.
+   * @param method       The method to be used for computing the percentiles.
+   * @tparam InExpression The type of the input expression.
+   * @tparam PExpression  The type of the percentile expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/percentile/ \$percentile]]
+   * @since 4.10
+   * @note Requires MongoDB 7.0 or greater
+   */
+  def percentile[InExpression, PExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      pExpression: PExpression,
+      method: String
+  ): BsonField =
+    JAccumulators.percentile(fieldName, inExpression, pExpression, method)
+
+  /**
+   * Returns a combination of a computed field and an accumulator that generates a BSON `Double`
+   * representing the median value computed from the given `nExpression` within a group.
+   *
+   * @param fieldName    The field computed by the accumulator.
+   * @param inExpression The input expression.
+   * @param method       The method to be used for computing the median.
+   * @tparam InExpression The type of the input expression.
+   * @return The requested [[BsonField]].
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/median/ \$median]]
+   * @since 4.10
+   * @note Requires MongoDB 7.0 or greater
+   */
+  def median[InExpression](
+      fieldName: String,
+      inExpression: InExpression,
+      method: String
+  ): BsonField =
+    JAccumulators.median(fieldName, inExpression, method)
+
+  /**
    * Gets a field name for a `\$group` operation representing the value of the given expression when applied to the first member of
    * the group.
    *

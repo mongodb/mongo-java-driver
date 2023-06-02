@@ -45,9 +45,11 @@ import static com.mongodb.client.model.Accumulators.last
 import static com.mongodb.client.model.Accumulators.lastN
 import static com.mongodb.client.model.Accumulators.max
 import static com.mongodb.client.model.Accumulators.maxN
+import static com.mongodb.client.model.Accumulators.median
 import static com.mongodb.client.model.Accumulators.mergeObjects
 import static com.mongodb.client.model.Accumulators.min
 import static com.mongodb.client.model.Accumulators.minN
+import static com.mongodb.client.model.Accumulators.percentile
 import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
@@ -295,6 +297,42 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 topN('res', descending('x'), '$y', 1))])
         then:
         results.first().get('res', List) == ['c']
+    }
+
+    @IgnoreIf({ serverVersionLessThan(7, 0) })
+    def 'should $group with quantiles'() {
+        when : 'quantile is $percentile'
+        List<Document> results = aggregate([group(new Document('gid', '$z'),
+                percentile("sat_95", '$x', [0.95], "approximate"))])
+                .collect()
+        then:
+        results.size() == 2
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('sat_95', List) == [3.0].toList()
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', false) })
+                .get('sat_95', List) == [1.0].toList()
+
+        when : 'quantile is $percentile with an array of percentiles'
+        results = aggregate([group(new Document('gid', '$z'),
+                percentile("sat_95", '$x', [0.95, 0.3], "approximate"))])
+                .collect()
+        then: 'results are returned in order specified by percentiles array'
+        results.size() == 2
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('sat_95', List) == [3.0, 2.0].toList()
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', false) })
+                .get('sat_95', List) == [1.0, 1.0].toList()
+
+        when : 'quantile is $median'
+        results = aggregate([group(new Document('gid', '$z'),
+                median("median", '$x', "approximate"))])
+                .collect()
+        then:
+        results.size() == 2
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('median', Double) == 2.0
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', false) })
+                .get('median', Double) == 1.0
     }
 
     def '$out'() {
@@ -1136,47 +1174,14 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     @IgnoreIf({ serverVersionLessThan(5, 2) })
     def '$setWindowFields'(Bson preSortBy, Object partitionBy, Bson sortBy, WindowOutputField output, List<Object> expectedFieldValues) {
         given:
-        ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId())
-        getCollectionHelper().drop()
-        Document[] original = [
-                new Document('partitionId', 1)
-                        .append('num1', 1)
-                        .append('num2', -1)
-                        .append('numMissing', 1)
-                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc)),
-                new Document('partitionId', 1)
-                        .append('num1', 2)
-                        .append('num2', -2)
-                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc)),
-                new Document('partitionId', 2)
-                        .append('num1', 3)
-                        .append('num2', -3)
-                        .append('numMissing', 3)
-                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))]
-        getCollectionHelper().insertDocuments(original)
-        List<Bson> stages = [
-                setWindowFields(partitionBy, sortBy, output),
-                sort(ascending('num1'))
-        ]
-        if (preSortBy != null) {
-            stages.add(0, sort(preSortBy))
-        }
-        List<Document> actual = aggregate(stages)
-        List<Object> actualFieldValues = actual.stream()
-                .map { doc -> doc.get('result') }
-                .collect(toList())
+        populateDatabaseWithInitialData()
 
-        expect:
+        when:
+        List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, sortBy, output, preSortBy)
+
+        then:
         actualFieldValues.size() == expectedFieldValues.size()
-        for (int i = 0; i < actualFieldValues.size(); i++) {
-            Object actualV = actualFieldValues.get(i)
-            Object expectedV = expectedFieldValues.get(i)
-            if (actualV instanceof Collection && expectedV instanceof Set) {
-                assert ((Collection) actualV).toSet() == expectedV
-            } else {
-                assert actualV == expectedV
-            }
-        }
+        assertEquals(actualFieldValues, expectedFieldValues)
 
         where:
         preSortBy | partitionBy | sortBy | output | expectedFieldValues
@@ -1262,6 +1267,36 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 .locf('result', '$numMissing') | [ 1, 1, 3 ]
         null | null | ascending('num1') | WindowOutputFields
                 .linearFill('result', '$numMissing') | [ 1, 2, 3 ]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(7, 0) })
+    def '$setWindowFields with quantiles'(Bson preSortBy, Object partitionBy, Bson sortBy,
+                                          WindowOutputField output, List<Object> expectedFieldValues) {
+        given:
+        populateDatabaseWithInitialData()
+
+        when:
+        List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, sortBy, output, preSortBy)
+
+        then:
+        actualFieldValues.size() == expectedFieldValues.size()
+        assertEquals(actualFieldValues, expectedFieldValues)
+
+        where:
+        preSortBy | partitionBy | sortBy | output | expectedFieldValues
+        null | null | null | WindowOutputFields
+                .percentile('result', '$num1', [0.1, 0.9], 'approximate', documents(UNBOUNDED, UNBOUNDED)) |
+                [[1.0, 3.0], [1.0, 3.0], [1.0, 3.0]]
+        null | null | null | WindowOutputFields
+                .percentile('result', '$num1', [0.1, 0.9], 'approximate', null) |
+                [[1.0, 3.0], [1.0, 3.0], [1.0, 3.0]]
+        null | '$partitionId' | null | WindowOutputFields
+                .percentile('result', '$num1', [0.1, 0.9], 'approximate', documents(UNBOUNDED, UNBOUNDED)) |
+                [[1.0, 2.0], [1.0, 2.0], [3.0, 3.0]]
+        null | null | null | WindowOutputFields
+                .median('result', '$num1', 'approximate', documents(UNBOUNDED, UNBOUNDED)) | [2.0, 2.0, 2.0]
+        null | '$partitionId' | null | WindowOutputFields
+                .median('result', '$num1', 'approximate', documents(UNBOUNDED, UNBOUNDED)) | [1.0, 1.0, 3.0]
     }
 
     @IgnoreIf({ serverVersionLessThan(5, 0) })
@@ -1400,5 +1435,54 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 fillOptions(),
                 FillOutputField.locf('field1'))                                  |
                 [1, 3, 3]
+    }
+
+    private void assertEquals(List<Object> actualFieldValues, List<Object> expectedFieldValues) {
+        for (int i = 0; i < actualFieldValues.size(); i++) {
+            Object actualV = actualFieldValues.get(i)
+            Object expectedV = expectedFieldValues.get(i)
+            if (actualV instanceof Collection && expectedV instanceof Set) {
+                assert ((Collection) actualV).toSet() == expectedV
+            } else {
+                assert actualV == expectedV
+            }
+        }
+    }
+
+    private populateDatabaseWithInitialData(){
+        ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId())
+        getCollectionHelper().drop()
+        Document[] original = [
+                new Document('partitionId', 1)
+                        .append('num1', 1)
+                        .append('num2', -1)
+                        .append('numMissing', 1)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc)),
+                new Document('partitionId', 1)
+                        .append('num1', 2)
+                        .append('num2', -2)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc)),
+                new Document('partitionId', 2)
+                        .append('num1', 3)
+                        .append('num2', -3)
+                        .append('numMissing', 3)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))]
+        getCollectionHelper().insertDocuments(original)
+    }
+
+    private List<Object> aggregateWithWindowFields(partitionBy, Bson sortBy, WindowOutputField output, Bson preSortBy) {
+        def actualFieldValues
+        def stages = [
+                setWindowFields(partitionBy, sortBy, output),
+                sort(ascending('num1'))
+        ]
+        if (preSortBy != null) {
+            stages.add(0, sort(preSortBy))
+        }
+        List<Document> actual = aggregate(stages)
+        actualFieldValues = actual.stream()
+                .map { doc -> doc.get('result') }
+                .collect(toList())
+        actualFieldValues
     }
 }
