@@ -16,9 +16,13 @@
 
 package com.mongodb;
 
+import com.mongodb.internal.connection.OidcAuthenticator;
+import com.mongodb.lang.Nullable;
 import junit.framework.TestCase;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +36,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-// See https://github.com/mongodb/specifications/tree/master/source/auth/tests
+import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
+import static com.mongodb.MongoCredential.REFRESH_TOKEN_CALLBACK_KEY;
+import static com.mongodb.MongoCredential.REQUEST_TOKEN_CALLBACK_KEY;
+
+// See https://github.com/mongodb/specifications/tree/master/source/auth/legacy/tests
 @RunWith(Parameterized.class)
 public class AuthConnectionStringTest extends TestCase {
     private final String input;
@@ -56,7 +64,7 @@ public class AuthConnectionStringTest extends TestCase {
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/auth")) {
+        for (File file : JsonPoweredTestHelper.getTestFiles("/auth/legacy")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
@@ -69,7 +77,7 @@ public class AuthConnectionStringTest extends TestCase {
     private void testInvalidUris() {
         Throwable expectedError = null;
         try {
-            new ConnectionString(input).getCredential();
+            getMongoCredential();
         } catch (Throwable t) {
             expectedError = t;
         }
@@ -78,7 +86,7 @@ public class AuthConnectionStringTest extends TestCase {
     }
 
     private void testValidUris() {
-        MongoCredential credential = new ConnectionString(input).getCredential();
+        MongoCredential credential = getMongoCredential();
 
         if (credential != null) {
             assertString("credential.source", credential.getSource());
@@ -97,6 +105,36 @@ public class AuthConnectionStringTest extends TestCase {
                 fail(String.format("Connection string '%s' should produce credentials", input));
             }
         }
+    }
+
+    @Nullable
+    private MongoCredential getMongoCredential() {
+        ConnectionString connectionString;
+        connectionString = new ConnectionString(input);
+        MongoCredential credential = connectionString.getCredential();
+        if (credential != null) {
+            BsonArray callbacks = (BsonArray) getExpectedValue("callback");
+            if (callbacks != null) {
+                for (BsonValue v : callbacks) {
+                    String string = ((BsonString) v).getValue();
+                    if ("oidcRequest".equals(string)) {
+                        credential = credential.withMechanismProperty(
+                                REQUEST_TOKEN_CALLBACK_KEY,
+                                (MongoCredential.OidcRequestCallback) (context) -> null);
+                    } else if ("oidcRefresh".equals(string)) {
+                        credential = credential.withMechanismProperty(
+                                REFRESH_TOKEN_CALLBACK_KEY,
+                                (MongoCredential.OidcRefreshCallback) (context) -> null);
+                    } else {
+                        fail("Unsupported callback: " + string);
+                    }
+                }
+            }
+            if (MONGODB_OIDC.getMechanismName().equals(credential.getMechanism())) {
+                OidcAuthenticator.OidcValidator.validateBeforeUse(credential);
+            }
+        }
+        return credential;
     }
 
     private void assertString(final String key, final String actual) {
@@ -142,6 +180,14 @@ public class AuthConnectionStringTest extends TestCase {
                 }
             } else if ((document.get(key).isBoolean())) {
                 boolean expectedValue = document.getBoolean(key).getValue();
+                if (REQUEST_TOKEN_CALLBACK_KEY.equals(key)) {
+                    assertTrue(actualMechanismProperty instanceof MongoCredential.OidcRequestCallback);
+                    return;
+                }
+                if (REFRESH_TOKEN_CALLBACK_KEY.equals(key)) {
+                    assertTrue(actualMechanismProperty instanceof MongoCredential.OidcRefreshCallback);
+                    return;
+                }
                 assertNotNull(actualMechanismProperty);
                 assertEquals(expectedValue, actualMechanismProperty);
             } else {
