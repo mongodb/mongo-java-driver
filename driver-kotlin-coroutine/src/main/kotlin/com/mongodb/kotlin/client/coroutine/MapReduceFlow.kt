@@ -21,9 +21,6 @@ import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.bson.conversions.Bson
 
@@ -36,7 +33,7 @@ import org.bson.conversions.Bson
  * @see [Map Reduce](https://www.mongodb.com/docs/manual/reference/command/mapReduce/)
  */
 @Deprecated("Map Reduce has been deprecated. Use Aggregation instead", replaceWith = ReplaceWith(""))
-public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) : Flow<T> {
+public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) : MongoAbstractFlow<T>(wrapped) {
     /**
      * Sets the number of documents to return per batch.
      *
@@ -209,6 +206,4 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
      * @return this
      */
     public fun collation(collation: Collation?): MapReduceFlow<T> = apply { wrapped.collation(collation) }
-
-    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }

@@ -22,7 +22,6 @@ import com.mongodb.client.model.changestream.FullDocumentBeforeChange
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.reactive.asFlow
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
@@ -37,7 +36,8 @@ import org.bson.BsonValue
  *
  * @param T The type of the result.
  */
-public class ChangeStreamFlow<T : Any>(private val wrapped: ChangeStreamPublisher<T>) : Flow<ChangeStreamDocument<T>> {
+public class ChangeStreamFlow<T : Any>(private val wrapped: ChangeStreamPublisher<T>) :
+    MongoAbstractFlow<ChangeStreamDocument<T>>(wrapped) {
 
     /**
      * Sets the fullDocument value.
@@ -173,6 +173,4 @@ public class ChangeStreamFlow<T : Any>(private val wrapped: ChangeStreamPublishe
     public fun showExpandedEvents(showExpandedEvents: Boolean): ChangeStreamFlow<T> = apply {
         wrapped.showExpandedEvents(showExpandedEvents)
     }
-    public override suspend fun collect(collector: FlowCollector<ChangeStreamDocument<T>>): Unit =
-        wrapped.asFlow().collect(collector)
 }

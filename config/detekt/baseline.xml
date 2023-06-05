@@ -10,7 +10,7 @@
     <ID>MaxLineLength:MapReduceIterable.kt$MapReduceIterable$*</ID>
     <ID>SwallowedException:MockitoHelper.kt$MockitoHelper.DeepReflectionEqMatcher$e: Throwable</ID>
     <ID>TooManyFunctions:ClientSession.kt$ClientSession : jClientSession</ID>
-    <ID>TooManyFunctions:FindFlow.kt$FindFlow&lt;T : Any> : Flow</ID>
+    <ID>TooManyFunctions:FindFlow.kt$FindFlow&lt;T : Any> : MongoAbstractFlow</ID>
     <ID>TooManyFunctions:FindIterable.kt$FindIterable&lt;T : Any> : MongoIterable</ID>
     <ID>TooManyFunctions:MongoCollection.kt$MongoCollection&lt;T : Any></ID>
     <ID>TooManyFunctions:MongoDatabase.kt$MongoDatabase</ID>

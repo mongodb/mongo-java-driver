@@ -17,9 +17,6 @@ package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.reactivestreams.client.ListIndexesPublisher
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.reactive.asFlow
 import org.bson.BsonValue
 
 /**
@@ -28,7 +25,7 @@ import org.bson.BsonValue
  * @param T The type of the result.
  * @see [List indexes](https://www.mongodb.com/docs/manual/reference/command/listIndexes/)
  */
-public class ListIndexesFlow<T : Any>(private val wrapped: ListIndexesPublisher<T>) : Flow<T> {
+public class ListIndexesFlow<T : Any>(private val wrapped: ListIndexesPublisher<T>) : MongoAbstractFlow<T>(wrapped) {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
@@ -65,6 +62,4 @@ public class ListIndexesFlow<T : Any>(private val wrapped: ListIndexesPublisher<
      * @return this
      */
     public fun comment(comment: BsonValue?): ListIndexesFlow<T> = apply { wrapped.comment(comment) }
-
-    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }
