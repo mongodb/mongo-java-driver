@@ -17,22 +17,27 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Evolving;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.AuthenticationMechanism.MONGODB_AWS;
+import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateOidcCredentialConstruction;
 
 /**
  * Represents credentials to authenticate to a mongo server,as well as the source of the credentials and the authentication mechanism to
@@ -178,6 +183,70 @@ public final class MongoCredential {
      */
     @Beta(Beta.Reason.CLIENT)
     public static final String AWS_CREDENTIAL_PROVIDER_KEY = "AWS_CREDENTIAL_PROVIDER";
+
+    /**
+     * The provider name. The value must be a string.
+     * <p>
+     * If this is provided,
+     * {@link MongoCredential#REQUEST_TOKEN_CALLBACK_KEY} and
+     * {@link MongoCredential#REFRESH_TOKEN_CALLBACK_KEY}
+     * must not be provided.
+     *
+     * @see #createOidcCredential(String)
+     * @since 4.10
+     */
+    public static final String PROVIDER_NAME_KEY = "PROVIDER_NAME";
+
+    /**
+     * This callback is invoked when the OIDC-based authenticator requests
+     * tokens from the identity provider. The type of the value must be
+     * {@link OidcRequestCallback}.
+     * <p>
+     * If this is provided, {@link MongoCredential#PROVIDER_NAME_KEY}
+     * must not be provided.
+     *
+     * @see #createOidcCredential(String)
+     * @since 4.10
+     */
+    public static final String REQUEST_TOKEN_CALLBACK_KEY = "REQUEST_TOKEN_CALLBACK";
+
+    /**
+     * Mechanism key for invoked when the OIDC-based authenticator refreshes
+     * tokens from the identity provider. If this callback is not provided,
+     * then refresh operations will not be attempted.The type of the value
+     * must be {@link OidcRefreshCallback}.
+     * <p>
+     * If this is provided, {@link MongoCredential#PROVIDER_NAME_KEY}
+     * must not be provided.
+     *
+     * @see #createOidcCredential(String)
+     * @since 4.10
+     */
+    public static final String REFRESH_TOKEN_CALLBACK_KEY = "REFRESH_TOKEN_CALLBACK";
+
+    /**
+     * Mechanism key for a list of allowed hostnames or ip-addresses for MongoDB connections. Ports must be excluded.
+     * The hostnames may include a leading "*." wildcard, which allows for matching (potentially nested) subdomains.
+     * When MONGODB-OIDC authentication is attempted against a hostname that does not match any of list of allowed hosts
+     * the driver will raise an error. The type of the value must be {@code List<String>}.
+     *
+     * @see MongoCredential#DEFAULT_ALLOWED_HOSTS
+     * @see #createOidcCredential(String)
+     * @since 4.10
+     */
+    public static final String ALLOWED_HOSTS_KEY = "ALLOWED_HOSTS";
+
+    /**
+     * The list of allowed hosts that will be used if no
+     * {@link MongoCredential#ALLOWED_HOSTS_KEY} value is supplied.
+     * The default allowed hosts are:
+     * {@code "*.mongodb.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
+     *
+     * @see #createOidcCredential(String)
+     * @since 4.10
+     */
+    public static final List<String> DEFAULT_ALLOWED_HOSTS = Collections.unmodifiableList(Arrays.asList(
+            "*.mongodb.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
 
     /**
      * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
@@ -328,6 +397,23 @@ public final class MongoCredential {
     }
 
     /**
+     * Creates a MongoCredential instance for the MONGODB-OIDC mechanism.
+     *
+     * @param userName the user name, which may be null. This is the OIDC principal name.
+     * @return the credential
+     * @since 4.10
+     * @see #withMechanismProperty(String, Object)
+     * @see #PROVIDER_NAME_KEY
+     * @see #REQUEST_TOKEN_CALLBACK_KEY
+     * @see #REFRESH_TOKEN_CALLBACK_KEY
+     * @see #ALLOWED_HOSTS_KEY
+     * @mongodb.server.release 7.0
+     */
+    public static MongoCredential createOidcCredential(@Nullable final String userName) {
+        return new MongoCredential(MONGODB_OIDC, userName, "$external", null);
+    }
+
+    /**
      * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.
      *
      * @param key   the key to the property, which is treated as case-insensitive
@@ -370,7 +456,11 @@ public final class MongoCredential {
     MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
                     @Nullable final char[] password, final Map<String, Object> mechanismProperties) {
 
-        if (userName == null && !Arrays.asList(MONGODB_X509, MONGODB_AWS).contains(mechanism)) {
+        if (mechanism == MONGODB_OIDC) {
+            validateOidcCredentialConstruction(source, mechanismProperties);
+        }
+
+        if (userName == null && !Arrays.asList(MONGODB_X509, MONGODB_AWS, MONGODB_OIDC).contains(mechanism)) {
             throw new IllegalArgumentException("username can not be null");
         }
 
@@ -542,5 +632,137 @@ public final class MongoCredential {
                 + ", password=<hidden>"
                 + ", mechanismProperties=<hidden>"
                 + '}';
+    }
+
+    /**
+     * The context for the {@link OidcRequestCallback#onRequest(OidcRequestContext) OIDC request callback}.
+     */
+    @Evolving
+    public interface OidcRequestContext {
+        /**
+         * @return The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
+         */
+        IdpInfo getIdpInfo();
+
+        /**
+         * @return The timeout that this callback must complete within.
+         */
+        Duration getTimeout();
+    }
+
+    /**
+     * The context for the {@link OidcRefreshCallback#onRefresh(OidcRefreshContext) OIDC refresh callback}.
+     */
+    @Evolving
+    public interface OidcRefreshContext extends OidcRequestContext {
+        /**
+         * @return The OIDC Refresh token supplied by a prior callback invocation.
+         */
+        String getRefreshToken();
+    }
+
+    /**
+     * This callback is invoked when the OIDC-based authenticator requests
+     * tokens from the identity provider.
+     * <p>
+     * It does not have to be thread-safe, unless it is provided to multiple
+     * MongoClients.
+     */
+    public interface OidcRequestCallback {
+        /**
+         * @param context The context.
+         * @return The response produced by an OIDC Identity Provider
+         */
+        IdpResponse onRequest(OidcRequestContext context);
+    }
+
+    /**
+     * This callback is invoked when the OIDC-based authenticator refreshes
+     * tokens from the identity provider. If this callback is not provided,
+     * then refresh operations will not be attempted.
+     * <p>
+     * It does not have to be thread-safe, unless it is provided to multiple
+     * MongoClients.
+     */
+    public interface OidcRefreshCallback {
+        /**
+         * @param context The context.
+         * @return The response produced by an OIDC Identity Provider
+         */
+        IdpResponse onRefresh(OidcRefreshContext context);
+    }
+
+    /**
+     * The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
+     */
+    @Evolving
+    public interface IdpInfo {
+        /**
+         * @return URL which describes the Authorization Server. This identifier is the
+         * iss of provided access tokens, and is viable for RFC8414 metadata
+         * discovery and RFC9207 identification.
+         */
+        String getIssuer();
+
+        /**
+         * @return Unique client ID for this OIDC client.
+         */
+        String getClientId();
+
+        /**
+         * @return Additional scopes to request from Identity Provider. Immutable.
+         */
+        List<String> getRequestScopes();
+    }
+
+    /**
+     * The response produced by an OIDC Identity Provider.
+     */
+    public static final class IdpResponse {
+
+        private final String accessToken;
+
+        @Nullable
+        private final Integer accessTokenExpiresInSeconds;
+
+        @Nullable
+        private final String refreshToken;
+
+        /**
+         * @param accessToken The OIDC access token
+         * @param accessTokenExpiresInSeconds The expiration in seconds. If null, the access token is single-use.
+         * @param refreshToken The refresh token. If null, refresh will not be attempted.
+         */
+        public IdpResponse(final String accessToken, @Nullable final Integer accessTokenExpiresInSeconds,
+                @Nullable final String refreshToken) {
+            notNull("accessToken", accessToken);
+            this.accessToken = accessToken;
+            this.accessTokenExpiresInSeconds = accessTokenExpiresInSeconds;
+            this.refreshToken = refreshToken;
+        }
+
+        /**
+         * @return The OIDC access token.
+         */
+        public String getAccessToken() {
+            return accessToken;
+        }
+
+        /**
+         * @return The expiration time for the access token in seconds.
+         * If null, the access token is single-use.
+         */
+        @Nullable
+        public Integer getAccessTokenExpiresInSeconds() {
+            return accessTokenExpiresInSeconds;
+        }
+
+        /**
+         * @return The OIDC refresh token. If null, refresh will not be attempted.
+         */
+        @Nullable
+        public String getRefreshToken() {
+            return refreshToken;
+        }
     }
 }

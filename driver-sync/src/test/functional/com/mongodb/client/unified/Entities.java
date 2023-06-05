@@ -383,7 +383,8 @@ public final class Entities {
             TestCommandListener testCommandListener = new TestCommandListener(
                     entity.getArray("observeEvents").stream()
                             .map(type -> type.asString().getValue()).collect(Collectors.toList()),
-                    ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue());
+                    ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue(),
+                    null);
             clientSettingsBuilder.addCommandListener(testCommandListener);
             putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
 

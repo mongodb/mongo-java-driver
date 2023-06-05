@@ -45,6 +45,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -959,6 +960,10 @@ public class ConnectionString {
                 break;
             case MONGODB_AWS:
                 credential = MongoCredential.createAwsCredential(userName, password);
+                break;
+            case MONGODB_OIDC:
+                validateCreateOidcCredential(password);
+                credential = MongoCredential.createOidcCredential(userName);
                 break;
             default:
                 throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
