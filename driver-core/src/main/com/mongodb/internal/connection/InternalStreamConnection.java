@@ -401,12 +401,8 @@ public class InternalStreamConnection implements InternalConnection {
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
                 message, decoder, sessionContext, requestContext, operationContext, c);
 
-        if (!Authenticator.shouldAuthenticate(authenticator, this.description)) {
-            sendAndReceiveAsyncInternal.complete(callback);
-            return;
-        }
-
-        sendAndReceiveAsyncInternal.onErrorIf(e -> triggersReauthentication(e), startAsync()
+        sendAndReceiveAsyncInternal.onErrorIf(e ->
+                        triggersReauthentication(e) && Authenticator.shouldAuthenticate(authenticator, this.description) , startAsync()
                 .run(c -> {
                     authenticated.set(false);
                     authenticator.reauthenticateAsync(this, c);

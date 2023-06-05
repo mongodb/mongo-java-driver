@@ -42,12 +42,8 @@ public final class Locks {
             stamp = lock.writeLockInterruptibly();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            try {
-                throw new MongoInterruptedException("Interrupted waiting for lock", e);
-            } catch (MongoInterruptedException mie) {
-                callback.onResult(null, mie);
-                return;
-            }
+            callback.onResult(null, new MongoInterruptedException("Interrupted waiting for lock", e));
+            return;
         }
 
         runnable.completeAlways(() -> {

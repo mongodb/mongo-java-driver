@@ -88,10 +88,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
             final RetryState state,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final AsyncCallbackSupplier<R> asyncFunction) {
-        this.state = state;
-        this.retryPredicate = retryPredicate;
-        this.failedResultTransformer = (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure;
-        this.asyncFunction = asyncFunction;
+        this(state, (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure, retryPredicate, asyncFunction);
     }
 
     @Override

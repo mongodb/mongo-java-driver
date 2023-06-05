@@ -231,9 +231,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 authLockAsync(connection, connectionDescription, c);
             }).complete(callback);
         } else {
-            startAsync().run(c -> {
-                authLockAsync(connection, connectionDescription, c);
-            }).complete(callback);
+            authLockAsync(connection, connectionDescription, callback);
         }
     }
 
@@ -284,9 +282,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private void authLockAsync(final InternalConnection connection, final ConnectionDescription description,
             final SingleResultCallback<Void> callback) {
 
-        MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
-        Locks.withLockAsync(
-                mongoCredentialWithCache.getOidcLock(),
+        Locks.withLockAsync(getMongoCredentialWithCache().getOidcLock(),
                 startAsync().runRetryingWhen(
                         e -> triggersRetry(e) && shouldRetryHandler(),
                         c -> authenticateAsyncUsing(connection, description, (challenge) -> evaluate(challenge), c)
