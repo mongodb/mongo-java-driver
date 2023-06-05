@@ -375,19 +375,16 @@ public class InternalStreamConnection implements InternalConnection {
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
                                 final RequestContext requestContext, final OperationContext operationContext) {
 
-        if (!Authenticator.shouldAuthenticate(authenticator, this.description)) {
-            return sendAndReceiveInternal(message, decoder, sessionContext, requestContext, operationContext);
-        }
-        Supplier<T> retryableOperation = () ->
-                sendAndReceiveInternal(message, decoder, sessionContext, requestContext, operationContext);
+        Supplier<T> sendAndReceiveInternal = () -> sendAndReceiveInternal(
+                message, decoder, sessionContext, requestContext, operationContext);
         try {
-            return retryableOperation.get();
+            return sendAndReceiveInternal.get();
         } catch (MongoCommandException e) {
-            if (triggersReauthentication(e)) {
+            if (triggersReauthentication(e) && Authenticator.shouldAuthenticate(authenticator, this.description)) {
                 authenticated.set(false);
                 authenticator.reauthenticate(this);
                 authenticated.set(true);
-                return retryableOperation.get();
+                return sendAndReceiveInternal.get();
             }
             throw e;
         }

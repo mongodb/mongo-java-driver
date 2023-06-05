@@ -234,8 +234,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     authenticateUsing(connection, connectionDescription, (challenge) -> evaluate(challenge));
                     break;
                 } catch (MongoSecurityException e) {
-                    boolean shouldRetry = triggersRetry(e) && shouldRetryHandler();
-                    if (!shouldRetry) {
+                    if (!(triggersRetry(e) && shouldRetryHandler())) {
                         throw e;
                     }
                 }
