@@ -176,11 +176,11 @@ abstract class PojoTestCase {
         return builder;
     }
 
-    <T> PojoCodecImpl<T> getCodec(final PojoCodecProvider.Builder builder, final Class<T> clazz) {
-        return (PojoCodecImpl<T>) getCodecRegistry(builder).get(clazz);
+    <T> PojoCodec<T> getCodec(final PojoCodecProvider.Builder builder, final Class<T> clazz) {
+        return (PojoCodec<T>) getCodecRegistry(builder).get(clazz);
     }
 
-    <T> PojoCodecImpl<T> getCodec(final Class<T> clazz) {
+    <T> PojoCodec<T> getCodec(final Class<T> clazz) {
         return getCodec(getPojoCodecProviderBuilder(clazz), clazz);
     }
 

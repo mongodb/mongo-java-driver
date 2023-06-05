@@ -50,36 +50,28 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     private final CodecRegistry registry;
     private final PropertyCodecRegistry propertyCodecRegistry;
     private final DiscriminatorLookup discriminatorLookup;
-    private final boolean specialized;
 
     PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry codecRegistry,
-                  final List<PropertyCodecProvider> propertyCodecProviders, final DiscriminatorLookup discriminatorLookup) {
+            final List<PropertyCodecProvider> propertyCodecProviders, final DiscriminatorLookup discriminatorLookup) {
         this.classModel = classModel;
         this.registry = codecRegistry;
         this.discriminatorLookup = discriminatorLookup;
         this.propertyCodecRegistry = new PropertyCodecRegistryImpl(this, registry, propertyCodecProviders);
-        this.specialized = shouldSpecialize(classModel);
         specialize();
     }
 
-    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry codecRegistry, final PropertyCodecRegistry propertyCodecRegistry,
-                  final DiscriminatorLookup discriminatorLookup, final boolean specialized) {
+    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry codecRegistry,
+            final PropertyCodecRegistry propertyCodecRegistry, final DiscriminatorLookup discriminatorLookup) {
         this.classModel = classModel;
         this.registry = codecRegistry;
         this.discriminatorLookup = discriminatorLookup;
         this.propertyCodecRegistry = propertyCodecRegistry;
-        this.specialized = specialized;
         specialize();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void encode(final BsonWriter writer, final T value, final EncoderContext encoderContext) {
-        if (!specialized) {
-            throw new CodecConfigurationException(format("%s contains generic types that have not been specialised.%n"
-                            + "Top level classes with generic types are not supported by the PojoCodec.", classModel.getName()));
-        }
-
         if (areEquivalentTypes(value.getClass(), classModel.getType())) {
             writer.writeStartDocument();
 
@@ -104,10 +96,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     @Override
     public T decode(final BsonReader reader, final DecoderContext decoderContext) {
         if (decoderContext.hasCheckedDiscriminator()) {
-            if (!specialized) {
-                throw new CodecConfigurationException(format("%s contains generic types that have not been specialised.%n"
-                        + "Top level classes with generic types are not supported by the PojoCodec.", classModel.getName()));
-            }
             InstanceCreator<T> instanceCreator = classModel.getInstanceCreator();
             decodeProperties(reader, decoderContext, instanceCreator);
             return instanceCreator.getInstance();
@@ -264,15 +252,13 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     }
 
     private void specialize() {
-        if (specialized) {
-            classModel.getPropertyModels().forEach(this::cachePropertyModelCodec);
-        }
+        classModel.getPropertyModels().forEach(this::cachePropertyModelCodec);
     }
 
     private <S> void cachePropertyModelCodec(final PropertyModel<S> propertyModel) {
         if (propertyModel.getCachedCodec() == null) {
             Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec()
-                    : new LazyPropertyModelCodec<>(propertyModel, registry, propertyCodecRegistry, discriminatorLookup);
+                    : new LazyPropertyModelCodec<>(propertyModel, registry, propertyCodecRegistry);
             propertyModel.cachedCodec(codec);
         }
     }
@@ -326,21 +312,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             }
         }
         return null;
-    }
-
-    private static <T> boolean shouldSpecialize(final ClassModel<T> classModel) {
-        if (!classModel.hasTypeParameters()) {
-            return true;
-        }
-
-        for (Map.Entry<String, TypeParameterMap> entry : classModel.getPropertyNameToTypeParameterMap().entrySet()) {
-            TypeParameterMap typeParameterMap = entry.getValue();
-            PropertyModel<?> propertyModel = classModel.getPropertyModel(entry.getKey());
-            if (typeParameterMap.hasTypeParameters() && (propertyModel == null || propertyModel.getCodec() == null)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override
