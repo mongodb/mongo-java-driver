@@ -22,8 +22,11 @@ import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.StampedLock;
 
 import static com.mongodb.internal.Locks.withInterruptibleLock;
+import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcCacheEntry;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -33,12 +36,12 @@ public class MongoCredentialWithCache {
     private final Cache cache;
 
     public MongoCredentialWithCache(final MongoCredential credential) {
-        this(credential, null);
+        this(credential, new Cache());
     }
 
-    private MongoCredentialWithCache(final MongoCredential credential, @Nullable final Cache cache) {
+    private MongoCredentialWithCache(final MongoCredential credential, final Cache cache) {
         this.credential = credential;
-        this.cache = cache != null ? cache : new Cache();
+        this.cache = cache;
     }
 
     public MongoCredentialWithCache withMechanism(final AuthenticationMechanism mechanism) {
@@ -63,14 +66,33 @@ public class MongoCredentialWithCache {
         cache.set(key, value);
     }
 
+    OidcCacheEntry getOidcCacheEntry() {
+        return cache.oidcCacheEntry;
+    }
+
+    void setOidcCacheEntry(final OidcCacheEntry oidcCacheEntry) {
+        this.cache.oidcCacheEntry = oidcCacheEntry;
+    }
+
+    StampedLock getOidcLock() {
+        return cache.oidcLock;
+    }
+
     public Lock getLock() {
         return cache.lock;
     }
 
+    /**
+     * Stores any state associated with the credential.
+     */
     static class Cache {
         private final ReentrantLock lock = new ReentrantLock();
         private Object cacheKey;
         private Object cacheValue;
+
+
+        private final StampedLock oidcLock = new StampedLock();
+        private volatile OidcCacheEntry oidcCacheEntry = new OidcCacheEntry();
 
         Object get(final Object key) {
             return withInterruptibleLock(lock, () -> {

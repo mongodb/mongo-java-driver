@@ -391,8 +391,10 @@ public final class Entities {
                     .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
                     .map(type -> type.asString().getValue()).collect(Collectors.toList());
             ignoreCommandMonitoringEvents.add("configureFailPoint");
-            TestCommandListener testCommandListener = new TestCommandListener(observeEvents,
-                    ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue());
+            TestCommandListener testCommandListener = new TestCommandListener(
+                    observeEvents,
+                    ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue(),
+                    null);
             clientSettingsBuilder.addCommandListener(testCommandListener);
             putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
 
