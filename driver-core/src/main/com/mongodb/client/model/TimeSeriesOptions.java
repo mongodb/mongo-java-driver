@@ -114,10 +114,10 @@ public final class TimeSeriesOptions {
      *
      * @param timeUnit the time unit.
      * @return time span between measurements.
+     * @since 4.10
      * @mongodb.server.release 6.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #bucketMaxSpan(Long, TimeUnit)
-     * @since 4.10
      */
     @Nullable
     public Long getBucketMaxSpan(final TimeUnit timeUnit) {
@@ -131,17 +131,17 @@ public final class TimeSeriesOptions {
      * Sets the maximum time span between measurements in a bucket.
      * <p>
      * The value of {@code bucketMaxSpanSeconds} must be the same as {@code bucketRoundingSeconds}.
-     * If you set the bucketMaxSpanSeconds, parameter, you can't set the granularity parameter
+     * If you set the {@code bucketMaxSpanSeconds}, parameter, you can't set the granularity parameter.
      * </p>
      *
-     * @param bucketMaxSpan - time span between measurements. After conversion to seconds using
-     *                      {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be &gt;= 1.
-     * @param timeUnit      - the time unit.
+     * @param bucketMaxSpan time span between measurements. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
+     * the value must be &gt;= 1.
+     * @param timeUnit the time unit.
      * @return this
+     * @since 4.10
      * @mongodb.server.release 6.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #getBucketMaxSpan(TimeUnit)
-     * @since 4.10
      */
     public TimeSeriesOptions bucketMaxSpan(@Nullable final Long bucketMaxSpan, final TimeUnit timeUnit) {
         if (bucketMaxSpan == null) {
@@ -158,10 +158,10 @@ public final class TimeSeriesOptions {
      *
      * @param timeUnit the time unit.
      * @return the time interval.
+     * @since 4.10
      * @mongodb.server.release 6.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #bucketRounding(Long, TimeUnit)
-     * @since 4.10
      */
     @Nullable
     public Long getBucketRounding(final TimeUnit timeUnit) {
@@ -174,18 +174,18 @@ public final class TimeSeriesOptions {
     /**
      * Specifies the time interval that determines the starting timestamp for a new bucket.
      * <p>
-     * The value of {@code bucketRounding} must be the same as {@code bucketMaxSpan}. If you set the {@code bucketRounding}, parameter,
-     * you can't set the granularity parameter.
+     * The value of {@code bucketRoundingSeconds} must be the same as {@code bucketMaxSpanSeconds}.
+     * If you set the {@code bucketRoundingSeconds}, parameter, you can't set the granularity parameter.
      * </p>
      *
-     * @param bucketRounding - time interval. After conversion to seconds using
-     *                       {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be &gt;= 1.
-     * @param timeUnit       - the time unit.
+     * @param bucketRounding time interval. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
+     * the value must be &gt;= 1.
+     * @param timeUnit the time unit.
      * @return this
+     * @since 4.10
      * @mongodb.server.release 6.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #getBucketRounding(TimeUnit)
-     * @since 4.10
      */
     public TimeSeriesOptions bucketRounding(@Nullable final Long bucketRounding, final TimeUnit timeUnit) {
         if (bucketRounding == null) {
