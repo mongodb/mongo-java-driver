@@ -35,7 +35,8 @@ class ExtensionMethodsTest {
                 "FindOneAndReplaceOptions",
                 "FindOneAndUpdateOptions",
                 "IndexOptions",
-                "TransactionOptions")
+                "TransactionOptions",
+                "TimeSeriesOptions")
 
         ClassGraph().enableClassInfo().enableMethodInfo().acceptPackages("com.mongodb").scan().use { scanResult ->
             val optionsClassesWithTimeUnit =
