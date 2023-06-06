@@ -16,38 +16,56 @@
 
 package com.mongodb.internal.async;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static com.mongodb.internal.async.AsyncRunnable.CallbackThrew;
 
 /**
  * See AsyncRunnableTest for usage
  */
 public interface AsyncSupplier<T> {
 
+    void supplyUnsafe(SingleResultCallback<T> callback);
+
     /**
      * Must be invoked at end of async chain
      * @param callback the callback provided by the method the chain is used in
      */
-    void complete(SingleResultCallback<T> callback);
+    default void finish(final SingleResultCallback<T> callback) {
+        try {
+            this.supplyUnsafe((v, e) -> {
+                try {
+                    callback.onResult(v, e);
+                } catch (Throwable t) {
+                    throw new CallbackThrew("Unexpected Throwable thrown from callback: ", e);
+                }
+            });
+        } catch (CallbackThrew t) {
+            // ignore
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+        }
+    }
 
     /**
-     * @see AsyncRunnable#onErrorIf(Function, AsyncRunnable).
+     * @see AsyncRunnable#onErrorRunIf(Predicate, AsyncRunnable).
      *
      * @param errorCheck A check, comparable to a catch-if/otherwise-rethrow
      * @param supplier   The branch to execute if the error matches
      * @return The composition of this, and the conditional branch
      */
-    default AsyncSupplier<T> onErrorIf(
-            final Function<Throwable, Boolean> errorCheck,
+    default AsyncSupplier<T> onErrorSupplyIf(
+            final Predicate<Throwable> errorCheck,
             final AsyncSupplier<T> supplier) {
-        return (callback) -> this.complete((r, e) -> {
+        return (callback) -> this.finish((r, e) -> {
             if (e == null) {
                 callback.onResult(r, null);
                 return;
             }
             try {
-                Boolean check = errorCheck.apply(e);
+                boolean check = errorCheck.test(e);
                 if (check) {
-                    supplier.complete(callback);
+                    supplier.finish(callback);
                     return;
                 }
             } catch (Throwable t) {

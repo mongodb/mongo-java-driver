@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.mongodb.internal.async.AsyncRunnable.startAsync;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -39,7 +39,7 @@ final class AsyncRunnableTest {
         2. at least one sync method must be converted to async
 
         To do this:
-        1. start an async path using the static method
+        1. start an async chain using the static method
         2. chain using the appropriate method, which will provide "c"
         3. move all sync code into that method
         4. at the async method, pass in "c" and start a new chained method
@@ -61,10 +61,10 @@ final class AsyncRunnableTest {
                     incrementSync();
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         multiply();
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -79,10 +79,10 @@ final class AsyncRunnableTest {
                     incrementSync();
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwException("msg");
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
 
     }
@@ -98,13 +98,13 @@ final class AsyncRunnableTest {
                     incrementSync();
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         multiply();
                         incrementAsync(c);
-                    }).run(c -> {
+                    }).thenRun(c -> {
                         multiply();
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -120,13 +120,13 @@ final class AsyncRunnableTest {
                     incrementSync();
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwException("m");
                         incrementAsync(c);
-                    }).run(c -> {
+                    }).thenRun(c -> {
                         throwException("m2");
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -141,13 +141,13 @@ final class AsyncRunnableTest {
                     incrementSync();
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         multiply();
                         throwExceptionAsync("msg", c);
-                    }).run(c -> {
+                    }).thenRun(c -> {
                         multiply();
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -161,9 +161,9 @@ final class AsyncRunnableTest {
                     multiply();
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         incrementAsync(c);
-                    }).complete(() -> {
+                    }).thenRunAndFinish(() -> {
                         multiply();
                     }, callback);
                 });
@@ -178,9 +178,9 @@ final class AsyncRunnableTest {
                     throwException("m");
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         incrementAsync(c);
-                    }).complete(() -> {
+                    }).thenRunAndFinish(() -> {
                         throwException("m");
                     }, callback);
                 });
@@ -195,9 +195,9 @@ final class AsyncRunnableTest {
                     multiply();
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("msg", c);
-                    }).complete(() -> {
+                    }).thenRunAndFinish(() -> {
                         multiply();
                     }, callback);
                 });
@@ -216,10 +216,10 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         multiply();
                         incrementAsync(c);
-                    }).completeAlways(() -> {
+                    }).thenAlwaysRunAndFinish(() -> {
                         multiply();
                     }, callback);
                 });
@@ -239,10 +239,10 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         multiply();
                         throwExceptionAsync("msg", c);
-                    }).completeAlways(() -> {
+                    }).thenAlwaysRunAndFinish(() -> {
                         multiply();
                     }, callback);
                 });
@@ -261,10 +261,10 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwException("msg");
                         incrementAsync(c);
-                    }).completeAlways(() -> {
+                    }).thenAlwaysRunAndFinish(() -> {
                         multiply();
                     }, callback);
                 });
@@ -283,10 +283,10 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         multiply();
                         incrementAsync(c);
-                    }).completeAlways(() -> {
+                    }).thenAlwaysRunAndFinish(() -> {
                         throwException("msg");
                     }, callback);
                 });
@@ -305,10 +305,10 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwException("first");
                         incrementAsync(c);
-                    }).completeAlways(() -> {
+                    }).thenAlwaysRunAndFinish(() -> {
                         throwException("msg");
                     }, callback);
                 });
@@ -322,10 +322,10 @@ final class AsyncRunnableTest {
                     return valueSync(1);
                 },
                 (callback) -> {
-                    startAsync().<Integer>supply(c -> {
+                    beginAsync().<Integer>thenSupply(c -> {
                         multiply();
                         valueAsync(1, c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -337,10 +337,10 @@ final class AsyncRunnableTest {
                     return valueSync(1);
                 },
                 (callback) -> {
-                    startAsync().<Integer>supply(c -> {
+                    beginAsync().<Integer>thenSupply(c -> {
                         throwException("msg");
                         valueAsync(1, c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -352,11 +352,11 @@ final class AsyncRunnableTest {
                     return valueSync(1);
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("msg", c);
-                    }).<Integer>supply(c -> {
+                    }).<Integer>thenSupply(c -> {
                         valueAsync(1, c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -376,11 +376,11 @@ final class AsyncRunnableTest {
                     }
                 },
                 (SingleResultCallback<Integer> callback) -> {
-                    startAsync().<Integer>supply(c -> {
+                    beginAsync().<Integer>thenSupply(c -> {
                         valueAsync(1, c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorSupplyIf(e -> e.getMessage().equals("m1"), c -> {
                         valueAsync(2, c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -400,11 +400,11 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().<Integer>supply(c -> {
+                    beginAsync().<Integer>thenSupply(c -> {
                         throwExceptionAsync("m1", c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorSupplyIf(e -> e.getMessage().equals("m1"), c -> {
                         valueAsync(2, c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
 
     }
@@ -425,11 +425,11 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().<Integer>supply(c -> {
+                    beginAsync().<Integer>thenSupply(c -> {
                         throwExceptionAsync("m1", c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorSupplyIf(e -> e.getMessage().equals("m1"), c -> {
                         throwExceptionAsync("m2", c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -450,12 +450,12 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         incrementSync();
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorRunIf(e -> e.getMessage().equals("m1"), c -> {
                         multiply();
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
 
     }
@@ -477,12 +477,12 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("m1", c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorRunIf(e -> e.getMessage().equals("m1"), c -> {
                         multiply();
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
 
     }
@@ -504,12 +504,12 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("not-m1", c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorRunIf(e -> e.getMessage().equals("m1"), c -> {
                         multiply();
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -530,12 +530,12 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("m1", c);
-                    }).onErrorIf(e -> throwException("check fails"), c -> {
+                    }).onErrorRunIf(e -> throwException("check fails"), c -> {
                         multiply();
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -556,12 +556,12 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("m1", c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorRunIf(e -> e.getMessage().equals("m1"), c -> {
                         throwException("branch");
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -583,13 +583,13 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("m1", c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorRunIf(e -> e.getMessage().equals("m1"), c -> {
                         multiply();
                         throwException("m1");
                         incrementAsync(c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 
@@ -610,12 +610,12 @@ final class AsyncRunnableTest {
                     }
                 },
                 (callback) -> {
-                    startAsync().run(c -> {
+                    beginAsync().thenRun(c -> {
                         throwExceptionAsync("m1", c);
-                    }).onErrorIf(e -> e.getMessage().equals("m1"), c -> {
+                    }).onErrorRunIf(e -> e.getMessage().equals("m1"), c -> {
                         multiply();
                         throwExceptionAsync("m1", c);
-                    }).complete(callback);
+                    }).finish(callback);
                 });
     }
 

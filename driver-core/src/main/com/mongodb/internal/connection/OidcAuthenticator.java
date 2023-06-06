@@ -67,7 +67,7 @@ import static com.mongodb.MongoCredential.REQUEST_TOKEN_CALLBACK_KEY;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.internal.async.AsyncRunnable.startAsync;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateBeforeUse;
 import static java.lang.String.format;
 
@@ -182,7 +182,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     @Override
     public void reauthenticate(final InternalConnection connection) {
-        // method must only be called after original handshake:
         assertTrue(connection.opened());
         authLock(connection, connection.getDescription());
     }
@@ -190,17 +189,14 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @Override
     public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
         assertTrue(connection.opened());
-        fallbackState = FallbackState.INITIAL;
-        startAsync().run(c -> {
+        beginAsync().thenRun(c -> {
             authLockAsync(connection, connection.getDescription(), c);
-        }).complete(callback);
+        }).finish(callback);
     }
 
     @Override
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
-        // method must only be called during original handshake:
         assertFalse(connection.opened());
-        // this method "wraps" the default authentication method in custom OIDC retry logic
         String accessToken = getValidCachedAccessToken();
         if (accessToken != null) {
             try {
@@ -225,11 +221,11 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         assertFalse(connection.opened());
         String accessToken = getValidCachedAccessToken();
         if (accessToken != null) {
-            startAsync().run(c -> {
+            beginAsync().thenRun(c -> {
                 authenticateAsyncUsing(connection, connectionDescription, (bytes) -> prepareTokenAsJwt(accessToken), c);
-            }).onErrorIf(e -> triggersRetry(e), c -> {
+            }).onErrorRunIf(e -> triggersRetry(e), c -> {
                 authLockAsync(connection, connectionDescription, c);
-            }).complete(callback);
+            }).finish(callback);
         } else {
             authLockAsync(connection, connectionDescription, callback);
         }
@@ -270,22 +266,22 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     authenticateUsing(connection, description, (challenge) -> evaluate(challenge));
                     break;
                 } catch (MongoSecurityException e) {
-                    if (!(triggersRetry(e) && shouldRetryHandler())) {
-                        throw e;
+                    if (triggersRetry(e) && shouldRetryHandler()) {
+                        continue;
                     }
+                    throw e;
                 }
             }
-            return null;
         });
     }
 
     private void authLockAsync(final InternalConnection connection, final ConnectionDescription description,
             final SingleResultCallback<Void> callback) {
-
+        fallbackState = FallbackState.INITIAL;
         Locks.withLockAsync(getMongoCredentialWithCache().getOidcLock(),
-                startAsync().runRetryingWhen(
-                        e -> triggersRetry(e) && shouldRetryHandler(),
-                        c -> authenticateAsyncUsing(connection, description, (challenge) -> evaluate(challenge), c)
+                beginAsync().thenRunRetryingWhile(
+                        c -> authenticateAsyncUsing(connection, description, (challenge) -> evaluate(challenge), c),
+                        e -> triggersRetry(e) && shouldRetryHandler()
                 ), callback);
     }
 

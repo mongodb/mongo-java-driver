@@ -19,7 +19,6 @@ package com.mongodb.internal.async;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -27,15 +26,32 @@ import java.util.function.Predicate;
  */
 public interface AsyncRunnable {
 
-    static AsyncRunnable startAsync() {
+    static AsyncRunnable beginAsync() {
         return (c) -> c.onResult(null, null);
     }
 
+    void runUnsafe(SingleResultCallback<Void> callback); // NoResultCallback
+
     /**
-     * Must be invoked at end of async chain
+     * Must be invoked at end of async chain. Wraps the lambda in an error
+     * handler.
      * @param callback the callback provided by the method the chain is used in
      */
-    void complete(SingleResultCallback<Void> callback); // NoResultCallback
+    default void finish(final SingleResultCallback<Void> callback) {
+        try {
+            this.runUnsafe((v, e) -> {
+                try {
+                    callback.onResult(v, e);
+                } catch (Throwable t) {
+                    throw new CallbackThrew("Unexpected Throwable thrown from callback: ", e);
+                }
+            });
+        } catch (CallbackThrew t) {
+            // ignore
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+        }
+    }
 
     /**
      * Must be invoked at end of async chain
@@ -43,8 +59,8 @@ public interface AsyncRunnable {
      *                 prior to the callback
      * @param callback the callback provided by the method the chain is used in
      */
-    default void complete(final Runnable runnable, final SingleResultCallback<Void> callback) {
-        this.complete((r, e) -> {
+    default void thenRunAndFinish(final Runnable runnable, final SingleResultCallback<Void> callback) {
+        this.finish((r, e) -> {
             if (e != null) {
                 callback.onResult(null, e);
                 return;
@@ -60,13 +76,13 @@ public interface AsyncRunnable {
     }
 
     /**
-     * See {@link #complete(Runnable, SingleResultCallback)}, but the runnable
+     * See {@link #thenRunAndFinish(Runnable, SingleResultCallback)}, but the runnable
      * will always be executed, including on the exceptional path.
      * @param runnable the runnable
      * @param callback the callback
      */
-    default void completeAlways(final Runnable runnable, final SingleResultCallback<Void> callback) {
-        this.complete((r, e) -> {
+    default void thenAlwaysRunAndFinish(final Runnable runnable, final SingleResultCallback<Void> callback) {
+        this.finish((r, e) -> {
             try {
                 runnable.run();
             } catch (Throwable t) {
@@ -81,15 +97,15 @@ public interface AsyncRunnable {
      * @param runnable The async runnable to run after this one
      * @return the composition of this and the runnable
      */
-    default AsyncRunnable run(final AsyncRunnable runnable) {
+    default AsyncRunnable thenRun(final AsyncRunnable runnable) {
         return (c) -> {
-            this.complete((r, e) -> {
+            this.finish((r, e) -> {
                 if (e != null) {
                     c.onResult(null, e);
                     return;
                 }
                 try {
-                    runnable.complete(c);
+                    runnable.finish(c);
                 } catch (Throwable t) {
                     c.onResult(null, t);
                 }
@@ -102,15 +118,15 @@ public interface AsyncRunnable {
      * @return the composition of this runnable and the supplier
      * @param <T> The return type of the supplier
      */
-    default <T> AsyncSupplier<T> supply(final AsyncSupplier<T> supplier) {
+    default <T> AsyncSupplier<T> thenSupply(final AsyncSupplier<T> supplier) {
         return (c) -> {
-            this.complete((r, e) -> {
+            this.finish((r, e) -> {
                 if (e != null) {
                     c.onResult(null, e);
                     return;
                 }
                 try {
-                    supplier.complete(c);
+                    supplier.finish(c);
                 } catch (Throwable t) {
                     c.onResult(null, t);
                 }
@@ -123,18 +139,18 @@ public interface AsyncRunnable {
      * @param runnable   The branch to execute if the error matches
      * @return The composition of this, and the conditional branch
      */
-    default AsyncRunnable onErrorIf(
-            final Function<Throwable, Boolean> errorCheck,
+    default AsyncRunnable onErrorRunIf(
+            final Predicate<Throwable> errorCheck,
             final AsyncRunnable runnable) {
-        return (callback) -> this.complete((r, e) -> {
+        return (callback) -> this.finish((r, e) -> {
             if (e == null) {
                 callback.onResult(r, null);
                 return;
             }
             try {
-                Boolean check = errorCheck.apply(e);
+                boolean check = errorCheck.test(e);
                 if (check) {
-                    runnable.complete(callback);
+                    runnable.finish(callback);
                     return;
                 }
             } catch (Throwable t) {
@@ -146,20 +162,27 @@ public interface AsyncRunnable {
     }
 
     /**
-     * @see RetryingAsyncCallbackSupplier
+     * @param runnable    the runnable to loop
      * @param shouldRetry condition under which to retry
-     * @param runnable the runnable to loop
      * @return the composition of this, and the looping branch
+     * @see RetryingAsyncCallbackSupplier
      */
-    default AsyncRunnable runRetryingWhen(
-            final Predicate<Throwable> shouldRetry,
-            final AsyncRunnable runnable) {
-        return this.run(callback -> {
+    default AsyncRunnable thenRunRetryingWhile(
+            final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
+        return this.thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
                     new RetryState(),
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
-                    cb -> runnable.complete(cb)
+                    cb -> runnable.finish(cb)
             ).get(callback);
         });
+    }
+
+    final class CallbackThrew extends AssertionError {
+        private static final long serialVersionUID = 875624357420415700L;
+
+        public CallbackThrew(final String s, final Throwable e) {
+            super(s, e);
+        }
     }
 }

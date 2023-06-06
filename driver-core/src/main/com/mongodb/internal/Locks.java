@@ -46,12 +46,12 @@ public final class Locks {
             return;
         }
 
-        runnable.completeAlways(() -> {
+        runnable.thenAlwaysRunAndFinish(() -> {
             lock.unlockWrite(stamp);
         }, callback);
     }
 
-    public static <V> V withLock(final StampedLock lock, final Supplier<V> supplier) {
+    public static void withLock(final StampedLock lock, final Runnable runnable) {
         long stamp;
         try {
             stamp = lock.writeLockInterruptibly();
@@ -60,7 +60,7 @@ public final class Locks {
             throw new MongoInterruptedException("Interrupted waiting for lock", e);
         }
         try {
-            return supplier.get();
+            runnable.run();
         } finally {
             lock.unlockWrite(stamp);
         }

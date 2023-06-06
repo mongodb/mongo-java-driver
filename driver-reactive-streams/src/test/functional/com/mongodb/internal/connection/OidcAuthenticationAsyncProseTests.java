@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.reactivestreams.client;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.OidcAuthenticationProseTests;
+import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.junit.jupiter.api.Test;
 import reactivestreams.helpers.SubscriberHelpers;
