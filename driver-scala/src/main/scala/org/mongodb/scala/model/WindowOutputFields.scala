@@ -98,6 +98,7 @@ object WindowOutputFields {
    * @tparam PExpression  The percentile expression type.
    * @return The constructed windowed computation.
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/percentile/ \$percentile]]
+   * @since 4.10
    * @note Requires MongoDB 7.0 or greater
    */
   def percentile[InExpression, PExpression](
@@ -118,8 +119,8 @@ object WindowOutputFields {
    * @param window       The window.
    * @tparam InExpression The input expression type.
    * @return The constructed windowed computation.
-   * @since 4.10
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/medoan/ \$median]]
+   * @since 4.10
    * @note Requires MongoDB 7.0 or greater
    */
   def median[InExpression](

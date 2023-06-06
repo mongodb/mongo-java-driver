@@ -125,6 +125,7 @@ public final class WindowOutputFields {
      * @param <PExpression> The type of the percentile expression.
      * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/percentile/ $percentile
+     * @since 4.10
      * @mongodb.server.release 7.0
      */
     public static <InExpression, PExpression> WindowOutputField percentile(final String path, final InExpression inExpression,
@@ -151,6 +152,7 @@ public final class WindowOutputFields {
      * @param <InExpression> The type of the input expression.
      * @return The constructed windowed output field.
      * @mongodb.driver.manual reference/operator/aggregation/median/ $median
+     * @since 4.10
      * @mongodb.server.release 7.0
      */
     public static <InExpression> WindowOutputField median(final String path, final InExpression inExpression,
