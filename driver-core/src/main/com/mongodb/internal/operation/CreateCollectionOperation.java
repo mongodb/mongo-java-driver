@@ -34,11 +34,13 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -346,6 +348,14 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             TimeSeriesGranularity granularity = timeSeriesOptions.getGranularity();
             if (granularity != null) {
                 timeSeriesDocument.put("granularity", new BsonString(getGranularityAsString(granularity)));
+            }
+            Long bucketMaxSpan = timeSeriesOptions.getBucketMaxSpan(TimeUnit.SECONDS);
+            if (bucketMaxSpan != null){
+                timeSeriesDocument.put("bucketMaxSpanSeconds", new BsonInt64(bucketMaxSpan));
+            }
+            Long bucketRounding = timeSeriesOptions.getBucketRounding(TimeUnit.SECONDS);
+            if (bucketRounding != null){
+                timeSeriesDocument.put("bucketRoundingSeconds", new BsonInt64(bucketRounding));
             }
             document.put("timeseries", timeSeriesDocument);
         }

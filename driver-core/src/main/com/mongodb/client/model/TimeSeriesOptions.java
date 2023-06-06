@@ -18,6 +18,9 @@ package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -31,6 +34,8 @@ public final class TimeSeriesOptions {
     private final String timeField;
     private String metaField;
     private TimeSeriesGranularity granularity;
+    private Long bucketMaxSpanSeconds;
+    private Long bucketRoundingSeconds;
 
     /**
      * Construct a new instance.
@@ -104,12 +109,102 @@ public final class TimeSeriesOptions {
         return this;
     }
 
+    /**
+     * Returns the maximum time span between measurements in a bucket.
+     *
+     * @param timeUnit the time unit.
+     * @return time span between measurements.
+     * @mongodb.server.release 6.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     * @see #bucketMaxSpan(Long, TimeUnit)
+     * @since 4.10
+     */
+    @Nullable
+    public Long getBucketMaxSpan(final TimeUnit timeUnit) {
+        if (bucketMaxSpanSeconds == null) {
+            return null;
+        }
+        return timeUnit.convert(bucketMaxSpanSeconds, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Sets the maximum time span between measurements in a bucket.
+     * <p>
+     * The value of {@code bucketMaxSpanSeconds} must be the same as {@code bucketRoundingSeconds}.
+     * If you set the bucketMaxSpanSeconds, parameter, you can't set the granularity parameter
+     * </p>
+     *
+     * @param bucketMaxSpan - time span between measurements. After conversion to seconds using
+     *                      {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be &gt;= 1.
+     * @param timeUnit      - the time unit.
+     * @return this
+     * @mongodb.server.release 6.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     * @see #getBucketMaxSpan(TimeUnit)
+     * @since 4.10
+     */
+    public TimeSeriesOptions bucketMaxSpan(@Nullable final Long bucketMaxSpan, final TimeUnit timeUnit) {
+        if (bucketMaxSpan == null) {
+            this.bucketMaxSpanSeconds = null;
+        } else {
+            this.bucketMaxSpanSeconds = TimeUnit.SECONDS.convert(bucketMaxSpan, timeUnit);
+            isTrueArgument("bucketMaxSpan, after conversion to seconds, must be >= 1", bucketMaxSpanSeconds > 0);
+        }
+        return this;
+    }
+
+    /**
+     * Returns the time interval that determines the starting timestamp for a new bucket.
+     *
+     * @param timeUnit the time unit.
+     * @return the time interval.
+     * @mongodb.server.release 6.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     * @see #bucketRounding(Long, TimeUnit)
+     * @since 4.10
+     */
+    @Nullable
+    public Long getBucketRounding(final TimeUnit timeUnit) {
+        if (bucketRoundingSeconds == null) {
+            return null;
+        }
+        return timeUnit.convert(bucketRoundingSeconds, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Specifies the time interval that determines the starting timestamp for a new bucket.
+     * <p>
+     * The value of {@code bucketRounding} must be the same as {@code bucketMaxSpan}. If you set the {@code bucketRounding}, parameter,
+     * you can't set the granularity parameter.
+     * </p>
+     *
+     * @param bucketRounding - time interval. After conversion to seconds using
+     *                       {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be &gt;= 1.
+     * @param timeUnit       - the time unit.
+     * @return this
+     * @mongodb.server.release 6.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     * @see #getBucketRounding(TimeUnit)
+     * @since 4.10
+     */
+    public TimeSeriesOptions bucketRounding(@Nullable final Long bucketRounding, final TimeUnit timeUnit) {
+        if (bucketRounding == null) {
+            this.bucketRoundingSeconds = null;
+        } else {
+            this.bucketRoundingSeconds = TimeUnit.SECONDS.convert(bucketRounding, timeUnit);
+            isTrueArgument("bucketRounding, after conversion to seconds, must be >= 1", bucketMaxSpanSeconds > 0);
+        }
+        return this;
+    }
+
     @Override
     public String toString() {
         return "TimeSeriesOptions{"
                 + "timeField='" + timeField + '\''
                 + ", metaField='" + metaField + '\''
                 + ", granularity=" + granularity
+                + ", bucketMaxSpanSeconds=" + bucketMaxSpanSeconds
+                + ", bucketRoundingSeconds=" + bucketRoundingSeconds
                 + '}';
     }
 }
