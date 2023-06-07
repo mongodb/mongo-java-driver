@@ -20,24 +20,159 @@ import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonDocument;
 import org.bson.Document;
-
-import java.util.Arrays;
-import java.util.List;
-
+import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.client.model.Accumulators.median;
+import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
+import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.setWindowFields;
+import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.Sorts.ascending;
+import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
+import static com.mongodb.client.model.Windows.documents;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
 
+    private static Stream<Arguments> shouldGroupWithPercentile() {
+        return Stream.of(
+                Arguments.of(new double[]{0.95}, asList(3.0), asList(1.0)),
+                Arguments.of(new double[]{0.95, 0.3}, asList(3.0, 2.0), asList(1.0, 1.0))
+        );
+    }
+    @ParameterizedTest
+    @MethodSource
+    @SuppressWarnings("unchecked")
+    public void shouldGroupWithPercentile(final double[] quantiles, final List<Double> expectedGroup1, final List<Double> expectedGroup2) {
+        //given
+        assumeTrue(serverVersionAtLeast(7, 0));
+        getCollectionHelper().insertDocuments("[\n"
+                + "   { _id: 1, x: 1, z: false },\n"
+                + "   { _id: 2, x: 2, z: true },\n"
+                + "   { _id: 3, x: 3, z: true },\n"
+                + "]");
+        //when
+        List<Document> results = getCollectionHelper().aggregate(Collections.singletonList(
+                group(new Document("gid", "$z"),
+                        percentile("sat_95", "$x", quantiles, "approximate"))), new DocumentCodec());
+        //then
+        assertThat(results, hasSize(2));
 
+        List<Double> result = results.stream()
+                .filter(document -> document.get("_id").equals(new Document("gid", true)))
+                .findFirst().map(document -> document.get("sat_95", List.class)).get();
+
+        assertEquals(expectedGroup1, result);
+
+        result = results.stream()
+                .filter(document -> document.get("_id").equals(new Document("gid", false)))
+                .findFirst().map(document -> document.get("sat_95", List.class)).get();
+
+        assertEquals(expectedGroup2, result);
+    }
+
+    @Test
+    public void shouldGroupWithMedian() {
+        //given
+        assumeTrue(serverVersionAtLeast(7, 0));
+        getCollectionHelper().insertDocuments("[\n"
+                + "   { _id: 1, x: 1, z: false },\n"
+                + "   { _id: 2, x: 2, z: true },\n"
+                + "   { _id: 3, x: 3, z: true },\n"
+                + "]");
+
+        //when
+        List<Document> results = getCollectionHelper().aggregate(Collections.singletonList(
+                group(new Document("gid", "$z"),
+                        median("sat_95", "$x", "approximate"))), new DocumentCodec());
+
+        //then
+        assertThat(results, hasSize(2));
+
+        Double result = results.stream()
+                .filter(document -> document.get("_id").equals(new Document("gid", true)))
+                .findFirst().map(document -> document.get("sat_95", Double.class)).get();
+
+        assertEquals(2.0, result);
+
+        result = results.stream()
+                .filter(document -> document.get("_id").equals(new Document("gid", false)))
+                .findFirst().map(document -> document.get("sat_95", Double.class)).get();
+
+        assertEquals(1.0, result);
+    }
+
+    private static Stream<Arguments> shouldSetWindowFieldWithQuantiles() {
+        return Stream.of(
+                Arguments.of(null,
+                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, "approximate", documents(UNBOUNDED, UNBOUNDED)),
+                        asList(asList(1.0, 3.0), asList(1.0, 3.0), asList(1.0, 3.0))),
+                Arguments.of("$partitionId",
+                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, "approximate", null),
+                        asList(asList(1.0, 2.0), asList(1.0, 2.0), asList(3.0, 3.0))),
+                Arguments.of(null,
+                        WindowOutputFields.median("result", "$num1", "approximate", documents(UNBOUNDED, UNBOUNDED)),
+                        asList(2.0, 2.0, 2.0)),
+                Arguments.of("$partitionId",
+                        WindowOutputFields.median("result", "$num1", "approximate", null),
+                        asList(1.0, 1.0, 3.0))
+        );
+    }
+    @ParameterizedTest
+    @MethodSource
+    public void shouldSetWindowFieldWithQuantiles(final Object partitionBy,
+                                                  final WindowOutputField output, final List<Object> expectedFieldValues){
+        //given
+        assumeTrue(serverVersionAtLeast(7, 0));
+        ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId());
+        Document[] original = new Document[]{
+                new Document("partitionId", 1)
+                        .append("num1", 1)
+                        .append("num2", -1)
+                        .append("numMissing", 1)
+                        .append("date", LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc)),
+                new Document("partitionId", 1)
+                        .append("num1", 2)
+                        .append("num2", -2)
+                        .append("date", LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc)),
+                new Document("partitionId", 2)
+                        .append("num1", 3)
+                        .append("num2", -3)
+                        .append("numMissing", 3)
+                        .append("date", LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))};
+        getCollectionHelper().insertDocuments(original);
+
+        //when
+        List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, output);
+
+        //then
+        Assertions.assertEquals(actualFieldValues, expectedFieldValues);
+    }
 
     @Test
     public void testUnset() {
@@ -196,5 +331,17 @@ public class AggregatesTest extends OperationTest {
         assertEquals(
                 parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
                 getCollectionHelper().aggregate(Arrays.asList(lookupStageNull)));
+    }
+
+    private List<Object> aggregateWithWindowFields(final Object partitionBy, final WindowOutputField output) {
+        List<Bson> stages = new ArrayList<>();
+        stages.add(setWindowFields(partitionBy, null, output));
+        stages.add(sort(ascending("num1")));
+
+        List<Document> actual = getCollectionHelper().aggregate(stages, new DocumentCodec());
+
+        return actual.stream()
+                .map(doc -> doc.get("result"))
+                .collect(toList());
     }
 }
