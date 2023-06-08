@@ -163,8 +163,7 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
     @Test
     public void shouldThrowClientErrorWhenProviderIsNotSpecified() {
         //given
-        String expectedErrorMessage = "Missing the provider but supplied a master key in the RewrapManyDataKeyOptions";
-        BsonDocument dstKey = MASTER_KEYS_BY_PROVIDER.get("aws");
+        BsonDocument dstKey =  BsonDocument.parse("{}");
 
         ClientEncryption clientEncryption = getClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
@@ -179,6 +178,8 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
 
         //then
         MongoClientException mongoClientException = assertThrows(MongoClientException.class, executable);
-        assertEquals(expectedErrorMessage, mongoClientException.getMessage());
+
+        assertEquals("Missing the provider but supplied a master key in the RewrapManyDataKeyOptions",
+                mongoClientException.getMessage());
     }
 }
