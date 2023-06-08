@@ -58,15 +58,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
+    private static final DocumentCodec DOCUMENT_DECODER = new DocumentCodec();
 
-    private static Stream<Arguments> shouldGroupWithPercentile() {
+    private static Stream<Arguments> groupWithPercentileSource() {
         return Stream.of(
                 Arguments.of(new double[]{0.95}, asList(3.0), asList(1.0)),
                 Arguments.of(new double[]{0.95, 0.3}, asList(3.0, 2.0), asList(1.0, 1.0))
         );
     }
     @ParameterizedTest
-    @MethodSource
+    @MethodSource("groupWithPercentileSource")
     @SuppressWarnings("unchecked")
     public void shouldGroupWithPercentile(final double[] quantiles, final List<Double> expectedGroup1, final List<Double> expectedGroup2) {
         //given
@@ -79,7 +80,7 @@ public class AggregatesTest extends OperationTest {
         //when
         List<Document> results = getCollectionHelper().aggregate(Collections.singletonList(
                 group(new Document("gid", "$z"),
-                        percentile("sat_95", "$x", quantiles, "approximate"))), new DocumentCodec());
+                        percentile("sat_95", "$x", quantiles, "approximate"))), DOCUMENT_DECODER);
         //then
         assertThat(results, hasSize(2));
 
@@ -109,7 +110,7 @@ public class AggregatesTest extends OperationTest {
         //when
         List<Document> results = getCollectionHelper().aggregate(Collections.singletonList(
                 group(new Document("gid", "$z"),
-                        median("sat_95", "$x", "approximate"))), new DocumentCodec());
+                        median("sat_95", "$x", "approximate"))), DOCUMENT_DECODER);
 
         //then
         assertThat(results, hasSize(2));
@@ -127,7 +128,7 @@ public class AggregatesTest extends OperationTest {
         assertEquals(1.0, result);
     }
 
-    private static Stream<Arguments> shouldSetWindowFieldWithQuantiles() {
+    private static Stream<Arguments> setWindowFieldWithQuantilesSource() {
         return Stream.of(
                 Arguments.of(null,
                         WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, "approximate", documents(UNBOUNDED, UNBOUNDED)),
@@ -144,7 +145,7 @@ public class AggregatesTest extends OperationTest {
         );
     }
     @ParameterizedTest
-    @MethodSource
+    @MethodSource("setWindowFieldWithQuantilesSource")
     public void shouldSetWindowFieldWithQuantiles(final Object partitionBy,
                                                   final WindowOutputField output, final List<Object> expectedFieldValues){
         //given
@@ -338,7 +339,7 @@ public class AggregatesTest extends OperationTest {
         stages.add(setWindowFields(partitionBy, null, output));
         stages.add(sort(ascending("num1")));
 
-        List<Document> actual = getCollectionHelper().aggregate(stages, new DocumentCodec());
+        List<Document> actual = getCollectionHelper().aggregate(stages, DOCUMENT_DECODER);
 
         return actual.stream()
                 .map(doc -> doc.get("result"))
