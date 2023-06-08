@@ -113,7 +113,7 @@ public final class TimeSeriesOptions {
      * Returns the maximum time span between measurements in a bucket.
      *
      * @param timeUnit the time unit.
-     * @return time span between measurements.
+     * @return time span between measurements, or {@code null} if not set.
      * @since 4.10
      * @mongodb.server.release 6.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
@@ -135,7 +135,7 @@ public final class TimeSeriesOptions {
      * </p>
      *
      * @param bucketMaxSpan time span between measurements. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
-     * the value must be &gt;= 1.
+     * the value must be &gt;= 1. {@code null} can be provided to unset any previously set value.
      * @param timeUnit the time unit.
      * @return this
      * @since 4.10
@@ -157,7 +157,7 @@ public final class TimeSeriesOptions {
      * Returns the time interval that determines the starting timestamp for a new bucket.
      *
      * @param timeUnit the time unit.
-     * @return the time interval.
+     * @return the time interval, or {@code null} if not set.
      * @since 4.10
      * @mongodb.server.release 6.3
      * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
@@ -179,7 +179,7 @@ public final class TimeSeriesOptions {
      * </p>
      *
      * @param bucketRounding time interval. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
-     * the value must be &gt;= 1.
+     * the value must be &gt;= 1. {@code null} can be provided to unset any previously set value.
      * @param timeUnit the time unit.
      * @return this
      * @since 4.10
