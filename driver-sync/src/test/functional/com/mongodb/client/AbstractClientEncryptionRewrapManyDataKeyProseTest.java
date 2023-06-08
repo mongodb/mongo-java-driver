@@ -163,15 +163,13 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
     @Test
     public void shouldThrowClientErrorWhenProviderIsNotSpecified() {
         //given
-        BsonDocument dstKey =  BsonDocument.parse("{}");
-
         ClientEncryption clientEncryption = getClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
                 .keyVaultNamespace("keyvault.datakeys")
                 .kmsProviders(KMS_PROVIDERS)
                 .build());
 
-        RewrapManyDataKeyOptions rewrapManyDataKeyOptions = new RewrapManyDataKeyOptions().masterKey(dstKey);
+        RewrapManyDataKeyOptions rewrapManyDataKeyOptions = new RewrapManyDataKeyOptions().masterKey(BsonDocument.parse("{}"));
 
         //when
         Executable executable = () -> clientEncryption.rewrapManyDataKey(new BsonDocument(), rewrapManyDataKeyOptions);
