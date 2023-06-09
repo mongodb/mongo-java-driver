@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
@@ -26,7 +27,10 @@ import com.mongodb.client.vault.ClientEncryption;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -43,6 +47,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#rewrap">
@@ -109,12 +114,19 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
         return data;
     }
 
+    protected AbstractClientEncryptionRewrapManyDataKeyProseTest() {
+        Assumptions.assumeTrue(serverVersionAtLeast(4, 2));
+        Assumptions.assumeTrue(hasEncryptionTestsEnabled(), "Custom Endpoint tests disables");
+    }
+
+    @AfterEach
+    void cleanUp(){
+        getMongoClient().getDatabase("keyvault").getCollection("datakeys").drop();
+    }
+
     @ParameterizedTest
     @MethodSource("data")
     public void rewrapWithSeparateClientEncryption(final String srcProvider, final String dstProvider) {
-        Assumptions.assumeTrue(serverVersionAtLeast(4, 2));
-        Assumptions.assumeTrue(hasEncryptionTestsEnabled(), "Custom Endpoint tests disables");
-
         BsonDocument srcKey = MASTER_KEYS_BY_PROVIDER.get(srcProvider);
         BsonDocument dstKey = MASTER_KEYS_BY_PROVIDER.get(dstProvider);
         BsonString testString = new BsonString("test");
@@ -146,5 +158,26 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
 
         assertEquals(testString, clientEncryption1.decrypt(ciphertext));
         assertEquals(testString, clientEncryption2.decrypt(ciphertext));
+    }
+
+    @Test
+    public void shouldThrowClientErrorWhenProviderIsNotSpecified() {
+        //given
+        ClientEncryption clientEncryption = getClientEncryption(ClientEncryptionSettings.builder()
+                .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
+                .keyVaultNamespace("keyvault.datakeys")
+                .kmsProviders(KMS_PROVIDERS)
+                .build());
+
+        RewrapManyDataKeyOptions rewrapManyDataKeyOptions = new RewrapManyDataKeyOptions().masterKey(BsonDocument.parse("{}"));
+
+        //when
+        Executable executable = () -> clientEncryption.rewrapManyDataKey(new BsonDocument(), rewrapManyDataKeyOptions);
+
+        //then
+        MongoClientException mongoClientException = assertThrows(MongoClientException.class, executable);
+
+        assertEquals("Missing the provider but supplied a master key in the RewrapManyDataKeyOptions",
+                mongoClientException.getMessage());
     }
 }
