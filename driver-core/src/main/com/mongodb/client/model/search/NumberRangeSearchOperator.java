@@ -16,14 +16,14 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 
 /**
  * @see SearchOperator#numberRange(FieldSearchPath, FieldSearchPath...)
  * @see SearchOperator#numberRange(Iterable)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface NumberRangeSearchOperator extends NumberRangeSearchOperatorBase, SearchOperator {
     @Override

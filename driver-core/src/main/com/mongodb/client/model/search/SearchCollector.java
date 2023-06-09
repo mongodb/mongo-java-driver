@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
 import org.bson.Document;
@@ -33,7 +33,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface SearchCollector extends Bson {
     /**

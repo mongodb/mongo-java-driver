@@ -16,13 +16,13 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 
 /**
  * @see SearchScoreExpression#constantExpression(float)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface ConstantSearchScoreExpression extends SearchScoreExpression {
 }

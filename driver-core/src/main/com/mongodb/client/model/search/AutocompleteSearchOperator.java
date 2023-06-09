@@ -16,14 +16,14 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 
 /**
  * @see SearchOperator#autocomplete(FieldSearchPath, String, String...)
  * @see SearchOperator#autocomplete(FieldSearchPath, Iterable)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface AutocompleteSearchOperator extends SearchOperator {
     @Override

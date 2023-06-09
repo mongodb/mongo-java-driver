@@ -16,13 +16,13 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 
 /**
  * @see SearchFacet#dateFacet(String, FieldSearchPath, Iterable)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
 public interface DateSearchFacet extends SearchFacet {
     /**

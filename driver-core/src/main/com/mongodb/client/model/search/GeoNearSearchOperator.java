@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.geojson.Point;
 
 /**
@@ -24,7 +24,7 @@ import com.mongodb.client.model.geojson.Point;
  * @see SearchOperator#near(Point, Number, Iterable)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface GeoNearSearchOperator extends SearchOperator {
     @Override

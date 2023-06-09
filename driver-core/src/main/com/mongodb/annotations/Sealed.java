@@ -26,13 +26,15 @@ import java.lang.annotation.Target;
 
 /**
  * Signifies that the annotated class or interface should be treated as sealed:
- * it must not be extended or implemented.
+ * it must not be extended or implemented by users.
  *
  * <p>Using such classes and interfaces is no different from using ordinary
  * unannotated classes and interfaces.
  *
  * <p>This annotation does not imply that the API is experimental or
  * {@link Beta}, or that the quality or performance of the API is inferior.
+ *
+ * @see Evolving
  */
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)

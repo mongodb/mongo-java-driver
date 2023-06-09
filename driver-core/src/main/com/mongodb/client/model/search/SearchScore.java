@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Projections;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
@@ -33,7 +33,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.atlas.manual atlas-search/scoring/ Scoring
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface SearchScore extends Bson {
     /**
