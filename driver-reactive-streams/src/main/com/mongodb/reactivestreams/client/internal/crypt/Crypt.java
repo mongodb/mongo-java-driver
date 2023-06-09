@@ -64,7 +64,9 @@ public class Crypt implements Closeable {
     private final KeyManagementService keyManagementService;
     private final boolean bypassAutoEncryption;
     @Nullable
-    private final MongoClient internalClient;
+    private final MongoClient collectionInfoRetrieverClient;
+    @Nullable
+    private final MongoClient keyVaultClient;
 
     /**
      * Create an instance to use for explicit encryption and decryption, and data key creation.
@@ -81,7 +83,7 @@ public class Crypt implements Closeable {
             final Map<String, Map<String, Object>> kmsProviders,
             final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
         this(mongoCrypt, keyRetriever, keyManagementService, kmsProviders, kmsProviderPropertySuppliers,
-                false, null, null, null);
+                false, null, null, null, null);
     }
 
     /**
@@ -95,7 +97,8 @@ public class Crypt implements Closeable {
      * @param bypassAutoEncryption          the bypass auto encryption flag
      * @param collectionInfoRetriever       the collection info retriever
      * @param commandMarker                 the command marker
-     * @param internalClient                the internal mongo client
+     * @param collectionInfoRetrieverClient the collection info retriever mongo client
+     * @param keyVaultClient                the key vault mongo client
      */
     Crypt(final MongoCrypt mongoCrypt,
             final KeyRetriever keyRetriever,
@@ -105,7 +108,8 @@ public class Crypt implements Closeable {
             final boolean bypassAutoEncryption,
             @Nullable final CollectionInfoRetriever collectionInfoRetriever,
             @Nullable final CommandMarker commandMarker,
-            @Nullable final MongoClient internalClient) {
+            @Nullable final MongoClient collectionInfoRetrieverClient,
+            @Nullable final MongoClient keyVaultClient) {
         this.mongoCrypt = mongoCrypt;
         this.keyRetriever = keyRetriever;
         this.keyManagementService = keyManagementService;
@@ -114,7 +118,8 @@ public class Crypt implements Closeable {
         this.bypassAutoEncryption = bypassAutoEncryption;
         this.collectionInfoRetriever = collectionInfoRetriever;
         this.commandMarker = commandMarker;
-        this.internalClient = internalClient;
+        this.collectionInfoRetrieverClient = collectionInfoRetrieverClient;
+        this.keyVaultClient = keyVaultClient;
     }
 
     /**
@@ -227,8 +232,9 @@ public class Crypt implements Closeable {
         //noinspection EmptyTryBlock
         try (MongoCrypt ignored = this.mongoCrypt;
              CommandMarker ignored1 = this.commandMarker;
-             MongoClient ignored2 = this.internalClient;
-             KeyManagementService ignored3 = this.keyManagementService
+             MongoClient ignored2 = this.collectionInfoRetrieverClient;
+             MongoClient ignored3 = this.keyVaultClient;
+             KeyManagementService ignored4 = this.keyManagementService
         ) {
             // just using try-with-resources to ensure they all get closed, even in the case of exceptions
         }

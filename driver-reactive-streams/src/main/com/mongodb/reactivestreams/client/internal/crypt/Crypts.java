@@ -42,17 +42,17 @@ public final class Crypts {
     }
 
     public static Crypt createCrypt(final MongoClientImpl client, final AutoEncryptionSettings settings) {
-        MongoClient internalClient = null;
+        MongoClient sharedInternalClient = null;
         MongoClientSettings keyVaultMongoClientSettings = settings.getKeyVaultMongoClientSettings();
         if (keyVaultMongoClientSettings == null || !settings.isBypassAutoEncryption()) {
-            MongoClientSettings mongoClientSettings = MongoClientSettings.builder(client.getSettings())
+            MongoClientSettings defaultInternalMongoClientSettings = MongoClientSettings.builder(client.getSettings())
                     .applyToConnectionPoolSettings(builder -> builder.minSize(0))
                     .autoEncryptionSettings(null)
                     .build();
-            internalClient = MongoClients.create(mongoClientSettings);
+            sharedInternalClient = MongoClients.create(defaultInternalMongoClientSettings);
         }
         MongoClient keyVaultClient = keyVaultMongoClientSettings == null
-                ? internalClient : MongoClients.create(keyVaultMongoClientSettings);
+                ? sharedInternalClient : MongoClients.create(keyVaultMongoClientSettings);
         MongoCrypt mongoCrypt = MongoCrypts.create(createMongoCryptOptions(settings));
         return new Crypt(
                 mongoCrypt,
@@ -61,9 +61,10 @@ public final class Crypts {
                 settings.getKmsProviders(),
                 settings.getKmsProviderPropertySuppliers(),
                 settings.isBypassAutoEncryption(),
-                settings.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(internalClient),
+                settings.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(sharedInternalClient),
                 new CommandMarker(mongoCrypt, settings),
-                internalClient);
+                sharedInternalClient,
+                keyVaultClient);
     }
 
     public static Crypt create(final MongoClient keyVaultClient, final ClientEncryptionSettings settings) {
