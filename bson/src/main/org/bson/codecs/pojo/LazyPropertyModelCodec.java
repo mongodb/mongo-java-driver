@@ -28,22 +28,21 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.String.format;
 import static org.bson.codecs.pojo.PojoSpecializationHelper.specializeTypeData;
 
 class LazyPropertyModelCodec<T> implements Codec<T> {
     private final PropertyModel<T> propertyModel;
     private final CodecRegistry registry;
     private final PropertyCodecRegistry propertyCodecRegistry;
-    private final DiscriminatorLookup discriminatorLookup;
 
     private volatile Codec<T> codec;
 
     LazyPropertyModelCodec(final PropertyModel<T> propertyModel, final CodecRegistry registry,
-                                  final PropertyCodecRegistry propertyCodecRegistry, final DiscriminatorLookup discriminatorLookup) {
+            final PropertyCodecRegistry propertyCodecRegistry) {
         this.propertyModel = propertyModel;
         this.registry = registry;
         this.propertyCodecRegistry = propertyCodecRegistry;
-        this.discriminatorLookup = discriminatorLookup;
     }
 
     @Override
@@ -77,7 +76,7 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
         if (localCodec instanceof PojoCodec) {
             PojoCodec<T> pojoCodec = (PojoCodec<T>) localCodec;
             ClassModel<T> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
-            localCodec = new PojoCodecImpl<>(specialized, registry, propertyCodecRegistry, pojoCodec.getDiscriminatorLookup(), true);
+            localCodec = new PojoCodecImpl<>(specialized, registry, propertyCodecRegistry, pojoCodec.getDiscriminatorLookup());
         }
         return localCodec;
     }
@@ -150,4 +149,46 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
                 propertyModel.getPropertyAccessor(), propertyModel.getError(), propertyModel.getBsonRepresentation());
     }
 
+    /**
+     * Instances of this codec are supposed to be replaced with usable implementations by {@link LazyPropertyModelCodec#createCodec()}.
+     */
+    static final class NeedSpecializationCodec<T> extends PojoCodec<T> {
+        private final ClassModel<T> classModel;
+        private final DiscriminatorLookup discriminatorLookup;
+
+        NeedSpecializationCodec(final ClassModel<T> classModel, final DiscriminatorLookup discriminatorLookup) {
+            this.classModel = classModel;
+            this.discriminatorLookup = discriminatorLookup;
+        }
+
+        @Override
+        public T decode(final BsonReader reader, final DecoderContext decoderContext) {
+            throw exception();
+        }
+
+        @Override
+        public void encode(final BsonWriter writer, final T value, final EncoderContext encoderContext) {
+            throw exception();
+        }
+
+        @Override
+        public Class<T> getEncoderClass() {
+            return classModel.getType();
+        }
+
+        private CodecConfigurationException exception() {
+            return new CodecConfigurationException(format("%s contains generic types that have not been specialised.%n"
+                    + "Top level classes with generic types are not supported by the PojoCodec.", classModel.getName()));
+        }
+
+        @Override
+        ClassModel<T> getClassModel() {
+            return classModel;
+        }
+
+        @Override
+        DiscriminatorLookup getDiscriminatorLookup() {
+            return discriminatorLookup;
+        }
+    }
 }
