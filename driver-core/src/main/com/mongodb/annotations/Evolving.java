@@ -56,7 +56,7 @@ import java.lang.annotation.Target;
  *     <td>Not applicable.</td>
  *   </tr>
  *   <tr>
- *     <td>Doing so facilitates writing user unit tests by creating a fake implementation.</td>
+ *     <td>Doing so facilitates writing application unit tests by creating a fake implementation.</td>
  *     <td>{@code com.mongodb.client.MongoClient}</td>
  *     <td>Applicable.</td>
  *   </tr>

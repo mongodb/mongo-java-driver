@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 
 /**
  * Signifies that the annotated class or interface should be treated as sealed:
- * it must not be extended or implemented by users.
+ * it must not be extended or implemented by consumers of the library.
  *
  * <p>Using such classes and interfaces is no different from using ordinary
  * unannotated classes and interfaces.
