@@ -36,7 +36,7 @@ import org.bson.conversions.Bson
  * @see [Map Reduce](https://www.mongodb.com/docs/manual/reference/command/mapReduce/)
  */
 @Deprecated("Map Reduce has been deprecated. Use Aggregation instead", replaceWith = ReplaceWith(""))
-public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) : Flow<T> {
+public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) : Flow<T> by wrapped.asFlow() {
     /**
      * Sets the number of documents to return per batch.
      *
