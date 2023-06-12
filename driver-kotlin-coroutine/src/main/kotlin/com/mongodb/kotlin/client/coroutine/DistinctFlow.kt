@@ -18,6 +18,9 @@ package com.mongodb.kotlin.client.coroutine
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.reactive.asFlow
 import org.bson.BsonValue
 import org.bson.conversions.Bson
 
@@ -27,7 +30,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
  */
-public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : MongoAbstractFlow<T>(wrapped) {
+public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : Flow<T> {
 
     /**
      * Sets the number of documents to return per batch.
@@ -83,4 +86,6 @@ public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : 
      * @return this
      */
     public fun comment(comment: BsonValue?): DistinctFlow<T> = apply { wrapped.comment(comment) }
+
+    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }

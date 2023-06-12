@@ -20,6 +20,9 @@ import com.mongodb.ExplainVerbosity
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.FindPublisher
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.BsonValue
 import org.bson.Document
@@ -31,7 +34,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Collection filter](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
  */
-public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : MongoAbstractFlow<T>(wrapped) {
+public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> {
 
     /**
      * Sets the number of documents to return per batch.
@@ -289,4 +292,6 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : MongoAbs
      */
     public suspend inline fun <reified R : Any> explain(verbosity: ExplainVerbosity? = null): R =
         explain(R::class.java, verbosity)
+
+    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }

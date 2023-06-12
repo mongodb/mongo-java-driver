@@ -17,6 +17,9 @@ package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.reactive.asFlow
 import org.bson.BsonValue
 import org.bson.conversions.Bson
 
@@ -26,8 +29,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [List databases](https://www.mongodb.com/docs/manual/reference/command/listDatabases/)
  */
-public class ListDatabasesFlow<T : Any>(private val wrapped: ListDatabasesPublisher<T>) :
-    MongoAbstractFlow<T>(wrapped) {
+public class ListDatabasesFlow<T : Any>(private val wrapped: ListDatabasesPublisher<T>) : Flow<T> {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
@@ -91,4 +93,6 @@ public class ListDatabasesFlow<T : Any>(private val wrapped: ListDatabasesPublis
      * @return this
      */
     public fun comment(comment: BsonValue?): ListDatabasesFlow<T> = apply { wrapped.comment(comment) }
+
+    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }

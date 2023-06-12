@@ -19,6 +19,9 @@ import com.mongodb.ExplainVerbosity
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.AggregatePublisher
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.BsonValue
@@ -31,7 +34,7 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Aggregation command](https://www.mongodb.com/docs/manual/reference/command/aggregate)
  */
-public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) : MongoAbstractFlow<T>(wrapped) {
+public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) : Flow<T> {
 
     /**
      * Sets the number of documents to return per batch.
@@ -164,6 +167,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     /**
      * Explain the execution plan for this operation with the given verbosity level
      *
+     * @param R the type of the document class
      * @param verbosity the verbosity of the explanation
      * @return the execution plan
      * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
@@ -194,4 +198,6 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
      */
     public suspend inline fun <reified R : Any> explain(verbosity: ExplainVerbosity? = null): R =
         explain(R::class.java, verbosity)
+
+    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }
