@@ -27,6 +27,7 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -105,8 +106,9 @@ public abstract class Authenticator {
     }
 
     public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
-        throw new UnsupportedOperationException(
-                "Reauthentication requested by server but is not supported by specified mechanism.");
+        beginAsync().thenRun((c) -> {
+            authenticateAsync(connection, connection.getDescription(), c);
+        }).finish(callback);
     }
 
 }
