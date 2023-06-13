@@ -37,7 +37,7 @@ public interface AsyncSupplier<T> {
                 try {
                     callback.onResult(v, e);
                 } catch (Throwable t) {
-                    throw new CallbackThrew("Unexpected Throwable thrown from callback: ", e);
+                    throw new CallbackThrew("Unexpected Throwable thrown from callback: ", t);
                 }
             });
         } catch (CallbackThrew t) {
