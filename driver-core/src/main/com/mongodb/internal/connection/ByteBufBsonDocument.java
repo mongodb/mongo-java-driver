@@ -19,15 +19,12 @@ package com.mongodb.internal.connection;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
-import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.ByteBuf;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DecoderContext;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
@@ -36,8 +33,12 @@ import org.bson.json.JsonWriterSettings;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.StringWriter;
+import java.util.AbstractCollection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -45,13 +46,10 @@ import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static com.mongodb.internal.connection.ByteBufBsonHelper.readBsonValue;
 
 final class ByteBufBsonDocument extends BsonDocument {
     private static final long serialVersionUID = 2L;
-
-    private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final transient ByteBuf byteBuf;
 
@@ -109,7 +107,7 @@ final class ByteBufBsonDocument extends BsonDocument {
     }
 
     @Override
-    public BsonReader asBsonReader() {
+    public BsonBinaryReader asBsonReader() {
         return new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()));
     }
 
@@ -124,10 +122,10 @@ final class ByteBufBsonDocument extends BsonDocument {
     @Nullable
     <T> T findInDocument(final Finder<T> finder) {
         ByteBuf duplicateByteBuf = byteBuf.duplicate();
-        try (BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()))) {
+        try (BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf))) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-                T found = finder.find(bsonReader);
+                T found = finder.find(duplicateByteBuf, bsonReader);
                 if (found != null) {
                     return found;
                 }
@@ -186,7 +184,7 @@ final class ByteBufBsonDocument extends BsonDocument {
     public boolean isEmpty() {
         return assertNotNull(findInDocument(new Finder<Boolean>() {
             @Override
-            public Boolean find(final BsonReader bsonReader) {
+            public Boolean find(final ByteBuf byteBuf, final BsonBinaryReader bsonReader) {
                 return false;
             }
 
@@ -204,7 +202,7 @@ final class ByteBufBsonDocument extends BsonDocument {
 
             @Override
             @Nullable
-            public Integer find(final BsonReader bsonReader) {
+            public Integer find(final ByteBuf byteBuf, final BsonBinaryReader bsonReader) {
                 size++;
                 bsonReader.readName();
                 bsonReader.skipValue();
@@ -220,17 +218,17 @@ final class ByteBufBsonDocument extends BsonDocument {
 
     @Override
     public Set<Entry<String, BsonValue>> entrySet() {
-        return toBaseBsonDocument().entrySet();
+        return new ByteBufBsonDocumentEntrySet();
     }
 
     @Override
     public Collection<BsonValue> values() {
-        return toBaseBsonDocument().values();
+        return new ByteBufBsonDocumentValuesCollection();
     }
 
     @Override
     public Set<String> keySet() {
-        return toBaseBsonDocument().keySet();
+        return new ByteBufBsonDocumentKeySet();
     }
 
     @Override
@@ -241,7 +239,7 @@ final class ByteBufBsonDocument extends BsonDocument {
 
         Boolean containsKey = findInDocument(new Finder<Boolean>() {
             @Override
-            public Boolean find(final BsonReader bsonReader) {
+            public Boolean find(final ByteBuf byteBuf, final BsonBinaryReader bsonReader) {
                 if (bsonReader.readName().equals(key)) {
                     return true;
                 }
@@ -261,9 +259,9 @@ final class ByteBufBsonDocument extends BsonDocument {
     public boolean containsValue(final Object value) {
         Boolean containsValue = findInDocument(new Finder<Boolean>() {
             @Override
-            public Boolean find(final BsonReader bsonReader) {
+            public Boolean find(final ByteBuf byteBuf, final BsonBinaryReader bsonReader) {
                 bsonReader.skipName();
-                if (deserializeBsonValue(bsonReader).equals(value)) {
+                if (readBsonValue(byteBuf, bsonReader).equals(value)) {
                     return true;
                 }
                 return null;
@@ -283,9 +281,9 @@ final class ByteBufBsonDocument extends BsonDocument {
         notNull("key", key);
         return findInDocument(new Finder<BsonValue>() {
             @Override
-            public BsonValue find(final BsonReader bsonReader) {
+            public BsonValue find(final ByteBuf byteBuf, final BsonBinaryReader bsonReader) {
                 if (bsonReader.readName().equals(key)) {
-                    return deserializeBsonValue(bsonReader);
+                    return readBsonValue(byteBuf, bsonReader);
                 }
                 bsonReader.skipValue();
                 return null;
@@ -308,7 +306,7 @@ final class ByteBufBsonDocument extends BsonDocument {
     public String getFirstKey() {
         return assertNotNull(findInDocument(new Finder<String>() {
             @Override
-            public String find(final BsonReader bsonReader) {
+            public String find(final ByteBuf byteBuf, final BsonBinaryReader bsonReader) {
                 return bsonReader.readName();
             }
 
@@ -321,13 +319,9 @@ final class ByteBufBsonDocument extends BsonDocument {
 
     private interface Finder<T> {
         @Nullable
-        T find(BsonReader bsonReader);
+        T find(ByteBuf byteBuf, BsonBinaryReader bsonReader);
         @Nullable
         T notFound();
-    }
-
-    private BsonValue deserializeBsonValue(final BsonReader bsonReader) {
-        return REGISTRY.get(getClassForBsonType(bsonReader.getCurrentBsonType())).decode(bsonReader, DecoderContext.builder().build());
     }
 
     // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
@@ -338,5 +332,109 @@ final class ByteBufBsonDocument extends BsonDocument {
     // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
     private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Proxy required");
+    }
+
+    private class ByteBufBsonDocumentEntrySet extends AbstractSet<Entry<String, BsonValue>> {
+        @Override
+        public Iterator<Entry<String, BsonValue>> iterator() {
+            return new Iterator<Entry<String, BsonValue>>() {
+                private final ByteBuf duplicatedByteBuf = byteBuf.duplicate();
+                private final BsonBinaryReader bsonReader;
+
+                {
+                    bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicatedByteBuf));
+                    bsonReader.readStartDocument();
+                    bsonReader.readBsonType();
+                }
+
+                @Override
+                public boolean hasNext() {
+                    return bsonReader.getCurrentBsonType() != BsonType.END_OF_DOCUMENT;
+                }
+
+                @Override
+                public Entry<String, BsonValue> next() {
+                    if (!hasNext()) {
+                        throw new NoSuchElementException();
+                    }
+                    String key = bsonReader.readName();
+                    BsonValue value = readBsonValue(duplicatedByteBuf, bsonReader);
+                    bsonReader.readBsonType();
+                    return new AbstractMap.SimpleEntry<>(key, value);
+                }
+
+            };
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return !iterator().hasNext();
+        }
+
+        @Override
+        public int size() {
+            return ByteBufBsonDocument.this.size();
+        }
+    }
+
+    private class ByteBufBsonDocumentKeySet extends AbstractSet<String> {
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+        private final Set<Entry<String, BsonValue>> entrySet = new ByteBufBsonDocumentEntrySet();
+
+        @Override
+        public Iterator<String> iterator() {
+            final Iterator<Entry<String, BsonValue>> entrySetIterator = entrySet.iterator();
+            return new Iterator<String>() {
+                @Override
+                public boolean hasNext() {
+                    return entrySetIterator.hasNext();
+                }
+
+                @Override
+                public String next() {
+                    return entrySetIterator.next().getKey();
+                }
+            };
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return entrySet.isEmpty();
+        }
+
+        @Override
+        public int size() {
+            return entrySet.size();
+        }
+    }
+
+    private class ByteBufBsonDocumentValuesCollection extends AbstractCollection<BsonValue> {
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+        private final Set<Entry<String, BsonValue>> entrySet = new ByteBufBsonDocumentEntrySet();
+
+        @Override
+        public Iterator<BsonValue> iterator() {
+            final Iterator<Entry<String, BsonValue>> entrySetIterator = entrySet.iterator();
+            return new Iterator<BsonValue>() {
+                @Override
+                public boolean hasNext() {
+                    return entrySetIterator.hasNext();
+                }
+
+                @Override
+                public BsonValue next() {
+                    return entrySetIterator.next().getValue();
+                }
+            };
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return entrySet.isEmpty();
+        }
+        @Override
+        public int size() {
+            return entrySet.size();
+        }
     }
 }
