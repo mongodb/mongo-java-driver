@@ -86,6 +86,9 @@ public interface AsyncRunnable {
             try {
                 runnable.run();
             } catch (Throwable t) {
+                if (e != null) {
+                    t.addSuppressed(e);
+                }
                 callback.onResult(null, t);
                 return;
             }
@@ -104,11 +107,7 @@ public interface AsyncRunnable {
                     c.onResult(null, e);
                     return;
                 }
-                try {
-                    runnable.finish(c);
-                } catch (Throwable t) {
-                    c.onResult(null, t);
-                }
+                runnable.finish(c);
             });
         };
     }
@@ -125,11 +124,7 @@ public interface AsyncRunnable {
                     c.onResult(null, e);
                     return;
                 }
-                try {
-                    supplier.finish(c);
-                } catch (Throwable t) {
-                    c.onResult(null, t);
-                }
+                supplier.finish(c);
             });
         };
     }

@@ -62,17 +62,19 @@ public interface AsyncSupplier<T> {
                 callback.onResult(r, null);
                 return;
             }
+            boolean useProvidedSupplier;
             try {
-                boolean check = errorCheck.test(e);
-                if (check) {
-                    supplier.finish(callback);
-                    return;
-                }
+                useProvidedSupplier = errorCheck.test(e);
             } catch (Throwable t) {
+                t.addSuppressed(e);
                 callback.onResult(null, t);
                 return;
             }
-            callback.onResult(r, e);
+            if (useProvidedSupplier) {
+                supplier.finish(callback);
+                return;
+            }
+            callback.onResult(null, e);
         });
     }
 }

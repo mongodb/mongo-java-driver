@@ -190,6 +190,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
         assertTrue(connection.opened());
         beginAsync().thenRun(c -> {
+            assertTrue(connection.opened());
             authLockAsync(connection, connection.getDescription(), c);
         }).finish(callback);
     }
@@ -222,7 +223,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         String accessToken = getValidCachedAccessToken();
         if (accessToken != null) {
             beginAsync().thenRun(c -> {
-                authenticateAsyncUsing(connection, connectionDescription, (bytes) -> prepareTokenAsJwt(accessToken), c);
+                authenticateAsyncUsing(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken), c);
             }).onErrorRunIf(e -> triggersRetry(e), c -> {
                 authLockAsync(connection, connectionDescription, c);
             }).finish(callback);
