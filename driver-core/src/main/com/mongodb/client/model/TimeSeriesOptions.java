@@ -32,6 +32,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  */
 public final class TimeSeriesOptions {
+    private static final String PARAMETER_TIME_UNIT = "timeUnit";
     private final String timeField;
     private String metaField;
     private TimeSeriesGranularity granularity;
@@ -124,6 +125,7 @@ public final class TimeSeriesOptions {
      */
     @Nullable
     public Long getBucketMaxSpan(final TimeUnit timeUnit) {
+        notNull(PARAMETER_TIME_UNIT, timeUnit);
         if (bucketMaxSpanSeconds == null) {
             return null;
         }
@@ -147,7 +149,7 @@ public final class TimeSeriesOptions {
      * @see #getBucketMaxSpan(TimeUnit)
      */
     public TimeSeriesOptions bucketMaxSpan(@Nullable final Long bucketMaxSpan, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
+        notNull(PARAMETER_TIME_UNIT, timeUnit);
         if (bucketMaxSpan == null) {
             this.bucketMaxSpanSeconds = null;
         } else {
@@ -169,6 +171,7 @@ public final class TimeSeriesOptions {
      */
     @Nullable
     public Long getBucketRounding(final TimeUnit timeUnit) {
+        notNull(PARAMETER_TIME_UNIT, timeUnit);
         if (bucketRoundingSeconds == null) {
             return null;
         }
@@ -192,7 +195,7 @@ public final class TimeSeriesOptions {
      * @see #getBucketRounding(TimeUnit)
      */
     public TimeSeriesOptions bucketRounding(@Nullable final Long bucketRounding, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
+        notNull(PARAMETER_TIME_UNIT, timeUnit);
         if (bucketRounding == null) {
             this.bucketRoundingSeconds = null;
         } else {

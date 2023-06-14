@@ -48,6 +48,12 @@ class TimeSeriesOptionsTest {
         assertThrows(IllegalStateException.class, () -> timeSeriesOptions.bucketMaxSpan(1L, TimeUnit.SECONDS));
     }
 
+    @Test
+    void shouldThrowErrorWhenGetWithNullParameter() {
+        assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.getBucketMaxSpan(null));
+        assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.getBucketRounding(null));
+    }
+
     @ParameterizedTest
     @MethodSource("args")
     void shouldThrowErrorWhenInvalidArgumentProvided(@Nullable final Long valueToSet, @Nullable final TimeUnit timeUnit) {
