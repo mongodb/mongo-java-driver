@@ -154,8 +154,9 @@ public final class TimeSeriesOptions {
             this.bucketMaxSpanSeconds = null;
         } else {
             isTrue("bucketMaxSpan is not allowed when granularity is set", granularity == null);
-            this.bucketMaxSpanSeconds = TimeUnit.SECONDS.convert(bucketMaxSpan, timeUnit);
-            isTrueArgument("bucketMaxSpan, after conversion to seconds, must be >= 1", bucketMaxSpanSeconds > 0);
+            long seconds = TimeUnit.SECONDS.convert(bucketMaxSpan, timeUnit);
+            isTrueArgument("bucketMaxSpan, after conversion to seconds, must be >= 1", seconds > 0);
+            this.bucketMaxSpanSeconds = seconds;
         }
         return this;
     }
@@ -200,8 +201,9 @@ public final class TimeSeriesOptions {
             this.bucketRoundingSeconds = null;
         } else {
             isTrue("bucketRounding is not allowed when granularity is set", granularity == null);
-            this.bucketRoundingSeconds = TimeUnit.SECONDS.convert(bucketRounding, timeUnit);
-            isTrueArgument("bucketRounding, after conversion to seconds, must be >= 1", bucketRoundingSeconds > 0);
+            long seconds = TimeUnit.SECONDS.convert(bucketRounding, timeUnit);
+            isTrueArgument("bucketRounding, after conversion to seconds, must be >= 1", seconds > 0);
+            this.bucketRoundingSeconds = seconds;
         }
         return this;
     }
