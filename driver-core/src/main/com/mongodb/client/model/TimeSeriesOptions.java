@@ -20,6 +20,7 @@ import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -97,7 +98,8 @@ public final class TimeSeriesOptions {
     /**
      * Sets the granularity of the time-series data.
      * <p>
-     * The default value is {@link TimeSeriesGranularity#SECONDS}.
+     * The default value is {@link TimeSeriesGranularity#SECONDS} if neither {@code bucketMaxSpan} nor {@code bucketRounding} is set.
+     * If any of these bucketing options are set, the granularity parameter cannot be set.
      * </p>
      *
      * @param granularity the time-series granularity
@@ -105,6 +107,8 @@ public final class TimeSeriesOptions {
      * @see #getGranularity()
      */
     public TimeSeriesOptions granularity(@Nullable final TimeSeriesGranularity granularity) {
+        isTrue("granularity is not allowed when bucketMaxSpan is set", bucketMaxSpanSeconds == null);
+        isTrue("granularity is not allowed when bucketRounding is set", bucketRoundingSeconds == null);
         this.granularity = granularity;
         return this;
     }
@@ -116,7 +120,6 @@ public final class TimeSeriesOptions {
      * @return time span between measurements, or {@code null} if not set.
      * @since 4.10
      * @mongodb.server.release 6.3
-     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #bucketMaxSpan(Long, TimeUnit)
      */
     @Nullable
@@ -130,8 +133,9 @@ public final class TimeSeriesOptions {
     /**
      * Sets the maximum time span between measurements in a bucket.
      * <p>
-     * The value of {@code bucketMaxSpanSeconds} must be the same as {@code bucketRoundingSeconds}.
-     * If you set the {@code bucketMaxSpanSeconds}, parameter, you can't set the granularity parameter.
+     * The value of {@code bucketMaxSpan} must be the same as {@code bucketRounding},
+     * which also means that the options must either be both set or both unset.
+     * If you set the {@code bucketMaxSpan}, parameter, you can't set the granularity parameter.
      * </p>
      *
      * @param bucketMaxSpan time span between measurements. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
@@ -140,13 +144,14 @@ public final class TimeSeriesOptions {
      * @return this
      * @since 4.10
      * @mongodb.server.release 6.3
-     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #getBucketMaxSpan(TimeUnit)
      */
     public TimeSeriesOptions bucketMaxSpan(@Nullable final Long bucketMaxSpan, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
         if (bucketMaxSpan == null) {
             this.bucketMaxSpanSeconds = null;
         } else {
+            isTrue("bucketMaxSpan is not allowed when granularity is set", granularity == null);
             this.bucketMaxSpanSeconds = TimeUnit.SECONDS.convert(bucketMaxSpan, timeUnit);
             isTrueArgument("bucketMaxSpan, after conversion to seconds, must be >= 1", bucketMaxSpanSeconds > 0);
         }
@@ -160,7 +165,6 @@ public final class TimeSeriesOptions {
      * @return the time interval, or {@code null} if not set.
      * @since 4.10
      * @mongodb.server.release 6.3
-     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #bucketRounding(Long, TimeUnit)
      */
     @Nullable
@@ -174,8 +178,9 @@ public final class TimeSeriesOptions {
     /**
      * Specifies the time interval that determines the starting timestamp for a new bucket.
      * <p>
-     * The value of {@code bucketRoundingSeconds} must be the same as {@code bucketMaxSpanSeconds}.
-     * If you set the {@code bucketRoundingSeconds}, parameter, you can't set the granularity parameter.
+     * The value of {@code bucketRounding} must be the same as {@code bucketMaxSpan},
+     * which also means that the options must either be both set or both unset.
+     * If you set the {@code bucketRounding}, parameter, you can't set the granularity parameter.
      * </p>
      *
      * @param bucketRounding time interval. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
@@ -184,15 +189,16 @@ public final class TimeSeriesOptions {
      * @return this
      * @since 4.10
      * @mongodb.server.release 6.3
-     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
      * @see #getBucketRounding(TimeUnit)
      */
     public TimeSeriesOptions bucketRounding(@Nullable final Long bucketRounding, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
         if (bucketRounding == null) {
             this.bucketRoundingSeconds = null;
         } else {
+            isTrue("bucketRounding is not allowed when granularity is set", granularity == null);
             this.bucketRoundingSeconds = TimeUnit.SECONDS.convert(bucketRounding, timeUnit);
-            isTrueArgument("bucketRounding, after conversion to seconds, must be >= 1", bucketMaxSpanSeconds > 0);
+            isTrueArgument("bucketRounding, after conversion to seconds, must be >= 1", bucketRoundingSeconds > 0);
         }
         return this;
     }

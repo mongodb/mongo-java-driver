@@ -29,7 +29,7 @@ public enum TimeSeriesGranularity {
     /**
      * Seconds-level granularity.
      * <p>
-     * If granularity of a time-series collection is unspecified, this is the default value.
+     * This is the default value.
      * </p>
      */
     SECONDS,
