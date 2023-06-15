@@ -18,32 +18,30 @@ package com.mongodb.internal.async;
 
 import java.util.function.Predicate;
 
-import static com.mongodb.internal.async.AsyncRunnable.CallbackThrew;
-
 /**
  * See AsyncRunnableTest for usage
  */
 public interface AsyncSupplier<T> {
 
-    void supplyUnsafe(SingleResultCallback<T> callback);
+    void supplyInternal(SingleResultCallback<T> callback);
 
     /**
      * Must be invoked at end of async chain
      * @param callback the callback provided by the method the chain is used in
      */
     default void finish(final SingleResultCallback<T> callback) {
+        final boolean[] callbackInvoked = {false};
         try {
-            this.supplyUnsafe((v, e) -> {
-                try {
-                    callback.onResult(v, e);
-                } catch (Throwable t) {
-                    throw new CallbackThrew("Unexpected Throwable thrown from callback: ", t);
-                }
+            this.supplyInternal((v, e) -> {
+                callbackInvoked[0] = true;
+                callback.onResult(v, e);
             });
-        } catch (CallbackThrew t) {
-            // ignore
         } catch (Throwable t) {
-            callback.onResult(null, t);
+            if (callbackInvoked[0]) {
+                throw t;
+            } else {
+                callback.onResult(null, t);
+            }
         }
     }
 
@@ -62,15 +60,15 @@ public interface AsyncSupplier<T> {
                 callback.onResult(r, null);
                 return;
             }
-            boolean useProvidedSupplier;
+            boolean errorMatched;
             try {
-                useProvidedSupplier = errorCheck.test(e);
+                errorMatched = errorCheck.test(e);
             } catch (Throwable t) {
                 t.addSuppressed(e);
                 callback.onResult(null, t);
                 return;
             }
-            if (useProvidedSupplier) {
+            if (errorMatched) {
                 supplier.finish(callback);
                 return;
             }

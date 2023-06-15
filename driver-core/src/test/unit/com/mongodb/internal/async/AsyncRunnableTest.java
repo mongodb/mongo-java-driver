@@ -681,8 +681,8 @@ final class AsyncRunnableTest {
                 actualException.set(e);
             };
             async.accept(callback);
-        } catch (Exception e) {
-            fail("async threw an exception instead of using callback");
+        } catch (Throwable e) {
+            fail("async threw instead of using callback");
         }
         Integer expectedI = i.get();
 
@@ -691,7 +691,7 @@ final class AsyncRunnableTest {
             T expectedValue = sync.get();
             assertEquals(expectedValue, actualValue.get());
             assertNull(actualException.get());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             assertNull(actualValue.get());
             assertNotNull(actualException.get(), "async failed to throw expected: " + e);
             assertEquals(e.getClass(), actualException.get().getClass());

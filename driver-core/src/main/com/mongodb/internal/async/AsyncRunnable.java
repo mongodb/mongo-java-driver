@@ -30,7 +30,7 @@ public interface AsyncRunnable {
         return (c) -> c.onResult(null, null);
     }
 
-    void runUnsafe(SingleResultCallback<Void> callback); // NoResultCallback
+    void runInternal(SingleResultCallback<Void> callback); // NoResultCallback
 
     /**
      * Must be invoked at end of async chain. Wraps the lambda in an error
@@ -38,18 +38,18 @@ public interface AsyncRunnable {
      * @param callback the callback provided by the method the chain is used in
      */
     default void finish(final SingleResultCallback<Void> callback) {
+        final boolean[] callbackInvoked = {false};
         try {
-            this.runUnsafe((v, e) -> {
-                try {
-                    callback.onResult(v, e);
-                } catch (Throwable t) {
-                    throw new CallbackThrew("Unexpected Throwable thrown from callback: ", t);
-                }
+            this.runInternal((v, e) -> {
+                callbackInvoked[0] = true;
+                callback.onResult(v, e);
             });
-        } catch (CallbackThrew t) {
-            // ignore
         } catch (Throwable t) {
-            callback.onResult(null, t);
+            if (callbackInvoked[0]) {
+                throw t;
+            } else {
+                callback.onResult(null, t);
+            }
         }
     }
 
@@ -102,12 +102,12 @@ public interface AsyncRunnable {
      */
     default AsyncRunnable thenRun(final AsyncRunnable runnable) {
         return (c) -> {
-            this.finish((r, e) -> {
-                if (e != null) {
+            this.runInternal((r, e) -> {
+                if (e == null) {
+                    runnable.runInternal(c);
+                } else {
                     c.onResult(null, e);
-                    return;
                 }
-                runnable.finish(c);
             });
         };
     }
@@ -119,12 +119,12 @@ public interface AsyncRunnable {
      */
     default <T> AsyncSupplier<T> thenSupply(final AsyncSupplier<T> supplier) {
         return (c) -> {
-            this.finish((r, e) -> {
-                if (e != null) {
+            this.runInternal((r, e) -> {
+                if (e == null) {
+                    supplier.supplyInternal(c);
+                } else {
                     c.onResult(null, e);
-                    return;
                 }
-                supplier.finish(c);
             });
         };
     }
@@ -137,19 +137,21 @@ public interface AsyncRunnable {
     default AsyncRunnable onErrorRunIf(
             final Predicate<Throwable> errorCheck,
             final AsyncRunnable runnable) {
-        return (callback) -> this.finish((r, e) -> {
+        return (callback) -> this.runInternal((r, e) -> {
             if (e == null) {
                 callback.onResult(r, null);
                 return;
             }
+            boolean errorMatched;
             try {
-                boolean check = errorCheck.test(e);
-                if (check) {
-                    runnable.finish(callback);
-                    return;
-                }
+                errorMatched = errorCheck.test(e);
             } catch (Throwable t) {
+                t.addSuppressed(e);
                 callback.onResult(null, t);
+                return;
+            }
+            if (errorMatched) {
+                runnable.runInternal(callback);
                 return;
             }
             callback.onResult(r, e);
@@ -171,13 +173,5 @@ public interface AsyncRunnable {
                     cb -> runnable.finish(cb)
             ).get(callback);
         });
-    }
-
-    final class CallbackThrew extends AssertionError {
-        private static final long serialVersionUID = 875624357420415700L;
-
-        public CallbackThrew(final String s, final Throwable e) {
-            super(s, e);
-        }
     }
 }
