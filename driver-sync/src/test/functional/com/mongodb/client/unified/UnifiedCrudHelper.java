@@ -1202,6 +1202,12 @@ final class UnifiedCrudHelper {
                 case "metaField":
                     options.metaField(cur.getValue().asString().getValue());
                     break;
+                case "bucketMaxSpanSeconds":
+                    options.bucketMaxSpan(cur.getValue().asInt32().longValue(), TimeUnit.SECONDS);
+                    break;
+                case "bucketRoundingSeconds":
+                    options.bucketRounding(cur.getValue().asInt32().longValue(), TimeUnit.SECONDS);
+                    break;
                 case "granularity":
                     options.granularity(createTimeSeriesGranularity(cur.getValue().asString().getValue()));
                     break;
