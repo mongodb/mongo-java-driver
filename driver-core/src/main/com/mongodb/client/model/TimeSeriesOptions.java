@@ -32,7 +32,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  */
 public final class TimeSeriesOptions {
-    private static final String PARAMETER_TIME_UNIT = "timeUnit";
     private final String timeField;
     private String metaField;
     private TimeSeriesGranularity granularity;
@@ -99,8 +98,8 @@ public final class TimeSeriesOptions {
     /**
      * Sets the granularity of the time-series data.
      * <p>
-     * The default value is {@link TimeSeriesGranularity#SECONDS} if neither {@code bucketMaxSpan} nor {@code bucketRounding} is set.
-     * If any of these bucketing options are set, the granularity parameter cannot be set.
+     * The default value is {@link TimeSeriesGranularity#SECONDS} if neither {@link #bucketMaxSpan(Long, TimeUnit)} nor
+     * {@link #bucketRounding(Long, TimeUnit)} is set. If any of these bucketing options are set, the granularity parameter cannot be set.
      * </p>
      *
      * @param granularity the time-series granularity
@@ -125,7 +124,7 @@ public final class TimeSeriesOptions {
      */
     @Nullable
     public Long getBucketMaxSpan(final TimeUnit timeUnit) {
-        notNull(PARAMETER_TIME_UNIT, timeUnit);
+        notNull("timeUnit", timeUnit);
         if (bucketMaxSpanSeconds == null) {
             return null;
         }
@@ -135,9 +134,8 @@ public final class TimeSeriesOptions {
     /**
      * Sets the maximum time span between measurements in a bucket.
      * <p>
-     * The value of {@code bucketMaxSpan} must be the same as {@code bucketRounding},
-     * which also means that the options must either be both set or both unset.
-     * If you set the {@code bucketMaxSpan}, parameter, you can't set the granularity parameter.
+     * The value of {@code bucketMaxSpan} must be the same as {@link #bucketRounding(Long, TimeUnit)}, which also means that the options
+     * must either be both set or both unset. If you set the {@code bucketMaxSpan} parameter, you can't set the granularity parameter.
      * </p>
      *
      * @param bucketMaxSpan time span between measurements. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
@@ -149,7 +147,7 @@ public final class TimeSeriesOptions {
      * @see #getBucketMaxSpan(TimeUnit)
      */
     public TimeSeriesOptions bucketMaxSpan(@Nullable final Long bucketMaxSpan, final TimeUnit timeUnit) {
-        notNull(PARAMETER_TIME_UNIT, timeUnit);
+        notNull("timeUnit", timeUnit);
         if (bucketMaxSpan == null) {
             this.bucketMaxSpanSeconds = null;
         } else {
@@ -172,7 +170,7 @@ public final class TimeSeriesOptions {
      */
     @Nullable
     public Long getBucketRounding(final TimeUnit timeUnit) {
-        notNull(PARAMETER_TIME_UNIT, timeUnit);
+        notNull("timeUnit", timeUnit);
         if (bucketRoundingSeconds == null) {
             return null;
         }
@@ -182,9 +180,8 @@ public final class TimeSeriesOptions {
     /**
      * Specifies the time interval that determines the starting timestamp for a new bucket.
      * <p>
-     * The value of {@code bucketRounding} must be the same as {@code bucketMaxSpan},
-     * which also means that the options must either be both set or both unset.
-     * If you set the {@code bucketRounding}, parameter, you can't set the granularity parameter.
+     * The value of {@code bucketRounding} must be the same as {@link #bucketMaxSpan(Long, TimeUnit)}, which also means that the options
+     * must either be both set or both unset. If you set the {@code bucketRounding} parameter, you can't set the granularity parameter.
      * </p>
      *
      * @param bucketRounding time interval. After conversion to seconds using {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)},
@@ -196,7 +193,7 @@ public final class TimeSeriesOptions {
      * @see #getBucketRounding(TimeUnit)
      */
     public TimeSeriesOptions bucketRounding(@Nullable final Long bucketRounding, final TimeUnit timeUnit) {
-        notNull(PARAMETER_TIME_UNIT, timeUnit);
+        notNull("timeUnit", timeUnit);
         if (bucketRounding == null) {
             this.bucketRoundingSeconds = null;
         } else {

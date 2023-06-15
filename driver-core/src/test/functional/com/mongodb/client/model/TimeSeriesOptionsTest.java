@@ -26,6 +26,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -44,21 +45,27 @@ class TimeSeriesOptionsTest {
         timeSeriesOptions.granularity(TimeSeriesGranularity.SECONDS);
 
         //when & then
-        assertThrows(IllegalStateException.class, () -> timeSeriesOptions.bucketRounding(1L, TimeUnit.SECONDS));
-        assertThrows(IllegalStateException.class, () -> timeSeriesOptions.bucketMaxSpan(1L, TimeUnit.SECONDS));
+        assertAll(
+                () -> assertThrows(IllegalStateException.class, () -> timeSeriesOptions.bucketRounding(1L, TimeUnit.SECONDS)),
+                () -> assertThrows(IllegalStateException.class, () -> timeSeriesOptions.bucketMaxSpan(1L, TimeUnit.SECONDS))
+        );
     }
 
     @Test
     void shouldThrowErrorWhenGetWithNullParameter() {
-        assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.getBucketMaxSpan(null));
-        assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.getBucketRounding(null));
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.getBucketMaxSpan(null)),
+                () -> assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.getBucketRounding(null))
+        );
     }
 
     @ParameterizedTest
     @MethodSource("args")
     void shouldThrowErrorWhenInvalidArgumentProvided(@Nullable final Long valueToSet, @Nullable final TimeUnit timeUnit) {
-        assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.bucketRounding(valueToSet, timeUnit));
-        assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.bucketMaxSpan(valueToSet, timeUnit));
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.bucketRounding(valueToSet, timeUnit)),
+                () -> assertThrows(IllegalArgumentException.class, () -> timeSeriesOptions.bucketMaxSpan(valueToSet, timeUnit))
+        );
     }
 
     private static Stream<Arguments> args() {
