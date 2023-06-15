@@ -84,7 +84,10 @@ public final class Accumulators {
      * @mongodb.server.release 7.0
      */
     public static <InExpression, PExpression> BsonField percentile(final String fieldName, final InExpression inExpression,
-                                                                   final PExpression pExpression, final String method) {
+                                                                   final PExpression pExpression, final QuantileMethod method) {
+        notNull("fieldName", fieldName);
+        notNull("inExpression", inExpression);
+        notNull("method", method);
         return quantileAccumulator("$percentile", fieldName, inExpression, pExpression, method);
     }
 
@@ -101,7 +104,10 @@ public final class Accumulators {
      * @since 4.10
      * @mongodb.server.release 7.0
      */
-    public static <InExpression> BsonField median(final String fieldName, final InExpression inExpression,  final String method) {
+    public static <InExpression> BsonField median(final String fieldName, final InExpression inExpression,  final QuantileMethod method) {
+        notNull("fieldName", fieldName);
+        notNull("inExpression", inExpression);
+        notNull("method", method);
         return quantileAccumulator("$median", fieldName, inExpression, null, method);
     }
 
@@ -550,11 +556,11 @@ public final class Accumulators {
 
     private static <InExpression, PExpression> BsonField quantileAccumulator(final String quantileAccumulatorName,
                                                                              final String fieldName, final InExpression inExpression,
-                                                                             @Nullable final PExpression pExpression, final String method) {
-        Document document = new Document("input", notNull("inExpression", inExpression))
-                        .append("method", notNull("method", method));
+                                                                             @Nullable final PExpression pExpression, final QuantileMethod method) {
+        Document document = new Document("input", inExpression)
+                .append("method", method.toBsonValue());
         if (pExpression != null) {
-            document.append("p", notNull("pExpression", pExpression));
+            document.append("p", pExpression);
         }
         return accumulatorOperator(quantileAccumulatorName, fieldName, document);
     }

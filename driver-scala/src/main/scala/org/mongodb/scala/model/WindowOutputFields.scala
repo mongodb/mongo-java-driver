@@ -15,7 +15,11 @@
  */
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowOutputFields => JWindowOutputFields }
+import com.mongodb.client.model.{
+  MongoTimeUnit => JMongoTimeUnit,
+  QuantileMethod,
+  WindowOutputFields => JWindowOutputFields
+}
 import org.mongodb.scala.bson.conversions.Bson
 
 /**
@@ -105,7 +109,7 @@ object WindowOutputFields {
       path: String,
       inExpression: InExpression,
       pExpression: PExpression,
-      method: String,
+      method: QuantileMethod,
       window: Option[_ <: Window]
   ): WindowOutputField =
     JWindowOutputFields.percentile(path, inExpression, pExpression, method, window.orNull)
@@ -126,7 +130,7 @@ object WindowOutputFields {
   def median[InExpression](
       path: String,
       inExpression: InExpression,
-      method: String,
+      method: QuantileMethod,
       window: Option[_ <: Window]
   ): WindowOutputField =
     JWindowOutputFields.median(path, inExpression, method, window.orNull)

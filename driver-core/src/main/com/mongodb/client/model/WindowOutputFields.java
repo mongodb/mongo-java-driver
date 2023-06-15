@@ -129,7 +129,7 @@ public final class WindowOutputFields {
      * @mongodb.server.release 7.0
      */
     public static <InExpression, PExpression> WindowOutputField percentile(final String path, final InExpression inExpression,
-                                                                           final PExpression pExpression, final String method,
+                                                                           final PExpression pExpression, final QuantileMethod method,
                                                                            @Nullable final Window window) {
         notNull("path", path);
         notNull("inExpression", inExpression);
@@ -138,7 +138,7 @@ public final class WindowOutputFields {
         Map<ParamName, Object> args = new LinkedHashMap<>(3);
         args.put(ParamName.INPUT, inExpression);
         args.put(ParamName.P_LOWERCASE, pExpression);
-        args.put(ParamName.METHOD, method);
+        args.put(ParamName.METHOD, method.toBsonValue());
         return compoundParameterWindowFunction(path, "$percentile", args, window);
     }
 
@@ -156,14 +156,14 @@ public final class WindowOutputFields {
      * @mongodb.server.release 7.0
      */
     public static <InExpression> WindowOutputField median(final String path, final InExpression inExpression,
-                                                                           final String method,
-                                                                           @Nullable final Window window) {
+                                                          final QuantileMethod method,
+                                                          @Nullable final Window window) {
         notNull("path", path);
         notNull("inExpression", inExpression);
         notNull("method", method);
         Map<ParamName, Object> args = new LinkedHashMap<>(2);
         args.put(ParamName.INPUT, inExpression);
-        args.put(ParamName.METHOD, method);
+        args.put(ParamName.METHOD, method.toBsonValue());
         return compoundParameterWindowFunction(path, "$median", args, window);
     }
 

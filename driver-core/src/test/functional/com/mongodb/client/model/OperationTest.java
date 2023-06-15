@@ -20,14 +20,18 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.internal.connection.ServerHelper;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,9 +41,15 @@ import static com.mongodb.ClusterFixture.getAsyncBinding;
 import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
+import static com.mongodb.client.model.Aggregates.setWindowFields;
+import static com.mongodb.client.model.Aggregates.sort;
+import static com.mongodb.client.model.Sorts.ascending;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class OperationTest {
+
+    protected static final DocumentCodec DOCUMENT_DECODER = new DocumentCodec();
 
     @BeforeEach
     public void beforeEach() {
@@ -99,5 +109,17 @@ public abstract class OperationTest {
         List<BsonDocument> expectedResults = parseToList(expectedResultsAsString);
         List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
         assertEquals(expectedResults, results);
+    }
+
+    protected List<Object> aggregateWithWindowFields(@Nullable final Object partitionBy, final WindowOutputField output) {
+        List<Bson> stages = new ArrayList<>();
+        stages.add(setWindowFields(partitionBy, null, output));
+        stages.add(sort(ascending("num1")));
+
+        List<Document> actual = getCollectionHelper().aggregate(stages, DOCUMENT_DECODER);
+
+        return actual.stream()
+                .map(doc -> doc.get("result"))
+                .collect(toList());
     }
 }

@@ -228,9 +228,9 @@ final class TestWindowOutputFields {
                     final BsonValue expectedInExpression,
                     final Object pExpressionParameter,
                     final BsonValue expectedPExpression,
-                    final Window window) {
+                    @Nullable final Window window) {
         String expectedFunctionName = "$percentile";
-        String method = "approximate";
+        QuantileMethod method = QuantileMethod.approximate();
         BsonField expectedWindowOutputField = getExpectedBsonField(expectedFunctionName, expectedInExpression, expectedPExpression,
                 method, window);
 
@@ -253,9 +253,9 @@ final class TestWindowOutputFields {
     @MethodSource("medianWindowFunctionsSource")
     void median(final Object inExpressionParameter,
                 final BsonValue expectedInExpression,
-                final Window window) {
+                @Nullable final Window window) {
         String expectedFunctionName = "$median";
-        String method = "approximate";
+        QuantileMethod method = QuantileMethod.approximate();
         BsonField expectedWindowOutputField = getExpectedBsonField(expectedFunctionName, expectedInExpression,
                 null, method, window);
 
@@ -314,12 +314,12 @@ final class TestWindowOutputFields {
 
     private static BsonField getExpectedBsonField(final String expectedFunctionName, final BsonValue expectedInExpression,
                                                   final @Nullable BsonValue expectedPExpression,
-                                                  final String method, final @Nullable Window window) {
+                                                  final QuantileMethod method, final @Nullable Window window) {
         BsonDocument expectedFunctionDoc = new BsonDocument("input", expectedInExpression);
         if (expectedPExpression != null) {
             expectedFunctionDoc.append("p", expectedPExpression);
         }
-        expectedFunctionDoc.append("method", new BsonString(method));
+        expectedFunctionDoc.append("method", method.toBsonValue());
         BsonDocument expectedFunctionAndWindow = new BsonDocument(expectedFunctionName, expectedFunctionDoc);
         if (window != null) {
             expectedFunctionAndWindow.append("window", window.toBsonDocument());

@@ -17,7 +17,7 @@
 package org.mongodb.scala.model
 
 import scala.collection.JavaConverters._
-import com.mongodb.client.model.{ Accumulators => JAccumulators }
+import com.mongodb.client.model.{ Accumulators => JAccumulators, QuantileMethod }
 import org.mongodb.scala.bson.conversions.Bson
 
 /**
@@ -75,7 +75,7 @@ object Accumulators {
       fieldName: String,
       inExpression: InExpression,
       pExpression: PExpression,
-      method: String
+      method: QuantileMethod
   ): BsonField =
     JAccumulators.percentile(fieldName, inExpression, pExpression, method)
 
@@ -95,7 +95,7 @@ object Accumulators {
   def median[InExpression](
       fieldName: String,
       inExpression: InExpression,
-      method: String
+      method: QuantileMethod
   ): BsonField =
     JAccumulators.median(fieldName, inExpression, method)
 
