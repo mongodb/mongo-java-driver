@@ -114,7 +114,6 @@ public abstract class OperationTest {
     protected List<Object> aggregateWithWindowFields(@Nullable final Object partitionBy, final WindowOutputField output) {
         List<Bson> stages = new ArrayList<>();
         stages.add(setWindowFields(partitionBy, null, output));
-        stages.add(sort(ascending("num1")));
 
         List<Document> actual = getCollectionHelper().aggregate(stages, DOCUMENT_DECODER);
 

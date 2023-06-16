@@ -28,8 +28,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -52,26 +50,33 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
 
-    private static Stream<Arguments> groupWithPercentileSource() {
+    private static Stream<Arguments> groupWithQuantileSource() {
         return Stream.of(
-                Arguments.of(percentile("sat_95", "$x",  new double[]{0.95}, QuantileMethod.approximate()), asList(3.0), asList(1.0)),
-                Arguments.of(percentile("sat_95", "$x",  new double[]{0.95, 0.3}, QuantileMethod.approximate()), asList(3.0, 2.0), asList(1.0, 1.0)),
+                Arguments.of(percentile("sat_95", "$x", new double[]{0.95}, QuantileMethod.approximate()), asList(3.0), asList(1.0)),
+                Arguments.of(percentile("sat_95", "$x", new double[]{0.95, 0.3}, QuantileMethod.approximate()), asList(3.0, 2.0),
+                        asList(1.0, 1.0)),
                 Arguments.of(median("sat_95", "$x", QuantileMethod.approximate()), 2.0d, 1.0d)
         );
     }
+
     @ParameterizedTest
-    @MethodSource("groupWithPercentileSource")
-    public void shouldGroupWithPercentile(final BsonField quantileAccumulator, final Object expectedGroup1, final Object expectedGroup2) {
+    @MethodSource("groupWithQuantileSource")
+    public void shouldGroupWithQuantile(final BsonField quantileAccumulator,
+                                        final Object expectedGroup1,
+                                        final Object expectedGroup2) {
         //given
         assumeTrue(serverVersionAtLeast(7, 0));
-        getCollectionHelper().insertDocuments("[\n"
-                + "   { _id: 1, x: 1, z: false },\n"
-                + "   { _id: 2, x: 2, z: true },\n"
-                + "   { _id: 3, x: 3, z: true },\n"
-                + "]");
+        Document[] original = new Document[]{
+                new Document("x", 1).append("z", false),
+                new Document("x", 2).append("z", true),
+                new Document("x", 3).append("z", true)
+        };
+        getCollectionHelper().insertDocuments(original);
+
         //when
         List<Document> results = getCollectionHelper().aggregate(Collections.singletonList(
                 group(new Document("gid", "$z"), quantileAccumulator)), DOCUMENT_DECODER);
+
         //then
         assertThat(results, hasSize(2));
 
@@ -88,36 +93,35 @@ public class AggregatesTest extends OperationTest {
         assertEquals(expectedGroup2, result);
     }
 
-    private static Stream<Arguments> setWindowFieldWithQuantilesSource() {
+    private static Stream<Arguments> setWindowFieldWithQuantileSource() {
         return Stream.of(
                 Arguments.of(null,
-                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9},  QuantileMethod.approximate(), documents(UNBOUNDED, UNBOUNDED)),
+                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, QuantileMethod.approximate(),
+                                documents(UNBOUNDED, UNBOUNDED)),
                         asList(asList(1.0, 3.0), asList(1.0, 3.0), asList(1.0, 3.0))),
                 Arguments.of("$partitionId",
-                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9},  QuantileMethod.approximate(), null),
+                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, QuantileMethod.approximate(), null),
                         asList(asList(1.0, 2.0), asList(1.0, 2.0), asList(3.0, 3.0))),
                 Arguments.of(null,
-                        WindowOutputFields.median("result", "$num1",  QuantileMethod.approximate(), documents(UNBOUNDED, UNBOUNDED)),
+                        WindowOutputFields.median("result", "$num1", QuantileMethod.approximate(), documents(UNBOUNDED, UNBOUNDED)),
                         asList(2.0, 2.0, 2.0)),
                 Arguments.of("$partitionId",
-                        WindowOutputFields.median("result", "$num1",  QuantileMethod.approximate(), null),
+                        WindowOutputFields.median("result", "$num1", QuantileMethod.approximate(), null),
                         asList(1.0, 1.0, 3.0))
         );
     }
+
     @ParameterizedTest
-    @MethodSource("setWindowFieldWithQuantilesSource")
-    public void shouldSetWindowFieldWithQuantiles(@Nullable final Object partitionBy,
-                                                  final WindowOutputField output, final List<Object> expectedFieldValues){
+    @MethodSource("setWindowFieldWithQuantileSource")
+    public void shouldSetWindowFieldWithQuantile(@Nullable final Object partitionBy,
+                                                 final WindowOutputField output,
+                                                 final List<Object> expectedFieldValues) {
         //given
         assumeTrue(serverVersionAtLeast(7, 0));
-        ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId());
         Document[] original = new Document[]{
-                new Document("partitionId", 1)
-                        .append("num1", 1),
-                new Document("partitionId", 1)
-                        .append("num1", 2),
-                new Document("partitionId", 2)
-                        .append("num1", 3)
+                new Document("partitionId", 1).append("num1", 1),
+                new Document("partitionId", 1).append("num1", 2),
+                new Document("partitionId", 2).append("num1", 3)
         };
         getCollectionHelper().insertDocuments(original);
 

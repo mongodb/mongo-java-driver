@@ -20,7 +20,7 @@ import org.bson.BsonValue;
 import java.util.Objects;
 
 final class QuantileMethodBson implements ApproximateQuantileMethod {
-    private BsonValue bsonValue;
+    private final BsonValue bsonValue;
 
     QuantileMethodBson(final BsonValue bsonValue) {
         this.bsonValue = bsonValue;

@@ -25,7 +25,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * This interface represents a quantile method used in quantile accumulators of the {@code $group} and
  * {@code $setWindowFields} stages.
  * <p>
- * It provides methods for creating and converting quantile methods to BSON values.
+ * It provides methods for creating and converting quantile methods to {@link BsonValue}.
  * </p>
  *
  * @mongodb.server.release 7.0
