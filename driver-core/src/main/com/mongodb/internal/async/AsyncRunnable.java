@@ -24,7 +24,10 @@ import java.util.function.Supplier;
 
 /**
  * See tests for usage (AsyncFunctionsTest).
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time
  */
+@FunctionalInterface
 public interface AsyncRunnable extends AsyncSupplier<Void> {
 
     static AsyncRunnable beginAsync() {

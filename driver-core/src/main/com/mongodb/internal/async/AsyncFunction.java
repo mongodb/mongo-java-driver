@@ -19,8 +19,11 @@ package com.mongodb.internal.async;
 import com.mongodb.lang.Nullable;
 
 /**
+ * This class is not part of the public API and may be removed or changed at any time
+ *
  * @see AsyncRunnable
  */
+@FunctionalInterface
 public interface AsyncFunction<T, R> {
     void internal(@Nullable T value, SingleResultCallback<R> callback);
 }

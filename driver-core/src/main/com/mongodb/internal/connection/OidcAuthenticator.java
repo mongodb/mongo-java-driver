@@ -201,7 +201,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         String accessToken = getValidCachedAccessToken();
         if (accessToken != null) {
             try {
-                authenticateUsing(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken));
+                authenticateUsingFunction(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken));
             } catch (MongoSecurityException e) {
                 if (triggersRetry(e)) {
                     authLock(connection, connectionDescription);
@@ -223,7 +223,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         String accessToken = getValidCachedAccessToken();
         if (accessToken != null) {
             beginAsync().thenRun(c -> {
-                authenticateAsyncUsing(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken), c);
+                authenticateUsingFunctionAsync(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken), c);
             }).onErrorIf(e -> triggersRetry(e), c -> {
                 authLockAsync(connection, connectionDescription, c);
             }).finish(callback);
@@ -244,14 +244,14 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return false;
     }
 
-    private void authenticateAsyncUsing(final InternalConnection connection,
+    private void authenticateUsingFunctionAsync(final InternalConnection connection,
             final ConnectionDescription connectionDescription, final Function<byte[], byte[]> evaluateChallengeFunction,
             final SingleResultCallback<Void> callback) {
         this.evaluateChallengeFunction = evaluateChallengeFunction;
         super.authenticateAsync(connection, connectionDescription, callback);
     }
 
-    private void authenticateUsing(
+    private void authenticateUsingFunction(
             final InternalConnection connection,
             final ConnectionDescription connectionDescription,
             final Function<byte[], byte[]> evaluateChallengeFunction) {
@@ -264,7 +264,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
             while (true) {
                 try {
-                    authenticateUsing(connection, description, (challenge) -> evaluate(challenge));
+                    authenticateUsingFunction(connection, description, (challenge) -> evaluate(challenge));
                     break;
                 } catch (MongoSecurityException e) {
                     if (triggersRetry(e) && shouldRetryHandler()) {
@@ -281,7 +281,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         fallbackState = FallbackState.INITIAL;
         Locks.withLockAsync(getMongoCredentialWithCache().getOidcLock(),
                 beginAsync().thenRunRetryingWhile(
-                        c -> authenticateAsyncUsing(connection, description, (challenge) -> evaluate(challenge), c),
+                        c -> authenticateUsingFunctionAsync(connection, description, (challenge) -> evaluate(challenge), c),
                         e -> triggersRetry(e) && shouldRetryHandler()
                 ), callback);
     }

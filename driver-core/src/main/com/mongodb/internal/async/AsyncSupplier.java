@@ -19,8 +19,11 @@ package com.mongodb.internal.async;
 import java.util.function.Predicate;
 
 /**
+ * This class is not part of the public API and may be removed or changed at any time
+ *
  * @see AsyncRunnable
  */
+@FunctionalInterface
 public interface AsyncSupplier<T> {
 
     void internal(SingleResultCallback<T> callback);
