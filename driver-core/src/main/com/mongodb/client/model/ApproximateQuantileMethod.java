@@ -21,6 +21,7 @@ import com.mongodb.annotations.Sealed;
 /**
  * @see QuantileMethod#approximate()
  * @since 4.10
+ * @mongodb.server.release 7.0
  */
 @Sealed
 public interface ApproximateQuantileMethod extends QuantileMethod {

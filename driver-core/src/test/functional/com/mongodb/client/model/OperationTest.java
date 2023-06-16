@@ -43,7 +43,6 @@ import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Aggregates.setWindowFields;
 import static com.mongodb.client.model.Aggregates.sort;
-import static com.mongodb.client.model.Sorts.ascending;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -111,9 +110,12 @@ public abstract class OperationTest {
         assertEquals(expectedResults, results);
     }
 
-    protected List<Object> aggregateWithWindowFields(@Nullable final Object partitionBy, final WindowOutputField output) {
+    protected List<Object> aggregateWithWindowFields(@Nullable final Object partitionBy,
+                                                     final WindowOutputField output,
+                                                     final Bson sortSpecification) {
         List<Bson> stages = new ArrayList<>();
         stages.add(setWindowFields(partitionBy, null, output));
+        stages.add(sort(sortSpecification));
 
         List<Document> actual = getCollectionHelper().aggregate(stages, DOCUMENT_DECODER);
 

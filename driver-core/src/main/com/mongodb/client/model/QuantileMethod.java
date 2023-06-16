@@ -28,12 +28,12 @@ import static com.mongodb.assertions.Assertions.notNull;
  * It provides methods for creating and converting quantile methods to {@link BsonValue}.
  * </p>
  *
- * @mongodb.server.release 7.0
  * @see Accumulators#percentile(String, Object, Object, QuantileMethod)
  * @see Accumulators#median(String, Object, QuantileMethod)
  * @see WindowOutputFields#percentile(String, Object, Object, QuantileMethod, Window)
  * @see WindowOutputFields#median(String, Object, QuantileMethod, Window)
  * @since 4.10
+ * @mongodb.server.release 7.0
  */
 @Sealed
 public interface QuantileMethod {

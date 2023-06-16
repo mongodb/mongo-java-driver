@@ -40,6 +40,7 @@ import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.group;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
 import static com.mongodb.client.model.Windows.documents;
 import static java.util.Arrays.asList;
@@ -126,7 +127,7 @@ public class AggregatesTest extends OperationTest {
         getCollectionHelper().insertDocuments(original);
 
         //when
-        List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, output);
+        List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, output, ascending("num1"));
 
         //then
         Assertions.assertEquals(actualFieldValues, expectedFieldValues);
