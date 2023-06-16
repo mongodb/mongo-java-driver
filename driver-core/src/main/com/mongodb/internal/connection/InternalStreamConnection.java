@@ -78,6 +78,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
@@ -383,7 +384,7 @@ public class InternalStreamConnection implements InternalConnection {
         try {
             return sendAndReceiveInternal.get();
         } catch (MongoCommandException e) {
-            if (triggersReauthentication(e) && Authenticator.shouldAuthenticate(authenticator, this.description)) {
+            if (triggersReauthentication(e) && shouldAuthenticate(authenticator, this.description)) {
                 authenticated.set(false);
                 authenticator.reauthenticate(this);
                 authenticated.set(true);
@@ -400,8 +401,8 @@ public class InternalStreamConnection implements InternalConnection {
 
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
                 message, decoder, sessionContext, requestContext, operationContext, c);
-        sendAndReceiveAsyncInternal.onErrorSupplyIf(e ->
-                        triggersReauthentication(e) && Authenticator.shouldAuthenticate(authenticator, this.description), beginAsync()
+        sendAndReceiveAsyncInternal.onErrorIf(e ->
+                        triggersReauthentication(e) && shouldAuthenticate(authenticator, this.description), beginAsync()
                 .thenRun(c -> {
                     authenticated.set(false);
                     authenticator.reauthenticateAsync(this, c);

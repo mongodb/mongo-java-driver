@@ -15,15 +15,14 @@
  */
 package org.bson.codecs.kotlin
 
+import java.lang.reflect.Type
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
-import java.lang.reflect.Type
 
 /** A Kotlin reflection based Codec Provider for data classes */
 public class DataClassCodecProvider : CodecProvider {
-    override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry): Codec<T>? =
-        get(clazz, emptyList(), registry)
+    override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry): Codec<T>? = get(clazz, emptyList(), registry)
 
     override fun <T : Any> get(clazz: Class<T>, typeArguments: List<Type>, registry: CodecRegistry): Codec<T>? =
         DataClassCodec.create(clazz.kotlin, registry, typeArguments)

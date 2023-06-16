@@ -224,7 +224,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         if (accessToken != null) {
             beginAsync().thenRun(c -> {
                 authenticateAsyncUsing(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken), c);
-            }).onErrorRunIf(e -> triggersRetry(e), c -> {
+            }).onErrorIf(e -> triggersRetry(e), c -> {
                 authLockAsync(connection, connectionDescription, c);
             }).finish(callback);
         } else {

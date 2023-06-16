@@ -20,37 +20,15 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
- * See AsyncRunnableTest for usage
+ * See tests for usage (AsyncFunctionsTest).
  */
-public interface AsyncRunnable {
+public interface AsyncRunnable extends AsyncSupplier<Void> {
 
     static AsyncRunnable beginAsync() {
         return (c) -> c.onResult(null, null);
-    }
-
-    void runInternal(SingleResultCallback<Void> callback); // NoResultCallback
-
-    /**
-     * Must be invoked at end of async chain. Wraps the lambda in an error
-     * handler.
-     * @param callback the callback provided by the method the chain is used in
-     */
-    default void finish(final SingleResultCallback<Void> callback) {
-        final boolean[] callbackInvoked = {false};
-        try {
-            this.runInternal((v, e) -> {
-                callbackInvoked[0] = true;
-                callback.onResult(v, e);
-            });
-        } catch (Throwable t) {
-            if (callbackInvoked[0]) {
-                throw t;
-            } else {
-                callback.onResult(null, t);
-            }
-        }
     }
 
     /**
@@ -97,14 +75,14 @@ public interface AsyncRunnable {
     }
 
     /**
-     * @param runnable The async runnable to run after this one
-     * @return the composition of this and the runnable
+     * @param runnable The async runnable to run after this runnable
+     * @return the composition of this runnable and the runnable, a runnable
      */
     default AsyncRunnable thenRun(final AsyncRunnable runnable) {
         return (c) -> {
-            this.runInternal((r, e) -> {
+            this.internal((r, e) -> {
                 if (e == null) {
-                    runnable.runInternal(c);
+                    runnable.internal(c);
                 } else {
                     c.onResult(null, e);
                 }
@@ -113,49 +91,49 @@ public interface AsyncRunnable {
     }
 
     /**
-     * @param supplier The supplier to supply using after this runnable.
-     * @return the composition of this runnable and the supplier
-     * @param <T> The return type of the supplier
+     * @param condition the condition to check
+     * @param runnable The async runnable to run after this runnable,
+     *                 if and only if the condition is met
+     * @return the composition of this runnable and the runnable, a runnable
      */
-    default <T> AsyncSupplier<T> thenSupply(final AsyncSupplier<T> supplier) {
+    default AsyncRunnable thenRunIf(final Supplier<Boolean> condition, final AsyncRunnable runnable) {
+        return (callback) -> {
+            this.internal((r, e) -> {
+                if (e != null) {
+                    callback.onResult(null, e);
+                    return;
+                }
+                boolean matched;
+                try {
+                    matched = condition.get();
+                } catch (Throwable t) {
+                    callback.onResult(null, t);
+                    return;
+                }
+                if (matched) {
+                    runnable.internal(callback);
+                } else {
+                    callback.onResult(null, null);
+                }
+            });
+        };
+    }
+
+    /**
+     * @param supplier The supplier to supply using after this runnable
+     * @return the composition of this runnable and the supplier, a supplier
+     * @param <R> The return type of the resulting supplier
+     */
+    default <R> AsyncSupplier<R> thenSupply(final AsyncSupplier<R> supplier) {
         return (c) -> {
-            this.runInternal((r, e) -> {
+            this.internal((r, e) -> {
                 if (e == null) {
-                    supplier.supplyInternal(c);
+                    supplier.internal(c);
                 } else {
                     c.onResult(null, e);
                 }
             });
         };
-    }
-
-    /**
-     * @param errorCheck A check, comparable to a catch-if/otherwise-rethrow
-     * @param runnable   The branch to execute if the error matches
-     * @return The composition of this, and the conditional branch
-     */
-    default AsyncRunnable onErrorRunIf(
-            final Predicate<Throwable> errorCheck,
-            final AsyncRunnable runnable) {
-        return (callback) -> this.runInternal((r, e) -> {
-            if (e == null) {
-                callback.onResult(r, null);
-                return;
-            }
-            boolean errorMatched;
-            try {
-                errorMatched = errorCheck.test(e);
-            } catch (Throwable t) {
-                t.addSuppressed(e);
-                callback.onResult(null, t);
-                return;
-            }
-            if (errorMatched) {
-                runnable.runInternal(callback);
-                return;
-            }
-            callback.onResult(r, e);
-        });
     }
 
     /**
@@ -166,11 +144,11 @@ public interface AsyncRunnable {
      */
     default AsyncRunnable thenRunRetryingWhile(
             final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
-        return this.thenRun(callback -> {
+        return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
                     new RetryState(),
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
-                    cb -> runnable.finish(cb)
+                    cb -> runnable.finish(cb) // finish is required here, to handle exceptions
             ).get(callback);
         });
     }
