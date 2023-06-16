@@ -167,6 +167,12 @@ data class DataClassWithObjectIdAndBsonDocument(
     @Contextual val bsonDocument: BsonDocument
 )
 
+@Serializable
+data class DataClassWithOptionalObjectIdAndBsonDocument(
+    @Contextual val objectId: ObjectId?,
+    @Contextual val bsonDocument: BsonDocument?
+)
+
 @Serializable sealed class DataClassSealed
 
 @Serializable data class DataClassSealedA(val a: String) : DataClassSealed()

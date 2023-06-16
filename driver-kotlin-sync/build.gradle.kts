@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.jetbrains.kotlin.jvm")
     `java-library`
+    kotlin("plugin.serialization")
 
     // Test based plugins
     id("com.diffplug.spotless")
@@ -72,7 +73,7 @@ dependencies {
     integrationTestImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     integrationTestImplementation(project(path = ":driver-sync"))
     integrationTestImplementation(project(path = ":driver-core"))
-    integrationTestImplementation(project(path = ":bson"))
+    integrationTestImplementation(project(path = ":bson-kotlinx"))
 }
 
 kotlin { explicitApi() }
