@@ -19,8 +19,8 @@ import com.mongodb.annotations.Sealed
 import com.mongodb.client.model.{ QuantileMethod => JQuantileMethod }
 
 /**
- * This interface represents a quantile method used in quantile accumulators of the `$group` and
- * `$setWindowFields` stages.
+ * This interface represents a quantile method used in quantile accumulators of the `\$group` and
+ * `\$setWindowFields` stages.
  * <p>
  * It provides methods for creating and converting quantile methods to `BsonValue`.
  * </p>
