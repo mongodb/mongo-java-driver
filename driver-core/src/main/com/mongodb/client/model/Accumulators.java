@@ -87,6 +87,7 @@ public final class Accumulators {
                                                                    final PExpression pExpression, final QuantileMethod method) {
         notNull("fieldName", fieldName);
         notNull("inExpression", inExpression);
+        notNull("pExpression", inExpression);
         notNull("method", method);
         return quantileAccumulator("$percentile", fieldName, inExpression, pExpression, method);
     }
