@@ -58,7 +58,6 @@ public interface QuantileMethod {
      *  QuantileMethod method1 = QuantileMethod.approximate();
      *  QuantileMethod method2 = QuantileMethod.of(new BsonString("approximate"));
      * }</pre>
-     * </p>
      *
      * @param method A {@link BsonValue} representing the required {@link QuantileMethod}.
      * @return The requested {@link QuantileMethod}.
