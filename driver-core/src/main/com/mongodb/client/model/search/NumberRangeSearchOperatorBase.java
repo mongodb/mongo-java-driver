@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 
 /**
  * A base for a {@link NumberRangeSearchOperator} which allows creating instances of this operator.
@@ -26,7 +26,7 @@ import com.mongodb.annotations.Evolving;
  * @see SearchOperator#numberRange(Iterable)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface NumberRangeSearchOperatorBase {
     /**

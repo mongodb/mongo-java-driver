@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 
 /**
  * A representation of a {@link CompoundSearchOperator} that allows changing
@@ -26,7 +26,7 @@ import com.mongodb.annotations.Evolving;
  * @see CompoundSearchOperatorBase#filter(Iterable)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface FilterCompoundSearchOperator extends CompoundSearchOperator {
     @Override

@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonString;
@@ -35,7 +35,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.atlas.manual atlas-search/scoring/#expressions Expressions for the function score modifier
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface SearchScoreExpression extends Bson {
     /**

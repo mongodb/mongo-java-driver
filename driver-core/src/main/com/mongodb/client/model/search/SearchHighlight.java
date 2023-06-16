@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Projections;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
@@ -36,7 +36,7 @@ import static com.mongodb.internal.client.model.Util.combineToBsonValue;
  * @mongodb.atlas.manual atlas-search/highlighting/ Highlighting
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface SearchHighlight extends Bson {
     /**

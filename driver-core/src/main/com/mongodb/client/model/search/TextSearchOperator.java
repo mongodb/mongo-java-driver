@@ -16,14 +16,14 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 
 /**
  * @see SearchOperator#text(SearchPath, String)
  * @see SearchOperator#text(Iterable, Iterable)
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface TextSearchOperator extends SearchOperator {
     @Override

@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import org.bson.conversions.Bson;
 
@@ -28,7 +28,7 @@ import org.bson.conversions.Bson;
  * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search syntax
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface SearchOptions extends Bson {
     /**

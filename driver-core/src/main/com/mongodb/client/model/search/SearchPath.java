@@ -16,7 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Sealed;
 import com.mongodb.internal.client.model.Util;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -36,7 +36,7 @@ import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
  * @mongodb.atlas.manual atlas-search/path-construction/ Path
  * @since 4.7
  */
-@Evolving
+@Sealed
 @Beta(Beta.Reason.CLIENT)
 public interface SearchPath extends Bson {
     /**
