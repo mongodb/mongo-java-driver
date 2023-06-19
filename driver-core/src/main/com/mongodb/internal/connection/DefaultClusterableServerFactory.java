@@ -29,6 +29,8 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.connection.grpc.GrpcConnectionPool;
+import com.mongodb.internal.connection.grpc.GrpcStreamFactory;
 import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -94,10 +96,13 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                 new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, applicationName,
                         mongoDriverInformation, emptyList(), loggerSettings, null, serverApi, inetAddressResolver),
                 clusterMode, serverApi, sdamProvider);
-        ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
-                new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi, inetAddressResolver),
-                connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
+        InternalStreamConnectionFactory internalStreamConnectionFactory = new InternalStreamConnectionFactory(
+                clusterMode, streamFactory, credential, applicationName,
+                mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi, inetAddressResolver);
+        ConnectionPool connectionPool = streamFactory instanceof GrpcStreamFactory
+                ? new GrpcConnectionPool(serverId, internalStreamConnectionFactory, connectionPoolSettings, false)
+                : new DefaultConnectionPool(
+                        serverId, internalStreamConnectionFactory, connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
         ServerListener serverListener = singleServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,
                 connectionPool, clusterMode);

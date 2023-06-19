@@ -40,7 +40,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -71,6 +70,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
+import static com.mongodb.internal.connection.netty.NettyChannelOptionsSetter.configureNettyChannelOptions;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -187,17 +187,7 @@ final class NettyStream implements Stream {
             bootstrap.group(workerGroup);
             bootstrap.channel(socketChannelClass);
 
-            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
-            bootstrap.option(ChannelOption.TCP_NODELAY, true);
-            bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-
-            if (settings.getReceiveBufferSize() > 0) {
-                bootstrap.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());
-            }
-            if (settings.getSendBufferSize() > 0) {
-                bootstrap.option(ChannelOption.SO_SNDBUF, settings.getSendBufferSize());
-            }
-            bootstrap.option(ChannelOption.ALLOCATOR, allocator);
+            configureNettyChannelOptions(settings, allocator, bootstrap::option);
 
             bootstrap.handler(new ChannelInitializer<SocketChannel>() {
                 @Override

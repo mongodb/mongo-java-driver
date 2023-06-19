@@ -34,7 +34,7 @@ class StreamFactoryHelperTest {
     @Test
     void streamFactoryFactoryIsNullWithDefaultSettings() {
         MongoClientSettings settings = MongoClientSettings.builder().build();
-        assertNull(StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings));
+        assertNull(StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings, null));
     }
 
     @Test
@@ -43,7 +43,7 @@ class StreamFactoryHelperTest {
         MongoClientSettings settings = MongoClientSettings.builder()
                 .streamFactoryFactory(streamFactoryFactory)
                 .build();
-        assertEquals(streamFactoryFactory, StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings));
+        assertEquals(streamFactoryFactory, StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings, null));
     }
 
     @Test
@@ -57,6 +57,6 @@ class StreamFactoryHelperTest {
                 .transportSettings(nettyTransportSettings)
                 .build();
         assertEquals(NettyStreamFactoryFactory.builder().applySettings(nettyTransportSettings).build(),
-                StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings));
+                StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings, null));
     }
 }

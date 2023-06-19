@@ -31,17 +31,17 @@ public final class MessageSettings {
      * <a href="https://www.mongodb.com/docs/current/reference/command/hello/#mongodb-data-hello.maxBsonObjectSize">
      * {@code maxBsonObjectSize}</a>.
      */
-    private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
+    public static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     /**
      * <a href="https://www.mongodb.com/docs/current/reference/command/hello/#mongodb-data-hello.maxMessageSizeBytes">
      * {@code maxMessageSizeBytes}</a>.
      */
-    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+    public static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
     /**
      * <a href="https://www.mongodb.com/docs/current/reference/command/hello/#mongodb-data-hello.maxWriteBatchSize">
      * {@code maxWriteBatchSize}</a>.
      */
-    private static final int DEFAULT_MAX_BATCH_COUNT = 1000;
+    public static final int DEFAULT_MAX_BATCH_COUNT = 1000;
 
     private final int maxDocumentSize;
     private final int maxMessageSize;

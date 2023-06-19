@@ -47,7 +47,9 @@ public final class TransactionContext<C extends ReferenceCounted> extends Abstra
     }
 
     public boolean isConnectionPinningRequired() {
-        return clusterType == LOAD_BALANCED;
+        return clusterType == LOAD_BALANCED
+                // VAKOTODO somehow check if gRPC is being used. For now, we assume it is always used
+                || Boolean.valueOf(true);
     }
 
     @Override

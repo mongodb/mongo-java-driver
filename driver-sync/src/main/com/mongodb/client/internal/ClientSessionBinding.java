@@ -131,7 +131,9 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         if (TransactionContext.get(session) == null) {
             ConnectionSource source = wrappedConnectionSourceSupplier.get();
             ClusterType clusterType = source.getServerDescription().getClusterType();
-            if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
+            if (clusterType == SHARDED || clusterType == LOAD_BALANCED
+                    // VAKOTODO somehow check if gRPC is being used. For now, we assume it is always used
+                    || Boolean.valueOf(true)) {
                 TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
                 session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
                 transactionContext.release();  // The session is responsible for retaining a reference to the context

@@ -30,9 +30,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * An instance of an implementation must be created in the {@linkplain #invalidate(Throwable) paused} state.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.</p>
  */
 @ThreadSafe
-interface ConnectionPool extends Closeable {
+public interface ConnectionPool extends Closeable {
     /**
      * Is equivalent to {@link #get(OperationContext, long, TimeUnit)} called with {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
      */

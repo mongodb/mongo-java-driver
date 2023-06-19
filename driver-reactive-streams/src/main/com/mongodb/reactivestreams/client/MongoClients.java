@@ -115,7 +115,7 @@ public final class MongoClients {
         if (settings.getSocketSettings().getProxySettings().isProxyEnabled()) {
             throw new MongoClientException("Proxy is not supported for reactive clients");
         }
-        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings);
+        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings, mongoDriverInformation);
 
         if (streamFactoryFactory == null) {
             if (settings.getSslSettings().isEnabled()) {

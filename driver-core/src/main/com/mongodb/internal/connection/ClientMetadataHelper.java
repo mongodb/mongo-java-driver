@@ -16,9 +16,12 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.build.MongoDriverVersion;
+import com.mongodb.internal.connection.grpc.SharingGrpcStreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
@@ -35,6 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
@@ -73,6 +77,21 @@ public final class ClientMetadataHelper {
             }
         }
         return false;
+    }
+
+    /**
+     * @return The configured {@link StreamFactoryFactory}, which may or may not be the same as {@code streamFactoryFactory}.
+     * Returns {@code null} iff {@code streamFactoryFactory} is {@code null}.
+     */
+    @Nullable
+    public static StreamFactoryFactory configureClientMetadataDocument(
+            @Nullable final StreamFactoryFactory streamFactoryFactory,
+            final MongoClientSettings mongoClientSettings,
+            @Nullable final MongoDriverInformation mongoDriverInformation) {
+        return mongoClientSettings.isGrpc()
+                ? ((SharingGrpcStreamFactoryFactory) assertNotNull(streamFactoryFactory)).withClientMetadataDocument(
+                        createClientMetadataDocument(mongoClientSettings.getApplicationName(), mongoDriverInformation))
+                : streamFactoryFactory;
     }
 
     public static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,

@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
@@ -219,6 +220,8 @@ public final class ClusterSettings {
 
         /**
          * Sets the required replica set name for the cluster.
+         * <p>
+         * Must be {@code null} if {@linkplain MongoClientSettings#isGrpc() gRPC is enabled}.</p>
          *
          * @param requiredReplicaSetName the required replica set name.
          * @return this

@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * Subclass of {@link MongoException} representing a network-related exception
  *
@@ -33,7 +35,7 @@ public class MongoSocketException extends MongoException {
      * @param msg the message
      * @param e the cause
      */
-    public MongoSocketException(final String msg, final ServerAddress serverAddress, final Throwable e) {
+    public MongoSocketException(final String msg, final ServerAddress serverAddress, @Nullable final Throwable e) {
         super(-2, msg, e);
         this.serverAddress = serverAddress;
     }

@@ -28,7 +28,9 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TransportSettings;
+import com.mongodb.connection.grpc.GrpcStreamFactoryFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.grpc.SharingGrpcStreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -50,7 +52,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -92,6 +96,9 @@ public final class MongoClientSettings {
     private final ReadConcern readConcern;
     private final MongoCredential credential;
     private final TransportSettings transportSettings;
+    /**
+     * {@linkplain StreamFactoryFactoryWrapping#assertRequiresNoFurtherWrapping(StreamFactoryFactory) Requires no further wrapping}.
+     */
     private final StreamFactoryFactory streamFactoryFactory;
     private final List<CommandListener> commandListeners;
     private final CodecRegistry codecRegistry;
@@ -213,6 +220,9 @@ public final class MongoClientSettings {
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private TransportSettings transportSettings;
+        /**
+         * {@linkplain StreamFactoryFactoryWrapping#wrap(StreamFactoryFactory, ConnectionPoolSettings) Requires wrapping}.
+         */
         private StreamFactoryFactory streamFactoryFactory;
         private List<CommandListener> commandListeners = new ArrayList<>();
 
@@ -257,7 +267,7 @@ public final class MongoClientSettings {
             dnsClient = settings.getDnsClient();
             inetAddressResolver = settings.getInetAddressResolver();
             transportSettings = settings.getTransportSettings();
-            streamFactoryFactory = settings.getStreamFactoryFactory();
+            streamFactoryFactory = StreamFactoryFactoryWrapping.unwrap(settings.getStreamFactoryFactory());
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             contextProvider = settings.getContextProvider();
             loggerSettingsBuilder.applySettings(settings.getLoggerSettings());
@@ -318,6 +328,18 @@ public final class MongoClientSettings {
             if (connectionString.getWriteConcern() != null) {
                 writeConcern = connectionString.getWriteConcern();
             }
+            Boolean grpc = connectionString.isGrpc();
+            if (grpc != null) {
+                if (streamFactoryFactory == null && grpc) {
+                    streamFactoryFactory = GrpcStreamFactoryFactory.builder().build();
+                } else if (grpc(streamFactoryFactory) && !grpc) {
+                    throw new IllegalArgumentException(
+                            streamFactoryFactory.getClass().getSimpleName() + " can not be specified with gRPC=false");
+                } else if (!grpc(streamFactoryFactory) && grpc) {
+                    throw new IllegalArgumentException(
+                            streamFactoryFactory.getClass().getSimpleName() + " can not be specified with gRPC=true");
+                }
+            }
             return this;
         }
 
@@ -360,6 +382,8 @@ public final class MongoClientSettings {
 
         /**
          * Applies the {@link ConnectionPoolSettings.Builder} block and then sets the connectionPoolSettings.
+         * <p>
+         * Must not be changed if {@linkplain #isGrpc() gRPC is enabled}.</p>
          *
          * @param block the block to apply to the ConnectionPoolSettings.
          * @return this
@@ -409,7 +433,9 @@ public final class MongoClientSettings {
         /**
          * Sets the write concern.
          *
-         * @param writeConcern the write concern
+         * @param writeConcern the write concern.
+         * <p>
+         * {@link WriteConcern#withWTimeout(long, TimeUnit) wtimeout} must not be specified if {@linkplain #isGrpc() gRPC is enabled}.</p>
          * @return this
          * @see MongoClientSettings#getWriteConcern()
          */
@@ -499,7 +525,7 @@ public final class MongoClientSettings {
          */
         @Deprecated
         public Builder streamFactoryFactory(final StreamFactoryFactory streamFactoryFactory) {
-            this.streamFactoryFactory = notNull("streamFactoryFactory", streamFactoryFactory);
+            this.streamFactoryFactory = StreamFactoryFactoryWrapping.unwrap(notNull("streamFactoryFactory", streamFactoryFactory));
             return this;
         }
 
@@ -799,7 +825,22 @@ public final class MongoClientSettings {
     @Deprecated
     @Nullable
     public StreamFactoryFactory getStreamFactoryFactory() {
+        StreamFactoryFactoryWrapping.assertRequiresNoFurtherWrapping(streamFactoryFactory);
         return streamFactoryFactory;
+    }
+
+    /**
+     * Gets whether gRPC is enabled.
+     *
+     * @return {@code true} if gRPC is enabled, {@code false} if not.
+     * @see ConnectionString#isGrpc()
+     * @see MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)
+     * @see GrpcStreamFactoryFactory
+     * @since VAKOTODO
+     * @mongodb.server.release VAKOTODO
+     */
+    public boolean isGrpc() {
+        return grpc(streamFactoryFactory);
     }
 
     /**
@@ -1077,6 +1118,10 @@ public final class MongoClientSettings {
                 + '}';
     }
 
+    private static boolean grpc(@Nullable final StreamFactoryFactory streamFactoryFactory) {
+        return streamFactoryFactory instanceof SharingGrpcStreamFactoryFactory || streamFactoryFactory instanceof GrpcStreamFactoryFactory;
+    }
+
     private MongoClientSettings(final Builder builder) {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
@@ -1085,7 +1130,6 @@ public final class MongoClientSettings {
         readConcern = builder.readConcern;
         credential = builder.credential;
         transportSettings = builder.transportSettings;
-        streamFactoryFactory = builder.streamFactoryFactory;
         codecRegistry = builder.codecRegistry;
         commandListeners = builder.commandListeners;
         applicationName = builder.applicationName;
@@ -1113,5 +1157,58 @@ public final class MongoClientSettings {
         heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
         contextProvider = builder.contextProvider;
+        StreamFactoryFactory builderStreamFactoryFactory = builder.streamFactoryFactory;
+        if (grpc(builderStreamFactoryFactory)) {
+            if (clusterSettings.getRequiredReplicaSetName() != null) {
+                throw new IllegalArgumentException(
+                        "requiredReplicaSetName can not be specified with " + GrpcStreamFactoryFactory.class.getSimpleName());
+            }
+            if (writeConcern.getWTimeout(MILLISECONDS) != null) {
+                throw new IllegalArgumentException(
+                        "Write concern wtimeout can not be specified with " + GrpcStreamFactoryFactory.class.getSimpleName());
+            }
+            if (socketSettings.getReadTimeout(MILLISECONDS) != SocketSettings.builder().build().getReadTimeout(MILLISECONDS)) {
+                throw new IllegalArgumentException(
+                        "Socket readTimeout  can not be specified with " + GrpcStreamFactoryFactory.class.getSimpleName());
+            }
+            if (!ConnectionPoolSettings.builder().build().equals(connectionPoolSettings)) {
+                throw new IllegalArgumentException(
+                        "connectionPoolSettings can not be specified with " + GrpcStreamFactoryFactory.class.getSimpleName());
+            }
+        }
+        streamFactoryFactory = StreamFactoryFactoryWrapping.wrap(builderStreamFactoryFactory, connectionPoolSettings);
+    }
+
+    private static final class StreamFactoryFactoryWrapping {
+        @Nullable
+        static StreamFactoryFactory wrap(
+                @Nullable final StreamFactoryFactory streamFactoryFactory,
+                final ConnectionPoolSettings connectionPoolSettings) {
+            if (streamFactoryFactory instanceof GrpcStreamFactoryFactory) {
+                return new SharingGrpcStreamFactoryFactory((GrpcStreamFactoryFactory) streamFactoryFactory, connectionPoolSettings);
+            }
+            return streamFactoryFactory;
+        }
+
+        @Nullable
+        static StreamFactoryFactory unwrap(@Nullable final StreamFactoryFactory streamFactoryFactory) {
+            if (streamFactoryFactory instanceof SharingGrpcStreamFactoryFactory) {
+                return ((SharingGrpcStreamFactoryFactory) streamFactoryFactory).unwrap();
+            }
+            return streamFactoryFactory;
+        }
+
+        static void assertRequiresNoFurtherWrapping(@Nullable final StreamFactoryFactory streamFactoryFactory) throws AssertionError {
+            assertFalse(requiresWrapping(streamFactoryFactory, false));
+        }
+
+        private static boolean requiresWrapping(@Nullable final StreamFactoryFactory streamFactoryFactory, final boolean ifNull) {
+            if (streamFactoryFactory instanceof GrpcStreamFactoryFactory) {
+                return true;
+            } else if (streamFactoryFactory == null) {
+                return ifNull;
+            }
+            return false;
+        }
     }
 }

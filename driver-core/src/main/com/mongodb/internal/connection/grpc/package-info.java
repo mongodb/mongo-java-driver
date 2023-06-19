@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.connection;
-
-import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.lang.NonNull;
-import org.bson.types.ObjectId;
-
 /**
- * This class is not part of the public API and may be removed or changed at any time.
+ * Contains <a href="https://grpc.io/">gRPC</a>-specific program elements.
  */
-@ThreadSafe
-public interface ConnectionGenerationSupplier {
-    int getGeneration();
+@NonNullApi
+package com.mongodb.internal.connection.grpc;
 
-    int getGeneration(@NonNull ObjectId serviceId);
-}
+import com.mongodb.lang.NonNullApi;

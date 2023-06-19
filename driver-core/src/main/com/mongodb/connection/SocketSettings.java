@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.Block;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Immutable;
 
 import java.util.concurrent.TimeUnit;
@@ -104,6 +105,8 @@ public final class SocketSettings {
 
         /**
          * Sets the socket read timeout.
+         * <p>
+         * Must not be specified if {@linkplain MongoClientSettings#isGrpc() gRPC is enabled}.</p>
          *
          * @param readTimeout the read timeout
          * @param timeUnit the time unit

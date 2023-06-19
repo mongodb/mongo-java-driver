@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * This exception is thrown when there is a timeout reading a response from the socket.
  *
@@ -32,7 +34,7 @@ public class MongoSocketReadTimeoutException extends MongoSocketException {
      * @param address the address
      * @param cause the cause
      */
-    public MongoSocketReadTimeoutException(final String message, final ServerAddress address, final Throwable cause) {
+    public MongoSocketReadTimeoutException(final String message, final ServerAddress address, @Nullable final Throwable cause) {
         super(message, address, cause);
     }
 

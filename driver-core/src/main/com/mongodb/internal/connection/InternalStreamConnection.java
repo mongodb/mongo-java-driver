@@ -29,6 +29,7 @@ import com.mongodb.MongoSocketWriteException;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
+import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -45,6 +46,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.internal.ResourceUtil;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.grpc.GrpcStreamFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
@@ -65,11 +67,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -209,12 +214,13 @@ public class InternalStreamConnection implements InternalConnection {
         stream = streamFactory.create(getServerAddressWithResolver());
         try {
             stream.open();
-
-            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
-            initAfterHandshakeStart(initializationDescription);
-
-            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
-            initAfterHandshakeFinish(initializationDescription);
+            if (streamFactory instanceof GrpcStreamFactory) {
+                Handshakes.HandshakeResults handshakeResults = Handshakes.getOrHandshake(this);
+                initAfterHandshakeStart(handshakeResults.start());
+                initAfterHandshakeFinish(handshakeResults.finish());
+            } else {
+                handshake();
+            }
         } catch (Throwable t) {
             close();
             if (t instanceof MongoException) {
@@ -225,8 +231,20 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
+    private Handshakes.HandshakeResults handshake() {
+        InternalConnectionInitializationDescription startResult = connectionInitializer.startHandshake(this);
+        initAfterHandshakeStart(startResult);
+
+        InternalConnectionInitializationDescription finishResult = connectionInitializer.finishHandshake(this, startResult);
+        initAfterHandshakeFinish(finishResult);
+        return new Handshakes.HandshakeResults(startResult, finishResult);
+    }
+
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
+        if (streamFactory instanceof GrpcStreamFactory) {
+            fail("VAKOTODO");
+        }
         isTrue("Open already called", stream == null, callback);
         try {
             stream = streamFactory.create(getServerAddressWithResolver());
@@ -872,5 +890,76 @@ public class InternalStreamConnection implements InternalConnection {
 
     private ClusterId getClusterId() {
         return description.getConnectionId().getServerId().getClusterId();
+    }
+
+    /**
+     * VAKOTODO
+     * This is a hack that allows us to avoid handshaking the same gRPC channel needlessly.
+     * Note that sometimes we have to handshake the same gRPC channel again, at the very least in the following situations
+     * <ol>
+     *     <li>when it starts using a different HTTP/2 connection because the previous one was terminated;</li>
+     *     <li>when it starts using a different HTTP/2 connection because it decided to use more than one connection.</li>
+     * </ol>
+     * We will not be able to implement this in a reasonable way until the authentication in the MongoDB gRPC protocol is specified and
+     * is supported by the server. For now, using {@link Handshakes.Key} should give us roughly the right behavior for the first item.
+     */
+    private static final class Handshakes {
+        private static final ConcurrentHashMap<Key, HandshakeResults> CACHE = new ConcurrentHashMap<>();
+
+        static HandshakeResults getOrHandshake(final InternalStreamConnection connection) {
+            return CACHE.computeIfAbsent(new Key(connection), key -> connection.handshake());
+        }
+
+        @Immutable
+        private static final class HandshakeResults {
+            private final InternalConnectionInitializationDescription start;
+            private final InternalConnectionInitializationDescription finish;
+
+            HandshakeResults(
+                    final InternalConnectionInitializationDescription start,
+                    final InternalConnectionInitializationDescription finish) {
+                this.start = start;
+                this.finish = finish;
+            }
+
+            InternalConnectionInitializationDescription start() {
+                return start;
+            }
+
+            InternalConnectionInitializationDescription finish() {
+                return finish;
+            }
+        }
+
+        private static final class Key {
+            private final ServerId serverId;
+            private final int generation;
+
+            private Key(final InternalStreamConnection connection) {
+                serverId = connection.serverId;
+                // I do not know if we support switching from `LOAD_BALANCED` to a different mode, or vice versa,
+                // but if we do, I am not sure this logic will work in such switching happens.
+                generation = connection.clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED
+                        ? connection.connectionGenerationSupplier.getGeneration(assertNotNull(connection.description.getServiceId()))
+                        : connection.connectionGenerationSupplier.getGeneration();
+            }
+
+            @Override
+            public boolean equals(final Object o) {
+                if (this == o) {
+                    return true;
+                }
+                if (o == null || getClass() != o.getClass()) {
+                    return false;
+                }
+                final Key key = (Key) o;
+                return generation == key.generation && Objects.equals(serverId, key.serverId);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(serverId, generation);
+            }
+        }
     }
 }

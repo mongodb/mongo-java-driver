@@ -125,9 +125,12 @@ import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
 @SuppressWarnings("deprecation")
 @ThreadSafe
-final class DefaultConnectionPool implements ConnectionPool {
+public final class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("connection");
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
@@ -1194,8 +1197,11 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
+    /**
+     * This class is not part of the public API and may be removed or changed at any time.
+     */
     @ThreadSafe
-    static final class ServiceStateManager {
+    public static final class ServiceStateManager {
         private final ConcurrentHashMap<ObjectId, ServiceState> stateByServiceId = new ConcurrentHashMap<>();
 
         void addConnection(final ObjectId serviceId) {
@@ -1232,7 +1238,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             return state == null || state.incrementGeneration(expectedGeneration);
         }
 
-        int getGeneration(final ObjectId serviceId) {
+        public int getGeneration(final ObjectId serviceId) {
             ServiceState state = stateByServiceId.get(serviceId);
             return state == null ? 0 : state.getGeneration();
         }

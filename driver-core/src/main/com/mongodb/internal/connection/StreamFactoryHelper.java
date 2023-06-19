@@ -18,11 +18,14 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.lang.Nullable;
+
+import static com.mongodb.internal.connection.ClientMetadataHelper.configureClientMetadataDocument;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -30,7 +33,9 @@ import com.mongodb.lang.Nullable;
 @SuppressWarnings("deprecation")
 public final class StreamFactoryHelper {
     @Nullable
-    public static StreamFactoryFactory getStreamFactoryFactoryFromSettings(final MongoClientSettings settings) {
+    public static StreamFactoryFactory getStreamFactoryFactoryFromSettings(
+            final MongoClientSettings settings,
+            @Nullable final MongoDriverInformation mongoDriverInformation) {
         StreamFactoryFactory streamFactoryFactory;
         TransportSettings transportSettings = settings.getTransportSettings();
         if (transportSettings != null) {
@@ -43,7 +48,7 @@ public final class StreamFactoryHelper {
         } else {
             streamFactoryFactory = settings.getStreamFactoryFactory();
         }
-        return streamFactoryFactory;
+        return configureClientMetadataDocument(streamFactoryFactory, settings, mongoDriverInformation);
     }
 
     private StreamFactoryHelper() {

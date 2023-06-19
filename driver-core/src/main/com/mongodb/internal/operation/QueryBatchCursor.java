@@ -133,7 +133,9 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 releaseServerAndResources = true;
             } else {
                 assertNotNull(connectionSource);
-                if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
+                if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
+                        // VAKOTODO somehow check if gRPC is being used. For now, we assume it is always used
+                        || Boolean.valueOf(true)) {
                     connectionToPin = connection;
                 }
             }

@@ -29,6 +29,8 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.grpc.GrpcConnectionPool;
+import com.mongodb.internal.connection.grpc.GrpcStreamFactory;
 import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -81,10 +83,14 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
 
     @Override
     public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
-        ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(cluster.getClusterId(), serverAddress),
-                new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi, inetAddressResolver),
-                connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance());
+        ServerId serverId = new ServerId(cluster.getClusterId(), serverAddress);
+        InternalStreamConnectionFactory internalStreamConnectionFactory = new InternalStreamConnectionFactory(
+                ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
+                mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi, inetAddressResolver);
+        ConnectionPool connectionPool = streamFactory instanceof GrpcStreamFactory
+                ? new GrpcConnectionPool(serverId, internalStreamConnectionFactory, connectionPoolSettings, true)
+                : new DefaultConnectionPool(serverId, internalStreamConnectionFactory,
+                        connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance());
         connectionPool.ready();
 
         return new LoadBalancedServer(new ServerId(cluster.getClusterId(), serverAddress), connectionPool, new DefaultConnectionFactory(),

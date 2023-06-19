@@ -46,6 +46,10 @@ dependencies {
     api "io.netty:netty-transport", optional
     api "io.netty:netty-handler", optional
 
+    implementation 'io.grpc:grpc-netty:1.56.0', optional
+    // required by Java gRPC for Java SE 9+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53', optional
+
     // Optionally depend on both AWS SDK v2 and v1.  The driver will use v2 is present, v1 if present, or built-in functionality if
     // neither are present
     implementation "software.amazon.awssdk:auth:$awsSdkV2Version", optional

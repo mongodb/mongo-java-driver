@@ -127,7 +127,9 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
             if (limitReached()) {
                 killCursor(connection);
             } else {
-                if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
+                if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
+                        // VAKOTODO somehow check if gRPC is being used. For now, we assume it is always used
+                        || Boolean.valueOf(true)) {
                     this.pinnedConnection = connection.retain();
                     this.pinnedConnection.markAsPinned(Connection.PinningMode.CURSOR);
                 }

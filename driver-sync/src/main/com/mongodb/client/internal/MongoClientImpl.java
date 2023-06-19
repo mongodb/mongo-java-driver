@@ -224,15 +224,18 @@ public final class MongoClientImpl implements MongoClient {
         notNull("settings", settings);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
-                getStreamFactory(settings, false), getStreamFactory(settings, true),
+                getStreamFactory(settings, mongoDriverInformation, false), getStreamFactory(settings, mongoDriverInformation, true),
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
                 settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
                 settings.getDnsClient(), settings.getInetAddressResolver());
     }
 
     @SuppressWarnings("deprecation")
-    private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
-        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings);
+    private static StreamFactory getStreamFactory(
+            final MongoClientSettings settings,
+            @Nullable final MongoDriverInformation mongoDriverInformation,
+            final boolean isHeartbeat) {
+        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings, mongoDriverInformation);
         SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
         if (streamFactoryFactory == null) {
             return new SocketStreamFactory(socketSettings, settings.getSslSettings());

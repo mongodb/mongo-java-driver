@@ -21,8 +21,11 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.lang.NonNull;
 import org.bson.types.ObjectId;
 
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
 @ThreadSafe
-interface InternalConnectionFactory {
+public interface InternalConnectionFactory {
     default InternalConnection create(ServerId serverId) {
         return create(serverId, new ConnectionGenerationSupplier() {
             @Override

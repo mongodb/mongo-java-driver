@@ -24,6 +24,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.grpc.GrpcStreamFactory;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.BsonDocument;
@@ -39,6 +40,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
     private final boolean isMonitoringConnection;
     private final StreamFactory streamFactory;
+    @Nullable
     private final BsonDocument clientMetadataDocument;
     private final List<MongoCompressor> compressorList;
     private final LoggerSettings loggerSettings;
@@ -74,7 +76,9 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         this.commandListener = commandListener;
         this.serverApi = serverApi;
         this.inetAddressResolver = inetAddressResolver;
-        this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
+        this.clientMetadataDocument = streamFactory instanceof GrpcStreamFactory
+                ? null
+                : createClientMetadataDocument(applicationName, mongoDriverInformation);
         this.credential = credential;
     }
 

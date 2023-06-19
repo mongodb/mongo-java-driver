@@ -116,7 +116,7 @@ public class MongoException extends RuntimeException {
      * @param msg  the message
      * @param t    the throwable cause
      */
-    public MongoException(final int code, final String msg, final Throwable t) {
+    public MongoException(final int code, final String msg, @Nullable final Throwable t) {
         super(msg, t);
         this.code = code;
         if (t instanceof MongoException) {
