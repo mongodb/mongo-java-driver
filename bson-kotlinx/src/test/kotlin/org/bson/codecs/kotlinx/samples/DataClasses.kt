@@ -34,7 +34,6 @@ import org.bson.BsonJavaScript
 import org.bson.BsonJavaScriptWithScope
 import org.bson.BsonMaxKey
 import org.bson.BsonMinKey
-import org.bson.BsonNull
 import org.bson.BsonObjectId
 import org.bson.BsonRegularExpression
 import org.bson.BsonString
@@ -201,7 +200,6 @@ data class DataClassBsonValues(
     @Contextual val int64: BsonInt64,
     @Contextual val maxKey: BsonMaxKey,
     @Contextual val minKey: BsonMinKey,
-    @Contextual val `null`: BsonNull,
     @Contextual val objectId: BsonObjectId,
     @Contextual val regex: BsonRegularExpression,
     @Contextual val string: BsonString,
@@ -231,7 +229,6 @@ data class DataClassOptionalBsonValues(
     @Contextual val int64: BsonInt64?,
     @Contextual val maxKey: BsonMaxKey?,
     @Contextual val minKey: BsonMinKey?,
-    @Contextual val `null`: BsonNull?,
     @Contextual val objectId: BsonObjectId?,
     @Contextual val regex: BsonRegularExpression?,
     @Contextual val string: BsonString?,

@@ -63,7 +63,6 @@ internal open class DefaultBsonDecoder(
     private data class ElementMetadata(val name: String, val nullable: Boolean, var processed: Boolean = false)
     private var elementsMetadata: Array<ElementMetadata>? = null
     private var currentIndex: Int = UNKNOWN_INDEX
-    private var level = 0
 
     companion object {
         val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
@@ -85,35 +84,24 @@ internal open class DefaultBsonDecoder(
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
         initElementMetadata(descriptor)
         currentIndex = decodeElementIndexImpl(descriptor)
+        elementsMetadata?.getOrNull(currentIndex)?.processed = true
         return currentIndex
     }
 
     @Suppress("ReturnCount", "ComplexMethod")
     private fun decodeElementIndexImpl(descriptor: SerialDescriptor): Int {
+        val elementMetadata = elementsMetadata ?: error("elementsMetadata may not be null.")
         val name: String? =
             when (reader.state ?: error("State of reader may not be null.")) {
                 AbstractBsonReader.State.NAME -> reader.readName()
                 AbstractBsonReader.State.VALUE -> reader.currentName
                 AbstractBsonReader.State.TYPE -> {
-                    val type = reader.readBsonType()
-                    if (type.isContainer) {
-                        level++
-                    }
+                    reader.readBsonType()
                     return decodeElementIndexImpl(descriptor)
                 }
                 AbstractBsonReader.State.END_OF_DOCUMENT,
-                AbstractBsonReader.State.END_OF_ARRAY -> {
-                    level--
-                    val elementMetadata = elementsMetadata ?: error("elementsMetadata may not be null.")
-
-                    return if (level == 0) {
-                        DECODE_DONE
-                    } else {
-                        currentIndex = elementMetadata.indexOfFirst { it.nullable && !it.processed }
-                        if (currentIndex >= 0) elementMetadata[currentIndex].processed = true
-                        return currentIndex
-                    }
-                }
+                AbstractBsonReader.State.END_OF_ARRAY ->
+                    return elementMetadata.indexOfFirst { it.nullable && !it.processed }
                 else -> null
             }
 
@@ -194,7 +182,6 @@ internal open class DefaultBsonDecoder(
 
     private inline fun <T> readOrThrow(action: () -> T, bsonType: BsonType): T {
         return try {
-            elementsMetadata?.get(currentIndex)?.processed = true
             action()
         } catch (e: BsonInvalidOperationException) {
             throw BsonInvalidOperationException(

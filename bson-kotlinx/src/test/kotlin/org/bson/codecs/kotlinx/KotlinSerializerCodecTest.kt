@@ -29,7 +29,6 @@ import org.bson.BsonDocumentWriter
 import org.bson.BsonInvalidOperationException
 import org.bson.BsonMaxKey
 import org.bson.BsonMinKey
-import org.bson.BsonNull
 import org.bson.BsonUndefined
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
@@ -119,7 +118,6 @@ class KotlinSerializerCodecTest {
     | "int64": {"${'$'}numberLong": "52"},
     | "maxKey": {"${'$'}maxKey": 1},
     | "minKey": {"${'$'}minKey": 1},
-    | "null": null,
     | "objectId": {"${'$'}oid": "211111111111111111111112"},
     | "regex": {"${'$'}regularExpression": {"pattern": "^test.*regex.*xyz$", "options": "i"}},
     | "string": "the fox ...",
@@ -494,7 +492,6 @@ class KotlinSerializerCodecTest {
                 allBsonTypesDocument["int64"]!!.asInt64(),
                 allBsonTypesDocument["maxKey"]!! as BsonMaxKey,
                 allBsonTypesDocument["minKey"]!! as BsonMinKey,
-                allBsonTypesDocument["null"]!! as BsonNull,
                 allBsonTypesDocument["objectId"]!!.asObjectId(),
                 allBsonTypesDocument["regex"]!!.asRegularExpression(),
                 allBsonTypesDocument["string"]!!.asString(),
@@ -507,7 +504,6 @@ class KotlinSerializerCodecTest {
 
     @Test
     fun testDataClassOptionalBsonValues() {
-
         val dataClass =
             DataClassOptionalBsonValues(
                 allBsonTypesDocument["id"]!!.asObjectId().value,
@@ -529,7 +525,6 @@ class KotlinSerializerCodecTest {
                 allBsonTypesDocument["int64"]!!.asInt64(),
                 allBsonTypesDocument["maxKey"]!! as BsonMaxKey,
                 allBsonTypesDocument["minKey"]!! as BsonMinKey,
-                allBsonTypesDocument["null"]!! as BsonNull,
                 allBsonTypesDocument["objectId"]!!.asObjectId(),
                 allBsonTypesDocument["regex"]!!.asRegularExpression(),
                 allBsonTypesDocument["string"]!!.asString(),
@@ -565,11 +560,18 @@ class KotlinSerializerCodecTest {
                 null,
                 null,
                 null,
-                null,
-                null,
-            )
+                null)
 
         assertRoundTrips("{}", emptyDataClass)
+        assertRoundTrips(
+            """{ "id": null,  "arrayEmpty": null, "arraySimple": null, "arrayComplex": null, "arrayMixedTypes": null,
+                | "arrayComplexMixedTypes": null, "binary": null, "boolean": null, "code": null, "codeWithScope": null,
+                | "dateTime": null, "decimal128": null, "documentEmpty": null, "document": null, "double": null,
+                | "int32": null, "int64": null, "maxKey": null, "minKey": null, "objectId": null, "regex": null,
+                | "string": null, "symbol": null, "timestamp": null, "undefined": null }"""
+                .trimMargin(),
+            emptyDataClass,
+            BsonConfiguration(explicitNulls = true))
     }
 
     @Test
