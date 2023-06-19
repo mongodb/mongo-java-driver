@@ -27,9 +27,14 @@ import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
 import org.bson.BsonInvalidOperationException
+import org.bson.BsonMaxKey
+import org.bson.BsonMinKey
+import org.bson.BsonNull
+import org.bson.BsonUndefined
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.kotlinx.samples.DataClassBsonValues
 import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
 import org.bson.codecs.kotlinx.samples.DataClassContainsValueClass
 import org.bson.codecs.kotlinx.samples.DataClassEmbedded
@@ -43,6 +48,7 @@ import org.bson.codecs.kotlinx.samples.DataClassNestedParameterizedTypes
 import org.bson.codecs.kotlinx.samples.DataClassOpen
 import org.bson.codecs.kotlinx.samples.DataClassOpenA
 import org.bson.codecs.kotlinx.samples.DataClassOpenB
+import org.bson.codecs.kotlinx.samples.DataClassOptionalBsonValues
 import org.bson.codecs.kotlinx.samples.DataClassParameterized
 import org.bson.codecs.kotlinx.samples.DataClassSealed
 import org.bson.codecs.kotlinx.samples.DataClassSealedA
@@ -72,8 +78,6 @@ import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterizedDataClass
 import org.bson.codecs.kotlinx.samples.DataClassWithNulls
-import org.bson.codecs.kotlinx.samples.DataClassWithObjectIdAndBsonDocument
-import org.bson.codecs.kotlinx.samples.DataClassWithOptionalObjectIdAndBsonDocument
 import org.bson.codecs.kotlinx.samples.DataClassWithPair
 import org.bson.codecs.kotlinx.samples.DataClassWithParameterizedDataClass
 import org.bson.codecs.kotlinx.samples.DataClassWithRequired
@@ -82,7 +86,6 @@ import org.bson.codecs.kotlinx.samples.DataClassWithSimpleValues
 import org.bson.codecs.kotlinx.samples.DataClassWithTriple
 import org.bson.codecs.kotlinx.samples.Key
 import org.bson.codecs.kotlinx.samples.ValueClass
-import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -92,6 +95,41 @@ class KotlinSerializerCodecTest {
     private val emptyDocument = "{}"
     private val altConfiguration =
         BsonConfiguration(encodeDefaults = false, classDiscriminator = "_t", explicitNulls = true)
+
+    private val allBsonTypesJson =
+        """{
+    | "id": {"${'$'}oid": "111111111111111111111111"},
+    | "arrayEmpty": [],
+    | "arraySimple": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
+    | "arrayComplex": [{"a": {"${'$'}numberInt": "1"}}, {"a": {"${'$'}numberInt": "2"}}],
+    | "arrayMixedTypes": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, true,
+    |  [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
+    |  {"a": {"${'$'}numberInt": "2"}}],
+    | "arrayComplexMixedTypes": [{"a": {"${'$'}numberInt": "1"}}, {"a": "a"}],
+    | "binary": {"${'$'}binary": {"base64": "S2Fma2Egcm9ja3Mh", "subType": "00"}},
+    | "boolean": true,
+    | "code": {"${'$'}code": "int i = 0;"},
+    | "codeWithScope": {"${'$'}code": "int x = y", "${'$'}scope": {"y": {"${'$'}numberInt": "1"}}},
+    | "dateTime": {"${'$'}date": {"${'$'}numberLong": "1577836801000"}},
+    | "decimal128": {"${'$'}numberDecimal": "1.0"},
+    | "documentEmpty": {},
+    | "document": {"a": {"${'$'}numberInt": "1"}},
+    | "double": {"${'$'}numberDouble": "62.0"},
+    | "int32": {"${'$'}numberInt": "42"},
+    | "int64": {"${'$'}numberLong": "52"},
+    | "maxKey": {"${'$'}maxKey": 1},
+    | "minKey": {"${'$'}minKey": 1},
+    | "null": null,
+    | "objectId": {"${'$'}oid": "211111111111111111111112"},
+    | "regex": {"${'$'}regularExpression": {"pattern": "^test.*regex.*xyz$", "options": "i"}},
+    | "string": "the fox ...",
+    | "symbol": {"${'$'}symbol": "ruby stuff"},
+    | "timestamp": {"${'$'}timestamp": {"t": 305419896, "i": 5}},
+    | "undefined": {"${'$'}undefined": true}
+    | }"""
+            .trimMargin()
+
+    private val allBsonTypesDocument = BsonDocument.parse(allBsonTypesJson)
 
     @Test
     fun testDataClassWithSimpleValues() {
@@ -433,90 +471,105 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
-    fun testDataClassWithObjectIdAndBsonDocument() {
-        val subDocument =
-            """{
-    | "_id": 1,
-    | "arrayEmpty": [],
-    | "arraySimple": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
-    | "arrayComplex": [{"a": {"${'$'}numberInt": "1"}}, {"a": {"${'$'}numberInt": "2"}}],
-    | "arrayMixedTypes": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, true,
-    |  [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
-    |  {"a": {"${'$'}numberInt": "2"}}],
-    | "arrayComplexMixedTypes": [{"a": {"${'$'}numberInt": "1"}}, {"a": "a"}],
-    | "binary": {"${'$'}binary": {"base64": "S2Fma2Egcm9ja3Mh", "subType": "00"}},
-    | "boolean": true,
-    | "code": {"${'$'}code": "int i = 0;"},
-    | "codeWithScope": {"${'$'}code": "int x = y", "${'$'}scope": {"y": {"${'$'}numberInt": "1"}}},
-    | "dateTime": {"${'$'}date": {"${'$'}numberLong": "1577836801000"}},
-    | "decimal128": {"${'$'}numberDecimal": "1.0"},
-    | "documentEmpty": {},
-    | "document": {"a": {"${'$'}numberInt": "1"}},
-    | "double": {"${'$'}numberDouble": "62.0"},
-    | "int32": {"${'$'}numberInt": "42"},
-    | "int64": {"${'$'}numberLong": "52"},
-    | "maxKey": {"${'$'}maxKey": 1},
-    | "minKey": {"${'$'}minKey": 1},
-    | "null": null,
-    | "objectId": {"${'$'}oid": "5f3d1bbde0ca4d2829c91e1d"},
-    | "regex": {"${'$'}regularExpression": {"pattern": "^test.*regex.*xyz$", "options": "i"}},
-    | "string": "the fox ...",
-    | "symbol": {"${'$'}symbol": "ruby stuff"},
-    | "timestamp": {"${'$'}timestamp": {"t": 305419896, "i": 5}},
-    | "undefined": {"${'$'}undefined": true}
-    | }"""
-                .trimMargin()
-        val expected = """{"objectId": {"${'$'}oid": "111111111111111111111111"}, "bsonDocument": $subDocument}"""
+    fun testDataClassBsonValues() {
 
         val dataClass =
-            DataClassWithObjectIdAndBsonDocument(ObjectId("111111111111111111111111"), BsonDocument.parse(subDocument))
-        assertRoundTrips(expected, dataClass)
+            DataClassBsonValues(
+                allBsonTypesDocument["id"]!!.asObjectId().value,
+                allBsonTypesDocument["arrayEmpty"]!!.asArray(),
+                allBsonTypesDocument["arraySimple"]!!.asArray(),
+                allBsonTypesDocument["arrayComplex"]!!.asArray(),
+                allBsonTypesDocument["arrayMixedTypes"]!!.asArray(),
+                allBsonTypesDocument["arrayComplexMixedTypes"]!!.asArray(),
+                allBsonTypesDocument["binary"]!!.asBinary(),
+                allBsonTypesDocument["boolean"]!!.asBoolean(),
+                allBsonTypesDocument["code"]!!.asJavaScript(),
+                allBsonTypesDocument["codeWithScope"]!!.asJavaScriptWithScope(),
+                allBsonTypesDocument["dateTime"]!!.asDateTime(),
+                allBsonTypesDocument["decimal128"]!!.asDecimal128(),
+                allBsonTypesDocument["documentEmpty"]!!.asDocument(),
+                allBsonTypesDocument["document"]!!.asDocument(),
+                allBsonTypesDocument["double"]!!.asDouble(),
+                allBsonTypesDocument["int32"]!!.asInt32(),
+                allBsonTypesDocument["int64"]!!.asInt64(),
+                allBsonTypesDocument["maxKey"]!! as BsonMaxKey,
+                allBsonTypesDocument["minKey"]!! as BsonMinKey,
+                allBsonTypesDocument["null"]!! as BsonNull,
+                allBsonTypesDocument["objectId"]!!.asObjectId(),
+                allBsonTypesDocument["regex"]!!.asRegularExpression(),
+                allBsonTypesDocument["string"]!!.asString(),
+                allBsonTypesDocument["symbol"]!!.asSymbol(),
+                allBsonTypesDocument["timestamp"]!!.asTimestamp(),
+                allBsonTypesDocument["undefined"]!! as BsonUndefined)
+
+        assertRoundTrips(allBsonTypesJson, dataClass)
     }
 
     @Test
-    fun testDataClassWithOptionalObjectIdAndBsonDocument() {
-        val subDocument =
-            """{
-    | "_id": 1,
-    | "arrayEmpty": [],
-    | "arraySimple": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
-    | "arrayComplex": [{"a": {"${'$'}numberInt": "1"}}, {"a": {"${'$'}numberInt": "2"}}],
-    | "arrayMixedTypes": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, true,
-    |  [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
-    |  {"a": {"${'$'}numberInt": "2"}}],
-    | "arrayComplexMixedTypes": [{"a": {"${'$'}numberInt": "1"}}, {"a": "a"}],
-    | "binary": {"${'$'}binary": {"base64": "S2Fma2Egcm9ja3Mh", "subType": "00"}},
-    | "boolean": true,
-    | "code": {"${'$'}code": "int i = 0;"},
-    | "codeWithScope": {"${'$'}code": "int x = y", "${'$'}scope": {"y": {"${'$'}numberInt": "1"}}},
-    | "dateTime": {"${'$'}date": {"${'$'}numberLong": "1577836801000"}},
-    | "decimal128": {"${'$'}numberDecimal": "1.0"},
-    | "documentEmpty": {},
-    | "document": {"a": {"${'$'}numberInt": "1"}},
-    | "double": {"${'$'}numberDouble": "62.0"},
-    | "int32": {"${'$'}numberInt": "42"},
-    | "int64": {"${'$'}numberLong": "52"},
-    | "maxKey": {"${'$'}maxKey": 1},
-    | "minKey": {"${'$'}minKey": 1},
-    | "null": null,
-    | "objectId": {"${'$'}oid": "5f3d1bbde0ca4d2829c91e1d"},
-    | "regex": {"${'$'}regularExpression": {"pattern": "^test.*regex.*xyz$", "options": "i"}},
-    | "string": "the fox ...",
-    | "symbol": {"${'$'}symbol": "ruby stuff"},
-    | "timestamp": {"${'$'}timestamp": {"t": 305419896, "i": 5}},
-    | "undefined": {"${'$'}undefined": true}
-    | }"""
-                .trimMargin()
-        val expected = """{"objectId": {"${'$'}oid": "111111111111111111111111"}, "bsonDocument": $subDocument}"""
+    fun testDataClassOptionalBsonValues() {
 
         val dataClass =
-            DataClassWithOptionalObjectIdAndBsonDocument(
-                ObjectId("111111111111111111111111"), BsonDocument.parse(subDocument))
-        assertRoundTrips(expected, dataClass)
+            DataClassOptionalBsonValues(
+                allBsonTypesDocument["id"]!!.asObjectId().value,
+                allBsonTypesDocument["arrayEmpty"]!!.asArray(),
+                allBsonTypesDocument["arraySimple"]!!.asArray(),
+                allBsonTypesDocument["arrayComplex"]!!.asArray(),
+                allBsonTypesDocument["arrayMixedTypes"]!!.asArray(),
+                allBsonTypesDocument["arrayComplexMixedTypes"]!!.asArray(),
+                allBsonTypesDocument["binary"]!!.asBinary(),
+                allBsonTypesDocument["boolean"]!!.asBoolean(),
+                allBsonTypesDocument["code"]!!.asJavaScript(),
+                allBsonTypesDocument["codeWithScope"]!!.asJavaScriptWithScope(),
+                allBsonTypesDocument["dateTime"]!!.asDateTime(),
+                allBsonTypesDocument["decimal128"]!!.asDecimal128(),
+                allBsonTypesDocument["documentEmpty"]!!.asDocument(),
+                allBsonTypesDocument["document"]!!.asDocument(),
+                allBsonTypesDocument["double"]!!.asDouble(),
+                allBsonTypesDocument["int32"]!!.asInt32(),
+                allBsonTypesDocument["int64"]!!.asInt64(),
+                allBsonTypesDocument["maxKey"]!! as BsonMaxKey,
+                allBsonTypesDocument["minKey"]!! as BsonMinKey,
+                allBsonTypesDocument["null"]!! as BsonNull,
+                allBsonTypesDocument["objectId"]!!.asObjectId(),
+                allBsonTypesDocument["regex"]!!.asRegularExpression(),
+                allBsonTypesDocument["string"]!!.asString(),
+                allBsonTypesDocument["symbol"]!!.asSymbol(),
+                allBsonTypesDocument["timestamp"]!!.asTimestamp(),
+                allBsonTypesDocument["undefined"]!! as BsonUndefined)
 
-        val expectedWithNulls = """{}"""
-        val dataClassWithNulls = DataClassWithOptionalObjectIdAndBsonDocument(null, null)
-        assertRoundTrips(expectedWithNulls, dataClassWithNulls)
+        assertRoundTrips(allBsonTypesJson, dataClass)
+
+        val emptyDataClass =
+            DataClassOptionalBsonValues(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+            )
+
+        assertRoundTrips("{}", emptyDataClass)
     }
 
     @Test
