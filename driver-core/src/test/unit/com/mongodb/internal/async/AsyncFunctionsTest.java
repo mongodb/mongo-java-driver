@@ -41,15 +41,18 @@ final class AsyncFunctionsTest {
         2. at least one sync method must be converted to async
 
         To use this API:
-        1. start an async chain using the static method
+        1. start an async chain using the "beginAsync" static method
         2. use an appropriate chaining method (then...), which will provide "c"
-        3. move all sync code into that method
+        3. copy all sync code to that method
         4. at the async method, pass in "c" and start a new chaining method
-        5. finish by invoking the original "callback" at the end of the chain
+        5. provide the original "callback" at the end of the chain via "finish"
 
         Async methods MUST be preceded by unaffected "plain" sync code (sync
         code with no async counterpart), and this code MUST reside above the
-        affected method, as it appears in the sync code.
+        affected method, as it appears in the sync code. Plain code after
+        the sync method should be supplied via one of the "finally" variants.
+        Safe "shared" plain code (variable and lambda declarations) which cannot
+        throw, may remain outside the chained invocations, for convenience.
 
         Plain sync code MAY throw exceptions, and SHOULD NOT attempt to handle
         them asynchronously. The exceptions will be caught and handled by the
@@ -60,8 +63,9 @@ final class AsyncFunctionsTest {
         a catch or finally (including close on try-with-resources) after the
         invocation of the sync method.
 
-        Always use a braced lambda body with no linebreak before ".", as shown
-        below, to ensure that the async code can be compared to the sync code.
+        A braced lambda body (with no linebreak before "."), as shown below,
+        should be used, as this will be consistent with other usages, and allows
+        the async code to be more easily compared to the sync code.
         */
 
         // the number of expected variations is often: 1 + N methods invoked
@@ -366,6 +370,51 @@ final class AsyncFunctionsTest {
                     }).thenAlwaysRunAndFinish(() -> {
                         plain(3);
                     }, callback);
+                });
+    }
+
+    @Test
+    void testUsedAsLambda() {
+        assertBehavesSameVariations(4,
+                () -> {
+                    Supplier<Integer> s = () -> syncReturns(9);
+                    sync(0);
+                    plain(1);
+                    return s.get();
+                },
+                (callback) -> {
+                    AsyncSupplier<Integer> s = (c) -> asyncReturns(9, c);
+                    beginAsync().thenRun(c -> {
+                        async(0, c);
+                    }).<Integer>thenSupply((c) -> {
+                        plain(1);
+                        s.getAsync(c);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    void testVariables() {
+        assertBehavesSameVariations(3,
+                () -> {
+                    int something;
+                    something = 90;
+                    sync(something);
+                    something = something + 10;
+                    sync(something);
+                },
+                (callback) -> {
+                    // Certain variables may need to be shared; these can be
+                    // declared (but not initialized) outside the async chain.
+                    // Any container works (atomic allowed but not needed)
+                    final int[] something = new int[1];
+                    beginAsync().thenRun(c -> {
+                        something[0] = 90;
+                        async(something[0], c);
+                    }).thenRun((c) -> {
+                        something[0] = something[0] + 10;
+                        async(something[0], c);
+                    }).finish(callback);
                 });
     }
 

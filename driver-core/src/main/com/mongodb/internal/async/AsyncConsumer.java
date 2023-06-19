@@ -17,9 +17,9 @@
 package com.mongodb.internal.async;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time>
- *
- * @see AsyncRunnable
+ * See tests for usage (AsyncFunctionsTest).
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time
  */
 @FunctionalInterface
 public interface AsyncConsumer<T> extends AsyncFunction<T, Void> {

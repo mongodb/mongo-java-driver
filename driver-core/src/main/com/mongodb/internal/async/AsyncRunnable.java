@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * This class is not part of the public API and may be removed or changed at any time
  */
 @FunctionalInterface
-public interface AsyncRunnable extends AsyncSupplier<Void> {
+public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> {
 
     static AsyncRunnable beginAsync() {
         return (c) -> c.onResult(null, null);
@@ -83,9 +83,9 @@ public interface AsyncRunnable extends AsyncSupplier<Void> {
      */
     default AsyncRunnable thenRun(final AsyncRunnable runnable) {
         return (c) -> {
-            this.internal((r, e) -> {
+            this.unsafeFinish((r, e) -> {
                 if (e == null) {
-                    runnable.internal(c);
+                    runnable.unsafeFinish(c);
                 } else {
                     c.onResult(null, e);
                 }
@@ -101,7 +101,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void> {
      */
     default AsyncRunnable thenRunIf(final Supplier<Boolean> condition, final AsyncRunnable runnable) {
         return (callback) -> {
-            this.internal((r, e) -> {
+            this.unsafeFinish((r, e) -> {
                 if (e != null) {
                     callback.onResult(null, e);
                     return;
@@ -114,7 +114,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void> {
                     return;
                 }
                 if (matched) {
-                    runnable.internal(callback);
+                    runnable.unsafeFinish(callback);
                 } else {
                     callback.onResult(null, null);
                 }
@@ -129,9 +129,9 @@ public interface AsyncRunnable extends AsyncSupplier<Void> {
      */
     default <R> AsyncSupplier<R> thenSupply(final AsyncSupplier<R> supplier) {
         return (c) -> {
-            this.internal((r, e) -> {
+            this.unsafeFinish((r, e) -> {
                 if (e == null) {
-                    supplier.internal(c);
+                    supplier.unsafeFinish(c);
                 } else {
                     c.onResult(null, e);
                 }

@@ -384,16 +384,12 @@ public class InternalStreamConnection implements InternalConnection {
         try {
             return sendAndReceiveInternal.get();
         } catch (MongoCommandException e) {
-            if (triggersReauthentication(e) && shouldAuthenticate(authenticator, this.description)) {
-                authenticated.set(false);
-                authenticator.reauthenticate(this);
-                authenticated.set(true);
-                return sendAndReceiveInternal.get();
+            if (reauthenticationIsTriggered(e)) {
+                return reauthenticateAndRetry(sendAndReceiveInternal);
             }
             throw e;
         }
     }
-
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
@@ -401,19 +397,35 @@ public class InternalStreamConnection implements InternalConnection {
 
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
                 message, decoder, sessionContext, requestContext, operationContext, c);
-        sendAndReceiveAsyncInternal.onErrorIf(e ->
-                        triggersReauthentication(e) && shouldAuthenticate(authenticator, this.description), beginAsync()
-                .thenRun(c -> {
-                    authenticated.set(false);
-                    authenticator.reauthenticateAsync(this, c);
-                }).thenSupply((c) -> {
-                    authenticated.set(true);
-                    sendAndReceiveAsyncInternal.finish(c);
-                }))
-        .finish(callback);
+        beginAsync().<T>thenSupply(c -> {
+            sendAndReceiveAsyncInternal.getAsync(c);
+        }).onErrorIf(e -> reauthenticationIsTriggered(e), c -> {
+            reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, c);
+        }).finish(callback);
     }
 
-    public static boolean triggersReauthentication(@Nullable final Throwable t) {
+    private <T> T reauthenticateAndRetry(final Supplier<T> operation) {
+        authenticated.set(false);
+        assertNotNull(authenticator).reauthenticate(this);
+        authenticated.set(true);
+        return operation.get();
+    }
+
+    private <T> void reauthenticateAndRetryAsync(final AsyncSupplier<T> operation,
+            final SingleResultCallback<T> callback) {
+        beginAsync().thenRun(c -> {
+            authenticated.set(false);
+            assertNotNull(authenticator).reauthenticateAsync(this, c);
+        }).<T>thenSupply((c) -> {
+            authenticated.set(true);
+            operation.getAsync(c);
+        }).finish(callback);
+    }
+
+    public boolean reauthenticationIsTriggered(@Nullable final Throwable t) {
+        if (!shouldAuthenticate(authenticator, this.description)) {
+            return false;
+        }
         if (t instanceof MongoCommandException) {
             MongoCommandException e = (MongoCommandException) t;
             return e.getErrorCode() == 391;

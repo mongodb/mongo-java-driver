@@ -19,11 +19,15 @@ package com.mongodb.internal.async;
 import com.mongodb.lang.Nullable;
 
 /**
+ * See tests for usage (AsyncFunctionsTest).
+ * <p>
  * This class is not part of the public API and may be removed or changed at any time
- *
- * @see AsyncRunnable
  */
 @FunctionalInterface
 public interface AsyncFunction<T, R> {
-    void internal(@Nullable T value, SingleResultCallback<R> callback);
+    /**
+     * This should not be called externally, but should be implemented as a
+     * lambda. To "finish" an async chain, use one of the "finish" methods.
+     */
+    void unsafeFinish(@Nullable T value, SingleResultCallback<R> callback);
 }

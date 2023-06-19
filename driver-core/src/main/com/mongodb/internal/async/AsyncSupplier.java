@@ -16,26 +16,50 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.function.Predicate;
 
+
 /**
+ * See tests for usage (AsyncFunctionsTest).
+ * <p>
  * This class is not part of the public API and may be removed or changed at any time
- *
- * @see AsyncRunnable
  */
 @FunctionalInterface
-public interface AsyncSupplier<T> {
-
-    void internal(SingleResultCallback<T> callback);
+public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
+    /**
+     * This should not be called externally to this API. It should be
+     * implemented as a lambda. To "finish" an async chain, use one of
+     * the "finish" methods.
+     *
+     * @see #finish(SingleResultCallback)
+     */
+    void unsafeFinish(SingleResultCallback<T> callback);
 
     /**
-     * Must be invoked at end of async chain
+     * This method must only be used when this AsyncSupplier corresponds
+     * to a {@link java.util.function.Supplier} (and is therefore being
+     * used within an async chain method lambda).
+     * @param callback the callback
+     */
+    default void getAsync(final SingleResultCallback<T> callback) {
+        unsafeFinish(callback);
+    }
+
+    @Override
+    default void unsafeFinish(@Nullable final Void value, final SingleResultCallback<T> callback) {
+        unsafeFinish(callback);
+    }
+
+    /**
+     * Must be invoked at end of async chain.
      * @param callback the callback provided by the method the chain is used in
      */
     default void finish(final SingleResultCallback<T> callback) {
         final boolean[] callbackInvoked = {false};
         try {
-            this.internal((v, e) -> {
+            this.unsafeFinish((v, e) -> {
                 callbackInvoked[0] = true;
                 callback.onResult(v, e);
             });
@@ -55,9 +79,9 @@ public interface AsyncSupplier<T> {
      */
     default <R> AsyncSupplier<R> thenApply(final AsyncFunction<T, R> function) {
         return (c) -> {
-            this.internal((v, e) -> {
+            this.unsafeFinish((v, e) -> {
                 if (e == null) {
-                    function.internal(v, c);
+                    function.unsafeFinish(v, c);
                 } else {
                     c.onResult(null, e);
                 }
@@ -72,9 +96,9 @@ public interface AsyncSupplier<T> {
      */
     default AsyncRunnable thenConsume(final AsyncConsumer<T> consumer) {
         return (c) -> {
-            this.internal((v, e) -> {
+            this.unsafeFinish((v, e) -> {
                 if (e == null) {
-                    consumer.internal(v, c);
+                    consumer.unsafeFinish(v, c);
                 } else {
                     c.onResult(null, e);
                 }
@@ -90,7 +114,7 @@ public interface AsyncSupplier<T> {
     default AsyncSupplier<T> onErrorIf(
             final Predicate<Throwable> errorCheck,
             final AsyncSupplier<T> supplier) {
-        return (callback) -> this.internal((r, e) -> {
+        return (callback) -> this.unsafeFinish((r, e) -> {
             if (e == null) {
                 callback.onResult(r, null);
                 return;
@@ -104,7 +128,7 @@ public interface AsyncSupplier<T> {
                 return;
             }
             if (errorMatched) {
-                supplier.internal(callback);
+                supplier.unsafeFinish(callback);
             } else {
                 callback.onResult(null, e);
             }
