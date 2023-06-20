@@ -21,8 +21,26 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.bson.BsonArray
+import org.bson.BsonBinary
+import org.bson.BsonBoolean
+import org.bson.BsonDateTime
+import org.bson.BsonDecimal128
 import org.bson.BsonDocument
+import org.bson.BsonDouble
+import org.bson.BsonInt32
+import org.bson.BsonInt64
+import org.bson.BsonJavaScript
+import org.bson.BsonJavaScriptWithScope
+import org.bson.BsonMaxKey
+import org.bson.BsonMinKey
+import org.bson.BsonObjectId
+import org.bson.BsonRegularExpression
+import org.bson.BsonString
+import org.bson.BsonSymbol
+import org.bson.BsonTimestamp
 import org.bson.BsonType
+import org.bson.BsonUndefined
 import org.bson.codecs.pojo.annotations.BsonCreator
 import org.bson.codecs.pojo.annotations.BsonDiscriminator
 import org.bson.codecs.pojo.annotations.BsonExtraElements
@@ -162,9 +180,61 @@ enum class Key {
 @Serializable data class DataClassWithDataClassMapKey(val map: Map<DataClassKey, Boolean>)
 
 @Serializable
-data class DataClassWithObjectIdAndBsonDocument(
-    @Contextual val objectId: ObjectId,
-    @Contextual val bsonDocument: BsonDocument
+data class DataClassBsonValues(
+    @Contextual val id: ObjectId,
+    @Contextual val arrayEmpty: BsonArray,
+    @Contextual val arraySimple: BsonArray,
+    @Contextual val arrayComplex: BsonArray,
+    @Contextual val arrayMixedTypes: BsonArray,
+    @Contextual val arrayComplexMixedTypes: BsonArray,
+    @Contextual val binary: BsonBinary,
+    @Contextual val boolean: BsonBoolean,
+    @Contextual val code: BsonJavaScript,
+    @Contextual val codeWithScope: BsonJavaScriptWithScope,
+    @Contextual val dateTime: BsonDateTime,
+    @Contextual val decimal128: BsonDecimal128,
+    @Contextual val documentEmpty: BsonDocument,
+    @Contextual val document: BsonDocument,
+    @Contextual val double: BsonDouble,
+    @Contextual val int32: BsonInt32,
+    @Contextual val int64: BsonInt64,
+    @Contextual val maxKey: BsonMaxKey,
+    @Contextual val minKey: BsonMinKey,
+    @Contextual val objectId: BsonObjectId,
+    @Contextual val regex: BsonRegularExpression,
+    @Contextual val string: BsonString,
+    @Contextual val symbol: BsonSymbol,
+    @Contextual val timestamp: BsonTimestamp,
+    @Contextual val undefined: BsonUndefined,
+)
+
+@Serializable
+data class DataClassOptionalBsonValues(
+    @Contextual val id: ObjectId?,
+    @Contextual val arrayEmpty: BsonArray?,
+    @Contextual val arraySimple: BsonArray?,
+    @Contextual val arrayComplex: BsonArray?,
+    @Contextual val arrayMixedTypes: BsonArray?,
+    @Contextual val arrayComplexMixedTypes: BsonArray?,
+    @Contextual val binary: BsonBinary?,
+    @Contextual val boolean: BsonBoolean?,
+    @Contextual val code: BsonJavaScript?,
+    @Contextual val codeWithScope: BsonJavaScriptWithScope?,
+    @Contextual val dateTime: BsonDateTime?,
+    @Contextual val decimal128: BsonDecimal128?,
+    @Contextual val documentEmpty: BsonDocument?,
+    @Contextual val document: BsonDocument?,
+    @Contextual val double: BsonDouble?,
+    @Contextual val int32: BsonInt32?,
+    @Contextual val int64: BsonInt64?,
+    @Contextual val maxKey: BsonMaxKey?,
+    @Contextual val minKey: BsonMinKey?,
+    @Contextual val objectId: BsonObjectId?,
+    @Contextual val regex: BsonRegularExpression?,
+    @Contextual val string: BsonString?,
+    @Contextual val symbol: BsonSymbol?,
+    @Contextual val timestamp: BsonTimestamp?,
+    @Contextual val undefined: BsonUndefined?,
 )
 
 @Serializable sealed class DataClassSealed

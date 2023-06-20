@@ -23,7 +23,6 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.SerialKind
 import kotlinx.serialization.descriptors.StructureKind
-import kotlinx.serialization.descriptors.elementDescriptors
 import kotlinx.serialization.encoding.AbstractDecoder
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
@@ -61,47 +60,48 @@ internal open class DefaultBsonDecoder(
     internal val configuration: BsonConfiguration
 ) : BsonDecoder, AbstractDecoder() {
 
+    private data class ElementMetadata(val name: String, val nullable: Boolean, var processed: Boolean = false)
+    private var elementsMetadata: Array<ElementMetadata>? = null
+    private var currentIndex: Int = UNKNOWN_INDEX
+
     companion object {
         val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
         val bsonValueCodec = BsonValueCodec()
+        const val UNKNOWN_INDEX = -10
     }
 
-    private var elementsIsNullableIndexes: BooleanArray? = null
-
-    private fun initElementNullsIndexes(descriptor: SerialDescriptor) {
-        if (elementsIsNullableIndexes != null) return
-        val elementIndexes = BooleanArray(descriptor.elementsCount)
-        descriptor.elementDescriptors.withIndex().forEach {
-            elementIndexes[it.index] = !descriptor.isElementOptional(it.index) && it.value.isNullable
-        }
-        elementsIsNullableIndexes = elementIndexes
+    private fun initElementMetadata(descriptor: SerialDescriptor) {
+        if (this.elementsMetadata != null) return
+        val elementsMetadata =
+            Array(descriptor.elementsCount) {
+                val elementDescriptor = descriptor.getElementDescriptor(it)
+                ElementMetadata(
+                    elementDescriptor.serialName, elementDescriptor.isNullable && !descriptor.isElementOptional(it))
+            }
+        this.elementsMetadata = elementsMetadata
     }
 
-    @Suppress("ReturnCount")
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
-        initElementNullsIndexes(descriptor)
+        initElementMetadata(descriptor)
+        currentIndex = decodeElementIndexImpl(descriptor)
+        elementsMetadata?.getOrNull(currentIndex)?.processed = true
+        return currentIndex
+    }
 
+    @Suppress("ReturnCount", "ComplexMethod")
+    private fun decodeElementIndexImpl(descriptor: SerialDescriptor): Int {
+        val elementMetadata = elementsMetadata ?: error("elementsMetadata may not be null.")
         val name: String? =
             when (reader.state ?: error("State of reader may not be null.")) {
                 AbstractBsonReader.State.NAME -> reader.readName()
                 AbstractBsonReader.State.VALUE -> reader.currentName
                 AbstractBsonReader.State.TYPE -> {
                     reader.readBsonType()
-                    return decodeElementIndex(descriptor)
+                    return decodeElementIndexImpl(descriptor)
                 }
                 AbstractBsonReader.State.END_OF_DOCUMENT,
-                AbstractBsonReader.State.END_OF_ARRAY -> {
-                    val isNullableIndexes =
-                        elementsIsNullableIndexes ?: error("elementsIsNullableIndexes may not be null.")
-                    val indexOfNullableElement = isNullableIndexes.indexOfFirst { it }
-
-                    return if (indexOfNullableElement == -1) {
-                        DECODE_DONE
-                    } else {
-                        isNullableIndexes[indexOfNullableElement] = false
-                        indexOfNullableElement
-                    }
-                }
+                AbstractBsonReader.State.END_OF_ARRAY ->
+                    return elementMetadata.indexOfFirst { it.nullable && !it.processed }
                 else -> null
             }
 
@@ -109,7 +109,7 @@ internal open class DefaultBsonDecoder(
             val index = descriptor.getElementIndex(it)
             return if (index == UNKNOWN_NAME) {
                 reader.skipValue()
-                decodeElementIndex(descriptor)
+                decodeElementIndexImpl(descriptor)
             } else {
                 index
             }
