@@ -38,6 +38,12 @@ class StringMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         assertExpression("abc", of("abc"), "'abc'");
         assertThrows(IllegalArgumentException.class, () -> of((String) null));
         assertExpression(fish, of(fish), "'" + fish + "'");
+
+        // must escape:
+        assertExpression(
+                "$abc",
+                of("$abc"),
+                "{'$literal': '$abc'}");
     }
 
     @Test
