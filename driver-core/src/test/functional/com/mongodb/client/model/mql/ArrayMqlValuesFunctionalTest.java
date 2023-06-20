@@ -77,6 +77,12 @@ class ArrayMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
                 Arrays.asList("a", "b", "c"),
                 ofStringArray("a", "b", "c"),
                 "['a', 'b', 'c']");
+        // must escape:
+        assertExpression(
+                Arrays.asList("$a", "b", "$c.d"),
+                ofStringArray("$a", "b", "$c.d"),
+                "[{'$literal': '$a'}, 'b', {'$literal': '$c.d'}]");
+
         // Date
         assertExpression(
                 Arrays.asList(Instant.parse("2007-12-03T10:15:30.00Z")),

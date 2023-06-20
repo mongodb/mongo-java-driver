@@ -233,7 +233,7 @@ public final class MqlValues {
      */
     public static MqlString of(final String of) {
         Assertions.notNull("String", of);
-        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(new BsonString(of)));
+        return new MqlExpression<>((codecRegistry) -> new AstPlaceholder(wrapString(of)));
     }
 
     /**
@@ -249,9 +249,18 @@ public final class MqlValues {
         List<BsonValue> result = new ArrayList<>();
         for (String e : array) {
             Assertions.notNull("elements of array", e);
-            result.add(new BsonString(e));
+            result.add(wrapString(e));
         }
         return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(result)));
+    }
+
+    private static BsonValue wrapString(final String s) {
+        BsonString bson = new BsonString(s);
+        if (s.contains("$")) {
+            return new BsonDocument("$literal", bson);
+        } else {
+            return bson;
+        }
     }
 
     /**
