@@ -4,17 +4,19 @@ Release notes are available [here](https://github.com/mongodb/mongo-java-driver/
 
 ## Documentation
 
-Reference and API documentation is available [here](http://mongodb.github.io/mongo-java-driver/).
+Reference and API documentation for the Java driver is available [here](https://www.mongodb.com/docs/drivers/java/sync/current/). 
+
+Reference and API documentation for the Kotlin driver is available [here](https://www.mongodb.com/docs/drivers/kotlin/coroutine/current/).
 
 ## Tutorials / Training
 
-For tutorials on how to use the MongoDB Java Driver, please reference MongoDB University's Java offerings [here](https://learn.mongodb.com/catalog?labels=%5B%22Language%22%5D&values=%5B%22Java%22%5D). Additional tutorials, videos, and code examples using the Java Driver can also be found in the [MongoDB Developer Center](https://www.mongodb.com/developer/languages/java/).
+For tutorials on how to use the MongoDB JVM Drivers, please reference [MongoDB University](https://learn.mongodb.com/). Additional tutorials, videos, and code examples using both the Java Driver and the Kotlin Driver can also be found in the [MongoDB Developer Center](https://www.mongodb.com/developer/).
 
 ## Support / Feedback
 
-For issues with, questions about, or feedback for the MongoDB Java driver, please look into
+For issues with, questions about, or feedback for the MongoDB Java and Kotlin drivers, please look into
 our [support channels](https://www.mongodb.com/docs/manual/support/). Please
-do not email any of the Java driver developers directly with issues or
+do not email any of the driver developers directly with issues or
 questions - you're more likely to get an answer on the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver) or [StackOverflow](https://stackoverflow.com/questions/tagged/mongodb+java).
 
 At a minimum, please include in your description the exact version of the driver that you are using.  If you are having
@@ -22,16 +24,14 @@ connectivity issues, it's often also useful to paste in the line of code where y
 along with the values of all parameters that you pass to the constructor. You should also check your application logs for
 any connectivity-related exceptions and post those as well.
 
-
-
 ## Bugs / Feature Requests
 
-Think you’ve found a bug? Want to see a new feature in the Java driver? Please open a
+Think you’ve found a bug in the Java or Kotlin drivers? Want to see a new feature in the drivers? Please open a
 case in our issue management tool, JIRA:
 
 - [Create an account and login](https://jira.mongodb.org).
 - Navigate to [the JAVA project](https://jira.mongodb.org/browse/JAVA).
-- Click **Create Issue** - Please provide as much information as possible about the issue type and how to reproduce it.
+- Click **Create Issue** - Please provide as much information as possible about the issue type, which driver you are using, and how to reproduce your issue.
 
 Bug reports in JIRA for the driver and the Core Server (i.e. SERVER) project are **public**.
 
@@ -40,16 +40,16 @@ MongoDB project, please report it according to the [instructions here](https://w
 
 ## Versioning
 
-Major increments (such as 2.x -> 3.x) will occur when break changes are being made to the public API.  All methods and
+Major increments (such as 3.x -> 4.x) will occur when break changes are being made to the public API.  All methods and
 classes removed in a major release will have been deprecated in a prior release of the previous major release branch, and/or otherwise
 called out in the release notes.
 
-Minor 3.x increments (such as 3.1, 3.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
+Minor 4.x increments (such as 4.1, 4.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
 fixes occur that may have behavioral changes that may affect some edge cases (such as dependence on behavior resulting from a bug). An
 example of an enhancement is a method or class added to support new functionality added to the MongoDB server.   Minor releases will
 almost always be binary compatible with prior minor releases from the same major release branch, except as noted below.
 
-Patch 3.x.y increments (such as 3.0.0 -> 3.0.1, 3.1.1 -> 3.1.2, etc) will occur for bug fixes only and will always be binary compatible
+Patch 4.x.y increments (such as 4.0.0 -> 4.0.1, 4.1.1 -> 4.1.2, etc) will occur for bug fixes only and will always be binary compatible
 with prior patch releases of the same minor release branch.
 
 #### @Beta
