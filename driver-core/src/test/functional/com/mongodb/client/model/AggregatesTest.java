@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
+import com.mongodb.client.model.mql.MqlValues;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -53,10 +54,9 @@ public class AggregatesTest extends OperationTest {
 
     private static Stream<Arguments> groupWithQuantileSource() {
         return Stream.of(
-                Arguments.of(percentile("sat_95", "$x", new double[]{0.95}, QuantileMethod.approximate()), asList(3.0), asList(1.0)),
-                Arguments.of(percentile("sat_95", "$x", new double[]{0.95, 0.3}, QuantileMethod.approximate()), asList(3.0, 2.0),
-                        asList(1.0, 1.0)),
-                Arguments.of(median("sat_95", "$x", QuantileMethod.approximate()), 2.0d, 1.0d)
+                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95), QuantileMethod.approximate()), asList(3.0), asList(1.0)),
+                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95, 0.3), QuantileMethod.approximate()), asList(3.0, 2.0), asList(1.0, 1.0)),
+                Arguments.of(median("result", "$x", QuantileMethod.approximate()), 2.0d, 1.0d)
         );
     }
 
@@ -67,29 +67,29 @@ public class AggregatesTest extends OperationTest {
                                         final Object expectedGroup2) {
         //given
         assumeTrue(serverVersionAtLeast(7, 0));
-        Document[] original = new Document[]{
-                new Document("x", 1).append("z", false),
-                new Document("x", 2).append("z", true),
-                new Document("x", 3).append("z", true)
-        };
-        getCollectionHelper().insertDocuments(original);
+        getCollectionHelper().insertDocuments("[\n"
+                + "   { _id: 1, x: 1, z: false},\n"
+                + "   { _id: 2, x: 2, z: true },\n"
+                + "   { _id: 3, x: 3, z: true }\n"
+                + "]");
 
         //when
         List<Document> results = getCollectionHelper().aggregate(Collections.singletonList(
-                group(new Document("gid", "$z"), quantileAccumulator)), DOCUMENT_DECODER);
+                group("$z", quantileAccumulator)), DOCUMENT_DECODER);
 
         //then
         assertThat(results, hasSize(2));
 
         Object result = results.stream()
-                .filter(document -> document.get("_id").equals(new Document("gid", true)))
-                .findFirst().map(document -> document.get("sat_95")).get();
+                .filter(document -> document.get("_id").equals(true))
+                .findFirst().map(document -> document.get("result")).get();
+
 
         assertEquals(expectedGroup1, result);
 
         result = results.stream()
-                .filter(document -> document.get("_id").equals(new Document("gid", false)))
-                .findFirst().map(document -> document.get("sat_95")).get();
+                .filter(document -> document.get("_id").equals(false))
+                .findFirst().map(document -> document.get("result")).get();
 
         assertEquals(expectedGroup2, result);
     }
