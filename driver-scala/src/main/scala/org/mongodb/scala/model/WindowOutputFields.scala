@@ -15,7 +15,11 @@
  */
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, WindowOutputFields => JWindowOutputFields }
+import com.mongodb.client.model.{
+  MongoTimeUnit => JMongoTimeUnit,
+  QuantileMethod,
+  WindowOutputFields => JWindowOutputFields
+}
 import org.mongodb.scala.bson.conversions.Bson
 
 /**
@@ -83,6 +87,53 @@ object WindowOutputFields {
    */
   def avg[TExpression](path: String, expression: TExpression, window: Option[_ <: Window]): WindowOutputField =
     JWindowOutputFields.avg(path, expression, window.orNull)
+
+  /**
+   * Builds a window output field of percentiles of the evaluation results of the `inExpression`
+   * over documents in the specified `window`. The `pExpression` parameter represents an array of
+   * percentiles of interest, with each element being a numeric value between 0.0 and 1.0 (inclusive).
+   *
+   * @param path         The output field path.
+   * @param inExpression The input expression.
+   * @param pExpression  The expression representing the percentiles of interest.
+   * @param method       The method to be used for computing the percentiles.
+   * @param window       The window.
+   * @tparam InExpression The input expression type.
+   * @tparam PExpression  The percentile expression type.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/percentile/ \$percentile]]
+   * @since 4.10
+   * @note Requires MongoDB 7.0 or greater
+   */
+  def percentile[InExpression, PExpression](
+      path: String,
+      inExpression: InExpression,
+      pExpression: PExpression,
+      method: QuantileMethod,
+      window: Option[_ <: Window]
+  ): WindowOutputField =
+    JWindowOutputFields.percentile(path, inExpression, pExpression, method, window.orNull)
+
+  /**
+   * Builds a window output field representing the median value of the evaluation results of the `inExpression`
+   * over documents in the specified `window`.
+   *
+   * @param inExpression The input expression.
+   * @param method       The method to be used for computing the median.
+   * @param window       The window.
+   * @tparam InExpression The input expression type.
+   * @return The constructed windowed computation.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/medoan/ \$median]]
+   * @since 4.10
+   * @note Requires MongoDB 7.0 or greater
+   */
+  def median[InExpression](
+      path: String,
+      inExpression: InExpression,
+      method: QuantileMethod,
+      window: Option[_ <: Window]
+  ): WindowOutputField =
+    JWindowOutputFields.median(path, inExpression, method, window.orNull)
 
   /**
    * Builds a computation of the sample standard deviation of the evaluation results of the `expression` over the `window`.

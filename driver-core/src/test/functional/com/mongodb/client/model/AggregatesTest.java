@@ -18,26 +18,120 @@ package com.mongodb.client.model;
 
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
+import com.mongodb.client.model.mql.MqlValues;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-
-import org.bson.conversions.Bson;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.client.model.Accumulators.median;
+import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
+import static com.mongodb.client.model.Aggregates.group;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.Sorts.ascending;
+import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
+import static com.mongodb.client.model.Windows.documents;
 import static java.util.Arrays.asList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
 
+    private static Stream<Arguments> groupWithQuantileSource() {
+        return Stream.of(
+                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95), QuantileMethod.approximate()), asList(3.0), asList(1.0)),
+                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95, 0.3), QuantileMethod.approximate()), asList(3.0, 2.0), asList(1.0, 1.0)),
+                Arguments.of(median("result", "$x", QuantileMethod.approximate()), 2.0d, 1.0d)
+        );
+    }
 
+    @ParameterizedTest
+    @MethodSource("groupWithQuantileSource")
+    public void shouldGroupWithQuantile(final BsonField quantileAccumulator,
+                                        final Object expectedGroup1,
+                                        final Object expectedGroup2) {
+        //given
+        assumeTrue(serverVersionAtLeast(7, 0));
+        getCollectionHelper().insertDocuments("[\n"
+                + "   { _id: 1, x: 1, z: false},\n"
+                + "   { _id: 2, x: 2, z: true },\n"
+                + "   { _id: 3, x: 3, z: true }\n"
+                + "]");
+
+        //when
+        List<Document> results = getCollectionHelper().aggregate(Collections.singletonList(
+                group("$z", quantileAccumulator)), DOCUMENT_DECODER);
+
+        //then
+        assertThat(results, hasSize(2));
+
+        Object result = results.stream()
+                .filter(document -> document.get("_id").equals(true))
+                .findFirst().map(document -> document.get("result")).get();
+
+
+        assertEquals(expectedGroup1, result);
+
+        result = results.stream()
+                .filter(document -> document.get("_id").equals(false))
+                .findFirst().map(document -> document.get("result")).get();
+
+        assertEquals(expectedGroup2, result);
+    }
+
+    private static Stream<Arguments> setWindowFieldWithQuantileSource() {
+        return Stream.of(
+                Arguments.of(null,
+                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, QuantileMethod.approximate(),
+                                documents(UNBOUNDED, UNBOUNDED)),
+                        asList(asList(1.0, 3.0), asList(1.0, 3.0), asList(1.0, 3.0))),
+                Arguments.of("$partitionId",
+                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, QuantileMethod.approximate(), null),
+                        asList(asList(1.0, 2.0), asList(1.0, 2.0), asList(3.0, 3.0))),
+                Arguments.of(null,
+                        WindowOutputFields.median("result", "$num1", QuantileMethod.approximate(), documents(UNBOUNDED, UNBOUNDED)),
+                        asList(2.0, 2.0, 2.0)),
+                Arguments.of("$partitionId",
+                        WindowOutputFields.median("result", "$num1", QuantileMethod.approximate(), null),
+                        asList(1.0, 1.0, 3.0))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("setWindowFieldWithQuantileSource")
+    public void shouldSetWindowFieldWithQuantile(@Nullable final Object partitionBy,
+                                                 final WindowOutputField output,
+                                                 final List<Object> expectedFieldValues) {
+        //given
+        assumeTrue(serverVersionAtLeast(7, 0));
+        Document[] original = new Document[]{
+                new Document("partitionId", 1).append("num1", 1),
+                new Document("partitionId", 1).append("num1", 2),
+                new Document("partitionId", 2).append("num1", 3)
+        };
+        getCollectionHelper().insertDocuments(original);
+
+        //when
+        List<Object> actualFieldValues = aggregateWithWindowFields(partitionBy, output, ascending("num1"));
+
+        //then
+        Assertions.assertEquals(actualFieldValues, expectedFieldValues);
+    }
 
     @Test
     public void testUnset() {

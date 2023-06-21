@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Sealed }
 
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ GeoNearOptions, MongoTimeUnit => JMongoTimeUnit, WindowOutputField }
@@ -937,6 +937,12 @@ package object model {
   type WindowOutputField = com.mongodb.client.model.WindowOutputField
 
   type GeoNearOptions = com.mongodb.client.model.GeoNearOptions
+
+  /**
+   * @see `QuantileMethod.approximate()`
+   */
+  @Sealed
+  type ApproximateQuantileMethod = com.mongodb.client.model.ApproximateQuantileMethod
 }
 
 // scalastyle:on number.of.methods number.of.types

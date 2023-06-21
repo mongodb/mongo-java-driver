@@ -68,6 +68,51 @@ public final class Accumulators {
     }
 
     /**
+     * Returns a combination of a computed field and an accumulator that generates a BSON {@link org.bson.BsonType#ARRAY Array}
+     * containing computed values from the given {@code inExpression} based on the provided {@code pExpression}, which represents an array
+     * of percentiles of interest within a group, where each element is a numeric value between 0.0 and 1.0 (inclusive).
+     *
+     * @param fieldName      The field computed by the accumulator.
+     * @param inExpression   The input expression.
+     * @param pExpression    The expression representing a percentiles of interest.
+     * @param method         The method to be used for computing the percentiles.
+     * @param <InExpression> The type of the input expression.
+     * @param <PExpression>  The type of the percentile expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/percentile/ $percentile
+     * @since 4.10
+     * @mongodb.server.release 7.0
+     */
+    public static <InExpression, PExpression> BsonField percentile(final String fieldName, final InExpression inExpression,
+                                                                   final PExpression pExpression, final QuantileMethod method) {
+        notNull("fieldName", fieldName);
+        notNull("inExpression", inExpression);
+        notNull("pExpression", inExpression);
+        notNull("method", method);
+        return quantileAccumulator("$percentile", fieldName, inExpression, pExpression, method);
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that generates a BSON {@link org.bson.BsonType#DOUBLE Double }
+     * representing the median value computed from the given {@code inExpression} within a group.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param inExpression The input expression.
+     * @param method The method to be used for computing the median.
+     * @param <InExpression> The type of the input expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/median/ $median
+     * @since 4.10
+     * @mongodb.server.release 7.0
+     */
+    public static <InExpression> BsonField median(final String fieldName, final InExpression inExpression,  final QuantileMethod method) {
+        notNull("fieldName", fieldName);
+        notNull("inExpression", inExpression);
+        notNull("method", method);
+        return quantileAccumulator("$median", fieldName, inExpression, null, method);
+    }
+
+    /**
      * Gets a field name for a $group operation representing the value of the given expression when applied to the first member of
      * the group.
      *
@@ -508,6 +553,17 @@ public final class Accumulators {
         return new BsonField(fieldName, new Document(accumulatorName, new Document("sortBy", sort)
                 .append("output", outExpression)
                 .append("n", nExpression)));
+    }
+
+    private static <InExpression, PExpression> BsonField quantileAccumulator(final String quantileAccumulatorName,
+                                                                             final String fieldName, final InExpression inExpression,
+                                                                             @Nullable final PExpression pExpression, final QuantileMethod method) {
+        Document document = new Document("input", inExpression)
+                .append("method", method.toBsonValue());
+        if (pExpression != null) {
+            document.append("p", pExpression);
+        }
+        return accumulatorOperator(quantileAccumulatorName, fieldName, document);
     }
 
     private Accumulators() {
