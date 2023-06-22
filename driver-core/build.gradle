@@ -37,8 +37,8 @@ def classifiers = ["linux-x86_64", "linux-aarch_64", "osx-x86_64", "osx-aarch_64
 dependencies {
     api project(path: ':bson', configuration: 'default')
     implementation project(path: ':bson-record-codec', configuration: 'default')
-    implementation project(path: ':bson-kotlin', configuration: 'default')
-    implementation project(path: ':bson-kotlinx', configuration: 'default')
+    implementation project(path: ':bson-kotlin', configuration: 'default'), optional
+    implementation project(path: ':bson-kotlinx', configuration: 'default'), optional
 
     implementation "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
     api platform("io.netty:netty-bom:$nettyVersion")

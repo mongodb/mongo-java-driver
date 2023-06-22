@@ -65,6 +65,7 @@ dependencies {
 
     api(project(path = ":bson", configuration = "default"))
     api(project(path = ":driver-reactive-streams", configuration = "default"))
+    implementation(project(path = ":bson-kotlin", configuration = "default"))
 
     testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
