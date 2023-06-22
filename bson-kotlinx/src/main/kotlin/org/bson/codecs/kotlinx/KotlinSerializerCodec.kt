@@ -85,10 +85,14 @@ private constructor(
             serializersModule: SerializersModule = defaultSerializersModule,
             bsonConfiguration: BsonConfiguration = BsonConfiguration()
         ): Codec<T>? {
-            return try {
-                create(kClass, kClass.serializer(), serializersModule, bsonConfiguration)
-            } catch (exception: SerializationException) {
+            return if (!(kClass.isData || kClass.isValue || kClass.isSealed)) {
                 null
+            } else {
+                try {
+                    create(kClass, kClass.serializer(), serializersModule, bsonConfiguration)
+                } catch (exception: SerializationException) {
+                    null
+                }
             }
         }
 
