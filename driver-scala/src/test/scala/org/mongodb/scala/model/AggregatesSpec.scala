@@ -448,7 +448,13 @@ class AggregatesSpec extends BaseSpec {
         ),
         WindowOutputFields.sum("newField01", "$field01", Some(range(1, CURRENT))),
         WindowOutputFields.avg("newField02", "$field02", Some(range(UNBOUNDED, 1))),
-        WindowOutputFields.percentile("newField02P", "$field02P", List(0.3, 0.9), QuantileMethod.approximate(), Some(range(UNBOUNDED, 1))),
+        WindowOutputFields.percentile(
+          "newField02P",
+          "$field02P",
+          List(0.3, 0.9),
+          QuantileMethod.approximate(),
+          Some(range(UNBOUNDED, 1))
+        ),
         WindowOutputFields.median("newField02M", "$field02M", QuantileMethod.approximate(), Some(range(UNBOUNDED, 1))),
         WindowOutputFields.stdDevSamp("newField03", "$field03", Some(window)),
         WindowOutputFields.stdDevPop("newField04", "$field04", Some(window)),
