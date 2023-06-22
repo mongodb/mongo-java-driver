@@ -97,11 +97,11 @@ public class AggregatesTest extends OperationTest {
     private static Stream<Arguments> setWindowFieldWithQuantileSource() {
         return Stream.of(
                 Arguments.of(null,
-                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, QuantileMethod.approximate(),
+                        WindowOutputFields.percentile("result", "$num1", asList(0.1, 0.9), QuantileMethod.approximate(),
                                 documents(UNBOUNDED, UNBOUNDED)),
                         asList(asList(1.0, 3.0), asList(1.0, 3.0), asList(1.0, 3.0))),
                 Arguments.of("$partitionId",
-                        WindowOutputFields.percentile("result", "$num1", new double[]{0.1, 0.9}, QuantileMethod.approximate(), null),
+                        WindowOutputFields.percentile("result", "$num1", asList(0.1, 0.9), QuantileMethod.approximate(), null),
                         asList(asList(1.0, 2.0), asList(1.0, 2.0), asList(3.0, 3.0))),
                 Arguments.of(null,
                         WindowOutputFields.median("result", "$num1", QuantileMethod.approximate(), documents(UNBOUNDED, UNBOUNDED)),
