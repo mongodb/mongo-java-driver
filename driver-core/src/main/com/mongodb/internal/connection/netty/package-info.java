@@ -14,23 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
-
-import com.mongodb.annotations.ThreadSafe;
-import org.bson.ByteBuf;
-
 /**
- * A provider of instances of ByteBuf.
- *
- * @since 3.0
+ * Contains <a href="https://netty.io/">Netty</a>-specific program elements.
  */
-@ThreadSafe
-public interface BufferProvider {
-    /**
-     * Gets a buffer with the givens capacity.
-     *
-     * @param size the size required for the buffer
-     * @return a ByteBuf with the given size, which is now owned by the caller and must be released.
-     */
-    ByteBuf getBuffer(int size);
-}
+@NonNullApi
+package com.mongodb.internal.connection.netty;
+
+import com.mongodb.lang.NonNullApi;
