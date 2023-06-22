@@ -51,6 +51,12 @@ class KotlinSerializerCodecProviderTest {
     }
 
     @Test
+    fun shouldReturnNullForSerializableButNotValueClassOrSealedOrDataClassTypes() {
+        assertNull(KotlinSerializerCodecProvider().get(DoubleArray::class.java, Bson.DEFAULT_CODEC_REGISTRY))
+        assertNull(KotlinSerializerCodecProvider().get(CharSequence::class.java, Bson.DEFAULT_CODEC_REGISTRY))
+    }
+
+    @Test
     fun shouldReturnKotlinSerializerCodecUsingDefaultRegistry() {
         val codec = MongoClientSettings.getDefaultCodecRegistry().get(DataClassWithSimpleValues::class.java)
 
