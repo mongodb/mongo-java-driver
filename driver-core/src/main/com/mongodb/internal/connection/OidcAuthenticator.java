@@ -188,7 +188,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     @Override
     public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
-        assertTrue(connection.opened());
         beginAsync().thenRun(c -> {
             assertTrue(connection.opened());
             authLockAsync(connection, connection.getDescription(), c);
