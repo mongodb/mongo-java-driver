@@ -18,10 +18,12 @@ package org.bson.codecs.kotlinx
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.findAnnotations
+import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
@@ -85,14 +87,14 @@ private constructor(
             serializersModule: SerializersModule = defaultSerializersModule,
             bsonConfiguration: BsonConfiguration = BsonConfiguration()
         ): Codec<T>? {
-            return if (!(kClass.isData || kClass.isValue || kClass.isSealed)) {
-                null
-            } else {
+            return if (kClass.hasAnnotation<Serializable>()) {
                 try {
                     create(kClass, kClass.serializer(), serializersModule, bsonConfiguration)
                 } catch (exception: SerializationException) {
                     null
                 }
+            } else {
+                null
             }
         }
 

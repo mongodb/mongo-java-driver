@@ -32,6 +32,8 @@ class KotlinSerializerCodecProviderTest {
     @Test
     fun shouldReturnNullForNonSerializableClass() {
         assertNull(KotlinSerializerCodecProvider().get(NotMarkedSerializable::class.java, Bson.DEFAULT_CODEC_REGISTRY))
+        assertNull(KotlinSerializerCodecProvider().get(DoubleArray::class.java, Bson.DEFAULT_CODEC_REGISTRY))
+        assertNull(KotlinSerializerCodecProvider().get(CharSequence::class.java, Bson.DEFAULT_CODEC_REGISTRY))
     }
 
     @Test
@@ -48,12 +50,6 @@ class KotlinSerializerCodecProviderTest {
     fun shouldReturnNullFoRawParameterizedDataClass() {
         val codec = KotlinSerializerCodecProvider().get(DataClassParameterized::class.java, Bson.DEFAULT_CODEC_REGISTRY)
         assertNull(codec)
-    }
-
-    @Test
-    fun shouldReturnNullForSerializableButNotValueClassOrSealedOrDataClassTypes() {
-        assertNull(KotlinSerializerCodecProvider().get(DoubleArray::class.java, Bson.DEFAULT_CODEC_REGISTRY))
-        assertNull(KotlinSerializerCodecProvider().get(CharSequence::class.java, Bson.DEFAULT_CODEC_REGISTRY))
     }
 
     @Test
