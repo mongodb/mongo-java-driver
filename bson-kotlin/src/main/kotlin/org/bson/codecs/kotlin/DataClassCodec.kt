@@ -133,9 +133,7 @@ internal data class DataClassCodec<T : Any>(
             codecRegistry: CodecRegistry,
             types: List<Type> = emptyList()
         ): Codec<R>? {
-            return if (!kClass.isData) {
-                null
-            } else {
+            return if (kClass.isData) {
                 validateAnnotations(kClass)
                 val primaryConstructor =
                     kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
@@ -148,6 +146,8 @@ internal data class DataClassCodec<T : Any>(
                             kParameter, computeFieldName(kParameter), getCodec(kParameter, typeMap, codecRegistry))
                     }
                 return DataClassCodec(kClass, primaryConstructor, propertyModels)
+            } else {
+                null
             }
         }
 
