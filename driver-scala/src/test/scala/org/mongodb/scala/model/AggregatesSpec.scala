@@ -17,7 +17,6 @@
 package org.mongodb.scala.model
 
 import com.mongodb.client.model.GeoNearOptions.geoNearOptions
-import com.mongodb.client.model.QuantileMethod
 import com.mongodb.client.model.fill.FillOutputField
 
 import java.lang.reflect.Modifier._
@@ -409,8 +408,8 @@ class AggregatesSpec extends BaseSpec {
         null,
         sum("sum", Document("""{ $multiply: [ "$price", "$quantity" ] }""")),
         avg("avg", "$quantity"),
-        percentile("percentile", "$quantity", List(0.95, 0.3), QuantileMethod.approximate()),
-        median("median", "$quantity", QuantileMethod.approximate()),
+        percentile("percentile", "$quantity", List(0.95, 0.3), QuantileMethod.approximate),
+        median("median", "$quantity", QuantileMethod.approximate),
         min("min", "$quantity"),
         minN("minN", "$quantity", 2),
         max("max", "$quantity"),
@@ -452,10 +451,10 @@ class AggregatesSpec extends BaseSpec {
           "newField02P",
           "$field02P",
           List(0.3, 0.9),
-          QuantileMethod.approximate(),
+          QuantileMethod.approximate,
           Some(range(UNBOUNDED, 1))
         ),
-        WindowOutputFields.median("newField02M", "$field02M", QuantileMethod.approximate(), Some(range(UNBOUNDED, 1))),
+        WindowOutputFields.median("newField02M", "$field02M", QuantileMethod.approximate, Some(range(UNBOUNDED, 1))),
         WindowOutputFields.stdDevSamp("newField03", "$field03", Some(window)),
         WindowOutputFields.stdDevPop("newField04", "$field04", Some(window)),
         WindowOutputFields.min("newField05", "$field05", Some(window)),
