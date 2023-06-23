@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.jetbrains.kotlin.jvm")
     `java-library`
-    kotlin("plugin.serialization")
 
     // Test based plugins
     id("com.diffplug.spotless")
@@ -62,6 +61,7 @@ dependencies {
 
     api(project(path = ":bson", configuration = "default"))
     api(project(path = ":driver-sync", configuration = "default"))
+    implementation(project(path = ":bson-kotlin", configuration = "default"))
 
     testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
@@ -73,7 +73,6 @@ dependencies {
     integrationTestImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     integrationTestImplementation(project(path = ":driver-sync"))
     integrationTestImplementation(project(path = ":driver-core"))
-    integrationTestImplementation(project(path = ":bson-kotlinx"))
 }
 
 kotlin { explicitApi() }
