@@ -29,6 +29,7 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
+import com.mongodb.internal.connection.netty.NettyByteBuf;
 import com.mongodb.lang.Nullable;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;

@@ -14,29 +14,41 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty;
+package com.mongodb.internal.connection.netty;
 
 import org.bson.ByteBuf;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-final class NettyByteBuf implements ByteBuf {
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public final class NettyByteBuf implements ByteBuf {
 
     private io.netty.buffer.ByteBuf proxied;
     private boolean isWriting = true;
 
+    /**
+     * @param proxied This constructor stores a reference to {@code proxied} in the heap memory
+     * but does not {@linkplain io.netty.buffer.ByteBuf#retain() retain} {@code proxied}.
+     * A caller may have to do that depending on the
+     * <a href="https://jira.mongodb.org/browse/JAVA-3964">reference counting approach</a> he uses.
+     */
     @SuppressWarnings("deprecation")
-    NettyByteBuf(final io.netty.buffer.ByteBuf proxied) {
+    public NettyByteBuf(final io.netty.buffer.ByteBuf proxied) {
         this.proxied = proxied.order(ByteOrder.LITTLE_ENDIAN);
     }
 
-    NettyByteBuf(final io.netty.buffer.ByteBuf proxied, final boolean isWriting) {
+    /**
+     * @param proxied See {@link #NettyByteBuf(io.netty.buffer.ByteBuf)}.
+     */
+    private NettyByteBuf(final io.netty.buffer.ByteBuf proxied, final boolean isWriting) {
         this(proxied);
         this.isWriting = isWriting;
     }
 
-    io.netty.buffer.ByteBuf asByteBuf() {
+    public io.netty.buffer.ByteBuf asByteBuf() {
         return proxied;
     }
 

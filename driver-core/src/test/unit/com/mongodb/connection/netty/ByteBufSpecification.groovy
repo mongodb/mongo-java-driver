@@ -16,6 +16,7 @@
 
 package com.mongodb.connection.netty
 
+import com.mongodb.internal.connection.netty.NettyByteBuf
 import io.netty.buffer.ByteBufAllocator
 import org.bson.ByteBufNIO
 import spock.lang.Specification
