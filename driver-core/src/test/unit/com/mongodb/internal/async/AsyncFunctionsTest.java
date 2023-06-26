@@ -306,6 +306,7 @@ final class AsyncFunctionsTest {
 
     @Test
     void testErrorIf() {
+        // thenSupply:
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -323,6 +324,27 @@ final class AsyncFunctionsTest {
                         asyncReturns(1, c);
                     }).onErrorIf(e -> e.getMessage().equals(plainTest(1) ? "unexpected" : "exception-1"), c -> {
                         asyncReturns(2, c);
+                    }).finish(callback);
+                });
+
+        // thenRun:
+        assertBehavesSameVariations(5,
+                () -> {
+                    try {
+                        sync(1);
+                    } catch (Exception e) {
+                        if (e.getMessage().equals(plainTest(1) ? "unexpected" : "exception-1")) {
+                            sync(2);
+                        } else {
+                            throw e;
+                        }
+                    }
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        async(1, c);
+                    }).onErrorIf(e -> e.getMessage().equals(plainTest(1) ? "unexpected" : "exception-1"), c -> {
+                        async(2, c);
                     }).finish(callback);
                 });
     }

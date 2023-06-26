@@ -16,16 +16,16 @@
 package org.bson.codecs.kotlin
 
 import com.mongodb.MongoClientSettings
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.kotlin.samples.DataClassParameterized
 import org.bson.codecs.kotlin.samples.DataClassWithSimpleValues
 import org.bson.conversions.Bson
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class DataClassCodecProviderTest {
 

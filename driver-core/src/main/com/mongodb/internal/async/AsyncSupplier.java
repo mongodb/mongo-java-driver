@@ -73,7 +73,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     /**
-     * @param function The async function to run after this runnable
+     * @param function The async function to run after this supplier
      * @return the composition of this supplier and the function, a supplier
      * @param <R> The return type of the resulting supplier
      */

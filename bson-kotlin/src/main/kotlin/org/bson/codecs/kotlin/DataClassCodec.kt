@@ -139,8 +139,8 @@ internal data class DataClassCodec<T : Any>(
                 validateAnnotations(kClass)
                 val primaryConstructor =
                     kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
-                val typeMap =
-                    types.mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType() to k }.toMap()
+                val typeMap = types.mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType() to k }
+                    .toMap()
 
                 val propertyModels =
                     primaryConstructor.parameters.map { kParameter ->

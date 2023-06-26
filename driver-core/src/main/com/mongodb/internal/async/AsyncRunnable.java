@@ -73,7 +73,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                 callback.onResult(null, t);
                 return;
             }
-            callback.onResult(r, e);
+            callback.onResult(null, e);
         });
     }
 
