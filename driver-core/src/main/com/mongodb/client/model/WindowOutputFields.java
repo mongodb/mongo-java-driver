@@ -146,6 +146,7 @@ public final class WindowOutputFields {
      * Builds a window output field representing the median value of the evaluation results of the {@code inExpression}
      * over documents in the specified {@code window}.
      *
+     * @param path The output field path.
      * @param inExpression The input expression.
      * @param method The method to be used for computing the median.
      * @param window The window.
