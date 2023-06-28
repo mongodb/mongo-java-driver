@@ -42,6 +42,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.ResourceUtil;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.async.AsyncSupplier;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -68,9 +69,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
@@ -238,7 +242,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
-        isTrue("Open already called", stream == null, callback);
+        assertNull(stream);
         try {
             stream = streamFactory.create(serverId.getAddress());
             stream.openAsync(new AsyncCompletionHandler<Void>() {
@@ -364,17 +368,48 @@ public class InternalStreamConnection implements InternalConnection {
         try {
             return sendAndReceiveInternal.get();
         } catch (MongoCommandException e) {
-            if (triggersReauthentication(e) && Authenticator.shouldAuthenticate(authenticator, this.description)) {
-                authenticated.set(false);
-                authenticator.reauthenticate(this);
-                authenticated.set(true);
-                return sendAndReceiveInternal.get();
+            if (reauthenticationIsTriggered(e)) {
+                return reauthenticateAndRetry(sendAndReceiveInternal);
             }
             throw e;
         }
     }
 
-    public static boolean triggersReauthentication(@Nullable final Throwable t) {
+    @Override
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+            final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
+
+        AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
+                message, decoder, sessionContext, requestContext, operationContext, c);
+        beginAsync().<T>thenSupply(c -> {
+            sendAndReceiveAsyncInternal.getAsync(c);
+        }).onErrorIf(e -> reauthenticationIsTriggered(e), c -> {
+            reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, c);
+        }).finish(callback);
+    }
+
+    private <T> T reauthenticateAndRetry(final Supplier<T> operation) {
+        authenticated.set(false);
+        assertNotNull(authenticator).reauthenticate(this);
+        authenticated.set(true);
+        return operation.get();
+    }
+
+    private <T> void reauthenticateAndRetryAsync(final AsyncSupplier<T> operation,
+            final SingleResultCallback<T> callback) {
+        beginAsync().thenRun(c -> {
+            authenticated.set(false);
+            assertNotNull(authenticator).reauthenticateAsync(this, c);
+        }).<T>thenSupply((c) -> {
+            authenticated.set(true);
+            operation.getAsync(c);
+        }).finish(callback);
+    }
+
+    public boolean reauthenticationIsTriggered(@Nullable final Throwable t) {
+        if (!shouldAuthenticate(authenticator, this.description)) {
+            return false;
+        }
         if (t instanceof MongoCommandException) {
             MongoCommandException e = (MongoCommandException) t;
             return e.getErrorCode() == 391;
@@ -501,11 +536,8 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
+    private <T> void sendAndReceiveAsyncInternal(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
             final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
-        notNull("stream is open", stream, callback);
-
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
             return;
@@ -616,7 +648,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public ResponseBuffers receiveMessage(final int responseTo) {
-        notNull("stream is open", stream);
+        assertNotNull(stream);
         if (isClosed()) {
             throw new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress());
         }
@@ -634,8 +666,9 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        notNull("stream is open", stream, callback);
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId,
+            final SingleResultCallback<Void> callback) {
+        assertNotNull(stream);
 
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
@@ -667,7 +700,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        isTrue("stream is open", stream != null, callback);
+        assertNotNull(stream);
 
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
