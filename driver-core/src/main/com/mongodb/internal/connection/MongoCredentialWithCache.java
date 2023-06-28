@@ -25,7 +25,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.StampedLock;
 
 import static com.mongodb.internal.Locks.withInterruptibleLock;
-import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcCacheEntry;
 
 /**
