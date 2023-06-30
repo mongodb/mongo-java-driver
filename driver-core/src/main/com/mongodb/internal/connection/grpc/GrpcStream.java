@@ -193,30 +193,6 @@ final class GrpcStream implements Stream {
         // The server will not flood up with messages even if there are `exhaustAllowed`/`moreToCome` `OP_MSG` flags
         // (https://www.mongodb.com/docs/upcoming/reference/mongodb-wire-protocol/#op_msg).
         call.request(Integer.MAX_VALUE);
-
-//        List<ByteBuf> messageBuffers = null;
-//        try {
-//            try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(bufferProvider)) {
-//                bsonOutput.writeInt(MessageHeader.MESSAGE_HEADER_LENGTH + 4);
-//                bsonOutput.writeInt(0);
-//                bsonOutput.writeInt(0);
-//                bsonOutput.writeInt(2013);
-//                bsonOutput.writeInt(1);
-//                bsonOutput.getByteBuffers();
-//                messageBuffers = bsonOutput.getByteBuffers();
-//            }
-//            try {
-//                write(messageBuffers);
-//            } catch (final Exception e) {
-//                release(messageBuffers);
-//                throw e;
-//            }
-//        } finally {
-//            if (messageBuffers != null) {
-//                messageBuffers.forEach(ByteBuf::release);
-//            }
-//        }
-//        fail("VAKOTODO");
     }
 
     @Override
@@ -999,70 +975,5 @@ final class GrpcStream implements Stream {
             assertTrue(stream instanceof Detachable);
             return ((Detachable) stream).detach();
         }
-
-//        @Override
-//        @SuppressWarnings("try")
-//        public List<ByteBuf> parse(
-//                // we must not close `stream`, Java gRPC does that
-//                final InputStream stream) {
-//            assertTrue(stream instanceof Detachable);
-//            // VAKOTODO use detach
-//            try {
-//                List<ByteBuf> buffers = new ArrayList<>();
-//                // VAKOTODO utilize the fact that the very first 4 bytes is the message length, see MessageHeader.getMessageLength
-//                int bufferCapacity = stream instanceof KnownLength || stream instanceof ByteArrayInputStream
-//                        ? stream.available()
-//                        : MessageHeader.MESSAGE_HEADER_LENGTH;
-//                int lastReadResult;
-//                int readLen = 0;
-//                do {
-//                    ByteBuf buffer = bufferProvider.getBuffer(bufferCapacity);
-//                    try {
-//                        byte[] bufferArray = array(buffer);
-//                        lastReadResult = read(stream, bufferArray);
-//                        if (lastReadResult != PendingWriteInputStream.END_OF_STREAM) {
-//                            buffer.limit(lastReadResult);
-//                            // we must retain `buffer` explicitly because `List` does not do that
-//                            buffers.add(buffer.retain());
-//                            readLen += lastReadResult;
-//                            int maxReasonableBufferCapacity = MAX_MESSAGE_SIZE_BYTES - readLen;
-//                            int doubledBufferCapacity = bufferCapacity * 2;
-//                            bufferCapacity = Math.min(doubledBufferCapacity, maxReasonableBufferCapacity);
-//                        }
-//                    } finally {
-//                        buffer.release();
-//                    }
-//                } while (lastReadResult != PendingWriteInputStream.END_OF_STREAM);
-//                return buffers;
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-//
-//        private static byte[] array(final ByteBuf buffer) {
-//            try {
-//                return buffer.array();
-//            } catch (UnsupportedOperationException e) {
-//                throw fail();
-//            }
-//        }
-//
-//        /**
-//         * This method is similar to {@link InputStream#read(byte[])}, but it is guaranteed to read until either {@code target} is full,
-//         * or the end of {@code stream} is reached, or an exception is thrown.
-//         */
-//        private static int read(final InputStream stream, final byte[] target) throws IOException {
-//            assertTrue(target.length > 0);
-//            int unreadLen = target.length;
-//            int lastReadResult;
-//            do {
-//                lastReadResult = stream.read(target, target.length - unreadLen, unreadLen);
-//                if (lastReadResult != PendingWriteInputStream.END_OF_STREAM) {
-//                    unreadLen -= lastReadResult;
-//                }
-//            } while (lastReadResult != PendingWriteInputStream.END_OF_STREAM && unreadLen > 0);
-//            int readLen = target.length - unreadLen;
-//            return readLen > 0 ? readLen : PendingWriteInputStream.END_OF_STREAM;
-//        }
     }
 }
