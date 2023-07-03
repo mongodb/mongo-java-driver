@@ -63,66 +63,10 @@ class ClientMetadataHelperSpecification extends Specification {
     def 'should create client metadata document including driver info'() {
         given:
         def applicationName = 'appName'
-        def driverInfo = MongoDriverInformation.builder().driverName('mongo-spark').driverVersion('2.0.0')
-                        .driverPlatform('Scala 2.10 / Spark 2.0.0').build()
+        def driverInfo = createDriverInformation();
 
         expect:
         createClientMetadataDocument(applicationName, driverInfo) == createExpectedClientMetadataDocument(applicationName, driverInfo)
-    }
-
-    def 'should create client metadata document and exclude the extra driver info if its too verbose'() {
-        given:
-        def driverInfo = MongoDriverInformation.builder()
-                .driverName('mongo-spark')
-                .driverVersion('a' * 512)
-                .driverPlatform('Scala 2.10 / Spark 2.0.0').build()
-        def expected = createExpectedClientMetadataDocument(null).append('os', BsonDocument.parse('{ type: "unknown" }'))
-        expected.remove('platform')
-
-        expect:
-        createClientMetadataDocument(null, driverInfo) == expected
-    }
-
-    def 'should return null when even the required data is too verbose'() {
-        given:
-        def template = BsonDocument.parse("{ driver: { name: 'mongo-java-driver', version: '${'a' * 512 }' }, os: {type: 'unknown'} }")
-
-        expect:
-        createClientMetadataDocument(null, null, template) == null
-    }
-
-    def 'should create client metadata document with the correct fields removed to fit within 512 byte limit '() {
-        when:
-        def clientMetadataDocument = createClientMetadataDocument(null, null, templateDocument)
-
-        then:
-        clientMetadataDocument == expectedDocument
-
-        where:
-        [templateDocument, expectedDocument] << [
-                [
-                        new BsonDocument('os',
-                                new BsonDocument('type', new BsonString('unknown'))
-                                        .append('name', new BsonString('a' * 512))
-                                        .append('architecture', new BsonString('arch1'))
-                                        .append('version', new BsonString('1.0')))
-                                .append('platform', new BsonString('platform1')),
-
-                        new BsonDocument('os', new BsonDocument('type', new BsonString('unknown')))
-                                .append('platform', new BsonString('platform1'))
-                ],
-
-                [
-                        new BsonDocument('os',
-                                new BsonDocument('type', new BsonString('unknown'))
-                                        .append('name', new BsonString('name1'))
-                                        .append('architecture', new BsonString('arch1'))
-                                        .append('version', new BsonString('1.0')))
-                                .append('platform', new BsonString('a' * 512)),
-
-                        new BsonDocument('os', new BsonDocument('type', new BsonString('unknown')))
-                ]
-        ]
     }
 
     def 'should get operating system type from name'() {
@@ -149,6 +93,14 @@ class ClientMetadataHelperSpecification extends Specification {
         buffer.toByteArray()
     }
 
+    static MongoDriverInformation createDriverInformation() {
+        MongoDriverInformation.builder()
+                .driverName('mongo-spark')
+                .driverVersion('2.0.0')
+                .driverPlatform('Scala 2.10 / Spark 2.0.0')
+                .build()
+    }
+
     static BsonDocument createExpectedClientMetadataDocument(String appName) {
         def expectedDriverDocument = new BsonDocument('name', new BsonString(MongoDriverVersion.NAME))
                 .append('version', new BsonString(MongoDriverVersion.VERSION))
@@ -162,7 +114,7 @@ class ClientMetadataHelperSpecification extends Specification {
                 .append('platform', new BsonString('Java/' + System.getProperty('java.vendor') + '/'
                 + System.getProperty('java.runtime.version')))
         if (appName != null) {
-            expectedClientDocument.append('application', new BsonDocument('name', new BsonString('appName')))
+            expectedClientDocument.append('application', new BsonDocument('name', new BsonString(appName)))
         }
         expectedClientDocument
     }

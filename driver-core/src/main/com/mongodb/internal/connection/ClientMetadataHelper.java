@@ -28,6 +28,7 @@ import org.bson.io.BasicOutputBuffer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
@@ -37,63 +38,29 @@ import static java.lang.System.getProperty;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class ClientMetadataHelper {
-    public static final BsonDocument CLIENT_METADATA_DOCUMENT = new BsonDocument();
-
     private static final String SEPARATOR = "|";
-
-    private static final String APPLICATION_FIELD = "application";
-    private static final String APPLICATION_NAME_FIELD = "name";
-
-    private static final String DRIVER_FIELD = "driver";
-    private static final String DRIVER_NAME_FIELD = "name";
-    private static final String DRIVER_VERSION_FIELD = "version";
-
-    private static final String PLATFORM_FIELD = "platform";
-
-    private static final String OS_FIELD = "os";
-    private static final String OS_TYPE_FIELD = "type";
-    private static final String OS_NAME_FIELD = "name";
-    private static final String OS_ARCHITECTURE_FIELD = "architecture";
-    private static final String OS_VERSION_FIELD = "version";
 
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
 
-    static {
-        BsonDocument driverMetadataDocument = addDriverInformation(null, new BsonDocument());
-        CLIENT_METADATA_DOCUMENT.append(DRIVER_FIELD, driverMetadataDocument.get(DRIVER_FIELD));
-
-        try {
-            String operatingSystemName = getProperty("os.name", "unknown");
-            CLIENT_METADATA_DOCUMENT.append(OS_FIELD, new BsonDocument()
-                                                              .append(OS_TYPE_FIELD,
-                                                                      new BsonString(getOperatingSystemType(operatingSystemName)))
-                                                              .append(OS_NAME_FIELD,
-                                                                      new BsonString(operatingSystemName))
-                                                              .append(OS_ARCHITECTURE_FIELD,
-                                                                      new BsonString(getProperty("os.arch", "unknown")))
-                                                              .append(OS_VERSION_FIELD,
-                                                                      new BsonString(getProperty("os.version", "unknown"))))
-                    .append(PLATFORM_FIELD, driverMetadataDocument.get(PLATFORM_FIELD, new BsonString("")));
-        } catch (SecurityException e) {
-            // do nothing
-        }
-    }
-
     private static String getOperatingSystemType(final String operatingSystemName) {
-        if (nameMatches(operatingSystemName, "linux")) {
+        if (nameStartsWith(operatingSystemName, "linux")) {
             return "Linux";
-        } else if (nameMatches(operatingSystemName, "mac")) {
+        } else if (nameStartsWith(operatingSystemName, "mac")) {
             return "Darwin";
-        } else if (nameMatches(operatingSystemName, "windows")) {
+        } else if (nameStartsWith(operatingSystemName, "windows")) {
             return  "Windows";
-        } else if (nameMatches(operatingSystemName, "hp-ux", "aix", "irix", "solaris", "sunos")) {
+        } else if (nameStartsWith(operatingSystemName, "hp-ux", "aix", "irix", "solaris", "sunos")) {
             return "Unix";
         } else {
-            return  "unknown";
+            return "unknown";
         }
     }
 
-    private static boolean nameMatches(final String name, final String... prefixes) {
+    private static String getOperatingSystemName() {
+        return getProperty("os.name", "unknown");
+    }
+
+    private static boolean nameStartsWith(final String name, final String... prefixes) {
         for (String prefix : prefixes) {
             if (name.toLowerCase().startsWith(prefix.toLowerCase())) {
                 return true;
@@ -110,61 +77,72 @@ public final class ClientMetadataHelper {
     @Nullable
     public static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
                                                             @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return createClientMetadataDocument(applicationName, mongoDriverInformation, CLIENT_METADATA_DOCUMENT);
-    }
-
-    @Nullable
-    static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
-                                                     @Nullable final MongoDriverInformation mongoDriverInformation,
-                                                     final BsonDocument templateDocument) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
                     applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
         }
 
-        BsonDocument document = templateDocument.clone();
-        if (applicationName != null) {
-            document.append(APPLICATION_FIELD, new BsonDocument(APPLICATION_NAME_FIELD, new BsonString(applicationName)));
-        }
+        // client fields are added in "preservation" order:
 
-        if (mongoDriverInformation != null) {
-            addDriverInformation(mongoDriverInformation, document);
-        }
+        BsonDocument client = new BsonDocument();
+        tryWithLimit(client, d -> putAtPath(d, "application.name", applicationName));
+        MongoDriverInformation baseDriverInformation = getDriverInformation(null);
+        // required fields:
+        tryWithLimit(client, d -> {
+            putAtPath(d, "driver.name", listToString(baseDriverInformation.getDriverNames()));
+            putAtPath(d, "driver.version", listToString(baseDriverInformation.getDriverVersions()));
+        });
+        tryWithLimit(client, d -> putAtPath(d, "os.type", getOperatingSystemType(getOperatingSystemName())));
+        // full driver information:
+        MongoDriverInformation fullDriverInformation = getDriverInformation(mongoDriverInformation);
+        tryWithLimit(client, d -> {
+            putAtPath(d, "driver.name", listToString(fullDriverInformation.getDriverNames()));
+            putAtPath(d, "driver.version", listToString(fullDriverInformation.getDriverVersions()));
+        });
+        // optional fields:
+        tryWithLimit(client, d -> putAtPath(d, "os.name", getOperatingSystemName()));
+        tryWithLimit(client, d -> putAtPath(d, "os.architecture", getProperty("os.arch", "unknown")));
+        tryWithLimit(client, d -> putAtPath(d, "os.version", getProperty("os.version", "unknown")));
+        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInformation.getDriverPlatforms())));
+        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInformation.getDriverPlatforms())));
 
-        if (clientMetadataDocumentTooLarge(document)) {
-            // first try: remove the three optional fields in the 'os' document, if it exists (may not if the security manager is configured
-            // to disallow access to system properties)
-            BsonDocument operatingSystemDocument = document.getDocument(OS_FIELD, null);
-            if (operatingSystemDocument != null) {
-                operatingSystemDocument.remove(OS_VERSION_FIELD);
-                operatingSystemDocument.remove(OS_ARCHITECTURE_FIELD);
-                operatingSystemDocument.remove(OS_NAME_FIELD);
-            }
-            if (operatingSystemDocument == null || clientMetadataDocumentTooLarge(document)) {
-                // second try: remove the optional 'platform' field
-                document.remove(PLATFORM_FIELD);
-                if (clientMetadataDocumentTooLarge(document)) {
-                    // Third try: Try the minimum required amount of data.
-                    document = new BsonDocument(DRIVER_FIELD, templateDocument.getDocument(DRIVER_FIELD));
-                    document.append(OS_FIELD, new BsonDocument(OS_TYPE_FIELD, new BsonString("unknown")));
-                    if (clientMetadataDocumentTooLarge(document)) {
-                        // Worst case scenario: give up and don't send any client metadata at all
-                        document = null;
-                    }
-                }
-            }
-        }
-        return document;
+        return client;
     }
 
-    private static BsonDocument addDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation,
-                                                     final BsonDocument document) {
-        MongoDriverInformation driverInformation = getDriverInformation(mongoDriverInformation);
-        BsonDocument driverMetadataDocument = new BsonDocument(DRIVER_NAME_FIELD, listToBsonString(driverInformation.getDriverNames()))
-                .append(DRIVER_VERSION_FIELD, listToBsonString(driverInformation.getDriverVersions()));
-        document.append(DRIVER_FIELD, driverMetadataDocument);
-        document.append(PLATFORM_FIELD, listToBsonString(driverInformation.getDriverPlatforms()));
-        return document;
+    /**
+     * Assumes valid documents (or not set) on path. No-op if value is null.
+     */
+    private static void putAtPath(final BsonDocument d, final String path, @Nullable final String value) {
+        if (value == null) {
+            return;
+        }
+        String[] split = path.split("\\.", 2);
+        String first = split[0];
+        if (split.length == 1) {
+            d.append(first, new BsonString(value));
+        } else {
+            BsonDocument child;
+            if (d.containsKey(first)) {
+                child = d.getDocument(first);
+            } else {
+                child = new BsonDocument();
+                d.append(first, child);
+            }
+            String rest = split[1];
+            putAtPath(child, rest, value);
+        }
+    }
+
+    private static void tryWithLimit(final BsonDocument document, final Consumer<BsonDocument> modifier) {
+        try {
+            BsonDocument temp = document.clone();
+            modifier.accept(temp);
+            if (!clientMetadataDocumentTooLarge(temp)) {
+                modifier.accept(document);
+            }
+        } catch (Exception e) {
+            // do nothing. This could be a SecurityException, or any other issue while building the document
+        }
     }
 
     static boolean clientMetadataDocumentTooLarge(final BsonDocument document) {
@@ -184,7 +162,7 @@ public final class ClientMetadataHelper {
                 .build();
     }
 
-    static BsonString listToBsonString(final List<String> listOfStrings) {
+    private static String listToString(final List<String> listOfStrings) {
         StringBuilder stringBuilder = new StringBuilder();
         int i = 0;
         for (String val : listOfStrings) {
@@ -194,7 +172,7 @@ public final class ClientMetadataHelper {
             stringBuilder.append(val);
             i++;
         }
-        return new BsonString(stringBuilder.toString());
+        return stringBuilder.toString();
     }
 
     private ClientMetadataHelper() {
