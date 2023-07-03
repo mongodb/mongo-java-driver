@@ -53,7 +53,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
+import static com.mongodb.internal.connection.ClientMetadataHelper.getClientMetadataDocument;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -86,12 +86,8 @@ public final class MongoClientImpl implements MongoClient {
                 withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
                 (SynchronousContextProvider) settings.getContextProvider());
-        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
-        if (clientMetadataDocument == null) {
-            LOGGER.info(format("MongoClient created with settings %s", settings));
-        } else {
-            LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
-        }
+        BsonDocument clientMetadataDocument = getClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+        LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 
     @Override

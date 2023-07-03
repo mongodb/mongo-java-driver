@@ -26,16 +26,21 @@ import org.bson.codecs.EncoderContext
 import org.bson.io.BasicOutputBuffer
 import spock.lang.Specification
 
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument
+import static com.mongodb.internal.connection.ClientMetadataHelper.getClientMetadataDocument
 
+// See also: ClientMetadataHelperProseTest.java
 class ClientMetadataHelperSpecification extends Specification {
+
+    def cleanup() {
+        ClientMetadataHelper.resetCachedMetadataDocument();
+    }
 
     def 'applicationName can be 128 bytes when encoded as UTF-8'() {
         given:
         def applicationName = 'a' * 126 + '\u00A0'
 
         when:
-        def clientMetadataDocument = createClientMetadataDocument(applicationName)
+        def clientMetadataDocument = getClientMetadataDocument(applicationName, null)
 
         then:
         clientMetadataDocument.getDocument('application').getString('name').getValue() == applicationName
@@ -46,7 +51,7 @@ class ClientMetadataHelperSpecification extends Specification {
         def applicationName = 'a' * 127 + '\u00A0'
 
         when:
-        createClientMetadataDocument(applicationName)
+        getClientMetadataDocument(applicationName, null)
 
         then:
         thrown(IllegalArgumentException)
@@ -54,7 +59,7 @@ class ClientMetadataHelperSpecification extends Specification {
 
     def 'should create client metadata document'() {
         expect:
-        createClientMetadataDocument(applicationName) == createExpectedClientMetadataDocument(applicationName)
+        getClientMetadataDocument(applicationName, null) == createExpectedClientMetadataDocument(applicationName)
 
         where:
         applicationName << ['appName', null]
@@ -66,7 +71,7 @@ class ClientMetadataHelperSpecification extends Specification {
         def driverInfo = createDriverInformation();
 
         expect:
-        createClientMetadataDocument(applicationName, driverInfo) == createExpectedClientMetadataDocument(applicationName, driverInfo)
+        getClientMetadataDocument(applicationName, driverInfo) == createExpectedClientMetadataDocument(applicationName, driverInfo)
     }
 
     def 'should get operating system type from name'() {
@@ -109,13 +114,16 @@ class ClientMetadataHelperSpecification extends Specification {
                 .append('name', new BsonString(System.getProperty('os.name')))
                 .append('architecture', new BsonString(System.getProperty('os.arch')))
                 .append('version', new BsonString(System.getProperty('os.version')))
-        def expectedClientDocument = new BsonDocument('driver', expectedDriverDocument)
-                .append('os', expectedOperatingSystemDocument)
-                .append('platform', new BsonString('Java/' + System.getProperty('java.vendor') + '/'
-                + System.getProperty('java.runtime.version')))
+        def expectedClientDocument = new BsonDocument()
         if (appName != null) {
             expectedClientDocument.append('application', new BsonDocument('name', new BsonString(appName)))
         }
+        expectedClientDocument
+                .append('driver', expectedDriverDocument)
+                .append('os', expectedOperatingSystemDocument)
+                .append('platform', new BsonString('Java/' + System.getProperty('java.vendor') + '/'
+                        + System.getProperty('java.runtime.version')))
+
         expectedClientDocument
     }
 
