@@ -42,7 +42,6 @@ public class ClientMetadataHelperProseTest {
     @AfterEach
     public void afterEach() {
         TestHelper.resetEnvironmentVariables();
-        ClientMetadataHelper.resetCachedMetadataDocument();
     }
 
     @Test

@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.build.MongoDriverVersion;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
@@ -45,12 +44,6 @@ public final class ClientMetadataHelper {
     private static final String SEPARATOR = "|";
 
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
-
-
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    static void resetCachedMetadataDocument() {
-        // nothing
-    }
 
     private static String getOperatingSystemType(final String operatingSystemName) {
         if (nameStartsWith(operatingSystemName, "linux")) {

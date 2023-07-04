@@ -31,10 +31,6 @@ import static com.mongodb.internal.connection.ClientMetadataHelper.getClientMeta
 // See also: ClientMetadataHelperProseTest.java
 class ClientMetadataHelperSpecification extends Specification {
 
-    def cleanup() {
-        ClientMetadataHelper.resetCachedMetadataDocument();
-    }
-
     def 'applicationName can be 128 bytes when encoded as UTF-8'() {
         given:
         def applicationName = 'a' * 126 + '\u00A0'
