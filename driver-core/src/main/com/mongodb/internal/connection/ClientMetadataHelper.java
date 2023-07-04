@@ -46,11 +46,10 @@ public final class ClientMetadataHelper {
 
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
 
-    private static BsonDocument cachedClientMetadataDocument;
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     static void resetCachedMetadataDocument() {
-        cachedClientMetadataDocument = null;
+        // nothing
     }
 
     private static String getOperatingSystemType(final String operatingSystemName) {
@@ -82,12 +81,6 @@ public final class ClientMetadataHelper {
 
     public static BsonDocument getClientMetadataDocument(@Nullable final String applicationName,
                                                             @Nullable final MongoDriverInformation mongoDriverInformation) {
-        if (cachedClientMetadataDocument != null) {
-            // "asDocument" prevents:
-            // MS_EXPOSE_REP: Public static method may expose internal representation by returning array
-            return cachedClientMetadataDocument.asDocument();
-        }
-
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
                     applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
@@ -122,7 +115,6 @@ public final class ClientMetadataHelper {
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
 
-        cachedClientMetadataDocument = client;
         return client;
     }
 
