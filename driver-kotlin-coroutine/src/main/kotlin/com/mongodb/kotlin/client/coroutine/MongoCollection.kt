@@ -20,24 +20,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteResult
-import com.mongodb.client.model.BulkWriteOptions
-import com.mongodb.client.model.CountOptions
-import com.mongodb.client.model.CreateIndexOptions
-import com.mongodb.client.model.DeleteOptions
-import com.mongodb.client.model.DropCollectionOptions
-import com.mongodb.client.model.DropIndexOptions
-import com.mongodb.client.model.EstimatedDocumentCountOptions
-import com.mongodb.client.model.FindOneAndDeleteOptions
-import com.mongodb.client.model.FindOneAndReplaceOptions
-import com.mongodb.client.model.FindOneAndUpdateOptions
-import com.mongodb.client.model.IndexModel
-import com.mongodb.client.model.IndexOptions
-import com.mongodb.client.model.InsertManyOptions
-import com.mongodb.client.model.InsertOneOptions
-import com.mongodb.client.model.RenameCollectionOptions
-import com.mongodb.client.model.ReplaceOptions
-import com.mongodb.client.model.UpdateOptions
-import com.mongodb.client.model.WriteModel
+import com.mongodb.client.model.*
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.InsertManyResult
 import com.mongodb.client.result.InsertOneResult
@@ -1233,6 +1216,89 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     public suspend fun drop(clientSession: ClientSession, options: DropCollectionOptions = DropCollectionOptions()) {
         wrapped.drop(clientSession.wrapped, options).awaitFirstOrNull()
     }
+
+    /**
+     * Create an Atlas Search index for the collection.
+     *
+     * @param indexName  the name of the search index to create.
+     * @param definition the search index mapping definition.
+     * @return the search index name.
+     * @see [Create search indexes](https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/)
+     */
+    public suspend fun createSearchIndex(indexName: String, definition: Bson): String =
+        wrapped.createSearchIndex(indexName, definition).awaitSingle()
+
+    /**
+     * Create an Atlas Search index with the default name for the collection.
+     *
+     * @param definition the search index mapping definition.
+     * @return the search index name.
+     * @see [Create search indexes](https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/)
+     */
+    public suspend fun createSearchIndex(definition: Bson): String =
+        wrapped.createSearchIndex(definition).awaitSingle()
+
+    /**
+     * Create one or more Atlas Search indexes for the collection.
+     * <p>
+     * The name can be omitted for a single index, in which case a name will be the default.
+     * </p>
+     *
+     * @param searchIndexModels the search index models.
+     * @return the search index names.
+     * @see [Create search indexes](https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/)
+     */
+    public fun createSearchIndexes(searchIndexModels: List<SearchIndexModel>): Flow<String> =
+        wrapped.createSearchIndexes(searchIndexModels).asFlow()
+
+    /**
+     * Update an Atlas Search index in the collection.
+     *
+     * @param indexName  the name of the search index to update.
+     * @param definition the search index mapping definition.
+     * @see [Update search index](https://www.mongodb.com/docs/manual/reference/command/updateSearchIndex/)
+     */
+    public suspend fun updateSearchIndex(indexName: String, definition: Bson) {
+        wrapped.updateSearchIndex(indexName, definition).awaitSingle()
+    }
+
+    /**
+     * Drop an Atlas Search index given its name.
+     *
+     * @param indexName the name of the search index to remove.
+     * @see [Drop search index](https://www.mongodb.com/docs/manual/reference/command/dropSearchIndex/)
+     */
+    public suspend fun dropSearchIndex(indexName: String) {
+        wrapped.dropSearchIndex(indexName).awaitSingle()
+    }
+
+    /**
+     * Get all the Atlas Search indexes in this collection.
+     *
+     * @return the list search indexes iterable interface.
+     * @see [List search indexes](https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes)
+     */
+    @JvmName("listSearchIndexesAsDocument") public fun listSearchIndexes(): ListSearchIndexesFlow<Document> = listSearchIndexes<Document>()
+
+    /**
+     * Get all the Atlas Search indexes in this collection.
+     *
+     * @param R the class to decode each document into.
+     * @param resultClass the target document type of the iterable.
+     * @return the list search indexes iterable interface.
+     * @see [List search indexes](https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes)
+     */
+    public fun <R : Any> listSearchIndexes(resultClass: Class<R>): ListSearchIndexesFlow<R> =
+            ListSearchIndexesFlow(wrapped.listSearchIndexes(resultClass))
+
+    /**
+     * Get all the Atlas Search indexes in this collection.
+     *
+     * @param R the class to decode each document into.
+     * @return the list search indexes iterable interface.
+     * @see [List search indexes]](https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes)
+     */
+    public inline fun <reified R : Any> listSearchIndexes(): ListSearchIndexesFlow<R> = listSearchIndexes(R::class.java)
 
     /**
      * Create an index with the given keys and options.

@@ -27,6 +27,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -44,6 +45,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -53,6 +55,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -643,6 +646,46 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     @Override
     public void drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
         Mono.from(wrapped.drop(unwrap(clientSession), dropCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public String createSearchIndex(final String name, final Bson definition) {
+        return requireNonNull(Mono.from(wrapped.createSearchIndex(name, definition)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public String createSearchIndex(final Bson definition) {
+        return requireNonNull(Mono.from(wrapped.createSearchIndex(definition)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public List<String> createSearchIndexes(final List<SearchIndexModel> searchIndexModels) {
+        return requireNonNull(Flux.from(wrapped.createSearchIndexes(searchIndexModels)).contextWrite(CONTEXT).collectList()
+                .block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public void updateSearchIndex(final String name, final Bson definition) {
+        Mono.from(wrapped.updateSearchIndex(name, definition)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public void dropSearchIndex(final String indexName) {
+        Mono.from(wrapped.dropSearchIndex(indexName)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public ListSearchIndexesIterable<Document> listSearchIndexes() {
+        return listSearchIndexes(Document.class);
+    }
+
+    @Override
+    public <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(final Class<TResult> tResultClass) {
+        return new SyncListSearchIndexesIterable<>(wrapped.listSearchIndexes(tResultClass));
     }
 
     @Override

@@ -106,7 +106,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return wrapped.getComment();
     }
 
-    public AggregateOperation<T> comment(final BsonValue comment) {
+    public AggregateOperation<T> comment(@Nullable final BsonValue comment) {
         wrapped.comment(comment);
         return this;
     }
@@ -178,4 +178,5 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     Decoder<T> getDecoder() {
         return wrapped.getDecoder();
     }
+
 }

@@ -255,9 +255,15 @@ final class OperationHelper {
 
     static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
             final BsonValue comment, final AsyncConnectionSource source, final AsyncConnection connection, final int batchSize) {
+      return cursorDocumentToAsyncBatchCursor(cursorDocument, decoder, 0, comment, source, connection, batchSize);
+    }
+
+    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
+                                                                    final long maxAwaitTimeMS,
+                                                                    final BsonValue comment, final AsyncConnectionSource source, final AsyncConnection connection, final int batchSize) {
         return new AsyncQueryBatchCursor<>(OperationHelper.cursorDocumentToQueryResult(cursorDocument,
                 source.getServerDescription().getAddress()),
-                0, batchSize, 0, decoder, comment, source, connection, cursorDocument);
+                0, batchSize, maxAwaitTimeMS, decoder, comment, source, connection, cursorDocument);
     }
 
 

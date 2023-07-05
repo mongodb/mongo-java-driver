@@ -152,7 +152,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                                 releasingCallback.onResult(null, t);
                                             } else {
                                                 releasingCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
-                                            }
+                                             }
                                         });
                             })
                 ).whenComplete(binding::release);

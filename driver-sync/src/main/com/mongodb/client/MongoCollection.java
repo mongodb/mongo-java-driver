@@ -38,6 +38,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -1692,6 +1693,84 @@ public interface MongoCollection<TDocument> {
      * @mongodb.server.release 6.0
      */
     void drop(ClientSession clientSession, DropCollectionOptions dropCollectionOptions);
+
+    /**
+     * Create an Atlas Search index for the collection.
+     *
+     * @param indexName  the name of the search index to create.
+     * @param definition the search index mapping definition.
+     * @return the search index name.
+     * @mongodb.server.release 7.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    String createSearchIndex(String indexName, Bson definition);
+
+    /**
+     * Create an Atlas Search index with the default name for the collection.
+     *
+     * @param definition the search index mapping definition.
+     * @return the search index name.
+     * @mongodb.server.release 7.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    String createSearchIndex(Bson definition);
+
+    /**
+     * Create one or more Atlas Search indexes for the collection.
+     * <p>
+     * The name can be omitted for a single index, in which case a name will be the default.
+     * </p>
+     *
+     * @param searchIndexModels the search index models.
+     * @return the search index names.
+     * @mongodb.server.release 7.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    List<String> createSearchIndexes(List<SearchIndexModel> searchIndexModels);
+
+    /**
+     * Update an Atlas Search index in the collection.
+     *
+     * @param indexName  the name of the search index to update.
+     * @param definition the search index mapping definition.
+     * @mongodb.server.release 7.0
+     * @mongodb.driver.manual reference/command/updateSearchIndex/ Update Search index
+     * @since 4.11
+     */
+    void updateSearchIndex(String indexName, Bson definition);
+
+    /**
+     * Drop an Atlas Search index given its name.
+     *
+     * @param indexName the name of the search index to remove.
+     * @mongodb.server.release 7.0
+     * @mongodb.driver.manual reference/command/dropSearchIndex/ Drop Search index
+     * @since 4.11
+     */
+    void dropSearchIndex(String indexName);
+
+    /**
+     * Get all Atlas Search indexes in this collection.
+     *
+     * @return the list search indexes iterable interface.
+     * @since 4.11
+     * @mongodb.server.release 7.0
+     */
+    ListSearchIndexesIterable<Document> listSearchIndexes();
+
+    /**
+     * Get all Atlas Search indexes in this collection.
+     *
+     * @param resultClass the class to decode each document into.
+     * @param <TResult>   the target document type of the iterable.
+     * @return the list search indexes iterable interface.
+     * @since 4.11
+     * @mongodb.server.release 7.0
+     */
+    <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(Class<TResult> resultClass);
 
     /**
      * Create an index with the given keys.

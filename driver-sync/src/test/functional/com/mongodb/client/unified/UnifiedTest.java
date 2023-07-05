@@ -412,6 +412,16 @@ public abstract class UnifiedTest {
                     return crudHelper.executeModifyCollection(operation);
                 case "rename":
                     return crudHelper.executeRenameCollection(operation);
+                case "createSearchIndex":
+                    return crudHelper.executeCreateSearchIndex(operation);
+                case "createSearchIndexes":
+                    return crudHelper.executeCreateSearchIndexes(operation);
+                case "updateSearchIndex":
+                    return crudHelper.executeUpdateSearchIndex(operation);
+                case "dropSearchIndex":
+                    return crudHelper.executeDropSearchIndex(operation);
+                case "listSearchIndexes":
+                    return crudHelper.executeListSearchIndexes(operation);
                 case "createIndex":
                     return crudHelper.executeCreateIndex(operation);
                 case "dropIndex":

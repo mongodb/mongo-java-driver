@@ -51,6 +51,29 @@ public final class Assertions {
     }
 
     /**
+     * Throw IllegalArgumentException if the values is null or contains null.
+     *
+     * @param name  the parameter name
+     * @param values the values that should not contain null.
+     * @param <T>   the value type
+     * @return the values
+     * @throws java.lang.IllegalArgumentException if value is null
+     */
+    public static <T> Iterable<T> notNullElements(final String name, final Iterable<T> values) {
+        if (values == null) {
+            throw new IllegalArgumentException(name + " can not be null");
+        }
+
+        for (T value : values) {
+            if (value == null){
+                throw new IllegalArgumentException(name + " can not contain null");
+            }
+        }
+
+        return values;
+    }
+
+    /**
      * Throw IllegalArgumentException if the value is null.
      *
      * @param name  the parameter name

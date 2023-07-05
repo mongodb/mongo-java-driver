@@ -1369,6 +1369,82 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): SingleObservable[Void] =
     wrapped.drop(clientSession, dropCollectionOptions)
 
+
+  /**
+   * Create an Atlas Search index for the collection.
+   *
+   * @param indexName  the name of the search index to create.
+   * @param definition the search index mapping definition.
+   * @return an empty Observable that indicates when the operation has completed
+   * @since 4.11
+   * @note Requires MongoDB 7.0 or greater
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
+   */
+  def createSearchIndex(indexName: String, definition: Bson): SingleObservable[String] =
+    wrapped.createSearchIndex(indexName, definition)
+
+  /**
+   * Create an Atlas Search index for the collection.
+   *
+   * @param definition the search index mapping definition.
+   * @return an empty Observable that indicates when the operation has completed.
+   * @since 4.11
+   * @note Requires MongoDB 7.0 or greater
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
+   */
+  def createSearchIndex(definition: Bson): SingleObservable[String] = wrapped.createSearchIndex(definition)
+
+
+  /**
+   * Create one or more Atlas Search indexes for the collection.
+   * <p>
+   * The name can be omitted for a single index, in which case a name will be the default.
+   * </p>
+   *
+   * @param searchIndexModels the search index models.
+   * @return a Observable with the names of the search indexes.
+   * @since 4.11
+   * @note Requires MongoDB 7.0 or greater
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
+   */
+  def createSearchIndexes(searchIndexModels: List[SearchIndexModel]):  Observable[String] = wrapped.createSearchIndexes(searchIndexModels.asJava)
+
+  /**
+   * Update an Atlas Search index in the collection.
+   *
+   * @param indexName  the name of the search index to update.
+   * @param definition the search index mapping definition.
+   * @return an empty Observable that indicates when the operation has completed.
+   * @since 4.11
+   * @note Requires MongoDB 7.0 or greater
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/updateSearchIndex/ Update Search Index]]
+   */
+  def updateSearchIndex(indexName: String, definition: Bson): SingleObservable[Void] = wrapped.updateSearchIndex(indexName, definition)
+
+
+  /**
+   * Drop an Atlas Search index given its name.
+   *
+   * @param indexName the name of the search index to remove.
+   * @return an empty Observable that indicates when the operation has completed.
+   * @since 4.11
+   * @note Requires MongoDB 7.0 or greater
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/dropSearchIndex/ Drop Search Index]]
+   */
+  def dropSearchIndex(indexName: String): SingleObservable[Void] = wrapped.dropSearchIndex(indexName)
+
+  /**
+   *  Get all Atlas Search indexes in this collection.
+   *
+   * @tparam C the target document type of the observable.
+   * @return the fluent list search indexes interface
+   * @since 4.11
+   * @note Requires MongoDB 7.0 or greater
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes List Search Indexes]]
+   */
+  def listSearchIndexes[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ListSearchIndexesObservable[C] =
+    ListSearchIndexesObservable(wrapped.listSearchIndexes(ct))
+
   /**
    * [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Create Index]]
    * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a `Codec` is

@@ -40,6 +40,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
@@ -113,10 +114,10 @@ public final class SyncOperations<TDocument> {
                                                                               final Class<TResult> resultClass,
                                                                               final long maxTimeMS, final long maxAwaitTimeMS,
                                                                               @Nullable final Integer batchSize,
-                                                                              final Collation collation, final Bson hint,
-                                                                              final String hintString,
+                                                                              final Collation collation, @Nullable final Bson hint,
+                                                                              @Nullable final String hintString,
                                                                               final BsonValue comment,
-                                                                              final Bson variables,
+                                                                              @Nullable final Bson variables,
                                                                               final Boolean allowDiskUse,
                                                                               final AggregationLevel aggregationLevel) {
         return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, hintString, comment,
@@ -247,6 +248,30 @@ public final class SyncOperations<TDocument> {
 
     public WriteOperation<Void> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions options) {
         return operations.createIndexes(indexes, options);
+    }
+
+    public WriteOperation<Void> createSearchIndexes(final List<SearchIndexModel> indexes) {
+        return operations.createSearchIndexes(indexes);
+    }
+
+    public WriteOperation<Void> updateSearchIndex(final String indexName, final Bson definition) {
+        return operations.updateSearchIndex(indexName, definition);
+    }
+
+    public WriteOperation<Void> dropSearchIndex(final String indexName) {
+        return operations.dropSearchIndex(indexName);
+    }
+
+
+    public <TResult> ExplainableReadOperation<BatchCursor<TResult>> listSearchIndexes(final Class<TResult> resultClass,
+                                                                           final long maxTimeMS, final long maxAwaitTimeMS,
+                                                                           @Nullable final String indexName,
+                                                                           @Nullable final Integer batchSize,
+                                                                           @Nullable final Collation collation,
+                                                                           @Nullable final BsonValue comment,
+                                                                           @Nullable final Boolean allowDiskUse) {
+        return operations.listSearchIndexes(resultClass, maxTimeMS, maxAwaitTimeMS, indexName, batchSize, collation,
+               comment, allowDiskUse);
     }
 
     public WriteOperation<Void> dropIndex(final String indexName, final DropIndexOptions options) {

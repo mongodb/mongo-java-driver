@@ -37,6 +37,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -51,6 +52,7 @@ import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
+import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -63,6 +65,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNullElements;
 
 
 final class MongoCollectionImpl<T> implements MongoCollection<T> {
@@ -645,6 +648,53 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public Publisher<Void> drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
         return mongoOperationPublisher.dropCollection(notNull("clientSession", clientSession), dropCollectionOptions);
+    }
+
+    @Override
+    public Publisher<String> createSearchIndex(final String indexName, final Bson definition) {
+        notNull("indexName", indexName);
+        notNull("definition", definition);
+
+        return mongoOperationPublisher.createSearchIndex(indexName, definition);
+    }
+
+    @Override
+    public Publisher<String> createSearchIndex(final Bson definition) {
+        notNull("definition", definition);
+
+        return mongoOperationPublisher.createSearchIndex(null, definition);
+    }
+
+    @Override
+    public Publisher<String> createSearchIndexes(final List<SearchIndexModel> searchIndexModels) {
+        notNullElements("searchIndexModels", searchIndexModels);
+
+        return mongoOperationPublisher.createSearchIndexes(searchIndexModels);
+    }
+
+    @Override
+    public Publisher<Void> updateSearchIndex(final String indexName, final Bson definition) {
+        notNull("indexName", indexName);
+        notNull("definition", definition);
+
+        return mongoOperationPublisher.updateSearchIndex(null, indexName, definition);
+    }
+
+    @Override
+    public Publisher<Void> dropSearchIndex(final String indexName) {
+        notNull("name", indexName);
+        
+        return mongoOperationPublisher.dropSearchIndex(null, indexName);
+    }
+
+    @Override
+    public ListSearchIndexesPublisher<Document> listSearchIndexes() {
+      return listSearchIndexes(Document.class);
+    }
+
+    @Override
+    public <TResult> ListSearchIndexesPublisher<TResult> listSearchIndexes(final Class<TResult> tResultClass) {
+        return new ListSearchIndexesPublisherImpl<>(mongoOperationPublisher.withDocumentClass(tResultClass));
     }
 
     @Override

@@ -33,6 +33,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoChangeStreamCursor;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -59,6 +60,7 @@ import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.TimeSeriesGranularity;
 import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.UpdateManyModel;
@@ -86,12 +88,14 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -1256,6 +1260,110 @@ final class UnifiedCrudHelper {
             default:
                 throw new UnsupportedOperationException("Unsupported time series granularity: " + value);
         }
+    }
+
+
+    public OperationResult executeCreateSearchIndex(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument model = arguments.getDocument("model");
+        BsonDocument definition = model.getDocument("definition");
+
+        return resultOf(() -> {
+            if (model.containsKey("name")) {
+                String name = model.getString("name").getValue();
+                collection.createSearchIndex(name, definition);
+            } else {
+                collection.createSearchIndex(definition);
+            }
+            return null;
+        });
+    }
+
+    public OperationResult executeCreateSearchIndexes(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        BsonArray models = arguments.getArray("models");
+
+        List<SearchIndexModel> searchIndexModels = models.stream()
+                .map(UnifiedCrudHelper::toIndexSearchModel).collect(toList());
+
+        return resultOf(() -> {
+            collection.createSearchIndexes(searchIndexModels);
+            return null;
+        });
+    }
+
+
+    public OperationResult executeUpdateSearchIndex(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument definition = arguments.getDocument("definition");
+        String name = arguments.getString("name").getValue();
+
+        return resultOf(() -> {
+            collection.updateSearchIndex(name, definition);
+            return null;
+        });
+    }
+
+    public OperationResult executeDropSearchIndex(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        String name = arguments.getString("name").getValue();
+
+        return resultOf(() -> {
+            collection.dropSearchIndex(name);
+            return null;
+        });
+    }
+
+    private static SearchIndexModel toIndexSearchModel(final BsonValue bsonValue) {
+        BsonDocument model = bsonValue.asDocument();
+        String name = null;
+        BsonDocument definition = model.getDocument("definition");
+        if (model.containsKey("name")) {
+            name = model.getString("name").getValue();
+        }
+        return new SearchIndexModel(definition, name);
+    }
+
+
+    public OperationResult executeListSearchIndexes(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        Optional<BsonDocument> arguments = Optional.ofNullable(operation.getOrDefault("arguments", null)).map(BsonValue::asDocument);
+
+        if (arguments.isPresent()) {
+            ListSearchIndexesIterable<BsonDocument> iterable = createListSearchIndexesIterable(collection, arguments.get());
+            return resultOf(iterable::first);
+        }
+
+        return resultOf(() -> {
+            collection.listSearchIndexes().first();
+            return null;
+        });
+    }
+
+    @NotNull
+    private ListSearchIndexesIterable<BsonDocument> createListSearchIndexesIterable(final MongoCollection<BsonDocument> collection,
+                                                                                    final BsonDocument arguments) {
+        Optional<String> name = Optional.ofNullable(arguments.getOrDefault("name", null))
+                .map(BsonValue::asString).map(BsonString::getValue);
+
+        ListSearchIndexesIterable<BsonDocument> iterable = collection.listSearchIndexes(BsonDocument.class);
+
+        if (arguments.containsKey("aggregationOptions")) {
+            for (Map.Entry<String, BsonValue> option : arguments.getDocument("aggregationOptions").entrySet()) {
+                switch (option.getKey()) {
+                    case "batchSize":
+                        iterable.batchSize(option.getValue().asNumber().intValue());
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + option.getKey());
+                }
+            }
+        }
+        return iterable.name(name.get());
     }
 
     public OperationResult executeCreateIndex(final BsonDocument operation) {

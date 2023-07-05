@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.client.model.IndexModel;
+import com.mongodb.client.model.SearchIndexModel;
 import org.bson.BsonDocument;
 import org.bson.BsonNumber;
 import org.bson.BsonString;
@@ -49,6 +50,26 @@ public final class IndexHelper {
             }
         }
         return indexNames;
+    }
+
+    /**
+     * Get a list of Atlas Search index names for the given list of {@link SearchIndexModel}.
+     *
+     * @param indexes the search index models
+     * @return the list of search index names.
+     */
+    public static List<String> getSearchIndexNames(final List<SearchIndexModel> indexes) {
+        List<String> indexNames = new ArrayList<>();
+        //TODO consider making a stream
+        for (SearchIndexModel model : indexes) {
+            indexNames.add(getSearchIndexName(model));
+        }
+        return indexNames;
+    }
+
+    public static String getSearchIndexName(final SearchIndexModel model) {
+        String name = model.getName();
+        return  name != null ? name : "default";
     }
 
     /**

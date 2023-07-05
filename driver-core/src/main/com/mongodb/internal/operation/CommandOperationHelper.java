@@ -242,8 +242,11 @@ final class CommandOperationHelper {
             final Connection connection) {
         BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
-        return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
-                source.getReadPreference(), decoder, binding)), source, connection);
+
+        D result = connection.command(database, command, new NoOpFieldNameValidator(),
+                source.getReadPreference(), decoder, binding);
+
+        return transformer.apply(assertNotNull(result), source, connection);
     }
 
     /* Write Binding Helpers */
