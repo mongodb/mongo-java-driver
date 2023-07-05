@@ -33,7 +33,7 @@ public class MongoInterruptedException extends MongoException {
      * @param message the message
      * @param e the cause
      */
-    public MongoInterruptedException(@Nullable final String message, final Exception e) {
+    public MongoInterruptedException(@Nullable final String message, @Nullable final Exception e) {
         super(message, e);
     }
 }

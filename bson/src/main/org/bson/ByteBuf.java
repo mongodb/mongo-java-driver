@@ -434,7 +434,7 @@ public interface ByteBuf  {
     ByteBuffer asNIO();
 
     /**
-     * Gets the current reference count, which starts at 0.
+     * Gets the current reference count, which starts at 1.
      *
      * @return the current count, which must be greater than or equal to 0
      */

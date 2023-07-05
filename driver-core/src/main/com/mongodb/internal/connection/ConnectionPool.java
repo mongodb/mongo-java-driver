@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.types.ObjectId;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * An instance of an implementation must be created in the {@linkplain #invalidate(Throwable) paused} state.
  */
+@ThreadSafe
 interface ConnectionPool extends Closeable {
     /**
      * Is equivalent to {@link #get(OperationContext, long, TimeUnit)} called with {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.

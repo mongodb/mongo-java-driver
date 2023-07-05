@@ -16,9 +16,11 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.lang.NonNull;
 import org.bson.types.ObjectId;
 
+@ThreadSafe
 interface ConnectionGenerationSupplier {
     int getGeneration();
 

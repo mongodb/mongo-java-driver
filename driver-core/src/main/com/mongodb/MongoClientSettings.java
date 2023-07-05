@@ -485,6 +485,7 @@ public final class MongoClientSettings {
          *
          * @param streamFactoryFactory the stream factory factory
          * @return this
+         * @see #getStreamFactoryFactory()
          */
         public Builder streamFactoryFactory(final StreamFactoryFactory streamFactoryFactory) {
             this.streamFactoryFactory = notNull("streamFactoryFactory", streamFactoryFactory);
@@ -712,7 +713,7 @@ public final class MongoClientSettings {
      * <p>Default is {@code WriteConcern.ACKNOWLEDGED}.</p>
      *
      * @return the write concern
-     * @see WriteConcern#ACKNOWLEDGED
+     * @see Builder#writeConcern(WriteConcern)
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
@@ -765,6 +766,7 @@ public final class MongoClientSettings {
      * Gets the factory to use to create a {@code StreamFactory}.
      *
      * @return the stream factory factory
+     * @see Builder#streamFactoryFactory(StreamFactoryFactory)
      */
     @Nullable
     public StreamFactoryFactory getStreamFactoryFactory() {
@@ -789,6 +791,7 @@ public final class MongoClientSettings {
      * <p>Default is null.</p>
      *
      * @return the application name, which may be null
+     * @see Builder#applicationName(String)
      * @mongodb.server.release 3.4
      */
     @Nullable
@@ -926,7 +929,7 @@ public final class MongoClientSettings {
      *
      * @return a ConnectionPoolSettings populated with the settings from this {@code MongoClientSettings} instance that relate to the
      * connection provider.
-     * @see ConnectionPoolSettings
+     * @see Builder#applyToConnectionPoolSettings(Block)
      */
     public ConnectionPoolSettings getConnectionPoolSettings() {
         return connectionPoolSettings;

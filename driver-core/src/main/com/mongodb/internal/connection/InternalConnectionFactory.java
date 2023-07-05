@@ -16,10 +16,12 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerId;
 import com.mongodb.lang.NonNull;
 import org.bson.types.ObjectId;
 
+@ThreadSafe
 interface InternalConnectionFactory {
     default InternalConnection create(ServerId serverId) {
         return create(serverId, new ConnectionGenerationSupplier() {

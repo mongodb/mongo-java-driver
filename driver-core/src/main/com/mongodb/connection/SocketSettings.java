@@ -103,6 +103,7 @@ public final class SocketSettings {
          * @param readTimeout the read timeout
          * @param timeUnit the time unit
          * @return this
+         * @see #getReadTimeout(TimeUnit)
          */
         public Builder readTimeout(final int readTimeout, final TimeUnit timeUnit) {
             this.readTimeoutMS = MILLISECONDS.convert(readTimeout, timeUnit);
@@ -177,6 +178,7 @@ public final class SocketSettings {
      *
      * @param timeUnit the time unit to get the timeout in
      * @return the read timeout in the requested time unit, or 0 if there is no timeout
+     * @see Builder#readTimeout(int, TimeUnit)
      */
     public int getReadTimeout(final TimeUnit timeUnit) {
         return (int) timeUnit.convert(readTimeoutMS, MILLISECONDS);
