@@ -114,10 +114,10 @@ public final class SyncOperations<TDocument> {
                                                                               final Class<TResult> resultClass,
                                                                               final long maxTimeMS, final long maxAwaitTimeMS,
                                                                               @Nullable final Integer batchSize,
-                                                                              final Collation collation, @Nullable final Bson hint,
-                                                                              @Nullable final String hintString,
+                                                                              final Collation collation, final Bson hint,
+                                                                              final String hintString,
                                                                               final BsonValue comment,
-                                                                              @Nullable final Bson variables,
+                                                                              final Bson variables,
                                                                               final Boolean allowDiskUse,
                                                                               final AggregationLevel aggregationLevel) {
         return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, hintString, comment,

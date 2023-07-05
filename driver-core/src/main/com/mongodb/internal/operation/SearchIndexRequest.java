@@ -19,33 +19,37 @@ package com.mongodb.internal.operation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
- * The settings to apply to the creation of a search index.
+ * The settings to apply to the creation of an Atlas Search index.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class SearchIndexRequest {
     private BsonDocument definition;
-    private String searchIndexName;
+    private String indexName;
 
-    @Nullable
+   public SearchIndexRequest(final BsonDocument definition){
+       assertNotNull(definition);
+       this.definition = definition;
+    }
+
     public BsonDocument getDefinition() {
         return definition;
     }
 
     public void setDefinition(final BsonDocument definition) {
-        notNull("definition", definition);
+        assertNotNull(definition);
         this.definition = definition;
     }
 
-   @Nullable
-    public String getSearchIndexName() {
-        return searchIndexName;
+    @Nullable
+    public String getIndexName() {
+        return indexName;
     }
 
-    public void setSearchIndexName(@Nullable final String searchIndexName) {
-        this.searchIndexName = searchIndexName;
+    public void setIndexName(@Nullable final String indexName) {
+        this.indexName = indexName;
     }
 }

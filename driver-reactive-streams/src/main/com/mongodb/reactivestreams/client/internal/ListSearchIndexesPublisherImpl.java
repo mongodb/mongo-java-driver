@@ -21,10 +21,8 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncExplainableReadOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher;
-import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -134,16 +132,8 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
     }
 
     private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
-        BsonDocument searchDefinition = new BsonDocument("name", getIndexName());
-        BsonDocument bsonDocument = new BsonDocument("$listSearchIndexes", searchDefinition);
-
-        return getOperations().listSearchIndexes(getDocumentClass(), maxTimeMS, maxAwaitTimeMS, indexName, getBatchSize(), collation,
+        return getOperations().listSearchIndexes(getDocumentClass(), maxTimeMS, maxAwaitTimeMS, indexName, initialBatchSize, collation,
                 comment,
                 allowDiskUse);
-    }
-
-    @NonNull
-    private BsonValue getIndexName() {
-        return indexName == null ? new BsonDocument() : new BsonString(indexName);
     }
 }

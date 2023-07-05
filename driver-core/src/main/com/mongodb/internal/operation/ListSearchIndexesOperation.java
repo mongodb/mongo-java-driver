@@ -24,12 +24,12 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -40,9 +40,14 @@ import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNot
 import static com.mongodb.internal.operation.OperationHelper.createEmptyAsyncBatchCursor;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
 
-
+/**
+ * An operation that lists Alas Search indexes with the help of {@value #STAGE_LIST_SEARCH_INDEXES} pipeline stage.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
+    private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final Boolean allowDiskUse;
@@ -65,7 +70,7 @@ public class ListSearchIndexesOperation<T>
         this.decoder = decoder;
         this.maxTimeMS = maxTimeMS;
         this.maxAwaitTimeMS = maxAwaitTimeMS;
-        this.batchSize = batchSize == null ? 0 : batchSize;
+        this.batchSize = batchSize == null ? Integer.valueOf(0) : batchSize;
         this.collation = collation;
         this.comment = comment;
         this.allowDiskUse = allowDiskUse;
@@ -77,8 +82,8 @@ public class ListSearchIndexesOperation<T>
         try {
             return getAggregateOperation().execute(binding);
         } catch (MongoCommandException exception) {
-            return rethrowIfNotNamespaceError(exception, createEmptyBatchCursor(namespace, decoder,
-                    exception.getServerAddress(), batchSize));
+            return assertNotNull(rethrowIfNotNamespaceError(exception, createEmptyBatchCursor(namespace, decoder,
+                    exception.getServerAddress(), batchSize)));
         }
     }
 
@@ -87,16 +92,13 @@ public class ListSearchIndexesOperation<T>
         getAggregateOperation().executeAsync(binding, (cursor, exception) -> {
             if (exception != null && !isNamespaceError(exception)) {
                 callback.onResult(null, exception);
-            } else {
-                if (exception == null) {
-                    callback.onResult(cursor, null);
-                    return;
-                }
+            } else if (exception == null) {
+                callback.onResult(cursor, null);
+                return;
+            }
                 MongoCommandException commandException = (MongoCommandException) assertNotNull(exception);
-
                 AsyncBatchCursor<T> emptyAsyncBatchCursor = createEmptyAsyncBatchCursor(namespace, commandException.getServerAddress());
                 callback.onResult(emptyAsyncBatchCursor, null);
-            }
         });
     }
 
@@ -111,7 +113,7 @@ public class ListSearchIndexesOperation<T>
 
     private AggregateOperation<T> getAggregateOperation() {
         BsonDocument searchDefinition = getSearchDefinition();
-        BsonDocument bsonDocument = new BsonDocument("$listSearchIndexes", searchDefinition);
+        BsonDocument bsonDocument = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
 
         return new AggregateOperation<>(namespace, Collections.singletonList(bsonDocument), decoder)
                 .collation(collation)
@@ -122,7 +124,7 @@ public class ListSearchIndexesOperation<T>
                 .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
-    @NotNull
+    @NonNull
     private BsonDocument getSearchDefinition() {
         if (indexName == null) {
             return new BsonDocument();

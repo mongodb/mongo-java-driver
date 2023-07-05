@@ -26,6 +26,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -59,12 +60,9 @@ public final class IndexHelper {
      * @return the list of search index names.
      */
     public static List<String> getSearchIndexNames(final List<SearchIndexModel> indexes) {
-        List<String> indexNames = new ArrayList<>();
-        //TODO consider making a stream
-        for (SearchIndexModel model : indexes) {
-            indexNames.add(getSearchIndexName(model));
-        }
-        return indexNames;
+        return indexes.stream()
+                .map(IndexHelper::getSearchIndexName)
+                .collect(Collectors.toList());
     }
 
     public static String getSearchIndexName(final SearchIndexModel model) {

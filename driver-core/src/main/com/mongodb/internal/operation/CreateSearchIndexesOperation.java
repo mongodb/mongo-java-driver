@@ -26,7 +26,7 @@ import org.bson.BsonString;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -34,14 +34,14 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
+class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "createSearchIndexes";
     private final List<SearchIndexRequest> indexRequests;
 
-    public CreateSearchIndexesOperation(final MongoNamespace namespace, final List<SearchIndexRequest> indexRequests,
+    CreateSearchIndexesOperation(final MongoNamespace namespace, final List<SearchIndexRequest> indexRequests,
                                         @Nullable final WriteConcern writeConcern) {
         super(namespace, writeConcern);
-        this.indexRequests = notNull("indexRequests", indexRequests);
+        this.indexRequests = assertNotNull(indexRequests);
     }
 
     private BsonArray convert(final List<SearchIndexRequest> requests) {
@@ -52,7 +52,7 @@ public class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperat
 
     private BsonDocument convert(final SearchIndexRequest request) {
         BsonDocument bsonIndexRequest = new BsonDocument();
-        String searchIndexName = request.getSearchIndexName();
+        String searchIndexName = request.getIndexName();
         if (searchIndexName != null) {
             bsonIndexRequest.append("name", new BsonString(searchIndexName));
         }

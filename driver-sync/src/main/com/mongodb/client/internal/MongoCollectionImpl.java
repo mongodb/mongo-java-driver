@@ -917,7 +917,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         executor.execute(operations.createSearchIndexes(searchIndexModels), readConcern, null);
         return IndexHelper.getSearchIndexNames(searchIndexModels);
     }
-    private String executeCreateSearchIndex(final Bson definition, final String indexName) {
+    private String executeCreateSearchIndex(final Bson definition, @Nullable final String indexName) {
         SearchIndexModel searchIndexModel = new SearchIndexModel(indexName, definition);
 
         executor.execute(operations.createSearchIndexes(singletonList(searchIndexModel)), readConcern, null);

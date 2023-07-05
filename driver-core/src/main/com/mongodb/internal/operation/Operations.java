@@ -230,9 +230,9 @@ final class Operations<TDocument> {
 
     <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                     final long maxTimeMS, final long maxAwaitTimeMS, @Nullable final Integer batchSize,
-                                                    @Nullable final Collation collation, @Nullable final Bson hint,
-                                                    @Nullable final String hintString, @Nullable final BsonValue comment,
-                                                    @Nullable final Bson variables, @Nullable final Boolean allowDiskUse,
+                                                    final Collation collation, @Nullable final Bson hint, @Nullable final String hintString,
+                                                    final BsonValue comment,
+                                                    final Bson variables, final Boolean allowDiskUse,
                                                     final AggregationLevel aggregationLevel) {
         return new AggregateOperation<>(assertNotNull(namespace), assertNotNull(toBsonDocumentList(pipeline)),
                 codecRegistry.get(resultClass), aggregationLevel)
@@ -654,17 +654,17 @@ final class Operations<TDocument> {
         return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern);
     }
 
-    public UpdateSearchIndexesOperation updateSearchIndex(final String name, final Bson definition) {
-        return new UpdateSearchIndexesOperation(assertNotNull(namespace), name, toBsonDocument(definition), writeConcern);
+    UpdateSearchIndexesOperation updateSearchIndex(final String name, final Bson definition) {
+        return new UpdateSearchIndexesOperation(assertNotNull(namespace), name, assertNotNull(toBsonDocument(definition)), writeConcern);
     }
 
 
-    public DropSearchIndexOperation dropSearchIndex(final String indexName) {
+    DropSearchIndexOperation dropSearchIndex(final String indexName) {
         return new DropSearchIndexOperation(assertNotNull(namespace), indexName, writeConcern);
     }
 
 
-    public <TResult> ListSearchIndexesOperation<TResult> listSearchIndexes(final Class<TResult> resultClass,
+    <TResult> ListSearchIndexesOperation<TResult> listSearchIndexes(final Class<TResult> resultClass,
                                                                                       final long maxTimeMS, final long maxAwaitTimeMS,
                                                                                       @Nullable final String indexName,
                                                                                       @Nullable final Integer batchSize,
@@ -673,8 +673,8 @@ final class Operations<TDocument> {
                                                                                       @Nullable final Boolean allowDiskUse) {
 
 
-        return new ListSearchIndexesOperation<>(assertNotNull(namespace),
-                codecRegistry.get(resultClass), maxTimeMS, maxAwaitTimeMS, indexName, batchSize, collation, comment, allowDiskUse);
+        return new ListSearchIndexesOperation<>(assertNotNull(namespace), codecRegistry.get(resultClass), maxTimeMS,
+                maxAwaitTimeMS, indexName, batchSize, collation, comment, allowDiskUse);
     }
 
     DropIndexOperation dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
@@ -770,9 +770,8 @@ final class Operations<TDocument> {
         BsonDocument definition = assertNotNull(toBsonDocument(model.getDefinition()));
         String indexName = model.getName();
 
-        SearchIndexRequest indexRequest = new SearchIndexRequest();
-        indexRequest.setSearchIndexName(indexName);
-        indexRequest.setDefinition(definition);
+        SearchIndexRequest indexRequest = new SearchIndexRequest(definition);
+        indexRequest.setIndexName(indexName);
         return indexRequest;
     }
 }

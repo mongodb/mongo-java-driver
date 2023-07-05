@@ -1369,7 +1369,6 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): SingleObservable[Void] =
     wrapped.drop(clientSession, dropCollectionOptions)
 
-
   /**
    * Create an Atlas Search index for the collection.
    *
@@ -1394,7 +1393,6 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    */
   def createSearchIndex(definition: Bson): SingleObservable[String] = wrapped.createSearchIndex(definition)
 
-
   /**
    * Create one or more Atlas Search indexes for the collection.
    * <p>
@@ -1407,7 +1405,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
    */
-  def createSearchIndexes(searchIndexModels: List[SearchIndexModel]):  Observable[String] = wrapped.createSearchIndexes(searchIndexModels.asJava)
+  def createSearchIndexes(searchIndexModels: List[SearchIndexModel]): Observable[String] =
+    wrapped.createSearchIndexes(searchIndexModels.asJava)
 
   /**
    * Update an Atlas Search index in the collection.
@@ -1419,8 +1418,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/updateSearchIndex/ Update Search Index]]
    */
-  def updateSearchIndex(indexName: String, definition: Bson): SingleObservable[Void] = wrapped.updateSearchIndex(indexName, definition)
-
+  def updateSearchIndex(indexName: String, definition: Bson): SingleObservable[Void] =
+    wrapped.updateSearchIndex(indexName, definition)
 
   /**
    * Drop an Atlas Search index given its name.

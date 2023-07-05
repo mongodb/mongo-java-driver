@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.kotlin.client.coroutine.syncadapter
+package com.mongodb.kotlin.client.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.ListSearchIndexesIterable as JListSearchIndexesIterable
-import com.mongodb.client.ListSearchIndexesIterable
 import com.mongodb.client.model.Collation
-import com.mongodb.kotlin.client.coroutine.ListSearchIndexesFlow
+import com.mongodb.kotlin.client.ListSearchIndexesIterable
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking
 import org.bson.BsonValue
 import org.bson.Document
 
-data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexesFlow<T>) :
+internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexesIterable<T>) :
     JListSearchIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncListSearchIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun name(indexName: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
 
-    override fun allowDiskUse(allowDiskUse: Boolean?): ListSearchIndexesIterable<T> = apply {
+    override fun allowDiskUse(allowDiskUse: Boolean?): com.mongodb.client.ListSearchIndexesIterable<T> = apply {
         wrapped.allowDiskUse(allowDiskUse)
     }
 
@@ -38,23 +36,23 @@ data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexes
         wrapped.maxTime(maxTime, timeUnit)
     }
 
-    override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): ListSearchIndexesIterable<T> = apply {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit)
-    }
+    override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): com.mongodb.client.ListSearchIndexesIterable<T> =
+        apply {
+            wrapped.maxAwaitTime(maxAwaitTime, timeUnit)
+        }
 
-    override fun collation(collation: Collation?): ListSearchIndexesIterable<T> = apply { wrapped.collation(collation) }
+    override fun collation(collation: Collation?): com.mongodb.client.ListSearchIndexesIterable<T> = apply {
+        wrapped.collation(collation)
+    }
 
     override fun comment(comment: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }
-    override fun explain(): Document = runBlocking { wrapped.explain() }
+    override fun explain(): Document = wrapped.explain()
 
-    override fun explain(verbosity: ExplainVerbosity): Document = runBlocking { wrapped.explain(verbosity) }
+    override fun explain(verbosity: ExplainVerbosity): Document = wrapped.explain(verbosity)
 
-    override fun <E : Any> explain(explainResultClass: Class<E>): E = runBlocking {
-        wrapped.explain(explainResultClass)
-    }
+    override fun <E : Any> explain(explainResultClass: Class<E>): E = wrapped.explain(explainResultClass)
 
-    override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity): E = runBlocking {
+    override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity): E =
         wrapped.explain(explainResultClass, verbosity)
-    }
 }

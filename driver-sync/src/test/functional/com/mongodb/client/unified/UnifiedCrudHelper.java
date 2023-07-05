@@ -88,7 +88,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1325,7 +1324,7 @@ final class UnifiedCrudHelper {
         if (model.containsKey("name")) {
             name = model.getString("name").getValue();
         }
-        return new SearchIndexModel(definition, name);
+        return new SearchIndexModel(name, definition);
     }
 
 
@@ -1344,7 +1343,6 @@ final class UnifiedCrudHelper {
         });
     }
 
-    @NotNull
     private ListSearchIndexesIterable<BsonDocument> createListSearchIndexesIterable(final MongoCollection<BsonDocument> collection,
                                                                                     final BsonDocument arguments) {
         Optional<String> name = Optional.ofNullable(arguments.getOrDefault("name", null))

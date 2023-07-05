@@ -33,7 +33,8 @@ import scala.reflect.ClassTag
  * @tparam TResult The type of the result.
  * @since 4.11
  */
-case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublisher[TResult]) extends Observable[TResult] {
+case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublisher[TResult])
+    extends Observable[TResult] {
 
   /**
    * Sets an Atlas Search index name for this operation. A null value means no index name is set.
@@ -155,8 +156,8 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * @note Requires MongoDB 3.6 or greater.
    */
   def explain[ExplainResult]()(
-    implicit e: ExplainResult DefaultsTo Document,
-    ct: ClassTag[ExplainResult]
+      implicit e: ExplainResult DefaultsTo Document,
+      ct: ClassTag[ExplainResult]
   ): SingleObservable[ExplainResult] =
     wrapped.explain[ExplainResult](ct)
 
@@ -170,8 +171,8 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * @note Requires MongoDB 3.6 or greater.
    */
   def explain[ExplainResult](
-                              verbosity: ExplainVerbosity
-                            )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
+      verbosity: ExplainVerbosity
+  )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
     wrapped.explain[ExplainResult](ct, verbosity)
 
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)

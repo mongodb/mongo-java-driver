@@ -23,8 +23,8 @@ import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.*
-import com.mongodb.client.model.*
 import com.mongodb.client.MongoCollection as JMongoCollection
+import com.mongodb.client.model.*
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.InsertManyResult
 import com.mongodb.client.result.InsertOneResult
@@ -379,28 +379,24 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
         wrapped.createSearchIndex(name, definition)
     }
 
-    override fun createSearchIndex(definition: Bson) = runBlocking {
-        wrapped.createSearchIndex(definition)
-    }
+    override fun createSearchIndex(definition: Bson) = runBlocking { wrapped.createSearchIndex(definition) }
 
     override fun createSearchIndexes(searchIndexModels: MutableList<SearchIndexModel>): MutableList<String> =
-            runBlocking {
-                wrapped.createSearchIndexes(searchIndexModels).toCollection(mutableListOf())
-            }
+        runBlocking {
+            wrapped.createSearchIndexes(searchIndexModels).toCollection(mutableListOf())
+        }
 
     override fun updateSearchIndex(indexName: String, definition: Bson) = runBlocking {
         wrapped.updateSearchIndex(indexName, definition)
     }
 
-    override fun dropSearchIndex(indexName: String) = runBlocking {
-        wrapped.dropSearchIndex(indexName)
-    }
+    override fun dropSearchIndex(indexName: String) = runBlocking { wrapped.dropSearchIndex(indexName) }
 
     override fun listSearchIndexes(): ListSearchIndexesIterable<Document> =
-            SyncListSearchIndexesIterable(wrapped.listSearchIndexes())
+        SyncListSearchIndexesIterable(wrapped.listSearchIndexes())
 
     override fun <R : Any> listSearchIndexes(resultClass: Class<R>): ListSearchIndexesIterable<R> =
-            SyncListSearchIndexesIterable(wrapped.listSearchIndexes(resultClass = resultClass))
+        SyncListSearchIndexesIterable(wrapped.listSearchIndexes(resultClass = resultClass))
 
     override fun createIndex(keys: Bson): String = runBlocking { wrapped.createIndex(keys) }
 

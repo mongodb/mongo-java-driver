@@ -20,7 +20,25 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteResult
-import com.mongodb.client.model.*
+import com.mongodb.client.model.BulkWriteOptions
+import com.mongodb.client.model.CountOptions
+import com.mongodb.client.model.CreateIndexOptions
+import com.mongodb.client.model.DeleteOptions
+import com.mongodb.client.model.DropCollectionOptions
+import com.mongodb.client.model.DropIndexOptions
+import com.mongodb.client.model.EstimatedDocumentCountOptions
+import com.mongodb.client.model.FindOneAndDeleteOptions
+import com.mongodb.client.model.FindOneAndReplaceOptions
+import com.mongodb.client.model.FindOneAndUpdateOptions
+import com.mongodb.client.model.IndexModel
+import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.InsertManyOptions
+import com.mongodb.client.model.InsertOneOptions
+import com.mongodb.client.model.RenameCollectionOptions
+import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.SearchIndexModel
+import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.WriteModel
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.InsertManyResult
 import com.mongodb.client.result.InsertOneResult
@@ -1220,7 +1238,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     /**
      * Create an Atlas Search index for the collection.
      *
-     * @param indexName  the name of the search index to create.
+     * @param indexName the name of the search index to create.
      * @param definition the search index mapping definition.
      * @return the search index name.
      * @see [Create search indexes](https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/)
@@ -1235,14 +1253,13 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return the search index name.
      * @see [Create search indexes](https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/)
      */
-    public suspend fun createSearchIndex(definition: Bson): String =
-        wrapped.createSearchIndex(definition).awaitSingle()
+    public suspend fun createSearchIndex(definition: Bson): String = wrapped.createSearchIndex(definition).awaitSingle()
 
     /**
      * Create one or more Atlas Search indexes for the collection.
+     *
      * <p>
-     * The name can be omitted for a single index, in which case a name will be the default.
-     * </p>
+     * The name can be omitted for a single index, in which case a name will be the default. </p>
      *
      * @param searchIndexModels the search index models.
      * @return the search index names.
@@ -1254,7 +1271,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     /**
      * Update an Atlas Search index in the collection.
      *
-     * @param indexName  the name of the search index to update.
+     * @param indexName the name of the search index to update.
      * @param definition the search index mapping definition.
      * @see [Update search index](https://www.mongodb.com/docs/manual/reference/command/updateSearchIndex/)
      */
@@ -1278,7 +1295,8 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return the list search indexes iterable interface.
      * @see [List search indexes](https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes)
      */
-    @JvmName("listSearchIndexesAsDocument") public fun listSearchIndexes(): ListSearchIndexesFlow<Document> = listSearchIndexes<Document>()
+    @JvmName("listSearchIndexesAsDocument")
+    public fun listSearchIndexes(): ListSearchIndexesFlow<Document> = listSearchIndexes<Document>()
 
     /**
      * Get all the Atlas Search indexes in this collection.
@@ -1289,7 +1307,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @see [List search indexes](https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes)
      */
     public fun <R : Any> listSearchIndexes(resultClass: Class<R>): ListSearchIndexesFlow<R> =
-            ListSearchIndexesFlow(wrapped.listSearchIndexes(resultClass))
+        ListSearchIndexesFlow(wrapped.listSearchIndexes(resultClass))
 
     /**
      * Get all the Atlas Search indexes in this collection.

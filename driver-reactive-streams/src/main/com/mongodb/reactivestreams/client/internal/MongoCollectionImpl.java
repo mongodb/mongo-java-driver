@@ -683,7 +683,6 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public Publisher<Void> dropSearchIndex(final String indexName) {
         notNull("name", indexName);
-        
         return mongoOperationPublisher.dropSearchIndex(null, indexName);
     }
 
