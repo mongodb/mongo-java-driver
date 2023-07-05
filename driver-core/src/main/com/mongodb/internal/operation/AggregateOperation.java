@@ -178,5 +178,4 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     Decoder<T> getDecoder() {
         return wrapped.getDecoder();
     }
-
 }
