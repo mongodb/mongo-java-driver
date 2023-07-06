@@ -30,7 +30,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
-public class SyncListSearchIndexesIterable<T> extends SyncMongoIterable<T> implements ListSearchIndexesIterable<T> {
+class SyncListSearchIndexesIterable<T> extends SyncMongoIterable<T> implements ListSearchIndexesIterable<T> {
     private final ListSearchIndexesPublisher<T> wrapped;
 
     SyncListSearchIndexesIterable(final ListSearchIndexesPublisher<T> wrapped) {

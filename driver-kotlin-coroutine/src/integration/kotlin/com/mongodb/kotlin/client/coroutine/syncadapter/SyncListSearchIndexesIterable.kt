@@ -27,8 +27,10 @@ import org.bson.Document
 
 data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexesFlow<T>) :
     JListSearchIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
-    override fun batchSize(batchSize: Int): SyncListSearchIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
+
     override fun name(indexName: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
+
+    override fun batchSize(batchSize: Int): SyncListSearchIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
 
     override fun allowDiskUse(allowDiskUse: Boolean?): ListSearchIndexesIterable<T> = apply {
         wrapped.allowDiskUse(allowDiskUse)

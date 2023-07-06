@@ -1334,11 +1334,14 @@ final class UnifiedCrudHelper {
 
         if (arguments.isPresent()) {
             ListSearchIndexesIterable<BsonDocument> iterable = createListSearchIndexesIterable(collection, arguments.get());
-            return resultOf(iterable::first);
+            return resultOf(() -> {
+                iterable.into(new ArrayList<>());
+                return null;
+            });
         }
 
         return resultOf(() -> {
-            collection.listSearchIndexes().first();
+            collection.listSearchIndexes().into(new ArrayList<>());
             return null;
         });
     }

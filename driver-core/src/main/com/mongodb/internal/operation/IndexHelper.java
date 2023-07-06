@@ -56,7 +56,7 @@ public final class IndexHelper {
     /**
      * Get a list of Atlas Search index names for the given list of {@link SearchIndexModel}.
      *
-     * @param indexes the search index models
+     * @param indexes the search index models.
      * @return the list of search index names.
      */
     public static List<String> getSearchIndexNames(final List<SearchIndexModel> indexes) {
