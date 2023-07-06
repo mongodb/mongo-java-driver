@@ -54,8 +54,8 @@ public final class Assertions {
      * Throw IllegalArgumentException if the values is null or contains null.
      *
      * <p><b>Note:</b> If performance is a concern, consider deferring the integrity validation
-     * to the point of actual data iteration to avoid incurring additional reference chasing. However,
-     * if performance considerations are low and it is acceptable to iterate over the data twice,
+     * to the point of actual data iteration to avoid incurring additional reference chasing for collections of complex objects.
+     * However, if performance considerations are low and it is acceptable to iterate over the data twice,
      * this method can still be used for validation purposes.
      *
      * @param name   the parameter name.
