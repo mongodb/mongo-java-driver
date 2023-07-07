@@ -68,12 +68,12 @@ public class ListSearchIndexesOperation<T>
                                       @Nullable final Boolean allowDiskUse) {
         this.namespace = namespace;
         this.decoder = decoder;
-        this.maxTimeMS = maxTimeMS;
-        this.maxAwaitTimeMS = maxAwaitTimeMS;
+        this.allowDiskUse = allowDiskUse;
         this.batchSize = batchSize == null ? Integer.valueOf(0) : batchSize;
         this.collation = collation;
+        this.maxTimeMS = maxTimeMS;
+        this.maxAwaitTimeMS = maxAwaitTimeMS;
         this.comment = comment;
-        this.allowDiskUse = allowDiskUse;
         this.indexName = indexName;
     }
 
