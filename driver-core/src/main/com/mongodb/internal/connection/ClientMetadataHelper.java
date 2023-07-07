@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.build.MongoDriverVersion;
-import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
