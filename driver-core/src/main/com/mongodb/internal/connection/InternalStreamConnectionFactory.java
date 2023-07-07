@@ -32,7 +32,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.ClientMetadataHelper.getClientMetadataDocument;
+import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
@@ -73,7 +73,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         this.commandListener = commandListener;
         this.serverApi = serverApi;
         this.inetAddressResolver = inetAddressResolver;
-        this.clientMetadataDocument = getClientMetadataDocument(applicationName, mongoDriverInformation);
+        this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
         this.credential = credential;
     }
 

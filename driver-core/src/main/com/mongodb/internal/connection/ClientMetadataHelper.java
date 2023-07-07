@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.build.MongoDriverVersion;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
@@ -45,7 +46,8 @@ public final class ClientMetadataHelper {
 
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
 
-    private static String getOperatingSystemType(final String operatingSystemName) {
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    static String getOperatingSystemType(final String operatingSystemName) {
         if (nameStartsWith(operatingSystemName, "linux")) {
             return "Linux";
         } else if (nameStartsWith(operatingSystemName, "mac")) {
@@ -72,7 +74,7 @@ public final class ClientMetadataHelper {
         return false;
     }
 
-    public static BsonDocument getClientMetadataDocument(@Nullable final String applicationName,
+    public static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
                                                             @Nullable final MongoDriverInformation mongoDriverInformation) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",

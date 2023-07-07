@@ -59,7 +59,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.mongodb.internal.connection.ClientMetadataHelper.getClientMetadataDocument;
+import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
@@ -245,7 +245,7 @@ public class MongoClient implements Closeable {
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();
-        BsonDocument clientMetadataDocument = getClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
         LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 

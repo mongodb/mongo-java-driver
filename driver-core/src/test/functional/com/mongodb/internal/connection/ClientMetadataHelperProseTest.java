@@ -19,135 +19,151 @@ package com.mongodb.internal.connection;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.TestHelper;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.internal.build.MongoDriverVersion;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
-import static com.mongodb.client.TestHelper.repeat;
-import static com.mongodb.client.TestHelper.withSystemProperty;
-import static com.mongodb.internal.connection.ClientMetadataHelperSpecification.createExpectedClientMetadataDocument;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.mongodb.client.WithWrapper.withWrapper;
+import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
+import static com.mongodb.internal.connection.ClientMetadataHelper.getOperatingSystemType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst#test-plan">spec</a>
- * @see ClientMetadataHelperSpecification
  */
 public class ClientMetadataHelperProseTest {
     private static final String APP_NAME = "app name";
 
-    @AfterEach
-    public void afterEach() {
-        TestHelper.resetEnvironmentVariables();
-    }
-
     @Test
     public void test01ValidAws() {
-        TestHelper.setEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8");
-        TestHelper.setEnvironmentVariable("AWS_REGION", "us-east-2");
-        TestHelper.setEnvironmentVariable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", "1024");
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                .withEnvironmentVariable("AWS_REGION", "us-east-2")
+                .withEnvironmentVariable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", "1024")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'memory_mb': 1024, 'region': 'us-east-2'}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'memory_mb': 1024, 'region': 'us-east-2'}"));
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
 
     @Test
     public void test02ValidAzure() {
-        TestHelper.setEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME", "node");
+        withWrapper()
+                .withEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME", "node")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'azure.func'}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        expected.put("env", BsonDocument.parse("{'name': 'azure.func'}"));
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
 
     @Test
     public void test03ValidGcp() {
-        TestHelper.setEnvironmentVariable("K_SERVICE", "servicename");
-        TestHelper.setEnvironmentVariable("FUNCTION_MEMORY_MB", "1024");
-        TestHelper.setEnvironmentVariable("FUNCTION_TIMEOUT_SEC", "60");
-        TestHelper.setEnvironmentVariable("FUNCTION_REGION", "us-central1");
+        withWrapper()
+                .withEnvironmentVariable("K_SERVICE", "servicename")
+                .withEnvironmentVariable("FUNCTION_MEMORY_MB", "1024")
+                .withEnvironmentVariable("FUNCTION_TIMEOUT_SEC", "60")
+                .withEnvironmentVariable("FUNCTION_REGION", "us-central1")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse(
+                            "{'name': 'gcp.func', 'timeout_sec': 60, 'memory_mb': 1024, 'region': 'us-central1'}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        expected.put("env", BsonDocument.parse(
-                "{'name': 'gcp.func', 'timeout_sec': 60, 'memory_mb': 1024, 'region': 'us-central1'}"));
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
 
     @Test
     public void test04ValidVercel() {
-        TestHelper.setEnvironmentVariable("VERCEL", "1");
-        TestHelper.setEnvironmentVariable("VERCEL_URL", "*.vercel.app");
-        TestHelper.setEnvironmentVariable("VERCEL_REGION", "cdg1");
+        withWrapper()
+                .withEnvironmentVariable("VERCEL", "1")
+                .withEnvironmentVariable("VERCEL_URL", "*.vercel.app")
+                .withEnvironmentVariable("VERCEL_REGION", "cdg1")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'vercel', 'url': '*.vercel.app', 'region': 'cdg1'}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        expected.put("env", BsonDocument.parse("{'name': 'vercel', 'url': '*.vercel.app', 'region': 'cdg1'}"));
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
 
     @Test
     public void test05InvalidMultipleProviders() {
-        TestHelper.setEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8");
-        TestHelper.setEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME", "node");
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                .withEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME", "node")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
 
     @Test
     public void test06InvalidLongString() {
-        TestHelper.setEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8");
-        TestHelper.setEnvironmentVariable("AWS_REGION", repeat(512, "a"));
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                .withEnvironmentVariable("AWS_REGION", repeat(512, "a"))
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda'}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda'}"));
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
 
     @Test
     public void test07InvalidWrongTypes() {
-        TestHelper.setEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8");
-        TestHelper.setEnvironmentVariable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", "big");
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                .withEnvironmentVariable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", "big")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda'}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda'}"));
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
-
 
     @Test
     public void test08NotLambda() {
-        TestHelper.setEnvironmentVariable("AWS_EXECUTION_ENV", "EC2");
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "EC2")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
 
-        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-        BsonDocument actual = getClientMetadataDocument();
-        assertEquals(expected, actual);
-
-        performHello();
+                    performHello();
+                });
     }
 
     // Additional tests, not specified as prose tests:
@@ -165,7 +181,7 @@ public class ClientMetadataHelperProseTest {
         BsonDocument expectedBase = createExpectedClientMetadataDocument(APP_NAME);
         expected.put("driver", expectedBase.get("driver"));
 
-        BsonDocument actual = ClientMetadataHelper.getClientMetadataDocument(APP_NAME, driverInfo);
+        BsonDocument actual = createClientMetadataDocument(APP_NAME, driverInfo);
         assertEquals(expected, actual);
     }
 
@@ -181,19 +197,65 @@ public class ClientMetadataHelperProseTest {
         BsonDocument expectedBase = createExpectedClientMetadataDocument(APP_NAME);
         expected.put("platform", expectedBase.get("platform"));
 
-        BsonDocument actual = ClientMetadataHelper.getClientMetadataDocument(APP_NAME, driverInfo);
+        BsonDocument actual = createClientMetadataDocument(APP_NAME, driverInfo);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testLimitForOsName() {
-        withSystemProperty("os.name", repeat(512, "a"), () -> {
-            BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-            expected.getDocument("os").remove("name");
+        withWrapper()
+                .withSystemProperty("os.name", repeat(512, "a"))
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.getDocument("os").remove("name");
 
-            BsonDocument actual = getClientMetadataDocument();
-            assertEquals(expected, actual);
-        });
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
+                });
+    }
+
+    @Test
+    public void testApplicationNameUnderLimit() {
+        String applicationName = repeat(126, "a") + "\u00A0";
+        BsonDocument client = createClientMetadataDocument(applicationName, null);
+        assertEquals(applicationName, client.getDocument("application").getString("name").getValue());
+    }
+
+    @Test
+    public void testApplicationNameOverLimit() {
+        String applicationName = repeat(127, "a") + "\u00A0";
+        assertThrows(IllegalArgumentException.class, () -> createClientMetadataDocument(applicationName, null));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            APP_NAME + ", " + true,
+            APP_NAME + ", " + false,
+            ", " + true, // null appName
+            ", " + false,
+    })
+    public void testCreateClientMetadataDocument(@Nullable final String appName, final boolean hasDriverInfo) {
+        MongoDriverInformation driverInformation = hasDriverInfo ? createDriverInformation() : null;
+        assertEquals(
+                createExpectedClientMetadataDocument(appName, driverInformation),
+                createClientMetadataDocument(appName, driverInformation));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "unknown,       unknown",
+            "Linux OS,      Linux",
+            "Mac OS X,      Darwin",
+            "Windows 10,    Windows",
+            "HP-UX OS,      Unix",
+            "AIX OS,        Unix",
+            "Irix OS,       Unix",
+            "Solaris OS,    Unix",
+            "SunOS,         Unix",
+            "Some Other OS, unknown",
+    })
+    public void testApplicationName(final String input, final String expected) {
+        assertEquals(expected, getOperatingSystemType(input));
     }
 
     private void performHello() {
@@ -203,7 +265,69 @@ public class ClientMetadataHelperProseTest {
         collectionHelper.hello();
     }
 
-    private BsonDocument getClientMetadataDocument() {
-        return ClientMetadataHelper.getClientMetadataDocument(APP_NAME, null);
+    private BsonDocument createActualClientMetadataDocument() {
+        return createClientMetadataDocument(APP_NAME, null);
+    }
+
+    private static MongoDriverInformation createDriverInformation() {
+        return MongoDriverInformation.builder()
+                .driverName("mongo-spark")
+                .driverVersion("2.0.0")
+                .driverPlatform("Scala 2.10 / Spark 2.0.0")
+                .build();
+    }
+
+    private static BsonDocument createExpectedClientMetadataDocument(
+            @Nullable final String appName,
+            @Nullable final MongoDriverInformation driverInformation) {
+        BsonDocument driverDocument = new BsonDocument()
+                .append("name", new BsonString(MongoDriverVersion.NAME))
+                .append("version", new BsonString(MongoDriverVersion.VERSION));
+        BsonDocument osDocument = new BsonDocument()
+                .append("type", new BsonString(getOperatingSystemType(System.getProperty("os.name"))))
+                .append("name", new BsonString(System.getProperty("os.name")))
+                .append("architecture", new BsonString(System.getProperty("os.arch")))
+                .append("version", new BsonString(System.getProperty("os.version")));
+        BsonDocument clientDocument = new BsonDocument();
+        if (appName != null) {
+            clientDocument.append("application", new BsonDocument("name", new BsonString(appName)));
+        }
+        clientDocument
+                .append("driver", driverDocument)
+                .append("os", osDocument)
+                .append("platform", new BsonString("Java/" + System.getProperty("java.vendor") + "/"
+                        + System.getProperty("java.runtime.version")));
+        if (driverInformation != null) {
+            driverDocument.append("name", new BsonString(join(
+                    driverDocument.getString("name").getValue(),
+                    driverInformation.getDriverNames())));
+            driverDocument.append("version", new BsonString(join(
+                    driverDocument.getString("version").getValue(),
+                    driverInformation.getDriverVersions())));
+            clientDocument.append("platform", new BsonString(join(
+                    clientDocument.getString("platform").getValue(),
+                    driverInformation.getDriverPlatforms())));
+        }
+        return clientDocument;
+    }
+
+    static BsonDocument createExpectedClientMetadataDocument(final String appName) {
+        return createExpectedClientMetadataDocument(appName, null);
+    }
+
+    private static String join(final String first, final List<String> rest) {
+        String separator = "|";
+        ArrayList<String> result = new ArrayList<>();
+        result.add(first);
+        result.addAll(rest);
+        return String.join(separator, result);
+    }
+
+    public static String repeat(final int times, final String s) {
+        StringBuilder builder = new StringBuilder(times);
+        for (int i = 0; i < times; i++) {
+            builder.append(s);
+        }
+        return builder.toString();
     }
 }
