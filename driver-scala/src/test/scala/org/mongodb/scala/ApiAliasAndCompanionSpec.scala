@@ -255,7 +255,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "NameCodecProvider",
       "SynchronousContextProvider",
       "TransactionBody",
-      "FailPoint"
+      "FailPoint",
+      "WithWrapper"
     )
 
     val wrapped = new Reflections(packageName, new SubTypesScanner(false))
