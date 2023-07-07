@@ -123,8 +123,9 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
      * bytes that should read. <p> Note that the byte buffers may be read-only. </p>
      *
      * @return the non-null list of byte buffers, in LITTLE_ENDIAN order. The returned {@link ByteBuf}s must eventually be
-     * {@linkplain ByteBuf#release() released} explicitly, calling {@link OutputBuffer#close()} is not enough not release them.
-     * This is done to allow the caller to continue using {@link ByteBuf}s even after closing this {@link OutputBuffer}.
+     * {@linkplain ByteBuf#release() released} explicitly, calling {@link OutputBuffer#close()} may be not enough to release them.
+     * The caller must not use the {@link ByteBuf}s after closing this {@link OutputBuffer},
+     * though releasing them is allowed to be done after closing this {@link OutputBuffer}.
      */
     public abstract List<ByteBuf> getByteBuffers();
 
