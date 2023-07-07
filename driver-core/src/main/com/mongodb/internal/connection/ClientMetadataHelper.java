@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.build.MongoDriverVersion;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
@@ -31,6 +32,7 @@ import org.bson.io.BasicOutputBuffer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -99,6 +101,8 @@ public final class ClientMetadataHelper {
         });
         // optional fields:
         Environment environment = getEnvironment();
+        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
+        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
         tryWithLimit(client, d -> putAtPath(d, "env.name", environment.getName()));
         tryWithLimit(client, d -> putAtPath(d, "os.name", getOperatingSystemName()));
         tryWithLimit(client, d -> putAtPath(d, "os.architecture", getProperty("os.arch", "unknown")));
@@ -106,19 +110,21 @@ public final class ClientMetadataHelper {
         tryWithLimit(client, d -> putAtPath(d, "env.timeout_sec", environment.getTimeoutSec()));
         tryWithLimit(client, d -> putAtPath(d, "env.memory_mb", environment.getMemoryMb()));
         tryWithLimit(client, d -> putAtPath(d, "env.region", environment.getRegion()));
-        tryWithLimit(client, d -> putAtPath(d, "env.url", environment.getUrl()));
-        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
-        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
-
         return client;
     }
 
 
     private static void putAtPath(final BsonDocument d, final String path, @Nullable final String value) {
+        if (value == null) {
+            return;
+        }
         putAtPath(d, path, new BsonString(value));
     }
 
-    private static void putAtPath(final BsonDocument d, final String path, @Nullable final int value) {
+    private static void putAtPath(final BsonDocument d, final String path, @Nullable final Integer value) {
+        if (value == null) {
+            return;
+        }
         putAtPath(d, path, new BsonInt32(value));
     }
 
@@ -218,16 +224,6 @@ public final class ClientMetadataHelper {
                     return null;
             }
         }
-
-        @Nullable
-        public String getUrl() {
-            switch (this) {
-                case VERCEL:
-                    return System.getenv("VERCEL_URL");
-                default:
-                    return null;
-            }
-        }
     }
 
     @Nullable
@@ -243,6 +239,10 @@ public final class ClientMetadataHelper {
     static Environment getEnvironment() {
         List<Environment> result = new ArrayList<>();
         String awsExecutionEnv = System.getenv("AWS_EXECUTION_ENV");
+
+        if (System.getenv("VERCEL") != null) {
+            result.add(Environment.VERCEL);
+        }
         if ((awsExecutionEnv != null && awsExecutionEnv.startsWith("AWS_Lambda_"))
                 || System.getenv("AWS_LAMBDA_RUNTIME_API") != null) {
             result.add(Environment.AWS_LAMBDA);
@@ -253,10 +253,14 @@ public final class ClientMetadataHelper {
         if (System.getenv("K_SERVICE") != null || System.getenv("FUNCTION_NAME") != null) {
             result.add(Environment.GCP_FUNC);
         }
-        if (System.getenv("VERCEL") != null) {
-            result.add(Environment.VERCEL);
+        // vercel takes precedence over aws.lambda
+        if (result.equals(Arrays.asList(Environment.VERCEL, Environment.AWS_LAMBDA))) {
+            return Environment.VERCEL;
         }
-        return result.size() != 1 ? Environment.UNKNOWN : result.get(0);
+        if (result.size() != 1) {
+            return Environment.UNKNOWN;
+        }
+        return result.get(0);
     }
 
     static MongoDriverInformation getDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {

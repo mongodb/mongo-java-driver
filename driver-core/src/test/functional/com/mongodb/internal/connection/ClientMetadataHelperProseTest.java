@@ -97,11 +97,10 @@ public class ClientMetadataHelperProseTest {
     public void test04ValidVercel() {
         withWrapper()
                 .withEnvironmentVariable("VERCEL", "1")
-                .withEnvironmentVariable("VERCEL_URL", "*.vercel.app")
                 .withEnvironmentVariable("VERCEL_REGION", "cdg1")
                 .run(() -> {
                     BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-                    expected.put("env", BsonDocument.parse("{'name': 'vercel', 'url': '*.vercel.app', 'region': 'cdg1'}"));
+                    expected.put("env", BsonDocument.parse("{'name': 'vercel', 'region': 'cdg1'}"));
                     BsonDocument actual = createActualClientMetadataDocument();
                     assertEquals(expected, actual);
 
