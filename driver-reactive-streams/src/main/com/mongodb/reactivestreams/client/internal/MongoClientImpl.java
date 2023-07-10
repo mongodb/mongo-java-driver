@@ -106,11 +106,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                      this.executor);
         this.closed = new AtomicBoolean();
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
-        if (clientMetadataDocument == null) {
-            LOGGER.info(format("MongoClient created with settings %s", settings));
-        } else {
-            LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
-        }
+        LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 
     Cluster getCluster() {

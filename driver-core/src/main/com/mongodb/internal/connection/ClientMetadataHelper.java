@@ -17,17 +17,23 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.build.MongoDriverVersion;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
@@ -37,63 +43,30 @@ import static java.lang.System.getProperty;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class ClientMetadataHelper {
-    public static final BsonDocument CLIENT_METADATA_DOCUMENT = new BsonDocument();
-
     private static final String SEPARATOR = "|";
-
-    private static final String APPLICATION_FIELD = "application";
-    private static final String APPLICATION_NAME_FIELD = "name";
-
-    private static final String DRIVER_FIELD = "driver";
-    private static final String DRIVER_NAME_FIELD = "name";
-    private static final String DRIVER_VERSION_FIELD = "version";
-
-    private static final String PLATFORM_FIELD = "platform";
-
-    private static final String OS_FIELD = "os";
-    private static final String OS_TYPE_FIELD = "type";
-    private static final String OS_NAME_FIELD = "name";
-    private static final String OS_ARCHITECTURE_FIELD = "architecture";
-    private static final String OS_VERSION_FIELD = "version";
 
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
 
-    static {
-        BsonDocument driverMetadataDocument = addDriverInformation(null, new BsonDocument());
-        CLIENT_METADATA_DOCUMENT.append(DRIVER_FIELD, driverMetadataDocument.get(DRIVER_FIELD));
-
-        try {
-            String operatingSystemName = getProperty("os.name", "unknown");
-            CLIENT_METADATA_DOCUMENT.append(OS_FIELD, new BsonDocument()
-                                                              .append(OS_TYPE_FIELD,
-                                                                      new BsonString(getOperatingSystemType(operatingSystemName)))
-                                                              .append(OS_NAME_FIELD,
-                                                                      new BsonString(operatingSystemName))
-                                                              .append(OS_ARCHITECTURE_FIELD,
-                                                                      new BsonString(getProperty("os.arch", "unknown")))
-                                                              .append(OS_VERSION_FIELD,
-                                                                      new BsonString(getProperty("os.version", "unknown"))))
-                    .append(PLATFORM_FIELD, driverMetadataDocument.get(PLATFORM_FIELD, new BsonString("")));
-        } catch (SecurityException e) {
-            // do nothing
-        }
-    }
-
-    private static String getOperatingSystemType(final String operatingSystemName) {
-        if (nameMatches(operatingSystemName, "linux")) {
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    static String getOperatingSystemType(final String operatingSystemName) {
+        if (nameStartsWith(operatingSystemName, "linux")) {
             return "Linux";
-        } else if (nameMatches(operatingSystemName, "mac")) {
+        } else if (nameStartsWith(operatingSystemName, "mac")) {
             return "Darwin";
-        } else if (nameMatches(operatingSystemName, "windows")) {
+        } else if (nameStartsWith(operatingSystemName, "windows")) {
             return  "Windows";
-        } else if (nameMatches(operatingSystemName, "hp-ux", "aix", "irix", "solaris", "sunos")) {
+        } else if (nameStartsWith(operatingSystemName, "hp-ux", "aix", "irix", "solaris", "sunos")) {
             return "Unix";
         } else {
-            return  "unknown";
+            return "unknown";
         }
     }
 
-    private static boolean nameMatches(final String name, final String... prefixes) {
+    private static String getOperatingSystemName() {
+        return getProperty("os.name", "unknown");
+    }
+
+    private static boolean nameStartsWith(final String name, final String... prefixes) {
         for (String prefix : prefixes) {
             if (name.toLowerCase().startsWith(prefix.toLowerCase())) {
                 return true;
@@ -102,75 +75,191 @@ public final class ClientMetadataHelper {
         return false;
     }
 
-    @Nullable
-    static BsonDocument createClientMetadataDocument(@Nullable final String applicationName) {
-        return createClientMetadataDocument(applicationName, null);
-    }
-
-    @Nullable
     public static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
                                                             @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return createClientMetadataDocument(applicationName, mongoDriverInformation, CLIENT_METADATA_DOCUMENT);
-    }
-
-    @Nullable
-    static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
-                                                     @Nullable final MongoDriverInformation mongoDriverInformation,
-                                                     final BsonDocument templateDocument) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
                     applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
         }
 
-        BsonDocument document = templateDocument.clone();
-        if (applicationName != null) {
-            document.append(APPLICATION_FIELD, new BsonDocument(APPLICATION_NAME_FIELD, new BsonString(applicationName)));
-        }
-
-        if (mongoDriverInformation != null) {
-            addDriverInformation(mongoDriverInformation, document);
-        }
-
-        if (clientMetadataDocumentTooLarge(document)) {
-            // first try: remove the three optional fields in the 'os' document, if it exists (may not if the security manager is configured
-            // to disallow access to system properties)
-            BsonDocument operatingSystemDocument = document.getDocument(OS_FIELD, null);
-            if (operatingSystemDocument != null) {
-                operatingSystemDocument.remove(OS_VERSION_FIELD);
-                operatingSystemDocument.remove(OS_ARCHITECTURE_FIELD);
-                operatingSystemDocument.remove(OS_NAME_FIELD);
-            }
-            if (operatingSystemDocument == null || clientMetadataDocumentTooLarge(document)) {
-                // second try: remove the optional 'platform' field
-                document.remove(PLATFORM_FIELD);
-                if (clientMetadataDocumentTooLarge(document)) {
-                    // Third try: Try the minimum required amount of data.
-                    document = new BsonDocument(DRIVER_FIELD, templateDocument.getDocument(DRIVER_FIELD));
-                    document.append(OS_FIELD, new BsonDocument(OS_TYPE_FIELD, new BsonString("unknown")));
-                    if (clientMetadataDocumentTooLarge(document)) {
-                        // Worst case scenario: give up and don't send any client metadata at all
-                        document = null;
-                    }
-                }
-            }
-        }
-        return document;
+        // client fields are added in "preservation" order:
+        BsonDocument client = new BsonDocument();
+        tryWithLimit(client, d -> putAtPath(d, "application.name", applicationName));
+        MongoDriverInformation baseDriverInfor = getDriverInformation(null);
+        // required fields:
+        tryWithLimit(client, d -> {
+            putAtPath(d, "driver.name", listToString(baseDriverInfor.getDriverNames()));
+            putAtPath(d, "driver.version", listToString(baseDriverInfor.getDriverVersions()));
+        });
+        tryWithLimit(client, d -> putAtPath(d, "os.type", getOperatingSystemType(getOperatingSystemName())));
+        // full driver information:
+        MongoDriverInformation fullDriverInfo = getDriverInformation(mongoDriverInformation);
+        tryWithLimit(client, d -> {
+            putAtPath(d, "driver.name", listToString(fullDriverInfo.getDriverNames()));
+            putAtPath(d, "driver.version", listToString(fullDriverInfo.getDriverVersions()));
+        });
+        // optional fields:
+        Environment environment = getEnvironment();
+        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
+        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
+        tryWithLimit(client, d -> putAtPath(d, "env.name", environment.getName()));
+        tryWithLimit(client, d -> putAtPath(d, "os.name", getOperatingSystemName()));
+        tryWithLimit(client, d -> putAtPath(d, "os.architecture", getProperty("os.arch", "unknown")));
+        tryWithLimit(client, d -> putAtPath(d, "os.version", getProperty("os.version", "unknown")));
+        tryWithLimit(client, d -> putAtPath(d, "env.timeout_sec", environment.getTimeoutSec()));
+        tryWithLimit(client, d -> putAtPath(d, "env.memory_mb", environment.getMemoryMb()));
+        tryWithLimit(client, d -> putAtPath(d, "env.region", environment.getRegion()));
+        return client;
     }
 
-    private static BsonDocument addDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation,
-                                                     final BsonDocument document) {
-        MongoDriverInformation driverInformation = getDriverInformation(mongoDriverInformation);
-        BsonDocument driverMetadataDocument = new BsonDocument(DRIVER_NAME_FIELD, listToBsonString(driverInformation.getDriverNames()))
-                .append(DRIVER_VERSION_FIELD, listToBsonString(driverInformation.getDriverVersions()));
-        document.append(DRIVER_FIELD, driverMetadataDocument);
-        document.append(PLATFORM_FIELD, listToBsonString(driverInformation.getDriverPlatforms()));
-        return document;
+
+    private static void putAtPath(final BsonDocument d, final String path, @Nullable final String value) {
+        if (value == null) {
+            return;
+        }
+        putAtPath(d, path, new BsonString(value));
+    }
+
+    private static void putAtPath(final BsonDocument d, final String path, @Nullable final Integer value) {
+        if (value == null) {
+            return;
+        }
+        putAtPath(d, path, new BsonInt32(value));
+    }
+
+    /**
+     * Assumes valid documents (or not set) on path. No-op if value is null.
+     */
+    private static void putAtPath(final BsonDocument d, final String path, @Nullable final BsonValue value) {
+        if (value == null) {
+            return;
+        }
+        String[] split = path.split("\\.", 2);
+        String first = split[0];
+        if (split.length == 1) {
+            d.append(first, value);
+        } else {
+            BsonDocument child;
+            if (d.containsKey(first)) {
+                child = d.getDocument(first);
+            } else {
+                child = new BsonDocument();
+                d.append(first, child);
+            }
+            String rest = split[1];
+            putAtPath(child, rest, value);
+        }
+    }
+
+    private static void tryWithLimit(final BsonDocument document, final Consumer<BsonDocument> modifier) {
+        try {
+            BsonDocument temp = document.clone();
+            modifier.accept(temp);
+            if (!clientMetadataDocumentTooLarge(temp)) {
+                modifier.accept(document);
+            }
+        } catch (Exception e) {
+            // do nothing. This could be a SecurityException, or any other issue while building the document
+        }
     }
 
     static boolean clientMetadataDocumentTooLarge(final BsonDocument document) {
         BasicOutputBuffer buffer = new BasicOutputBuffer(MAXIMUM_CLIENT_METADATA_ENCODED_SIZE);
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
+    }
+
+    private enum Environment {
+        AWS_LAMBDA("aws.lambda"),
+        AZURE_FUNC("azure.func"),
+        GCP_FUNC("gcp.func"),
+        VERCEL("vercel"),
+        UNKNOWN(null);
+
+        @Nullable
+        private final String name;
+
+        Environment(@Nullable final String name) {
+            this.name = name;
+        }
+
+        @Nullable
+        public String getName() {
+            return name;
+        }
+
+        @Nullable
+        public Integer getTimeoutSec() {
+            switch (this) {
+                case GCP_FUNC:
+                    return getEnvInteger("FUNCTION_TIMEOUT_SEC");
+                default:
+                    return null;
+            }
+        }
+
+        @Nullable
+        public Integer getMemoryMb() {
+            switch (this) {
+                case AWS_LAMBDA:
+                    return getEnvInteger("AWS_LAMBDA_FUNCTION_MEMORY_SIZE");
+                case GCP_FUNC:
+                    return getEnvInteger("FUNCTION_MEMORY_MB");
+                default:
+                    return null;
+            }
+        }
+
+        @Nullable
+        public String getRegion() {
+            switch (this) {
+                case AWS_LAMBDA:
+                    return System.getenv("AWS_REGION");
+                case GCP_FUNC:
+                    return System.getenv("FUNCTION_REGION");
+                case VERCEL:
+                    return System.getenv("VERCEL_REGION");
+                default:
+                    return null;
+            }
+        }
+    }
+
+    @Nullable
+    private static Integer getEnvInteger(final String name) {
+        try {
+            String value = System.getenv(name);
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    static Environment getEnvironment() {
+        List<Environment> result = new ArrayList<>();
+        String awsExecutionEnv = System.getenv("AWS_EXECUTION_ENV");
+
+        if (System.getenv("VERCEL") != null) {
+            result.add(Environment.VERCEL);
+        }
+        if ((awsExecutionEnv != null && awsExecutionEnv.startsWith("AWS_Lambda_"))
+                || System.getenv("AWS_LAMBDA_RUNTIME_API") != null) {
+            result.add(Environment.AWS_LAMBDA);
+        }
+        if (System.getenv("FUNCTIONS_WORKER_RUNTIME") != null) {
+            result.add(Environment.AZURE_FUNC);
+        }
+        if (System.getenv("K_SERVICE") != null || System.getenv("FUNCTION_NAME") != null) {
+            result.add(Environment.GCP_FUNC);
+        }
+        // vercel takes precedence over aws.lambda
+        if (result.equals(Arrays.asList(Environment.VERCEL, Environment.AWS_LAMBDA))) {
+            return Environment.VERCEL;
+        }
+        if (result.size() != 1) {
+            return Environment.UNKNOWN;
+        }
+        return result.get(0);
     }
 
     static MongoDriverInformation getDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
@@ -184,7 +273,7 @@ public final class ClientMetadataHelper {
                 .build();
     }
 
-    static BsonString listToBsonString(final List<String> listOfStrings) {
+    private static String listToString(final List<String> listOfStrings) {
         StringBuilder stringBuilder = new StringBuilder();
         int i = 0;
         for (String val : listOfStrings) {
@@ -194,7 +283,7 @@ public final class ClientMetadataHelper {
             stringBuilder.append(val);
             i++;
         }
-        return new BsonString(stringBuilder.toString());
+        return stringBuilder.toString();
     }
 
     private ClientMetadataHelper() {
