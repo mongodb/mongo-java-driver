@@ -90,6 +90,8 @@ afterEvaluate {
             'com.mongodb.crypt.capi.*;resolution:=optional',
             'jdk.net.*;resolution:=optional', // Used by SocketStreamHelper & depends on JDK version
             'org.bson.codecs.record.*;resolution:=optional', // Depends on JDK version
+            'org.bson.codecs.kotlin.*;resolution:=optional',
+            'org.bson.codecs.kotlinx.*;resolution:=optional',
             '*' // import all that is not excluded or modified before
     ].join(',')
 }
