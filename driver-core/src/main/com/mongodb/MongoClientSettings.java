@@ -299,6 +299,10 @@ public final class MongoClientSettings {
             if (retryWritesValue != null) {
                 retryWrites = retryWritesValue;
             }
+            Boolean retryReadsValue = connectionString.getRetryReads();
+            if (retryReadsValue != null) {
+                retryReads = retryReadsValue;
+            }
             if (connectionString.getUuidRepresentation() != null) {
                 uuidRepresentation = connectionString.getUuidRepresentation();
             }

@@ -194,7 +194,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
-                .retryReads(false)
+                .retryReads(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
