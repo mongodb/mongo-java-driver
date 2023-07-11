@@ -118,9 +118,6 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * @param comment the comment
    * @return this
    * @since 4.6
-   * @note The comment can be any valid BSON type for server versions 4.4 and above.
-   *       Server versions between 3.6 and 4.2 only support
-   *       string as comment, and providing a non-string type will result in a server-side error.
    */
   def comment(comment: BsonValue): ListSearchIndexesObservable[TResult] = {
     wrapped.comment(comment)
