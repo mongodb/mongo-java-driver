@@ -35,7 +35,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListSearchIndexesPublisher<T> {
     private Boolean allowDiskUse;
     private long maxTimeMS;
-    private long maxAwaitTimeMS;
     private Collation collation;
     private BsonValue comment;
     private String indexName;
@@ -67,13 +66,6 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
     public ListSearchIndexesPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    @Override
-    public ListSearchIndexesPublisher<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -132,7 +124,7 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
     }
 
     private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
-        return getOperations().listSearchIndexes(getDocumentClass(), maxTimeMS, maxAwaitTimeMS, indexName, initialBatchSize, collation,
+        return getOperations().listSearchIndexes(getDocumentClass(), maxTimeMS, indexName, initialBatchSize, collation,
                 comment,
                 allowDiskUse);
     }

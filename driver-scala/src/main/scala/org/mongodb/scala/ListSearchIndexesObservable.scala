@@ -72,20 +72,6 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
   }
 
   /**
-   * Sets the maximum await execution time on the server for this operation.
-   *
-   * @param duration the duration.
-   * @return this.
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater.
-   * @see [[https://www.mongodb.com/docs/manual/reference/method/cursor.maxAwaitTimeMS/ Max Await Time]]
-   */
-  def maxAwaitTime(duration: Duration): ListSearchIndexesObservable[TResult] = {
-    wrapped.maxAwaitTime(duration.toMillis, TimeUnit.MILLISECONDS)
-    this
-  }
-
-  /**
    * Sets the collation options
    *
    * @param collation the collation options to use.

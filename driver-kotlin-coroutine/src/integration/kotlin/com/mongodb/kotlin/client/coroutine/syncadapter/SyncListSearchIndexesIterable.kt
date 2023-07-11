@@ -40,10 +40,6 @@ data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexes
         wrapped.maxTime(maxTime, timeUnit)
     }
 
-    override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): ListSearchIndexesIterable<T> = apply {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit)
-    }
-
     override fun collation(collation: Collation?): ListSearchIndexesIterable<T> = apply { wrapped.collation(collation) }
 
     override fun comment(comment: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }

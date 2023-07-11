@@ -71,17 +71,6 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
     ListSearchIndexesIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
-     * <p>
-     * A zero value will be ignored.
-     *
-     * @param maxAwaitTime the max await time.
-     * @param timeUnit     the time unit to return the result in.
-     * @return the maximum await execution time in the given time unit.
-     */
-    ListSearchIndexesIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
-
-    /**
      * Sets the collation options
      *
      * <p>A null value represents the server default.</p>

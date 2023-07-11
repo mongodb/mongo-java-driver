@@ -665,7 +665,7 @@ final class Operations<TDocument> {
 
 
     <TResult> ListSearchIndexesOperation<TResult> listSearchIndexes(final Class<TResult> resultClass,
-                                                                                      final long maxTimeMS, final long maxAwaitTimeMS,
+                                                                                      final long maxTimeMS,
                                                                                       @Nullable final String indexName,
                                                                                       @Nullable final Integer batchSize,
                                                                                       @Nullable final Collation collation,
@@ -674,7 +674,7 @@ final class Operations<TDocument> {
 
 
         return new ListSearchIndexesOperation<>(assertNotNull(namespace), codecRegistry.get(resultClass), maxTimeMS,
-                maxAwaitTimeMS, indexName, batchSize, collation, comment, allowDiskUse);
+                indexName, batchSize, collation, comment, allowDiskUse);
     }
 
     DropIndexOperation dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {

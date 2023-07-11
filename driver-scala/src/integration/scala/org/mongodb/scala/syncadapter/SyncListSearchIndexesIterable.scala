@@ -24,7 +24,6 @@ import org.mongodb.scala.ListSearchIndexesObservable
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 case class SyncListSearchIndexesIterable[T](wrapped: ListSearchIndexesObservable[T])
@@ -48,11 +47,6 @@ case class SyncListSearchIndexesIterable[T](wrapped: ListSearchIndexesObservable
 
   override def maxTime(maxTime: Long, timeUnit: TimeUnit): ListSearchIndexesIterable[T] = {
     wrapped.maxTime(maxTime, timeUnit)
-    this
-  }
-
-  override def maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): ListSearchIndexesIterable[T] = {
-    wrapped.maxAwaitTime(Duration(maxAwaitTime, timeUnit))
     this
   }
 

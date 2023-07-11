@@ -54,13 +54,12 @@ public class ListSearchIndexesOperation<T>
     private final Integer batchSize;
     private final Collation collation;
     private final BsonValue comment;
-    private final long maxAwaitTimeMS;
     private final long maxTimeMS;
     private final String indexName;
 
     public ListSearchIndexesOperation(final MongoNamespace namespace,
                                       final Decoder<T> decoder,
-                                      final long maxTimeMS, final long maxAwaitTimeMS,
+                                      final long maxTimeMS,
                                       @Nullable final String indexName,
                                       @Nullable final Integer batchSize,
                                       @Nullable final Collation collation,
@@ -72,7 +71,6 @@ public class ListSearchIndexesOperation<T>
         this.batchSize = batchSize;
         this.collation = collation;
         this.maxTimeMS = maxTimeMS;
-        this.maxAwaitTimeMS = maxAwaitTimeMS;
         this.comment = comment;
         this.indexName = indexName;
     }
@@ -121,7 +119,6 @@ public class ListSearchIndexesOperation<T>
                 .comment(comment)
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
-                .maxAwaitTime(maxAwaitTimeMS, TimeUnit.MILLISECONDS)
                 .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 

@@ -73,20 +73,6 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
         }
 
     /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a `$changeStream` aggregation.
-     *
-     * A zero value will be ignored.
-     *
-     * @param maxAwaitTime the max await time.
-     * @param timeUnit the time unit to return the result in, defaults to Milliseconds.
-     * @return the maximum await execution time in the given time unit.
-     */
-    public fun maxAwaitTime(
-        maxAwaitTime: Long,
-        timeUnit: TimeUnit = TimeUnit.MILLISECONDS
-    ): ListSearchIndexesIterable<T> = apply { wrapped.maxAwaitTime(maxAwaitTime, timeUnit) }
-
-    /**
      * Sets the collation options.
      *
      * A null value represents the server default.

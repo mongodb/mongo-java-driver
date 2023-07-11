@@ -36,11 +36,6 @@ internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchInd
         wrapped.maxTime(maxTime, timeUnit)
     }
 
-    override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): com.mongodb.client.ListSearchIndexesIterable<T> =
-        apply {
-            wrapped.maxAwaitTime(maxAwaitTime, timeUnit)
-        }
-
     override fun collation(collation: Collation?): com.mongodb.client.ListSearchIndexesIterable<T> = apply {
         wrapped.collation(collation)
     }

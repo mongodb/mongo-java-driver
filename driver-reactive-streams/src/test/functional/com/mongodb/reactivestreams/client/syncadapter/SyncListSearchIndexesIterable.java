@@ -45,12 +45,6 @@ class SyncListSearchIndexesIterable<T> extends SyncMongoIterable<T> implements L
     }
 
     @Override
-    public ListSearchIndexesIterable<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
-        return this;
-    }
-
-    @Override
     public ListSearchIndexesIterable<T> collation(final Collation collation) {
         wrapped.collation(collation);
         return this;

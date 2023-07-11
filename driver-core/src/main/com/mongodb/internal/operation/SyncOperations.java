@@ -264,13 +264,13 @@ public final class SyncOperations<TDocument> {
 
 
     public <TResult> ExplainableReadOperation<BatchCursor<TResult>> listSearchIndexes(final Class<TResult> resultClass,
-                                                                           final long maxTimeMS, final long maxAwaitTimeMS,
+                                                                           final long maxTimeMS,
                                                                            @Nullable final String indexName,
                                                                            @Nullable final Integer batchSize,
                                                                            @Nullable final Collation collation,
                                                                            @Nullable final BsonValue comment,
                                                                            @Nullable final Boolean allowDiskUse) {
-        return operations.listSearchIndexes(resultClass, maxTimeMS, maxAwaitTimeMS, indexName, batchSize, collation,
+        return operations.listSearchIndexes(resultClass, maxTimeMS, indexName, batchSize, collation,
                comment, allowDiskUse);
     }
 

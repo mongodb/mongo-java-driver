@@ -76,20 +76,6 @@ public class ListSearchIndexesFlow<T : Any>(private val wrapped: ListSearchIndex
     }
 
     /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a `$changeStream` aggregation.
-     *
-     * A zero value will be ignored.
-     *
-     * @param maxAwaitTime the max await time.
-     * @param timeUnit the time unit to return the result in, defaults to Milliseconds.
-     * @return the maximum await execution time in the given time unit.
-     */
-    public fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListSearchIndexesFlow<T> =
-        apply {
-            wrapped.maxAwaitTime(maxAwaitTime, timeUnit)
-        }
-
-    /**
      * Sets the collation options.
      *
      * A null value represents the server default.
@@ -118,7 +104,6 @@ public class ListSearchIndexesFlow<T : Any>(private val wrapped: ListSearchIndex
     /**
      * Explain the execution plan for this operation with the given verbosity level.
      *
-     * @param R the type of the document class.
      * @param verbosity the verbosity of the explanation.
      * @return the execution plan.
      * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)

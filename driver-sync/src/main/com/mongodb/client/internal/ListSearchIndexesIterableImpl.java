@@ -42,7 +42,6 @@ public class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TR
     private final Class<TResult> resultClass;
     private Boolean allowDiskUse;
     private long maxTimeMS;
-    private long maxAwaitTimeMS;
     private Collation collation;
     private BsonValue comment;
     private String indexName;
@@ -80,13 +79,6 @@ public class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TR
     public ListSearchIndexesIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    @Override
-    public ListSearchIndexesIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -141,7 +133,7 @@ public class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TR
     }
 
     private ExplainableReadOperation<BatchCursor<TResult>> asAggregateOperation() {
-        return operations.listSearchIndexes(resultClass, maxTimeMS, maxAwaitTimeMS, indexName, getBatchSize(), collation, comment,
+        return operations.listSearchIndexes(resultClass, maxTimeMS, indexName, getBatchSize(), collation, comment,
                 allowDiskUse);
     }
 }
