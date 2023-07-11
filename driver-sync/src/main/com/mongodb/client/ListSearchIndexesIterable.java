@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  * This interface contains aggregate options and that of applied to {@code $listSearchIndexes} operation.
  *
  * @param <TResult> The type of the result.
- * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+ * @mongodb.driver.manual reference/operator/aggregation/listSearchIndexes ListSearchIndexes
  * @since 4.11
  * @mongodb.server.release 7.0
  */
