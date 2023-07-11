@@ -62,8 +62,8 @@ class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
 
     @Override
     BsonDocument buildCommand() {
-        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()));
-        command.put("indexes", convert(indexRequests));
+        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+                .append("indexes", convert(indexRequests));
         appendWriteConcernToCommand(getWriteConcern(), command);
         return command;
     }

@@ -60,8 +60,8 @@ class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
 
     @Override
     BsonDocument buildCommand() {
-        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()));
-        command.put("name", new BsonString(indexName));
+        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+                .append("name", new BsonString(indexName));
         appendWriteConcernToCommand(getWriteConcern(), command);
         return command;
     }

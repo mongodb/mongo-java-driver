@@ -771,7 +771,7 @@ final class Operations<TDocument> {
         String indexName = model.getName();
 
         SearchIndexRequest indexRequest = new SearchIndexRequest(definition);
-        indexRequest.setIndexName(indexName);
+        indexRequest.indexName(indexName);
         return indexRequest;
     }
 }

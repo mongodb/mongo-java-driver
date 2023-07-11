@@ -43,9 +43,9 @@ public class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperat
 
     @Override
     BsonDocument buildCommand() {
-        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()));
-        command.append("name", new BsonString(indexName));
-        command.append("definition", definition);
+        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+                .append("name", new BsonString(indexName))
+                .append("definition", definition);
         appendWriteConcernToCommand(getWriteConcern(), command);
         return command;
     }

@@ -39,7 +39,7 @@ public class SearchIndexRequest {
         return definition;
     }
 
-    public void setDefinition(final BsonDocument definition) {
+    public void definition(final BsonDocument definition) {
         assertNotNull(definition);
         this.definition = definition;
     }
@@ -49,7 +49,7 @@ public class SearchIndexRequest {
         return indexName;
     }
 
-    public void setIndexName(@Nullable final String indexName) {
+    public void indexName(@Nullable final String indexName) {
         this.indexName = indexName;
     }
 }

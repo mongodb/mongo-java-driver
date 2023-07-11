@@ -69,7 +69,7 @@ public class ListSearchIndexesOperation<T>
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
-        this.batchSize = batchSize == null ? Integer.valueOf(0) : batchSize;
+        this.batchSize = batchSize;
         this.collation = collation;
         this.maxTimeMS = maxTimeMS;
         this.maxAwaitTimeMS = maxAwaitTimeMS;
@@ -80,42 +80,43 @@ public class ListSearchIndexesOperation<T>
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         try {
-            return getAggregateOperation().execute(binding);
+            return asAggregateOperation().execute(binding);
         } catch (MongoCommandException exception) {
+            int cursorBatchSize = batchSize == null ? 0 : batchSize;
             return assertNotNull(rethrowIfNotNamespaceError(exception, createEmptyBatchCursor(namespace, decoder,
-                    exception.getServerAddress(), batchSize)));
+                    exception.getServerAddress(), cursorBatchSize)));
         }
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        getAggregateOperation().executeAsync(binding, (cursor, exception) -> {
+        asAggregateOperation().executeAsync(binding, (cursor, exception) -> {
             if (exception != null && !isNamespaceError(exception)) {
                 callback.onResult(null, exception);
-            } else if (exception == null) {
-                callback.onResult(cursor, null);
-                return;
-            }
-                MongoCommandException commandException = (MongoCommandException) assertNotNull(exception);
+            } else if (exception != null) {
+                MongoCommandException commandException = (MongoCommandException) exception;
                 AsyncBatchCursor<T> emptyAsyncBatchCursor = createEmptyAsyncBatchCursor(namespace, commandException.getServerAddress());
                 callback.onResult(emptyAsyncBatchCursor, null);
+            } else {
+                callback.onResult(cursor, null);
+            }
         });
     }
 
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return getAggregateOperation().asExplainableOperation(verbosity, resultDecoder);
+        return asAggregateOperation().asExplainableOperation(verbosity, resultDecoder);
     }
 
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return getAggregateOperation().asAsyncExplainableOperation(verbosity, resultDecoder);
+        return asAggregateOperation().asAsyncExplainableOperation(verbosity, resultDecoder);
     }
 
-    private AggregateOperation<T> getAggregateOperation() {
+    private AggregateOperation<T> asAggregateOperation() {
         BsonDocument searchDefinition = getSearchDefinition();
-        BsonDocument bsonDocument = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
+        BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
 
-        return new AggregateOperation<>(namespace, Collections.singletonList(bsonDocument), decoder)
+        return new AggregateOperation<>(namespace, Collections.singletonList(listSearchIndexesStage), decoder)
                 .collation(collation)
                 .comment(comment)
                 .allowDiskUse(allowDiskUse)
