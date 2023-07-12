@@ -46,12 +46,13 @@ class ChangeStreamDocumentSpecification extends Specification {
         def txnNumber = new BsonInt64(1)
         def lsid = BsonDocument.parse('{id: 1, uid: 1}')
         def wallTime = new BsonDateTime(42)
+        def splitEvent = BsonDocument.parse('{ fragment: 1, of: 2 }')
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
         when:
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
                 destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, txnNumber,
-                lsid, wallTime, extraElements)
+                lsid, wallTime, splitEvent, extraElements)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -70,6 +71,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getTxnNumber() == txnNumber
         changeStreamDocument.getLsid() == lsid
         changeStreamDocument.getWallTime() == wallTime
+        changeStreamDocument.getSplitEvent() == splitEvent
         changeStreamDocument.getExtraElements() == extraElements
 
         when:

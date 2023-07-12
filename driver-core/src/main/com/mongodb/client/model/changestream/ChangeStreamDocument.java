@@ -59,8 +59,61 @@ public final class ChangeStreamDocument<TDocument> {
     private final BsonInt64 txnNumber;
     private final BsonDocument lsid;
     private final BsonDateTime wallTime;
+    private final BsonDocument splitEvent;
     @BsonExtraElements
     private final BsonDocument extraElements;
+
+    /**
+     * Creates a new instance
+     *
+     * @param operationTypeString the operation type
+     * @param resumeToken the resume token
+     * @param namespaceDocument the BsonDocument representing the namespace
+     * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
+     * @param fullDocument the full document
+     * @param fullDocumentBeforeChange the full document before change
+     * @param documentKey a document containing the _id of the changed document
+     * @param clusterTime the cluster time at which the change occured
+     * @param updateDescription the update description
+     * @param txnNumber the transaction number
+     * @param lsid the identifier for the session associated with the transaction
+     * @param wallTime the wall time of the server at the moment the change occurred
+     * @param splitEvent the split event
+     * @param extraElements any extra elements that are part of the change stream document but not otherwise mapped to fields
+     *
+     * @since 4.11
+     */
+    @BsonCreator
+    public ChangeStreamDocument(@BsonProperty("operationType") final String operationTypeString,
+            @BsonProperty("resumeToken") final BsonDocument resumeToken,
+            @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
+            @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
+            @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
+            @Nullable @BsonProperty("fullDocumentBeforeChange") final TDocument fullDocumentBeforeChange,
+            @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
+            @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
+            @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
+            @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
+            @Nullable @BsonProperty("lsid") final BsonDocument lsid,
+            @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime,
+            @Nullable @BsonProperty("splitEvent") final BsonDocument splitEvent,
+            @Nullable @BsonProperty final BsonDocument extraElements) {
+        this.resumeToken = resumeToken;
+        this.namespaceDocument = namespaceDocument;
+        this.destinationNamespaceDocument = destinationNamespaceDocument;
+        this.fullDocumentBeforeChange = fullDocumentBeforeChange;
+        this.documentKey = documentKey;
+        this.fullDocument = fullDocument;
+        this.clusterTime = clusterTime;
+        this.operationTypeString = operationTypeString;
+        this.operationType = OperationType.fromString(operationTypeString);
+        this.updateDescription = updateDescription;
+        this.txnNumber = txnNumber;
+        this.lsid = lsid;
+        this.wallTime = wallTime;
+        this.splitEvent = splitEvent;
+        this.extraElements = extraElements;
+    }
 
     /**
      * Creates a new instance
@@ -81,7 +134,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @since 4.7
      */
-    @BsonCreator
+    @Deprecated
     public ChangeStreamDocument(@BsonProperty("operationType") final String operationTypeString,
             @BsonProperty("resumeToken") final BsonDocument resumeToken,
             @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
@@ -95,20 +148,8 @@ public final class ChangeStreamDocument<TDocument> {
             @Nullable @BsonProperty("lsid") final BsonDocument lsid,
             @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime,
             @Nullable @BsonProperty final BsonDocument extraElements) {
-        this.resumeToken = resumeToken;
-        this.namespaceDocument = namespaceDocument;
-        this.destinationNamespaceDocument = destinationNamespaceDocument;
-        this.fullDocumentBeforeChange = fullDocumentBeforeChange;
-        this.documentKey = documentKey;
-        this.fullDocument = fullDocument;
-        this.clusterTime = clusterTime;
-        this.operationTypeString = operationTypeString;
-        this.operationType = OperationType.fromString(operationTypeString);
-        this.updateDescription = updateDescription;
-        this.txnNumber = txnNumber;
-        this.lsid = lsid;
-        this.wallTime = wallTime;
-        this.extraElements = extraElements;
+        this(operationTypeString, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey,
+                clusterTime, updateDescription, txnNumber, lsid, wallTime, null, extraElements);
     }
 
     /**
@@ -139,7 +180,7 @@ public final class ChangeStreamDocument<TDocument> {
                                 @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
                                 @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
         this(operationTypeString, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid, null, null);
+                clusterTime, updateDescription, txnNumber, lsid, null, null, null);
     }
 
     /**
@@ -170,7 +211,7 @@ public final class ChangeStreamDocument<TDocument> {
             final BsonInt64 txnNumber,
             final BsonDocument lsid) {
         this(operationType.getValue(), resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid, null, null);
+                clusterTime, updateDescription, txnNumber, lsid, null, null, null);
     }
 
     /**
@@ -428,6 +469,21 @@ public final class ChangeStreamDocument<TDocument> {
     @Nullable
     public BsonDateTime getWallTime() {
         return wallTime;
+    }
+
+
+    /**
+     * When the change stream's backing aggregation pipeline contains the
+     * <code>$changeStreamSplitLargeEvent</code> stage, events larger than 16MB
+     * will be split into multiple events. This split event information takes
+     * the form: <code>{ fragment: &lt;current>, of: &lt;total> }</code>.
+     *
+     * @return the split event
+     * @since 4.11
+     * @mongodb.server.release 7.0
+     */
+    public BsonDocument getSplitEvent() {
+        return splitEvent;
     }
 
     /**
