@@ -92,7 +92,7 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
 
     abstract BsonDocument buildCommand();
 
-    public MongoNamespace getNamespace() {
+    MongoNamespace getNamespace() {
         return namespace;
     }
 
