@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.11
  * @mongodb.server.release 7.0
  */
-public class SearchIndexModel {
+public final class SearchIndexModel {
     private final String name;
     private final Bson definition;
 
