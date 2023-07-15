@@ -49,8 +49,8 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
     }
 
     @Override
-    public ListSearchIndexesPublisher<T> name(@Nullable final String indexName) {
-        this.indexName = indexName;
+    public ListSearchIndexesPublisher<T> name(final String indexName) {
+        this.indexName = notNull("indexName", indexName);
         return this;
     }
 
@@ -112,11 +112,11 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
     @Override
     public <E> Publisher<E> explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
         notNull("verbosity", verbosity);
+        notNull("explainResultClass", explainResultClass);
         return publishExplain(explainResultClass, verbosity);
     }
 
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
-        notNull("explainDocumentClass", explainResultClass);
         return getMongoOperationPublisher().createReadOperationMono(() ->
                 asAggregateOperation(1).asAsyncExplainableOperation(verbosity,
                         getCodecRegistry().get(explainResultClass)), getClientSession());

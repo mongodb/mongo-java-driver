@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -41,7 +42,7 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
      * @param indexName the index name.
      * @return this.
      */
-    ListSearchIndexesIterable<TResult> name(@Nullable String indexName);
+    ListSearchIndexesIterable<TResult> name(String indexName);
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.

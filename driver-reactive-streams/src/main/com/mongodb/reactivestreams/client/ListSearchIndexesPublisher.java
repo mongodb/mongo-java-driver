@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Evolving;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -41,7 +42,7 @@ public interface ListSearchIndexesPublisher<TResult> extends Publisher<TResult> 
      * @param indexName the index name.
      * @return this
      */
-    ListSearchIndexesPublisher<TResult> name(@Nullable String indexName);
+    ListSearchIndexesPublisher<TResult> name(String indexName);
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.

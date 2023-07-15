@@ -37,7 +37,7 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
      * @param indexName Atlas Search index name.
      * @return this.
      */
-    public fun name(indexName: String?): ListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
+    public fun name(indexName: String): ListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
 
     /**
      * Sets the number of documents to return per batch.

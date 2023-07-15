@@ -23,18 +23,18 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
+import org.bson.codecs.BsonDocumentCodec;
 
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWrite;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWriteAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 
 /**
  * An abstract class for defining operations for managing Atlas Search indexes.
@@ -45,49 +45,71 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
     private final MongoNamespace namespace;
     @Nullable
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
 
-    AbstractWriteSearchIndexOperation(final MongoNamespace mongoNamespace, @Nullable final WriteConcern writeConcern) {
+    AbstractWriteSearchIndexOperation(final MongoNamespace mongoNamespace,
+                                      @Nullable final WriteConcern writeConcern,
+                                      final boolean retryWrites) {
         this.namespace = mongoNamespace;
         this.writeConcern = writeConcern;
+        this.retryWrites = retryWrites;
     }
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> {
-            try {
-                executeCommand(binding, namespace.getDatabaseName(), buildCommand(), connection, writeConcernErrorTransformer());
-            } catch (MongoCommandException mongoCommandException){
-                handleCommandException(mongoCommandException);
-            }
-            return null;
-        });
+        try {
+            return executeRetryableWrite(binding, namespace.getDatabaseName(), null, new NoOpFieldNameValidator(),
+                    new BsonDocumentCodec(), getCommandCreator(binding.getSessionContext()),
+                    writeConcernErrorTransformer(), cmd -> cmd);
+        } catch (MongoCommandException mongoCommandException) {
+            swallowOrThrow(mongoCommandException);
+        }
+        return null;
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, (connection, connectionException) -> {
-            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-            if (connectionException != null) {
-                errHandlingCallback.onResult(null, connectionException);
-            } else {
-                SingleResultCallback<Void> completionCallback = releasingCallback(errHandlingCallback, connection);
-                try {
-                    executeCommandAsync(binding, namespace.getDatabaseName(),
-                            buildCommand(), connection, writeConcernErrorWriteTransformer(),
-                            getCommandExecutionCallback(completionCallback));
-                } catch (Throwable commandExecutionException) {
-                    completionCallback.onResult(null, commandExecutionException);
-                }
+        executeRetryableWriteAsync(binding, namespace.getDatabaseName(), null, new NoOpFieldNameValidator(),
+                new BsonDocumentCodec(), getCommandCreator(binding.getSessionContext()), writeConcernErrorTransformerAsync(),
+                cmd -> cmd, (result, commandExecutionError) -> {
+                    try {
+                        swallowOrThrow(commandExecutionError);
+                        callback.onResult(result, null);
+                    } catch (Throwable mongoCommandException) {
+                        callback.onResult(null, mongoCommandException);
+                    }
+                });
+    }
+
+    private CommandOperationHelper.CommandCreator getCommandCreator(final SessionContext sessionContext) {
+        return (serverDescription, connectionDescription) -> {
+
+            BsonDocument command = buildCommand();
+            if (isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)) {
+                command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
             }
-        });
+
+            return command;
+        };
     }
 
-    SingleResultCallback<Void> getCommandExecutionCallback(final SingleResultCallback<Void> completionCallback) {
-        return (result, commandExecutionException) -> completionCallback.onResult(null, commandExecutionException);
-    }
-
-    void handleCommandException(final MongoCommandException mongoCommandException) {
-        throw mongoCommandException;
+    /**
+     * Handles the provided execution exception by either throwing it or ignoring it. This method is meant to be overridden
+     * by subclasses that need to handle exceptions differently based on their specific requirements.
+     *
+     * <p>
+     * <strong>Note:</strong> While the method declaration allows throwing a checked exception to enhance readability, the implementation
+     * of this method must not throw a checked exception.
+     * </p>
+     *
+     * @param <E>                     The type of the execution exception.
+     * @param mongoExecutionException The execution exception to handle. If not null, it may be thrown or ignored.
+     * @throws E The execution exception, if it is not null (implementation-specific).
+     */
+    <E extends Throwable> void swallowOrThrow(@Nullable final E mongoExecutionException) throws E {
+        if (mongoExecutionException != null) {
+            throw mongoExecutionException;
+        }
     }
 
     abstract BsonDocument buildCommand();

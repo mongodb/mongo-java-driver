@@ -651,16 +651,18 @@ final class Operations<TDocument> {
                 .map(this::createSearchIndexRequest)
                 .collect(Collectors.toList());
 
-        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern);
+        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern, retryWrites);
     }
 
     UpdateSearchIndexesOperation updateSearchIndex(final String name, final Bson definition) {
-        return new UpdateSearchIndexesOperation(assertNotNull(namespace), name, assertNotNull(toBsonDocument(definition)), writeConcern);
+        return new UpdateSearchIndexesOperation(assertNotNull(namespace), name,
+                assertNotNull(toBsonDocument(definition)),
+                writeConcern, retryWrites);
     }
 
 
     DropSearchIndexOperation dropSearchIndex(final String indexName) {
-        return new DropSearchIndexOperation(assertNotNull(namespace), indexName, writeConcern);
+        return new DropSearchIndexOperation(assertNotNull(namespace), indexName, writeConcern, retryWrites);
     }
 
 
@@ -674,7 +676,7 @@ final class Operations<TDocument> {
 
 
         return new ListSearchIndexesOperation<>(assertNotNull(namespace), codecRegistry.get(resultClass), maxTimeMS,
-                indexName, batchSize, collation, comment, allowDiskUse);
+                indexName, batchSize, collation, comment, allowDiskUse, retryReads);
     }
 
     DropIndexOperation dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
@@ -770,8 +772,7 @@ final class Operations<TDocument> {
         BsonDocument definition = assertNotNull(toBsonDocument(model.getDefinition()));
         String indexName = model.getName();
 
-        SearchIndexRequest indexRequest = new SearchIndexRequest(definition);
-        indexRequest.indexName(indexName);
+        SearchIndexRequest indexRequest = new SearchIndexRequest(definition, indexName);
         return indexRequest;
     }
 }

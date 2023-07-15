@@ -677,13 +677,13 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
         notNull("indexName", indexName);
         notNull("definition", definition);
 
-        return mongoOperationPublisher.updateSearchIndex(null, indexName, definition);
+        return mongoOperationPublisher.updateSearchIndex(indexName, definition);
     }
 
     @Override
     public Publisher<Void> dropSearchIndex(final String indexName) {
         notNull("name", indexName);
-        return mongoOperationPublisher.dropSearchIndex(null, indexName);
+        return mongoOperationPublisher.dropSearchIndex(indexName);
     }
 
     @Override
@@ -692,8 +692,9 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <TResult> ListSearchIndexesPublisher<TResult> listSearchIndexes(final Class<TResult> tResultClass) {
-        return new ListSearchIndexesPublisherImpl<>(mongoOperationPublisher.withDocumentClass(tResultClass));
+    public <TResult> ListSearchIndexesPublisher<TResult> listSearchIndexes(final Class<TResult> resultClass) {
+        notNull("resultClass", resultClass);
+        return new ListSearchIndexesPublisherImpl<>(mongoOperationPublisher.withDocumentClass(resultClass));
     }
 
     @Override

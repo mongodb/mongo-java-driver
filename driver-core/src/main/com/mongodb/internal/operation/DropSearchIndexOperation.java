@@ -16,16 +16,13 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
-import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -37,25 +34,17 @@ final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "dropSearchIndex";
     private final String indexName;
 
-    DropSearchIndexOperation(final MongoNamespace namespace, final String indexName, @Nullable final WriteConcern writeConcern) {
-        super(namespace, writeConcern);
+    DropSearchIndexOperation(final MongoNamespace namespace, final String indexName,
+                             final WriteConcern writeConcern, final boolean retryWrites) {
+        super(namespace, writeConcern, retryWrites);
         this.indexName = indexName;
     }
 
     @Override
-    SingleResultCallback<Void> getCommandExecutionCallback(final SingleResultCallback<Void> completionCallback) {
-        return (result, commandExecutionException) -> {
-            if (commandExecutionException != null && !isNamespaceError(commandExecutionException)) {
-                completionCallback.onResult(null, commandExecutionException);
-            } else {
-                completionCallback.onResult(result, null);
-            }
-        };
-    }
-
-    @Override
-    void handleCommandException(final MongoCommandException mongoCommandException) {
-        rethrowIfNotNamespaceError(mongoCommandException);
+    <E extends Throwable> void swallowOrThrow(@Nullable final E mongoExecutionException) throws E {
+        if (mongoExecutionException != null && !isNamespaceError(mongoExecutionException)) {
+            throw mongoExecutionException;
+        }
     }
 
     @Override

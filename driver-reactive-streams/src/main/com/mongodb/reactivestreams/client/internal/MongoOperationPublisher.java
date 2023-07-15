@@ -395,17 +395,13 @@ public final class MongoOperationPublisher<T> {
     }
 
 
-    Publisher<Void> updateSearchIndex(@Nullable final ClientSession clientSession, final String name, final Bson definition) {
-       return createWriteOperationMono(() -> operations.updateSearchIndex(name, definition), clientSession);
+    public Publisher<Void> updateSearchIndex(final String name, final Bson definition) {
+       return createWriteOperationMono(() -> operations.updateSearchIndex(name, definition), null);
     }
 
 
-    Publisher<Void> dropSearchIndex(@Nullable final ClientSession clientSession, final String indexName) {
-        return createWriteOperationMono(() -> operations.dropSearchIndex(indexName), clientSession);
-    }
-
-    public Publisher<Void> listSearchIndexes(@Nullable final ClientSession clientSession, final String indexName) {
-        return createWriteOperationMono(() -> operations.dropSearchIndex(indexName), clientSession);
+    public Publisher<Void> dropSearchIndex(final String indexName) {
+        return createWriteOperationMono(() -> operations.dropSearchIndex(indexName), null);
     }
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final String indexName, final DropIndexOptions options) {

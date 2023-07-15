@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -29,14 +28,14 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
+final class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "updateSearchIndex";
     private final String indexName;
     private final BsonDocument definition;
 
     UpdateSearchIndexesOperation(final MongoNamespace namespace, final String indexName, final BsonDocument definition,
-                                        @Nullable final WriteConcern writeConcern) {
-        super(namespace, writeConcern);
+                                 final WriteConcern writeConcern, final boolean retryWrites) {
+        super(namespace, writeConcern, retryWrites);
         this.indexName = indexName;
         this.definition = definition;
     }

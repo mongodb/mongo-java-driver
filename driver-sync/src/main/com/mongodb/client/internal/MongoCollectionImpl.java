@@ -857,8 +857,9 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(final Class<TResult> tResultClass) {
-        return createListSearchIndexesIterable(tResultClass);
+    public <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(final Class<TResult> resultClass) {
+        notNull("resultClass", resultClass);
+        return createListSearchIndexesIterable(resultClass);
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
@@ -953,7 +954,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private <TResult> ListSearchIndexesIterable<TResult> createListSearchIndexesIterable(final Class<TResult> resultClass) {
         return new ListSearchIndexesIterableImpl<>(getNamespace(), executor, readConcern,
-                resultClass, codecRegistry, readPreference);
+                resultClass, codecRegistry, readPreference, retryReads);
     }
 
     @Override

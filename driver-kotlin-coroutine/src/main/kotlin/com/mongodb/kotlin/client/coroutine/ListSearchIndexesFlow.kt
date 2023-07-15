@@ -42,7 +42,7 @@ public class ListSearchIndexesFlow<T : Any>(private val wrapped: ListSearchIndex
      * @param indexName Atlas Search index name.
      * @return this.
      */
-    public fun name(indexName: String?): ListSearchIndexesFlow<T> = apply { wrapped.name(indexName) }
+    public fun name(indexName: String): ListSearchIndexesFlow<T> = apply { wrapped.name(indexName) }
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.

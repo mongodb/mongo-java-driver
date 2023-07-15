@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -39,8 +38,8 @@ final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     private final List<SearchIndexRequest> indexRequests;
 
     CreateSearchIndexesOperation(final MongoNamespace namespace, final List<SearchIndexRequest> indexRequests,
-                                        @Nullable final WriteConcern writeConcern) {
-        super(namespace, writeConcern);
+                                 final WriteConcern writeConcern, final boolean retryWrites) {
+        super(namespace, writeConcern, retryWrites);
         this.indexRequests = assertNotNull(indexRequests);
     }
 

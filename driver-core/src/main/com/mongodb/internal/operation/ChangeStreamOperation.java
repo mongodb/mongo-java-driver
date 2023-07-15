@@ -161,6 +161,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return wrapped.getRetryReads();
     }
 
+    @Nullable
     public BsonValue getComment() {
         return wrapped.getComment();
     }

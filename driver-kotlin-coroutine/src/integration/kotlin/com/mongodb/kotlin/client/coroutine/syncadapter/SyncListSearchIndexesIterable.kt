@@ -17,7 +17,6 @@ package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.ListSearchIndexesIterable as JListSearchIndexesIterable
-import com.mongodb.client.ListSearchIndexesIterable
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.coroutine.ListSearchIndexesFlow
 import java.util.concurrent.TimeUnit
@@ -28,11 +27,11 @@ import org.bson.Document
 data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexesFlow<T>) :
     JListSearchIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
 
-    override fun name(indexName: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
+    override fun name(indexName: String): SyncListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
 
     override fun batchSize(batchSize: Int): SyncListSearchIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
 
-    override fun allowDiskUse(allowDiskUse: Boolean?): ListSearchIndexesIterable<T> = apply {
+    override fun allowDiskUse(allowDiskUse: Boolean?): SyncListSearchIndexesIterable<T> = apply {
         wrapped.allowDiskUse(allowDiskUse)
     }
 
@@ -40,7 +39,7 @@ data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexes
         wrapped.maxTime(maxTime, timeUnit)
     }
 
-    override fun collation(collation: Collation?): ListSearchIndexesIterable<T> = apply { wrapped.collation(collation) }
+    override fun collation(collation: Collation?): SyncListSearchIndexesIterable<T> = apply { wrapped.collation(collation) }
 
     override fun comment(comment: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }

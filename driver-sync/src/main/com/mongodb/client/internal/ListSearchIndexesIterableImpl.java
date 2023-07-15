@@ -54,11 +54,12 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
 
     ListSearchIndexesIterableImpl(final MongoNamespace namespace, final OperationExecutor executor,
                                          final ReadConcern readConcern, final Class<TResult> resultClass,
-                                         final CodecRegistry codecRegistry, final ReadPreference readPreference) {
-        super(null, executor, readConcern, readPreference, false);
+                                         final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                         final boolean retryReads) {
+        super(null, executor, readConcern, readPreference, retryReads);
 
-        this.resultClass = notNull("resultClass", resultClass);
-        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, false);
+        this.resultClass = resultClass;
+        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads);
         this.codecRegistry = codecRegistry;
     }
 
@@ -107,7 +108,7 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
 
     @Override
     public ListSearchIndexesIterable<TResult> name(@Nullable final String indexName) {
-        this.indexName = indexName;
+        this.indexName = notNull("indexName", indexName);
         return this;
     }
 
@@ -118,21 +119,23 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
 
     @Override
     public Document explain(final ExplainVerbosity verbosity) {
-        return executeExplain(Document.class, notNull("verbosity", verbosity));
+        notNull("verbosity", verbosity);
+        return executeExplain(Document.class, verbosity);
     }
 
     @Override
-    public <E> E explain(final Class<E> explainDocumentClass) {
-        return executeExplain(explainDocumentClass, null);
+    public <E> E explain(final Class<E> explainResultClass) {
+        notNull("explainResultClass", explainResultClass);
+        return executeExplain(explainResultClass, null);
     }
 
     @Override
     public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        notNull("verbosity", verbosity);
         return executeExplain(explainResultClass, verbosity);
     }
 
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
-        notNull("explainDocumentClass", explainResultClass);
         return getExecutor().execute(asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)),
                 getReadPreference(), getReadConcern(), getClientSession());
     }

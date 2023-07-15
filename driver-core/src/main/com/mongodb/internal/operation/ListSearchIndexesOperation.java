@@ -61,15 +61,17 @@ final class ListSearchIndexesOperation<T>
     private final long maxTimeMS;
     @Nullable
     private final String indexName;
+    private final boolean retryReads;
 
     ListSearchIndexesOperation(final MongoNamespace namespace,
-                                      final Decoder<T> decoder,
-                                      final long maxTimeMS,
-                                      @Nullable final String indexName,
-                                      @Nullable final Integer batchSize,
-                                      @Nullable final Collation collation,
-                                      @Nullable final BsonValue comment,
-                                      @Nullable final Boolean allowDiskUse) {
+                               final Decoder<T> decoder,
+                               final long maxTimeMS,
+                               @Nullable final String indexName,
+                               @Nullable final Integer batchSize,
+                               @Nullable final Collation collation,
+                               @Nullable final BsonValue comment,
+                               @Nullable final Boolean allowDiskUse,
+                               final boolean retryReads) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
@@ -78,6 +80,7 @@ final class ListSearchIndexesOperation<T>
         this.maxTimeMS = maxTimeMS;
         this.comment = comment;
         this.indexName = indexName;
+        this.retryReads = retryReads;
     }
 
     @Override
@@ -86,8 +89,11 @@ final class ListSearchIndexesOperation<T>
             return asAggregateOperation().execute(binding);
         } catch (MongoCommandException exception) {
             int cursorBatchSize = batchSize == null ? 0 : batchSize;
-            return assertNotNull(rethrowIfNotNamespaceError(exception, createEmptyBatchCursor(namespace, decoder,
-                    exception.getServerAddress(), cursorBatchSize)));
+            if (!isNamespaceError(exception)) {
+                throw exception;
+            } else {
+                return createEmptyBatchCursor(namespace, decoder, exception.getServerAddress(), cursorBatchSize);
+            }
         }
     }
 
@@ -122,6 +128,7 @@ final class ListSearchIndexesOperation<T>
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
 
         return new AggregateOperation<>(namespace, Collections.singletonList(listSearchIndexesStage), decoder)
+                .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)
                 .allowDiskUse(allowDiskUse)
