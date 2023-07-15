@@ -44,9 +44,9 @@ final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
         this.indexRequests = assertNotNull(indexRequests);
     }
 
-    private BsonArray convert(final List<SearchIndexRequest> requests) {
+    private static BsonArray convert(final List<SearchIndexRequest> requests) {
         return requests.stream()
-                .map(this::convert)
+                .map(CreateSearchIndexesOperation::convert)
                 .collect(Collectors.toCollection(BsonArray::new));
     }
 
