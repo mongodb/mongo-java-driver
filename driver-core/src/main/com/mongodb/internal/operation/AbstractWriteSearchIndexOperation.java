@@ -96,7 +96,8 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
         return namespace;
     }
 
-    public WriteConcern getWriteConcern() {
+    @Nullable
+    WriteConcern getWriteConcern() {
         return writeConcern;
     }
 }
