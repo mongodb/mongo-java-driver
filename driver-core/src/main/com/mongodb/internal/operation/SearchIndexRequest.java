@@ -26,7 +26,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class SearchIndexRequest {
+final class SearchIndexRequest {
     private BsonDocument definition;
     private String indexName;
 
