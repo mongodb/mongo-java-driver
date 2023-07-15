@@ -43,6 +43,7 @@ import static com.mongodb.internal.operation.OperationHelper.withConnection;
  */
 abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
+    @Nullable
     private final WriteConcern writeConcern;
 
     AbstractWriteSearchIndexOperation(final MongoNamespace mongoNamespace, @Nullable final WriteConcern writeConcern) {
