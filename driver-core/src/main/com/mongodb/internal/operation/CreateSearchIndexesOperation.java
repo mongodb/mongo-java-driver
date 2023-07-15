@@ -50,7 +50,7 @@ final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
                 .collect(Collectors.toCollection(BsonArray::new));
     }
 
-    private BsonDocument convert(final SearchIndexRequest request) {
+    private static BsonDocument convert(final SearchIndexRequest request) {
         BsonDocument bsonIndexRequest = new BsonDocument();
         String searchIndexName = request.getIndexName();
         if (searchIndexName != null) {

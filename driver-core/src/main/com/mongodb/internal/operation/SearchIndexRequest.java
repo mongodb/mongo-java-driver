@@ -30,7 +30,7 @@ final class SearchIndexRequest {
     private BsonDocument definition;
     private String indexName;
 
-   public SearchIndexRequest(final BsonDocument definition){
+   SearchIndexRequest(final BsonDocument definition){
        assertNotNull(definition);
        this.definition = definition;
     }

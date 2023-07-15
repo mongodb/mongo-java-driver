@@ -33,7 +33,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
+final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "dropSearchIndex";
     private final String indexName;
 

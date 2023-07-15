@@ -45,19 +45,24 @@ import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCur
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListSearchIndexesOperation<T>
+final class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
+    @Nullable
     private final Boolean allowDiskUse;
+    @Nullable
     private final Integer batchSize;
+    @Nullable
     private final Collation collation;
+    @Nullable
     private final BsonValue comment;
     private final long maxTimeMS;
+    @Nullable
     private final String indexName;
 
-    public ListSearchIndexesOperation(final MongoNamespace namespace,
+    ListSearchIndexesOperation(final MongoNamespace namespace,
                                       final Decoder<T> decoder,
                                       final long maxTimeMS,
                                       @Nullable final String indexName,
@@ -101,10 +106,12 @@ public class ListSearchIndexesOperation<T>
         });
     }
 
+    @Override
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return asAggregateOperation().asExplainableOperation(verbosity, resultDecoder);
     }
 
+    @Override
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
         return asAggregateOperation().asAsyncExplainableOperation(verbosity, resultDecoder);

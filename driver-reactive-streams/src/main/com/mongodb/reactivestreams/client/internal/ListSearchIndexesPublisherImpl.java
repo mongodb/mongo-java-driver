@@ -33,10 +33,14 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListSearchIndexesPublisher<T> {
+    @Nullable
     private Boolean allowDiskUse;
     private long maxTimeMS;
+    @Nullable
     private Collation collation;
+    @Nullable
     private BsonValue comment;
+    @Nullable
     private String indexName;
 
     ListSearchIndexesPublisherImpl(

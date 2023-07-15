@@ -34,7 +34,7 @@ public class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperat
     private final String indexName;
     private final BsonDocument definition;
 
-    public UpdateSearchIndexesOperation(final MongoNamespace namespace, final String indexName, final BsonDocument definition,
+    UpdateSearchIndexesOperation(final MongoNamespace namespace, final String indexName, final BsonDocument definition,
                                         @Nullable final WriteConcern writeConcern) {
         super(namespace, writeConcern);
         this.indexName = indexName;

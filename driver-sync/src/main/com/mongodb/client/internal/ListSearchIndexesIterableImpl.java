@@ -37,17 +37,22 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-public class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListSearchIndexesIterable<TResult> {
+final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListSearchIndexesIterable<TResult> {
     private final SyncOperations<BsonDocument> operations;
     private final Class<TResult> resultClass;
+    @Nullable
     private Boolean allowDiskUse;
+    @Nullable
     private long maxTimeMS;
+    @Nullable
     private Collation collation;
+    @Nullable
     private BsonValue comment;
+    @Nullable
     private String indexName;
-    private CodecRegistry codecRegistry;
+    private final CodecRegistry codecRegistry;
 
-    public ListSearchIndexesIterableImpl(final MongoNamespace namespace, final OperationExecutor executor,
+    ListSearchIndexesIterableImpl(final MongoNamespace namespace, final OperationExecutor executor,
                                          final ReadConcern readConcern, final Class<TResult> resultClass,
                                          final CodecRegistry codecRegistry, final ReadPreference readPreference) {
         super(null, executor, readConcern, readPreference, false);

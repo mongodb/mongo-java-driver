@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * @since 4.11
  * @mongodb.server.release 7.0
  */
+@Evolving
 public interface ListSearchIndexesPublisher<TResult> extends Publisher<TResult> {
 
     /**
