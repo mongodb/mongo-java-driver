@@ -1707,7 +1707,7 @@ public interface MongoCollection<TDocument> {
     String createSearchIndex(String indexName, Bson definition);
 
     /**
-     * Create an Atlas Search index with the default name for the collection.
+     * Create an Atlas Search index with {@code "default"} name for the collection.
      *
      * @param definition the search index mapping definition.
      * @return the search index name.
@@ -1720,7 +1720,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Create one or more Atlas Search indexes for the collection.
      * <p>
-     * The name can be omitted for a single index, in which case a name will be the default.
+     * The name can be omitted for a single index, in which case a name will be {@code "default"}.
      * </p>
      *
      * @param searchIndexModels the search index models.

@@ -1119,7 +1119,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
         wrapped.createSearchIndex(indexName, definition)
 
     /**
-     * Create an Atlas Search index with the default name for the collection.
+     * Create an Atlas Search index with `default` name for the collection.
      *
      * @param definition the search index mapping definition.
      * @return the search index name.
@@ -1131,7 +1131,8 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * Create one or more Atlas Search indexes for the collection.
      *
      * <p>
-     * The name can be omitted for a single index, in which case a name will be the default. </p>
+     * The name can be omitted for a single index, in which case a name will be `default`.
+     * </p>
      *
      * @param searchIndexModels the search index models.
      * @return the search index names.

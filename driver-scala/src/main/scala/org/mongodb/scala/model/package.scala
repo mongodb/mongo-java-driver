@@ -489,6 +489,10 @@ package object model {
     /**
      * Construct an instance with the given search index definition.
      *
+     * After calling this constructor, the `name` field will be `null`. In that case, when passing this
+     * `SearchIndexModel` to the `createSearchIndexes` method, the default search index name `default`
+     * will be used to create the search index.
+     *
      * @param definition the search index mapping definition.
      * @return the SearchIndexModel
      */
