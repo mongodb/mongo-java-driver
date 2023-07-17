@@ -39,7 +39,9 @@ data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexes
         wrapped.maxTime(maxTime, timeUnit)
     }
 
-    override fun collation(collation: Collation?): SyncListSearchIndexesIterable<T> = apply { wrapped.collation(collation) }
+    override fun collation(collation: Collation?): SyncListSearchIndexesIterable<T> = apply {
+        wrapped.collation(collation)
+    }
 
     override fun comment(comment: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }

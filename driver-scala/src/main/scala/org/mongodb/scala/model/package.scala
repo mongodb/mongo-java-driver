@@ -487,7 +487,7 @@ package object model {
   object SearchIndexModel {
 
     /**
-     * Construct an instance with the given search index definition.
+     * Construct an instance with the given Atlas Search index mapping definition.
      *
      * After calling this constructor, the `name` field will be `null`. In that case, when passing this
      * `SearchIndexModel` to the `createSearchIndexes` method, the default search index name `default`

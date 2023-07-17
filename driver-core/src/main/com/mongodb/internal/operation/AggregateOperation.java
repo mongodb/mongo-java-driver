@@ -102,6 +102,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return this;
     }
 
+   @Nullable
     public BsonValue getComment() {
         return wrapped.getComment();
     }

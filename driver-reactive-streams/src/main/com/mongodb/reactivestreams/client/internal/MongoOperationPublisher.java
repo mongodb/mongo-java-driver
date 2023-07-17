@@ -384,11 +384,13 @@ public final class MongoOperationPublisher<T> {
                 .thenMany(Flux.fromIterable(IndexHelper.getIndexNames(indexes, getCodecRegistry())));
     }
 
-    Publisher<String> createSearchIndex(@Nullable final String name, final Bson definition) {
-        SearchIndexModel searchIndexModel = new SearchIndexModel(name, definition);
+    Publisher<String> createSearchIndex(@Nullable final String indexName, final Bson definition) {
+        SearchIndexModel searchIndexModel =
+                indexName == null ? new SearchIndexModel(definition) : new SearchIndexModel(indexName, definition);
 
         return createSearchIndexes(singletonList(searchIndexModel));
     }
+
     Publisher<String> createSearchIndexes(final List<SearchIndexModel> indexes) {
         return createWriteOperationMono(() -> operations.createSearchIndexes(indexes), null)
                 .thenMany(Flux.fromIterable(IndexHelper.getSearchIndexNames(indexes)));

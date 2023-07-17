@@ -43,12 +43,11 @@ import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
  */
 abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
-    @Nullable
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
 
     AbstractWriteSearchIndexOperation(final MongoNamespace mongoNamespace,
-                                      @Nullable final WriteConcern writeConcern,
+                                      final WriteConcern writeConcern,
                                       final boolean retryWrites) {
         this.namespace = mongoNamespace;
         this.writeConcern = writeConcern;
@@ -118,7 +117,6 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
         return namespace;
     }
 
-    @Nullable
     WriteConcern getWriteConcern() {
         return writeConcern;
     }

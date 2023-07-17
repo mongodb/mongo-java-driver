@@ -33,31 +33,32 @@ public final class SearchIndexModel {
     private final Bson definition;
 
     /**
-     * Construct an instance with the given Atlas Search index definition.
+     * Construct an instance with the given Atlas Search index mapping definition.
      *
      * <p>After calling this constructor, the {@code name} field will be {@code null}. In that case, when passing this
      * {@code SearchIndexModel} to the {@code createSearchIndexes} method, the default search index name 'default'
      * will be used to create the search index.</p>
      *
-     * @param definition the search index definition.
+     * @param definition the search index mapping definition.
      */
     public SearchIndexModel(final Bson definition) {
-        this(null, notNull("definition", definition));
+        this.definition = notNull("definition", definition);
+        this.name = null;
     }
 
     /**
      * Construct an instance with the given Atlas Search name and index definition.
      *
      * @param name       the search index name.
-     * @param definition the search index definition.
+     * @param definition the search index mapping definition.
      */
     public SearchIndexModel(final String name, final Bson definition) {
         this.definition = notNull("definition", definition);
-        this.name = name;
+        this.name = notNull("name", name);
     }
 
     /**
-     * Get the Atlas Search index definition.
+     * Get the Atlas Search index mapping definition.
      *
      * @return the index definition.
      */

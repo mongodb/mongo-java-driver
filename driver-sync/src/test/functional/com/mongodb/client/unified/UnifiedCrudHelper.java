@@ -1262,7 +1262,7 @@ final class UnifiedCrudHelper {
     }
 
 
-    public OperationResult executeCreateSearchIndex(final BsonDocument operation) {
+    OperationResult executeCreateSearchIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument model = arguments.getDocument("model");
@@ -1279,7 +1279,7 @@ final class UnifiedCrudHelper {
         });
     }
 
-    public OperationResult executeCreateSearchIndexes(final BsonDocument operation) {
+    OperationResult executeCreateSearchIndexes(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonArray models = arguments.getArray("models");
@@ -1294,7 +1294,7 @@ final class UnifiedCrudHelper {
     }
 
 
-    public OperationResult executeUpdateSearchIndex(final BsonDocument operation) {
+    OperationResult executeUpdateSearchIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument definition = arguments.getDocument("definition");
@@ -1306,7 +1306,7 @@ final class UnifiedCrudHelper {
         });
     }
 
-    public OperationResult executeDropSearchIndex(final BsonDocument operation) {
+    OperationResult executeDropSearchIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         String name = arguments.getString("name").getValue();
@@ -1328,7 +1328,7 @@ final class UnifiedCrudHelper {
     }
 
 
-    public OperationResult executeListSearchIndexes(final BsonDocument operation) {
+    OperationResult executeListSearchIndexes(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         Optional<BsonDocument> arguments = Optional.ofNullable(operation.getOrDefault("arguments", null)).map(BsonValue::asDocument);
 

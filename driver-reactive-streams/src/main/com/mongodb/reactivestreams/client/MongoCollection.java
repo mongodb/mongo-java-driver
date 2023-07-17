@@ -1447,7 +1447,7 @@ public interface MongoCollection<TDocument> {
      * Update an Atlas Search index in the collection.
      *
      * @param indexName  the name of the search index to update.
-     * @param definition Atlas Search index definition.
+     * @param definition Atlas Search index mapping definition.
      * @return an empty publisher that indicates when the operation has completed.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/updateSearchIndex/ Update Search index

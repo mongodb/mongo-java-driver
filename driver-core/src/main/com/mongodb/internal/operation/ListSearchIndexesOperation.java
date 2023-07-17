@@ -34,9 +34,7 @@ import org.bson.codecs.Decoder;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
-import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyAsyncBatchCursor;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
 
