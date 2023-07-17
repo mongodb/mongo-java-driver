@@ -37,6 +37,6 @@ public class IndexManagmentTest extends UnifiedReactiveStreamsTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/index-management/tests");
+        return getTestData("unified-test-format/index-management");
     }
 }

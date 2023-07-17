@@ -1319,12 +1319,14 @@ final class UnifiedCrudHelper {
 
     private static SearchIndexModel toIndexSearchModel(final BsonValue bsonValue) {
         BsonDocument model = bsonValue.asDocument();
-        String name = null;
+        String name;
         BsonDocument definition = model.getDocument("definition");
         if (model.containsKey("name")) {
             name = model.getString("name").getValue();
+            return new SearchIndexModel(name, definition);
+        } else {
+            return new SearchIndexModel(definition);
         }
-        return new SearchIndexModel(name, definition);
     }
 
 
