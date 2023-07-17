@@ -1436,7 +1436,8 @@ public interface MongoCollection<TDocument> {
      * </p>
      *
      * @param searchIndexModels the search index models.
-     * @return an empty publisher that indicates when the operation has completed with the search index names.
+     * @return an empty publisher that indicates when the operation has completed with the search index names
+     * in the order specified by the given list of {@link SearchIndexModel}.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11

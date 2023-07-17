@@ -1400,7 +1400,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * </p>
    *
    * @param searchIndexModels the search index models.
-   * @return a Observable with the names of the search indexes.
+   * @return a Observable with the names of the search indexes
+   *         in the order specified by the given list of [[SearchIndexModel]].
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]

@@ -1263,7 +1263,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * </p>
      *
      * @param searchIndexModels the search index models.
-     * @return the search index names.
+     * @return the search index names in the order specified by the given list of [SearchIndexModel].
      * @see [Create search indexes](https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/)
      */
     public fun createSearchIndexes(searchIndexModels: List<SearchIndexModel>): Flow<String> =

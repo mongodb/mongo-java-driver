@@ -1710,7 +1710,7 @@ public interface MongoCollection<TDocument> {
      * Create an Atlas Search index with {@code "default"} name for the collection.
      *
      * @param definition the search index mapping definition.
-     * @return the search index name.
+     * @return the search index name  in the order specified by the given list of {@link SearchIndexModel}.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
