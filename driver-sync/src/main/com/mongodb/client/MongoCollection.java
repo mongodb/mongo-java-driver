@@ -1745,7 +1745,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Drop an Atlas Search index given its name.
      *
-     * @param indexName the name of the search index to remove.
+     * @param indexName the name of the search index to drop.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/dropSearchIndex/ Drop Search index
      * @since 4.11

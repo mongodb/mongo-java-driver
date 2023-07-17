@@ -1283,7 +1283,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     /**
      * Drop an Atlas Search index given its name.
      *
-     * @param indexName the name of the search index to remove.
+     * @param indexName the name of the search index to drop.
      * @see [Drop search index](https://www.mongodb.com/docs/manual/reference/command/dropSearchIndex/)
      */
     public suspend fun dropSearchIndex(indexName: String) {

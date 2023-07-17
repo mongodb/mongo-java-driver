@@ -1425,7 +1425,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drop an Atlas Search index given its name.
    *
-   * @param indexName the name of the search index to remove.
+   * @param indexName the name of the search index to drop.
    * @return an empty Observable that indicates when the operation has completed.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
