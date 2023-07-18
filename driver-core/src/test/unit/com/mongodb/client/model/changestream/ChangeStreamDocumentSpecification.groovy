@@ -46,7 +46,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def txnNumber = new BsonInt64(1)
         def lsid = BsonDocument.parse('{id: 1, uid: 1}')
         def wallTime = new BsonDateTime(42)
-        def splitEvent = BsonDocument.parse('{ fragment: 1, of: 2 }')
+        def splitEvent = new SplitEvent(1, 2);
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
         when:

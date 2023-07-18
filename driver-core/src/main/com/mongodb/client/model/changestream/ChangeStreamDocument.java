@@ -59,7 +59,7 @@ public final class ChangeStreamDocument<TDocument> {
     private final BsonInt64 txnNumber;
     private final BsonDocument lsid;
     private final BsonDateTime wallTime;
-    private final BsonDocument splitEvent;
+    private final SplitEvent splitEvent;
     @BsonExtraElements
     private final BsonDocument extraElements;
 
@@ -96,7 +96,7 @@ public final class ChangeStreamDocument<TDocument> {
             @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
             @Nullable @BsonProperty("lsid") final BsonDocument lsid,
             @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime,
-            @Nullable @BsonProperty("splitEvent") final BsonDocument splitEvent,
+            @Nullable @BsonProperty("splitEvent") final SplitEvent splitEvent,
             @Nullable @BsonProperty final BsonDocument extraElements) {
         this.resumeToken = resumeToken;
         this.namespaceDocument = namespaceDocument;
@@ -471,18 +471,15 @@ public final class ChangeStreamDocument<TDocument> {
         return wallTime;
     }
 
-
     /**
-     * When the change stream's backing aggregation pipeline contains the
-     * <code>$changeStreamSplitLargeEvent</code> stage, events larger than 16MB
-     * will be split into multiple events. This split event information takes
-     * the form: <code>{ fragment: &lt;current>, of: &lt;total> }</code>.
+     * The split event.
      *
      * @return the split event
      * @since 4.11
      * @mongodb.server.release 7.0
      */
-    public BsonDocument getSplitEvent() {
+    @Nullable
+    public SplitEvent getSplitEvent() {
         return splitEvent;
     }
 
@@ -518,64 +515,42 @@ public final class ChangeStreamDocument<TDocument> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ChangeStreamDocument<?> that = (ChangeStreamDocument<?>) o;
-
-        if (!Objects.equals(resumeToken, that.resumeToken)) {
-            return false;
-        }
-        if (!Objects.equals(namespaceDocument, that.namespaceDocument)) {
-            return false;
-        }
-        if (!Objects.equals(destinationNamespaceDocument, that.destinationNamespaceDocument)) {
-            return false;
-        }
-        if (!Objects.equals(fullDocument, that.fullDocument)) {
-            return false;
-        }
-        if (!Objects.equals(fullDocumentBeforeChange, that.fullDocumentBeforeChange)) {
-            return false;
-        }
-        if (!Objects.equals(documentKey, that.documentKey)) {
-            return false;
-        }
-        if (!Objects.equals(operationTypeString, that.operationTypeString)) {
-            return false;
-        }
-        if (!Objects.equals(clusterTime, that.clusterTime)) {
-            return false;
-        }
-        if (!Objects.equals(updateDescription, that.updateDescription)) {
-            return false;
-        }
-        if (!Objects.equals(txnNumber, that.txnNumber)) {
-            return false;
-        }
-        if (!Objects.equals(lsid, that.lsid)) {
-            return false;
-        }
-        if (!Objects.equals(wallTime, that.wallTime)) {
-            return false;
-        }
-
-        return true;
+        return Objects.equals(resumeToken, that.resumeToken)
+                && Objects.equals(namespaceDocument, that.namespaceDocument)
+                && Objects.equals(destinationNamespaceDocument, that.destinationNamespaceDocument)
+                && Objects.equals(fullDocument, that.fullDocument)
+                && Objects.equals(fullDocumentBeforeChange, that.fullDocumentBeforeChange)
+                && Objects.equals(documentKey, that.documentKey)
+                && Objects.equals(clusterTime, that.clusterTime)
+                && Objects.equals(operationTypeString, that.operationTypeString)
+                && operationType == that.operationType
+                && Objects.equals(updateDescription, that.updateDescription)
+                && Objects.equals(txnNumber, that.txnNumber)
+                && Objects.equals(lsid, that.lsid)
+                && Objects.equals(wallTime, that.wallTime)
+                && Objects.equals(splitEvent, that.splitEvent)
+                && Objects.equals(extraElements, that.extraElements);
     }
 
     @Override
     public int hashCode() {
-        int result = resumeToken != null ? resumeToken.hashCode() : 0;
-        result = 31 * result + (namespaceDocument != null ? namespaceDocument.hashCode() : 0);
-        result = 31 * result + (destinationNamespaceDocument != null ? destinationNamespaceDocument.hashCode() : 0);
-        result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
-        result = 31 * result + (fullDocumentBeforeChange != null ? fullDocumentBeforeChange.hashCode() : 0);
-        result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
-        result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
-        result = 31 * result + (operationTypeString != null ? operationTypeString.hashCode() : 0);
-        result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
-        result = 31 * result + (txnNumber != null ? txnNumber.hashCode() : 0);
-        result = 31 * result + (lsid != null ? lsid.hashCode() : 0);
-        result = 31 * result + (wallTime != null ? wallTime.hashCode() : 0);
-        return result;
+        return Objects.hash(
+                resumeToken,
+                namespaceDocument,
+                destinationNamespaceDocument,
+                fullDocument,
+                fullDocumentBeforeChange,
+                documentKey,
+                clusterTime,
+                operationTypeString,
+                operationType,
+                updateDescription,
+                txnNumber,
+                lsid,
+                wallTime,
+                splitEvent,
+                extraElements);
     }
 
     @Override
@@ -592,6 +567,7 @@ public final class ChangeStreamDocument<TDocument> {
                 + ", updateDescription=" + updateDescription
                 + ", txnNumber=" + txnNumber
                 + ", lsid=" + lsid
+                + ", splitEvent=" + splitEvent
                 + ", wallTime=" + wallTime
                 + "}";
     }
