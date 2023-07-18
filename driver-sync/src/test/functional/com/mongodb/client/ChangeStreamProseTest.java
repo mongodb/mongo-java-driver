@@ -27,6 +27,7 @@ import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.client.model.changestream.SplitEvent;
 import com.mongodb.internal.operation.AggregateResponseBatchCursor;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -434,8 +435,8 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
             ChangeStreamDocument<Document> e2 = Assertions.assertNotNull(cursor.tryNext());
 
             // #. Assert that the events collected have ``splitEvent`` fields ..., in that order.
-            assertEquals(e1.getSplitEvent(), BsonDocument.parse("{ 'fragment': 1, 'of': 2 }"));
-            assertEquals(e2.getSplitEvent(), BsonDocument.parse("{ 'fragment': 2, 'of': 2 }"));
+            assertEquals(e1.getSplitEvent(), new SplitEvent(1, 2));
+            assertEquals(e2.getSplitEvent(), new SplitEvent(2, 2));
         }
     }
 

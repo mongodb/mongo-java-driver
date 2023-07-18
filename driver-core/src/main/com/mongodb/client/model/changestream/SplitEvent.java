@@ -17,6 +17,7 @@
 package com.mongodb.client.model.changestream;
 
 import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Objects;
 
@@ -35,7 +36,9 @@ public class SplitEvent {
     private final int of;
 
     @BsonCreator
-    public SplitEvent(final int fragment, final int of) {
+    public SplitEvent(
+            @BsonProperty("fragment") final int fragment,
+            @BsonProperty("of") final int of) {
         this.fragment = fragment;
         this.of = of;
     }

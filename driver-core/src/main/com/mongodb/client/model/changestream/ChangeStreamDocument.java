@@ -84,7 +84,8 @@ public final class ChangeStreamDocument<TDocument> {
      * @since 4.11
      */
     @BsonCreator
-    public ChangeStreamDocument(@BsonProperty("operationType") final String operationTypeString,
+    public ChangeStreamDocument(
+            @Nullable @BsonProperty("operationType") final String operationTypeString,
             @BsonProperty("resumeToken") final BsonDocument resumeToken,
             @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
             @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
@@ -106,7 +107,7 @@ public final class ChangeStreamDocument<TDocument> {
         this.fullDocument = fullDocument;
         this.clusterTime = clusterTime;
         this.operationTypeString = operationTypeString;
-        this.operationType = OperationType.fromString(operationTypeString);
+        this.operationType = operationTypeString == null ? null : OperationType.fromString(operationTypeString);
         this.updateDescription = updateDescription;
         this.txnNumber = txnNumber;
         this.lsid = lsid;
@@ -421,6 +422,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @return the operationType
      */
+    @Nullable
     public OperationType getOperationType() {
         return operationType;
     }

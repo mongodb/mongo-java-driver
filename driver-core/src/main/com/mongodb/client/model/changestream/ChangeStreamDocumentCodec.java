@@ -50,6 +50,7 @@ final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocu
         PojoCodecProvider provider = PojoCodecProvider.builder()
                 .register(MongoNamespace.class)
                 .register(UpdateDescription.class)
+                .register(SplitEvent.class)
                 .register(TruncatedArray.class)
                 .register(changeStreamDocumentClassModel)
                 .build();
