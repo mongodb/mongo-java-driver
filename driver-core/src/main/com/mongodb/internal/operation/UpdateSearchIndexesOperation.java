@@ -34,8 +34,8 @@ final class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     private final BsonDocument definition;
 
     UpdateSearchIndexesOperation(final MongoNamespace namespace, final String indexName, final BsonDocument definition,
-                                 final WriteConcern writeConcern, final boolean retryWrites) {
-        super(namespace, writeConcern, retryWrites);
+                                 final WriteConcern writeConcern) {
+        super(namespace, writeConcern);
         this.indexName = indexName;
         this.definition = definition;
     }

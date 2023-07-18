@@ -23,18 +23,15 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
-import org.bson.codecs.BsonDocumentCodec;
 
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWrite;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWriteAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformerAsync;
-import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
+import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
+import static com.mongodb.internal.operation.OperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.OperationHelper.withConnection;
 
 /**
  * An abstract class for defining operations for managing Atlas Search indexes.
@@ -44,52 +41,40 @@ import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
-    private final boolean retryWrites;
 
     AbstractWriteSearchIndexOperation(final MongoNamespace mongoNamespace,
-                                      final WriteConcern writeConcern,
-                                      final boolean retryWrites) {
+                                      final WriteConcern writeConcern) {
         this.namespace = mongoNamespace;
         this.writeConcern = writeConcern;
-        this.retryWrites = retryWrites;
     }
 
     @Override
     public Void execute(final WriteBinding binding) {
-        try {
-            return executeRetryableWrite(binding, namespace.getDatabaseName(), null, new NoOpFieldNameValidator(),
-                    new BsonDocumentCodec(), getCommandCreator(binding.getSessionContext()),
-                    writeConcernErrorTransformer(), cmd -> cmd);
-        } catch (MongoCommandException mongoCommandException) {
-            swallowOrThrow(mongoCommandException);
-        }
-        return null;
+        return withConnection(binding, connection -> {
+            try {
+                executeCommand(binding, namespace.getDatabaseName(), buildCommand(), connection, writeConcernErrorTransformer());
+            } catch (MongoCommandException mongoCommandException) {
+                swallowOrThrow(mongoCommandException);
+            }
+            return null;
+        });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeRetryableWriteAsync(binding, namespace.getDatabaseName(), null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(binding.getSessionContext()), writeConcernErrorTransformerAsync(),
-                cmd -> cmd, (result, commandExecutionError) -> {
-                    try {
-                        swallowOrThrow(commandExecutionError);
-                        callback.onResult(result, null);
-                    } catch (Throwable mongoCommandException) {
-                        callback.onResult(null, mongoCommandException);
-                    }
-                });
-    }
-
-    private CommandOperationHelper.CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> {
-
-            BsonDocument command = buildCommand();
-            if (isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)) {
-                command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
-            }
-
-            return command;
-        };
+        withAsyncSourceAndConnection(binding::getWriteConnectionSource, false, callback,
+                (connectionSource, connection, cb) ->
+                        executeCommandAsync(binding, namespace.getDatabaseName(), buildCommand(), connection,
+                                writeConcernErrorWriteTransformer(), (result, commandExecutionError) -> {
+                                    try {
+                                        swallowOrThrow(commandExecutionError);
+                                        callback.onResult(result, null);
+                                    } catch (Throwable mongoCommandException) {
+                                        callback.onResult(null, mongoCommandException);
+                                    }
+                                }
+                        )
+        );
     }
 
     /**

@@ -38,8 +38,8 @@ final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     private final List<SearchIndexRequest> indexRequests;
 
     CreateSearchIndexesOperation(final MongoNamespace namespace, final List<SearchIndexRequest> indexRequests,
-                                 final WriteConcern writeConcern, final boolean retryWrites) {
-        super(namespace, writeConcern, retryWrites);
+                                 final WriteConcern writeConcern) {
+        super(namespace, writeConcern);
         this.indexRequests = assertNotNull(indexRequests);
     }
 
