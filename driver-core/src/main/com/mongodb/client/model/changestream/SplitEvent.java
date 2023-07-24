@@ -31,7 +31,7 @@ import java.util.Objects;
  * @mongodb.server.release 7.0
  * @mongodb.driver.manual reference/operator/aggregation/changeStreamSplitLargeEvent/  $changeStreamSplitLargeEvent
  */
-public class SplitEvent {
+public final class SplitEvent {
     private final int fragment;
     private final int of;
 

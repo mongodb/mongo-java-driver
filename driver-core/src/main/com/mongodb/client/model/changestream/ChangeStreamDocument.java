@@ -402,23 +402,26 @@ public final class ChangeStreamDocument<TDocument> {
 
     /**
      * Returns the operation type as a string.
-     *
      * <p>
      * This method is useful when using a driver release that has not yet been updated to include a newer operation type in the
      * {@link OperationType} enum.  In that case, {@link #getOperationType()} will return {@link OperationType#OTHER} and this method can
      * be used to retrieve the actual operation type as a string value.
-     * </p>
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
      *
      * @return the operation type as a string
      * @since 4.6
      * @see #getOperationType()
      */
+    @Nullable
     public String getOperationTypeString() {
         return operationTypeString;
     }
 
     /**
-     * Returns the operationType
+     * Returns the operationType.
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
      *
      * @return the operationType
      */
@@ -526,7 +529,7 @@ public final class ChangeStreamDocument<TDocument> {
                 && Objects.equals(documentKey, that.documentKey)
                 && Objects.equals(clusterTime, that.clusterTime)
                 && Objects.equals(operationTypeString, that.operationTypeString)
-                && operationType == that.operationType
+                // operationType covered by operationTypeString
                 && Objects.equals(updateDescription, that.updateDescription)
                 && Objects.equals(txnNumber, that.txnNumber)
                 && Objects.equals(lsid, that.lsid)
@@ -546,7 +549,7 @@ public final class ChangeStreamDocument<TDocument> {
                 documentKey,
                 clusterTime,
                 operationTypeString,
-                operationType,
+                // operationType covered by operationTypeString
                 updateDescription,
                 txnNumber,
                 lsid,
