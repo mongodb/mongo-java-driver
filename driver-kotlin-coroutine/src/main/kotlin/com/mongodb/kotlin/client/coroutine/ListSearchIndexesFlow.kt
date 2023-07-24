@@ -37,7 +37,7 @@ public class ListSearchIndexesFlow<T : Any>(private val wrapped: ListSearchIndex
     Flow<T> by wrapped.asFlow() {
 
     /**
-     * Sets an Atlas Search index name for this operation. A null value means no index name is set.
+     * Sets an Atlas Search index name for this operation.
      *
      * @param indexName Atlas Search index name.
      * @return this.

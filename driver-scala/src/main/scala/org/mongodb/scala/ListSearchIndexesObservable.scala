@@ -37,7 +37,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
     extends Observable[TResult] {
 
   /**
-   * Sets an Atlas Search index name for this operation. A null value means no index name is set.
+   * Sets an Atlas Search index name for this operation.
    *
    * @param indexName Atlas Search index name.
    * @note Requires MongoDB 7.0 or greater

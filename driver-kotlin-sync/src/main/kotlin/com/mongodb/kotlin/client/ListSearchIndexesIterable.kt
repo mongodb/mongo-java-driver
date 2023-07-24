@@ -32,7 +32,7 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
     MongoIterable<T>(wrapped) {
 
     /**
-     * Sets an Atlas Search index name for this operation. A null value means no index name is set.
+     * Sets an Atlas Search index name for this operation.
      *
      * @param indexName Atlas Search index name.
      * @return this.

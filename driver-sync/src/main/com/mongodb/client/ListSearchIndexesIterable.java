@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResult> {
 
     /**
-     * Sets the index name for this operation. A null value means no index name is set.
+     * Sets the index name for this operation.
      *
      * @param indexName the index name.
      * @return this.

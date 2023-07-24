@@ -107,7 +107,7 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     }
 
     @Override
-    public ListSearchIndexesIterable<TResult> name(@Nullable final String indexName) {
+    public ListSearchIndexesIterable<TResult> name(final String indexName) {
         this.indexName = notNull("indexName", indexName);
         return this;
     }
