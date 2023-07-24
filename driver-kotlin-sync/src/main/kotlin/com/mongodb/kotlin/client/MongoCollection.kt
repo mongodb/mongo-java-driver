@@ -1131,7 +1131,8 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * Create one or more Atlas Search indexes for the collection.
      *
      * <p>
-     * The name can be omitted for a single index, in which case a name will be `default`. </p>
+     * The name can be omitted for a single index, in which case a name will be `default`.
+     * </p>
      *
      * @param searchIndexModels the search index models.
      * @return the search index names in the order specified by the given list of [SearchIndexModel].

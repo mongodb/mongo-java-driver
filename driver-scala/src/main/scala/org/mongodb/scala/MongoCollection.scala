@@ -1374,7 +1374,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param indexName  the name of the search index to create.
    * @param definition the search index mapping definition.
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an empty Observable that indicates when the operation has completed with the search index name.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
@@ -1386,7 +1386,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Create an Atlas Search index with `default` name for the collection.
    *
    * @param definition the search index mapping definition.
-   * @return an empty Observable that indicates when the operation has completed.
+   * @return an empty Observable that indicates when the operation has completed with the search index name.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]

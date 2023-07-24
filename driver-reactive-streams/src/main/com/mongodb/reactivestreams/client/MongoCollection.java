@@ -1422,7 +1422,7 @@ public interface MongoCollection<TDocument> {
      * Create an Atlas Search index with {@code "default"} name for the collection.
      *
      * @param definition Atlas Search index mapping definition.
-     * @return an empty publisher that indicates when the operation has completed with {@code "default"} search index name.
+     * @return an empty publisher that indicates when the operation has completed with search index name.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
