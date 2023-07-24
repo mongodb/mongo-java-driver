@@ -1724,7 +1724,7 @@ public interface MongoCollection<TDocument> {
      * </p>
      *
      * @param searchIndexModels the search index models.
-     * @return the search index name in the order specified by the given list of {@link SearchIndexModel}.
+     * @return the search index names in the order specified by the given list of {@link SearchIndexModel}s.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
