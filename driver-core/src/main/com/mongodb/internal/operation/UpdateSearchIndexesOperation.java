@@ -30,21 +30,19 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  */
 final class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "updateSearchIndex";
-    private final String indexName;
-    private final BsonDocument definition;
+    private final SearchIndexRequest request;
 
-    UpdateSearchIndexesOperation(final MongoNamespace namespace, final String indexName, final BsonDocument definition,
+    UpdateSearchIndexesOperation(final MongoNamespace namespace, final SearchIndexRequest request,
                                  final WriteConcern writeConcern) {
         super(namespace, writeConcern);
-        this.indexName = indexName;
-        this.definition = definition;
+        this.request = request;
     }
 
     @Override
     BsonDocument buildCommand() {
         BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
-                .append("name", new BsonString(indexName))
-                .append("definition", definition);
+                .append("name", new BsonString(request.getIndexName()))
+                .append("definition", request.getDefinition());
         appendWriteConcernToCommand(getWriteConcern(), command);
         return command;
     }

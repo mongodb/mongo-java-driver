@@ -277,10 +277,4 @@
         <Bug pattern="NP_NONNULL_PARAM_VIOLATION"/>
     </Match>
 
-    <!-- Null return is used to denote method completion with a Void return type -->
-    <Match>
-        <Class name="com.mongodb.internal.operation.AbstractWriteSearchIndexOperation"/>
-        <Method name="execute"/>
-        <Bug pattern="NP_NONNULL_RETURN_VIOLATION"/>
-    </Match>
 </FindBugsFilter>

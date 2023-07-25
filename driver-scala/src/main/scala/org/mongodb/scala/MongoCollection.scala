@@ -25,7 +25,6 @@ import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import org.mongodb.scala.result._
-import org.reactivestreams.Publisher
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -1374,7 +1373,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param indexName  the name of the search index to create.
    * @param definition the search index mapping definition.
-   * @return an empty Observable that indicates when the operation has completed with the search index name.
+   * @return an Observable with the search index name.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
@@ -1386,7 +1385,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Create an Atlas Search index with `default` name for the collection.
    *
    * @param definition the search index mapping definition.
-   * @return an empty Observable that indicates when the operation has completed with the search index name.
+   * @return an Observable with search index name.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
@@ -1400,8 +1399,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * </p>
    *
    * @param searchIndexModels the search index models.
-   * @return a Observable with the names of the search indexes
-   *         in the order specified by the given list of [[SearchIndexModel]].
+   * @return an Observable with the names of the search indexes
+   *         in the order specified by the given list of [[org.mongodb.scala.model.SearchIndexModel]]s.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]

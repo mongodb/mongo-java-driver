@@ -654,9 +654,11 @@ final class Operations<TDocument> {
         return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern);
     }
 
-    UpdateSearchIndexesOperation updateSearchIndex(final String name, final Bson definition) {
-        return new UpdateSearchIndexesOperation(assertNotNull(namespace), name,
-                assertNotNull(toBsonDocument(definition)),
+    UpdateSearchIndexesOperation updateSearchIndex(final String indexName, final Bson definition) {
+        BsonDocument definitionDocument = assertNotNull(toBsonDocument(definition));
+        SearchIndexRequest searchIndexRequest = new SearchIndexRequest(definitionDocument, indexName);
+
+        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest,
                 writeConcern);
     }
 

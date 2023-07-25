@@ -16,16 +16,18 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
- * The settings to apply to the creation of an Atlas Search index.
+ * A request for creating or updating an Atlas Search index.
  *
- * <p>Note: This class is semantically equivalent to {@link SearchIndexModel}.</p>
+ * <p>Additional options may be introduced as Atlas evolves.
+ * To maintain a clear API, it can be split into separate classes, e.g., {@code SearchIndexCreateRequest}
+ * and {@code SearchIndexUpdateRequest}, for handling each operation separately in the future.</p>
+ *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 final class SearchIndexRequest {

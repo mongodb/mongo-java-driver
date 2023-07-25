@@ -1412,17 +1412,18 @@ public interface MongoCollection<TDocument> {
      *
      * @param indexName  the name of the search index to create.
      * @param definition Atlas Search index mapping definition.
-     * @return an empty publisher that indicates when the operation has completed with the search index name.
+     * @return a {@link Publisher} with search index name.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
      */
     Publisher<String> createSearchIndex(String indexName, Bson definition);
+
     /**
      * Create an Atlas Search index with {@code "default"} name for the collection.
      *
      * @param definition Atlas Search index mapping definition.
-     * @return an empty publisher that indicates when the operation has completed with search index name.
+     * @return a {@link Publisher} with search index name.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
@@ -1436,8 +1437,7 @@ public interface MongoCollection<TDocument> {
      * </p>
      *
      * @param searchIndexModels the search index models.
-     * @return an empty publisher that indicates when the operation has completed with the search index names
-     * in the order specified by the given list of {@link SearchIndexModel}.
+     * @return a {@link Publisher} with the search index names in the order specified by the given list {@link SearchIndexModel}s.
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
