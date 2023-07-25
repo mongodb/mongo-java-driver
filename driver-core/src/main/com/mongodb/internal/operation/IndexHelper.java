@@ -65,7 +65,7 @@ public final class IndexHelper {
                 .collect(Collectors.toList());
     }
 
-    public static String getSearchIndexName(final SearchIndexModel model) {
+    private static String getSearchIndexName(final SearchIndexModel model) {
         String name = model.getName();
         return  name != null ? name : "default";
     }

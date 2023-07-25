@@ -24,7 +24,7 @@ import kotlinx.coroutines.runBlocking
 import org.bson.BsonValue
 import org.bson.Document
 
-data class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexesFlow<T>) :
+internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexesFlow<T>) :
     JListSearchIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
 
     override fun name(indexName: String): SyncListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }

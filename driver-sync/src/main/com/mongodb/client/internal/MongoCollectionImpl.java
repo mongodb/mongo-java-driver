@@ -819,14 +819,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         notNull("indexName", indexName);
         notNull("definition", definition);
 
-        return executeCreateSearchIndex(definition, indexName);
+        return executeCreateSearchIndexes(singletonList(new SearchIndexModel(indexName, definition))).get(0);
     }
 
     @Override
     public String createSearchIndex(final Bson definition) {
         notNull("definition", definition);
 
-        return executeCreateSearchIndex(definition, null);
+        return executeCreateSearchIndexes(singletonList(new SearchIndexModel(definition))).get(0);
     }
 
     @Override
@@ -917,13 +917,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private List<String> executeCreateSearchIndexes(final List<SearchIndexModel> searchIndexModels) {
         executor.execute(operations.createSearchIndexes(searchIndexModels), readConcern, null);
         return IndexHelper.getSearchIndexNames(searchIndexModels);
-    }
-    private String executeCreateSearchIndex(final Bson definition, @Nullable final String indexName) {
-        SearchIndexModel searchIndexModel =
-                indexName == null ? new SearchIndexModel(definition) : new SearchIndexModel(indexName, definition);
-
-        executor.execute(operations.createSearchIndexes(singletonList(searchIndexModel)), readConcern, null);
-        return IndexHelper.getSearchIndexName(searchIndexModel);
     }
 
     @Override
