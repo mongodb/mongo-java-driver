@@ -131,7 +131,7 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
 
     @Override
     public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
-        notNull("explainResultClass", verbosity);
+        notNull("explainResultClass", explainResultClass);
         notNull("verbosity", verbosity);
         return executeExplain(explainResultClass, verbosity);
     }
