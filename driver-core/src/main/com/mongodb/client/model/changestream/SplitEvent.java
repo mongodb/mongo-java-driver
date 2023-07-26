@@ -28,7 +28,7 @@ import java.util.Objects;
  * will be split into multiple events.
  *
  * @since 4.11
- * @mongodb.server.release 7.0
+ * @mongodb.server.release 6.0.9
  * @mongodb.driver.manual reference/operator/aggregation/changeStreamSplitLargeEvent/  $changeStreamSplitLargeEvent
  */
 public final class SplitEvent {
