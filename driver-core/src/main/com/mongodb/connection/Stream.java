@@ -47,7 +47,7 @@ public interface Stream extends BufferProvider{
      * Write each buffer in the list to the stream in order, blocking until all are completely written.
      *
      * @param buffers the buffers to write. The operation must not {@linkplain ByteBuf#release() release} any buffer from {@code buffers},
-     * unless it also {@linkplain ByteBuf#retain() retained} it, and releasing is meant to compensate for that.
+     * unless the operation {@linkplain ByteBuf#retain() retains} it, and releasing is meant to compensate for that.
      * @throws IOException if there are problems writing to the stream
      */
     void write(List<ByteBuf> buffers) throws IOException;
@@ -102,7 +102,7 @@ public interface Stream extends BufferProvider{
      * callback on completion.
      *
      * @param buffers the buffers to write. The operation must not {@linkplain ByteBuf#release() release} any buffer from {@code buffers},
-     * unless it also {@linkplain ByteBuf#retain() retained} it, and releasing is meant to compensate for that.
+     * unless the operation {@linkplain ByteBuf#retain() retains} it, and releasing is meant to compensate for that.
      * @param handler invoked when the write operation has completed
      */
     void writeAsync(List<ByteBuf> buffers, AsyncCompletionHandler<Void> handler);
