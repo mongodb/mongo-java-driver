@@ -42,6 +42,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.ResourceUtil;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -411,31 +412,28 @@ public class InternalStreamConnection implements InternalConnection {
                                     final ByteBufferBsonOutput bsonOutput, final SessionContext sessionContext) {
 
         Compressor localSendCompressor = sendCompressor;
-        if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
-            try {
-                sendMessage(bsonOutput.getByteBuffers(), message.getId());
-            } finally {
-                bsonOutput.close();
-            }
-        } else {
-            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
-            ByteBufferBsonOutput compressedBsonOutput;
-            try {
+        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+        try {
+            if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+                sendMessage(byteBuffers, message.getId());
+            } else {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
                         getMessageSettings(description));
-                compressedBsonOutput = new ByteBufferBsonOutput(this);
-                compressedMessage.encode(compressedBsonOutput, sessionContext);
-            } finally {
-                releaseAllBuffers(byteBuffers);
-                bsonOutput.close();
+                try (ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this)) {
+                    compressedMessage.encode(compressedBsonOutput, sessionContext);
+                    List<ByteBuf> compressedByteBuffers = compressedBsonOutput.getByteBuffers();
+                    try {
+                        sendMessage(compressedByteBuffers, message.getId());
+                    } finally {
+                        ResourceUtil.release(compressedByteBuffers);
+                    }
+                }
             }
-            try {
-                sendMessage(compressedBsonOutput.getByteBuffers(), message.getId());
-            } finally {
-                compressedBsonOutput.close();
-            }
+            responseTo = message.getId();
+        } finally {
+            ResourceUtil.release(byteBuffers);
+            bsonOutput.close();
         }
-        responseTo = message.getId();
     }
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder,
@@ -497,7 +495,7 @@ public class InternalStreamConnection implements InternalConnection {
                             getMessageSettings(description));
                     compressedMessage.encode(compressedBsonOutput, sessionContext);
                 } finally {
-                    releaseAllBuffers(byteBuffers);
+                    ResourceUtil.release(byteBuffers);
                     bsonOutput.close();
                 }
                 sendCommandMessageAsync(message.getId(), decoder, sessionContext, callback, compressedBsonOutput, commandEventSender,
@@ -510,16 +508,12 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void releaseAllBuffers(final List<ByteBuf> byteBuffers) {
-        for (ByteBuf cur : byteBuffers) {
-            cur.release();
-        }
-    }
-
     private <T> void sendCommandMessageAsync(final int messageId, final Decoder<T> decoder, final SessionContext sessionContext,
                                              final SingleResultCallback<T> callback, final ByteBufferBsonOutput bsonOutput,
                                              final CommandEventSender commandEventSender, final boolean responseExpected) {
-        sendMessageAsync(bsonOutput.getByteBuffers(), messageId, (result, t) -> {
+        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+        sendMessageAsync(byteBuffers, messageId, (result, t) -> {
+            ResourceUtil.release(byteBuffers);
             bsonOutput.close();
             if (t != null) {
                 commandEventSender.sendFailedEvent(t);
