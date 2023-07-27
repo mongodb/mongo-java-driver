@@ -32,7 +32,13 @@ import org.mockito.kotlin.whenever
 class MongoCursorTest {
     @Test
     fun shouldHaveTheSameMethods() {
-        val jMongoCursorFunctions = JMongoCursor::class.declaredFunctions.map { it.name }.toSet()
+        val jMongoCursorFunctions =
+            JMongoCursor::class
+                .declaredFunctions
+                .map { it.name }
+                // exclude since this method has a default implementation in MongoCursor interface
+                .filterNot { it == "forEachRemaining" }
+                .toSet()
         val kMongoCursorFunctions =
             MongoCursorImpl::class.declaredFunctions.map { it.name }.toSet() +
                 MongoCursorImpl::class
