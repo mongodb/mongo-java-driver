@@ -528,7 +528,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                 lock.lockInterruptibly();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new MongoInterruptedException(null, new InterruptedException());
+                throw new MongoInterruptedException(null, e);
             }
         }
     }
@@ -542,7 +542,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
     private static void throwIfInterrupted() throws MongoInterruptedException {
         if (Thread.currentThread().isInterrupted()) {
-            throw new MongoInterruptedException(null, new InterruptedException());
+            throw new MongoInterruptedException(null, null);
         }
     }
 }

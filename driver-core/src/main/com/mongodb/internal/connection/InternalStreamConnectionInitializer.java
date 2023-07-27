@@ -60,7 +60,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     public InternalStreamConnectionInitializer(final ClusterConnectionMode clusterConnectionMode,
                                                @Nullable final Authenticator authenticator,
-                                               final BsonDocument clientMetadataDocument, final List<MongoCompressor> requestedCompressors,
+                                               @Nullable final BsonDocument clientMetadataDocument,
+                                               final List<MongoCompressor> requestedCompressors,
                                                @Nullable final ServerApi serverApi) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.authenticator = authenticator;
