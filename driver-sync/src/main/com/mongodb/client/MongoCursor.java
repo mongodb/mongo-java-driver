@@ -23,6 +23,7 @@ import com.mongodb.lang.Nullable;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 /**
  * The Mongo Cursor interface implementing the iterator protocol.
@@ -96,4 +97,13 @@ public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
      * @return ServerAddress
      */
     ServerAddress getServerAddress();
+
+    @Override
+    default void forEachRemaining(final Consumer<? super TResult> action) {
+        try {
+            Iterator.super.forEachRemaining(action);
+        } finally {
+            close();
+        }
+    }
 }

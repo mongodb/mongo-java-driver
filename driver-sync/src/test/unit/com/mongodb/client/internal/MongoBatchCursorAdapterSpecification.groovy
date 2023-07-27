@@ -184,4 +184,23 @@ class MongoBatchCursorAdapterSpecification extends Specification {
         then:
         cursor.available() == 0
     }
+
+    def 'should close cursor in forEachRemaining if there is an exception'() {
+        given:
+        def firstBatch = [new Document('x', 1)]
+
+        def batchCursor = Mock(BatchCursor)
+        batchCursor.hasNext() >>> [true, true]
+        batchCursor.next() >>> [firstBatch]
+        def cursor = new MongoBatchCursorAdapter(batchCursor)
+
+        when:
+        cursor.forEachRemaining {
+            throw new IllegalStateException('test')
+        }
+
+        then:
+        thrown(IllegalStateException)
+        1 * batchCursor.close()
+    }
 }
