@@ -412,28 +412,35 @@ public class InternalStreamConnection implements InternalConnection {
                                     final ByteBufferBsonOutput bsonOutput, final SessionContext sessionContext) {
 
         Compressor localSendCompressor = sendCompressor;
-        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
-        try {
-            if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+        if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+            try {
                 sendMessage(byteBuffers, message.getId());
-            } else {
+            } finally {
+                ResourceUtil.release(byteBuffers);
+                bsonOutput.close();
+            }
+        } else {
+            ByteBufferBsonOutput compressedBsonOutput;
+            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+            try {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
                         getMessageSettings(description));
-                try (ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this)) {
-                    compressedMessage.encode(compressedBsonOutput, sessionContext);
-                    List<ByteBuf> compressedByteBuffers = compressedBsonOutput.getByteBuffers();
-                    try {
-                        sendMessage(compressedByteBuffers, message.getId());
-                    } finally {
-                        ResourceUtil.release(compressedByteBuffers);
-                    }
-                }
+                compressedBsonOutput = new ByteBufferBsonOutput(this);
+                compressedMessage.encode(compressedBsonOutput, sessionContext);
+            } finally {
+                ResourceUtil.release(byteBuffers);
+                bsonOutput.close();
             }
-            responseTo = message.getId();
-        } finally {
-            ResourceUtil.release(byteBuffers);
-            bsonOutput.close();
+            List<ByteBuf> compressedByteBuffers = compressedBsonOutput.getByteBuffers();
+            try {
+                sendMessage(compressedByteBuffers, message.getId());
+            } finally {
+                ResourceUtil.release(compressedByteBuffers);
+                compressedBsonOutput.close();
+            }
         }
+        responseTo = message.getId();
     }
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder,
