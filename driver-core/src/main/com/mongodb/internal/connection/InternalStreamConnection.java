@@ -42,6 +42,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.ResourceUtil;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -412,26 +413,30 @@ public class InternalStreamConnection implements InternalConnection {
 
         Compressor localSendCompressor = sendCompressor;
         if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
             try {
-                sendMessage(bsonOutput.getByteBuffers(), message.getId());
+                sendMessage(byteBuffers, message.getId());
             } finally {
+                ResourceUtil.release(byteBuffers);
                 bsonOutput.close();
             }
         } else {
-            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
             ByteBufferBsonOutput compressedBsonOutput;
+            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
             try {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
                         getMessageSettings(description));
                 compressedBsonOutput = new ByteBufferBsonOutput(this);
                 compressedMessage.encode(compressedBsonOutput, sessionContext);
             } finally {
-                releaseAllBuffers(byteBuffers);
+                ResourceUtil.release(byteBuffers);
                 bsonOutput.close();
             }
+            List<ByteBuf> compressedByteBuffers = compressedBsonOutput.getByteBuffers();
             try {
-                sendMessage(compressedBsonOutput.getByteBuffers(), message.getId());
+                sendMessage(compressedByteBuffers, message.getId());
             } finally {
+                ResourceUtil.release(compressedByteBuffers);
                 compressedBsonOutput.close();
             }
         }
@@ -497,7 +502,7 @@ public class InternalStreamConnection implements InternalConnection {
                             getMessageSettings(description));
                     compressedMessage.encode(compressedBsonOutput, sessionContext);
                 } finally {
-                    releaseAllBuffers(byteBuffers);
+                    ResourceUtil.release(byteBuffers);
                     bsonOutput.close();
                 }
                 sendCommandMessageAsync(message.getId(), decoder, sessionContext, callback, compressedBsonOutput, commandEventSender,
@@ -510,16 +515,12 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void releaseAllBuffers(final List<ByteBuf> byteBuffers) {
-        for (ByteBuf cur : byteBuffers) {
-            cur.release();
-        }
-    }
-
     private <T> void sendCommandMessageAsync(final int messageId, final Decoder<T> decoder, final SessionContext sessionContext,
                                              final SingleResultCallback<T> callback, final ByteBufferBsonOutput bsonOutput,
                                              final CommandEventSender commandEventSender, final boolean responseExpected) {
-        sendMessageAsync(bsonOutput.getByteBuffers(), messageId, (result, t) -> {
+        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+        sendMessageAsync(byteBuffers, messageId, (result, t) -> {
+            ResourceUtil.release(byteBuffers);
             bsonOutput.close();
             if (t != null) {
                 commandEventSender.sendFailedEvent(t);

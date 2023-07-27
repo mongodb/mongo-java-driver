@@ -249,7 +249,12 @@ final class NettyStream implements Stream {
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
         CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
         for (ByteBuf cur : buffers) {
-            composite.addComponent(true, ((NettyByteBuf) cur).asByteBuf());
+            // The Netty framework releases `CompositeByteBuf` after writing
+            // (see https://netty.io/wiki/reference-counted-objects.html#outbound-messages),
+            // which results in the buffer we pass to `CompositeByteBuf.addComponent` being released.
+            // However, `CompositeByteBuf.addComponent` does not retain this buffer,
+            // which means we must retain it to conform to the `Stream.writeAsync` contract.
+            composite.addComponent(true, ((NettyByteBuf) cur).asByteBuf().retain());
         }
 
         channel.writeAndFlush(composite).addListener((ChannelFutureListener) future -> {
