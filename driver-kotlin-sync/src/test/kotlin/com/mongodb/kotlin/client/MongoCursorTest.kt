@@ -33,7 +33,9 @@ class MongoCursorTest {
     @Test
     fun shouldHaveTheSameMethods() {
         val jMongoCursorFunctions =
-            JMongoCursor::class.declaredFunctions.map { it.name }
+            JMongoCursor::class
+                .declaredFunctions
+                .map { it.name }
                 // exclude since this method has a default implementation in MongoCursor interface
                 .filterNot { it == "forEachRemaining" }
                 .toSet()
