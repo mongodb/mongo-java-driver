@@ -121,7 +121,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @SuppressWarnings("deprecation")
-class DefaultConnectionPool implements ConnectionPool {
+@ThreadSafe
+final class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("connection");
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
@@ -137,6 +138,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private final StateAndGeneration stateAndGeneration;
     private final OptionalProvider<SdamServerDescriptionManager> sdamProvider;
 
+    @VisibleForTesting(otherwise = PRIVATE)
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
             final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
         this(serverId, internalConnectionFactory, settings, InternalConnectionPoolSettings.builder().build(), sdamProvider);
@@ -1156,6 +1158,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
+    @ThreadSafe
     static final class ServiceStateManager {
         private final ConcurrentHashMap<ObjectId, ServiceState> stateByServiceId = new ConcurrentHashMap<>();
 

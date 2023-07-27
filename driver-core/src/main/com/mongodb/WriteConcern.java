@@ -229,6 +229,7 @@ public class WriteConcern implements Serializable {
      *
      * @param timeUnit the non-null time unit for the result
      * @return the WTimeout, which may be null if a wTimeout has not been specified
+     * @see #withWTimeout(long, TimeUnit)
      * @since 3.2
      * @mongodb.driver.manual core/write-concern/#timeouts wTimeout
      */
@@ -380,6 +381,7 @@ public class WriteConcern implements Serializable {
      * @param wTimeout the wTimeout, which must be &gt;= 0 and &lt;= Integer.MAX_VALUE after conversion to milliseconds
      * @param timeUnit the non-null time unit to apply to wTimeout
      * @return the WriteConcern with the given wTimeout
+     * @see #getWTimeout(TimeUnit)
      * @since 3.2
      * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
      */

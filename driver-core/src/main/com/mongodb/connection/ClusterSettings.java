@@ -222,6 +222,7 @@ public final class ClusterSettings {
          *
          * @param requiredReplicaSetName the required replica set name.
          * @return this
+         * @see #getRequiredReplicaSetName()
          */
         public Builder requiredReplicaSetName(@Nullable final String requiredReplicaSetName) {
             this.requiredReplicaSetName = requiredReplicaSetName;
@@ -443,7 +444,9 @@ public final class ClusterSettings {
      * Gets the required replica set name.
      *
      * @return the required replica set name
+     * @see Builder#requiredReplicaSetName(String)
      */
+    @Nullable
     public String getRequiredReplicaSetName() {
         return requiredReplicaSetName;
     }

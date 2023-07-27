@@ -83,7 +83,7 @@ final class TimeoutTest {
     @Test
     void remainingNanosTrivialCases() {
         assertAll(
-                () -> assertThrows(UnsupportedOperationException.class, () -> Timeout.infinite().remaining(NANOSECONDS)),
+                () -> assertThrows(AssertionError.class, () -> Timeout.infinite().remaining(NANOSECONDS)),
                 () -> assertTrue(Timeout.infinite().remainingOrInfinite(NANOSECONDS) < 0),
                 () -> assertEquals(0, Timeout.immediate().remaining(NANOSECONDS)),
                 () -> assertEquals(0, Timeout.immediate().remainingOrInfinite(NANOSECONDS)));

@@ -164,14 +164,12 @@ public final class Timeout {
      *             returning {@code false}. If such a discrepancy is observed,
      *             the result of the {@link #expired()} method should be preferred.
      *
-     * @throws UnsupportedOperationException If the timeout is {@linkplain #isInfinite() infinite}.
+     * @throws AssertionError If the timeout is {@linkplain #isInfinite() infinite}.
      * @see #remainingOrInfinite(TimeUnit)
      */
-    public long remaining(final TimeUnit unit) throws UnsupportedOperationException {
+    public long remaining(final TimeUnit unit) {
         assertNotNull(unit);
-        if (isInfinite()) {
-            throw new UnsupportedOperationException();
-        }
+        assertFalse(isInfinite());
         return isImmediate() ? 0 : convertRoundUp(remainingNanos(System.nanoTime()), unit);
     }
 

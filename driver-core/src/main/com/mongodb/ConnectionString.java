@@ -131,6 +131,7 @@ import static java.util.Collections.unmodifiableList;
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
+ * <li>{@code minPoolSize=n}: The minimum number of connections in the connection pool.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
  * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>

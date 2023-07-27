@@ -17,10 +17,12 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.annotations.Immutable;
 import org.bson.ByteBuf;
 
 // Contains the details of an OP_COMPRESSED reply from a MongoDB server.
-class MessageHeader {
+@Immutable
+final class MessageHeader {
     /**
      * The length of the standard message header in the MongoDB wire protocol.
      */
