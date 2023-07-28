@@ -288,15 +288,16 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018')]
     }
 
-    def 'when cluster type is unknown and replica set name is specified, should set cluster type to ReplicaSet'() {
+    def 'when cluster type is UNKNOWN and replica set name is set, should set cluster type to REPLICA_SET and mode to MULTIPLE'() {
         when:
         def settings = ClusterSettings.builder().hosts([new ServerAddress()]).requiredReplicaSetName('yeah').build()
 
         then:
         ClusterType.REPLICA_SET == settings.requiredClusterType
+        ClusterConnectionMode.MULTIPLE == settings.mode
     }
 
-    def 'connection mode should default to single if one host or multiple if more'() {
+    def 'connection mode should default to SINGLE if replica set name is not set and one host, or MULTIPLE if more'() {
         when:
         def settings = ClusterSettings.builder().hosts([new ServerAddress()]).build()
 

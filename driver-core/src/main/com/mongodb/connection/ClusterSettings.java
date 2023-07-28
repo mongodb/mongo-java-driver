@@ -620,6 +620,7 @@ public final class ClusterSettings {
         srvMaxHosts = builder.srvMaxHosts;
         srvServiceName = builder.srvServiceName;
         hosts = builder.hosts;
+        requiredReplicaSetName = builder.requiredReplicaSetName;
         if (srvHost != null) {
             if (builder.mode == ClusterConnectionMode.SINGLE) {
                 throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
@@ -629,9 +630,14 @@ public final class ClusterSettings {
             if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
                 throw new IllegalArgumentException("Can not directly connect to more than one server");
             }
-            mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
+            if (builder.mode != null) {
+                mode = builder.mode;
+            } else {
+                mode = (hosts.size() == 1 && requiredReplicaSetName == null)
+                        ? ClusterConnectionMode.SINGLE
+                        : ClusterConnectionMode.MULTIPLE;
+            }
         }
-        requiredReplicaSetName = builder.requiredReplicaSetName;
         requiredClusterType = builder.requiredClusterType;
         localThresholdMS = builder.localThresholdMS;
         serverSelector = builder.serverSelector;
