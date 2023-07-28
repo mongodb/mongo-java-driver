@@ -21,7 +21,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -30,11 +29,12 @@ import org.bson.codecs.BsonDocumentCodec;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWrite;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableWriteAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableWriteAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableWrite;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 
 /**
  * A base class for transaction-related operations

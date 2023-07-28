@@ -25,8 +25,6 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -41,10 +39,12 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.createReadCommandAndExecute;
-import static com.mongodb.internal.operation.CommandOperationHelper.createReadCommandAndExecuteAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.decorateReadWithRetries;
+import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.createEmptyAsyncBatchCursor;
+import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
@@ -52,12 +52,12 @@ import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromB
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
-import static com.mongodb.internal.operation.OperationHelper.createEmptyAsyncBatchCursor;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToAsyncBatchCursor;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToBatchCursor;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncSourceAndConnection;
-import static com.mongodb.internal.operation.OperationHelper.withSourceAndConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
+import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
+import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 
 /**
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
@@ -160,8 +160,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
-        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = CommandOperationHelper.<AsyncBatchCursor<T>>decorateReadWithRetries(
-                retryState, binding.getOperationContext(), funcCallback ->
+        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
+                retryState, binding.getOperationContext(), (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                             (source, connection, releasingCallback) -> {
                                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
@@ -197,7 +197,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return (result, source, connection) -> cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
     }
 
-    private CommandCreator getCommandCreator() {
+    private CommandOperationHelper.CommandCreator getCommandCreator() {
         return (serverDescription, connectionDescription) -> getCommand();
     }
 

@@ -19,14 +19,14 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformer;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformerAsync;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
+import static com.mongodb.internal.operation.AsyncOperationHelper.CommandWriteTransformerAsync;
+import static com.mongodb.internal.operation.SyncOperationHelper.CommandWriteTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernError;
 

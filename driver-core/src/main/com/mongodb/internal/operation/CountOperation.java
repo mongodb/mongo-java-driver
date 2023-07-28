@@ -22,8 +22,6 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -35,12 +33,14 @@ import org.bson.codecs.Decoder;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>

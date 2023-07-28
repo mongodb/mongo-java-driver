@@ -33,10 +33,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnectionSource;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursor.convertAndProduceLastId;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
 import static java.lang.String.format;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
@@ -211,7 +211,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<T>> callback,
                                 final boolean tryNext) {
-        withAsyncReadConnection(binding, (source, t) -> {
+        withAsyncReadConnectionSource(binding, (source, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
