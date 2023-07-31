@@ -35,6 +35,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -48,6 +49,7 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
@@ -78,6 +80,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNullElements;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
@@ -811,6 +814,54 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         executeDrop(clientSession, dropCollectionOptions);
     }
 
+    @Override
+    public String createSearchIndex(final String indexName, final Bson definition) {
+        notNull("indexName", indexName);
+        notNull("definition", definition);
+
+        return executeCreateSearchIndexes(singletonList(new SearchIndexModel(indexName, definition))).get(0);
+    }
+
+    @Override
+    public String createSearchIndex(final Bson definition) {
+        notNull("definition", definition);
+
+        return executeCreateSearchIndexes(singletonList(new SearchIndexModel(definition))).get(0);
+    }
+
+    @Override
+    public List<String> createSearchIndexes(final List<SearchIndexModel> searchIndexModels) {
+        notNullElements("searchIndexModels", searchIndexModels);
+
+        return executeCreateSearchIndexes(searchIndexModels);
+    }
+
+    @Override
+    public void updateSearchIndex(final String indexName, final Bson definition) {
+        notNull("indexName", indexName);
+        notNull("definition", definition);
+
+        executor.execute(operations.updateSearchIndex(indexName, definition), readConcern, null);
+    }
+
+    @Override
+    public void dropSearchIndex(final String indexName) {
+        notNull("indexName", indexName);
+
+        executor.execute(operations.dropSearchIndex(indexName), readConcern, null);
+    }
+
+    @Override
+    public ListSearchIndexesIterable<Document> listSearchIndexes() {
+        return createListSearchIndexesIterable(Document.class);
+    }
+
+    @Override
+    public <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(final Class<TResult> resultClass) {
+        notNull("resultClass", resultClass);
+        return createListSearchIndexesIterable(resultClass);
+    }
+
     private void executeDrop(@Nullable final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
         executor.execute(operations.dropCollection(dropCollectionOptions, autoEncryptionSettings), readConcern, clientSession);
     }
@@ -863,6 +914,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         return IndexHelper.getIndexNames(indexes, codecRegistry);
     }
 
+    private List<String> executeCreateSearchIndexes(final List<SearchIndexModel> searchIndexModels) {
+        executor.execute(operations.createSearchIndexes(searchIndexModels), readConcern, null);
+        return IndexHelper.getSearchIndexNames(searchIndexModels);
+    }
+
     @Override
     public ListIndexesIterable<Document> listIndexes() {
         return listIndexes(Document.class);
@@ -888,6 +944,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                                              final Class<TResult> resultClass) {
         return new ListIndexesIterableImpl<>(clientSession, getNamespace(), resultClass, codecRegistry, ReadPreference.primary(),
                 executor, retryReads);
+    }
+
+    private <TResult> ListSearchIndexesIterable<TResult> createListSearchIndexesIterable(final Class<TResult> resultClass) {
+        return new ListSearchIndexesIterableImpl<>(getNamespace(), executor, readConcern,
+                resultClass, codecRegistry, readPreference, retryReads);
     }
 
     @Override

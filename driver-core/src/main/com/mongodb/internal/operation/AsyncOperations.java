@@ -40,6 +40,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
@@ -48,6 +49,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
@@ -272,6 +274,29 @@ public final class AsyncOperations<TDocument> {
 
     public AsyncWriteOperation<Void> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions options) {
         return operations.createIndexes(indexes, options);
+    }
+
+    public AsyncWriteOperation<Void> createSearchIndexes(final List<SearchIndexModel> indexes) {
+        return operations.createSearchIndexes(indexes);
+    }
+
+    public AsyncWriteOperation<Void> updateSearchIndex(final String indexName, final Bson definition) {
+        return operations.updateSearchIndex(indexName, definition);
+    }
+
+    public AsyncWriteOperation<Void> dropSearchIndex(final String indexName) {
+        return operations.dropSearchIndex(indexName);
+    }
+
+    public <TResult> AsyncExplainableReadOperation<AsyncBatchCursor<TResult>> listSearchIndexes(final Class<TResult> resultClass,
+                                                                                      final long maxTimeMS,
+                                                                                      @Nullable final String indexName,
+                                                                                      @Nullable final Integer batchSize,
+                                                                                      @Nullable final Collation collation,
+                                                                                      @Nullable final BsonValue comment,
+                                                                                      @Nullable final Boolean allowDiskUse) {
+        return operations.listSearchIndexes(resultClass, maxTimeMS, indexName, batchSize, collation,
+                comment, allowDiskUse);
     }
 
     public AsyncWriteOperation<Void> dropIndex(final String indexName, final DropIndexOptions options) {

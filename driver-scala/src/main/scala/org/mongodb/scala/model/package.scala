@@ -477,6 +477,39 @@ package object model {
   }
 
   /**
+   * A model describing the creation of a single Atlas Search index.
+   */
+  type SearchIndexModel = com.mongodb.client.model.SearchIndexModel
+
+  /**
+   * A model describing the creation of a single Atlas Search index.
+   */
+  object SearchIndexModel {
+
+    /**
+     * Construct an instance with the given Atlas Search index mapping definition.
+     *
+     * After calling this constructor, the `name` field will be `null`. In that case, when passing this
+     * `SearchIndexModel` to the `createSearchIndexes` method, the default search index name `default`
+     * will be used to create the search index.
+     *
+     * @param definition the search index mapping definition.
+     * @return the SearchIndexModel
+     */
+    def apply(definition: Bson): SearchIndexModel = new com.mongodb.client.model.SearchIndexModel(definition)
+
+    /**
+     * Construct an instance with the given search index name and definition.
+     *
+     * @param indexName the name of the search index to create.
+     * @param definition the search index mapping definition.
+     * @return the SearchIndexModel
+     */
+    def apply(indexName: String, definition: Bson): SearchIndexModel =
+      new com.mongodb.client.model.SearchIndexModel(indexName, definition)
+  }
+
+  /**
    * A model describing the creation of a single index.
    */
   type IndexModel = com.mongodb.client.model.IndexModel

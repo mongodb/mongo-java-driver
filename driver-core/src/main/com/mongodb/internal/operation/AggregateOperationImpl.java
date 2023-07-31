@@ -152,11 +152,12 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
+    @Nullable
     BsonValue getComment() {
         return comment;
     }
 
-    AggregateOperationImpl<T> comment(final BsonValue comment) {
+    AggregateOperationImpl<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }

@@ -28,6 +28,7 @@ import com.mongodb.client.ClientSession
 import com.mongodb.client.DistinctIterable
 import com.mongodb.client.FindIterable
 import com.mongodb.client.ListIndexesIterable
+import com.mongodb.client.ListSearchIndexesIterable
 import com.mongodb.client.MapReduceIterable
 import com.mongodb.client.MongoCollection as JMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
@@ -46,6 +47,7 @@ import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneOptions
 import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.SearchIndexModel
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.WriteModel
 import com.mongodb.client.result.DeleteResult
@@ -345,6 +347,24 @@ internal class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : J
 
     override fun drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions) =
         wrapped.drop(clientSession.unwrapped(), dropCollectionOptions)
+
+    override fun createSearchIndex(name: String, definition: Bson) = wrapped.createSearchIndex(name, definition)
+
+    override fun createSearchIndex(definition: Bson) = wrapped.createSearchIndex(definition)
+
+    override fun createSearchIndexes(searchIndexModels: MutableList<SearchIndexModel>): MutableList<String> =
+        wrapped.createSearchIndexes(searchIndexModels).toCollection(mutableListOf())
+
+    override fun updateSearchIndex(indexName: String, definition: Bson) =
+        wrapped.updateSearchIndex(indexName, definition)
+
+    override fun dropSearchIndex(indexName: String) = wrapped.dropSearchIndex(indexName)
+
+    override fun listSearchIndexes(): ListSearchIndexesIterable<Document> =
+        SyncListSearchIndexesIterable(wrapped.listSearchIndexes())
+
+    override fun <R : Any> listSearchIndexes(resultClass: Class<R>): ListSearchIndexesIterable<R> =
+        SyncListSearchIndexesIterable(wrapped.listSearchIndexes(resultClass = resultClass))
 
     override fun createIndex(keys: Bson): String = wrapped.createIndex(keys)
 

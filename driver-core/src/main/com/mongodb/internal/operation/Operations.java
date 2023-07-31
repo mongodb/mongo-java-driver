@@ -46,6 +46,7 @@ import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
@@ -79,6 +80,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -644,6 +646,41 @@ final class Operations<TDocument> {
                 .commitQuorum(createIndexOptions.getCommitQuorum());
     }
 
+    CreateSearchIndexesOperation createSearchIndexes(final List<SearchIndexModel> indexes) {
+        List<SearchIndexRequest> indexRequests = indexes.stream()
+                .map(this::createSearchIndexRequest)
+                .collect(Collectors.toList());
+
+        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern);
+    }
+
+    UpdateSearchIndexesOperation updateSearchIndex(final String indexName, final Bson definition) {
+        BsonDocument definitionDocument = assertNotNull(toBsonDocument(definition));
+        SearchIndexRequest searchIndexRequest = new SearchIndexRequest(definitionDocument, indexName);
+
+        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest,
+                writeConcern);
+    }
+
+
+    DropSearchIndexOperation dropSearchIndex(final String indexName) {
+        return new DropSearchIndexOperation(assertNotNull(namespace), indexName, writeConcern);
+    }
+
+
+    <TResult> ListSearchIndexesOperation<TResult> listSearchIndexes(final Class<TResult> resultClass,
+                                                                                      final long maxTimeMS,
+                                                                                      @Nullable final String indexName,
+                                                                                      @Nullable final Integer batchSize,
+                                                                                      @Nullable final Collation collation,
+                                                                                      @Nullable final BsonValue comment,
+                                                                                      @Nullable final Boolean allowDiskUse) {
+
+
+        return new ListSearchIndexesOperation<>(assertNotNull(namespace), codecRegistry.get(resultClass), maxTimeMS,
+                indexName, batchSize, collation, comment, allowDiskUse, retryReads);
+    }
+
     DropIndexOperation dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
         return new DropIndexOperation(assertNotNull(namespace), indexName, writeConcern)
                 .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
@@ -733,4 +770,11 @@ final class Operations<TDocument> {
         return bsonDocumentList;
     }
 
+    private SearchIndexRequest createSearchIndexRequest(final SearchIndexModel model) {
+        BsonDocument definition = assertNotNull(toBsonDocument(model.getDefinition()));
+        String indexName = model.getName();
+
+        SearchIndexRequest indexRequest = new SearchIndexRequest(definition, indexName);
+        return indexRequest;
+    }
 }

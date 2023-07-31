@@ -51,6 +51,34 @@ public final class Assertions {
     }
 
     /**
+     * Throw IllegalArgumentException if the values is null or contains null.
+     *
+     * <p><b>Note:</b> If performance is a concern, consider deferring the integrity validation
+     * to the point of actual data iteration to avoid incurring additional reference chasing for collections of complex objects.
+     * However, if performance considerations are low and it is acceptable to iterate over the data twice,
+     * this method can still be used for validation purposes.
+     *
+     * @param name   the parameter name.
+     * @param values the values that should not contain null elements.
+     * @param <T>    the type of elements in the collection.
+     * @return the input collection if it passes the null element validation.
+     * @throws java.lang.IllegalArgumentException if the input collection is null or contains null elements.
+     */
+    public static <T> Iterable<T> notNullElements(final String name, final Iterable<T> values) {
+        if (values == null) {
+            throw new IllegalArgumentException(name + " can not be null");
+        }
+
+        for (T value : values) {
+            if (value == null){
+                throw new IllegalArgumentException(name + " can not contain null");
+            }
+        }
+
+        return values;
+    }
+
+    /**
      * Throw IllegalArgumentException if the value is null.
      *
      * @param name  the parameter name

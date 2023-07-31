@@ -47,6 +47,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -381,6 +382,28 @@ public final class MongoOperationPublisher<T> {
         return createWriteOperationMono(() -> operations.createIndexes(notNull("indexes", indexes),
                                                                        notNull("options", options)), clientSession)
                 .thenMany(Flux.fromIterable(IndexHelper.getIndexNames(indexes, getCodecRegistry())));
+    }
+
+    Publisher<String> createSearchIndex(@Nullable final String indexName, final Bson definition) {
+        SearchIndexModel searchIndexModel =
+                indexName == null ? new SearchIndexModel(definition) : new SearchIndexModel(indexName, definition);
+
+        return createSearchIndexes(singletonList(searchIndexModel));
+    }
+
+    Publisher<String> createSearchIndexes(final List<SearchIndexModel> indexes) {
+        return createWriteOperationMono(() -> operations.createSearchIndexes(indexes), null)
+                .thenMany(Flux.fromIterable(IndexHelper.getSearchIndexNames(indexes)));
+    }
+
+
+    public Publisher<Void> updateSearchIndex(final String name, final Bson definition) {
+       return createWriteOperationMono(() -> operations.updateSearchIndex(name, definition), null);
+    }
+
+
+    public Publisher<Void> dropSearchIndex(final String indexName) {
+        return createWriteOperationMono(() -> operations.dropSearchIndex(indexName), null);
     }
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final String indexName, final DropIndexOptions options) {
