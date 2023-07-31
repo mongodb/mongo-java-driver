@@ -145,7 +145,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 commitInProgress = true;
-                delegate.getOperationExecutor().execute(new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()),
+                delegate.getOperationExecutor().execute(new CommitTransactionOperation(null, assertNotNull(transactionOptions.getWriteConcern()),
                         transactionState == TransactionState.COMMITTED)
                                 .recoveryToken(getRecoveryToken())
                                 .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
@@ -177,7 +177,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
-                delegate.getOperationExecutor().execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
+                delegate.getOperationExecutor().execute(new AbortTransactionOperation(null, assertNotNull(transactionOptions.getWriteConcern())
+                        )
                                 .recoveryToken(getRecoveryToken()),
                         readConcern, this);
             }

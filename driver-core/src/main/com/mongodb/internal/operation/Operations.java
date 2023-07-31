@@ -53,6 +53,8 @@ import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -95,10 +97,12 @@ final class Operations<TDocument> {
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private final boolean retryReads;
+    @Nullable
+    private final Long timeoutMS;
 
     Operations(@Nullable final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
             final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites,
-            final boolean retryReads) {
+            final boolean retryReads, @Nullable final Long timeoutMS) {
         this.namespace = namespace;
         this.documentClass = documentClass;
         this.readPreference = readPreference;
@@ -107,6 +111,7 @@ final class Operations<TDocument> {
         this.writeConcern = writeConcern;
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
+        this.timeoutMS = timeoutMS;
     }
 
     @Nullable
@@ -143,12 +148,13 @@ final class Operations<TDocument> {
     }
 
     CountDocumentsOperation countDocuments(final Bson filter, final CountOptions options) {
-        CountDocumentsOperation operation = new CountDocumentsOperation(assertNotNull(namespace))
+
+        CountDocumentsOperation operation = new CountDocumentsOperation(
+                ClientSideOperationTimeouts.create(timeoutMS, options.getMaxTime(MILLISECONDS)),  assertNotNull(namespace))
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .skip(options.getSkip())
                 .limit(options.getLimit())
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                 .collation(options.getCollation())
                 .comment(options.getComment());
         if (options.getHint() != null) {
@@ -226,17 +232,13 @@ final class Operations<TDocument> {
 
     }
 
-    <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                                    final long maxTimeMS, final long maxAwaitTimeMS, @Nullable final Integer batchSize,
-                                                    final Collation collation, @Nullable final Bson hint, @Nullable final String hintString,
-                                                    final BsonValue comment,
-                                                    final Bson variables, final Boolean allowDiskUse,
-                                                    final AggregationLevel aggregationLevel) {
-        return new AggregateOperation<>(assertNotNull(namespace), assertNotNull(toBsonDocumentList(pipeline)),
-                codecRegistry.get(resultClass), aggregationLevel)
+    <TResult> AggregateOperation<TResult> aggregate(final ClientSideOperationTimeout clientSideOperationTimeout,
+            final List<? extends Bson> pipeline, final Class<TResult> resultClass, @Nullable final Integer batchSize,
+            final Collation collation, @Nullable final Bson hint, @Nullable final String hintString, final BsonValue comment,
+            final Bson variables, final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
+        return new AggregateOperation<>(clientSideOperationTimeout, assertNotNull(namespace),
+                assertNotNull(toBsonDocumentList(pipeline)), codecRegistry.get(resultClass), aggregationLevel)
                 .retryReads(retryReads)
-                .maxTime(maxTimeMS, MILLISECONDS)
-                .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
                 .collation(collation)
@@ -245,13 +247,12 @@ final class Operations<TDocument> {
                 .let(toBsonDocument(variables));
     }
 
-    AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
-            final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
+    AggregateToCollectionOperation aggregateToCollection(final ClientSideOperationTimeout clientSideOperationTimeout,
+            final List<? extends Bson> pipeline, final long maxTimeMS, final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
-        return new AggregateToCollectionOperation(assertNotNull(namespace), assertNotNull(toBsonDocumentList(pipeline)),
-                readConcern, writeConcern, aggregationLevel)
-                .maxTime(maxTimeMS, MILLISECONDS)
+        return new AggregateToCollectionOperation(clientSideOperationTimeout, assertNotNull(namespace),
+                assertNotNull(toBsonDocumentList(pipeline)), readConcern, writeConcern, aggregationLevel)
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation)
@@ -523,8 +524,8 @@ final class Operations<TDocument> {
     <TResult> CommandReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
         notNull("command", command);
         notNull("resultClass", resultClass);
-        return new CommandReadOperation<>(assertNotNull(namespace).getDatabaseName(), assertNotNull(toBsonDocument(command)),
-                codecRegistry.get(resultClass));
+        return new CommandReadOperation<>(assertNotNull(namespace).getDatabaseName(),
+                assertNotNull(toBsonDocument(command)), codecRegistry.get(resultClass));
     }
 
 
@@ -692,12 +693,11 @@ final class Operations<TDocument> {
             final Decoder<TResult> decoder, final ChangeStreamLevel changeStreamLevel, @Nullable final Integer batchSize,
             final Collation collation, final BsonValue comment, final long maxAwaitTimeMS, final BsonDocument resumeToken,
             final BsonTimestamp startAtOperationTime, final BsonDocument startAfter, final boolean showExpandedEvents) {
-        return new ChangeStreamOperation<>(assertNotNull(namespace), fullDocument, fullDocumentBeforeChange,
+        return new ChangeStreamOperation<>(null, assertNotNull(namespace), fullDocument, fullDocumentBeforeChange,
                 assertNotNull(toBsonDocumentList(pipeline)), decoder, changeStreamLevel)
                 .batchSize(batchSize)
                 .collation(collation)
                 .comment(comment)
-                .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .resumeAfter(resumeToken)
                 .startAtOperationTime(startAtOperationTime)
                 .startAfter(startAfter)

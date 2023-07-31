@@ -127,13 +127,13 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public Long execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(),
+        return executeRetryableRead(null, binding, namespace.getDatabaseName(),
                 getCommandCreator(binding.getSessionContext()), DECODER, transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), DECODER,
+        executeRetryableReadAsync(null, binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), DECODER,
                 asyncTransformer(), retryReads, callback);
     }
 
@@ -146,7 +146,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription);
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription);
     }
 
     private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {

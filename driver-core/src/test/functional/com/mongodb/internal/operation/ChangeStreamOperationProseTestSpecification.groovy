@@ -53,7 +53,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
         given:
         def helper = getHelper()
         def pipeline = [BsonDocument.parse('{$project: {"_id": 0}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+        def operation = new ChangeStreamOperation<BsonDocument>(null, helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:
@@ -90,7 +90,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
         def failPointDocument = createFailPointDocument('getMore', 10107)
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+        def operation = new ChangeStreamOperation<BsonDocument>(null, helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         def cursor = execute(operation, async)
@@ -123,7 +123,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
     def 'should not resume for aggregation errors'() {
         given:
         def pipeline = [BsonDocument.parse('{$unsupportedStage: {_id: 0}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
+        def operation = new ChangeStreamOperation<BsonDocument>(null, helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, pipeline, CODEC)
 
         when:

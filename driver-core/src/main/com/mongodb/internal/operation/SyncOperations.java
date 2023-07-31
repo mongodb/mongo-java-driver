@@ -64,20 +64,20 @@ public final class SyncOperations<TDocument> {
     private final Operations<TDocument> operations;
 
     public SyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
-                          final CodecRegistry codecRegistry, final boolean retryReads) {
-        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, retryReads);
+                          final CodecRegistry codecRegistry, final boolean retryReads, @Nullable final Long timeoutMS) {
+        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, retryReads, timeoutMS);
     }
 
     public SyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-                          final CodecRegistry codecRegistry, final boolean retryReads) {
-        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, retryReads);
+                          final CodecRegistry codecRegistry, final boolean retryReads, @Nullable final Long timeoutMS) {
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, retryReads, timeoutMS);
     }
 
     public SyncOperations(@Nullable final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
-                          final boolean retryWrites, final boolean retryReads) {
+                          final boolean retryWrites, final boolean retryReads, @Nullable final Long timeoutMS) {
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                retryWrites, retryReads);
+                retryWrites, retryReads, timeoutMS);
     }
 
     public ReadOperation<Long> countDocuments(final Bson filter, final CountOptions options) {
@@ -119,7 +119,7 @@ public final class SyncOperations<TDocument> {
                                                                               final Bson variables,
                                                                               final Boolean allowDiskUse,
                                                                               final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, hintString, comment,
+        return operations.aggregate(null, pipeline, resultClass, batchSize, collation, hint, hintString, comment,
                 variables, allowDiskUse, aggregationLevel);
     }
 
@@ -127,7 +127,7 @@ public final class SyncOperations<TDocument> {
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, final Bson hint, final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
+        return operations.aggregateToCollection(null, pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
                 comment, variables, aggregationLevel);
     }
 

@@ -69,7 +69,7 @@ public final class AsyncOperations<TDocument> {
             final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
             final boolean retryWrites, final boolean retryReads) {
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                retryWrites, retryReads);
+                retryWrites, retryReads, null);
     }
 
     public MongoNamespace getNamespace() {
@@ -143,7 +143,7 @@ public final class AsyncOperations<TDocument> {
             final Bson variables,
             final Boolean allowDiskUse,
             final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, hintString, comment,
+        return operations.aggregate(null, pipeline, resultClass, batchSize, collation, hint, hintString, comment,
                 variables, allowDiskUse, aggregationLevel);
     }
 
@@ -151,7 +151,7 @@ public final class AsyncOperations<TDocument> {
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, final Bson hint, final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
+        return operations.aggregateToCollection(null, pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
                 comment, variables, aggregationLevel);
     }
 

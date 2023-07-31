@@ -51,6 +51,7 @@ import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.RenameCollectionOperation;
+import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -1221,9 +1222,10 @@ public class DBCollection {
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages,
+            AggregateToCollectionOperation operation =
+                    new AggregateToCollectionOperation(null, getNamespace(), stages,
                     getReadConcern(), getWriteConcern())
-                                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                       // .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS) // TODO
                                                        .allowDiskUse(options.getAllowDiskUse())
                                                        .bypassDocumentValidation(options.getBypassDocumentValidation())
                                                        .collation(options.getCollation());
@@ -1235,8 +1237,8 @@ public class DBCollection {
                 throw createWriteConcernException(e);
             }
         } else {
-            AggregateOperation<DBObject> operation = new AggregateOperation<>(getNamespace(), stages, getDefaultDBObjectCodec())
-                    .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+            AggregateOperation<DBObject> operation = new AggregateOperation<>(null, getNamespace(), stages, getDefaultDBObjectCodec())
+                    // .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS) // TODO
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
                     .collation(options.getCollation())
@@ -1258,9 +1260,9 @@ public class DBCollection {
      * @mongodb.server.release 3.6
      */
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
-        AggregateOperation<BsonDocument> operation = new AggregateOperation<>(getNamespace(), preparePipeline(pipeline),
-                new BsonDocumentCodec())
-                                                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+        AggregateOperation<BsonDocument> operation = new AggregateOperation<>(null, getNamespace(), preparePipeline(pipeline),
+                                                                              new BsonDocumentCodec())
+                                                         // .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS) // TODO
                                                          .allowDiskUse(options.getAllowDiskUse())
                                                          .collation(options.getCollation())
                                                          .retryReads(retryReads);

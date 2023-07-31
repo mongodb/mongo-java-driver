@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -40,20 +41,25 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private boolean retryReads;
+    @Nullable
     private BsonDocument filter;
+    @Nullable
     private BsonValue hint;
+    @Nullable
     private BsonValue comment;
     private long skip;
     private long limit;
-    private long maxTimeMS;
     private Collation collation;
 
-    public CountDocumentsOperation(final MongoNamespace namespace) {
+    public CountDocumentsOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace) {
+        this.clientSideOperationTimeout =  notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
     }
 
+    @Nullable
     public BsonDocument getFilter() {
         return filter;
     }
@@ -72,6 +78,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return retryReads;
     }
 
+    @Nullable
     public BsonValue getHint() {
         return hint;
     }
@@ -99,17 +106,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
         return this;
     }
 
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public CountDocumentsOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -153,12 +150,11 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     private AggregateOperation<BsonDocument> getAggregateOperation() {
-        return new AggregateOperation<>(namespace, getPipeline(), DECODER)
+        return new AggregateOperation<>(clientSideOperationTimeout, namespace, getPipeline(), DECODER)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)
-                .hint(hint)
-                .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+                .hint(hint);
     }
 
     private List<BsonDocument> getPipeline() {

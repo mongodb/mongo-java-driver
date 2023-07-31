@@ -76,7 +76,9 @@ import org.bson.conversions.Bson;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
@@ -98,12 +100,15 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final UuidRepresentation uuidRepresentation;
     @Nullable
     private final AutoEncryptionSettings autoEncryptionSettings;
+    @Nullable
+    private final Long timeoutMS;
     private final OperationExecutor executor;
 
-    MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
-                        final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
-                        final boolean retryReads, final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
-                        @Nullable final AutoEncryptionSettings autoEncryptionSettings, final OperationExecutor executor) {
+    MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry, 
+            final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
+            final boolean retryReads, final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
+            @Nullable final AutoEncryptionSettings autoEncryptionSettings, @Nullable final Long timeoutMS, 
+            final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -115,8 +120,9 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         this.executor = notNull("executor", executor);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.autoEncryptionSettings = autoEncryptionSettings;
+        this.timeoutMS = timeoutMS;
         this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                retryWrites, retryReads);
+                retryWrites, retryReads, timeoutMS);
     }
 
     @Override
@@ -150,33 +156,47 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return timeoutMS;
+    }
+
+    @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
         return new MongoCollectionImpl<>(namespace, clazz, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutMS, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoCollectionImpl<>(namespace, documentClass, withUuidRepresentation(codecRegistry, uuidRepresentation),
-                readPreference, writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
+                readPreference, writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutMS, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutMS, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutMS, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadConcern(final ReadConcern readConcern) {
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, executor);
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutMS, executor);
+    }
+
+    @Override
+    public MongoCollection<TDocument> withTimeout(final long timeout, final TimeUnit timeUnit) {
+        isTrueArgument("timeout >= 0", timeout >= 0);
+        notNull("timeUnit", timeUnit);
+        long timeoutMS = timeUnit.convert(timeout, TimeUnit.MILLISECONDS);
+        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
+                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutMS, executor);
     }
 
     @Override

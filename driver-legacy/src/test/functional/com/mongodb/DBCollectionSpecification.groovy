@@ -630,7 +630,7 @@ class DBCollectionSpecification extends Specification {
         collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(null, collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true))
         executor.getReadConcern() == ReadConcern.DEFAULT
 
@@ -639,7 +639,7 @@ class DBCollectionSpecification extends Specification {
         collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(null, collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
@@ -648,7 +648,7 @@ class DBCollectionSpecification extends Specification {
         collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(null, collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).collation(collation).retryReads(true))
         executor.getReadConcern() == ReadConcern.LOCAL
     }
@@ -665,21 +665,21 @@ class DBCollectionSpecification extends Specification {
         collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(null, collection.getNamespace(),
                 bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when: // Inherits from DB
         collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(null, collection.getNamespace(),
                 bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when:
         collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+        expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(null, collection.getNamespace(),
                 bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()).collation(collation))
     }
 
@@ -697,7 +697,7 @@ class DBCollectionSpecification extends Specification {
         collection.explainAggregate(pipeline, options)
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(null, collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()))
 
@@ -706,7 +706,7 @@ class DBCollectionSpecification extends Specification {
         collection.explainAggregate(pipeline, options)
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(null, collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()))
 
@@ -715,7 +715,7 @@ class DBCollectionSpecification extends Specification {
         collection.explainAggregate(pipeline, options)
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(null, collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()))
     }

@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -167,16 +168,19 @@ final class SyncOperationHelper {
     }
 
     static <D, T> T executeRetryableRead(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final ReadBinding binding,
             final String database,
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
             final boolean retryReads) {
-        return executeRetryableRead(binding, binding::getReadConnectionSource, database, commandCreator, decoder, transformer, retryReads);
+        return executeRetryableRead(clientSideOperationTimeout, binding, binding::getReadConnectionSource, database, commandCreator,
+                decoder, transformer, retryReads);
     }
 
     static <D, T> T executeRetryableRead(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final ReadBinding binding,
             final Supplier<ConnectionSource> readConnectionSourceSupplier,
             final String database,
@@ -188,7 +192,8 @@ final class SyncOperationHelper {
         Supplier<T> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
                 withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
-                    return createReadCommandAndExecute(retryState, binding, source, database, commandCreator, decoder, transformer, connection);
+                    return createReadCommandAndExecute(clientSideOperationTimeout, retryState, binding, source, database,
+                            commandCreator, decoder, transformer, connection);
                 })
         );
         return read.get();
@@ -212,6 +217,7 @@ final class SyncOperationHelper {
     }
 
     static <T, R> R executeRetryableWrite(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final WriteBinding binding,
             final String database,
             @Nullable final ReadPreference readPreference,
@@ -219,7 +225,9 @@ final class SyncOperationHelper {
             final Decoder<T> commandResultDecoder,
             final CommandCreator commandCreator,
             final CommandWriteTransformer<T, R> transformer,
-            final com.mongodb.Function<BsonDocument, BsonDocument> retryCommandModifier) {
+            final com.mongodb.Function<BsonDocument, BsonDocument> retryCommandModifier) // TODO com.mongodb.Function -> Function
+
+    {
         RetryState retryState = CommandOperationHelper.initialRetryState(true);
         Supplier<R> retryingWrite = decorateWriteWithRetries(retryState, binding.getOperationContext(), () -> {
             boolean firstAttempt = retryState.isFirstAttempt();
@@ -234,7 +242,7 @@ final class SyncOperationHelper {
                             .map(previousAttemptCommand -> {
                                 assertFalse(firstAttempt);
                                 return retryCommandModifier.apply(previousAttemptCommand);
-                            }).orElseGet(() -> commandCreator.create(source.getServerDescription(), connection.getDescription()));
+                            }).orElseGet(() -> commandCreator.create(clientSideOperationTimeout, source.getServerDescription(), connection.getDescription()));
                     // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
                     retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
                             .attach(AttachmentKeys.retryableCommandFlag(), CommandOperationHelper.isRetryWritesEnabled(command), true)
@@ -260,6 +268,7 @@ final class SyncOperationHelper {
 
     @Nullable
     static <D, T> T createReadCommandAndExecute(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final RetryState retryState,
             final ReadBinding binding,
             final ConnectionSource source,
@@ -268,7 +277,7 @@ final class SyncOperationHelper {
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
             final Connection connection) {
-        BsonDocument command = commandCreator.create(source.getServerDescription(), connection.getDescription());
+        BsonDocument command = commandCreator.create(clientSideOperationTimeout, source.getServerDescription(), connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
         return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
                 source.getReadPreference(), decoder, binding)), source, connection);

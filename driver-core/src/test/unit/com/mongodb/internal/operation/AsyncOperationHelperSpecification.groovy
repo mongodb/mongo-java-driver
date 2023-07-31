@@ -89,7 +89,7 @@ class AsyncOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableWriteAsync(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
+        executeRetryableWriteAsync(null, asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
                 commandCreator, FindAndModifyHelper.asyncTransformer(), { cmd -> cmd }, callback)
 
         then:
@@ -146,7 +146,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableReadAsync(asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
+        executeRetryableReadAsync(null, asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

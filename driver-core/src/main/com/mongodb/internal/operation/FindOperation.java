@@ -322,7 +322,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(null, retryState, binding, source, namespace.getDatabaseName(),
                             getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                             transformer(), connection);
                 } catch (MongoCommandException e) {
@@ -347,7 +347,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                     return;
                                 }
                                 SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
-                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
+                                createReadCommandAndExecuteAsync(null, retryState, binding, source, namespace.getDatabaseName(),
                                         getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                         asyncTransformer(), connection, wrappedCallback);
                             })
@@ -460,7 +460,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
     }
 
     private boolean isTailableCursor() {

@@ -33,7 +33,7 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
                 hasActiveTransaction() >> true
             }
         }
-        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(null, WriteConcern.ACKNOWLEDGED)
 
         when:
         operation.execute(writeBinding)
@@ -53,7 +53,7 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
                 hasActiveTransaction() >> true
             }
         }
-        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(null, WriteConcern.ACKNOWLEDGED)
         def callback = new FutureResultCallback()
 
         when:

@@ -25,6 +25,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -62,6 +64,7 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.executeAsync;
@@ -75,9 +78,12 @@ public final class CollectionHelper<T> {
     private final CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
     private final MongoNamespace namespace;
 
+    private final Supplier<ClientSideOperationTimeout> clientSideOperationTimeout;
+
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;
         this.namespace = namespace;
+        this.clientSideOperationTimeout = () -> ClientSideOperationTimeouts.create(60_000L);
     }
 
     public T hello() {
@@ -294,7 +300,7 @@ public final class CollectionHelper<T> {
         for (Bson cur : pipeline) {
             bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
         }
-        BatchCursor<D> cursor = new AggregateOperation<D>(namespace, bsonDocumentPipeline, decoder, level)
+        BatchCursor<D> cursor = new AggregateOperation<D>(null, namespace, bsonDocumentPipeline, decoder, level)
                 .execute(getBinding());
         List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {
@@ -343,15 +349,16 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final ReadBinding binding) {
-        return new CountDocumentsOperation(namespace).execute(binding);
+        return new CountDocumentsOperation(clientSideOperationTimeout.get(), namespace).execute(binding);
     }
 
     public long count(final AsyncReadWriteBinding binding) throws Throwable {
-        return executeAsync(new CountDocumentsOperation(namespace), binding);
+        return executeAsync(new CountDocumentsOperation(clientSideOperationTimeout.get(), namespace), binding);
     }
 
     public long count(final Bson filter) {
-        return new CountDocumentsOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
+        return new CountDocumentsOperation(clientSideOperationTimeout.get(), namespace)
+                .filter(toBsonDocument(filter)).execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {

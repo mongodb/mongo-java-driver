@@ -119,13 +119,13 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+        return executeRetryableRead(null, binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
                 createCommandDecoder(), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+        executeRetryableReadAsync(null, binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
                 createCommandDecoder(), asyncTransformer(), retryReads, errorHandlingCallback(callback, LOGGER));
     }
 
@@ -153,7 +153,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription);
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription);
     }
 
     private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {

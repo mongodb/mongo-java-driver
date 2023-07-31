@@ -121,13 +121,13 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, "admin", getCommandCreator(),
+        return executeRetryableRead(null, binding, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, "admin", getCommandCreator(),
+        executeRetryableReadAsync(null, binding, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "databases"), asyncTransformer(),
                 retryReads, errorHandlingCallback(callback, LOGGER));
     }
@@ -147,7 +147,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     private CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> getCommand();
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand();
     }
 
     private BsonDocument getCommand() {

@@ -32,6 +32,8 @@ import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -112,7 +114,14 @@ public final class ClusterFixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
-    public static final Duration TIMEOUT_DURATION = Duration.ofMinutes(1);
+    public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
+
+    public static final ClientSideOperationTimeout CSOT_NO_TIMEOUT = ClientSideOperationTimeouts.NO_TIMEOUT;
+    public static final ClientSideOperationTimeout CSOT_TIMEOUT = ClientSideOperationTimeouts.create(TIMEOUT_DURATION.toMillis());
+    public static final ClientSideOperationTimeout CSOT_MAX_TIME =
+            ClientSideOperationTimeouts.create(null, TIMEOUT_DURATION.toMillis(), 0, 0);
+    public static final ClientSideOperationTimeout CSOT_MAX_TIME_AND_MAX_AWAIT_TIME =
+            ClientSideOperationTimeouts.create(null, 999, 9999, 0);
     public static final String LEGACY_HELLO = "isMaster";
 
     private static ConnectionString connectionString;
@@ -449,11 +458,7 @@ public final class ClusterFixture {
     public static ServerAddress getPrimary() {
         List<ServerDescription> serverDescriptions = getPrimaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            sleep(100);
             serverDescriptions = getPrimaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
@@ -462,14 +467,18 @@ public final class ClusterFixture {
     public static ServerAddress getSecondary() {
         List<ServerDescription> serverDescriptions = getSecondaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            sleep(100);
             serverDescriptions = getSecondaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
+    }
+
+    public static void sleep(final int sleepMS) {
+        try {
+            Thread.sleep(sleepMS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Nullable
@@ -715,7 +724,7 @@ public final class ClusterFixture {
                 if (System.currentTimeMillis() > startTime + 5000) {
                     return count;
                 }
-                sleep(10);
+                Thread.sleep(10);
                 count = referenceCounted.getCount();
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted", e);

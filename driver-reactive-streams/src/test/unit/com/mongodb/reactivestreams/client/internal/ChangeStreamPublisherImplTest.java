@@ -57,7 +57,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                                                                                     Document.class, pipeline, ChangeStreamLevel.COLLECTION);
 
         ChangeStreamOperation<ChangeStreamDocument<Document>> expectedOperation =
-                new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline, codec)
+                new ChangeStreamOperation<>(null, NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline, codec)
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
@@ -75,8 +75,8 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                 .maxAwaitTime(20, SECONDS)
                 .fullDocument(FullDocument.UPDATE_LOOKUP);
 
-        expectedOperation = new ChangeStreamOperation<>(NAMESPACE, FullDocument.UPDATE_LOOKUP, FullDocumentBeforeChange.DEFAULT, pipeline,
-                codec).retryReads(true);
+        expectedOperation = new ChangeStreamOperation<>(null, NAMESPACE, FullDocument.UPDATE_LOOKUP, FullDocumentBeforeChange.DEFAULT, pipeline,
+                                                        codec).retryReads(true);
         expectedOperation
                 .batchSize(100)
                 .collation(COLLATION)
@@ -102,8 +102,8 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                 .withDocumentClass(BsonDocument.class);
 
         ChangeStreamOperation<BsonDocument> expectedOperation =
-                new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
-                        getDefaultCodecRegistry().get(BsonDocument.class))
+                new ChangeStreamOperation<>(null, NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
+                                            getDefaultCodecRegistry().get(BsonDocument.class))
                         .batchSize(batchSize)
                         .comment(new BsonInt32(1))
                         .retryReads(true);

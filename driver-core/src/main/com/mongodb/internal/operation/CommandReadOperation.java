@@ -45,16 +45,16 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result, false);
+        return executeRetryableRead(null, binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result,
+        executeRetryableReadAsync(null, binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result,
                 false, callback);
     }
 
     private CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> command;
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> command;
     }
 }

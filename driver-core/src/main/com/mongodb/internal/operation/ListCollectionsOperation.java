@@ -145,7 +145,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, databaseName, getCommandCreator(),
+                    return createReadCommandAndExecute(null, retryState, binding, source, databaseName, getCommandCreator(),
                             createCommandDecoder(), commandTransformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
@@ -168,7 +168,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                         binding.getSessionContext()), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(retryState, binding, source, databaseName, getCommandCreator(), createCommandDecoder(),
+                                createReadCommandAndExecuteAsync(null, retryState, binding, source, databaseName, getCommandCreator(), createCommandDecoder(),
                                         asyncTransformer(), connection, (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {
                                                 releasingCallback.onResult(null, t);
@@ -198,7 +198,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     }
 
     private CommandOperationHelper.CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> getCommand();
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand();
     }
 
     private BsonDocument getCommand() {

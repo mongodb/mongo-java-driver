@@ -88,7 +88,7 @@ class ChangeStreamIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(null, namespace, FullDocument.UPDATE_LOOKUP,
                 FullDocumentBeforeChange.WHEN_AVAILABLE,
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION)
                 .retryReads(true)

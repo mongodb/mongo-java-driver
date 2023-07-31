@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -54,12 +55,13 @@ public class CommitTransactionOperation extends TransactionOperation {
     private BsonDocument recoveryToken;
     private Long maxCommitTimeMS;
 
-    public CommitTransactionOperation(final WriteConcern writeConcern) {
-        this(writeConcern, false);
+    public CommitTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteConcern writeConcern) {
+        this(clientSideOperationTimeout, writeConcern, false);
     }
 
-    public CommitTransactionOperation(final WriteConcern writeConcern, final boolean alreadyCommitted) {
-        super(writeConcern);
+    public CommitTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteConcern writeConcern,
+            final boolean alreadyCommitted) {
+        super(clientSideOperationTimeout, writeConcern);
         this.alreadyCommitted = alreadyCommitted;
     }
 
@@ -143,9 +145,9 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     CommandCreator getCommandCreator() {
-        CommandCreator creator = (serverDescription, connectionDescription) -> {
-            BsonDocument command = CommitTransactionOperation.super.getCommandCreator().create(serverDescription,
-                    connectionDescription);
+        CommandCreator creator = (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+            BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
+                    .create(clientSideOperationTimeout, serverDescription, connectionDescription);
             if (maxCommitTimeMS != null) {
                 command.append("maxTimeMS",
                         maxCommitTimeMS > Integer.MAX_VALUE
@@ -154,9 +156,12 @@ public class CommitTransactionOperation extends TransactionOperation {
             return command;
         };
         if (alreadyCommitted) {
-            return (serverDescription, connectionDescription) -> getRetryCommandModifier().apply(creator.create(serverDescription, connectionDescription));
+            return (clientSideOperationTimeout, serverDescription, connectionDescription) ->
+                    getRetryCommandModifier().apply(creator.create(clientSideOperationTimeout, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
-                return (serverDescription, connectionDescription) -> creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);
+                return (clientSideOperationTimeout, serverDescription, connectionDescription) ->
+                        creator.create(clientSideOperationTimeout, serverDescription, connectionDescription)
+                                .append("recoveryToken", recoveryToken);
         }
         return creator;
     }

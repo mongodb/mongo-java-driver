@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -31,7 +32,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
@@ -44,13 +44,14 @@ import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSIO
 public class AggregateOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private final AggregateOperationImpl<T> wrapped;
 
-    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION);
+    public AggregateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final List<BsonDocument> pipeline, final Decoder<T> decoder) {
+        this(clientSideOperationTimeout, namespace, pipeline, decoder, AggregationLevel.COLLECTION);
     }
 
-    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-                              final AggregationLevel aggregationLevel) {
-        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, decoder, aggregationLevel);
+    public AggregateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
+        this.wrapped = new AggregateOperationImpl<>(clientSideOperationTimeout, namespace, pipeline, decoder, aggregationLevel);
     }
 
     public List<BsonDocument> getPipeline() {
@@ -72,24 +73,6 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
 
     public AggregateOperation<T> batchSize(@Nullable final Integer batchSize) {
         wrapped.batchSize(batchSize);
-        return this;
-    }
-
-    public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        return wrapped.getMaxAwaitTime(timeUnit);
-    }
-
-    public AggregateOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
-        return this;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        return wrapped.getMaxTime(timeUnit);
-    }
-
-    public AggregateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        wrapped.maxTime(maxTime, timeUnit);
         return this;
     }
 
@@ -159,15 +142,15 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
 
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
-                resultDecoder);
+                asExplainCommand(wrapped.getCommand(wrapped.getClientSideOperationTimeout(), NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                        verbosity), resultDecoder);
     }
 
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
-                resultDecoder);
+                asExplainCommand(wrapped.getCommand(wrapped.getClientSideOperationTimeout(), NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                        verbosity), resultDecoder);
     }
 
 
@@ -175,7 +158,4 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return wrapped.getNamespace();
     }
 
-    Decoder<T> getDecoder() {
-        return wrapped.getDecoder();
-    }
 }

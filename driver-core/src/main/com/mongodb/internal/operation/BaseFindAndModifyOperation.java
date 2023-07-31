@@ -77,7 +77,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeRetryableWrite(binding, getDatabaseName(), null, getFieldNameValidator(),
+        return executeRetryableWrite(null, binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()),
                 FindAndModifyHelper.transformer(),
@@ -86,7 +86,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableWriteAsync(binding, getDatabaseName(), null, getFieldNameValidator(),
+        executeRetryableWriteAsync(null, binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
     }
@@ -198,7 +198,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     protected abstract void specializeCommand(BsonDocument initialCommand, ConnectionDescription connectionDescription);
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> {
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
             BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
             putIfNotNull(commandDocument, "query", getFilter());
             putIfNotNull(commandDocument, "fields", getProjection());

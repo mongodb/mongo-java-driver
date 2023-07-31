@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -153,6 +154,7 @@ final class AsyncOperationHelper {
     }
 
     static <D, T> void executeRetryableReadAsync(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final AsyncReadBinding binding,
             final String database,
             final CommandCreator commandCreator,
@@ -160,11 +162,12 @@ final class AsyncOperationHelper {
             final CommandReadTransformerAsync<D, T> transformer,
             final boolean retryReads,
             final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, binding::getReadConnectionSource, database, commandCreator, decoder, transformer, retryReads,
-                callback);
+        executeRetryableReadAsync(clientSideOperationTimeout, binding, binding::getReadConnectionSource, database, commandCreator,
+                decoder, transformer, retryReads, callback);
     }
 
     static <D, T> void executeRetryableReadAsync(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final AsyncReadBinding binding,
             final AsyncCallbackSupplier<AsyncConnectionSource> sourceAsyncSupplier,
             final String database,
@@ -185,11 +188,8 @@ final class AsyncOperationHelper {
                                             releasingCallback)) {
                                         return;
                                     }
-                                    createReadCommandAndExecuteAsync(retryState, binding, source,
-                                            database, commandCreator,
-                                            decoder, transformer,
-                                            connection,
-                                            releasingCallback);
+                                    createReadCommandAndExecuteAsync(clientSideOperationTimeout, retryState, binding, source, database,
+                                            commandCreator, decoder, transformer, connection, releasingCallback);
                                 })
         ).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, OperationHelper.LOGGER));
@@ -209,6 +209,7 @@ final class AsyncOperationHelper {
     }
 
     static <T, R> void executeRetryableWriteAsync(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final AsyncWriteBinding binding,
             final String database,
             @Nullable final ReadPreference readPreference,
@@ -243,7 +244,7 @@ final class AsyncOperationHelper {
                                     .map(previousAttemptCommand -> {
                                         Assertions.assertFalse(firstAttempt);
                                         return retryCommandModifier.apply(previousAttemptCommand);
-                                    }).orElseGet(() -> commandCreator.create(source.getServerDescription(), connection.getDescription()));
+                                    }).orElseGet(() -> commandCreator.create(null, source.getServerDescription(), connection.getDescription()));
                             // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
                             retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
                                     .attach(AttachmentKeys.retryableCommandFlag(), isRetryWritesEnabled(command), true)
@@ -262,6 +263,7 @@ final class AsyncOperationHelper {
     }
 
     static <D, T> void createReadCommandAndExecuteAsync(
+            final ClientSideOperationTimeout clientSideOperationTimeout,
             final RetryState retryState,
             final AsyncReadBinding binding,
             final AsyncConnectionSource source,
@@ -273,7 +275,7 @@ final class AsyncOperationHelper {
             final SingleResultCallback<T> callback) {
         BsonDocument command;
         try {
-            command = commandCreator.create(source.getServerDescription(), connection.getDescription());
+            command = commandCreator.create(clientSideOperationTimeout, source.getServerDescription(), connection.getDescription());
             retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
         } catch (IllegalArgumentException e) {
             callback.onResult(null, e);

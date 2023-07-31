@@ -59,6 +59,8 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
+import com.mongodb.internal.ClientSideOperationTimeout
+import com.mongodb.internal.ClientSideOperationTimeouts
 import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.bulk.InsertRequest
@@ -91,6 +93,7 @@ import org.bson.conversions.Bson
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
@@ -114,6 +117,7 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoCollectionSpecification extends Specification {
 
     def namespace = new MongoNamespace('databaseName', 'collectionName')
+    def clientSideOperationTimeout = { ClientSideOperationTimeouts.create(60_000) } as Supplier<ClientSideOperationTimeout>
     def codecRegistry = MongoClientSettings.getDefaultCodecRegistry()
     def readPreference = secondary()
     def readConcern = ReadConcern.MAJORITY
@@ -209,7 +213,8 @@ class MongoCollectionSpecification extends Specification {
         def filter = new BsonDocument()
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, true,
                 true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new CountDocumentsOperation(namespace).filter(filter).retryReads(true)
+        def expectedOperation = new CountDocumentsOperation(clientSideOperationTimeout.get(), namespace)
+                .filter(filter).retryReads(true)
 
         def countMethod = collection.&countDocuments
 
@@ -232,13 +237,12 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def hint = new BsonDocument('hint', new BsonInt32(1))
-        execute(countMethod, session, filter, new CountOptions().hint(hint).skip(10).limit(100)
-                .maxTime(100, MILLISECONDS).collation(collation))
+        execute(countMethod, session, filter, new CountOptions().hint(hint).skip(10).limit(100).collation(collation))
         operation = executor.getReadOperation() as CountDocumentsOperation
 
         then:
         executor.getClientSession() == session
-        expect operation, isTheSameAs(expectedOperation.filter(filter).hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS)
+        expect operation, isTheSameAs(expectedOperation.filter(filter).hint(hint).skip(10).limit(100)
                 .collation(collation))
 
         where:
