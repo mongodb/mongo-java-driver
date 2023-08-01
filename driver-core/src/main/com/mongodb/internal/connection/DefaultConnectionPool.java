@@ -43,7 +43,7 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.Timeout;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
@@ -55,6 +55,7 @@ import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.internal.time.Timer;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
@@ -190,7 +191,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     @Override
     public InternalConnection get(final OperationContext operationContext, final long timeoutValue, final TimeUnit timeUnit) {
         connectionCheckoutStarted(operationContext);
-        Timeout timeout = Timeout.startNow(timeoutValue, timeUnit);
+        Timeout timeout = Timeout.started(timeoutValue, timeUnit, Timer.start());
         try {
             stateAndGeneration.throwIfClosedOrPaused();
             PooledConnection connection = getPooledConnection(timeout);
@@ -208,7 +209,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     @Override
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         connectionCheckoutStarted(operationContext);
-        Timeout timeout = Timeout.startNow(settings.getMaxWaitTime(NANOSECONDS));
+        Timeout timeout = Timeout.started(settings.getMaxWaitTime(NANOSECONDS), Timer.start());
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
@@ -1123,7 +1124,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
-         * @param timeoutNanos See {@link Timeout#startNow(long)}.
+         * @param timeoutNanos See {@link Timeout#started(long, Timer)}.
          * @return The remaining duration as per {@link Timeout#remainingOrInfinite(TimeUnit)} if waiting ended early either
          * spuriously or because of receiving a signal.
          */
