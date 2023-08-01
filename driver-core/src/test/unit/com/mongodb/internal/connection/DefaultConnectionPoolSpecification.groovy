@@ -38,6 +38,8 @@ import util.spock.annotations.Slow
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 import static com.mongodb.connection.ConnectionPoolSettings.builder
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -256,8 +258,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         def readyLogMessage = getMessage("Connection ready")
         "Connection created: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
                 "driver-generated ID=${driverConnectionId}" == createdLogMessage
-        "Connection ready: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
-                "driver-generated ID=${driverConnectionId}" == readyLogMessage
+        readyLogMessage ==~ "Connection ready: address=${quoteHostnameOrIp(SERVER_ADDRESS.getHost())}:${SERVER_ADDRESS.getPort()}" +
+                ", driver-generated ID=${driverConnectionId}, established in=\\d+ ms"
 
         when: 'connection is released back into the pool on close'
         pool.get(new OperationContext()).close()
@@ -265,8 +267,9 @@ class DefaultConnectionPoolSpecification extends Specification {
         def checkoutStartedMessage = getMessage("Connection checkout started")
         def connectionCheckedInMessage = getMessage("Connection checked in")
         def checkedOutLogMessage = getMessage("Connection checked out")
-        "Connection checked out: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
-                "driver-generated ID=${driverConnectionId}" == checkedOutLogMessage
+        checkedOutLogMessage ==~ "Connection checked out: " +
+                "address=${quoteHostnameOrIp(SERVER_ADDRESS.getHost())}:${SERVER_ADDRESS.getPort()}, " +
+                "driver-generated ID=${driverConnectionId}, duration=\\d+ ms"
         "Checkout started for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}" == checkoutStartedMessage
         "Connection checked in: address=${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}, " +
                 "driver-generated ID=${driverConnectionId}" == connectionCheckedInMessage
@@ -298,8 +301,9 @@ class DefaultConnectionPoolSpecification extends Specification {
         then:
         thrown(MongoServerUnavailableException)
         def connectionCheckoutFailedInMessage = getMessage("Connection checkout failed")
-        "Checkout failed for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}. " +
-                "Reason: Connection pool was closed." == connectionCheckoutFailedInMessage
+        connectionCheckoutFailedInMessage ==~ "Checkout failed for connection to" +
+                " ${quoteHostnameOrIp(SERVER_ADDRESS.getHost())}:${SERVER_ADDRESS.getPort()}." +
+                " Reason: Connection pool was closed. Duration: \\d+ ms"
     }
 
     private String getMessage(messageId) {
@@ -326,8 +330,10 @@ class DefaultConnectionPoolSpecification extends Specification {
         then:
         connectionGetter.gotTimeout
         def unstructuredMessage = getMessage("Connection checkout failed")
-        "Checkout failed for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}." +
-                " Reason: Wait queue timeout elapsed without a connection becoming available." == unstructuredMessage
+        unstructuredMessage ==~ "Checkout failed for connection to" +
+                " ${quoteHostnameOrIp(SERVER_ADDRESS.getHost())}:${SERVER_ADDRESS.getPort()}." +
+                " Reason: Wait queue timeout elapsed without a connection becoming available." +
+                " Duration: \\d+ ms"
     }
 
     def 'should log on connection become idle'() {
@@ -393,9 +399,11 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         def unstructuredMessage = getMessage("Connection checkout failed" )
-       "Checkout failed for connection to ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}." +
+        unstructuredMessage ==~ "Checkout failed for connection to" +
+               " ${quoteHostnameOrIp(SERVER_ADDRESS.getHost())}:${SERVER_ADDRESS.getPort()}." +
                " Reason: An error occurred while trying to establish a new connection." +
-               " Error: java.io.UncheckedIOException: expected failure" == unstructuredMessage
+               " Error: java.io.UncheckedIOException: expected failure." +
+               " Duration: \\d+ ms"
     }
 
     def 'should fire asynchronous connection created to pool event'() {
@@ -720,6 +728,10 @@ class DefaultConnectionPoolSpecification extends Specification {
 
     private mockSdamProvider() {
         SameObjectProvider.initialized(Mock(SdamServerDescriptionManager))
+    }
+
+    private static quoteHostnameOrIp(String hostnameOrIp) {
+        hostnameOrIp.replaceAll(Pattern.quote("."), Matcher.quoteReplacement("\\."))
     }
 
     class ConnectionLatch {

@@ -16,8 +16,12 @@
 
 package com.mongodb.event;
 
+import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -54,8 +58,25 @@ public final class ConnectionCheckOutFailedEvent {
 
     private final ServerId serverId;
     private final long operationId;
-
     private final Reason reason;
+    private final long elapsedTimeNanos;
+
+    /**
+     * Constructs an instance.
+     *
+     * @param serverId The server ID. See {@link #getServerId()}.
+     * @param operationId The operation ID. See {@link #getOperationId()}.
+     * @param reason The reason the connection check out failed. See {@link #getReason()}.
+     * @param elapsedTimeNanos The time it took while trying to check out the connection. See {@link #getElapsedTime(TimeUnit)}.
+     * @since VAKOTODO
+     */
+    public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason, final long elapsedTimeNanos) {
+        this.serverId = notNull("serverId", serverId);
+        this.operationId = operationId;
+        this.reason = notNull("reason", reason);
+        isTrueArgument("waited time is not negative", elapsedTimeNanos >= 0);
+        this.elapsedTimeNanos = elapsedTimeNanos;
+    }
 
     /**
      * Construct an instance
@@ -64,11 +85,12 @@ public final class ConnectionCheckOutFailedEvent {
      * @param operationId the operation id
      * @param reason the reason the connection check out failed
      * @since 4.10
+     * @deprecated Prefer {@link ConnectionCheckOutFailedEvent#ConnectionCheckOutFailedEvent(ServerId, long, Reason, long)}.
+     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
      */
+    @Deprecated
     public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason) {
-        this.serverId = notNull("serverId", serverId);
-        this.operationId = operationId;
-        this.reason = notNull("reason", reason);
+        this(serverId, operationId, reason, 0);
     }
 
     /**
@@ -77,6 +99,7 @@ public final class ConnectionCheckOutFailedEvent {
      * @param serverId the server id
      * @param reason the reason the connection check out failed
      * @deprecated Prefer {@link #ConnectionCheckOutFailedEvent(ServerId, long, Reason)}
+     * If this constructor is used, then {@link #getOperationId()} is -1.
      */
     @Deprecated
     public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
@@ -112,6 +135,27 @@ public final class ConnectionCheckOutFailedEvent {
         return reason;
     }
 
+    /**
+     * The time it took to check out the connection.
+     * More specifically, the time elapsed between the {@link ConnectionCheckOutStartedEvent} emitted by the same checking out and this event.
+     * <p>
+     * Naturally, if a new connection was not {@linkplain ConnectionCreatedEvent created}
+     * and {@linkplain ConnectionReadyEvent established} as part of checking out,
+``     * this duration is usually not greater than {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)},
+     * but may occasionally be greater than that, because the driver does not provide hard real-time guarantees.</p>
+     * <p>
+     * This duration does not include the time to deliver the {@link ConnectionCheckOutStartedEvent}.
+     * Be warned that this may change.</p>
+     *
+     * @param timeUnit The time unit of the result.
+     * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.
+     * @return The time it took to establish the connection.
+     * @since VAKOTODO
+     */
+    public long getElapsedTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);
+    }
+
     @Override
     public String toString() {
         return "ConnectionCheckOutFailedEvent{"
@@ -119,6 +163,7 @@ public final class ConnectionCheckOutFailedEvent {
                 + ", clusterId=" + serverId.getClusterId()
                 + ", operationId=" + operationId
                 + ", reason=" + reason
+                + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + '}';
     }
 }

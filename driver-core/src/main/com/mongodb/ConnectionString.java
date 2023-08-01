@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
@@ -132,8 +133,9 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
  * <li>{@code minPoolSize=n}: The minimum number of connections in the connection pool.</li>
- * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
- * become available.</li>
+ * <li>{@code waitQueueTimeoutMS=ms}: The maximum duration to wait for either an available connection
+ * (limited by {@link #getMaxConnectionPoolSize()}),
+ * or a {@linkplain ConnectionCreatedEvent newly created connection} (limited by {@link #getMaxConnecting()}).</li>
  * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
  * </ul>
  * <p>Write concern configuration:</p>
@@ -1366,6 +1368,7 @@ public class ConnectionString {
     /**
      * Gets the maximum connection pool size specified in the connection string.
      * @return the maximum connection pool size
+     * @see ConnectionPoolSettings#getMaxSize()
      */
     @Nullable
     public Integer getMaxConnectionPoolSize() {
@@ -1373,8 +1376,10 @@ public class ConnectionString {
     }
 
     /**
-     * Gets the maximum wait time of a thread waiting for a connection specified in the connection string.
-     * @return the maximum wait time of a thread waiting for a connection
+     * The maximum duration to wait for either an available connection (limited by {@link #getMaxConnectionPoolSize()}),
+     * or a {@linkplain ConnectionCreatedEvent newly created connection} (limited by {@link #getMaxConnecting()}).
+     * @return the maximum wait time when waiting for a connection
+     * @see ConnectionPoolSettings#getMaxWaitTime(TimeUnit)
      */
     @Nullable
     public Integer getMaxWaitTime() {
