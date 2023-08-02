@@ -152,7 +152,7 @@ public final class ClusterFixture {
 
     public static ServerVersion getServerVersion() {
         if (serverVersion == null) {
-            serverVersion = getVersion(new CommandReadOperation<>("admin",
+            serverVersion = getVersion(new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
                     .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(),
                             IgnorableRequestContext.INSTANCE)));
@@ -197,7 +197,8 @@ public final class ClusterFixture {
     }
 
     public static Document getServerStatus() {
-        return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
+        return new CommandReadOperation<>(CSOT_TIMEOUT, "admin", new BsonDocument("serverStatus", new BsonInt32(1)),
+                new DocumentCodec())
                 .execute(getBinding());
     }
 
@@ -250,9 +251,10 @@ public final class ClusterFixture {
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
                 new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
-            BsonDocument helloResult = new CommandReadOperation<>("admin",
-                    new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
-                    ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(), IgnorableRequestContext.INSTANCE));
+            BsonDocument helloResult = new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
+                    new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec())
+                    .execute(new ClusterBinding(cluster, ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(),
+                            IgnorableRequestContext.INSTANCE));
             if (helloResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
                         + helloResult.getString("setName").getValue());
@@ -497,9 +499,8 @@ public final class ClusterFixture {
 
     public static BsonDocument getServerParameters() {
         if (serverParameters == null) {
-            serverParameters = new CommandReadOperation<>("admin",
-                    new BsonDocument("getParameter", new BsonString("*")),
-                    new BsonDocumentCodec())
+            serverParameters = new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
+                    new BsonDocument("getParameter", new BsonString("*")), new BsonDocumentCodec())
                     .execute(getBinding());
         }
         return serverParameters;
@@ -564,7 +565,7 @@ public final class ClusterFixture {
         boolean failsPointsSupported = true;
         if (!isSharded()) {
             try {
-                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
+                new CommandReadOperation<>(CSOT_TIMEOUT, "admin", failPointDocument, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
@@ -580,7 +581,8 @@ public final class ClusterFixture {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString(failPoint))
                     .append("mode", new BsonString("off"));
             try {
-                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec()).execute(getBinding());
+                new CommandReadOperation<>(CSOT_TIMEOUT, "admin", failPointDocument, new BsonDocumentCodec())
+                        .execute(getBinding());
             } catch (MongoCommandException e) {
                 // ignore
             }

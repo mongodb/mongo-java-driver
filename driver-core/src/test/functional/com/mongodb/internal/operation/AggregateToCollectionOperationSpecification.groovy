@@ -42,7 +42,6 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
 import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -53,7 +52,6 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.client.model.Filters.gte
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class AggregateToCollectionOperationSpecification extends OperationFunctionalSpecification {
@@ -307,7 +305,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
-        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
+        new CommandReadOperation<>(null, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
         AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(),
@@ -322,7 +320,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         ((Document) profileDocument.get('command')).get('comment') == expectedComment
 
         cleanup:
-        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
+        new CommandReadOperation<>(null, getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
                 .execute(getBinding())
         profileCollectionHelper.drop()
 

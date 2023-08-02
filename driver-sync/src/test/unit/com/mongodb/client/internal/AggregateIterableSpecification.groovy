@@ -41,6 +41,7 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -71,7 +72,7 @@ class AggregateIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new AggregateOperation<Document>(null, namespace,
+        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_NO_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
                 .retryReads(true))
         readPreference == secondary()
@@ -88,14 +89,12 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as AggregateOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateOperation<Document>(null, namespace,
+        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_NO_TIMEOUT, namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
                 .retryReads(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment(new BsonString('this is a comment'))
-                .maxAwaitTime(99, MILLISECONDS)
-                .maxTime(999, MILLISECONDS))
+                .comment(new BsonString('this is a comment')))
 
         when: 'both hint and hint string are set'
         aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,

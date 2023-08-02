@@ -177,7 +177,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
     def 'should use hint with the count'() {
         given:
         def indexDefinition = new BsonDocument('y', new BsonInt32(1))
-        new CreateIndexesOperation(getNamespace(), [new IndexRequest(indexDefinition).sparse(true)])
+        new CreateIndexesOperation(CSOT_NO_TIMEOUT, getNamespace(), [new IndexRequest(indexDefinition).sparse(true)], null)
                 .execute(getBinding())
         def operation = new CountDocumentsOperation(CSOT_NO_TIMEOUT, getNamespace()).hint(indexDefinition)
 

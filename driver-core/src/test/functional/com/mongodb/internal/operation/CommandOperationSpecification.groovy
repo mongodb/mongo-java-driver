@@ -36,9 +36,9 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute read command'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName())),
-                                                                      new BsonDocumentCodec())
+        def commandOperation = new CommandReadOperation<BsonDocument>(null, getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName())),
+                new BsonDocumentCodec())
         when:
         def result = commandOperation.execute(getBinding())
 
@@ -49,9 +49,9 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute read command asynchronously'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName())),
-                                                                      new BsonDocumentCodec())
+        def commandOperation = new CommandReadOperation<BsonDocument>(null, getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName())),
+                new BsonDocumentCodec())
         when:
         def result = executeAsync(commandOperation)
 
@@ -62,14 +62,14 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     @Slow
     def 'should execute command larger than 16MB'() {
         when:
-        def result = new CommandReadOperation<>(getNamespace().databaseName,
-                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                                     .append('update',
-                                                                             new BsonDocument('_id', new BsonInt32(42))
-                                                                                     .append('b', new BsonBinary(
-                                                                                     new byte[16 * 1024 * 1024 - 30]))),
-                                                             new BsonDocumentCodec())
+        def result = new CommandReadOperation<>(null, getNamespace().databaseName,
+                new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
+                        .append('query', new BsonDocument('_id', new BsonInt32(42)))
+                        .append('update',
+                                new BsonDocument('_id', new BsonInt32(42))
+                                        .append('b', new BsonBinary(
+                                                new byte[16 * 1024 * 1024 - 30]))),
+                new BsonDocumentCodec())
                 .execute(getBinding())
 
         then:
@@ -79,10 +79,10 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                              .append('maxTimeMS', new BsonInt32(1)),
-                                                                      new BsonDocumentCodec())
+        def commandOperation = new CommandReadOperation<BsonDocument>(null, getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName()))
+                        .append('maxTimeMS', new BsonInt32(1)),
+                new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
@@ -99,10 +99,10 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                              .append('maxTimeMS', new BsonInt32(1)),
-                                                                      new BsonDocumentCodec())
+        def commandOperation = new CommandReadOperation<BsonDocument>(null, getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName()))
+                        .append('maxTimeMS', new BsonInt32(1)),
+                new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:

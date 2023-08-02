@@ -270,9 +270,9 @@ class DBCollectionSpecification extends Specification {
         collection.getStats()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new CommandReadOperation('myDatabase',
-                                                                                 new BsonDocument('collStats', new BsonString('test')),
-                                                                new BsonDocumentCodec()))
+        expect executor.getReadOperation(), isTheSameAs(new CommandReadOperation(null, 'myDatabase',
+                new BsonDocument('collStats', new BsonString('test')),
+                new BsonDocumentCodec()))
         executor.getReadPreference() == collection.getReadPreference()
     }
 
@@ -451,7 +451,7 @@ class DBCollectionSpecification extends Specification {
         collection.count()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(null, collection.getNamespace())
                 .filter(new BsonDocument()).retryReads(true))
 
         when: // Inherits from DB
@@ -460,7 +460,7 @@ class DBCollectionSpecification extends Specification {
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(null, collection.getNamespace())
                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
@@ -469,7 +469,7 @@ class DBCollectionSpecification extends Specification {
         collection.count(new BasicDBObject(), new DBCollectionCountOptions().collation(collation))
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(null, collection.getNamespace())
                 .filter(new BsonDocument()).retryReads(true)
                 .collation(collation))
         executor.getReadConcern() == ReadConcern.LOCAL

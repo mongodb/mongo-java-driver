@@ -23,6 +23,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
@@ -43,11 +44,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBCollection.createWriteConcernException;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance
@@ -75,6 +79,7 @@ public class DB {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
+    private volatile Long timeoutMS;
 
     DB(final MongoClient mongo, final String name, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
@@ -160,6 +165,62 @@ public class DB {
      */
     public ReadConcern getReadConcern() {
         return readConcern != null ? readConcern : mongo.getReadConcern();
+    }
+
+    /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the time limit for the full execution of an operation or null.
+     * @since 4.x
+     */
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        Long localTimeoutMS = timeoutMS;
+        if (localTimeoutMS != null) {
+            return notNull("timeUnit", timeUnit).convert(localTimeoutMS, MILLISECONDS);
+        }
+        return null; // mongo.getMongoClientOptions().getTimeout(timeUnit);
+    }
+
+    /**
+     * Sets the time limit for the full execution of an operation.
+     *
+     * <ul>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit
+     * @return this
+     * @since 4.x
+     */
+    public DB setTimeout(final long timeout, final TimeUnit timeUnit) {
+        isTrueArgument("timeout >= 0", timeout >= 0);
+        notNull("timeUnit", timeUnit);
+        timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
+        return this;
     }
 
     /**
@@ -380,7 +441,7 @@ public class DB {
             validationAction = ValidationAction.fromString((String) options.get("validationAction"));
         }
         Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
-        return new CreateCollectionOperation(getName(), collectionName, getWriteConcern())
+        return new CreateCollectionOperation(null, getName(), collectionName, getWriteConcern())
                    .capped(capped)
                    .collation(collation)
                    .sizeInBytes(sizeInBytes)
@@ -513,7 +574,8 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(executor.execute(new CommandReadOperation<>(getName(), commandDocument,
+        return new CommandResult(executor.execute(
+                new CommandReadOperation<>(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)), getName(), commandDocument,
                         new BsonDocumentCodec()), readPreference, getReadConcern()), getDefaultDBObjectCodec());
     }
 

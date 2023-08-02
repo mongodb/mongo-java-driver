@@ -283,7 +283,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         result == 42
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(null, collection.getNamespace())
                                                                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
@@ -299,7 +299,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         result == 42
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(null, collection.getNamespace())
                                                                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }

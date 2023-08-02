@@ -31,6 +31,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.operation.SyncOperations;
@@ -301,8 +302,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions createCollectionOptions) {
-        executor.execute(operations.createCollection(collectionName, createCollectionOptions, autoEncryptionSettings), readConcern,
-                clientSession);
+        executor.execute(operations.createCollection(ClientSideOperationTimeouts.create(timeoutMS), collectionName,
+                        createCollectionOptions, autoEncryptionSettings), readConcern, clientSession);
     }
 
     @Override

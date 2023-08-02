@@ -45,6 +45,7 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
@@ -117,8 +118,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)])
-                .execute(getBinding())
+        new CreateIndexesOperation(CSOT_NO_TIMEOUT, namespace,
+                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique (true)], null).execute(getBinding())
 
         when:
         BatchCursor cursor = operation.execute(getBinding())
@@ -137,8 +138,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)])
-                .execute(getBinding())
+        new CreateIndexesOperation(CSOT_NO_TIMEOUT, namespace,
+                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(getBinding())
 
         when:
         def cursor = executeAsync(operation)

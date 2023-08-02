@@ -251,7 +251,7 @@ public final class AsyncOperations<TDocument> {
 
     public AsyncWriteOperation<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
             final AutoEncryptionSettings autoEncryptionSettings) {
-        return operations.createCollection(collectionName, createCollectionOptions, autoEncryptionSettings);
+        return operations.createCollection(null, collectionName, createCollectionOptions, autoEncryptionSettings);
     }
 
 

@@ -26,6 +26,7 @@ import com.mongodb.client.model.DBCollectionFindAndModifyOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.client.model.DBCollectionRemoveOptions;
 import com.mongodb.client.model.DBCollectionUpdateOptions;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -51,7 +52,6 @@ import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.RenameCollectionOperation;
-import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -83,6 +83,7 @@ import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperation
 import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
@@ -138,6 +139,7 @@ public class DBCollection {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
+    private volatile Long timeoutMS;
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
     private DBCollectionObjectFactory objectFactory;
@@ -910,12 +912,12 @@ public class DBCollection {
      */
     public long getCount(@Nullable final DBObject query, final DBCollectionCountOptions options) {
         notNull("countOptions", options);
-        CountOperation operation = new CountOperation(getNamespace())
-                                       .skip(options.getSkip())
-                                       .limit(options.getLimit())
-                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                       .collation(options.getCollation())
-                                       .retryReads(retryReads);
+        CountOperation operation = new CountOperation(
+                ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)), getNamespace())
+                .skip(options.getSkip())
+                .limit(options.getLimit())
+                .collation(options.getCollation())
+                .retryReads(retryReads);
         if (query != null) {
             operation.filter(wrap(query));
         }
@@ -1223,12 +1225,12 @@ public class DBCollection {
 
         if (outCollection != null) {
             AggregateToCollectionOperation operation =
-                    new AggregateToCollectionOperation(null, getNamespace(), stages,
-                    getReadConcern(), getWriteConcern())
-                                                       // .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS) // TODO
-                                                       .allowDiskUse(options.getAllowDiskUse())
-                                                       .bypassDocumentValidation(options.getBypassDocumentValidation())
-                                                       .collation(options.getCollation());
+                    new AggregateToCollectionOperation(
+                            ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)),
+                            getNamespace(), stages, getReadConcern(), getWriteConcern())
+                            .allowDiskUse(options.getAllowDiskUse())
+                            .bypassDocumentValidation(options.getBypassDocumentValidation())
+                            .collation(options.getCollation());
             try {
                 executor.execute(operation, getReadPreference(), getReadConcern());
                 result = new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
@@ -1237,8 +1239,9 @@ public class DBCollection {
                 throw createWriteConcernException(e);
             }
         } else {
-            AggregateOperation<DBObject> operation = new AggregateOperation<>(null, getNamespace(), stages, getDefaultDBObjectCodec())
-                    // .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS) // TODO
+            AggregateOperation<DBObject> operation = new AggregateOperation<>(
+                    ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)), getNamespace(), stages,
+                    getDefaultDBObjectCodec())
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
                     .collation(options.getCollation())
@@ -1260,12 +1263,12 @@ public class DBCollection {
      * @mongodb.server.release 3.6
      */
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
-        AggregateOperation<BsonDocument> operation = new AggregateOperation<>(null, getNamespace(), preparePipeline(pipeline),
-                                                                              new BsonDocumentCodec())
-                                                         // .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS) // TODO
-                                                         .allowDiskUse(options.getAllowDiskUse())
-                                                         .collation(options.getCollation())
-                                                         .retryReads(retryReads);
+        AggregateOperation<BsonDocument> operation = new AggregateOperation<>(
+                ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS), options.getMaxTime(MILLISECONDS)), getNamespace(),
+                preparePipeline(pipeline), new BsonDocumentCodec())
+                .allowDiskUse(options.getAllowDiskUse())
+                .collation(options.getCollation())
+                .retryReads(retryReads);
         return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER, new BsonDocumentCodec()),
                 primaryPreferred(), getReadConcern()), getDefaultDBObjectCodec());
     }
@@ -1781,6 +1784,61 @@ public class DBCollection {
     }
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the time limit for the full execution of an operation or null.
+     * @since 4.x
+     */
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        if (timeoutMS != null) {
+            return notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
+        }
+        return database.getTimeout(timeUnit);
+    }
+
+    /**
+     * Sets the time limit for the full execution of an operation.
+     *
+     * <ul>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit
+     * @return this
+     * @since 4.x
+     */
+    public DBCollection setTimeout(final long timeout, final TimeUnit timeUnit) {
+        isTrueArgument("timeout >= 0", timeout >= 0);
+        notNull("timeUnit", timeUnit);
+        timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
+        return this;
+    }
+
+    /**
      * Drops (deletes) this collection from the database. Use with care.
      *
      * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
@@ -1853,7 +1911,8 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {
-        return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(), retryReads) {
+        return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT,
+                primary(), retryReads) {
             @Override
             public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
                 return new ListIndexesOperation<>(getNamespace(), getDefaultDBObjectCodec()).retryReads(retryReads);
@@ -2136,7 +2195,7 @@ public class DBCollection {
         if (options.containsField("collation")) {
             request.collation(DBObjectCollationHelper.createCollationFromOptions(options));
         }
-        return new CreateIndexesOperation(getNamespace(), singletonList(request), writeConcern);
+        return new CreateIndexesOperation(null, getNamespace(), singletonList(request), writeConcern);
     }
 
     Codec<DBObject> getObjectCodec() {

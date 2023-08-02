@@ -524,8 +524,8 @@ final class Operations<TDocument> {
     <TResult> CommandReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
         notNull("command", command);
         notNull("resultClass", resultClass);
-        return new CommandReadOperation<>(assertNotNull(namespace).getDatabaseName(),
-                assertNotNull(toBsonDocument(command)), codecRegistry.get(resultClass));
+        return new CommandReadOperation<>(null, assertNotNull(namespace).getDatabaseName(),
+                                          assertNotNull(toBsonDocument(command)), codecRegistry.get(resultClass));
     }
 
 
@@ -533,11 +533,10 @@ final class Operations<TDocument> {
         return new DropDatabaseOperation(assertNotNull(namespace).getDatabaseName(), getWriteConcern());
     }
 
-
-    CreateCollectionOperation createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
-            @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
-        CreateCollectionOperation operation = new CreateCollectionOperation(assertNotNull(namespace).getDatabaseName(),
-                collectionName, writeConcern)
+    CreateCollectionOperation createCollection(final ClientSideOperationTimeout clientSideOperationTimeout, final String collectionName,
+            final CreateCollectionOptions createCollectionOptions, @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
+        CreateCollectionOperation operation = new CreateCollectionOperation(clientSideOperationTimeout,
+                assertNotNull(namespace).getDatabaseName(), collectionName, writeConcern)
                 .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
@@ -640,8 +639,8 @@ final class Operations<TDocument> {
                     .hidden(model.getOptions().isHidden())
             );
         }
-        return new CreateIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern)
-                .maxTime(createIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+        return new CreateIndexesOperation(ClientSideOperationTimeouts.create(timeoutMS, createIndexOptions.getMaxTime(MILLISECONDS)),
+                assertNotNull(namespace), indexRequests, writeConcern)
                 .commitQuorum(createIndexOptions.getCommitQuorum());
     }
 

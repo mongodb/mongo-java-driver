@@ -84,7 +84,7 @@ class DBSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as CreateCollectionOperation
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()))
+        expect operation, isTheSameAs(new CreateCollectionOperation(null, 'test', 'ctest', db.getWriteConcern()))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -104,7 +104,7 @@ class DBSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern())
+        expect operation, isTheSameAs(new CreateCollectionOperation(null, 'test', 'ctest', db.getWriteConcern())
                 .sizeInBytes(100000)
                 .maxDocuments(2000)
                 .capped(true)
@@ -132,7 +132,7 @@ class DBSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()).collation(collation))
+        expect operation, isTheSameAs(new CreateCollectionOperation(null, 'test', 'ctest', db.getWriteConcern()).collation(collation))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
 

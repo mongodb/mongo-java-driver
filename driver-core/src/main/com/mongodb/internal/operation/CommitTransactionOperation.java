@@ -42,6 +42,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -53,7 +54,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class CommitTransactionOperation extends TransactionOperation {
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
-    private Long maxCommitTimeMS;
 
     public CommitTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteConcern writeConcern) {
         this(clientSideOperationTimeout, writeConcern, false);
@@ -68,26 +68,6 @@ public class CommitTransactionOperation extends TransactionOperation {
     public CommitTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {
         this.recoveryToken = recoveryToken;
         return this;
-    }
-
-    public CommitTransactionOperation maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
-        if (maxCommitTime == null) {
-            this.maxCommitTimeMS = null;
-        } else {
-            notNull("timeUnit", timeUnit);
-            isTrueArgument("maxCommitTime > 0", maxCommitTime > 0);
-            this.maxCommitTimeMS = MILLISECONDS.convert(maxCommitTime, timeUnit);
-        }
-        return this;
-    }
-
-    @Nullable
-    public Long getMaxCommitTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        if (maxCommitTimeMS == null) {
-            return null;
-        }
-        return timeUnit.convert(maxCommitTimeMS, MILLISECONDS);
     }
 
     @Override
@@ -148,11 +128,8 @@ public class CommitTransactionOperation extends TransactionOperation {
         CommandCreator creator = (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
                     .create(clientSideOperationTimeout, serverDescription, connectionDescription);
-            if (maxCommitTimeMS != null) {
-                command.append("maxTimeMS",
-                        maxCommitTimeMS > Integer.MAX_VALUE
-                        ? new BsonInt64(maxCommitTimeMS) : new BsonInt32(maxCommitTimeMS.intValue()));
-            }
+            long maxCommitTimeMS = clientSideOperationTimeout.getMaxCommitTimeMS();
+            putIfNotZero(command, "maxTimeMS", maxCommitTimeMS);
             return command;
         };
         if (alreadyCommitted) {

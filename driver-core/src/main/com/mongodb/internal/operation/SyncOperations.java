@@ -44,6 +44,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
@@ -225,10 +226,9 @@ public final class SyncOperations<TDocument> {
         return operations.dropDatabase();
     }
 
-
-    public WriteOperation<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
-            @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
-        return operations.createCollection(collectionName, createCollectionOptions, autoEncryptionSettings);
+    public WriteOperation<Void> createCollection(final ClientSideOperationTimeout clientSideOperationTimeout, final String collectionName,
+            final CreateCollectionOptions createCollectionOptions, @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
+        return operations.createCollection(clientSideOperationTimeout, collectionName, createCollectionOptions, autoEncryptionSettings);
     }
 
     public WriteOperation<Void> dropCollection(final DropCollectionOptions dropCollectionOptions,

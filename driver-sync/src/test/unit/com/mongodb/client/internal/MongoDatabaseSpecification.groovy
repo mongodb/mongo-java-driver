@@ -271,7 +271,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern))
+        expect operation, isTheSameAs(new CreateCollectionOperation(null, name, collectionName, writeConcern))
         executor.getClientSession() == session
 
         when:
@@ -290,7 +290,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern)
+        expect operation, isTheSameAs(new CreateCollectionOperation(null, name, collectionName, writeConcern)
                 .collation(collation)
                 .capped(true)
                 .maxDocuments(100)

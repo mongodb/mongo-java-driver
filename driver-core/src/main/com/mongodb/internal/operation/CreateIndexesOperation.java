@@ -26,6 +26,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -69,15 +70,12 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
-    private long maxTimeMS;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private CreateIndexCommitQuorum commitQuorum;
 
-    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests) {
-        this(namespace, requests, null);
-    }
-
-    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests,
-            @Nullable final WriteConcern writeConcern) {
+    public CreateIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final List<IndexRequest> requests, @Nullable final WriteConcern writeConcern) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
@@ -101,18 +99,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             }
         }
         return indexNames;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public CreateIndexesOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxTime >= 0", maxTime >= 0);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
     }
 
     public CreateIndexCommitQuorum getCommitQuorum() {
@@ -231,7 +217,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             values.add(getIndex(request));
         }
         command.put("indexes", new BsonArray(values));
-        putIfNotZero(command, "maxTimeMS", maxTimeMS);
+        putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         appendWriteConcernToCommand(writeConcern, command);
         if (commitQuorum != null) {
             if (serverIsAtLeastVersionFourDotFour(description)) {

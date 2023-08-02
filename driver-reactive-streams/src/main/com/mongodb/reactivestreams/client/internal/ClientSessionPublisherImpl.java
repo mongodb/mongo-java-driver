@@ -23,6 +23,7 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
@@ -144,9 +145,11 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             commitInProgress = true;
 
             return executor.execute(
-                    new CommitTransactionOperation(null, assertNotNull(transactionOptions.getWriteConcern()), alreadyCommitted)
-                            .recoveryToken(getRecoveryToken())
-                            .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
+                    new CommitTransactionOperation(
+                            // TODO - JAVA-4067
+                            ClientSideOperationTimeouts.withMaxCommitMS(null, transactionOptions.getMaxCommitTime(MILLISECONDS)),
+                            assertNotNull(transactionOptions.getWriteConcern()), alreadyCommitted)
+                            .recoveryToken(getRecoveryToken()),
                     readConcern, this)
                     .doOnTerminate(() -> {
                         commitInProgress = false;

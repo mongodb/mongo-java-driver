@@ -209,7 +209,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(namespace.getDatabaseName(),
+        return new CommandReadOperation<>(null, namespace.getDatabaseName(),
                 asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
                         explainVerbosity), new BsonDocumentCodec());
     }

@@ -372,7 +372,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
-        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
+        new CommandReadOperation<>(null, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
         def operation = new AggregateOperation<Document>(CSOT_NO_TIMEOUT, getNamespace(), [], new DocumentCodec())
@@ -386,7 +386,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         ((Document) profileDocument.get('command')).get('comment') == expectedComment
 
         cleanup:
-        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
+        new CommandReadOperation<>(null, getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
                 .execute(getBinding())
         profileCollectionHelper.drop()
 

@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT;
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
 import static java.util.Arrays.asList;
@@ -87,7 +88,7 @@ public final class CollectionHelper<T> {
     }
 
     public T hello() {
-        return new CommandReadOperation<>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
+        return new CommandReadOperation<>(null, "admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
     }
 
     public static void drop(final MongoNamespace namespace) {
@@ -141,7 +142,7 @@ public final class CollectionHelper<T> {
 
     public void create(final String collectionName, final CreateCollectionOptions options, final WriteConcern writeConcern) {
         drop(namespace, writeConcern);
-        CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName, writeConcern)
+        CreateCollectionOperation operation = new CreateCollectionOperation(null, namespace.getDatabaseName(), collectionName, writeConcern)
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
                 .maxDocuments(options.getMaxDocuments());
@@ -168,7 +169,7 @@ public final class CollectionHelper<T> {
             BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                     .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
             try {
-                new CommandReadOperation<>(namespace.getDatabaseName(), command, new BsonDocumentCodec())
+                new CommandReadOperation<>(null, namespace.getDatabaseName(), command, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (Exception e) {
                 // Ignore any exceptions killing old cursors
@@ -370,31 +371,31 @@ public final class CollectionHelper<T> {
     }
 
     public void createIndex(final BsonDocument key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     public void createIndex(final Document key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     public void createUniqueIndex(final Document key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).unique(true)), WriteConcern.ACKNOWLEDGED)
+        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(wrap(key)).unique(true)), WriteConcern.ACKNOWLEDGED)
                 .execute(getBinding());
     }
 
     public void createIndex(final Document key, final String defaultLanguage) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
+        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
                                           WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     public void createIndex(final Bson key) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))),
+        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))),
                                           WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     @SuppressWarnings("deprecation")
     public void createIndex(final Bson key, final Double bucketSize) {
-        new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
+        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
                 .bucketSize(bucketSize)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
@@ -409,8 +410,8 @@ public final class CollectionHelper<T> {
 
     public void killAllSessions() {
         try {
-            new CommandReadOperation<>("admin", new BsonDocument("killAllSessions", new BsonArray()),
-                    new BsonDocumentCodec()).execute(getBinding());
+            new CommandReadOperation<>(null, "admin", new BsonDocument("killAllSessions", new BsonArray()),
+                                       new BsonDocumentCodec()).execute(getBinding());
         } catch (MongoCommandException e) {
             // ignore exception caused by killing the implicit session that the killAllSessions command itself is running in
         }
@@ -418,10 +419,9 @@ public final class CollectionHelper<T> {
 
     public void renameCollection(final MongoNamespace newNamespace) {
         try {
-            new CommandReadOperation<>("admin",
+            new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
                     new BsonDocument("renameCollection", new BsonString(getNamespace().getFullName()))
-                                .append("to", new BsonString(newNamespace.getFullName())),
-                    new BsonDocumentCodec()).execute(getBinding());
+                            .append("to", new BsonString(newNamespace.getFullName())), new BsonDocumentCodec()).execute(getBinding());
         } catch (MongoCommandException e) {
             // do nothing
         }
@@ -432,10 +432,10 @@ public final class CollectionHelper<T> {
     }
 
     public void runAdminCommand(final BsonDocument command) {
-        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding());
+        new CommandReadOperation<>(null, "admin", command, new BsonDocumentCodec()).execute(getBinding());
     }
 
     public void runAdminCommand(final BsonDocument command, final ReadPreference readPreference) {
-        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(getBinding(readPreference));
+        new CommandReadOperation<>(null, "admin", command, new BsonDocumentCodec()).execute(getBinding(readPreference));
     }
 }

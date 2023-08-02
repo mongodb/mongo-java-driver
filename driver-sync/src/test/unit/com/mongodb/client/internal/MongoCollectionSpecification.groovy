@@ -95,6 +95,9 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
@@ -1134,7 +1137,7 @@ class MongoCollectionSpecification extends Specification {
         def createIndexesMethod = collection.&createIndexes
 
         when:
-        def expectedOperation = new CreateIndexesOperation(namespace,
+        def expectedOperation = new CreateIndexesOperation(null, namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))], ACKNOWLEDGED)
         def indexName = execute(createIndexMethod, session, new Document('key', 1))
         def operation = executor.getWriteOperation() as CreateIndexesOperation
@@ -1144,7 +1147,7 @@ class MongoCollectionSpecification extends Specification {
         indexName == 'key_1'
 
         when:
-        expectedOperation = new CreateIndexesOperation(namespace,
+        expectedOperation = new CreateIndexesOperation(CSOT_NO_TIMEOUT, namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
                  new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
         def indexNames = execute(createIndexesMethod, session, [new IndexModel(new Document('key', 1)),
@@ -1157,10 +1160,12 @@ class MongoCollectionSpecification extends Specification {
         indexNames == ['key_1', 'key1_1']
 
         when:
-        expectedOperation = expectedOperation.maxTime(10, MILLISECONDS)
+        expectedOperation = new CreateIndexesOperation(CSOT_MAX_TIME, namespace,
+                [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
+                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
         indexNames = execute(createIndexesMethod, session,
                 [new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))],
-                new CreateIndexOptions().maxTime(10, MILLISECONDS))
+                new CreateIndexOptions().maxTime(TIMEOUT_DURATION.toMillis(), MILLISECONDS))
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
@@ -1169,7 +1174,7 @@ class MongoCollectionSpecification extends Specification {
         indexNames == ['key_1', 'key1_1']
 
         when:
-        expectedOperation = new CreateIndexesOperation(namespace,
+        expectedOperation = new CreateIndexesOperation(null, namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
                  new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
                 .commitQuorum(CreateIndexCommitQuorum.VOTING_MEMBERS)
@@ -1184,7 +1189,7 @@ class MongoCollectionSpecification extends Specification {
         indexNames == ['key_1', 'key1_1']
 
         when:
-        expectedOperation = new CreateIndexesOperation(namespace,
+        expectedOperation = new CreateIndexesOperation(null, namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))
                          .background(true)
                          .unique(true)

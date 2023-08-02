@@ -420,7 +420,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
-        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
+        new CommandReadOperation<>(null, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
@@ -440,7 +440,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         }
 
         cleanup:
-        new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
+        new CommandReadOperation<>(null, getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
                 .execute(getBinding())
         profileCollectionHelper.drop()
 
