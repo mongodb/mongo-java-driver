@@ -79,7 +79,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
         when:
-        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT, getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), 'name', stringDecoder)
 
         then:
         operation.getFilter() == null
@@ -91,7 +91,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         def filter = new BsonDocument('filter', new BsonInt32(1))
 
         when:
-        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT, getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), 'name', stringDecoder)
                 .filter(filter)
                 .collation(defaultCollation)
 
@@ -106,7 +106,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT, getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), 'name', stringDecoder)
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -124,7 +124,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        def operation = new DistinctOperation(CSOT_NO_TIMEOUT, getNamespace(), 'name', stringDecoder)
+        def operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), 'name', stringDecoder)
                 .filter(new BsonDocument('age', new BsonInt32(25)))
 
         when:
@@ -155,7 +155,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('numberOfJobs', sam.numberOfJobs)
 
         getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument))
-        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT, getNamespace(), 'worker', new WorkerCodec())
+        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), 'worker', new WorkerCodec())
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -174,7 +174,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 1)
         Document pete2 = new Document('name', new Document('earle', 'Jones'))
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT, getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), 'name', stringDecoder)
 
         when:
         execute(operation, async)
@@ -188,7 +188,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw execution timeout exception from execute'() {
         given:
-        def operation = new DistinctOperation(CSOT_MAX_TIME, getNamespace(), 'name', stringDecoder)
+        def operation = new DistinctOperation(CSOT_MAX_TIME.get(), getNamespace(), 'name', stringDecoder)
         enableMaxTimeFailPoint()
 
         when:
@@ -206,7 +206,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
-        def operation = new DistinctOperation(CSOT_NO_TIMEOUT, helper.namespace, 'name', helper.decoder)
+        def operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), helper.namespace, 'name', helper.decoder)
 
         then:
         testOperationSecondaryOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
@@ -217,7 +217,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should create the expected command'() {
         when:
-        def operation = new DistinctOperation(CSOT_MAX_TIME, helper.namespace, 'name', new BsonDocumentCodec())
+        def operation = new DistinctOperation(CSOT_MAX_TIME.get(), helper.namespace, 'name', new BsonDocumentCodec())
                 .filter(new BsonDocument('a', BsonBoolean.TRUE))
                 .collation(defaultCollation)
 
@@ -239,7 +239,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         given:
         def document = Document.parse('{str: "foo"}')
         getCollectionHelper().insertDocuments(document)
-        def operation = new DistinctOperation(CSOT_NO_TIMEOUT, namespace, 'str', stringDecoder).filter(BsonDocument.parse('{str: "FOO"}}'))
+        def operation = new DistinctOperation(CSOT_NO_TIMEOUT.get(), namespace, 'str', stringDecoder).filter(BsonDocument.parse('{str: "FOO"}}'))
                 .collation(caseInsensitiveCollation)
 
         when:
@@ -268,7 +268,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('key', new BsonString('str'))
         appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
-        def operation = new DistinctOperation<String>(CSOT_NO_TIMEOUT, getNamespace(), 'str', new StringCodec())
+        def operation = new DistinctOperation<String>(CSOT_NO_TIMEOUT.get(), getNamespace(), 'str', new StringCodec())
 
         when:
         operation.execute(binding)
@@ -307,7 +307,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('key', new BsonString('str'))
         appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
-        def operation = new DistinctOperation<String>(CSOT_NO_TIMEOUT, getNamespace(), 'str', new StringCodec())
+        def operation = new DistinctOperation<String>(CSOT_NO_TIMEOUT.get(), getNamespace(), 'str', new StringCodec())
 
         when:
         executeAsync(operation, binding)

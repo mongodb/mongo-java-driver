@@ -244,7 +244,7 @@ final class AsyncOperationHelper {
                                     .map(previousAttemptCommand -> {
                                         Assertions.assertFalse(firstAttempt);
                                         return retryCommandModifier.apply(previousAttemptCommand);
-                                    }).orElseGet(() -> commandCreator.create(null, source.getServerDescription(), connection.getDescription()));
+                                    }).orElseGet(() -> commandCreator.create(clientSideOperationTimeout, source.getServerDescription(), connection.getDescription()));
                             // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
                             retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
                                     .attach(AttachmentKeys.retryableCommandFlag(), isRetryWritesEnabled(command), true)

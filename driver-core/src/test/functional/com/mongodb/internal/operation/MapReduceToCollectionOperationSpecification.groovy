@@ -65,8 +65,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     def cleanup() {
-        new DropCollectionOperation(CSOT_TIMEOUT, mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
-        new DropCollectionOperation(CSOT_TIMEOUT, mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(CSOT_TIMEOUT.get(), mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(CSOT_TIMEOUT.get(), mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
     }
 
     def 'should have the correct defaults'() {

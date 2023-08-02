@@ -72,7 +72,7 @@ class AggregateIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_NO_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_NO_TIMEOUT.get(), namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
                 .retryReads(true))
         readPreference == secondary()
@@ -89,7 +89,7 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as AggregateOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_NO_TIMEOUT, namespace,
+        expect operation, isTheSameAs(new AggregateOperation<Document>(CSOT_NO_TIMEOUT.get(), namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
                 .retryReads(true)
                 .collation(collation)

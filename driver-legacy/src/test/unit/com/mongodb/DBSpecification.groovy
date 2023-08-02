@@ -161,7 +161,7 @@ class DBSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as CreateViewOperation
-        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, databaseName, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT.get(), databaseName, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
@@ -170,7 +170,7 @@ class DBSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, databaseName, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT.get(), databaseName, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }

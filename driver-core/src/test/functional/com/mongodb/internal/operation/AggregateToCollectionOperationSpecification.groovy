@@ -72,7 +72,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
 
         when:
-        AggregateToCollectionOperation operation = createOperation(CSOT_NO_TIMEOUT, getNamespace(), pipeline, ACKNOWLEDGED)
+        AggregateToCollectionOperation operation = createOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), pipeline, ACKNOWLEDGED)
 
         then:
         operation.getAllowDiskUse() == null
@@ -87,7 +87,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
 
         when:
-        AggregateToCollectionOperation operation = createOperation(CSOT_NO_TIMEOUT, getNamespace(), pipeline, WriteConcern.MAJORITY)
+        AggregateToCollectionOperation operation = createOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), pipeline, WriteConcern.MAJORITY)
                 .allowDiskUse(true)
                 .bypassDocumentValidation(true)
                 .collation(defaultCollation)
@@ -104,7 +104,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
 
         when:
-        AggregateToCollectionOperation operation = createOperation(CSOT_NO_TIMEOUT, getNamespace(), pipeline, ReadConcern.DEFAULT)
+        AggregateToCollectionOperation operation = createOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), pipeline, ReadConcern.DEFAULT)
                 .allowDiskUse(true)
                 .bypassDocumentValidation(true)
                 .collation(defaultCollation)
@@ -118,7 +118,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should not accept an empty pipeline'() {
         when:
-        createOperation(CSOT_NO_TIMEOUT, getNamespace(), [], ACKNOWLEDGED)
+        createOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), [], ACKNOWLEDGED)
 
 
         then:
@@ -127,7 +127,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should be able to output to a collection'() {
         when:
-        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT.get(), getNamespace(),
                 [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                 ACKNOWLEDGED)
         execute(operation, async)
@@ -142,7 +142,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should be able to merge into a collection'() {
         when:
-        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT.get(), getNamespace(),
                 [new BsonDocument('$merge', new BsonDocument('into', new BsonString(aggregateCollectionNamespace.collectionName)))])
         execute(operation, async)
 
@@ -155,7 +155,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should be able to match then output to a collection'() {
         when:
-        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT.get(), getNamespace(),
                 [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                  new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))], ACKNOWLEDGED)
         execute(operation, async)
@@ -169,7 +169,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should throw execution timeout exception from execute'() {
         given:
-        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT.get(), getNamespace(),
                 [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                  new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                 ACKNOWLEDGED)
@@ -191,7 +191,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
-        AggregateToCollectionOperation operation =createOperation(CSOT_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation =createOperation(CSOT_TIMEOUT.get(), getNamespace(),
                         [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                         new WriteConcern(5))
 
@@ -216,7 +216,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         getCollectionHelper().insertDocuments(BsonDocument.parse('{ level: 9 }'))
 
         when:
-        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT.get(), getNamespace(),
                 [BsonDocument.parse('{$out: "collectionOut"}')], ACKNOWLEDGED)
         execute(operation, async)
 
@@ -245,7 +245,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     def 'should create the expected command'() {
         when:
         def pipeline = [BsonDocument.parse('{$out: "collectionOut"}')]
-        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(CSOT_NO_TIMEOUT, getNamespace(), pipeline,
+        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), pipeline,
                 ReadConcern.MAJORITY, WriteConcern.MAJORITY)
                 .bypassDocumentValidation(true)
         def expectedCommand = new BsonDocument('aggregate', new BsonString(getNamespace().getCollectionName()))
@@ -288,7 +288,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         getCollectionHelper().insertDocuments(BsonDocument.parse('{_id: 1, str: "foo"}'))
         def pipeline = [BsonDocument.parse('{$match: {str: "FOO"}}'),
                         new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
-        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(), pipeline, ACKNOWLEDGED)
+        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT.get(), getNamespace(), pipeline, ACKNOWLEDGED)
                 .collation(caseInsensitiveCollation)
 
         when:
@@ -308,7 +308,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         new CommandReadOperation<>(null, getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
-        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation = createOperation(CSOT_TIMEOUT.get(), getNamespace(),
                 [Aggregates.out('outputCollection').toBsonDocument(BsonDocument, registry)], ACKNOWLEDGED)
                 .comment(new BsonString(expectedComment))
 

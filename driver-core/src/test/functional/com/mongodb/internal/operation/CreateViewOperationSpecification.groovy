@@ -52,7 +52,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         getCollectionHelper().insertDocuments([trueXDocument, falseXDocument])
 
         def pipeline = [new BsonDocument('$match', trueXDocument)]
-        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT, getDatabaseName(), viewName, viewOn, pipeline, WriteConcern.ACKNOWLEDGED)
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), viewName, viewOn, pipeline, WriteConcern.ACKNOWLEDGED)
 
         when:
         execute(operation, async)
@@ -80,7 +80,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         assert !collectionNameExists(viewOn)
         assert !collectionNameExists(viewName)
 
-        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT, getDatabaseName(), viewName, viewOn, [], WriteConcern.ACKNOWLEDGED)
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), viewName, viewOn, [], WriteConcern.ACKNOWLEDGED)
                 .collation(defaultCollation)
 
         when:
@@ -101,7 +101,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
     @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw if server version is not 3.4 or greater'() {
         given:
-        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT, getDatabaseName(), getCollectionName() + '-view',
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), getCollectionName() + '-view',
                 getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
 
         when:
@@ -121,7 +121,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
         assert !collectionNameExists(viewName)
 
-        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT, getDatabaseName(), viewName, getCollectionName(), [], new WriteConcern(5))
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), viewName, getCollectionName(), [], new WriteConcern(5))
 
         when:
         execute(operation, async)

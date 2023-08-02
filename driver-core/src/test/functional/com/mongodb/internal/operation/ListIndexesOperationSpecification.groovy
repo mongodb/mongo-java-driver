@@ -118,7 +118,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(CSOT_NO_TIMEOUT, namespace,
+        new CreateIndexesOperation(CSOT_NO_TIMEOUT.get(), namespace,
                 [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique (true)], null).execute(getBinding())
 
         when:
@@ -138,7 +138,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(CSOT_NO_TIMEOUT, namespace,
+        new CreateIndexesOperation(CSOT_NO_TIMEOUT.get(), namespace,
                 [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(getBinding())
 
         when:

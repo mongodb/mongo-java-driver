@@ -97,7 +97,6 @@ import java.util.function.Supplier
 
 import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
 import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
-import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
@@ -258,7 +257,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([1L, 2L])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, true,
                 true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new EstimatedDocumentCountOperation(namespace)
+        def expectedOperation = new EstimatedDocumentCountOperation(CSOT_NO_TIMEOUT.get(), namespace)
                 .retryReads(true)
 
         def countMethod = collection.&estimatedDocumentCount
@@ -272,12 +271,13 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation)
 
         when:
+        expectedOperation = new EstimatedDocumentCountOperation(CSOT_MAX_TIME.get(), namespace).retryReads(true)
         execute(countMethod, session, new EstimatedDocumentCountOptions().maxTime(100, MILLISECONDS))
         operation = executor.getReadOperation() as EstimatedDocumentCountOperation
 
         then:
         executor.getClientSession() == session
-        expect operation, isTheSameAs(expectedOperation.maxTime(100, MILLISECONDS))
+        expect operation, isTheSameAs(expectedOperation)
 
         where:
         session << [null]
@@ -995,7 +995,8 @@ class MongoCollectionSpecification extends Specification {
         })
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry,  readPreference, ACKNOWLEDGED,
                 retryWrites, true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new FindAndDeleteOperation(namespace, ACKNOWLEDGED, retryWrites,  new DocumentCodec())
+        def expectedOperation = new FindAndDeleteOperation(CSOT_NO_TIMEOUT.get(),
+                namespace, ACKNOWLEDGED, retryWrites,  new DocumentCodec())
                 .filter(new BsonDocument('a', new BsonInt32(1)))
         def findOneAndDeleteMethod = collection.&findOneAndDelete
 
@@ -1008,13 +1009,18 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         execute(findOneAndDeleteMethod, session, new Document('a', 1),
-                new FindOneAndDeleteOptions().projection(new Document('projection', 1))
-                        .maxTime(100, MILLISECONDS).collation(collation))
+                new FindOneAndDeleteOptions()
+                        .projection(new Document('projection', 1))
+                        .maxTime(100, MILLISECONDS)
+                        .collation(collation))
         operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
-                .maxTime(100, MILLISECONDS).collation(collation))
+        expectedOperation = new FindAndDeleteOperation(CSOT_MAX_TIME.get(), namespace, ACKNOWLEDGED, retryWrites,  new DocumentCodec())
+                .filter(new BsonDocument('a', new BsonInt32(1)))
+                .projection(new BsonDocument('projection', new BsonInt32(1)))
+                .collation(collation)
+        expect operation, isTheSameAs(expectedOperation)
 
         where:
         [writeConcern, session, retryWrites] << [
@@ -1031,8 +1037,9 @@ class MongoCollectionSpecification extends Specification {
         })
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry,  readPreference, writeConcern,
                 retryWrites, true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new FindAndReplaceOperation(namespace, writeConcern, retryWrites, new DocumentCodec(),
-                new BsonDocument('a', new BsonInt32(10))).filter(new BsonDocument('a', new BsonInt32(1)))
+        def expectedOperation = new FindAndReplaceOperation(CSOT_NO_TIMEOUT.get(), namespace, writeConcern,
+                retryWrites, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
         def findOneAndReplaceMethod = collection.&findOneAndReplace
 
         when:
@@ -1044,23 +1051,22 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         execute(findOneAndReplaceMethod, session, new Document('a', 1), new Document('a', 10),
-                new FindOneAndReplaceOptions().projection(new Document('projection', 1))
-                        .maxTime(100, MILLISECONDS).bypassDocumentValidation(false))
+                new FindOneAndReplaceOptions()
+                        .projection(new Document('projection', 1))
+                        .maxTime(100, MILLISECONDS)
+                        .bypassDocumentValidation(false)
+                        .collation(collation))
+
         operation = executor.getWriteOperation() as FindAndReplaceOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
-                .maxTime(100, MILLISECONDS).bypassDocumentValidation(false))
-
-        when:
-        execute(findOneAndReplaceMethod, session, new Document('a', 1), new Document('a', 10),
-                new FindOneAndReplaceOptions().projection(new Document('projection', 1))
-                        .maxTime(100, MILLISECONDS).bypassDocumentValidation(true).collation(collation))
-        operation = executor.getWriteOperation() as FindAndReplaceOperation
-
-        then:
-        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
-                .maxTime(100, MILLISECONDS).bypassDocumentValidation(true).collation(collation))
+        expectedOperation = new FindAndReplaceOperation(CSOT_MAX_TIME.get(), namespace, writeConcern,
+                retryWrites, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
+                .projection(new BsonDocument('projection', new BsonInt32(1)))
+                .bypassDocumentValidation(false)
+                .collation(collation)
+        expect operation, isTheSameAs(expectedOperation)
 
         where:
         [writeConcern, session, retryWrites] << [
@@ -1077,8 +1083,9 @@ class MongoCollectionSpecification extends Specification {
         })
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry,  readPreference, writeConcern,
                 retryWrites, true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new FindAndUpdateOperation(namespace, writeConcern, retryWrites, new DocumentCodec(),
-                new BsonDocument('a', new BsonInt32(10))).filter(new BsonDocument('a', new BsonInt32(1)))
+        def expectedOperation = new FindAndUpdateOperation(CSOT_NO_TIMEOUT.get(), namespace, writeConcern, retryWrites,
+                new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
         def findOneAndUpdateMethod = collection.&findOneAndUpdate
 
         when:
@@ -1090,14 +1097,23 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         execute(findOneAndUpdateMethod, session, new Document('a', 1), new Document('a', 10),
-                new FindOneAndUpdateOptions().projection(new Document('projection', 1)).maxTime(100, MILLISECONDS)
-                        .bypassDocumentValidation(bypassDocumentValidation).collation(collation).arrayFilters(arrayFilters))
+                new FindOneAndUpdateOptions()
+                        .projection(new Document('projection', 1))
+                        .maxTime(100, MILLISECONDS)
+                        .bypassDocumentValidation(bypassDocumentValidation)
+                        .collation(collation)
+                        .arrayFilters(arrayFilters))
         operation = executor.getWriteOperation() as FindAndUpdateOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
-                .maxTime(100, MILLISECONDS).bypassDocumentValidation(bypassDocumentValidation).collation(collation)
-                .arrayFilters(arrayFilters))
+        expectedOperation = new FindAndUpdateOperation(CSOT_MAX_TIME.get(), namespace, writeConcern, retryWrites, new DocumentCodec(),
+                new BsonDocument('a', new BsonInt32(10)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
+                .projection(new BsonDocument('projection', new BsonInt32(1)))
+                .bypassDocumentValidation(bypassDocumentValidation)
+                .collation(collation)
+                .arrayFilters(arrayFilters)
+        expect operation, isTheSameAs(expectedOperation)
 
         where:
         [writeConcern, arrayFilters, bypassDocumentValidation, session, retryWrites] << [
@@ -1114,7 +1130,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new DropCollectionOperation(CSOT_NO_TIMEOUT, namespace, ACKNOWLEDGED)
+        def expectedOperation = new DropCollectionOperation(CSOT_NO_TIMEOUT.get(), namespace, ACKNOWLEDGED)
         def dropMethod = collection.&drop
 
         when:
@@ -1148,7 +1164,7 @@ class MongoCollectionSpecification extends Specification {
         indexName == 'key_1'
 
         when:
-        expectedOperation = new CreateIndexesOperation(CSOT_NO_TIMEOUT, namespace,
+        expectedOperation = new CreateIndexesOperation(CSOT_NO_TIMEOUT.get(), namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
                  new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
         def indexNames = execute(createIndexesMethod, session, [new IndexModel(new Document('key', 1)),
@@ -1161,7 +1177,7 @@ class MongoCollectionSpecification extends Specification {
         indexNames == ['key_1', 'key1_1']
 
         when:
-        expectedOperation = new CreateIndexesOperation(CSOT_MAX_TIME, namespace,
+        expectedOperation = new CreateIndexesOperation(CSOT_MAX_TIME.get(), namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
                  new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
         indexNames = execute(createIndexesMethod, session,
@@ -1309,7 +1325,7 @@ class MongoCollectionSpecification extends Specification {
         def dropIndexMethod = collection.&dropIndex
 
         when:
-        def expectedOperation = new DropIndexOperation(namespace, 'indexName', ACKNOWLEDGED)
+        def expectedOperation = new DropIndexOperation(CSOT_NO_TIMEOUT.get(), namespace, 'indexName', ACKNOWLEDGED)
         execute(dropIndexMethod, session, 'indexName')
         def operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -1319,7 +1335,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def keys = new BsonDocument('x', new BsonInt32(1))
-        expectedOperation = new DropIndexOperation(namespace, keys, ACKNOWLEDGED)
+        expectedOperation = new DropIndexOperation(CSOT_NO_TIMEOUT.get(), namespace, keys, ACKNOWLEDGED)
         execute(dropIndexMethod, session, keys)
         operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -1328,8 +1344,8 @@ class MongoCollectionSpecification extends Specification {
         executor.getClientSession() == session
 
         when:
-        expectedOperation = expectedOperation.maxTime(10, MILLISECONDS)
-        execute(dropIndexMethod, session, keys, new DropIndexOptions().maxTime(10, MILLISECONDS))
+        expectedOperation = new DropIndexOperation(CSOT_MAX_TIME.get(), namespace, keys, ACKNOWLEDGED)
+        execute(dropIndexMethod, session, keys, new DropIndexOptions().maxTime(CSOT_MAX_TIME.getMaxTimeMS(), MILLISECONDS))
         operation = executor.getWriteOperation() as DropIndexOperation
 
         then:
@@ -1345,7 +1361,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new DropIndexOperation(namespace, '*', ACKNOWLEDGED)
+        def expectedOperation = new DropIndexOperation(null, namespace, '*', ACKNOWLEDGED)
         def dropIndexesMethod = collection.&dropIndexes
 
         when:

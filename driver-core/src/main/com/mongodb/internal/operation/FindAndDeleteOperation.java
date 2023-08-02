@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -38,9 +39,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
 
-    public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder) {
-        super(namespace, writeConcern, retryWrites, decoder);
+    public FindAndDeleteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder) {
+        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
     }
 
     @Override
@@ -52,12 +53,6 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     @Override
     public FindAndDeleteOperation<T> projection(@Nullable final BsonDocument projection) {
         super.projection(projection);
-        return this;
-    }
-
-    @Override
-    public FindAndDeleteOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        super.maxTime(maxTime, timeUnit);
         return this;
     }
 

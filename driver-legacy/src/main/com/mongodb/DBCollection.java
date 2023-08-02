@@ -26,6 +26,7 @@ import com.mongodb.client.model.DBCollectionFindAndModifyOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.client.model.DBCollectionRemoveOptions;
 import com.mongodb.client.model.DBCollectionUpdateOptions;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.IndexRequest;
@@ -1653,12 +1654,13 @@ public class DBCollection {
         WriteConcern optionsWriteConcern = options.getWriteConcern();
         WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         WriteOperation<DBObject> operation;
+        ClientSideOperationTimeout clientSideOperationTimeout = ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS),
+                options.getMaxTime(MILLISECONDS));
         if (options.isRemove()) {
-            operation = new FindAndDeleteOperation<>(getNamespace(), writeConcern, retryWrites, objectCodec)
+            operation = new FindAndDeleteOperation<>(clientSideOperationTimeout, getNamespace(), writeConcern, retryWrites, objectCodec)
                         .filter(wrapAllowNull(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
-                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                         .collation(options.getCollation());
         } else {
             DBObject update = options.getUpdate();
@@ -1666,26 +1668,24 @@ public class DBCollection {
                 throw new IllegalArgumentException("update can not be null unless it's a remove");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                operation = new FindAndUpdateOperation<>(getNamespace(), writeConcern, retryWrites, objectCodec,
-                        wrap(update))
+                operation = new FindAndUpdateOperation<>(clientSideOperationTimeout,  getNamespace(), writeConcern, retryWrites,
+                        objectCodec, wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
                         .returnOriginal(!options.returnNew())
                         .upsert(options.isUpsert())
-                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                         .bypassDocumentValidation(options.getBypassDocumentValidation())
                         .collation(options.getCollation())
                         .arrayFilters(wrapAllowNull(options.getArrayFilters(), (Encoder<DBObject>) null));
             } else {
-                operation = new FindAndReplaceOperation<>(getNamespace(), writeConcern, retryWrites, objectCodec,
-                        wrap(update))
+                operation = new FindAndReplaceOperation<>(clientSideOperationTimeout, getNamespace(), writeConcern, retryWrites,
+                        objectCodec, wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
                         .returnOriginal(!options.returnNew())
                         .upsert(options.isUpsert())
-                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                         .bypassDocumentValidation(options.getBypassDocumentValidation())
                         .collation(options.getCollation());
             }
@@ -1931,7 +1931,7 @@ public class DBCollection {
      */
     public void dropIndex(final DBObject index) {
         try {
-            executor.execute(new DropIndexOperation(getNamespace(), wrap(index), getWriteConcern()), getReadConcern());
+            executor.execute(new DropIndexOperation(null, getNamespace(), wrap(index), getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -1946,7 +1946,7 @@ public class DBCollection {
      */
     public void dropIndex(final String indexName) {
         try {
-            executor.execute(new DropIndexOperation(getNamespace(), indexName, getWriteConcern()), getReadConcern());
+            executor.execute(new DropIndexOperation(null, getNamespace(), indexName, getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }

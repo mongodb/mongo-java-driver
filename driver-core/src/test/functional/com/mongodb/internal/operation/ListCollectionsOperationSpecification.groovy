@@ -232,7 +232,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes when calling hasNext before next'() {
         given:
-        new DropDatabaseOperation(CSOT_TIMEOUT, databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -248,7 +248,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes without calling hasNext before next'() {
         given:
-        new DropDatabaseOperation(CSOT_TIMEOUT, databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -270,7 +270,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes when calling hasNext before tryNext'() {
         given:
-        new DropDatabaseOperation(CSOT_TIMEOUT, databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -292,7 +292,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes without calling hasNext before tryNext'() {
         given:
-        new DropDatabaseOperation(CSOT_TIMEOUT, databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -309,7 +309,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes asynchronously'() {
         given:
-        new DropDatabaseOperation(CSOT_TIMEOUT, databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 

@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -50,23 +51,20 @@ import static java.util.Collections.singletonList;
  */
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private long maxTimeMS;
     private BsonValue comment;
 
-    public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
+    public EstimatedDocumentCountOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+            final MongoNamespace namespace) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
     }
 
     public EstimatedDocumentCountOperation retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
-        return this;
-    }
-
-    public EstimatedDocumentCountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -119,7 +117,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
         return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
-            putIfNotZero(document, "maxTimeMS", maxTimeMS);
+            putIfNotZero(document, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
             if (comment != null) {
                 document.put("comment", comment);
             }

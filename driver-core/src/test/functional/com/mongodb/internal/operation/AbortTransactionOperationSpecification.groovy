@@ -34,13 +34,13 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
         def expectedCommand = BsonDocument.parse('{abortTransaction: 1}')
 
         when:
-        def operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT, ACKNOWLEDGED)
+        def operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), ACKNOWLEDGED)
 
         then:
         testOperationInTransaction(operation, [4, 0, 0], expectedCommand, async, cannedResult)
 
         when:
-        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT, MAJORITY)
+        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), MAJORITY)
         expectedCommand.put('writeConcern', MAJORITY.asDocument())
 
         then:
@@ -57,14 +57,14 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
 
         when:
         def writeConcern = MAJORITY.withWTimeout(10, TimeUnit.MILLISECONDS)
-        def operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT, writeConcern)
+        def operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
 
         then:
         testOperationRetries(operation, [4, 0, 0], expectedCommand, async, cannedResult, true)
 
         when:
         writeConcern = MAJORITY
-        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT, writeConcern)
+        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
         expectedCommand.put('writeConcern', writeConcern.asDocument())
 
         then:
@@ -72,7 +72,7 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
 
         when:
         writeConcern = ACKNOWLEDGED
-        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT, writeConcern)
+        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
         expectedCommand.remove('writeConcern')
 
         then:

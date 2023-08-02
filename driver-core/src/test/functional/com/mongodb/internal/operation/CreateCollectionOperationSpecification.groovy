@@ -161,7 +161,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         collectionNameExists(getCollectionName())
 
         when:
-        def stats = new CommandReadOperation<>(CSOT_NO_TIMEOUT, getDatabaseName(),
+        def stats = new CommandReadOperation<>(CSOT_NO_TIMEOUT.get(), getDatabaseName(),
                 new BsonDocument('collStats', new BsonString(getCollectionName())),
                 new BsonDocumentCodec()).execute(getBinding())
 
@@ -298,6 +298,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
     def createOperation(WriteConcern writeConcern) {
-        new CreateCollectionOperation(CSOT_NO_TIMEOUT,  getDatabaseName(), getCollectionName(), writeConcern)
+        new CreateCollectionOperation(CSOT_NO_TIMEOUT.get(),  getDatabaseName(), getCollectionName(), writeConcern)
     }
 }

@@ -36,7 +36,7 @@ import static com.mongodb.ClusterFixture.serverVersionLessThan
 class RenameCollectionOperationSpecification extends OperationFunctionalSpecification {
 
     def cleanup() {
-        new DropCollectionOperation(CSOT_TIMEOUT, new MongoNamespace(getDatabaseName(), 'newCollection'), WriteConcern.ACKNOWLEDGED)
+        new DropCollectionOperation(CSOT_TIMEOUT.get(), new MongoNamespace(getDatabaseName(), 'newCollection'), WriteConcern.ACKNOWLEDGED)
                 .execute(getBinding())
     }
 

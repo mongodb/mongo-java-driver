@@ -218,7 +218,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as DropDatabaseOperation
 
         then:
-        expect operation, isTheSameAs(new DropDatabaseOperation(CSOT_NO_TIMEOUT, name, writeConcern))
+        expect operation, isTheSameAs(new DropDatabaseOperation(CSOT_NO_TIMEOUT.get(), name, writeConcern))
         executor.getClientSession() == session
 
         where:
@@ -323,7 +323,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT.get(), name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
         executor.getClientSession() == session
 
@@ -332,7 +332,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT.get(), name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
         executor.getClientSession() == session
 

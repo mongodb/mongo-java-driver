@@ -80,6 +80,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
@@ -116,12 +117,12 @@ public final class ClusterFixture {
     public static final long TIMEOUT = 60L;
     public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
 
-    public static final ClientSideOperationTimeout CSOT_NO_TIMEOUT = ClientSideOperationTimeouts.NO_TIMEOUT;
-    public static final ClientSideOperationTimeout CSOT_TIMEOUT = ClientSideOperationTimeouts.create(TIMEOUT_DURATION.toMillis());
-    public static final ClientSideOperationTimeout CSOT_MAX_TIME =
-            ClientSideOperationTimeouts.create(null, TIMEOUT_DURATION.toMillis(), 0, 0);
-    public static final ClientSideOperationTimeout CSOT_MAX_TIME_AND_MAX_AWAIT_TIME =
-            ClientSideOperationTimeouts.create(null, 999, 9999, 0);
+    public static final Supplier<ClientSideOperationTimeout> CSOT_NO_TIMEOUT = () -> ClientSideOperationTimeouts.NO_TIMEOUT;
+    public static final Supplier<ClientSideOperationTimeout> CSOT_TIMEOUT =
+            () -> ClientSideOperationTimeouts.create(TIMEOUT_DURATION.toMillis());
+    public static final Supplier<ClientSideOperationTimeout> CSOT_MAX_TIME = () ->
+            ClientSideOperationTimeouts.create(null, 100, 0, 0);
+
     public static final String LEGACY_HELLO = "isMaster";
 
     private static ConnectionString connectionString;
@@ -152,7 +153,7 @@ public final class ClusterFixture {
 
     public static ServerVersion getServerVersion() {
         if (serverVersion == null) {
-            serverVersion = getVersion(new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
+            serverVersion = getVersion(new CommandReadOperation<>(CSOT_TIMEOUT.get(), "admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
                     .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(),
                             IgnorableRequestContext.INSTANCE)));
@@ -197,7 +198,7 @@ public final class ClusterFixture {
     }
 
     public static Document getServerStatus() {
-        return new CommandReadOperation<>(CSOT_TIMEOUT, "admin", new BsonDocument("serverStatus", new BsonInt32(1)),
+        return new CommandReadOperation<>(CSOT_TIMEOUT.get(), "admin", new BsonDocument("serverStatus", new BsonInt32(1)),
                 new DocumentCodec())
                 .execute(getBinding());
     }
@@ -213,7 +214,7 @@ public final class ClusterFixture {
         @Override
         public void run() {
             if (cluster != null) {
-                new DropDatabaseOperation(CSOT_TIMEOUT, getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                new DropDatabaseOperation(CSOT_TIMEOUT.get(), getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
                 cluster.close();
             }
         }
@@ -251,7 +252,7 @@ public final class ClusterFixture {
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
                 new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
-            BsonDocument helloResult = new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
+            BsonDocument helloResult = new CommandReadOperation<>(CSOT_TIMEOUT.get(), "admin",
                     new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec())
                     .execute(new ClusterBinding(cluster, ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(),
                             IgnorableRequestContext.INSTANCE));
@@ -499,7 +500,7 @@ public final class ClusterFixture {
 
     public static BsonDocument getServerParameters() {
         if (serverParameters == null) {
-            serverParameters = new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
+            serverParameters = new CommandReadOperation<>(CSOT_TIMEOUT.get(), "admin",
                     new BsonDocument("getParameter", new BsonString("*")), new BsonDocumentCodec())
                     .execute(getBinding());
         }
@@ -565,7 +566,7 @@ public final class ClusterFixture {
         boolean failsPointsSupported = true;
         if (!isSharded()) {
             try {
-                new CommandReadOperation<>(CSOT_TIMEOUT, "admin", failPointDocument, new BsonDocumentCodec())
+                new CommandReadOperation<>(CSOT_TIMEOUT.get(), "admin", failPointDocument, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
@@ -581,7 +582,7 @@ public final class ClusterFixture {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString(failPoint))
                     .append("mode", new BsonString("off"));
             try {
-                new CommandReadOperation<>(CSOT_TIMEOUT, "admin", failPointDocument, new BsonDocumentCodec())
+                new CommandReadOperation<>(CSOT_TIMEOUT.get(), "admin", failPointDocument, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (MongoCommandException e) {
                 // ignore

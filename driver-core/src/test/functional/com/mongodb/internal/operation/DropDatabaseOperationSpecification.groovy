@@ -43,7 +43,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         assert databaseNameExists(databaseName)
 
         when:
-        execute(new DropDatabaseOperation(CSOT_TIMEOUT, databaseName, WriteConcern.ACKNOWLEDGED), async)
+        execute(new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(databaseName)
@@ -58,7 +58,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         def dbName = 'nonExistingDatabase'
 
         when:
-        execute(new DropDatabaseOperation(CSOT_TIMEOUT, dbName, WriteConcern.ACKNOWLEDGED), async)
+        execute(new DropDatabaseOperation(CSOT_TIMEOUT.get(), dbName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(dbName)
@@ -74,7 +74,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
 
         // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
         def w = serverVersionAtLeast(4, 0) ? 2 : 5
-        def operation = new DropDatabaseOperation(CSOT_TIMEOUT, databaseName, new WriteConcern(w))
+        def operation = new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, new WriteConcern(w))
         if (serverVersionAtLeast(4, 0)) {
             configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
                     'mode : {times : 1}, ' +

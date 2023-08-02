@@ -38,7 +38,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        new DropCollectionOperation(CSOT_TIMEOUT, getNamespace(), WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(CSOT_TIMEOUT.get(), getNamespace(), WriteConcern.ACKNOWLEDGED).execute(getBinding())
 
         then:
         !collectionNameExists(getCollectionName())
@@ -51,7 +51,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        executeAsync(new DropCollectionOperation(CSOT_TIMEOUT, getNamespace(), WriteConcern.ACKNOWLEDGED))
+        executeAsync(new DropCollectionOperation(CSOT_TIMEOUT.get(), getNamespace(), WriteConcern.ACKNOWLEDGED))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -62,7 +62,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        new DropCollectionOperation(CSOT_TIMEOUT, namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(CSOT_TIMEOUT.get(), namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
 
         then:
         !collectionNameExists('nonExistingCollection')
@@ -74,7 +74,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        executeAsync(new DropCollectionOperation(CSOT_TIMEOUT, namespace, WriteConcern.ACKNOWLEDGED))
+        executeAsync(new DropCollectionOperation(CSOT_TIMEOUT.get(), namespace, WriteConcern.ACKNOWLEDGED))
 
         then:
         !collectionNameExists('nonExistingCollection')
@@ -85,7 +85,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
         assert collectionNameExists(getCollectionName())
-        def operation = new DropCollectionOperation(CSOT_TIMEOUT, getNamespace(), new WriteConcern(5))
+        def operation = new DropCollectionOperation(CSOT_TIMEOUT.get(), getNamespace(), new WriteConcern(5))
 
         when:
         async ? executeAsync(operation) : operation.execute(getBinding())

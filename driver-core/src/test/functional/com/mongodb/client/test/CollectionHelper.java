@@ -67,7 +67,6 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.mongodb.ClusterFixture.CSOT_TIMEOUT;
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
 import static java.util.Arrays.asList;
@@ -75,20 +74,19 @@ import static java.util.Collections.singletonList;
 
 public final class CollectionHelper<T> {
 
+    private static final Supplier<ClientSideOperationTimeout> CSOT_SUPPLIER = () -> ClientSideOperationTimeouts.create(10_000L);
     private final Codec<T> codec;
     private final CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
     private final MongoNamespace namespace;
 
-    private final Supplier<ClientSideOperationTimeout> clientSideOperationTimeout;
-
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;
         this.namespace = namespace;
-        this.clientSideOperationTimeout = () -> ClientSideOperationTimeouts.create(60_000L);
     }
 
     public T hello() {
-        return new CommandReadOperation<>(null, "admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
+        return new CommandReadOperation<>(CSOT_SUPPLIER.get(), "admin", BsonDocument.parse("{isMaster: 1}"), codec)
+                .execute(getBinding());
     }
 
     public static void drop(final MongoNamespace namespace) {
@@ -96,7 +94,7 @@ public final class CollectionHelper<T> {
     }
 
     public static void drop(final MongoNamespace namespace, final WriteConcern writeConcern) {
-        new DropCollectionOperation(CSOT_TIMEOUT, namespace, writeConcern).execute(getBinding());
+        new DropCollectionOperation(CSOT_SUPPLIER.get(), namespace, writeConcern).execute(getBinding());
     }
 
     public static void dropDatabase(final String name) {
@@ -108,7 +106,7 @@ public final class CollectionHelper<T> {
             return;
         }
         try {
-            new DropDatabaseOperation(CSOT_TIMEOUT, name, writeConcern).execute(getBinding());
+            new DropDatabaseOperation(CSOT_SUPPLIER.get(), name, writeConcern).execute(getBinding());
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
@@ -142,7 +140,8 @@ public final class CollectionHelper<T> {
 
     public void create(final String collectionName, final CreateCollectionOptions options, final WriteConcern writeConcern) {
         drop(namespace, writeConcern);
-        CreateCollectionOperation operation = new CreateCollectionOperation(null, namespace.getDatabaseName(), collectionName, writeConcern)
+        CreateCollectionOperation operation = new CreateCollectionOperation(CSOT_SUPPLIER.get(), namespace.getDatabaseName(), collectionName,
+                writeConcern)
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
                 .maxDocuments(options.getMaxDocuments());
@@ -169,7 +168,7 @@ public final class CollectionHelper<T> {
             BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                     .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
             try {
-                new CommandReadOperation<>(null, namespace.getDatabaseName(), command, new BsonDocumentCodec())
+                new CommandReadOperation<>(CSOT_SUPPLIER.get(), namespace.getDatabaseName(), command, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (Exception e) {
                 // Ignore any exceptions killing old cursors
@@ -297,11 +296,11 @@ public final class CollectionHelper<T> {
     }
 
     private <D> List<D> aggregate(final List<Bson> pipeline, final Decoder<D> decoder, final AggregationLevel level) {
-        List<BsonDocument> bsonDocumentPipeline = new ArrayList<BsonDocument>();
+        List<BsonDocument> bsonDocumentPipeline = new ArrayList<>();
         for (Bson cur : pipeline) {
             bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
         }
-        BatchCursor<D> cursor = new AggregateOperation<D>(null, namespace, bsonDocumentPipeline, decoder, level)
+        BatchCursor<D> cursor = new AggregateOperation<>(CSOT_SUPPLIER.get(), namespace, bsonDocumentPipeline, decoder, level)
                 .execute(getBinding());
         List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {
@@ -350,15 +349,15 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final ReadBinding binding) {
-        return new CountDocumentsOperation(clientSideOperationTimeout.get(), namespace).execute(binding);
+        return new CountDocumentsOperation(CSOT_SUPPLIER.get(), namespace).execute(binding);
     }
 
     public long count(final AsyncReadWriteBinding binding) throws Throwable {
-        return executeAsync(new CountDocumentsOperation(clientSideOperationTimeout.get(), namespace), binding);
+        return executeAsync(new CountDocumentsOperation(CSOT_SUPPLIER.get(), namespace), binding);
     }
 
     public long count(final Bson filter) {
-        return new CountDocumentsOperation(clientSideOperationTimeout.get(), namespace)
+        return new CountDocumentsOperation(CSOT_SUPPLIER.get(), namespace)
                 .filter(toBsonDocument(filter)).execute(getBinding());
     }
 
@@ -371,32 +370,36 @@ public final class CollectionHelper<T> {
     }
 
     public void createIndex(final BsonDocument key) {
-        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(CSOT_SUPPLIER.get(), namespace, singletonList(new IndexRequest(key)), WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding());
     }
 
     public void createIndex(final Document key) {
-        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(CSOT_SUPPLIER.get(), namespace, singletonList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding());
     }
 
     public void createUniqueIndex(final Document key) {
-        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(wrap(key)).unique(true)), WriteConcern.ACKNOWLEDGED)
+        new CreateIndexesOperation(CSOT_SUPPLIER.get(), namespace, singletonList(new IndexRequest(wrap(key)).unique(true)), 
+                WriteConcern.ACKNOWLEDGED)
                 .execute(getBinding());
     }
 
     public void createIndex(final Document key, final String defaultLanguage) {
-        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
-                                          WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(CSOT_SUPPLIER.get(), namespace, 
+                singletonList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     public void createIndex(final Bson key) {
-        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))),
-                                          WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(CSOT_SUPPLIER.get(), namespace, 
+                singletonList(new IndexRequest(key.toBsonDocument(Document.class, registry))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     @SuppressWarnings("deprecation")
     public void createIndex(final Bson key, final Double bucketSize) {
-        new CreateIndexesOperation(null, namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
-                .bucketSize(bucketSize)), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        new CreateIndexesOperation(CSOT_SUPPLIER.get(), namespace,
+                singletonList(new IndexRequest(key.toBsonDocument(Document.class, registry)).bucketSize(bucketSize)), 
+                WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
     public List<BsonDocument> listIndexes(){
@@ -410,8 +413,8 @@ public final class CollectionHelper<T> {
 
     public void killAllSessions() {
         try {
-            new CommandReadOperation<>(null, "admin", new BsonDocument("killAllSessions", new BsonArray()),
-                                       new BsonDocumentCodec()).execute(getBinding());
+            new CommandReadOperation<>(CSOT_SUPPLIER.get(), "admin", 
+                    new BsonDocument("killAllSessions", new BsonArray()), new BsonDocumentCodec()).execute(getBinding());
         } catch (MongoCommandException e) {
             // ignore exception caused by killing the implicit session that the killAllSessions command itself is running in
         }
@@ -419,7 +422,7 @@ public final class CollectionHelper<T> {
 
     public void renameCollection(final MongoNamespace newNamespace) {
         try {
-            new CommandReadOperation<>(CSOT_TIMEOUT, "admin",
+            new CommandReadOperation<>(CSOT_SUPPLIER.get(), "admin",
                     new BsonDocument("renameCollection", new BsonString(getNamespace().getFullName()))
                             .append("to", new BsonString(newNamespace.getFullName())), new BsonDocumentCodec()).execute(getBinding());
         } catch (MongoCommandException e) {
@@ -432,10 +435,12 @@ public final class CollectionHelper<T> {
     }
 
     public void runAdminCommand(final BsonDocument command) {
-        new CommandReadOperation<>(null, "admin", command, new BsonDocumentCodec()).execute(getBinding());
+        new CommandReadOperation<>(CSOT_SUPPLIER.get(), "admin", command, new BsonDocumentCodec())
+                .execute(getBinding());
     }
 
     public void runAdminCommand(final BsonDocument command, final ReadPreference readPreference) {
-        new CommandReadOperation<>(null, "admin", command, new BsonDocumentCodec()).execute(getBinding(readPreference));
+        new CommandReadOperation<>(CSOT_SUPPLIER.get(), "admin", command, new BsonDocumentCodec())
+                .execute(getBinding(readPreference));
     }
 }

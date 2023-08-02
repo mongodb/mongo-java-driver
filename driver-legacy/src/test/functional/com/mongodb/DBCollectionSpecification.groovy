@@ -371,8 +371,8 @@ class DBCollectionSpecification extends Specification {
         collection.findAndRemove(query)
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
-                WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec()).filter(new BsonDocument()))
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(CSOT_NO_TIMEOUT.get(), collection.
+                getNamespace(), WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec()).filter(new BsonDocument()))
     }
 
     def 'findAndModify should create the correct FindAndUpdateOperation'() {
@@ -391,8 +391,8 @@ class DBCollectionSpecification extends Specification {
         collection.findAndModify(query, update)
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(),
-                WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec(), bsonUpdate)
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(CSOT_NO_TIMEOUT.get(),
+                collection.getNamespace(), WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec(), bsonUpdate)
                 .filter(new BsonDocument()))
 
         when: // With options
@@ -400,10 +400,11 @@ class DBCollectionSpecification extends Specification {
                 .arrayFilters(dbObjectArrayFilters).writeConcern(WriteConcern.W3))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(), WriteConcern.W3,
-                retryWrites, collection.getObjectCodec(), bsonUpdate)
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(CSOT_NO_TIMEOUT.get(),
+                collection.getNamespace(), WriteConcern.W3, retryWrites, collection.getObjectCodec(), bsonUpdate)
                 .filter(new BsonDocument())
-                .collation(collation).arrayFilters(bsonDocumentWrapperArrayFilters))
+                .collation(collation)
+                .arrayFilters(bsonDocumentWrapperArrayFilters))
 
         where:
         dbObjectArrayFilters <<            [null, [], [new BasicDBObject('i.b', 1)]]
@@ -427,8 +428,8 @@ class DBCollectionSpecification extends Specification {
         collection.findAndModify(query, replace)
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(),
-                WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec(), bsonReplace)
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(CSOT_NO_TIMEOUT.get(), collection.
+                getNamespace(), WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec(), bsonReplace)
                 .filter(new BsonDocument()))
 
         when: // With options
@@ -436,7 +437,7 @@ class DBCollectionSpecification extends Specification {
                 .writeConcern(WriteConcern.W3))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(), WriteConcern.W3,
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(CSOT_NO_TIMEOUT.get(), collection.getNamespace(), WriteConcern.W3,
                 retryWrites, collection.getObjectCodec(), bsonReplace)
                 .filter(new BsonDocument())
                 .collation(collation))
@@ -497,7 +498,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         distinctFieldValues == [1, 2]
-        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(CSOT_NO_TIMEOUT, collection.getNamespace(), 'field1',
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(CSOT_NO_TIMEOUT.get(), collection.getNamespace(), 'field1',
                 new BsonValueCodec()).filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.DEFAULT
 
@@ -515,7 +516,7 @@ class DBCollectionSpecification extends Specification {
         collection.distinct('field1', new DBCollectionDistinctOptions().collation(collation))
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(CSOT_NO_TIMEOUT, collection.getNamespace(), 'field1',
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(CSOT_NO_TIMEOUT.get(), collection.getNamespace(), 'field1',
                 new BsonValueCodec()).collation(collation).retryReads(true))
         executor.getReadConcern() == ReadConcern.LOCAL
     }

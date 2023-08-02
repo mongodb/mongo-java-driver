@@ -86,7 +86,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     def 'should throw execution timeout exception from execute'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
-        def operation = createOperation(CSOT_MAX_TIME, [new IndexRequest(keys)])
+        def operation = createOperation(CSOT_MAX_TIME.get(), [new IndexRequest(keys)])
 
         enableMaxTimeFailPoint()
 
@@ -571,7 +571,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     }
 
     def createOperation(final List<IndexRequest> requests) {
-        return createOperation(CSOT_NO_TIMEOUT, requests)
+        return createOperation(CSOT_NO_TIMEOUT.get(), requests)
     }
 
     def createOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final List<IndexRequest> requests) {
