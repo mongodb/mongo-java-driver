@@ -19,21 +19,14 @@ package org.mongodb.scala.syncadapter
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
 import com.mongodb.client.result.{ DeleteResult, UpdateResult }
-import com.mongodb.client.{
-  ChangeStreamIterable,
-  ClientSession,
-  ListSearchIndexesIterable,
-  MongoCollection => JMongoCollection
-}
+import com.mongodb.client.{ ChangeStreamIterable, ClientSession, MongoCollection => JMongoCollection }
 import com.mongodb.{ MongoNamespace, ReadConcern, ReadPreference, WriteConcern }
-import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.result.{ InsertManyResult, InsertOneResult }
 
-import java.util
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -486,7 +479,7 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
   override def createSearchIndex(definition: Bson) =
     wrapped.createSearchIndex(definition).toFuture().get()
 
-  override def createSearchIndexes(searchIndexModels: util.List[SearchIndexModel]) =
+  override def createSearchIndexes(searchIndexModels: java.util.List[SearchIndexModel]) =
     throw new UnsupportedOperationException()
 
   def updateSearchIndex(indexName: String, definition: Bson) =
@@ -494,7 +487,7 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
 
   def dropSearchIndex(indexName: String) = wrapped.dropSearchIndex(indexName).toFuture().get()
 
-  override def listSearchIndexes(): ListSearchIndexesIterable[Document] = throw new UnsupportedOperationException()
+  override def listSearchIndexes() = throw new UnsupportedOperationException()
 
   override def listSearchIndexes[TResult](resultClass: Class[TResult]) =
     SyncListSearchIndexesIterable[TResult](
