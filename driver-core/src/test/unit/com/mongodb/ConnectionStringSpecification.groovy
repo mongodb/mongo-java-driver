@@ -683,6 +683,20 @@ class ConnectionStringSpecification extends Specification {
         connectionString.hosts == ['test5.test.build.10gen.cc']
     }
 
+    // sslEnabled defaults to true with mongodb+srv but can be overridden via query parameter
+    def 'should set sslEnabled property with SRV protocol'() {
+        expect:
+        connectionString.getSslEnabled() == sslEnabled
+
+        where:
+        connectionString                                                           | sslEnabled
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc')            | true
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?tls=true')  | true
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?ssl=true')  | true
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?tls=false') | false
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?ssl=false') | false
+    }
+
 
     // these next two tests are functionally part of the initial-dns-seedlist-discovery specification tests, but since those
     // tests require that the driver connects to an actual replica set, it isn't possible to create specification tests
