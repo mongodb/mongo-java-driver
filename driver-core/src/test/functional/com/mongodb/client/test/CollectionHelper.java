@@ -96,7 +96,7 @@ public final class CollectionHelper<T> {
     }
 
     public static void drop(final MongoNamespace namespace, final WriteConcern writeConcern) {
-        new DropCollectionOperation(namespace, writeConcern).execute(getBinding());
+        new DropCollectionOperation(CSOT_TIMEOUT, namespace, writeConcern).execute(getBinding());
     }
 
     public static void dropDatabase(final String name) {
@@ -108,7 +108,7 @@ public final class CollectionHelper<T> {
             return;
         }
         try {
-            new DropDatabaseOperation(name, writeConcern).execute(getBinding());
+            new DropDatabaseOperation(CSOT_TIMEOUT, name, writeConcern).execute(getBinding());
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;

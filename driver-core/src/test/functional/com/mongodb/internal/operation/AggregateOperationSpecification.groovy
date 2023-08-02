@@ -236,7 +236,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def viewSuffix = '-view'
         def viewName = getCollectionName() + viewSuffix
         def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
-        new CreateViewOperation(getDatabaseName(), viewName, getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
+        new CreateViewOperation(CSOT_NO_TIMEOUT, getDatabaseName(), viewName, getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
                 .execute(getBinding(getCluster()))
 
         when:
@@ -249,7 +249,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
 
         cleanup:
-        new DropCollectionOperation(viewNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding(getCluster()))
+        new DropCollectionOperation(CSOT_TIMEOUT, viewNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding(getCluster()))
 
         where:
         async << [true, false]

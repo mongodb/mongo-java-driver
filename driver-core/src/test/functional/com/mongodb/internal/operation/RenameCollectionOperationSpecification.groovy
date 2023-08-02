@@ -25,6 +25,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -35,7 +36,8 @@ import static com.mongodb.ClusterFixture.serverVersionLessThan
 class RenameCollectionOperationSpecification extends OperationFunctionalSpecification {
 
     def cleanup() {
-        new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getBinding())
+        new DropCollectionOperation(CSOT_TIMEOUT, new MongoNamespace(getDatabaseName(), 'newCollection'), WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding())
     }
 
     def 'should return rename a collection'() {

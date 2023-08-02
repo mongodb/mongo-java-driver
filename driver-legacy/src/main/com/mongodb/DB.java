@@ -256,7 +256,8 @@ public class DB {
      */
     public void dropDatabase() {
         try {
-            getExecutor().execute(new DropDatabaseOperation(getName(), getWriteConcern()), getReadConcern());
+            getExecutor().execute(new DropDatabaseOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)), 
+                            getName(), getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -365,8 +366,9 @@ public class DB {
         try {
             notNull("options", options);
             DBCollection view = getCollection(viewName);
-            executor.execute(new CreateViewOperation(name, viewName, viewOn, view.preparePipeline(pipeline), writeConcern)
-                                     .collation(options.getCollation()), getReadConcern());
+            executor.execute(new CreateViewOperation(ClientSideOperationTimeouts.create(getTimeout(MILLISECONDS)), name, viewName, viewOn,
+                    view.preparePipeline(pipeline), writeConcern)
+                    .collation(options.getCollation()), getReadConcern());
             return view;
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);

@@ -35,6 +35,7 @@ import org.bson.BsonDouble
 import spock.lang.Specification
 
 import static Fixture.getMongoClient
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static spock.util.matcher.HamcrestSupport.expect
@@ -160,7 +161,7 @@ class DBSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as CreateViewOperation
-        expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, databaseName, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
@@ -169,7 +170,7 @@ class DBSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, databaseName, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }

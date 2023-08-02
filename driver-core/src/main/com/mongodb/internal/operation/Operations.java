@@ -223,10 +223,10 @@ final class Operations<TDocument> {
     <TResult> DistinctOperation<TResult> distinct(final String fieldName, @Nullable final Bson filter,
                                                          final Class<TResult> resultClass, final long maxTimeMS,
                                                          final Collation collation, final BsonValue comment) {
-        return new DistinctOperation<>(assertNotNull(namespace), fieldName, codecRegistry.get(resultClass))
+        return new DistinctOperation<>(ClientSideOperationTimeouts.create(timeoutMS, maxTimeMS), assertNotNull(namespace),
+                fieldName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
-                .maxTime(maxTimeMS, MILLISECONDS)
                 .collation(collation)
                 .comment(comment);
 
@@ -530,7 +530,8 @@ final class Operations<TDocument> {
 
 
     DropDatabaseOperation dropDatabase() {
-        return new DropDatabaseOperation(assertNotNull(namespace).getDatabaseName(), getWriteConcern());
+        return new DropDatabaseOperation(ClientSideOperationTimeouts.create(timeoutMS), assertNotNull(namespace).getDatabaseName(),
+                getWriteConcern());
     }
 
     CreateCollectionOperation createCollection(final ClientSideOperationTimeout clientSideOperationTimeout, final String collectionName,
@@ -578,7 +579,8 @@ final class Operations<TDocument> {
     DropCollectionOperation dropCollection(
             final DropCollectionOptions dropCollectionOptions,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
-        DropCollectionOperation operation = new DropCollectionOperation(assertNotNull(namespace), writeConcern);
+        DropCollectionOperation operation = new DropCollectionOperation(ClientSideOperationTimeouts.create(timeoutMS),
+                assertNotNull(namespace), writeConcern);
         Bson encryptedFields = dropCollectionOptions.getEncryptedFields();
         if (encryptedFields != null) {
             operation.encryptedFields(assertNotNull(toBsonDocument(encryptedFields)));
@@ -603,8 +605,8 @@ final class Operations<TDocument> {
             final CreateViewOptions createViewOptions) {
         notNull("options", createViewOptions);
         notNull("pipeline", pipeline);
-        return new CreateViewOperation(assertNotNull(namespace).getDatabaseName(), viewName, viewOn,
-                assertNotNull(toBsonDocumentList(pipeline)), writeConcern).collation(createViewOptions.getCollation());
+        return new CreateViewOperation(ClientSideOperationTimeouts.create(timeoutMS), assertNotNull(namespace).getDatabaseName(), viewName,
+                viewOn, assertNotNull(toBsonDocumentList(pipeline)), writeConcern).collation(createViewOptions.getCollation());
     }
 
     @SuppressWarnings("deprecation")

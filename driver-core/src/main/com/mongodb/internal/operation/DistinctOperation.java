@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -54,6 +55,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String VALUES = "values";
 
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Decoder<T> decoder;
@@ -63,7 +65,9 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private Collation collation;
     private BsonValue comment;
 
-    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder) {
+    public DistinctOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final String fieldName, final Decoder<T> decoder) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
@@ -87,17 +91,6 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return retryReads;
     }
 
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public DistinctOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
     public Collation getCollation() {
         return collation;
     }
@@ -119,14 +112,15 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(null, binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                createCommandDecoder(), transformer(), retryReads);
+        return executeRetryableRead(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()), createCommandDecoder(), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(null, binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                createCommandDecoder(), asyncTransformer(), retryReads, errorHandlingCallback(callback, LOGGER));
+        executeRetryableReadAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()), createCommandDecoder(), asyncTransformer(), retryReads,
+                errorHandlingCallback(callback, LOGGER));
     }
 
     private Codec<BsonDocument> createCommandDecoder() {
@@ -153,19 +147,17 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription);
-    }
-
-    private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
-        BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
-        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), commandDocument);
-        commandDocument.put("key", new BsonString(fieldName));
-        putIfNotNull(commandDocument, "query", filter);
-        putIfNotZero(commandDocument, "maxTimeMS", maxTimeMS);
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
-        }
-        putIfNotNull(commandDocument, "comment", comment);
-        return commandDocument;
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+            BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
+            appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), commandDocument);
+            commandDocument.put("key", new BsonString(fieldName));
+            putIfNotNull(commandDocument, "query", filter);
+            putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+            if (collation != null) {
+                commandDocument.put("collation", collation.asDocument());
+            }
+            putIfNotNull(commandDocument, "comment", comment);
+            return commandDocument;
+        };
     }
 }

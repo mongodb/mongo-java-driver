@@ -37,6 +37,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -64,8 +65,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     def cleanup() {
-        new DropCollectionOperation(mapReduceInputNamespace).execute(getBinding())
-        new DropCollectionOperation(mapReduceOutputNamespace).execute(getBinding())
+        new DropCollectionOperation(CSOT_TIMEOUT, mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(CSOT_TIMEOUT, mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
     }
 
     def 'should have the correct defaults'() {

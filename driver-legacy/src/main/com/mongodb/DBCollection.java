@@ -1033,7 +1033,7 @@ public class DBCollection {
                                                   retryReads) {
             @Override
             public ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
-                return new DistinctOperation<>(getNamespace(), fieldName, new BsonValueCodec())
+                return new DistinctOperation<>(null, getNamespace(), fieldName, new BsonValueCodec())
                                .filter(wrapAllowNull(options.getFilter()))
                                .collation(options.getCollation())
                                .retryReads(retryReads);
@@ -1847,7 +1847,8 @@ public class DBCollection {
      */
     public void drop() {
         try {
-            executor.execute(new DropCollectionOperation(getNamespace(), getWriteConcern()), getReadConcern());
+            executor.execute(new DropCollectionOperation(ClientSideOperationTimeouts.create(timeoutMS), getNamespace(), getWriteConcern()),
+                    getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }

@@ -97,6 +97,7 @@ import java.util.function.Supplier
 
 import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
 import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
@@ -1113,7 +1114,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, readConcern, JAVA_LEGACY, null, executor)
-        def expectedOperation = new DropCollectionOperation(namespace, ACKNOWLEDGED)
+        def expectedOperation = new DropCollectionOperation(CSOT_NO_TIMEOUT, namespace, ACKNOWLEDGED)
         def dropMethod = collection.&drop
 
         when:

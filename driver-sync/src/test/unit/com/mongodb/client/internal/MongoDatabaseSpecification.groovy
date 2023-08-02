@@ -44,6 +44,7 @@ import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
@@ -217,7 +218,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as DropDatabaseOperation
 
         then:
-        expect operation, isTheSameAs(new DropDatabaseOperation(name, writeConcern))
+        expect operation, isTheSameAs(new DropDatabaseOperation(CSOT_NO_TIMEOUT, name, writeConcern))
         executor.getClientSession() == session
 
         where:
@@ -322,7 +323,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
         executor.getClientSession() == session
 
@@ -331,7 +332,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(CSOT_NO_TIMEOUT, name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
         executor.getClientSession() == session
 

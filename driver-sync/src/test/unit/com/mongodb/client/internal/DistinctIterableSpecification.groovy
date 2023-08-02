@@ -64,7 +64,7 @@ class DistinctIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
+        expect operation, isTheSameAs(new DistinctOperation<Document>(null, namespace, 'field', new DocumentCodec())
                 .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
@@ -74,7 +74,7 @@ class DistinctIterableSpecification extends Specification {
         operation = executor.getReadOperation() as DistinctOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
+        expect operation, isTheSameAs(new DistinctOperation<Document>(null, namespace, 'field', new DocumentCodec())
                 .filter(new BsonDocument('field', new BsonInt32(1)))
                 .maxTime(999, MILLISECONDS).collation(collation).retryReads(true))
     }

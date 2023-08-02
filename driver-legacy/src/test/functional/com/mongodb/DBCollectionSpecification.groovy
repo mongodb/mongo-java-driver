@@ -63,6 +63,7 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 import static Fixture.getMongoClient
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForDelete
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForUpdate
@@ -496,8 +497,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         distinctFieldValues == [1, 2]
-        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                                                                .filter(new BsonDocument()).retryReads(true))
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(CSOT_NO_TIMEOUT, collection.getNamespace(), 'field1',
+                new BsonValueCodec()).filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
@@ -505,7 +506,7 @@ class DBCollectionSpecification extends Specification {
         collection.distinct('field1')
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(null, collection.getNamespace(), 'field1', new BsonValueCodec())
                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
@@ -514,8 +515,8 @@ class DBCollectionSpecification extends Specification {
         collection.distinct('field1', new DBCollectionDistinctOptions().collation(collation))
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .collation(collation).retryReads(true))
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(CSOT_NO_TIMEOUT, collection.getNamespace(), 'field1',
+                new BsonValueCodec()).collation(collation).retryReads(true))
         executor.getReadConcern() == ReadConcern.LOCAL
     }
 

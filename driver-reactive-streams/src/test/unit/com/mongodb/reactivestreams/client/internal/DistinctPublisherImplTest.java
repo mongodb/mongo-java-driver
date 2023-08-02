@@ -43,7 +43,7 @@ public class DistinctPublisherImplTest extends TestHelper {
         DistinctPublisher<Document> publisher =
                 new DistinctPublisherImpl<>(null, createMongoOperationPublisher(executor), fieldName, new Document());
 
-        DistinctOperation<Document> expectedOperation = new DistinctOperation<>(NAMESPACE, fieldName,
+        DistinctOperation<Document> expectedOperation = new DistinctOperation<>(null, NAMESPACE, fieldName,
                                                                                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true).filter(new BsonDocument());
 
