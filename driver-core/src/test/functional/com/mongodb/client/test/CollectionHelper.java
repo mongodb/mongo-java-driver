@@ -238,7 +238,7 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final Codec<D> codec) {
-        BatchCursor<D> cursor = new FindOperation<>(namespace, codec)
+        BatchCursor<D> cursor = new FindOperation<>(CSOT_SUPPLIER.get(), namespace, codec)
                 .sort(new BsonDocument("_id", new BsonInt32(1)))
                 .execute(getBinding());
         List<D> results = new ArrayList<>();
@@ -335,7 +335,7 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final BsonDocument projection, final Decoder<D> decoder) {
-        BatchCursor<D> cursor = new FindOperation<>(namespace, decoder).filter(filter).sort(sort).projection(projection)
+        BatchCursor<D> cursor = new FindOperation<>(null, namespace, decoder).filter(filter).sort(sort).projection(projection)
                                                                         .execute(getBinding());
         List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {

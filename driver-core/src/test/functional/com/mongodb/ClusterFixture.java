@@ -122,7 +122,8 @@ public final class ClusterFixture {
             () -> ClientSideOperationTimeouts.create(TIMEOUT_DURATION.toMillis());
     public static final Supplier<ClientSideOperationTimeout> CSOT_MAX_TIME = () ->
             ClientSideOperationTimeouts.create(null, 100, 0, 0);
-
+    public static final Supplier<ClientSideOperationTimeout> CSOT_MAX_TIME_AND_MAX_AWAIT_TIME = () ->
+            ClientSideOperationTimeouts.create(null, 101, 1001, 0);
     public static final String LEGACY_HELLO = "isMaster";
 
     private static ConnectionString connectionString;

@@ -38,6 +38,8 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -66,14 +68,14 @@ class GridFSFindIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(null, namespace, gridFSFileCodec)
                 .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
         findIterable.filter(new Document('filter', 2))
                 .sort(new Document('sort', 2))
-                .maxTime(999, MILLISECONDS)
+                .maxTime(101, MILLISECONDS)
                 .batchSize(99)
                 .limit(99)
                 .skip(9)
@@ -84,10 +86,9 @@ class GridFSFindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(CSOT_MAX_TIME.get(), namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
-                .maxTime(999, MILLISECONDS)
                 .batchSize(99)
                 .limit(99)
                 .skip(9)
@@ -111,7 +112,7 @@ class GridFSFindIterableSpecification extends Specification {
         def operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(null, namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)

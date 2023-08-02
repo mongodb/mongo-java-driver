@@ -23,6 +23,7 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
+import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
@@ -429,32 +430,31 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
-
-        return new FindOperation<>(collection.getNamespace(), decoder)
-                                                .filter(collection.wrapAllowNull(filter))
-                                                .batchSize(findOptions.getBatchSize())
-                                                .skip(findOptions.getSkip())
-                                                .limit(findOptions.getLimit())
-                                                .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                                                .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                .projection(collection.wrapAllowNull(findOptions.getProjection()))
-                                                .sort(collection.wrapAllowNull(findOptions.getSort()))
-                                                .collation(findOptions.getCollation())
-                                                .comment(findOptions.getComment() != null
-                                                        ? new BsonString(findOptions.getComment()) : null)
-                                                .hint(findOptions.getHint() != null
-                                                        ? collection.wrapAllowNull(findOptions.getHint())
-                                                        : (findOptions.getHintString() != null
-                                                        ? new BsonString(findOptions.getHintString()) : null))
-                                                .min(collection.wrapAllowNull(findOptions.getMin()))
-                                                .max(collection.wrapAllowNull(findOptions.getMax()))
-                                                .cursorType(findOptions.getCursorType())
-                                                .noCursorTimeout(findOptions.isNoCursorTimeout())
-                                                .oplogReplay(findOptions.isOplogReplay())
-                                                .partial(findOptions.isPartial())
-                                                .returnKey(findOptions.isReturnKey())
-                                                .showRecordId(findOptions.isShowRecordId())
-                                                .retryReads(retryReads);
+        return new FindOperation<>(
+                ClientSideOperationTimeouts.create(collection.getTimeout(MILLISECONDS), findOptions.getMaxTime(MILLISECONDS),
+                        findOptions.getMaxAwaitTime(MILLISECONDS)), collection.getNamespace(), decoder)
+                .filter(collection.wrapAllowNull(filter))
+                .batchSize(findOptions.getBatchSize())
+                .skip(findOptions.getSkip())
+                .limit(findOptions.getLimit())
+                .projection(collection.wrapAllowNull(findOptions.getProjection()))
+                .sort(collection.wrapAllowNull(findOptions.getSort()))
+                .collation(findOptions.getCollation())
+                .comment(findOptions.getComment() != null
+                        ? new BsonString(findOptions.getComment()) : null)
+                .hint(findOptions.getHint() != null
+                        ? collection.wrapAllowNull(findOptions.getHint())
+                        : (findOptions.getHintString() != null
+                        ? new BsonString(findOptions.getHintString()) : null))
+                .min(collection.wrapAllowNull(findOptions.getMin()))
+                .max(collection.wrapAllowNull(findOptions.getMax()))
+                .cursorType(findOptions.getCursorType())
+                .noCursorTimeout(findOptions.isNoCursorTimeout())
+                .oplogReplay(findOptions.isOplogReplay())
+                .partial(findOptions.isPartial())
+                .returnKey(findOptions.isReturnKey())
+                .showRecordId(findOptions.isShowRecordId())
+                .retryReads(retryReads);
     }
 
     /**

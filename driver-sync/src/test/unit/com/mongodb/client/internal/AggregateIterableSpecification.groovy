@@ -41,6 +41,7 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
 import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -151,14 +152,12 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'aggregation includes $out and is at the database level'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
                 pipeline, AggregationLevel.DATABASE, false)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(101, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
@@ -168,11 +167,10 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(null, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_MAX_TIME.get(), namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
                 readConcern, writeConcern,
                 AggregationLevel.DATABASE)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
@@ -186,8 +184,6 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
         operation.isAllowDiskUse() == null
 
         when: 'toCollection should work as expected'
@@ -287,14 +283,12 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'aggregation includes $merge into a different database'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
                 pipelineWithIntoDocument, AggregationLevel.COLLECTION, false)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(101, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
@@ -303,13 +297,12 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(null, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_MAX_TIME.get(), namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into',
                          new BsonDocument('db', new BsonString('db2')).append('coll', new BsonString(collectionName))))],
                 readConcern, writeConcern,
                 AggregationLevel.COLLECTION)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
@@ -323,14 +316,12 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == new MongoNamespace('db2', collectionName)
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'aggregation includes $merge and is at the database level'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
                 pipeline, AggregationLevel.DATABASE, false)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(101, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
@@ -339,12 +330,11 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(null, namespace,
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(CSOT_MAX_TIME.get(), namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
                 readConcern, writeConcern,
                 AggregationLevel.DATABASE)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
@@ -358,8 +348,6 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'toCollection should work as expected'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,

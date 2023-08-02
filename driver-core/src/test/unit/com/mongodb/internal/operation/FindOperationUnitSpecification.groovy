@@ -27,14 +27,15 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CursorType.TailableAwait
-import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
 
 class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should find with correct command'() {
         when:
-        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(CSOT_MAX_TIME.get(), namespace, new BsonDocumentCodec())
         def expectedCommand = new BsonDocument('find', new BsonString(namespace.getCollectionName()))
 
         then:
@@ -51,7 +52,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .noCursorTimeout(true)
                 .partial(true)
                 .oplogReplay(true)
-                .maxTime(10, MILLISECONDS)
                 .comment(new BsonString('my comment'))
                 .hint(BsonDocument.parse('{ hint : 1}'))
                 .min(BsonDocument.parse('{ abc: 99 }'))
@@ -71,7 +71,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .append('allowPartialResults', BsonBoolean.TRUE)
                 .append('noCursorTimeout', BsonBoolean.TRUE)
                 .append('oplogReplay', BsonBoolean.TRUE)
-                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
+                .append('maxTimeMS', new BsonInt64(100))
                 .append('comment', operation.getComment())
                 .append('hint', operation.getHint())
                 .append('min', operation.getMin())
@@ -108,7 +108,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should use the readPreference to set secondaryOk for commands'() {
         when:
-        def operation = new FindOperation<Document>(namespace, new DocumentCodec())
+        def operation = new FindOperation<Document>(CSOT_NO_TIMEOUT.get(), namespace, new DocumentCodec())
 
         then:
         testOperationSecondaryOk(operation, [3, 2, 0], readPreference, async, commandResult)

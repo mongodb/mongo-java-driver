@@ -291,7 +291,7 @@ class DBCollectionSpecification extends Specification {
         collection.find().iterator().hasNext()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(null, collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .retryReads(true))
 
@@ -300,7 +300,7 @@ class DBCollectionSpecification extends Specification {
         collection.find().iterator().hasNext()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(null, collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .retryReads(true))
 
@@ -309,7 +309,7 @@ class DBCollectionSpecification extends Specification {
         collection.find(new BasicDBObject(), new DBCollectionFindOptions().collation(collation)).iterator().hasNext()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(null, collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .collation(collation)
                 .retryReads(true))
@@ -331,7 +331,7 @@ class DBCollectionSpecification extends Specification {
         collection.findOne()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(null, collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .limit(-1)
                 .retryReads(true))
@@ -341,7 +341,7 @@ class DBCollectionSpecification extends Specification {
         collection.findOne()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(null, collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .limit(-1)
                 .retryReads(true))
@@ -351,7 +351,7 @@ class DBCollectionSpecification extends Specification {
         collection.findOne(new BasicDBObject(), new DBCollectionFindOptions().collation(collation))
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(null, collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .limit(-1)
                 .collation(collation)
